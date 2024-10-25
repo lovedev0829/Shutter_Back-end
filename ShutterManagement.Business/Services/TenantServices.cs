@@ -38,10 +38,9 @@ namespace ShutterManagement.Business.Services
             {
         new SqlParameter("@TenantName", SqlDbType.VarChar) { SqlValue = model.TenantName },
         new SqlParameter("@Brandinginfo", SqlDbType.VarChar) { SqlValue = model.Brandinginfo ?? (object)DBNull.Value },
-        new SqlParameter("@SubTenantId", SqlDbType.UniqueIdentifier) { SqlValue = model.SubTenantId }
             };
 
-            await dataServices.CallSP("sp_CreateTenant", sqlParameters);
+            await dataServices.CallSP("sp_CreateTenant", null, sqlParameters);
         }
 
         public async Task TenantUpdate(Sp_Tenant model)
@@ -59,7 +58,7 @@ namespace ShutterManagement.Business.Services
                 new SqlParameter("@Brandinginfo", SqlDbType.VarChar) { SqlValue = model.Brandinginfo }
             };
 
-            await dataServices.CallSP("sp_UpdateTenant", sqlParameters);
+            await dataServices.CallSP("sp_UpdateTenant", null, sqlParameters);
         }
 
         public async Task<GetTenantResponse> GetAll()
