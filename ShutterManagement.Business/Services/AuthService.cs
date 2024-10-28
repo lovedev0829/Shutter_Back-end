@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using ShutterManagement.Core;
 
 namespace ShutterManagement.Services
 {
@@ -32,7 +33,7 @@ namespace ShutterManagement.Services
                 throw new UnauthorizedAccessException("Invalid username or password.");
 
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.UTF8.GetBytes(_config["Jwt:SecretKey"]);
+            var key = Encoding.UTF8.GetBytes(AppConstant.JWTSecretKey);
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(new[]
@@ -40,9 +41,9 @@ namespace ShutterManagement.Services
                     new Claim("Id", existingUser.Id.ToString()),
                     new Claim("Username", existingUser.Username)
                 }),
-                Expires = DateTime.UtcNow.AddHours(1),
-                Issuer = _config["Jwt:Issuer"],
-                Audience = _config["Jwt:Audience"],
+                Expires = DateTime.UtcNow.AddHours(AppConstant.JwtExpiryTime),
+                Issuer = AppConstant.JwtIssuer,
+                Audience = AppConstant.JwtAudience,
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
 
