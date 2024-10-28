@@ -5,9 +5,11 @@ using ShutterManagement.Core.Common;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core.SPModel;
 using Azure;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ShutterManagement.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class CommonController : ControllerBase

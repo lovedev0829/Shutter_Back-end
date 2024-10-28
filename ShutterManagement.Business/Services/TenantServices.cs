@@ -53,7 +53,6 @@ namespace ShutterManagement.Business.Services
             SqlParameter[] sqlParameters = new SqlParameter[]
             {
                 new SqlParameter("@TenantId", SqlDbType.UniqueIdentifier) { SqlValue = model.TenantId },
-                new SqlParameter("@SubTenantId", SqlDbType.UniqueIdentifier) { SqlValue = model.SubTenantId },
                 new SqlParameter("@TenantName", SqlDbType.VarChar) { SqlValue = model.TenantName },
                 new SqlParameter("@Brandinginfo", SqlDbType.VarChar) { SqlValue = model.Brandinginfo }
             };
@@ -68,7 +67,7 @@ namespace ShutterManagement.Business.Services
                 return new Sp_Tenant
                 {
                     TenantId = reader.GetGuid(reader.GetOrdinal("TenantId")),
-                    SubTenantId = reader.GetGuid(reader.GetOrdinal("SubTenantId")),
+                    ParentTenantId = reader.GetGuid(reader.GetOrdinal("ParentTenantId")),
                     TenantName = reader.GetString(reader.GetOrdinal("TenantName")),
                     Brandinginfo = reader.GetString(reader.GetOrdinal("Brandinginfo"))
                 };
@@ -88,8 +87,9 @@ namespace ShutterManagement.Business.Services
             {
                 return new Sp_Tenant
                 {
+
                     TenantId = reader.GetGuid(reader.GetOrdinal("TenantId")),
-                    SubTenantId = reader.GetGuid(reader.GetOrdinal("SubTenantId")),
+                    ParentTenantId = reader.GetGuid(reader.GetOrdinal("ParentTenantId")),
                     TenantName = reader.GetString(reader.GetOrdinal("TenantName")),
                     Brandinginfo = reader.GetString(reader.GetOrdinal("Brandinginfo"))
                 };

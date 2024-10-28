@@ -49,6 +49,8 @@ public partial class ShutterDbContext : DbContext
 
     public virtual DbSet<TblTenant> TblTenants { get; set; }
 
+    public virtual DbSet<TblUser> TblUsers { get; set; }
+
     public virtual DbSet<TblVendor> TblVendors { get; set; }
 
     public virtual DbSet<TblVendorOrder> TblVendorOrders { get; set; }
@@ -505,6 +507,23 @@ public partial class ShutterDbContext : DbContext
             entity.HasOne(d => d.ParentTenant).WithMany(p => p.InverseParentTenant)
                 .HasForeignKey(d => d.ParentTenantId)
                 .HasConstraintName("FK__TblTenant__Paren__57DD0BE4");
+        });
+
+        modelBuilder.Entity<TblUser>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__TblUser__3213E83FB218A81D");
+
+            entity.ToTable("TblUser");
+
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("(newid())")
+                .HasColumnName("id");
+            entity.Property(e => e.Pwd)
+                .HasMaxLength(128)
+                .HasColumnName("pwd");
+            entity.Property(e => e.Username)
+                .HasMaxLength(128)
+                .HasColumnName("username");
         });
 
         modelBuilder.Entity<TblVendor>(entity =>
