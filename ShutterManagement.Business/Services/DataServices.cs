@@ -57,7 +57,6 @@ namespace ShutterManagement.Business.Services
             }
         }
 
-
         public async Task<List<T>> CallSPtoRead<T>(string storedProcedure, Func<SqlDataReader, T> mapFunc, params SqlParameter[] parameters) where T : class
         {
             var result = new List<T>();

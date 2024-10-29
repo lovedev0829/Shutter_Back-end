@@ -41,7 +41,7 @@ namespace ShutterManagement.Services
                     new Claim("Id", existingUser.Id.ToString()),
                     new Claim("Username", existingUser.Username)
                 }),
-                Expires = DateTime.UtcNow.AddHours(AppConstant.JwtExpiryTime),
+                Expires = DateTime.UtcNow.AddHours(Convert.ToDouble(AppConstant.JwtExpiryTime)),
                 Issuer = AppConstant.JwtIssuer,
                 Audience = AppConstant.JwtAudience,
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)

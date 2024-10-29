@@ -9,7 +9,7 @@ namespace ShutterManagement.Core.SPModel
      public class Sp_Tenant
     {
         public Guid TenantId { get; set; }
-        public Guid ParentTenantId { get; set; }
+        public Guid? ParentTenantId { get; set; }
         public string TenantName { get; set; }
         public string  Brandinginfo { get; set; }
     }

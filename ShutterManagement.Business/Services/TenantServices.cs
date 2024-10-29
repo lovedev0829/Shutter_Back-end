@@ -67,9 +67,9 @@ namespace ShutterManagement.Business.Services
                 return new Sp_Tenant
                 {
                     TenantId = reader.GetGuid(reader.GetOrdinal("TenantId")),
-                    ParentTenantId = reader.GetGuid(reader.GetOrdinal("ParentTenantId")),
+                    ParentTenantId = reader.IsDBNull(reader.GetOrdinal("ParentTenantId")) ? (Guid?)null : reader.GetGuid(reader.GetOrdinal("ParentTenantId")),
                     TenantName = reader.GetString(reader.GetOrdinal("TenantName")),
-                    Brandinginfo = reader.GetString(reader.GetOrdinal("Brandinginfo"))
+                    Brandinginfo = reader.IsDBNull(reader.GetOrdinal("Brandinginfo")) ? null : reader.GetString(reader.GetOrdinal("Brandinginfo"))
                 };
             });
 
