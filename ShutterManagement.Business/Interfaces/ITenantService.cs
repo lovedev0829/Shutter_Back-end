@@ -11,7 +11,7 @@ namespace ShutterManagement.Business.Interfaces
     {
         Task TenantCreate(Sp_Tenant model);
         Task TenantUpdate(Sp_Tenant model);
-        Task<GetTenantResponse> GetAll();
+        Task<List<Sp_Tenant>> GetAll();
         Task<Sp_Tenant> GetById(Guid id);
 
         Task DeleteTenant(Guid id);

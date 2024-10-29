@@ -60,7 +60,7 @@ namespace ShutterManagement.Business.Services
             await dataServices.CallSP("sp_UpdateTenant", null, sqlParameters);
         }
 
-        public async Task<GetTenantResponse> GetAll()
+        public async Task<List<Sp_Tenant>> GetAll()
         {
             var tenants = await dataServices.CallSPtoRead<Sp_Tenant>("sp_GetAllTenant", reader =>
             {
@@ -73,16 +73,11 @@ namespace ShutterManagement.Business.Services
                 };
             });
 
-            return new GetTenantResponse { Tenants = tenants };
+            return  tenants ;
         }
 
         public async Task<Sp_Tenant> GetById(Guid id)
         {
-            if (id == Guid.Empty)
-            {
-                throw new ArgumentException("Invalid ID specified.");
-            }
-
             var tenants = await dataServices.CallSPtoRead<Sp_Tenant>("sp_GetAllTenantById", reader =>
             {
                 return new Sp_Tenant

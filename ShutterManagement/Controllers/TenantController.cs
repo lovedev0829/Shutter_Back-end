@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core.Common;
 using ShutterManagement.Core.SPModel;
+using ShutterManagement.Core.ViewModels;
+using ShutterManagement.DAL.Context;
 using System;
 using System.Threading.Tasks;
 
@@ -85,24 +87,30 @@ namespace ShutterManagement.Controllers
         [Route("GetAllTenants")]
         public async Task<IActionResult> GetAllTenants()
         {
+            IResponseVm<List<Sp_Tenant>> res = new ResponseVm<List<Sp_Tenant>>();
             try
             {
                 var response = await tenantService.GetAll();
-                return Ok(response);
+                res.IsSuccess = true;
+                res.Message = "Data fetched successfully";
+                res.Data = response;
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                res.Message = $"Internal server error: {ex.Message}";
             }
+            return Ok(res);
+
         }
 
         [HttpGet]
         [Route("{id}")]
         public async Task<IActionResult> GetTenantById(Guid id)
         {
+            IResponseVm<Sp_Tenant> res = new ResponseVm<Sp_Tenant>();
             if (id == Guid.Empty)
             {
-                return BadRequest("Invalid Tenant ID specified.");
+                res.Message = "Invalid Tenant ID specified.";
             }
 
             try
@@ -110,14 +118,21 @@ namespace ShutterManagement.Controllers
                 var tenant = await tenantService.GetById(id);
                 if (tenant == null)
                 {
-                    return NotFound($"Tenant with ID {id} not found.");
+                    res.Message = $"Tenant with ID {id} not found.";
+                }
+                else
+                {
+                    res.IsSuccess = true;
+                    res.Message = "Data fetched successfully";
+                    res.Data = tenant;
                 }
                 return Ok(tenant);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                res.Message = $"Internal server error: {ex.Message}";
             }
+            return Ok(res);
         }
     }
 }
