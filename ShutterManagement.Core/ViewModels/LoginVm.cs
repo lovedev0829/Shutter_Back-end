@@ -11,5 +11,7 @@ namespace ShutterManagement.Core.ViewModels
         public string? Username { get; set; }
 
         public string? Pwd { get; set; }
+
+        public string? Token { get; set; }
     }
 }

@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Azure;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using ShutterManagement.Business.Interfaces;
+using ShutterManagement.Core;
 using ShutterManagement.Core.Common;
 using ShutterManagement.Core.SPModel;
 using ShutterManagement.Core.ViewModels;
@@ -27,60 +29,70 @@ namespace ShutterManagement.Controllers
         [Route("TenantCreate")]
         public async Task<IActionResult> TenantCreate([FromBody] Sp_Tenant model)
         {
+            IResponseVm<List<Sp_Tenant>> res = new ResponseVm<List<Sp_Tenant>>();
             if (model == null)
             {
-                return BadRequest("Tenant model is required.");
+                res.Message = "Tenant"+$"{AppConstant.ModelError}";
             }
 
             try
             {
                 await tenantService.TenantCreate(model);
-                return Ok("Tenant created successfully.");
+                res.IsSuccess = true;
+                res.Message = $"{AppConstant.InsertSuccessMsg}";   
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                res.Message = $"{AppConstant.ExternalError} {ex.Message}";
             }
+            return Ok(res);
+
         }
 
         [HttpPut]
         [Route("TenantUpdate")]
         public async Task<IActionResult> TenantUpdate([FromBody] Sp_Tenant model)
         {
+            IResponseVm<List<Sp_Tenant>> res = new ResponseVm<List<Sp_Tenant>>();
             if (model == null || model.TenantId == Guid.Empty)
             {
-                return BadRequest("Valid Tenant model with TenantId is required.");
+                res.Message = "Tenant" + $"{AppConstant.ModelError}";
             }
 
             try
             {
-                await tenantService.TenantUpdate(model);
-                return Ok("Tenant updated successfully.");
+ await tenantService.TenantUpdate(model);
+                res.IsSuccess= true;    
+                res.Message= $"{AppConstant.UpdateSuccessMsg}"; 
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                res.Message = $"{AppConstant.ExternalError} {ex.Message}";
             }
+            return Ok(res);
         }
 
         [HttpDelete]
         [Route("TenantDelete/{id}")]
         public async Task<IActionResult> TenantDelete(Guid id)
         {
+            IResponseVm<List<Sp_Tenant>> res = new ResponseVm<List<Sp_Tenant>>();
             if (id == Guid.Empty)
             {
-                return BadRequest("Invalid Tenant ID specified.");
+                res.Message = $"{AppConstant.InvalidGuid}"; 
             }
 
             try
             {
                 await tenantService.DeleteTenant(id);
-                return Ok("Tenant deleted successfully.");
+                res.IsSuccess = true;
+                res.Message = $"{AppConstant.DeletedSuccessMsg}";
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                res.Message = $"{AppConstant.ExternalError} {ex.Message}";
             }
+            return Ok(res );
         }
 
         [HttpGet]
@@ -92,12 +104,13 @@ namespace ShutterManagement.Controllers
             {
                 var response = await tenantService.GetAll();
                 res.IsSuccess = true;
-                res.Message = "Data fetched successfully";
+                res.Message= $"{AppConstant.FetchSuccessMsg}";  
                 res.Data = response;
             }
             catch (Exception ex)
             {
-                res.Message = $"Internal server error: {ex.Message}";
+                res.Message = $"{AppConstant.ExternalError} {ex.Message}";
+
             }
             return Ok(res);
 
@@ -110,7 +123,7 @@ namespace ShutterManagement.Controllers
             IResponseVm<Sp_Tenant> res = new ResponseVm<Sp_Tenant>();
             if (id == Guid.Empty)
             {
-                res.Message = "Invalid Tenant ID specified.";
+                res.Message = $"{AppConstant.InvalidGuid}"; 
             }
 
             try
@@ -118,19 +131,20 @@ namespace ShutterManagement.Controllers
                 var tenant = await tenantService.GetById(id);
                 if (tenant == null)
                 {
+
                     res.Message = $"Tenant with ID {id} not found.";
                 }
                 else
                 {
                     res.IsSuccess = true;
-                    res.Message = "Data fetched successfully";
+                    res.Message = $"{AppConstant.FetchSuccessMsg}" ;    
                     res.Data = tenant;
                 }
                 return Ok(tenant);
             }
             catch (Exception ex)
             {
-                res.Message = $"Internal server error: {ex.Message}";
+                res.Message = $"{AppConstant.ExternalError} {ex.Message}";
             }
             return Ok(res);
         }

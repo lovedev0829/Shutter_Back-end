@@ -24,15 +24,6 @@ namespace ShutterManagement.Business.Services
 
         public async Task TenantCreate(Sp_Tenant model)
         {
-            if (model == null)
-            {
-                throw new ArgumentNullException(nameof(model), "Tenant model cannot be null.");
-            }
-
-            if (string.IsNullOrWhiteSpace(model.TenantName))
-            {
-                throw new ArgumentException("TenantName is required.", nameof(model.TenantName));
-            }
 
             SqlParameter[] sqlParameters = new SqlParameter[]
             {
@@ -45,10 +36,7 @@ namespace ShutterManagement.Business.Services
 
         public async Task TenantUpdate(Sp_Tenant model)
         {
-            if (model == null || model.TenantId == Guid.Empty)
-            {
-                throw new ArgumentException("Valid Tenant model with TenantId is required.");
-            }
+     
 
             SqlParameter[] sqlParameters = new SqlParameter[]
             {
@@ -72,7 +60,6 @@ namespace ShutterManagement.Business.Services
                     Brandinginfo = reader.IsDBNull(reader.GetOrdinal("Brandinginfo")) ? null : reader.GetString(reader.GetOrdinal("Brandinginfo"))
                 };
             });
-
             return  tenants ;
         }
 
@@ -95,19 +82,10 @@ namespace ShutterManagement.Business.Services
 
         public async Task DeleteTenant(Guid id)
         {
-            if (id == Guid.Empty)
-            {
-                throw new ArgumentException("Invalid ID specified.");
-            }
-
-            try
-            {
+           
                 await dataServices.CallSP("sp_TenantDelete", new SqlParameter("@TenantId", id));
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error deleting tenant: {ex.Message}");
-            }
+            
+            
         }
     }
 }

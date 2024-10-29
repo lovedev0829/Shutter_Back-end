@@ -25,6 +25,8 @@ public partial class ShutterDbContext : DbContext
 
     public virtual DbSet<TblContact> TblContacts { get; set; }
 
+    public virtual DbSet<TblContactBillingAddress> TblContactBillingAddresses { get; set; }
+
     public virtual DbSet<TblContactRole> TblContactRoles { get; set; }
 
     public virtual DbSet<TblEstimate> TblEstimates { get; set; }
@@ -61,7 +63,7 @@ public partial class ShutterDbContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Server=DESKTOP-9TAG556\\SQLEXPRESS;Database=ShutterDB;TrustServerCertificate=true;Integrated Security=true;");
+        => optionsBuilder.UseSqlServer("Server=SYS82\\SQLEXPRESS;Database=ShutterDB;TrustServerCertificate=true;Integrated Security=true;");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -190,6 +192,34 @@ public partial class ShutterDbContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.Website).HasMaxLength(255);
+        });
+
+        modelBuilder.Entity<TblContactBillingAddress>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToTable("TblContact_billingAddress");
+
+            entity.Property(e => e.AddressLine1).HasMaxLength(255);
+            entity.Property(e => e.AddressLine2).HasMaxLength(255);
+            entity.Property(e => e.City).HasMaxLength(100);
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.EmailAddress).HasMaxLength(128);
+            entity.Property(e => e.FullName).HasMaxLength(128);
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
+            entity.Property(e => e.IsDelete).HasDefaultValue(false);
+            entity.Property(e => e.PhoneNumber).HasMaxLength(128);
+            entity.Property(e => e.State).HasMaxLength(100);
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.ZipCode).HasMaxLength(20);
+
+            entity.HasOne(d => d.Contact).WithMany()
+                .HasForeignKey(d => d.ContactId)
+                .HasConstraintName("FK__TblContac__Conta__5F492382");
         });
 
         modelBuilder.Entity<TblContactRole>(entity =>

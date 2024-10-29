@@ -9,10 +9,10 @@ namespace ShutterManagement.Business.Interfaces
 {
      public interface ISubtenantService
     {
-        Task SubtenantCreate(Sp_Tenant model);
-        Task SubtenantUpdate(Sp_Tenant model);
-        Task<GetTenantResponse> GetAll();
-        Task<Sp_Tenant> Subtenant_GetById(Guid id);
-        Task Delete_Subtenant(Guid id);
+        Task CreateSubtenant(Sp_Tenant model);
+        Task UpdateSubtenant(Sp_Tenant model);
+        Task<List<Sp_Tenant>> GetAllSubtenants();
+        Task<Sp_Tenant> GetSubtenantById(Guid id);
+        Task DeleteSubtenant(Guid id);
     }
 }

@@ -15,5 +15,19 @@ namespace ShutterManagement.Core
         public static string JwtIssuer = string.Empty;
         public static string JwtAudience = string.Empty;
         public static string JwtExpiryTime = string.Empty;
-    }
+
+
+        //Error Message//
+        public static string ExternalError { get; set; } = string.Empty;
+        public static string ModelError { get; set; } = string.Empty;
+
+        public static string SuccessMsg {get; set; } = string.Empty; 
+        
+        public static string InsertSuccessMsg { get; set; } = string.Empty; 
+        public static string UpdateSuccessMsg { get; set; }= string.Empty; 
+
+        public static string DeletedSuccessMsg { get; set; }= string.Empty;
+        public static string FetchSuccessMsg { get; set; }=string.Empty;    
+        public  static string InvalidGuid { get; set; } = string.Empty; 
+}
 }

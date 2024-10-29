@@ -23,14 +23,12 @@ namespace ShutterManagement.Services
 
         public async Task<string> LoginAsync(TblUser user)
         {
-            if (user == null || string.IsNullOrEmpty(user.Username) || string.IsNullOrEmpty(user.Pwd))
-                throw new ArgumentException("Invalid username or password.");
+           
 
             var existingUser = await _context.TblUsers
                 .SingleOrDefaultAsync(u => u.Username == user.Username && u.Pwd == user.Pwd);
 
-            if (existingUser == null)
-                throw new UnauthorizedAccessException("Invalid username or password.");
+           
 
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.UTF8.GetBytes(AppConstant.JWTSecretKey);

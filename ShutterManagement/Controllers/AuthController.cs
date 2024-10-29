@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using ShutterManagement.Core;
+using ShutterManagement.Core.SPModel;
 using ShutterManagement.Core.ViewModels; 
 using ShutterManagement.DAL.Context;
 using ShutterManagement.Services;
@@ -20,9 +22,10 @@ namespace ShutterManagement.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginVm loginVm)
         {
+            IResponseVm<LoginVm> res = new ResponseVm<LoginVm>();
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState);
+                res.Message = $"{AppConstant.ModelError}";
             }
 
             var user = new TblUser
@@ -34,16 +37,21 @@ namespace ShutterManagement.Controllers
             try
             {
                 var token = await _authService.LoginAsync(user);
+                res.IsSuccess = true;
+                res.Message = "User is authenticated";
+                res.Data = new LoginVm { Token = token };
                 return Ok(new { Token = token });
             }
             catch (UnauthorizedAccessException ex)
             {
-                return Unauthorized(ex.Message);
+                res.Message = ex.Message;   
             }
             catch (ArgumentException ex)
             {
-                return BadRequest(ex.Message);
+                res.Message = $"Failed to login {ex.Message}";
             }
+            return Ok(res);
         }
+      
     }
 }
