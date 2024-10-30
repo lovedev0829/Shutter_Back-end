@@ -148,7 +148,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-
 app.UseSwagger();
 
 app.UseSwaggerUI(c =>

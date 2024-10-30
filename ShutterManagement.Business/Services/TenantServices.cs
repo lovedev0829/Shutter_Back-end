@@ -83,7 +83,7 @@ namespace ShutterManagement.Business.Services
         public async Task DeleteTenant(Guid id)
         {
            
-                await dataServices.CallSP("sp_TenantDelete", new SqlParameter("@TenantId", id));
+                await dataServices.CallSP("sp_TenantDelete",null, new SqlParameter("@TenantId", id));
             
             
         }
