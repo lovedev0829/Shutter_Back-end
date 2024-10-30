@@ -137,6 +137,7 @@ builder.Services.AddScoped<IMasterCreate, MasterCreate>();
 builder.Services.AddScoped<ITenantService, TenantServices>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ISubtenantService,SubtenantServices>();
+builder.Services.AddScoped<IContactService,ContactServices>();  
 builder.Services.AddScoped<DataServices>();
 
 var app = builder.Build();
