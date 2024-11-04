@@ -17,5 +17,7 @@ namespace ShutterManagement.Core.SPModel
         public string Notes { get; set; }
 
         public bool IsBillingAddressSameAsAddress { get; set; } = false;
+
+        public BillingAddressVm billingAddressVm { get; set; }  
     }
 }

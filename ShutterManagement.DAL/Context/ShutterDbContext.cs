@@ -196,30 +196,25 @@ public partial class ShutterDbContext : DbContext
 
         modelBuilder.Entity<TblContactBillingAddress>(entity =>
         {
-            entity
-                .HasNoKey()
-                .ToTable("TblContact_billingAddress");
+            entity.HasKey(e => e.BillingAddressId).HasName("PK__TblConta__90BDB2B120EB5B56");
 
+            entity.ToTable("TblContact_billingAddress");
+
+            entity.Property(e => e.BillingAddressId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.AddressLine1).HasMaxLength(255);
             entity.Property(e => e.AddressLine2).HasMaxLength(255);
             entity.Property(e => e.City).HasMaxLength(100);
-            entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
-            entity.Property(e => e.EmailAddress).HasMaxLength(128);
-            entity.Property(e => e.FullName).HasMaxLength(128);
+            entity.Property(e => e.Country).HasMaxLength(100);
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
             entity.Property(e => e.IsActive).HasDefaultValue(true);
-            entity.Property(e => e.IsDelete).HasDefaultValue(false);
-            entity.Property(e => e.PhoneNumber).HasMaxLength(128);
+            entity.Property(e => e.Label).HasMaxLength(100);
             entity.Property(e => e.State).HasMaxLength(100);
-            entity.Property(e => e.UpdatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
             entity.Property(e => e.ZipCode).HasMaxLength(20);
 
-            entity.HasOne(d => d.Contact).WithMany()
+            entity.HasOne(d => d.Contact).WithMany(p => p.TblContactBillingAddresses)
                 .HasForeignKey(d => d.ContactId)
-                .HasConstraintName("FK__TblContac__Conta__5F492382");
+                .HasConstraintName("FK__TblContac__Conta__7DCDAAA2");
         });
 
         modelBuilder.Entity<TblContactRole>(entity =>

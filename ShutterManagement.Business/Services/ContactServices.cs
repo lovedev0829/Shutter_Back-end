@@ -17,22 +17,53 @@ namespace ShutterManagement.Business.Services
             this.dataServices = dataServices;
         }
 
+        //public async Task Create_Contact(Sp_Contact model)
+        //{
+        //    SqlParameter[] sqlParameters = new SqlParameter[]
+        //    {
+        //        new SqlParameter("@ContactType", SqlDbType.VarChar) { SqlValue = model.ContactType ?? (object)DBNull.Value },
+        //        new SqlParameter("@Name", SqlDbType.VarChar) { SqlValue = model.Name ?? (object)DBNull.Value },
+        //        new SqlParameter("@Phone", SqlDbType.NVarChar) { SqlValue = model.PhoneNumber ?? (object)DBNull.Value },
+        //        new SqlParameter("@Email", SqlDbType.NVarChar) { SqlValue = model.Email ?? (object)DBNull.Value },
+        //        new SqlParameter("@Website", SqlDbType.NVarChar) { SqlValue = model.Website ?? (object)DBNull.Value },
+        //        new SqlParameter("@Notes", SqlDbType.NVarChar) { SqlValue = model.Notes ?? (object)DBNull.Value },
+        //        new SqlParameter("@IsBillingAddressSameAsAddress", SqlDbType.Bit) { SqlValue = model.IsBillingAddressSameAsAddress },
+        //        new SqlParameter("@Action", SqlDbType.NVarChar) { SqlValue = "Insert" }
+        //    };
+
+        //    await dataServices.CallSP("sp_ContactCRUD", null, sqlParameters);
+        //}
+
         public async Task Create_Contact(Sp_Contact model)
         {
-            SqlParameter[] sqlParameters = new SqlParameter[]
+            
+
+            SqlParameter[] parameters = new SqlParameter[]
             {
-                new SqlParameter("@ContactType", SqlDbType.VarChar) { SqlValue = model.ContactType ?? (object)DBNull.Value },
-                new SqlParameter("@Name", SqlDbType.VarChar) { SqlValue = model.Name ?? (object)DBNull.Value },
-                new SqlParameter("@Phone", SqlDbType.NVarChar) { SqlValue = model.PhoneNumber ?? (object)DBNull.Value },
-                new SqlParameter("@Email", SqlDbType.NVarChar) { SqlValue = model.Email ?? (object)DBNull.Value },
-                new SqlParameter("@Website", SqlDbType.NVarChar) { SqlValue = model.Website ?? (object)DBNull.Value },
-                new SqlParameter("@Notes", SqlDbType.NVarChar) { SqlValue = model.Notes ?? (object)DBNull.Value },
-                new SqlParameter("@IsBillingAddressSameAsAddress", SqlDbType.Bit) { SqlValue = model.IsBillingAddressSameAsAddress },
-                new SqlParameter("@Action", SqlDbType.NVarChar) { SqlValue = "Insert" }
+        new SqlParameter("@ContactId", SqlDbType.UniqueIdentifier) { SqlValue = model.ContactId },
+        new SqlParameter("@ContactType", SqlDbType.VarChar) { SqlValue = model.ContactType ?? (object)DBNull.Value },
+        new SqlParameter("@Name", SqlDbType.VarChar) { SqlValue = model.Name ?? (object)DBNull.Value },
+        new SqlParameter("@Phone", SqlDbType.NVarChar) { SqlValue = model.PhoneNumber ?? (object)DBNull.Value },
+        new SqlParameter("@Email", SqlDbType.NVarChar) { SqlValue = model.Email ?? (object)DBNull.Value },
+        new SqlParameter("@Website", SqlDbType.NVarChar) { SqlValue = model.Website ?? (object)DBNull.Value },
+        new SqlParameter("@Notes", SqlDbType.NVarChar) { SqlValue = model.Notes ?? (object)DBNull.Value },
+        new SqlParameter("@IsBillingAddressSameAsAddress", SqlDbType.Bit) { SqlValue = model.IsBillingAddressSameAsAddress },
+        
+        new SqlParameter("@Label", SqlDbType.NVarChar) { SqlValue = !model.IsBillingAddressSameAsAddress ? (model.billingAddressVm.Label ?? (object)DBNull.Value) : (object)DBNull.Value },
+        new SqlParameter("@AddressLine1", SqlDbType.NVarChar) { SqlValue = !model.IsBillingAddressSameAsAddress ? (model.billingAddressVm.AddressLine1 ?? (object)DBNull.Value) : (object)DBNull.Value },
+        new SqlParameter("@AddressLine2", SqlDbType.NVarChar) { SqlValue = !model.IsBillingAddressSameAsAddress ? (model.billingAddressVm.AddressLine2 ?? (object)DBNull.Value) : (object)DBNull.Value },
+        new SqlParameter("@City", SqlDbType.NVarChar) { SqlValue = !model.IsBillingAddressSameAsAddress ? (model.billingAddressVm.City ?? (object)DBNull.Value) : (object)DBNull.Value },
+        new SqlParameter("@State", SqlDbType.NVarChar) { SqlValue = !model.IsBillingAddressSameAsAddress ? (model.billingAddressVm.State ?? (object)DBNull.Value) : (object)DBNull.Value },
+        new SqlParameter("@ZipCode", SqlDbType.NVarChar) { SqlValue = !model.IsBillingAddressSameAsAddress ? (model.billingAddressVm.ZipCode ?? (object)DBNull.Value) : (object)DBNull.Value },
+        new SqlParameter("@Country", SqlDbType.NVarChar) { SqlValue = !model.IsBillingAddressSameAsAddress ? (model.billingAddressVm.Country ?? (object)DBNull.Value) : (object)DBNull.Value },
+
+        new SqlParameter("@Action", SqlDbType.NVarChar) { SqlValue = "Insert" }
             };
 
-            await dataServices.CallSP("sp_ContactCRUD", null, sqlParameters);
+            await dataServices.CallSP("sp_ContactCRUD", null, parameters);
         }
+
+
 
         public async Task Delete_Contact(Guid id)
         {

@@ -27,7 +27,11 @@ public partial class TblContact
 
     public bool? IsDelete { get; set; }
 
+    public bool IsBillingAddressSameAsAddress { get; set; }
+
     public virtual ICollection<TblAddress> TblAddresses { get; set; } = new List<TblAddress>();
+
+    public virtual ICollection<TblContactBillingAddress> TblContactBillingAddresses { get; set; } = new List<TblContactBillingAddress>();
 
     public virtual ICollection<TblContactRole> TblContactRoles { get; set; } = new List<TblContactRole>();
 

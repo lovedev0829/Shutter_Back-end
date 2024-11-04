@@ -27,16 +27,28 @@ namespace ShutterManagement.Api.Controllers
         public async Task<IActionResult> CreateContact([FromBody] Sp_Contact model)
         {
             var res = new ResponseVm<Sp_Contact>();
+
             if (model == null || string.IsNullOrEmpty(model.Name))
             {
-                res.Message = "Contact" + $"{AppConstant.ModelError}";
+                res.Message = "Contact model is invalid." + $"{AppConstant.ModelError}";
+                return BadRequest(res);
             }
 
-            await _contactService.Create_Contact(model);
-            res.IsSuccess = true;
-            res.Message = $"{AppConstant.InsertSuccessMsg}";
-            return Ok(res);
+            try
+            {
+                await _contactService.Create_Contact(model);
+                res.IsSuccess = true;
+                res.Message = $"{AppConstant.InsertSuccessMsg}";
+                return Ok(res);
+            }
+            catch (Exception ex)
+            {
+                res.IsSuccess = false;
+                res.Message = "An error occurred while creating the contact: " + ex.Message;
+                return StatusCode(500, res);
+            }
         }
+
 
         [HttpPut]
         [Route("ContactUpdate/{id}")]
