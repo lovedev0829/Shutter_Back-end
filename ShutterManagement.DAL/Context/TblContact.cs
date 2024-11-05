@@ -29,6 +29,8 @@ public partial class TblContact
 
     public bool IsBillingAddressSameAsAddress { get; set; }
 
+    public Guid? TenantId { get; set; }
+
     public virtual ICollection<TblAddress> TblAddresses { get; set; } = new List<TblAddress>();
 
     public virtual ICollection<TblContactBillingAddress> TblContactBillingAddresses { get; set; } = new List<TblContactBillingAddress>();
@@ -40,4 +42,6 @@ public partial class TblContact
     public virtual ICollection<TblRawMaterial> TblRawMaterials { get; set; } = new List<TblRawMaterial>();
 
     public virtual ICollection<TblTaxExemption> TblTaxExemptions { get; set; } = new List<TblTaxExemption>();
+
+    public virtual TblTenant? Tenant { get; set; }
 }

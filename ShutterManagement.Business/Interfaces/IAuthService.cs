@@ -1,10 +1,12 @@
 ﻿using System.Threading.Tasks;
+using ShutterManagement.Core.ViewModels;
+using ShutterManagement.Core.ViewModels.Response;
 using ShutterManagement.DAL.Context;
 
 namespace ShutterManagement.Services
 {
     public interface IAuthService
     {
-        Task<string> LoginAsync(TblUser user);
+        Task<IResponseVm<UserLoginDetails>> LoginAsync(LoginDetailVM user);
     }
 }

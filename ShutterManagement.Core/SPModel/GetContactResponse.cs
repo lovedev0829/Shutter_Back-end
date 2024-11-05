@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace ShutterManagement.Core.SPModel
 {
      public class GetContactResponse
-    {
+     {
         public List<Sp_Contact> Contacts { get; set; }
-    }
+     }
 }

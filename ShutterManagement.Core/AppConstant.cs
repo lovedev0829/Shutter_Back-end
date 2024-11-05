@@ -29,5 +29,6 @@ namespace ShutterManagement.Core
         public static string DeletedSuccessMsg { get; set; }= string.Empty;
         public static string FetchSuccessMsg { get; set; }=string.Empty;    
         public  static string InvalidGuid { get; set; } = string.Empty; 
+        public  static string LoginSuccessMessgae { get; set; } = string.Empty; 
 }
 }

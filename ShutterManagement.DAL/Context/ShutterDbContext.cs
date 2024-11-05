@@ -15,6 +15,10 @@ public partial class ShutterDbContext : DbContext
     {
     }
 
+    public virtual DbSet<MstModule> MstModules { get; set; }
+
+    public virtual DbSet<MstModulePermission> MstModulePermissions { get; set; }
+
     public virtual DbSet<TblAddress> TblAddresses { get; set; }
 
     public virtual DbSet<TblAssembly> TblAssemblies { get; set; }
@@ -45,13 +49,19 @@ public partial class ShutterDbContext : DbContext
 
     public virtual DbSet<TblRawMaterial> TblRawMaterials { get; set; }
 
+    public virtual DbSet<TblRole> TblRoles { get; set; }
+
     public virtual DbSet<TblTaxExemption> TblTaxExemptions { get; set; }
 
     public virtual DbSet<TblTaxRate> TblTaxRates { get; set; }
 
     public virtual DbSet<TblTenant> TblTenants { get; set; }
 
+    public virtual DbSet<TblTenantBrandingInfo> TblTenantBrandingInfos { get; set; }
+
     public virtual DbSet<TblUser> TblUsers { get; set; }
+
+    public virtual DbSet<TblUserRole> TblUserRoles { get; set; }
 
     public virtual DbSet<TblVendor> TblVendors { get; set; }
 
@@ -67,6 +77,31 @@ public partial class ShutterDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<MstModule>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__MstModul__3214EC071549A1AC");
+
+            entity.ToTable("MstModule");
+
+            entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.ModuleDisplayName).HasMaxLength(200);
+            entity.Property(e => e.ModuleName).HasMaxLength(200);
+        });
+
+        modelBuilder.Entity<MstModulePermission>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__MstModul__3214EC07D283D662");
+
+            entity.ToTable("MstModule_Permission");
+
+            entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.ModulePermission).HasMaxLength(100);
+
+            entity.HasOne(d => d.Module).WithMany(p => p.MstModulePermissions)
+                .HasForeignKey(d => d.ModuleId)
+                .HasConstraintName("FK__MstModule__Modul__22FF2F51");
+        });
+
         modelBuilder.Entity<TblAddress>(entity =>
         {
             entity.HasKey(e => e.AddressId).HasName("PK__TblAddre__091C2AFB1A8F5F02");
@@ -192,6 +227,10 @@ public partial class ShutterDbContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.Website).HasMaxLength(255);
+
+            entity.HasOne(d => d.Tenant).WithMany(p => p.TblContacts)
+                .HasForeignKey(d => d.TenantId)
+                .HasConstraintName("FK__TblContac__Tenan__7FB5F314");
         });
 
         modelBuilder.Entity<TblContactBillingAddress>(entity =>
@@ -467,6 +506,27 @@ public partial class ShutterDbContext : DbContext
                 .HasConstraintName("FK__TblRawMat__Vendo__6E01572D");
         });
 
+        modelBuilder.Entity<TblRole>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__TblRoles__3214EC0763166A18");
+
+            entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.ModifiedAt).HasColumnType("datetime");
+
+            entity.HasOne(d => d.Module).WithMany(p => p.TblRoles)
+                .HasForeignKey(d => d.ModuleId)
+                .HasConstraintName("FK__TblRoles__Module__26CFC035");
+
+            entity.HasOne(d => d.ModulePermission).WithMany(p => p.TblRoles)
+                .HasForeignKey(d => d.ModulePermissionId)
+                .HasConstraintName("FK__TblRoles__Module__27C3E46E");
+
+            entity.HasOne(d => d.Tenant).WithMany(p => p.TblRoles)
+                .HasForeignKey(d => d.TenantId)
+                .HasConstraintName("FK__TblRoles__Tenant__28B808A7");
+        });
+
         modelBuilder.Entity<TblTaxExemption>(entity =>
         {
             entity.HasKey(e => e.TaxExemptionId).HasName("PK__TblTaxEx__BCE64BE6FDD15890");
@@ -519,6 +579,7 @@ public partial class ShutterDbContext : DbContext
             entity.ToTable("TblTenant");
 
             entity.Property(e => e.TenantId).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.Code).HasMaxLength(128);
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
@@ -528,10 +589,28 @@ public partial class ShutterDbContext : DbContext
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
+            entity.Property(e => e.Url).HasMaxLength(128);
+
+            entity.HasOne(d => d.BrandingInfoNavigation).WithMany(p => p.TblTenants)
+                .HasForeignKey(d => d.BrandingInfo)
+                .HasConstraintName("FK__TblTenant__Brand__1B5E0D89");
 
             entity.HasOne(d => d.ParentTenant).WithMany(p => p.InverseParentTenant)
                 .HasForeignKey(d => d.ParentTenantId)
                 .HasConstraintName("FK__TblTenant__Paren__57DD0BE4");
+        });
+
+        modelBuilder.Entity<TblTenantBrandingInfo>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__TblTenan__3214EC075DE33688");
+
+            entity.ToTable("TblTenant_BrandingInfo");
+
+            entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.Email).HasMaxLength(200);
+            entity.Property(e => e.PhoneNmber).HasMaxLength(100);
+            entity.Property(e => e.PrimaryColor).HasMaxLength(20);
+            entity.Property(e => e.SecondaryColor).HasMaxLength(20);
         });
 
         modelBuilder.Entity<TblUser>(entity =>
@@ -543,12 +622,52 @@ public partial class ShutterDbContext : DbContext
             entity.Property(e => e.Id)
                 .HasDefaultValueSql("(newid())")
                 .HasColumnName("id");
+            entity.Property(e => e.CreatedAt)
+                .HasColumnType("datetime")
+                .HasColumnName("CreatedAT");
+            entity.Property(e => e.Email).HasMaxLength(100);
+            entity.Property(e => e.FirstName)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
+            entity.Property(e => e.IsDelete).HasDefaultValue(false);
+            entity.Property(e => e.LastName)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.MiddleName)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.ModifiedAt).HasColumnType("datetime");
+            entity.Property(e => e.Phone).HasMaxLength(100);
             entity.Property(e => e.Pwd)
                 .HasMaxLength(128)
                 .HasColumnName("pwd");
             entity.Property(e => e.Username)
                 .HasMaxLength(128)
                 .HasColumnName("username");
+
+            entity.HasOne(d => d.Tenant).WithMany(p => p.TblUsers)
+                .HasForeignKey(d => d.TenantId)
+                .HasConstraintName("FK__TblUser__TenantI__02925FBF");
+        });
+
+        modelBuilder.Entity<TblUserRole>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__TblUser___3214EC07FEFC8739");
+
+            entity.ToTable("TblUser_Roles");
+
+            entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.ModifiedAt).HasColumnType("datetime");
+
+            entity.HasOne(d => d.Role).WithMany(p => p.TblUserRoles)
+                .HasForeignKey(d => d.RoleId)
+                .HasConstraintName("FK__TblUser_R__RoleI__2D7CBDC4");
+
+            entity.HasOne(d => d.User).WithMany(p => p.TblUserRoles)
+                .HasForeignKey(d => d.UserId)
+                .HasConstraintName("FK__TblUser_R__UserI__2C88998B");
         });
 
         modelBuilder.Entity<TblVendor>(entity =>

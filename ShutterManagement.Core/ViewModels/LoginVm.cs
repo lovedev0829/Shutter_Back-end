@@ -8,10 +8,11 @@ namespace ShutterManagement.Core.ViewModels
 {
     public class LoginVm
     {
-        public string? Username { get; set; }
+        public Guid Id { get; set; }
+        public string Username { get; set; }
 
-        public string? Pwd { get; set; }
+        public string Password { get; set; }
 
-        public string? Token { get; set; }
+        public string Code { get; set; }
     }
 }

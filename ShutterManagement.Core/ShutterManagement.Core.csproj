@@ -10,4 +10,9 @@
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="SPModel\SP_Request\" />
+    <Folder Include="ViewModels\Request\" />
+  </ItemGroup>
+
 </Project>

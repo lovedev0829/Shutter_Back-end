@@ -20,38 +20,18 @@ namespace ShutterManagement.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginVm loginVm)
+        public async Task<IActionResult> Login([FromBody] LoginDetailVM loginVm)
         {
-            IResponseVm<LoginVm> res = new ResponseVm<LoginVm>();
-            if (!ModelState.IsValid)
-            {
-                res.Message = $"{AppConstant.ModelError}";
-            }
-
-            var user = new TblUser
-            {
-                Username = loginVm.Username,
-                Pwd = loginVm.Pwd
-            };
-
-            try
-            {
-                var token = await _authService.LoginAsync(user);
-                res.IsSuccess = true;
-                res.Message = "User is authenticated";
-                res.Data = new LoginVm { Token = token };
-                return Ok(new { Token = token });
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                res.Message = ex.Message;   
-            }
-            catch (ArgumentException ex)
-            {
-                res.Message = $"Failed to login {ex.Message}";
-            }
-            return Ok(res);
+            var UserDetails = await _authService.LoginAsync(loginVm);
+            return Ok(UserDetails);
         }
-      
+
+        [HttpPost("HomePageContent")]
+        public async Task<IActionResult> HomePageContant([FromBody] string TenantCode)
+        {
+            //var UserDetails = await _authService.LoginAsync(loginVm);
+            return Ok("Coming soon");
+        }
+
     }
 }
