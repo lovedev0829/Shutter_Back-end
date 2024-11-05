@@ -11,6 +11,7 @@ using ShutterManagement.Services;
 using ShutterManagement.Core;
 using ShutterManagement;
 using System.Configuration;
+using AutoMapper;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -132,9 +133,10 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-
+builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
 builder.Services.AddScoped<IMasterCreate, MasterCreate>();
 builder.Services.AddScoped<ITenantService, TenantServices>();
+
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ISubtenantService,SubtenantServices>();
 builder.Services.AddScoped<IContactService,ContactServices>();  

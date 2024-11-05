@@ -48,37 +48,45 @@ namespace ShutterManagement.Services
                     Phone = reader.GetString(reader.GetOrdinal("Phone"))
                 };
             },
-             new SqlParameter("@Username", SqlDbType.NVarChar) { SqlValue = user.Username },
-             new SqlParameter("@Password", SqlDbType.NVarChar) { SqlValue = user.Password },
-             new SqlParameter("@CompanyCode", SqlDbType.NVarChar) { SqlValue = user.CompanyCode }
+             new SqlParameter("@Username", SqlDbType.NVarChar,100) { SqlValue = user.Username },
+             new SqlParameter("@Password", SqlDbType.NVarChar, 100) { SqlValue = user.Password },
+             new SqlParameter("@CompanyCode", SqlDbType.NVarChar, 100) { SqlValue = user.CompanyCode }
              );
 
-
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.UTF8.GetBytes(AppConstant.JWTSecretKey);
-            var tokenDescriptor = new SecurityTokenDescriptor
+            if (UserDetails.Count > 0)
             {
-                Subject = new ClaimsIdentity(new[]
+
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var key = Encoding.UTF8.GetBytes(AppConstant.JWTSecretKey);
+                var tokenDescriptor = new SecurityTokenDescriptor
                 {
+                    Subject = new ClaimsIdentity(new[]
+                    {
                     new Claim("UserId", UserDetails[0].UserId.ToString()),
                     new Claim("Username", UserDetails[0].Username),
                     new Claim(ClaimTypes.Name, UserDetails[0].FirstName + " " + UserDetails[0].MiddleName + " " + UserDetails[0].LastName ),
                     new Claim(ClaimTypes.Email, UserDetails[0].Email),
                     new Claim("Phone",UserDetails[0].Phone),
+                    new Claim("CompanyCode",user.CompanyCode),
                 }),
-                Expires = DateTime.UtcNow.AddHours(Convert.ToDouble(AppConstant.JwtExpiryTime)),
-                Issuer = AppConstant.JwtIssuer,
-                Audience = AppConstant.JwtAudience,
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-            };
+                    Expires = DateTime.UtcNow.AddHours(Convert.ToDouble(AppConstant.JwtExpiryTime)),
+                    Issuer = AppConstant.JwtIssuer,
+                    Audience = AppConstant.JwtAudience,
+                    SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+                };
 
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-            string TokenValue = tokenHandler.WriteToken(token);
+                var token = tokenHandler.CreateToken(tokenDescriptor);
+                string TokenValue = tokenHandler.WriteToken(token);
 
-            responseVm.Data = mapper.Map(UserDetails[0], loginDetails);
-            responseVm.Data.Token = TokenValue;
-            responseVm.IsSuccess = true;
-            responseVm.Message = AppConstant.LoginSuccessMessgae;
+                responseVm.Data = mapper.Map(UserDetails[0], loginDetails);
+                responseVm.Data.Token = TokenValue;
+                responseVm.IsSuccess = true;
+                responseVm.Message = AppConstant.LoginSuccessMessgae;
+            }
+            else
+            {
+                responseVm.Message = AppConstant.NoUserFound;
+            }
             return responseVm;
         }
 
