@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,6 +13,10 @@ namespace ShutterManagement.Core.SPModel
         public string ContactType { get; set; }
         public string Name { get; set; }
         public string PhoneNumber { get; set; }
+
+        [Required, MaxLength(100)]
+        [RegularExpression(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", ErrorMessage = "Invalid email address.")]
+        [EmailAddress(ErrorMessage = "Invalid email address")]
         public string Email { get; set; }
         public string Website { get; set; }
         public string Notes { get; set; }
