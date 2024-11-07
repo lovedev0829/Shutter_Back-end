@@ -7,11 +7,8 @@ using System.Threading.Tasks;
 
 namespace ShutterManagement.Core.ViewModels.Request
 {
-    public class UpdateTenant : CreateTenantRequest
+    public class UpdateTenant : Tenant
     {
         public string? TenantId { get; set; }
-
-        public string? ParentTenantId { get; set; }
-
     }
 }

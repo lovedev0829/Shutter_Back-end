@@ -12,6 +12,7 @@ using ShutterManagement.Core;
 using ShutterManagement;
 using System.Configuration;
 using AutoMapper;
+using ShutterManagement.Core.Common;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -69,76 +70,19 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true
     };
 });
-//// Swagger Configuration
-//builder.Services.AddSwaggerGen(options =>
-//{
-//    options.SwaggerDoc("v1", new OpenApiInfo { Title = "Shutter Management API", Version = "v1" });
-//    options.CustomSchemaIds(x => x.FullName);
-//});
 
-//// JWT Authentication Configuration
-
-//builder.Services.AddSwaggerGen(options =>
-//{
-//    //options.SwaggerDoc("v1", new OpenApiInfo { Title = "Mortgage API", Version = "v1" });
-//    var securitySchema = new OpenApiSecurityScheme
-//    {
-//        Description = "JWT Authorizations header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
-//        Name = "Authorization",
-//        In = ParameterLocation.Header,
-//        Type = SecuritySchemeType.ApiKey,
-//        Scheme = "bearer",
-//        Reference = new OpenApiReference
-//        {
-//            Type = ReferenceType.SecurityScheme,
-//            Id = "Authorization"
-//        }
-//    };
-//    options.AddSecurityDefinition("Authorization", securitySchema);
-//    var securityRequirement = new OpenApiSecurityRequirement { { securitySchema, new[] { "Authorization" } } };
-//    options.AddSecurityRequirement(securityRequirement);
-//    options.CustomSchemaIds(x => x.FullName);
-//});
-
-//builder.Services.AddAuthentication(options =>
-//{
-//    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-//    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-//    options.DefaultSignInScheme = JwtBearerDefaults.AuthenticationScheme;
-//})
-//.AddJwtBearer(cfg =>
-//{
-//    cfg.RequireHttpsMetadata = false;
-//    cfg.SaveToken = true;
-//    cfg.TokenValidationParameters = new TokenValidationParameters()
-//    {
-//        ValidIssuer = AppConstant.JwtIssuer,
-//        ValidAudience = AppConstant.JwtAudience,
-//        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(AppConstant.JWTSecretKey)),
-//        ValidateLifetime = true,
-//        ValidateAudience = true,
-//        ValidateIssuer = true,
-//        ValidateIssuerSigningKey = true,
-//    };
-
-//    Console.WriteLine(AppConstant.DBConnectionString);
-//    Console.WriteLine();
-//    Console.WriteLine();
-//    Console.WriteLine();
-//    Console.WriteLine();
-
-//});
-// Add services to the container.
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
+
+builder.Services.AddScoped<ClaimsProperty>();
 builder.Services.AddScoped<IMasterCreate, MasterCreate>();
 builder.Services.AddScoped<ITenantService, TenantServices>();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
-//builder.Services.AddScoped<ISubtenantService,SubtenantServices>();
+builder.Services.AddScoped<ISubtenantService, SubtenantServices>();
 builder.Services.AddScoped<IContactService,ContactServices>();  
 builder.Services.AddScoped<IUserService,UserService>();  
 builder.Services.AddScoped<DataServices>();

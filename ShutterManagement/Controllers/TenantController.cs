@@ -27,122 +27,37 @@ namespace ShutterManagement.Controllers
         }
 
         [HttpPost]
-        [Route("TenantCreate")]
-        public async Task<IActionResult> TenantCreate([FromBody] CreateTenantRequest model)
+        [Route("Create")]
+        public async Task<IActionResult> TenantCreate([FromBody] Tenant model)
         {
-            IResponseVm<List<Sp_Tenant>> res = new ResponseVm<List<Sp_Tenant>>();
-            if (model == null)
-            {
-                res.Message = "Tenant"+$"{AppConstant.ModelError}";
-            }
-
-            try
-            {
-                await tenantService.TenantCreate(model);
-                res.IsSuccess = true;
-                res.Message = $"{AppConstant.InsertSuccessMsg}";   
-            }
-            catch (Exception ex)
-            {
-                res.Message = $"{AppConstant.ExternalError} {ex.Message}";
-            }
+            var res = await tenantService.TenantCreate(model);
             return Ok(res);
-
         }
 
         [HttpPut]
-        [Route("TenantUpdate")]
+        [Route("Update")]
         public async Task<IActionResult> TenantUpdate([FromBody] UpdateTenant model)
         {
-            IResponseVm<List<UpdateTenant>> res = new ResponseVm<List<UpdateTenant>>();
-            try
-            {
-                await tenantService.TenantUpdate(model);
-                res.IsSuccess= true;    
-                res.Message= $"{AppConstant.UpdateSuccessMsg}"; 
-            }
-            catch (Exception ex)
-            {
-                res.Message = $"{AppConstant.ExternalError} {ex.Message}";
-            }
+            var res = await tenantService.TenantUpdate(model);
             return Ok(res);
         }
 
-        //[HttpDelete]
-        //[Route("TenantDelete/{id}")]
-        //public async Task<IActionResult> TenantDelete(Guid id)
-        //{
-        //    IResponseVm<List<Sp_Tenant>> res = new ResponseVm<List<Sp_Tenant>>();
-        //    if (id == Guid.Empty)
-        //    {
-        //        res.Message = $"{AppConstant.InvalidGuid}"; 
-        //    }
+        [HttpPost]
+        [Route("Delete")]
+        public async Task<IActionResult> TenantDelete([FromBody] string TenantId)
+        {
+            var res = await tenantService.TenantDelete(TenantId);
+            return Ok(res);
+        }
 
-        //    try
-        //    {
-        //        await tenantService.DeleteTenant(id);
-        //        res.IsSuccess = true;
-        //        res.Message = $"{AppConstant.DeletedSuccessMsg}";
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        res.Message = $"{AppConstant.ExternalError} {ex.Message}";
-        //    }
-        //    return Ok(res );
-        //}
+        [HttpPost]
+        [Route("ActiveInActive")]
+        public async Task<IActionResult> TenantActiveInactive([FromBody] string TenantId)
+        {
+            var res = await tenantService.TenantActiveInactive(TenantId);
+            return Ok(res);
+        }
 
-        //[HttpGet]
-        //[Route("GetAllTenants")]
-        //public async Task<IActionResult> GetAllTenants()
-        //{
-        //    IResponseVm<List<Sp_Tenant>> res = new ResponseVm<List<Sp_Tenant>>();
-        //    try
-        //    {
-        //        var response = await tenantService.GetAll();
-        //        res.IsSuccess = true;
-        //        res.Message= $"{AppConstant.FetchSuccessMsg}";  
-        //        res.Data = response;
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        res.Message = $"{AppConstant.ExternalError} {ex.Message}";
 
-        //    }
-        //    return Ok(res);
-
-        //}
-
-        //[HttpGet]
-        //[Route("{id}")]
-        //public async Task<IActionResult> GetTenantById(Guid id)
-        //{
-        //    IResponseVm<Sp_Tenant> res = new ResponseVm<Sp_Tenant>();
-        //    if (id == Guid.Empty)
-        //    {
-        //        res.Message = $"{AppConstant.InvalidGuid}"; 
-        //    }
-
-        //    try
-        //    {
-        //        var tenant = await tenantService.GetById(id);
-        //        if (tenant == null)
-        //        {
-
-        //            res.Message = $"Tenant with ID {id} not found.";
-        //        }
-        //        else
-        //        {
-        //            res.IsSuccess = true;
-        //            res.Message = $"{AppConstant.FetchSuccessMsg}" ;    
-        //            res.Data = tenant;
-        //        }
-        //        return Ok(tenant);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        res.Message = $"{AppConstant.ExternalError} {ex.Message}";
-        //    }
-        //    return Ok(res);
-        //}
     }
 }

@@ -1,5 +1,9 @@
-﻿using ShutterManagement.Core.SPModel;
+﻿using ShutterManagement.Business.Services;
+using ShutterManagement.Core.SPModel;
+using ShutterManagement.Core.ViewModels;
 using ShutterManagement.Core.ViewModels.Request;
+using ShutterManagement.DAL.Context;
+using ShutterManagement.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,14 +12,11 @@ using System.Threading.Tasks;
 
 namespace ShutterManagement.Business.Interfaces
 {
-    public interface ITenantService
+    public interface ITenantService : IGenericRepository<TblTenant>
     {
-        Task TenantCreate(CreateTenantRequest model);
-        Task TenantUpdate(UpdateTenant model);
-        //Task<List<Sp_Tenant>> GetAll();
-        //Task<Sp_Tenant> GetById(Guid id);
-
-        //Task DeleteTenant(Guid id);
-
+        Task<IResponseVm<string>> TenantCreate(Tenant model);
+        Task<IResponseVm<string>> TenantUpdate(UpdateTenant model);
+        Task<IResponseVm<string>> TenantDelete(string TenantId);
+        Task<IResponseVm<string>> TenantActiveInactive(string TenantId);
     }
 }

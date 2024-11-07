@@ -25,11 +25,16 @@ namespace ShutterManagement.Core
 
         public static string InsertSuccessMsg { get; set; } = string.Empty;
         public static string UpdateSuccessMsg { get; set; } = string.Empty;
+        public static string DeleteSuccessMsg { get; set; } = string.Empty;
+        public static string NotAddedMsg { get; set; } = string.Empty;
+        public static string AlreadyExists { get; set; } = string.Empty;
+        public static string IncorrectDetails { get; set; } = string.Empty;
 
         public static string DeletedSuccessMsg { get; set; } = string.Empty;
         public static string FetchSuccessMsg { get; set; } = string.Empty;
         public static string InvalidGuid { get; set; } = string.Empty;
         public static string LoginSuccessMessgae { get; set; } = string.Empty;
         public static string NoUserFound { get; set; } = string.Empty;
+        public static string ExceptionError { get; set; } = string.Empty;
     }
 }

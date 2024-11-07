@@ -1,4 +1,7 @@
 ﻿using ShutterManagement.Core.ViewModels;
+using ShutterManagement.Core.ViewModels.Request;
+using ShutterManagement.DAL.Context;
+using ShutterManagement.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,13 +10,11 @@ using System.Threading.Tasks;
 
 namespace ShutterManagement.Business.Interfaces
 {
-    public interface IUserService
+    public interface IUserService : IGenericRepository<TblUser>
     {
-        Task<string> CreateUserAsync(LoginVm loginVm);
-        Task<List<LoginVm>> GetAllUsersAsync(string code);
-        Task<LoginVm> GetUserByIdAsync(Guid id,string Code);
-        Task<string> UpdateUserAsync(Guid id, LoginVm loginVm);
-        Task<string> DeleteUserAsync(Guid id, string Code);
-        Task<string> SetUserInactiveAsync(Guid id, string Code);
+        Task<IResponseVm<string>> Create(User userDetails);
+        Task<IResponseVm<string>> Update(UpdateUser UserDetails);
+        Task<IResponseVm<string>> Delete(string UserId);
+        Task<IResponseVm<string>> ActiveInactive(string UserId);
     }
 }

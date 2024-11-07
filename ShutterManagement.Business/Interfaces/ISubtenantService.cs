@@ -1,4 +1,8 @@
 ﻿using ShutterManagement.Core.SPModel;
+using ShutterManagement.Core.ViewModels.Request;
+using ShutterManagement.Core.ViewModels;
+using ShutterManagement.DAL.Context;
+using ShutterManagement.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,12 +11,11 @@ using System.Threading.Tasks;
 
 namespace ShutterManagement.Business.Interfaces
 {
-     public interface ISubtenantService
+     public interface ISubtenantService : IGenericRepository<TblTenant>
     {
-        Task CreateSubtenant(Sp_Tenant model);
-        Task UpdateSubtenant(Sp_Tenant model);
-        Task<List<Sp_Tenant>> GetAllSubtenants();
-        Task<Sp_Tenant> GetSubtenantById(Guid id);
-        Task DeleteSubtenant(Guid id);
+        Task<IResponseVm<string>> SubTenantCreate(CreateSubTenant model);
+        Task<IResponseVm<string>> SubTenantUpdate(UpdateSubTenant model);
+        Task<IResponseVm<string>> SubTenantDelete(string TenantId);
+        Task<IResponseVm<string>> SubTenantActiveInactive(string TenantId);
     }
 }

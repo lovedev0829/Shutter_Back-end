@@ -1,7 +1,12 @@
-﻿using Microsoft.Data.SqlClient;
+﻿using AutoMapper;
+using Microsoft.Data.SqlClient;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Business.Services;
+using ShutterManagement.Core;
+using ShutterManagement.Core.Common;
 using ShutterManagement.Core.ViewModels;
+using ShutterManagement.Core.ViewModels.Request;
+using ShutterManagement.DAL.Context;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -9,107 +14,168 @@ using System.Threading.Tasks;
 
 namespace ShutterManagement.Services
 {
-    public class UserService : IUserService
+    public class UserService : BaseRepository<ShutterDbContext, TblUser>, IUserService
     {
         private readonly DataServices _dataServices;
+        private readonly ClaimsProperty claimsProperty;
+        private readonly IMapper mapper;
 
-        public UserService(DataServices dataServices)
+        public UserService(DataServices dataServices, ClaimsProperty claimsProperty, IMapper mapper)
         {
             _dataServices = dataServices;
+            this.claimsProperty = claimsProperty;
+            this.mapper = mapper;
         }
 
-        public async Task<string> CreateUserAsync(LoginVm loginVm)
+        public async Task<IResponseVm<string>> Create(User UserDetails)
         {
-            var parameters = new SqlParameter[]
+            IResponseVm<string> result = new ResponseVm<string>();
+            try
             {
-                new SqlParameter("@username", SqlDbType.NVarChar) { SqlValue = loginVm.Username },
-                new SqlParameter("@pwd", SqlDbType.NVarChar) { SqlValue = loginVm.Password }, 
-                new SqlParameter("@Code", SqlDbType.NVarChar) { SqlValue = loginVm.Code },
-                new SqlParameter("@Action", SqlDbType.NVarChar) { SqlValue = "Insert" }
-            };
-
-            await _dataServices.CallSP("sp_UserCRUD",null, parameters);
-            return "User created successfully.";
-        }
-
-        public async Task<List<LoginVm>> GetAllUsersAsync(string Code)
-        {
-           
-            var users = await _dataServices.CallSPtoRead<LoginVm>("sp_UserCRUD", reader =>
-            {
-                return new LoginVm
+                var IsUserExists = GetAllQuerable().Where(x => x.IsActive == true && x.IsDelete == false &&
+                x.Username == UserDetails.Email && x.Phone == UserDetails.PhoneNumber
+                && x.TenantId == claimsProperty.GetTenantId());
+                if (IsUserExists.Count() == 0)
                 {
-                    Id = reader.GetGuid(reader.GetOrdinal("Id")),
-                    Username = reader.GetString(reader.GetOrdinal("Username")),
-                    Password = reader.GetString(reader.GetOrdinal("Pwd")),
-                };
-            },
-            new SqlParameter("@Code", SqlDbType.NVarChar) { SqlValue = Code },
-            new SqlParameter("@Action", SqlDbType.NVarChar) { SqlValue = "SelectAll" });
-
-            return users.ToList();
-        }
-
-        public async Task<LoginVm> GetUserByIdAsync(Guid id, string Code)
-        {
-            var parameters = new SqlParameter[]
-            {
-                new SqlParameter("@Id", SqlDbType.UniqueIdentifier) { SqlValue = id },
-                new SqlParameter("@Code", SqlDbType.NVarChar) { SqlValue = Code },
-                new SqlParameter("@Action", SqlDbType.NVarChar) { SqlValue = "SelectById" }
-            };
-
-            var user = await _dataServices.CallSPtoRead<LoginVm>("sp_UserCRUD", reader =>
-            {
-                return new LoginVm
+                    TblUser tblUser = new TblUser();
+                    mapper.Map(UserDetails, tblUser);
+                    var res = await Add(tblUser);
+                    if (res.Id != Guid.Empty)
+                    {
+                        result.IsSuccess = true;
+                        result.Message = AppConstant.InsertSuccessMsg;
+                    }
+                    else
+                    {
+                        result.Message = AppConstant.NotAddedMsg;
+                    }
+                }
+                else
                 {
-                    Username = reader.GetString(reader.GetOrdinal("Username")),
-                    Password = reader.GetString(reader.GetOrdinal("Pwd")),
-                };
-            }, parameters);
-
-            return user.FirstOrDefault();
-        }
-
-        public async Task<string> UpdateUserAsync(Guid id, LoginVm loginVm)
-        {
-            var parameters = new SqlParameter[]
+                    result.Message = AppConstant.AlreadyExists;
+                }
+            }
+            catch (Exception ex)
             {
-                new SqlParameter("@Id", SqlDbType.UniqueIdentifier) { SqlValue = id },
-                new SqlParameter("@username", SqlDbType.NVarChar) { SqlValue = loginVm.Username },
-                new SqlParameter("@pwd", SqlDbType.NVarChar) { SqlValue = loginVm.Password }, 
-                new SqlParameter("@Code", SqlDbType.NVarChar) { SqlValue = loginVm.Code },
-                new SqlParameter("@Action", SqlDbType.NVarChar) { SqlValue = "Update" }
-            };
-
-            await _dataServices.CallSP("sp_UserCRUD", parameters);
-            return "User updated successfully.";
+                result.Message = AppConstant.ExceptionError + ex.Message;
+            }
+            return result;
         }
 
-        public async Task<string> DeleteUserAsync(Guid id,string Code)
+        public async Task<IResponseVm<string>> Update(UpdateUser UserDetails)
         {
-            var parameters = new SqlParameter[]
+            IResponseVm<string> result = new ResponseVm<string>();
+            try
             {
-                new SqlParameter("@Id", SqlDbType.UniqueIdentifier) { SqlValue = id },
-                new SqlParameter("@Code", SqlDbType.NVarChar) { SqlValue = Code },
-                new SqlParameter("@Action", SqlDbType.NVarChar) { SqlValue = "Delete" }
-            };
+                var IsUserExists = GetAllQuerable().Where(x => x.IsActive == true && x.IsDelete == false &&
+                x.Id == Guid.Parse(UserDetails.UserId)
+                && x.TenantId == claimsProperty.GetTenantId());
+                if (IsUserExists.Count() == 1)
+                {
+                    var UpdateUserDetails = IsUserExists.FirstOrDefault();
+                    mapper.Map(UserDetails, UpdateUserDetails);
+                    if (UpdateUserDetails != null)
+                    {
+                        UpdateUserDetails.ModifiedAt = DateTime.Now;
+                        UpdateUserDetails.ModifiedBy = claimsProperty.GetUserId();
+                        var res = await Update(UpdateUserDetails);
 
-            await _dataServices.CallSP("sp_UserCRUD", parameters);
-            return "User deleted successfully.";
+                        result.IsSuccess = true;
+                        result.Message = AppConstant.UpdateSuccessMsg;
+                    }
+                    else
+                    {
+                        result.Message = AppConstant.NoUserFound;
+                    }
+                }
+                else
+                {
+                    result.Message = AppConstant.NoUserFound;
+                }
+            }
+            catch (Exception ex)
+            {
+                result.Message = AppConstant.ExceptionError + ex.Message;
+            }
+            return result;
         }
 
-        public async Task<string> SetUserInactiveAsync(Guid id,string Code)
+        public async Task<IResponseVm<string>> Delete(string UserId)
         {
-            var parameters = new SqlParameter[]
+            IResponseVm<string> result = new ResponseVm<string>();
+            try
             {
-                new SqlParameter("@Id", SqlDbType.UniqueIdentifier) { SqlValue = id },
-                new SqlParameter("@Code", SqlDbType.NVarChar) { SqlValue = Code },
-                new SqlParameter("@Action", SqlDbType.NVarChar) { SqlValue = "Inactive" }
-            };
+                var IsUserExists = GetAllQuerable().Where(x => x.IsActive == true && x.IsDelete == false &&
+                x.Id == Guid.Parse(UserId)
+                && x.TenantId == claimsProperty.GetTenantId());
+                if (IsUserExists.Count() == 1)
+                {
+                    var UpdateUserDetails = IsUserExists.FirstOrDefault();
+                    if (UpdateUserDetails != null)
+                    {
+                        UpdateUserDetails.IsActive = false;
+                        UpdateUserDetails.IsDelete = true;
+                        UpdateUserDetails.ModifiedAt = DateTime.Now;
+                        UpdateUserDetails.ModifiedBy = claimsProperty.GetUserId();
+                        var res = await Update(UpdateUserDetails);
 
-            await _dataServices.CallSP("sp_UserCRUD", parameters);
-            return "User set to inactive.";
+                        result.IsSuccess = true;
+                        result.Message = AppConstant.DeletedSuccessMsg;
+                    }
+                    else
+                    {
+                        result.Message = AppConstant.IncorrectDetails;
+                    }
+                }
+                else
+                {
+                    result.Message = AppConstant.NoUserFound;
+                }
+            }
+            catch (Exception ex)
+            {
+                result.Message = AppConstant.ExceptionError + ex.Message;
+            }
+            return result;
         }
+
+        public async Task<IResponseVm<string>> ActiveInactive(string UserId)
+        {
+            IResponseVm<string> result = new ResponseVm<string>();
+            try
+            {
+                var IsUserExists = GetAllQuerable().Where(x => x.IsActive == true && x.IsDelete == false &&
+                x.Id == Guid.Parse(UserId)
+                && x.TenantId == claimsProperty.GetTenantId());
+                if (IsUserExists.Count() == 1)
+                {
+                    var UpdateUserDetails = IsUserExists.FirstOrDefault();
+                    if (UpdateUserDetails != null)
+                    {
+                        UpdateUserDetails.IsActive = !UpdateUserDetails.IsActive;
+                        UpdateUserDetails.ModifiedAt = DateTime.Now;
+                        UpdateUserDetails.ModifiedBy = claimsProperty.GetUserId();
+                        var res = await Update(UpdateUserDetails);
+
+                        result.IsSuccess = true;
+                        result.Message = AppConstant.UpdateSuccessMsg;
+                    }
+                    else
+                    {
+                        result.Message = AppConstant.IncorrectDetails;
+                    }
+                }
+                else
+                {
+                    result.Message = AppConstant.NoUserFound;
+                }
+            }
+            catch (Exception ex)
+            {
+                result.Message = AppConstant.ExceptionError + ex.Message;
+            }
+            return result;
+        }
+
     }
 }

@@ -1,6 +1,8 @@
 ﻿using AutoMapper;
 using ShutterManagement.Core.SPModel.SP_Responses;
+using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.Core.ViewModels.Response;
+using ShutterManagement.DAL.Context;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,6 +16,7 @@ namespace ShutterManagement.Core
         public MappingProfile()
         {
             CreateMap<LoginDetails, UserLoginDetails>();
+            CreateMap<User, TblUser>();
         }
     }
 }

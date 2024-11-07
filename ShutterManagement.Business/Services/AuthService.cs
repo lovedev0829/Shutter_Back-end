@@ -67,6 +67,7 @@ namespace ShutterManagement.Services
                     new Claim(ClaimTypes.Name, UserDetails[0].FirstName + " " + UserDetails[0].MiddleName + " " + UserDetails[0].LastName ),
                     new Claim(ClaimTypes.Email, UserDetails[0].Email),
                     new Claim("Phone",UserDetails[0].Phone),
+                    new Claim("TenantId",UserDetails[0].TenantId),
                     new Claim("CompanyCode",user.CompanyCode),
                 }),
                     Expires = DateTime.UtcNow.AddHours(Convert.ToDouble(AppConstant.JwtExpiryTime)),
