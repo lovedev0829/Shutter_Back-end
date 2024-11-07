@@ -34,7 +34,7 @@ namespace ShutterManagement.Controllers
             return Ok(res);
         }
 
-        [HttpPut]
+        [HttpPost]
         [Route("Update")]
         public async Task<IActionResult> TenantUpdate([FromBody] UpdateTenant model)
         {

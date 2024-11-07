@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ShutterManagement.Core.ViewModels.Request
 {
-    public class UpdateUser : User
+    public class UpdateUser : UserDetails
     {
         public string? UserId { get; set; }
     }

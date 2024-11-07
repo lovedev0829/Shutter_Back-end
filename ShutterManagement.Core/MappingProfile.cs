@@ -16,7 +16,7 @@ namespace ShutterManagement.Core
         public MappingProfile()
         {
             CreateMap<LoginDetails, UserLoginDetails>();
-            CreateMap<User, TblUser>();
+            CreateMap<UserDetails, TblUser>();
         }
     }
 }

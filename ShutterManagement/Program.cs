@@ -12,7 +12,7 @@ using ShutterManagement.Core;
 using ShutterManagement;
 using System.Configuration;
 using AutoMapper;
-using ShutterManagement.Core.Common;
+using ShutterManagement.Business;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -77,7 +77,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
 
-builder.Services.AddScoped<ClaimsProperty>();
+//builder.Services.AddScoped<ClaimsProperty>();
+builder.Services.AddScoped<DataServices>();
 builder.Services.AddScoped<IMasterCreate, MasterCreate>();
 builder.Services.AddScoped<ITenantService, TenantServices>();
 
@@ -85,7 +86,6 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ISubtenantService, SubtenantServices>();
 builder.Services.AddScoped<IContactService,ContactServices>();  
 builder.Services.AddScoped<IUserService,UserService>();  
-builder.Services.AddScoped<DataServices>();
 
 var app = builder.Build();
 

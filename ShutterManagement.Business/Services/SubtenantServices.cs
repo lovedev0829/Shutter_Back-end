@@ -1,5 +1,4 @@
 ﻿using Newtonsoft.Json;
-using ShutterManagement.Core.Common;
 using ShutterManagement.Core.SPModel;
 using ShutterManagement.Core.ViewModels;
 using System;
@@ -14,18 +13,21 @@ using ShutterManagement.Services;
 using ShutterManagement.DAL.Context;
 using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.Core;
+using Microsoft.AspNetCore.Http;
 
 namespace ShutterManagement.Business.Services
 {
     public class SubtenantServices :  BaseRepository<ShutterDbContext, TblTenant>, ISubtenantService
     {
         private readonly DataServices dataServices;
-        private readonly ClaimsProperty claimsProperty;
+        //private readonly ClaimsProperty claimsProperty;
 
-        public SubtenantServices(DataServices dataServices, ClaimsProperty claimsProperty)
+        public SubtenantServices(DataServices dataServices
+            //, ClaimsProperty claimsProperty
+            )
         {
             this.dataServices = dataServices;
-            this.claimsProperty = claimsProperty;
+            //this.claimsProperty = claimsProperty;
         }
         
         public async Task<IResponseVm<string>> SubTenantCreate(CreateSubTenant model)
@@ -118,7 +120,7 @@ namespace ShutterManagement.Business.Services
                         item.IsActive = false;
                         item.IsDelete = true;
                         item.ModifiedAt = DateTime.Now;
-                        item.ModifiedBy = claimsProperty.GetUserId();
+                        //item.ModifiedBy = claimsProperty.GetUserId();
 
                         var result = await Update(TenantDetails);
 
@@ -152,7 +154,7 @@ namespace ShutterManagement.Business.Services
                     {
                         item.IsActive = !item.IsActive;
                         item.ModifiedAt = DateTime.Now;
-                        item.ModifiedBy = claimsProperty.GetUserId();
+                        //item.ModifiedBy = claimsProperty.GetUserId();
 
                         var result = await Update(TenantDetails);
 

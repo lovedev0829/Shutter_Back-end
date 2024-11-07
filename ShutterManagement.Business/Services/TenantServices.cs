@@ -1,5 +1,4 @@
 ﻿using Newtonsoft.Json;
-using ShutterManagement.Core.Common;
 using ShutterManagement.Core.SPModel;
 using ShutterManagement.Core.ViewModels;
 using System;
@@ -21,12 +20,14 @@ namespace ShutterManagement.Business.Services
     public class TenantServices : BaseRepository<ShutterDbContext, TblTenant>, ITenantService
     {
         private readonly DataServices dataServices;
-        private readonly ClaimsProperty claimsProperty;
+        //private readonly ClaimsProperty claimsProperty;
 
-        public TenantServices(DataServices dataServices, ClaimsProperty claimsProperty)
+        public TenantServices(DataServices dataServices
+            //, ClaimsProperty claimsProperty
+            )
         {
             this.dataServices = dataServices;
-            this.claimsProperty = claimsProperty;
+            //this.claimsProperty = claimsProperty;
         }
 
         public async Task<IResponseVm<string>> TenantCreate(Tenant model)
@@ -117,7 +118,7 @@ namespace ShutterManagement.Business.Services
                         item.IsActive = false;
                         item.IsDelete = true;
                         item.ModifiedAt = DateTime.Now;
-                        item.ModifiedBy = claimsProperty.GetUserId();
+                        //item.ModifiedBy = claimsProperty.GetUserId();
 
                         var result = await Update(TenantDetails);
 
@@ -151,7 +152,7 @@ namespace ShutterManagement.Business.Services
                     {
                         item.IsActive = !item.IsActive;
                         item.ModifiedAt = DateTime.Now;
-                        item.ModifiedBy = claimsProperty.GetUserId();
+                        //item.ModifiedBy = claimsProperty.GetUserId();
 
                         var result = await Update(TenantDetails);
 

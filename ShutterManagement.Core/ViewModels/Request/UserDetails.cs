@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace ShutterManagement.Core.ViewModels.Request
 {
-    public class User
+    public class UserDetails
     {
         public string? FirstName { get; set; }
         public string? MiddleName { get; set; }
