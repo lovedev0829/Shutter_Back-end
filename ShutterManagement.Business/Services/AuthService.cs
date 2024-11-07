@@ -45,6 +45,7 @@ namespace ShutterManagement.Services
                     MiddleName = reader.GetString(reader.GetOrdinal("MiddleName")),
                     LastName = reader.GetString(reader.GetOrdinal("LastName")),
                     Email = reader.GetString(reader.GetOrdinal("Email")),
+                    TenantId = reader.GetString(reader.GetOrdinal("TenantId")),
                     Phone = reader.GetString(reader.GetOrdinal("Phone"))
                 };
             },
