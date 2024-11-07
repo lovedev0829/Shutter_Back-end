@@ -8,9 +8,20 @@ namespace ShutterManagement.Core.SPModel
 {
      public class Sp_Tenant
     {
-        public Guid TenantId { get; set; }
-        public Guid? ParentTenantId { get; set; }
-        public string TenantName { get; set; }
-        public string  Brandinginfo { get; set; }
+
+		public Guid? TenantId { get; set; } = Guid.Empty;
+		public Guid? ParentTenantId { get; set; } = Guid.Empty;
+		public string FirstName { get; set; }
+        public string MiddleName { get; set; }
+		public string LastName { get; set; }
+		public string Code { get; set; }
+		public string URL { get; set; }
+		public string Email { get; set; }
+		public string PhoneNumber { get; set; }
+		public string Logo { get; set; }
+		public string PrimaryColor { get; set; }
+		public string SecondaryColor { get; set; }
+		public string Password { get; set; }
+
     }
 }

@@ -9,8 +9,6 @@ public partial class TblTenant
 
     public Guid? ParentTenantId { get; set; }
 
-    public string? TenantName { get; set; }
-
     public DateTime? CreatedAt { get; set; }
 
     public DateTime? UpdatedAt { get; set; }
@@ -24,6 +22,16 @@ public partial class TblTenant
     public string? Url { get; set; }
 
     public Guid? BrandingInfo { get; set; }
+
+    public Guid? CreatedBy { get; set; }
+
+    public Guid? ModifiedBy { get; set; }
+
+    public string? FirstName { get; set; }
+
+    public string? MiddleName { get; set; }
+
+    public string? LastName { get; set; }
 
     public virtual TblTenantBrandingInfo? BrandingInfoNavigation { get; set; }
 

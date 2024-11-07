@@ -28,7 +28,7 @@ namespace ShutterManagement.Services
                 new SqlParameter("@Action", SqlDbType.NVarChar) { SqlValue = "Insert" }
             };
 
-            await _dataServices.CallSP("sp_UserCRUD", parameters);
+            await _dataServices.CallSP("sp_UserCRUD",null, parameters);
             return "User created successfully.";
         }
 

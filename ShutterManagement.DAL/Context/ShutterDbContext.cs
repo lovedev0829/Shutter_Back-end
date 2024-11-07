@@ -71,9 +71,11 @@ public partial class ShutterDbContext : DbContext
 
     public virtual DbSet<TblWindow> TblWindows { get; set; }
 
+    public virtual DbSet<Tbttest> Tbttests { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Server=103.93.16.117;Database=btprojec_shuttermanagement_dev;user id=btprojec_admin;password=Bwy0w65ixN*bsE9wy;Integrated Security=false;TrustServerCertificate=true;");
+        => optionsBuilder.UseSqlServer("Server=SYS82\\SQLEXPRESS;Database=ShutterDB;TrustServerCertificate=true;Integrated Security=true;");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -583,9 +585,11 @@ public partial class ShutterDbContext : DbContext
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
+            entity.Property(e => e.FirstName).HasMaxLength(128);
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
-            entity.Property(e => e.TenantName).HasMaxLength(255);
+            entity.Property(e => e.LastName).HasMaxLength(128);
+            entity.Property(e => e.MiddleName).HasMaxLength(128);
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
@@ -773,6 +777,20 @@ public partial class ShutterDbContext : DbContext
             entity.HasOne(d => d.Address).WithMany(p => p.TblWindows)
                 .HasForeignKey(d => d.AddressId)
                 .HasConstraintName("FK__TblWindow__Addre__5EBF139D");
+        });
+
+        modelBuilder.Entity<Tbttest>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToTable("Tbttest");
+
+            entity.Property(e => e.PasswordEncrypted)
+                .HasMaxLength(128)
+                .HasColumnName("Password_Encrypted");
+            entity.Property(e => e.Pwd)
+                .HasMaxLength(128)
+                .HasColumnName("pwd");
         });
 
         OnModelCreatingPartial(modelBuilder);
