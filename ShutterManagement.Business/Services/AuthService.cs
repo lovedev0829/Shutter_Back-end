@@ -45,13 +45,14 @@ namespace ShutterManagement.Services
                     MiddleName = reader.GetString(reader.GetOrdinal("MiddleName")),
                     LastName = reader.GetString(reader.GetOrdinal("LastName")),
                     Email = reader.GetString(reader.GetOrdinal("Email")),
-                    TenantId = reader.GetString(reader.GetOrdinal("TenantId")),
+                    TenantId = reader.GetGuid(reader.GetOrdinal("TenantId")),
                     Phone = reader.GetString(reader.GetOrdinal("Phone"))
                 };
             },
              new SqlParameter("@Username", SqlDbType.NVarChar,100) { SqlValue = user.Username },
              new SqlParameter("@Password", SqlDbType.NVarChar, 100) { SqlValue = user.Password },
-             new SqlParameter("@CompanyCode", SqlDbType.NVarChar, 100) { SqlValue = user.CompanyCode }
+             new SqlParameter("@CompanyCode", SqlDbType.NVarChar, 100) { SqlValue = user.CompanyCode },
+             new SqlParameter("@Result", SqlDbType.VarChar, 1000) { Direction = ParameterDirection.Output}
              );
 
             if (UserDetails.Count > 0)
@@ -68,7 +69,7 @@ namespace ShutterManagement.Services
                     new Claim(ClaimTypes.Name, UserDetails[0].FirstName + " " + UserDetails[0].MiddleName + " " + UserDetails[0].LastName ),
                     new Claim(ClaimTypes.Email, UserDetails[0].Email),
                     new Claim("Phone",UserDetails[0].Phone),
-                    new Claim("TenantId",UserDetails[0].TenantId),
+                    new Claim("TenantId",UserDetails[0].TenantId.ToString()),
                     new Claim("CompanyCode",user.CompanyCode),
                 }),
                     Expires = DateTime.UtcNow.AddHours(Convert.ToDouble(AppConstant.JwtExpiryTime)),

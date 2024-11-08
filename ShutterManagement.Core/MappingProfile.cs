@@ -17,6 +17,8 @@ namespace ShutterManagement.Core
         {
             CreateMap<LoginDetails, UserLoginDetails>();
             CreateMap<UserDetails, TblUser>();
+            CreateMap<UpdateUser, TblUser>();
+            //CreateMap<TblTenant, TenantList>();
         }
     }
 }

@@ -125,7 +125,7 @@ namespace ShutterManagement.Services
                         var res = await Update(UpdateUserDetails);
 
                         result.IsSuccess = true;
-                        result.Message = AppConstant.DeletedSuccessMsg;
+                        result.Message = AppConstant.DeleteSuccessMsg;
                     }
                     else
                     {

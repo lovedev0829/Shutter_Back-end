@@ -127,7 +127,7 @@ namespace ShutterManagement.Business.Services
                     }
                 }
                 responseVm.IsSuccess = true;
-                responseVm.Message = AppConstant.DeletedSuccessMsg;
+                responseVm.Message = AppConstant.DeleteSuccessMsg;
 
             }
             catch (Exception ex)
@@ -162,6 +162,39 @@ namespace ShutterManagement.Business.Services
                 }
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.UpdateSuccessMsg;
+
+            }
+            catch (Exception ex)
+            {
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+            }
+            return responseVm;
+
+        }
+
+        public async Task<IResponseVm<dynamic>> SubTenantGetAll(Guid TenantId,Pagination filter)
+        {
+            IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
+            try
+            {
+                var SubTenantList = GetAllQuerable().Where(x => x.IsDelete == false && x.ParentTenantId == TenantId).ToList();
+                var FilterRecords = SubTenantList
+                                    .Where(x =>
+                                    (filter.SearchValue != "" ?
+                                    (x.BrandingInfoNavigation.Email.Contains(filter.SearchValue)
+                                    || x.BrandingInfoNavigation.PhoneNmber.Contains(filter.SearchValue)
+                                    || x.FirstName.Contains(filter.SearchValue) || x.LastName.Contains(filter.SearchValue)
+                                    || x.MiddleName.Contains(filter.SearchValue)
+                                    ) : true)).ToList()
+                                    .Skip(filter.PageNo).Take(filter.RecordPerPage);
+                if (FilterRecords != null)
+                {
+                    responseVm.Data = FilterRecords;
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = AppConstant.UpdateSuccessMsg;
+                    responseVm.TotalRecords = SubTenantList.Count;
+                }
+
 
             }
             catch (Exception ex)

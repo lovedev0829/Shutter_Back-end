@@ -14,19 +14,23 @@ using ShutterManagement.Services;
 using ShutterManagement.DAL.Context;
 using ShutterManagement.Core.ViewModels.Response;
 using ShutterManagement.Core;
+using AutoMapper;
 
 namespace ShutterManagement.Business.Services
 {
     public class TenantServices : BaseRepository<ShutterDbContext, TblTenant>, ITenantService
     {
         private readonly DataServices dataServices;
+        private readonly IMapper mapper;
+
         //private readonly ClaimsProperty claimsProperty;
 
-        public TenantServices(DataServices dataServices
+        public TenantServices(DataServices dataServices,IMapper mapper
             //, ClaimsProperty claimsProperty
             )
         {
             this.dataServices = dataServices;
+            this.mapper = mapper;
             //this.claimsProperty = claimsProperty;
         }
 
@@ -125,7 +129,7 @@ namespace ShutterManagement.Business.Services
                     }
                 }
                 responseVm.IsSuccess = true;
-                responseVm.Message = AppConstant.DeletedSuccessMsg;
+                responseVm.Message = AppConstant.DeleteSuccessMsg;
 
             }
             catch (Exception ex)
@@ -160,6 +164,40 @@ namespace ShutterManagement.Business.Services
                 }
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.UpdateSuccessMsg;
+
+            }
+            catch (Exception ex)
+            {
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+            }
+            return responseVm;
+
+        }
+
+        public async Task<IResponseVm<dynamic>> TenantGetAll(Pagination filter)
+        {
+            IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
+            try
+            {
+                var TenantList = GetAllQuerable().Where(x => x.IsDelete == false).ToList();
+                var FilterRecords = TenantList
+                                    .Where(x=>
+                                    x.IsDelete == false 
+                                    && (filter.SearchValue != "" ? 
+                                    (x.BrandingInfoNavigation.Email.Contains(filter.SearchValue) 
+                                    || x.BrandingInfoNavigation.PhoneNmber.Contains(filter.SearchValue)
+                                     || x.FirstName.Contains(filter.SearchValue) || x.LastName.Contains(filter.SearchValue)
+                                    || x.MiddleName.Contains(filter.SearchValue)
+                                    ) : true))
+                                    .Skip(filter.PageNo).Take(filter.RecordPerPage).ToList();
+                if (FilterRecords != null && FilterRecords.Count > 0)
+                {
+                    responseVm.Data = FilterRecords;
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = AppConstant.UpdateSuccessMsg;
+                    responseVm.TotalRecords = TenantList.Count;
+                }
+                
 
             }
             catch (Exception ex)

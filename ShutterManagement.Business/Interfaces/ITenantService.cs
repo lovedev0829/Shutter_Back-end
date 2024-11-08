@@ -2,6 +2,7 @@
 using ShutterManagement.Core.SPModel;
 using ShutterManagement.Core.ViewModels;
 using ShutterManagement.Core.ViewModels.Request;
+using ShutterManagement.Core.ViewModels.Response;
 using ShutterManagement.DAL.Context;
 using ShutterManagement.Interfaces;
 using System;
@@ -18,5 +19,6 @@ namespace ShutterManagement.Business.Interfaces
         Task<IResponseVm<string>> TenantUpdate(UpdateTenant model);
         Task<IResponseVm<string>> TenantDelete(string TenantId);
         Task<IResponseVm<string>> TenantActiveInactive(string TenantId);
+        Task<IResponseVm<dynamic>> TenantGetAll(Pagination filter);
     }
 }

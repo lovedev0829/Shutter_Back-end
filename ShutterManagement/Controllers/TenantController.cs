@@ -58,6 +58,14 @@ namespace ShutterManagement.Controllers
             return Ok(res);
         }
 
+        [HttpPost]
+        [Route("GetAll")]
+        public async Task<IActionResult> GetAll(Pagination filter)
+        {
+            var res = await tenantService.TenantGetAll(filter);
+            return Ok(res);
+        }
+
 
     }
 }

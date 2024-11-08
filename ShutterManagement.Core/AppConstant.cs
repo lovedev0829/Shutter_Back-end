@@ -18,23 +18,22 @@ namespace ShutterManagement.Core
 
 
         //Error Message//
-        public static string ExternalError { get; set; } = string.Empty;
-        public static string ModelError { get; set; } = string.Empty;
+        public static string ExternalError { get; set; } = "Something went wrong. ";
+        public static string ModelError { get; set; } = "Something incorrect in details. ";
 
-        public static string SuccessMsg { get; set; } = string.Empty;
+        public static string SuccessMsg { get; set; } = "Success";
 
-        public static string InsertSuccessMsg { get; set; } = string.Empty;
-        public static string UpdateSuccessMsg { get; set; } = string.Empty;
-        public static string DeleteSuccessMsg { get; set; } = string.Empty;
-        public static string NotAddedMsg { get; set; } = string.Empty;
-        public static string AlreadyExists { get; set; } = string.Empty;
-        public static string IncorrectDetails { get; set; } = string.Empty;
+        public static string InsertSuccessMsg { get; set; } = "Data Added Successfully";
+        public static string UpdateSuccessMsg { get; set; } = "Data Updated Successfully";
+        public static string DeleteSuccessMsg { get; set; } = "Data Deleted Successfully";
+        public static string NotAddedMsg { get; set; } = "Data not added.";
+        public static string AlreadyExists { get; set; } = "Data already exists!";
+        public static string IncorrectDetails { get; set; } = "Incorrect details";
 
-        public static string DeletedSuccessMsg { get; set; } = string.Empty;
-        public static string FetchSuccessMsg { get; set; } = string.Empty;
-        public static string InvalidGuid { get; set; } = string.Empty;
-        public static string LoginSuccessMessgae { get; set; } = string.Empty;
-        public static string NoUserFound { get; set; } = string.Empty;
-        public static string ExceptionError { get; set; } = string.Empty;
+        public static string FetchSuccessMsg { get; set; } = "Data fetched Successfully";
+        public static string InvalidGuid { get; set; } = "Invalid Data Id";
+        public static string LoginSuccessMessgae { get; set; } = "User loggedin successfully.";
+        public static string NoUserFound { get; set; } = "No user found";
+        public static string ExceptionError { get; set; } = "Server error. ";
     }
 }

@@ -11,11 +11,13 @@ namespace ShutterManagement.Core.ViewModels
         public bool IsSuccess { get; set; }
         public string Message { get; set; }
         public T Data { get; set; }
+        public int TotalRecords { get; set; }
     }
     public interface IResponseVm<T>
     {
         public bool IsSuccess { get; set; }
         public string Message { get; set; }
         public T Data { get; set; }
+        public int TotalRecords { get; set; }
     }
 }
