@@ -26,11 +26,11 @@ namespace ShutterManagement.Controllers
             return Ok(UserDetails);
         }
 
-        [HttpPost("HomePageContent")]
-        public async Task<IActionResult> HomePageContant([FromBody] string TenantCode)
+        [HttpGet("HomePageContent")]
+        public async Task<IActionResult> HomePageContant(string CompanyCode)
         {
-            //var UserDetails = await _authService.LoginAsync(loginVm);
-            return Ok("Coming soon");
+            var UserDetails = await _authService.HomePageContent(CompanyCode);
+            return Ok(UserDetails);
         }
 
     }

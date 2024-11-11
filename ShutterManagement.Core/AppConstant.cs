@@ -26,7 +26,7 @@ namespace ShutterManagement.Core
         public static string InsertSuccessMsg { get; set; } = "Data Added Successfully";
         public static string UpdateSuccessMsg { get; set; } = "Data Updated Successfully";
         public static string DeleteSuccessMsg { get; set; } = "Data Deleted Successfully";
-        public static string NotAddedMsg { get; set; } = "Data not added.";
+        public static string NoDataFound { get; set; } = "Data not added.";
         public static string AlreadyExists { get; set; } = "Data already exists!";
         public static string IncorrectDetails { get; set; } = "Incorrect details";
 
@@ -35,5 +35,15 @@ namespace ShutterManagement.Core
         public static string LoginSuccessMessgae { get; set; } = "User loggedin successfully.";
         public static string NoUserFound { get; set; } = "No user found";
         public static string ExceptionError { get; set; } = "Server error. ";
+        public static string ParentTenantIdNull { get; set; } = "Need parent Tenant ID to create or update Sub Tenant.. ";
+        public static string TenantIdNull { get; set; } = "Need Tenant ID to update Sub Tenant.. ";
+        public static string TenantNotFound { get; set; } = "Tenant not found.";
+        public static Guid? LoggedInUserID { get; set; } = Guid.Empty;
+        public static string LoggedInUserName { get; set; } = string.Empty;
+        public static Guid? LoggedInTenantId { get; set; } = Guid.Empty;
+        public static string LoggedInEmail { get; set; } = string.Empty;
+        public static string LoggedInPhone { get; set; } = string.Empty;
+        public static string LoggedInName { get; set; } = string.Empty;
+        public static string LoggedInCompanyCode { get; set; } = string.Empty;
     }
 }

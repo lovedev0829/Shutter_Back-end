@@ -21,7 +21,7 @@ namespace ShutterManagement.Controllers
             _contactService = contactService;
         }
 
-        [HttpGet]
+        [HttpPost("GetAll")]
         public async Task<IActionResult> GetAllContacts()
         {
             IResponseVm<List<Sp_Contact>> res = new ResponseVm<List<Sp_Contact>>();   
@@ -70,7 +70,7 @@ namespace ShutterManagement.Controllers
 
         }
 
-        [HttpPost]
+        [HttpPost("Create")]
         public async Task<IActionResult> CreateContact([FromBody] Sp_Contact model)
         {
             IResponseVm<Sp_Contact> res = new ResponseVm<Sp_Contact>();
@@ -98,7 +98,7 @@ namespace ShutterManagement.Controllers
             return Ok(res );    
         }
 
-        [HttpPut("{id}")]
+        [HttpPost("Update")]
         public async Task<IActionResult> UpdateContact(Guid id, [FromBody] Sp_Contact model)
         {
             IResponseVm<Sp_Contact> res = new ResponseVm<Sp_Contact>();
@@ -161,22 +161,19 @@ namespace ShutterManagement.Controllers
             return Ok(res); 
         }
 
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteContact(Guid id)
+        [HttpPost("ActiveInactive")]
+        public async Task<IActionResult> ActiveInActiveContact(string ContactId)
         {
-            IResponseVm<Sp_Contact> res = new ResponseVm<Sp_Contact>();
+            Guid guid = Guid.Parse(ContactId);
+            var res = await _contactService.ActiveInActiveContact(guid);
+            return Ok(res);
+        }
 
-            try
-            {
-                await _contactService.Delete_Contact(id);
-                res.IsSuccess = true;
-                res.Message = $"Contact with {id} deleted successfully";
-                res.Data = null;
-            }
-            catch (Exception ex)
-            {
-                res.Message = $"Error deleting contact: {ex.Message}";
-            }
+        [HttpPost("Delete")]
+        public async Task<IActionResult> DeleteContact(string ContactId)
+        {
+            Guid guid = Guid.Parse(ContactId);
+            var res = await _contactService.DeleteContact(guid);
 
             return Ok(res);
         }

@@ -12,7 +12,6 @@ namespace ShutterManagement
             AppConstant.JwtIssuer = Configuration["Jwt:Issuer"] ?? ""; 
             AppConstant.JwtAudience = Configuration["Jwt:Audience"] ?? "";
             AppConstant.JwtExpiryTime = Configuration["Jwt:ExpireTimeOut"] ?? "";
-
         }
     }
 }

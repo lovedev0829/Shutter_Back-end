@@ -17,7 +17,7 @@ namespace ShutterManagement.Interfaces
         Task Delete(T entity);
         Task<T> Update(T entity);
         Task Save();
-       
+
     }
 
 }

@@ -8,10 +8,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using ShutterManagement.Core;
+using ShutterManagement.Services;
 
 namespace ShutterManagement.Business.Services
 {
-    public class ContactServices : IContactService
+    public class ContactServices :BaseRepository<ShutterDbContext,TblContact> ,IContactService
     {
         private readonly ShutterDbContext _context;
 
@@ -78,17 +79,61 @@ namespace ShutterManagement.Business.Services
             await _context.SaveChangesAsync();
         }
 
-
-        public async Task Delete_Contact(Guid id)
+        public async Task<IResponseVm<string>> ActiveInActiveContact(Guid id)
         {
-            var contact = await _context.TblContacts
-                .FirstOrDefaultAsync(c => c.ContactId == id);
-
-            if (contact != null)
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+            try
             {
-                _context.TblContacts.Remove(contact);
-                await _context.SaveChangesAsync();
+                var contact = GetAllQuerable()
+                    .Where(c => c.ContactId == id
+                    && c.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
+
+                if (contact != null)
+                {
+                    contact.IsActive = !contact.IsActive;
+                    await Update(contact);
+
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = AppConstant.UpdateSuccessMsg;
+                }
+                else
+                {
+                    responseVm.Message = AppConstant.NoUserFound;
+                }
             }
+            catch (Exception ex)
+            {
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+            }
+            return responseVm;
+        }
+        public async Task<IResponseVm<string>> DeleteContact(Guid id)
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+            try
+            {
+                var contact = GetAllQuerable()
+                    .Where(c => c.ContactId == id
+                    && c.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
+
+                if (contact != null)
+                {
+                    contact.IsActive = false;
+                    contact.IsDelete = true;
+                    await Update(contact);
+
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = AppConstant.DeleteSuccessMsg;
+                }
+                else
+                {
+                    responseVm.Message = AppConstant.NoUserFound;
+                }
+            }
+            catch (Exception ex) {
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+            }
+            return responseVm;
         }
 
         public async Task<List<Sp_Contact>> GetAll_Contact()

@@ -14,20 +14,21 @@ using ShutterManagement.DAL.Context;
 using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.Core;
 using Microsoft.AspNetCore.Http;
+using ShutterManagement.Core.Common;
 
 namespace ShutterManagement.Business.Services
 {
     public class SubtenantServices :  BaseRepository<ShutterDbContext, TblTenant>, ISubtenantService
     {
         private readonly DataServices dataServices;
-        //private readonly ClaimsProperty claimsProperty;
+        private readonly ClaimsProperty claimsProperty;
 
         public SubtenantServices(DataServices dataServices
-            //, ClaimsProperty claimsProperty
+            , ClaimsProperty claimsProperty
             )
         {
             this.dataServices = dataServices;
-            //this.claimsProperty = claimsProperty;
+            this.claimsProperty = claimsProperty;
         }
         
         public async Task<IResponseVm<string>> SubTenantCreate(CreateSubTenant model)
@@ -35,6 +36,19 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
+                if(model.ParentTenantId == null || model.ParentTenantId == "")
+                {
+                    responseVm.Message = AppConstant.ParentTenantIdNull;
+                    return responseVm;
+                }
+                bool IsParentExists = await AnyAsync(x => x.TenantId.ToString() == model.ParentTenantId 
+                && x.IsDelete == false && x.IsActive == true && x.Code == model.Code);
+                if (!IsParentExists)
+                {
+                    responseVm.Message = AppConstant.TenantNotFound;
+                    return responseVm;
+                }
+
                 SqlParameter[] sqlParameters =
                 {
                     new SqlParameter("@ParentTenantId", SqlDbType.UniqueIdentifier) { SqlValue = model.ParentTenantId },
@@ -69,9 +83,33 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var tenantid = Guid.Parse(model.TenantId);
-                var Parenttenantid =  Guid.Parse(model.ParentTenantId);
+                if (model.TenantId == null || model.TenantId == "")
+                {
+                    responseVm.Message = AppConstant.TenantIdNull;
+                    return responseVm;
+                }
+                if (model.ParentTenantId == null || model.ParentTenantId == "")
+                {
+                    responseVm.Message = AppConstant.ParentTenantIdNull;
+                    return responseVm;
+                }
+                bool IsParentExists = await AnyAsync(x => x.TenantId.ToString() == model.ParentTenantId
+                && x.IsDelete == false && x.IsActive == true && x.Code == model.Code);
+                if (!IsParentExists)
+                {
+                    responseVm.Message = AppConstant.TenantNotFound;
+                    return responseVm;
+                }
+                bool IsTenantExists = await AnyAsync(x => x.TenantId.ToString() == model.TenantId
+                && x.IsDelete == false && x.IsActive == true && x.Code == model.Code);
+                if (!IsParentExists)
+                {
+                    responseVm.Message = AppConstant.TenantNotFound;
+                    return responseVm;
+                }
 
+                var tenantid = Guid.Parse(model.TenantId);
+                var Parenttenantid = Guid.Parse(model.ParentTenantId);
                 SqlParameter[] sqlParameters =
                 {
                     new SqlParameter("@TenantId", SqlDbType.UniqueIdentifier) { SqlValue = tenantid},
@@ -107,7 +145,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var TenantDetails = GetAllQuerable().Where(x => x.TenantId.ToString() == TenantId).FirstOrDefault();
+                var TenantDetails = GetAllQuerable().Where(x => x.TenantId.ToString() == TenantId && x.Code == AppConstant.LoggedInCompanyCode).FirstOrDefault();
                 if (TenantDetails != null)
                 {
                     TenantDetails.IsDelete = true;
@@ -120,14 +158,18 @@ namespace ShutterManagement.Business.Services
                         item.IsActive = false;
                         item.IsDelete = true;
                         item.ModifiedAt = DateTime.Now;
-                        //item.ModifiedBy = claimsProperty.GetUserId();
+                        item.ModifiedBy = AppConstant.LoggedInUserID;
 
                         var result = await Update(TenantDetails);
 
                     }
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = AppConstant.DeleteSuccessMsg;
                 }
-                responseVm.IsSuccess = true;
-                responseVm.Message = AppConstant.DeleteSuccessMsg;
+                else
+                {
+                    responseVm.Message = AppConstant.NoUserFound;
+                }
 
             }
             catch (Exception ex)
@@ -143,7 +185,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var TenantDetails = GetAllQuerable().Where(x => x.TenantId.ToString() == TenantId).FirstOrDefault();
+                var TenantDetails = GetAllQuerable().Where(x => x.TenantId.ToString() == TenantId && x.Code == AppConstant.LoggedInCompanyCode).FirstOrDefault();
                 if (TenantDetails != null)
                 {
                     TenantDetails.IsActive = !TenantDetails.IsActive;
@@ -154,7 +196,7 @@ namespace ShutterManagement.Business.Services
                     {
                         item.IsActive = !item.IsActive;
                         item.ModifiedAt = DateTime.Now;
-                        //item.ModifiedBy = claimsProperty.GetUserId();
+                        item.ModifiedBy = AppConstant.LoggedInUserID;
 
                         var result = await Update(TenantDetails);
 

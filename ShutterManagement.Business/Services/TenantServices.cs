@@ -15,6 +15,7 @@ using ShutterManagement.DAL.Context;
 using ShutterManagement.Core.ViewModels.Response;
 using ShutterManagement.Core;
 using AutoMapper;
+using ShutterManagement.Core.Common;
 
 namespace ShutterManagement.Business.Services
 {
@@ -23,15 +24,15 @@ namespace ShutterManagement.Business.Services
         private readonly DataServices dataServices;
         private readonly IMapper mapper;
 
-        //private readonly ClaimsProperty claimsProperty;
+        private readonly ClaimsProperty claimsProperty;
 
         public TenantServices(DataServices dataServices,IMapper mapper
-            //, ClaimsProperty claimsProperty
+            , ClaimsProperty claimsProperty
             )
         {
             this.dataServices = dataServices;
             this.mapper = mapper;
-            //this.claimsProperty = claimsProperty;
+            this.claimsProperty = claimsProperty;
         }
 
         public async Task<IResponseVm<string>> TenantCreate(Tenant model)
@@ -122,14 +123,18 @@ namespace ShutterManagement.Business.Services
                         item.IsActive = false;
                         item.IsDelete = true;
                         item.ModifiedAt = DateTime.Now;
-                        //item.ModifiedBy = claimsProperty.GetUserId();
+                        item.ModifiedBy = AppConstant.LoggedInUserID;
 
                         var result = await Update(TenantDetails);
 
                     }
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = AppConstant.DeleteSuccessMsg;
                 }
-                responseVm.IsSuccess = true;
-                responseVm.Message = AppConstant.DeleteSuccessMsg;
+                else
+                {
+                    responseVm.Message = AppConstant.NoUserFound;
+                }
 
             }
             catch (Exception ex)
@@ -156,14 +161,15 @@ namespace ShutterManagement.Business.Services
                     {
                         item.IsActive = !item.IsActive;
                         item.ModifiedAt = DateTime.Now;
-                        //item.ModifiedBy = claimsProperty.GetUserId();
+                        item.ModifiedBy = AppConstant.LoggedInUserID;
 
                         var result = await Update(TenantDetails);
 
                     }
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = AppConstant.UpdateSuccessMsg;
                 }
-                responseVm.IsSuccess = true;
-                responseVm.Message = AppConstant.UpdateSuccessMsg;
+                
 
             }
             catch (Exception ex)
