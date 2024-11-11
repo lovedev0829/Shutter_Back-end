@@ -41,6 +41,21 @@ namespace ShutterManagement.Services
         public async Task<IResponseVm<UserLoginDetails>> LoginAsync(LoginDetailVM user)
         {
             IResponseVm<UserLoginDetails> responseVm = new ResponseVm<UserLoginDetails>();
+            if (string.IsNullOrEmpty(user.Username))
+            {
+                responseVm.Message = "Username required.";
+                return responseVm;
+            }
+            if (string.IsNullOrEmpty(user.Password))
+            {
+                responseVm.Message = "Password required.";
+                return responseVm;
+            }
+            if (string.IsNullOrEmpty(user.CompanyCode))
+            {
+                responseVm.Message = "CompanyCode required.";
+                return responseVm;
+            }
             UserLoginDetails loginDetails = new UserLoginDetails();
             var UserDetails = await dataServices.CallSPtoRead<LoginDetails>("Sp_GetUserDetailsOnLogin", reader =>
             {
@@ -100,9 +115,15 @@ namespace ShutterManagement.Services
             return responseVm;
         }
 
-        public async Task<IResponseVm<dynamic>> HomePageContent(string CompanyCode)
+        public async Task<IResponseVm<HomePageContent>> HomePageContent(string CompanyCode)
         {
-            IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
+            IResponseVm<HomePageContent> responseVm = new ResponseVm<HomePageContent>();
+            if (string.IsNullOrEmpty(CompanyCode))
+            {
+                responseVm.Message = "Company code required.";
+                return responseVm;
+            }
+
             var TenantHomePageData = tenantService.GetAllQuerable().Where(x=>x.Code == CompanyCode
             && x.IsDelete == false && x.IsActive == true && x.ParentTenantId == null).FirstOrDefault();
             if (TenantHomePageData != null) {
