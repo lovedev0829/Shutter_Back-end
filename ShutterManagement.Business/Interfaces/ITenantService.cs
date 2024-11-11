@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace ShutterManagement.Business.Interfaces
 {
-    public interface ITenantService : IGenericRepository<TblTenant>
+    public interface ITenantService : IGenericRepository<TblTenant> 
     {
         Task<IResponseVm<string>> TenantCreate(Tenant model);
         Task<IResponseVm<string>> TenantUpdate(UpdateTenant model);

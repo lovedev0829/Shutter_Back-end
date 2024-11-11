@@ -4,6 +4,7 @@ using ShutterManagement.Business;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Business.Services;
 using ShutterManagement.Core;
+using ShutterManagement.Core.Common;
 using ShutterManagement.Core.ViewModels;
 using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.DAL.Context;
@@ -17,15 +18,15 @@ namespace ShutterManagement.Services
     public class UserService : BaseRepository<ShutterDbContext, TblUser>, IUserService
     {
         private readonly DataServices _dataServices;
-        //private readonly ClaimsProperty claimsProperty;
+        private readonly ClaimsProperty claimsProperty;
         private readonly IMapper mapper;
 
         public UserService(DataServices dataServices
-            //, ClaimsProperty claimsProperty
+            , ClaimsProperty claimsProperty
             , IMapper mapper)
         {
             _dataServices = dataServices;
-            //this.claimsProperty = claimsProperty;
+            this.claimsProperty = claimsProperty;
             this.mapper = mapper;
         }
 
@@ -35,13 +36,15 @@ namespace ShutterManagement.Services
             try
             {
                 var IsUserExists = GetAllQuerable().Where(x => x.IsActive == true && x.IsDelete == false &&
-                x.Username == UserDetails.Email && x.Phone == UserDetails.PhoneNumber
-                //&& x.TenantId == claimsProperty.GetTenantId()
+                (x.Username == UserDetails.Email || x.Phone == UserDetails.PhoneNumber)
+                && x.TenantId == AppConstant.LoggedInTenantId
                 );
                 if (IsUserExists.Count() == 0)
                 {
                     TblUser tblUser = new TblUser();
                     mapper.Map(UserDetails, tblUser);
+                    tblUser.CreatedBy = AppConstant.LoggedInUserID;
+                    tblUser.CreatedAt = DateTime.Now;
                     var res = await Add(tblUser);
                     if (res.Id != Guid.Empty)
                     {
@@ -50,7 +53,7 @@ namespace ShutterManagement.Services
                     }
                     else
                     {
-                        result.Message = AppConstant.NotAddedMsg;
+                        result.Message = AppConstant.NoDataFound;
                     }
                 }
                 else
@@ -72,7 +75,7 @@ namespace ShutterManagement.Services
             {
                 var IsUserExists = GetAllQuerable().Where(x => x.IsActive == true && x.IsDelete == false &&
                 x.Id == Guid.Parse(UserDetails.UserId)
-                //&& x.TenantId == claimsProperty.GetTenantId()
+                && x.TenantId == AppConstant.LoggedInTenantId
                 );
                 if (IsUserExists.Count() == 1)
                 {
@@ -81,7 +84,7 @@ namespace ShutterManagement.Services
                     if (UpdateUserDetails != null)
                     {
                         UpdateUserDetails.ModifiedAt = DateTime.Now;
-                        //UpdateUserDetails.ModifiedBy = claimsProperty.GetUserId();
+                        UpdateUserDetails.ModifiedBy = AppConstant.LoggedInUserID;
                         var res = await Update(UpdateUserDetails);
 
                         result.IsSuccess = true;
@@ -111,7 +114,7 @@ namespace ShutterManagement.Services
             {
                 var IsUserExists = GetAllQuerable().Where(x => x.IsActive == true && x.IsDelete == false &&
                 x.Id == Guid.Parse(UserId)
-                //&& x.TenantId == claimsProperty.GetTenantId()
+                && x.TenantId == AppConstant.LoggedInTenantId
                 );
                 if (IsUserExists.Count() == 1)
                 {
@@ -121,7 +124,7 @@ namespace ShutterManagement.Services
                         UpdateUserDetails.IsActive = false;
                         UpdateUserDetails.IsDelete = true;
                         UpdateUserDetails.ModifiedAt = DateTime.Now;
-                        //UpdateUserDetails.ModifiedBy = claimsProperty.GetUserId();
+                        UpdateUserDetails.ModifiedBy = AppConstant.LoggedInUserID;
                         var res = await Update(UpdateUserDetails);
 
                         result.IsSuccess = true;
@@ -151,7 +154,7 @@ namespace ShutterManagement.Services
             {
                 var IsUserExists = GetAllQuerable().Where(x => x.IsActive == true && x.IsDelete == false &&
                 x.Id == Guid.Parse(UserId)
-                //&& x.TenantId == claimsProperty.GetTenantId()
+                && x.TenantId == AppConstant.LoggedInTenantId
                 );
                 if (IsUserExists.Count() == 1)
                 {
@@ -160,7 +163,7 @@ namespace ShutterManagement.Services
                     {
                         UpdateUserDetails.IsActive = !UpdateUserDetails.IsActive;
                         UpdateUserDetails.ModifiedAt = DateTime.Now;
-                        //UpdateUserDetails.ModifiedBy = claimsProperty.GetUserId();
+                        UpdateUserDetails.ModifiedBy = AppConstant.LoggedInUserID;
                         var res = await Update(UpdateUserDetails);
 
                         result.IsSuccess = true;

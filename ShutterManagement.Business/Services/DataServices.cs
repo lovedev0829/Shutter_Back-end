@@ -14,11 +14,16 @@ using System.Text;
 using System.Threading.Tasks;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 using Newtonsoft.Json;
+using System.Data.Entity;
+using Microsoft.Extensions.Logging;
+using ShutterManagement.Interfaces;
+using ShutterManagement.Services;
 
 namespace ShutterManagement.Business.Services
 {
     public class DataServices
     {
+        private Dictionary<string, dynamic> _repositories;
         private readonly ShutterDbContext dbContext;
         public DataServices(ShutterDbContext dbContext)
         {
@@ -101,6 +106,62 @@ namespace ShutterManagement.Business.Services
             return result;
         }
 
+        public void BeginTransaction()
+        {
+            try
+            {
+                dbContext.Database.BeginTransaction();
+            }
+            catch (Exception ex)
+            {
+                //logger.LogError(GetExpandedExceptionText(ex), ex);
+            }
+        }
+
+        public void Commit()
+        {
+            try
+            {
+                dbContext.Database.CommitTransaction();
+            }
+            catch (Exception ex)
+            {
+                Rollback();
+               // logger.LogError(GetExpandedExceptionText(ex), ex);
+            }
+        }
+
+        public void Rollback()
+        {
+            try
+            {
+                dbContext.Database.RollbackTransaction();
+            }
+            catch (Exception ex)
+            {
+                //logger.LogError(GetExpandedExceptionText(ex), ex);
+            }
+        }
+        //public IGenericRepository<Entity> Repository<Entity>() where Entity : class
+        //{
+        //    if (_repositories == null)
+        //    {
+        //        _repositories = new Dictionary<string, dynamic>();
+        //    }
+
+        //    var type = typeof(Entity).Name;
+
+        //    if (_repositories.ContainsKey(type))
+        //    {
+        //        return (IGenericRepository<Entity>)_repositories[type];
+        //    }
+
+        //    var repositoryType = typeof(BaseRepository<>);
+
+        //    _repositories.Add(type, Activator.CreateInstance(repositoryType.MakeGenericType(typeof(Entity)), _dbContext, _tenantProvider, _httpContext));
+
+        //    return _repositories[type];
+        //}
         public T MapClass<T>(SqlDataReader reader)
         {
             object f = "";

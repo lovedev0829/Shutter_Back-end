@@ -8,5 +8,6 @@ namespace ShutterManagement.Services
     public interface IAuthService
     {
         Task<IResponseVm<UserLoginDetails>> LoginAsync(LoginDetailVM user);
+        Task<IResponseVm<dynamic>> HomePageContent(string CompanyCode);
     }
 }

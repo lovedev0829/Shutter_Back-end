@@ -1,4 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
+using ShutterManagement.Core;
 using ShutterManagement.Interfaces;
 
 
@@ -90,19 +92,6 @@ namespace ShutterManagement.Services
         {
             await dbContext.SaveChangesAsync();
             return;
-        }
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        void Dispose(bool disposing)
-        {
-            if (dbContext != null)
-            {
-                dbContext.Dispose();
-            }
         }
 
     }

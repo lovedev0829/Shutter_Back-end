@@ -16,6 +16,8 @@ using Microsoft.Data.SqlClient;
 using ShutterManagement.Core.ViewModels.Response;
 using Microsoft.Extensions.Logging;
 using AutoMapper;
+using ShutterManagement.Core.ViewModels.Request;
+using ShutterManagement.Business.Interfaces;
 
 namespace ShutterManagement.Services
 {
@@ -24,12 +26,17 @@ namespace ShutterManagement.Services
         private readonly DataServices dataServices;
         private readonly IMapper mapper;
         private readonly IConfiguration _config;
+        private readonly ITenantService tenantService;
+        private readonly ITenantBrandingService tenantBrandingService;
 
-        public AuthService(DataServices dataServices,IMapper mapper, IConfiguration config)
+        public AuthService(DataServices dataServices,IMapper mapper, IConfiguration config,
+            ITenantService tenantService, ITenantBrandingService tenantBrandingService )
         {
             this.dataServices = dataServices;
             this.mapper = mapper;
             _config = config;
+            this.tenantService = tenantService;
+            this.tenantBrandingService = tenantBrandingService;
         }
         public async Task<IResponseVm<UserLoginDetails>> LoginAsync(LoginDetailVM user)
         {
@@ -93,55 +100,38 @@ namespace ShutterManagement.Services
             return responseVm;
         }
 
-        //public async Task<IResponseVm<UserLoginDetails>> HomePageContent(string CompanyCode)
-        //{
-        //    IResponseVm<UserLoginDetails> responseVm = new ResponseVm<UserLoginDetails>();
-        //    UserLoginDetails loginDetails = new UserLoginDetails();
-        //    var UserDetails = await dataServices.CallSPtoRead<LoginDetails>("Sp_GetUserDetailsOnLogin", reader =>
-        //    {
-        //        return new LoginDetails
-        //        {
-        //            UserId = reader.GetGuid(reader.GetOrdinal("id")),
-        //            Username = reader.GetString(reader.GetOrdinal("username")),
-        //            FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
-        //            MiddleName = reader.GetString(reader.GetOrdinal("MiddleName")),
-        //            LastName = reader.GetString(reader.GetOrdinal("LastName")),
-        //            Email = reader.GetString(reader.GetOrdinal("Email")),
-        //            Phone = reader.GetString(reader.GetOrdinal("Phone"))
-        //        };
-        //    },
-        //     new SqlParameter("@Username", SqlDbType.NVarChar) { SqlValue = user.Username },
-        //     new SqlParameter("@Password", SqlDbType.NVarChar) { SqlValue = user.Password },
-        //     new SqlParameter("@CompanyCode", SqlDbType.NVarChar) { SqlValue = user.CompanyCode }
-        //     );
-
-
-        //    var tokenHandler = new JwtSecurityTokenHandler();
-        //    var key = Encoding.UTF8.GetBytes(AppConstant.JWTSecretKey);
-        //    var tokenDescriptor = new SecurityTokenDescriptor
-        //    {
-        //        Subject = new ClaimsIdentity(new[]
-        //        {
-        //            new Claim("UserId", UserDetails[0].UserId.ToString()),
-        //            new Claim("Username", UserDetails[0].Username),
-        //            new Claim(ClaimTypes.Name, UserDetails[0].FirstName + " " + UserDetails[0].MiddleName + " " + UserDetails[0].LastName ),
-        //            new Claim(ClaimTypes.Email, UserDetails[0].Email),
-        //            new Claim("Phone",UserDetails[0].Phone),
-        //        }),
-        //        Expires = DateTime.UtcNow.AddHours(Convert.ToDouble(AppConstant.JwtExpiryTime)),
-        //        Issuer = AppConstant.JwtIssuer,
-        //        Audience = AppConstant.JwtAudience,
-        //        SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-        //    };
-
-        //    var token = tokenHandler.CreateToken(tokenDescriptor);
-        //    string TokenValue = tokenHandler.WriteToken(token);
-
-        //    responseVm.Data = mapper.Map(UserDetails[0], loginDetails);
-        //    responseVm.Data.Token = TokenValue;
-        //    responseVm.IsSuccess = true;
-        //    responseVm.Message = AppConstant.LoginSuccessMessgae;
-        //    return responseVm;
-        //}
+        public async Task<IResponseVm<dynamic>> HomePageContent(string CompanyCode)
+        {
+            IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
+            var TenantHomePageData = tenantService.GetAllQuerable().Where(x=>x.Code == CompanyCode
+            && x.IsDelete == false && x.IsActive == true && x.ParentTenantId == null).FirstOrDefault();
+            if (TenantHomePageData != null) {
+                var brandInfo = tenantBrandingService.GetAllQuerable().Where(x => x.Id == TenantHomePageData.BrandingInfo).FirstOrDefault();
+                if (brandInfo != null)
+                {
+                    HomePageContent homePageContent = new HomePageContent
+                    {
+                        Code = TenantHomePageData.Code,
+                        URL = TenantHomePageData.Url,
+                        FirstName = TenantHomePageData.FirstName,
+                        LastName = TenantHomePageData.LastName,
+                        MiddleName = TenantHomePageData.MiddleName,
+                        Email = brandInfo.Email,
+                        PhoneNumber = brandInfo.PhoneNmber,
+                        Logo = brandInfo.Logo,
+                        PrimaryColor = brandInfo.PrimaryColor,
+                        SecondaryColor = brandInfo.SecondaryColor,
+                    };
+                    responseVm.IsSuccess = true;
+                    responseVm.Data = homePageContent;
+                }
+               
+            }
+            else
+            {
+                responseVm.Message = AppConstant.NoDataFound;
+            }
+            return responseVm;
+        }
     }
 }
