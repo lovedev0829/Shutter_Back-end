@@ -1,65 +1,122 @@
-﻿//using Microsoft.AspNetCore.Authorization;
-//using Microsoft.AspNetCore.Mvc;
-//using ShutterManagement.Business.Interfaces;
-//using ShutterManagement.Core;
-//using ShutterManagement.Core.SPModel;
-//using ShutterManagement.Core.ViewModels;
-//using System;
-//using System.Collections.Generic;
-//using System.Threading.Tasks;
+﻿using Azure;
+using Microsoft.AspNetCore.Mvc;
+using ShutterManagement.Business.Interfaces;
+using ShutterManagement.Core.SPModel;
+using ShutterManagement.Core.ViewModels;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Threading.Tasks;
 
-//namespace ShutterManagement.Api.Controllers
-//{
-//    //[Authorize]
-//    [Route("api/[controller]")]
-//    [ApiController]
-//    public class ContactController : ControllerBase
-//    {
-//        private readonly IContactService _contactService;
+namespace ShutterManagement.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class ContactController : ControllerBase
+    {
+        private readonly IContactService _contactService;
 
-//        public ContactController(IContactService contactService)
-//        {
-//            _contactService = contactService;
-//        }
+        public ContactController(IContactService contactService)
+        {
+            _contactService = contactService;
+        }
 
-//        [HttpPost]
-//        [Route("ContactCreate")]
-//        public async Task<IActionResult> CreateContact([FromBody] Sp_Contact model)
-//        {
-//            var res = new ResponseVm<Sp_Contact>();
+        [HttpGet]
+        public async Task<IActionResult> GetAllContacts()
+        {
+            IResponseVm<List<Sp_Contact>> res = new ResponseVm<List<Sp_Contact>>();   
+            try
+            {
+                var contacts = await _contactService.GetAll_Contact();
+                res.IsSuccess = true;
+                res.Message = "Contacts fetched successfully";
+                res.Data = contacts;
+                res.TotalRecords = contacts.Count;
+            }
+            catch (Exception ex)
+            {
+                res.IsSuccess = false;
+                res.Message = $"Error fetching contacts: {ex.Message}";
+            }
+            return Ok(res);
 
-//            if (model == null || string.IsNullOrEmpty(model.Name))
-//            {
-//                res.Message = "Contact model is invalid." + $"{AppConstant.ModelError}";
-//                return BadRequest(res);
-//            }
+        }
 
-//            try
-//            {
-//                await _contactService.Create_Contact(model);
-//                res.IsSuccess = true;
-//                res.Message = $"{AppConstant.InsertSuccessMsg}";
-//                return Ok(res);
-//            }
-//            catch (Exception ex)
-//            {
-//                res.IsSuccess = false;
-//                res.Message = "An error occurred while creating the contact: " + ex.Message;
-//                return StatusCode(500, res);
-//            }
-//        }
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetContactById(Guid id)
+        {
+            IResponseVm<Sp_Contact> res = new ResponseVm<Sp_Contact>();
 
+            try
+            {
+                var contact = await _contactService.GetById_Contact(id);
+                res.IsSuccess = true;
+                res.Message = $"Contact with {id} fetched successfully";
+                res.Data = contact;
 
-//        [HttpPut]
-//        [Route("ContactUpdate/{id}")]
-//        public async Task<IActionResult> UpdateContact(Guid id, [FromBody] Sp_Contact model)
-//        {
-//            var res = new ResponseVm<Sp_Contact>();
-//            if (model == null || id == Guid.Empty)
-//            {
-//                res.Message = "Invalid contact information.";
-//            }
+                if (contact == null)
+                {
+                    res.IsSuccess = false;
+                    res.Message = $"Contact with ID {id} not found";
+                    res.Data = null;
+                }
 
+            }
+            catch (Exception ex)
+            {
+                res.Message = $"Error fetching contact: {ex.Message}";
+            }
+            return Ok(res);
+
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CreateContact([FromBody] Sp_Contact model)
+        {
+            IResponseVm<Sp_Contact> res = new ResponseVm<Sp_Contact>();
+
+            if (model == null)
+            {
+                res.Message = "Contact data is null";
+            }
+            try
+            {
+                await _contactService.Create_Contact(model);
+                res.IsSuccess = true;
+                res.Message = "Contact added Successfully";
+                res.Data = model;
+                 CreatedAtAction(
+                           nameof(GetContactById),
+                           new { id = model.ContactId },
+                           model);
+                res.TotalRecords = 1;
+            }
+            catch (Exception ex)
+            {
+                res.Message = $"Error creating contact: {ex.Message}";
+            }
+            return Ok(res );    
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateContact(Guid id, [FromBody] Sp_Contact model)
+        {
+            IResponseVm<Sp_Contact> res = new ResponseVm<Sp_Contact>();
+
+            if (model == null || id != model.ContactId)
+            {
+                res.Message = "Contact data is invalid or ID mismatch";
+            }
+
+            try
+            {
+                var existingContact = await _contactService.GetById_Contact(id);
+
+                if (existingContact == null)
+                {
+                    res.Message = "Contact not found.";
+                }
+  
 //            model.ContactId = id;
 //            await _contactService.Update_Contact(model);
 //            res.IsSuccess = true;
@@ -67,54 +124,61 @@
 //            return Ok(res);
 //        }
 
-//        [HttpGet]
-//        [Route("GetAllContacts")]
-//        public async Task<IActionResult> GetAllContacts()
-//        {
-//            IResponseVm<List<Sp_Contact>> res = new ResponseVm<List<Sp_Contact>>();
-//            var contacts = await _contactService.GetAll_Contact();
-//            res.IsSuccess = true;
-//            res.Message = $"{AppConstant.FetchSuccessMsg}";
-//            res.Data = contacts;
-//            return Ok(res);
-//        }
+                existingContact.ContactId = model.ContactId;
+                existingContact.ContactType = model.ContactType;
+                existingContact.Name = model.Name;
+                existingContact.PhoneNumber = model.PhoneNumber;
+                existingContact.Email = model.Email;
+                existingContact.Website = model.Website;
+                existingContact.Notes = model.Notes;
+                existingContact.IsBillingAddressSameAsAddress = model.IsBillingAddressSameAsAddress;
 
-//        [HttpGet]
-//        [Route("GetContactById/{id}")]
-//        public async Task<IActionResult> GetContactById(Guid id)
-//        {
-//            IResponseVm<Sp_Contact> res = new ResponseVm<Sp_Contact>();
-//            if (id == Guid.Empty)
-//            {
-//                res.Message = $"{AppConstant.InvalidGuid}";
-//            }
+                if (!existingContact.IsBillingAddressSameAsAddress)
+                {
+                    existingContact.billingAddressVm.BillingAddessId = model.billingAddressVm.BillingAddessId;
+                    existingContact.billingAddressVm.Label = model.billingAddressVm.Label;
+                    existingContact.billingAddressVm.AddressLine1 = model.billingAddressVm.AddressLine1;
+                    existingContact.billingAddressVm.AddressLine2 = model.billingAddressVm.AddressLine2;
+                    existingContact.billingAddressVm.City = model.billingAddressVm.City;
+                    existingContact.billingAddressVm.State = model.billingAddressVm.State;
+                    existingContact.billingAddressVm.ZipCode = model.billingAddressVm.ZipCode;
+                    existingContact.billingAddressVm.Country = model.billingAddressVm.Country;
 
-//            var contact = await _contactService.GetById_Contact(id);
-//            if (contact == null)
-//            {
-//                res.Message = "Contact not found.";
-//            }
+                }
+                await _contactService.Update_Contact(model);
+                res.IsSuccess = true;
+                res.Message = "Contact updated successfully";
+                res.Data = model;
+                CreatedAtAction(
+                  nameof(GetContactById),
+                  new { id = model.ContactId },
+                 model);
+            }
+            catch (Exception ex)
+            {
+                res.Message = $"Error updating contact: {ex.Message}";
+            }
+            return Ok(res); 
+        }
 
-//            res.IsSuccess = true;
-//            res.Message = $"{AppConstant.FetchSuccessMsg}";
-//            res.Data = contact;
-//            return Ok(res);
-//        }
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteContact(Guid id)
+        {
+            IResponseVm<Sp_Contact> res = new ResponseVm<Sp_Contact>();
 
-//        [HttpDelete]
-//        [Route("ContactDelete/{id}")]
-//        public async Task<IActionResult> DeleteContact(Guid id)
-//        {
-//            var res = new ResponseVm<Sp_Contact>();
-//            if (id == Guid.Empty)
-//            {
-//                res.Message = $"{AppConstant.InvalidGuid}";
-//            }
+            try
+            {
+                await _contactService.Delete_Contact(id);
+                res.IsSuccess = true;
+                res.Message = $"Contact with {id} deleted successfully";
+                res.Data = null;
+            }
+            catch (Exception ex)
+            {
+                res.Message = $"Error deleting contact: {ex.Message}";
+            }
 
-//            await _contactService.Delete_Contact(id);
-//            res.IsSuccess = true;
-//            res.Message = $"{AppConstant.DeletedSuccessMsg}";
-//            return Ok(res);
-//        }
-//    }
-//}
+            return Ok(res);
+        }
+    }
+}

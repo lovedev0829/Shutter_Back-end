@@ -1,4 +1,5 @@
 ﻿using ShutterManagement.Core.SPModel;
+using ShutterManagement.Core.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,6 +15,7 @@ namespace ShutterManagement.Business.Interfaces
         Task<List<Sp_Contact>> GetAll_Contact();
         Task<Sp_Contact> GetById_Contact(Guid id);
 
+        //Task<IResponseVm<string>> ContactActiveInactive(string contactId);
         Task Delete_Contact(Guid id);
     }
 }

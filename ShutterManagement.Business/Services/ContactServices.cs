@@ -1,140 +1,220 @@
-﻿using Microsoft.Data.SqlClient;
-using ShutterManagement.Business.Interfaces;
+﻿using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core.SPModel;
+using ShutterManagement.Core.ViewModels;
+using ShutterManagement.DAL.Context;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
-using System.Data;
+using System.Linq;
 using System.Threading.Tasks;
+using ShutterManagement.Core;
 
 namespace ShutterManagement.Business.Services
 {
     public class ContactServices : IContactService
     {
-        private readonly DataServices dataServices;
+        private readonly ShutterDbContext _context;
 
-        public ContactServices(DataServices dataServices)
+        public ContactServices(ShutterDbContext context)
         {
-            this.dataServices = dataServices;
+            _context = context;
         }
-
-        //public async Task Create_Contact(Sp_Contact model)
-        //{
-        //    SqlParameter[] sqlParameters = new SqlParameter[]
-        //    {
-        //        new SqlParameter("@ContactType", SqlDbType.VarChar) { SqlValue = model.ContactType ?? (object)DBNull.Value },
-        //        new SqlParameter("@Name", SqlDbType.VarChar) { SqlValue = model.Name ?? (object)DBNull.Value },
-        //        new SqlParameter("@Phone", SqlDbType.NVarChar) { SqlValue = model.PhoneNumber ?? (object)DBNull.Value },
-        //        new SqlParameter("@Email", SqlDbType.NVarChar) { SqlValue = model.Email ?? (object)DBNull.Value },
-        //        new SqlParameter("@Website", SqlDbType.NVarChar) { SqlValue = model.Website ?? (object)DBNull.Value },
-        //        new SqlParameter("@Notes", SqlDbType.NVarChar) { SqlValue = model.Notes ?? (object)DBNull.Value },
-        //        new SqlParameter("@IsBillingAddressSameAsAddress", SqlDbType.Bit) { SqlValue = model.IsBillingAddressSameAsAddress },
-        //        new SqlParameter("@Action", SqlDbType.NVarChar) { SqlValue = "Insert" }
-        //    };
-
-        //    await dataServices.CallSP("sp_ContactCRUD", null, sqlParameters);
-        //}
 
         public async Task Create_Contact(Sp_Contact model)
         {
-            
-
-            SqlParameter[] parameters = new SqlParameter[]
+            if (!model.IsBillingAddressSameAsAddress)
             {
-        new SqlParameter("@ContactId", SqlDbType.UniqueIdentifier) { SqlValue = model.ContactId },
-        new SqlParameter("@ContactType", SqlDbType.VarChar) { SqlValue = model.ContactType ?? (object)DBNull.Value },
-        new SqlParameter("@Name", SqlDbType.VarChar) { SqlValue = model.Name ?? (object)DBNull.Value },
-        new SqlParameter("@Phone", SqlDbType.NVarChar) { SqlValue = model.PhoneNumber ?? (object)DBNull.Value },
-        new SqlParameter("@Email", SqlDbType.NVarChar) { SqlValue = model.Email ?? (object)DBNull.Value },
-        new SqlParameter("@Website", SqlDbType.NVarChar) { SqlValue = model.Website ?? (object)DBNull.Value },
-        new SqlParameter("@Notes", SqlDbType.NVarChar) { SqlValue = model.Notes ?? (object)DBNull.Value },
-        new SqlParameter("@IsBillingAddressSameAsAddress", SqlDbType.Bit) { SqlValue = model.IsBillingAddressSameAsAddress },
-        
-        new SqlParameter("@Label", SqlDbType.NVarChar) { SqlValue = !model.IsBillingAddressSameAsAddress ? (model.billingAddressVm.Label ?? (object)DBNull.Value) : (object)DBNull.Value },
-        new SqlParameter("@AddressLine1", SqlDbType.NVarChar) { SqlValue = !model.IsBillingAddressSameAsAddress ? (model.billingAddressVm.AddressLine1 ?? (object)DBNull.Value) : (object)DBNull.Value },
-        new SqlParameter("@AddressLine2", SqlDbType.NVarChar) { SqlValue = !model.IsBillingAddressSameAsAddress ? (model.billingAddressVm.AddressLine2 ?? (object)DBNull.Value) : (object)DBNull.Value },
-        new SqlParameter("@City", SqlDbType.NVarChar) { SqlValue = !model.IsBillingAddressSameAsAddress ? (model.billingAddressVm.City ?? (object)DBNull.Value) : (object)DBNull.Value },
-        new SqlParameter("@State", SqlDbType.NVarChar) { SqlValue = !model.IsBillingAddressSameAsAddress ? (model.billingAddressVm.State ?? (object)DBNull.Value) : (object)DBNull.Value },
-        new SqlParameter("@ZipCode", SqlDbType.NVarChar) { SqlValue = !model.IsBillingAddressSameAsAddress ? (model.billingAddressVm.ZipCode ?? (object)DBNull.Value) : (object)DBNull.Value },
-        new SqlParameter("@Country", SqlDbType.NVarChar) { SqlValue = !model.IsBillingAddressSameAsAddress ? (model.billingAddressVm.Country ?? (object)DBNull.Value) : (object)DBNull.Value },
+                if (model.billingAddressVm == null ||
+                    string.IsNullOrEmpty(model.billingAddressVm.Label) ||
+                    string.IsNullOrEmpty(model.billingAddressVm.AddressLine1) ||
+                    string.IsNullOrEmpty(model.billingAddressVm.City) ||
+                    string.IsNullOrEmpty(model.billingAddressVm.State) ||
+                    string.IsNullOrEmpty(model.billingAddressVm.ZipCode) ||
+                    string.IsNullOrEmpty(model.billingAddressVm.Country))
+                {
+                    string missingFields = "";
 
-        new SqlParameter("@Action", SqlDbType.NVarChar) { SqlValue = "Insert" }
+                    if (string.IsNullOrEmpty(model.billingAddressVm.Label)) missingFields += "Label, ";
+                    if (string.IsNullOrEmpty(model.billingAddressVm.AddressLine1)) missingFields += "Address Line 1, ";
+                    if (string.IsNullOrEmpty(model.billingAddressVm.City)) missingFields += "City, ";
+                    if (string.IsNullOrEmpty(model.billingAddressVm.State)) missingFields += "State, ";
+                    if (string.IsNullOrEmpty(model.billingAddressVm.ZipCode)) missingFields += "Zip Code, ";
+                    if (string.IsNullOrEmpty(model.billingAddressVm.Country)) missingFields += "Country, ";
+
+                    missingFields = missingFields.TrimEnd(',', ' ');
+
+                    throw new ArgumentException($"Billing address information is incomplete. The following fields are required: {missingFields}.");
+                }
+            }
+
+            var contact = new TblContact
+            {
+                ContactType = model.ContactType,
+                Name = model.Name,
+                PhoneNumber = model.PhoneNumber,
+                Email = model.Email,
+                Website = model.Website,
+                Notes = model.Notes,
+                IsBillingAddressSameAsAddress = model.IsBillingAddressSameAsAddress,
+                IsActive = true,
+                TblContactBillingAddresses = model.IsBillingAddressSameAsAddress
+                    ? new List<TblContactBillingAddress>()
+                    : new List<TblContactBillingAddress>
+                    {
+                new TblContactBillingAddress
+                {
+                    Label = model.billingAddressVm?.Label,
+                    AddressLine1 = model.billingAddressVm?.AddressLine1,
+                    AddressLine2 = model.billingAddressVm?.AddressLine2,
+                    City = model.billingAddressVm?.City,
+                    State = model.billingAddressVm?.State,
+                    ZipCode = model.billingAddressVm?.ZipCode,
+                    Country = model.billingAddressVm?.Country
+                }
+                    }
             };
 
-            await dataServices.CallSP("sp_ContactCRUD", null, parameters);
+            _context.TblContacts.Add(contact);
+            await _context.SaveChangesAsync();
         }
-
 
 
         public async Task Delete_Contact(Guid id)
         {
-            SqlParameter[] sqlParameters = new SqlParameter[]
-            {
-                new SqlParameter("@ContactId", SqlDbType.UniqueIdentifier) { SqlValue = id },
-                new SqlParameter("@Action", SqlDbType.NVarChar) { SqlValue = "Delete" }
-            };
+            var contact = await _context.TblContacts
+                .FirstOrDefaultAsync(c => c.ContactId == id);
 
-            await dataServices.CallSP("sp_ContactCRUD", null, sqlParameters);
+            if (contact != null)
+            {
+                _context.TblContacts.Remove(contact);
+                await _context.SaveChangesAsync();
+            }
         }
 
         public async Task<List<Sp_Contact>> GetAll_Contact()
         {
-            var contacts = await dataServices.CallSPtoRead<Sp_Contact>("Sp_ContactCRUD", reader =>
-            {
-                return new Sp_Contact
+            var contacts = await _context.TblContacts
+                .Where(c => c.IsActive == true)
+                .Select(c => new Sp_Contact
                 {
-                    ContactId = reader.GetGuid(reader.GetOrdinal("ContactId")),
-                    ContactType = reader.GetString(reader.GetOrdinal("ContactType")),
-                    Name = reader.GetString(reader.GetOrdinal("Name")),
-                    PhoneNumber = reader.GetString(reader.GetOrdinal("PhoneNumber")),
-                    Email = reader.GetString(reader.GetOrdinal("Email")),
-                    Website = reader.GetString(reader.GetOrdinal("Website")),
-                    Notes = reader.GetString(reader.GetOrdinal("Notes")),
-                    IsBillingAddressSameAsAddress = reader.GetBoolean(reader.GetOrdinal("IsBillingAddressSameAsAddress"))
-                };
-            }, new SqlParameter("@Action", SqlDbType.NVarChar) { SqlValue = "SELECTAll" });
+                    ContactId = c.ContactId,
+                    ContactType = c.ContactType,
+                    Name = c.Name,
+                    PhoneNumber = c.PhoneNumber,
+                    Email = c.Email,
+                    Website = c.Website,
+                    Notes = c.Notes,
+                    IsBillingAddressSameAsAddress = c.IsBillingAddressSameAsAddress
+                })
+                .ToListAsync();
 
             return contacts;
         }
 
         public async Task<Sp_Contact> GetById_Contact(Guid id)
         {
-
-            var contacts = await dataServices.CallSPtoRead<Sp_Contact>("Sp_ContactCRUD", reader =>
-            {
-                return new Sp_Contact
+            var contact = await _context.TblContacts
+                .Where(c => c.ContactId == id)
+                .Select(c => new Sp_Contact
                 {
-                    ContactId = reader.GetGuid(reader.GetOrdinal("ContactId")),
-                    ContactType = reader.GetString(reader.GetOrdinal("ContactType")),
-                    Name = reader.GetString(reader.GetOrdinal("Name")),
-                    PhoneNumber = reader.GetString(reader.GetOrdinal("PhoneNumber")),
-                    Email = reader.GetString(reader.GetOrdinal("Email")),
-                    Website = reader.GetString(reader.GetOrdinal("Website")),
-                    Notes = reader.GetString(reader.GetOrdinal("Notes")),
-                    IsBillingAddressSameAsAddress = reader.GetBoolean(reader.GetOrdinal("IsBillingAddressSameAsAddress"))
-                };
-            },
-             new SqlParameter("@ContactId", SqlDbType.UniqueIdentifier) { SqlValue = id },
-             new SqlParameter("@Action", SqlDbType.NVarChar) { SqlValue = "SelectById" });
+                    ContactId = c.ContactId,
+                    ContactType = c.ContactType,
+                    Name = c.Name,
+                    PhoneNumber = c.PhoneNumber,
+                    Email = c.Email,
+                    Website = c.Website,
+                    Notes = c.Notes,
+                    IsBillingAddressSameAsAddress = c.IsBillingAddressSameAsAddress
+                })
+                .FirstOrDefaultAsync();
 
-            return contacts.FirstOrDefault();
+            return contact;
         }
-
 
         public async Task Update_Contact(Sp_Contact model)
         {
-            SqlParameter[] sqlParameters = new SqlParameter[]
-            {
-                new SqlParameter("@ContactId", SqlDbType.UniqueIdentifier) { SqlValue = model.ContactId },
-                new SqlParameter("@ContactType", SqlDbType.VarChar) { SqlValue = model.ContactType ?? (object)DBNull.Value },
-                new SqlParameter("@Name", SqlDbType.VarChar) { SqlValue = model.Name ?? (object)DBNull.Value },
-                new SqlParameter("@Phone", SqlDbType.NVarChar) { SqlValue = model.PhoneNumber ?? (object)DBNull.Value },
-                new SqlParameter("@Email", SqlDbType.NVarChar) { SqlValue = model.Email ?? (object)DBNull.Value },
-                new SqlParameter("@Website", SqlDbType.NVarChar) { SqlValue = model.Website ?? (object)DBNull.Value },
-                new SqlParameter("@Notes", SqlDbType.NVarChar) { SqlValue = model.Notes ?? (object)DBNull.Value },
-                new SqlParameter("@Action", SqlDbType.NVarChar) { SqlValue = "Update" }
-            };
+            var contact = await _context.TblContacts
+                .FirstOrDefaultAsync(c => c.ContactId == model.ContactId);
 
-            await dataServices.CallSP("sp_ContactCRUD", null, sqlParameters);
+            if (contact != null)
+            {
+                contact.ContactType = model.ContactType;
+                contact.Name = model.Name;
+                contact.PhoneNumber = model.PhoneNumber;
+                contact.Email = model.Email;
+                contact.Website = model.Website;
+                contact.Notes = model.Notes;
+                contact.IsBillingAddressSameAsAddress = model.IsBillingAddressSameAsAddress;
+                contact.IsActive = true;  
+
+                if (!model.IsBillingAddressSameAsAddress)
+                {
+                    contact.TblContactBillingAddresses = new List<TblContactBillingAddress>
+                    {
+                        new TblContactBillingAddress
+                        {
+                            Label = model.billingAddressVm?.Label,
+                            AddressLine1 = model.billingAddressVm?.AddressLine1,
+                            AddressLine2 = model.billingAddressVm?.AddressLine2,
+                            City = model.billingAddressVm?.City,
+                            State = model.billingAddressVm?.State,
+                            ZipCode = model.billingAddressVm?.ZipCode,
+                            Country = model.billingAddressVm?.Country
+                        }
+                    };
+                }
+
+                await _context.SaveChangesAsync();
+            }
+
+            //public async Task<IResponseVm<string>> ContactActiveInactive(Guid contactId)
+            //{
+            //    IResponseVm<string> responseVm = new ResponseVm<string>();
+
+            //    try
+            //    {
+            //        var contact = await _context.TblContacts
+            //            .Include(c => c.TblContactRoles)      
+            //            .Include(c => c.TblContactBillingAddresses) 
+            //            .FirstOrDefaultAsync(c => c.ContactId == contactId);
+
+            //        if (contact != null)
+            //        {
+            //            contact.IsActive = !(contact.IsActive ?? true); 
+
+            //            foreach (var user in contact.TblContactRoles)  
+            //            {
+            //                user.IsActive = !user.IsActive;  
+            //                user.UpdatedAt = DateTime.Now; 
+            //            }
+
+            //            if (!contact.IsBillingAddressSameAsAddress && contact.TblContactBillingAddresses.Any())
+            //            {
+            //                foreach (var billingAddress in contact.TblContactBillingAddresses)
+            //                {
+            //                }
+            //            }
+
+            //            await _context.SaveChangesAsync();
+
+            //            responseVm.IsSuccess = true;
+            //            responseVm.Message = "Contact and related entities status updated successfully.";
+            //        }
+            //        else
+            //        {
+            //            responseVm.IsSuccess = false;
+            //            responseVm.Message = "Contact not found.";
+            //        }
+            //    }
+            //    catch (Exception ex)
+            //    {
+            //        responseVm.IsSuccess = false;
+            //        responseVm.Message = $"Error toggling active status: {ex.Message}";
+            //    }
+
+            //    return responseVm;
+            //}
+
         }
     }
 }

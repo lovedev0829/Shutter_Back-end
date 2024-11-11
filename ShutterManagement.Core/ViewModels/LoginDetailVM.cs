@@ -13,7 +13,12 @@ namespace ShutterManagement.Core.ViewModels
         [RegularExpression(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", ErrorMessage = "Invalid Username.")]
         [EmailAddress(ErrorMessage = "Invalid Username")]
         public string? Username { get; set; }
+
+        [Required]
+        [MinLength(8), MaxLength(12)]
         public string? Password { get; set; }
+
+        [Required]  
         public string? CompanyCode { get; set; }
     }
 }
