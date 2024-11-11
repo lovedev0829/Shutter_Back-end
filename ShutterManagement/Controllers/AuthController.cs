@@ -27,7 +27,7 @@ namespace ShutterManagement.Controllers
         }
 
         [HttpGet("HomePageContent")]
-        public async Task<IActionResult> HomePageContant(string CompanyCode)
+        public async Task<IActionResult> HomePageContant(string CompanyCode = "")
         {
             var UserDetails = await _authService.HomePageContent(CompanyCode);
             return Ok(UserDetails);

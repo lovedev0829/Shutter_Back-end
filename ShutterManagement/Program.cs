@@ -24,7 +24,18 @@ builder.Services.AddDbContext<ShutterDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
     sqlOptions => sqlOptions.CommandTimeout(60)));
 
-
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowedCorsPolicy",
+        builder => builder
+            //.SetIsOriginAllowedToAllowWildcardSubdomains()
+            //.WithOrigins("http://localhost:4200", "https://localhost:90", "https://*.sentridocs.com", "http://*.sentridocs.com")
+            .AllowAnyOrigin()
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+        //.AllowCredentials()
+        );
+});
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo { Title = "Shutter Management API", Version = "v1" });
@@ -79,8 +90,13 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
 
 builder.Services.AddScoped<DataServices>();
+
+builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+builder.Services.AddScoped<ClaimsProperty>();
+
 builder.Services.AddScoped<IMasterCreate, MasterCreate>();
 builder.Services.AddScoped<ITenantService, TenantServices>();
+builder.Services.AddScoped<ITenantBrandingService, TenantBrandingService>();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ISubtenantService, SubtenantServices>();
@@ -96,7 +112,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
+app.UseCors("AllowedCorsPolicy");
 app.UseSwagger();
 
 app.UseSwaggerUI(c =>

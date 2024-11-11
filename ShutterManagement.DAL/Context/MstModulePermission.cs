@@ -15,7 +15,7 @@ public partial class MstModulePermission
 
     public bool? IsDelete { get; set; }
 
-    public virtual MstModule? Module { get; set; }
+    public string? PermissionDisplayName { get; set; }
 
-    public virtual ICollection<TblRole> TblRoles { get; set; } = new List<TblRole>();
+    public virtual MstModule? Module { get; set; }
 }

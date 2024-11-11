@@ -66,7 +66,7 @@ namespace ShutterManagement.Business.Services
         {
             var result = new List<T>();
 
-            using (var con = dbContext.Database.GetDbConnection())
+            using (var con = new SqlConnection(dbContext.Database.GetDbConnection().ConnectionString))
             {
                 await con.OpenAsync();
 
@@ -100,7 +100,12 @@ namespace ShutterManagement.Business.Services
                     {
                         Console.WriteLine($"Error: {ex.Message}");
                     }
+                    finally
+                    {
+                    }
                 }
+
+                con.Close();
             }
 
             return result;
