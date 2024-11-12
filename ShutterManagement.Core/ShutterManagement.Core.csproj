@@ -16,4 +16,8 @@
     <ProjectReference Include="..\ShutterManagement.DAL\ShutterManagement.DAL.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="SPModel\SP_Request\" />
+  </ItemGroup>
+
 </Project>

@@ -58,6 +58,9 @@ namespace ShutterManagement.Business.Services
                 Notes = model.Notes,
                 IsBillingAddressSameAsAddress = model.IsBillingAddressSameAsAddress,
                 IsActive = true,
+                CreatedAt = DateTime.Now,
+                CreatedBy = AppConstant.LoggedInUserID,
+
                 TblContactBillingAddresses = model.IsBillingAddressSameAsAddress
                     ? new List<TblContactBillingAddress>()
                     : new List<TblContactBillingAddress>

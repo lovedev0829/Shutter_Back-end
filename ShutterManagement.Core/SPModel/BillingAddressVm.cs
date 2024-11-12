@@ -13,7 +13,7 @@ namespace ShutterManagement.Core.SPModel
 
         [Required]
         [MaxLength(100)]
-        [RegularExpression("^[a-zA-Z]")]
+        [RegularExpression("^[a-zA-Z]+$")]
         public string Label { get; set; } = string.Empty;
 
         [Required]
@@ -26,12 +26,12 @@ namespace ShutterManagement.Core.SPModel
 
         [Required]
         [MaxLength(100)]
-        [RegularExpression("^[a-zA-Z]")]
+        [RegularExpression("^[a-zA-Z]+$")]
 
         public string City { get; set; } = string.Empty;
         [Required]
         [MaxLength(100)]
-        [RegularExpression("^[a-zA-Z]")]
+        [RegularExpression("^[a-zA-Z]+$")]
 
         public string State { get; set; } = string.Empty;
 
@@ -43,7 +43,7 @@ namespace ShutterManagement.Core.SPModel
 
         [Required]
         [MaxLength(100)]
-        [RegularExpression("^[a-zA-Z]")]
+        [RegularExpression("^[a-zA-Z]+$")]
         public string Country { get; set; } = string.Empty;
     }
 }

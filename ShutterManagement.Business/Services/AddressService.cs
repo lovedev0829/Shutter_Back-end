@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core;
@@ -29,153 +30,228 @@ namespace ShutterManagement.Business.Services
 
       public Task<IResponseVm<string>> ActiveInActiveAddress(Guid id)
       {
-         throw new NotImplementedException();
-      }
-
-      public async Task Create_Address(CreateAddress model)
-        {
-            var address = new TblAddress
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+            try
             {
-                ContactId = model.ContactId,
-                Label = model.Label,
-                AddressLine1= model.AddressLine1,
-                AddressLine2 = model.AddressLine2,
-                City = model.City,
-                State = model.State,
-                ZipCode = model.ZipCode,
-                Country = model.Country,
+                var address = GetAllQuerable()
+                    .Where(c => c.AddressId == id && c.TenantId == AppConstant.LoggedInTenantId)
+                    .FirstOrDefault();
 
-            };
+                if (address != null)
+                {
 
-            _context.TblAddresses.Add(address);
-            await _context.SaveChangesAsync();
+                    address.IsActive = false;
+                    address.ModifiedBy = AppConstant.LoggedInUserID;
+                    address.UpdatedAt = DateTime.Now;
+                    Update(address);
+
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = AppConstant.DeleteSuccessMsg;
+                }
+                else
+                {
+                    responseVm.Message = AppConstant.NoUserFound;
+                }
+            }
+            catch (Exception ex)
+            {
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+            }
+
+            return Task.FromResult(responseVm);
+
         }
+
+        public async Task<IResponseVm<string>> Create_Address(CreateAddress model)
+        {
+
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+            try
+            {
+                var address = new TblAddress
+                {
+                    ContactId = model.ContactId,
+                    Label = model.Label,
+                    AddressLine1 = model.AddressLine1,
+                    AddressLine2 = model.AddressLine2,
+                    City = model.City,
+                    State = model.State,
+                    ZipCode = model.ZipCode,
+                    Country = model.Country,
+                    CreatedAt = DateTime.Now,
+                    CreatedBy = AppConstant.LoggedInUserID,
+                    IsActive = true,
+                    IsDelete = false,
+                    TenantId = AppConstant.LoggedInTenantId
+                };
+                if (address != null)
+                {
+                    _context.TblAddresses.Add(address);
+                    await _context.SaveChangesAsync();
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = AppConstant.InsertSuccessMsg;
+                }
+                else
+                {
+                    responseVm.Message = AppConstant.NoDataFound;
+                }
+            }
+               
+            catch (Exception ex)
+            {
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+            }
+
+            return responseVm;
+        }
+
 
         public Task<IResponseVm<string>> DeleteAddress(Guid id)
         {
-            throw new NotImplementedException();
-        }
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+            try
+            { 
+                var address = GetAllQuerable()
+                    .Where(c => c.AddressId == id && c.TenantId == AppConstant.LoggedInTenantId)
+                    .FirstOrDefault();
 
-        //public Task<IResponseVm<string>> DeleteAddress(Guid id)
-        //{
-
-        //    IResponseVm<string> responseVm = new ResponseVm<string>();
-        //    try
-        //    {
-        //        var address = GetAllQuerable()
-        //            .Where(c => c.ContactId == id
-        //            && c.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
-
-        //        if (contact != null)
-        //        {
-        //            contact.IsActive = false;
-        //            contact.IsDelete = true;
-        //            await Update(contact);
-
-        //            responseVm.IsSuccess = true;
-        //            responseVm.Message = AppConstant.DeleteSuccessMsg;
-        //        }
-        //        else
-        //        {
-        //            responseVm.Message = AppConstant.NoUserFound;
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        responseVm.Message = AppConstant.ExceptionError + ex.Message;
-        //    }
-        //    return responseVm;
-        //}
-
-        //public Task<IResponseVm<string>> DeleteAddress(Guid id)
-        //{
-        //    IResponseVm<string> responseVm = new ResponseVm<string>();
-
-        //    try
-        //    {
-        //        var address = GetAllQuerable()
-        //            .Where(c => c.AddressId == AddressId
-        //            && c.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
-
-        //        if (contact != null)
-        //        {
-        //            contact.IsActive = false;
-        //            contact.IsDelete = true;
-        //            await Update(contact);
-
-        //            responseVm.IsSuccess = true;
-        //            responseVm.Message = AppConstant.DeleteSuccessMsg;
-        //        }
-        //        else
-        //        {
-        //            responseVm.Message = AppConstant.NoUserFound;
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        responseVm.Message = AppConstant.ExceptionError + ex.Message;
-        //    }
-        //    return responseVm;
-        //}
-
-        public Task<List<AddressResponse>> GetAll_Address()
-        {
-
-            var addresses = _context.TblAddresses
-                .Where(c => c.IsActive == true)
-                .Select(c => new AddressResponse
+                if (address != null)
                 {
-                    AddressId = c.AddressId,
-                    ContactId = c.ContactId,
-                    Label = c.Label,
-                    AddressLine1 = c.AddressLine1,
-                    AddressLine2 = c.AddressLine2,
-                    City = c.City,
-                    State = c.State,
-                    ZipCode = c.ZipCode,
-                    Country = c.Country,
-                })
-                .ToListAsync();
 
-            return addresses;
-        }
+                    address.IsActive = false;
+                    address.IsDelete = true;
+                    address.ModifiedBy = AppConstant.LoggedInUserID;
+                    address.UpdatedAt = DateTime.Now;
+                    Update(address);
 
-        public async Task<AddressResponse> GetById_Address(Guid id)
-        {
-            var address = await _context.TblAddresses
-                .Where(c => c.AddressId == id && c.IsActive == true)
-                .Select(c => new AddressResponse
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = AppConstant.DeleteSuccessMsg;
+                }
+                else
                 {
-                    ContactId = c.ContactId,
-                    Label = c.Label,
-                    AddressLine1 = c.AddressLine1,
-                    AddressLine2 = c.AddressLine2,
-                    City = c.City,
-                    State = c.State,
-                    ZipCode = c.ZipCode,
-                    Country = c.Country,
-                })
-                .FirstOrDefaultAsync();
-
-            return address;
-        }
-
-        public async Task Update_Address(CreateAddress model)
-        {
-           var address = await _context.TblAddresses
-                .FirstOrDefaultAsync(c => c.AddressId == model.AddressId);
-
-            if (address == null)
+                    responseVm.Message = AppConstant.NoUserFound;
+                }
+            }
+            catch (Exception ex)
             {
-                address.AddressLine1 = model.AddressLine1;
-                address.AddressLine2 = model.AddressLine2;
-                address.City = model.City;
-                address.State = model.State;
-                address.ZipCode = model.ZipCode;
-                address.Country = model.Country;
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
             }
 
-            await _context.SaveChangesAsync();
+            return Task.FromResult(responseVm);
+        }
+
+
+
+        public async Task<IResponseVm<List<AddressResponse>>> GetAll_Address()
+        {
+            IResponseVm<List<AddressResponse>> responseVm = new ResponseVm<List<AddressResponse>>();
+            try
+            {
+                var addresses = await _context.TblAddresses
+                    .Where(c => c.IsActive == true && c.TenantId == AppConstant.LoggedInTenantId)
+                    .Select(c => new AddressResponse
+                    {
+                        AddressId = c.AddressId,
+                        ContactId = c.ContactId,
+                        Label = c.Label,
+                        AddressLine1 = c.AddressLine1,
+                        AddressLine2 = c.AddressLine2,
+                        City = c.City,
+                        State = c.State,
+                        ZipCode = c.ZipCode,
+                        Country = c.Country,
+                    })
+                    .ToListAsync();
+
+                if (addresses != null && addresses.Any())  
+                {
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = $"{AppConstant.FetchSuccessMsg}";
+                    responseVm.Data = addresses;
+                    responseVm.TotalRecords = addresses.Count;
+                }
+                else
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = "No addresses found.";
+                }
+            }
+            catch (Exception ex)
+            {
+                responseVm.IsSuccess = false;
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+            }
+            return responseVm;  
+        }
+
+        public async Task<IResponseVm<AddressResponse>> GetById_Address(Guid id)
+        {
+            IResponseVm<AddressResponse> responseVm = new ResponseVm<AddressResponse>();    
+            try
+            {
+                var address = await _context.TblAddresses
+                    .Where(c => c.AddressId == id && c.IsActive == true && c.TenantId == AppConstant.LoggedInTenantId)
+                    .Select(c => new AddressResponse
+                    {
+                        ContactId = c.ContactId,
+                        Label = c.Label,
+                        AddressLine1 = c.AddressLine1,
+                        AddressLine2 = c.AddressLine2,
+                        City = c.City,
+                        State = c.State,
+                        ZipCode = c.ZipCode,
+                        Country = c.Country,
+                        
+                    })
+                    .FirstOrDefaultAsync();
+                if (address != null)
+                {
+                    responseVm.IsSuccess=true;
+                    responseVm.Message = $"{AppConstant.FetchSuccessMsg}";
+                    responseVm.Data = address;
+                    responseVm.TotalRecords = 1;
+                }
+                else
+                {
+                    responseVm.Message = AppConstant.NoDataFound;
+                }
+            }
+            catch (Exception ex) {
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+            }
+            return responseVm;
+        }
+
+        public async Task<IResponseVm<AddressResponse>> Update_Address(UpdateAddress model)
+        {
+            IResponseVm<AddressResponse> responseVm = new ResponseVm<AddressResponse>();
+            try
+            {
+                var address = await _context.TblAddresses
+                    .FirstOrDefaultAsync(c => c.AddressId == model.AddressId && c.IsActive == true && c.TenantId == AppConstant.LoggedInTenantId);
+
+                if (address == null)
+                {
+                    address.ContactId = model.ContactId;    
+                    address.AddressLine1 = model.AddressLine1;
+                    address.AddressLine2 = model.AddressLine2;
+                    address.City = model.City;
+                    address.State = model.State;
+                    address.ZipCode = model.ZipCode;
+                    address.Country = model.Country;
+                    address.TenantId = model.TenantId;
+                    address.ModifiedBy = AppConstant.LoggedInUserID;
+                    address.UpdatedAt= DateTime.Now;    
+                }
+
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+
+            }
+            return responseVm;
+
         }
 
        

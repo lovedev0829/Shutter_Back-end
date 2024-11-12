@@ -97,6 +97,7 @@ builder.Services.AddScoped<ClaimsProperty>();
 builder.Services.AddScoped<IMasterCreate, MasterCreate>();
 builder.Services.AddScoped<ITenantService, TenantServices>();
 builder.Services.AddScoped<ITenantBrandingService, TenantBrandingService>();
+builder.Services.AddScoped<IAddress, AddressService>();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ISubtenantService, SubtenantServices>();

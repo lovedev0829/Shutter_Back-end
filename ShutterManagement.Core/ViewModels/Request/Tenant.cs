@@ -11,16 +11,16 @@ namespace ShutterManagement.Core.ViewModels.Request
     {
         [Required]
         [MaxLength(255)]
-        //[RegularExpression("^[a-zA-Z]+$\r\n")]
+        [RegularExpression("^[a-zA-Z]+$")]
         public string? FirstName { get; set; }
 
         [MaxLength(255)]
-        //[RegularExpression("^[a-zA-Z]+$\r\n")]
+        [RegularExpression("^[a-zA-Z]+$")]
         public string? MiddleName { get; set; }
 
         [Required]
         [MaxLength(255)]
-        //[RegularExpression("^[a-zA-Z]+$\r\n")]
+        [RegularExpression("^[a-zA-Z]+$")]
         public string? LastName { get; set; }
         public string? Code { get; set; }
         public string? URL { get; set; }
@@ -39,11 +39,11 @@ namespace ShutterManagement.Core.ViewModels.Request
         public string? Logo { get; set; }
 
         [MaxLength(20)]
-        //[RegularExpression("^[a-zA-Z]+$\r\n")]
+        [RegularExpression("^[a-zA-Z]+$")]
         public string? PrimaryColor { get; set; }
 
         [MaxLength(20)]
-        //[RegularExpression("^[a-zA-Z]+$\r\n")]
+        [RegularExpression("^[a-zA-Z]+$")]
         public string? SecondaryColor { get; set; }
 
         [Required]

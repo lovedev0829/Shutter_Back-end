@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core.ViewModels.Request;
 
 namespace ShutterManagement.Controllers
@@ -9,8 +10,10 @@ namespace ShutterManagement.Controllers
     [ApiController]
     public class RolesController : ControllerBase
     {
-        public RolesController()
+        private readonly ITenantService tenantService;
+        public RolesController(ITenantService tenantService)
         {
+            this.tenantService = tenantService;
                 
         }
         [HttpPost]
@@ -18,7 +21,7 @@ namespace ShutterManagement.Controllers
         [Authorize(Roles = "RoleEdit")]
         public async Task<IActionResult> ActiveInactive(string RoleId)
         {
-            var res = await tenantService.TenantActiveInactive(TenantId);
+            var res = await tenantService.TenantActiveInactive(RoleId);
             return Ok(res);
         }
 
