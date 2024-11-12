@@ -68,7 +68,11 @@ namespace ShutterManagement.Services
                     LastName = reader.GetString(reader.GetOrdinal("LastName")),
                     Email = reader.GetString(reader.GetOrdinal("Email")),
                     TenantId = reader.GetGuid(reader.GetOrdinal("TenantId")),
-                    Phone = reader.GetString(reader.GetOrdinal("Phone"))
+                    Phone = reader.GetString(reader.GetOrdinal("Phone")),
+                    Code = reader.GetString(reader.GetOrdinal("Code")),
+                    Logo = reader.GetString(reader.GetOrdinal("Logo")),
+                    PrimaryColor = reader.GetString(reader.GetOrdinal("PrimaryColor")),
+                    SecondaryColor = reader.GetString(reader.GetOrdinal("SecondaryColor")),
                 };
             },
              new SqlParameter("@Username", SqlDbType.NVarChar, 100) { SqlValue = user.Username },

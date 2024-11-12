@@ -17,6 +17,10 @@ namespace ShutterManagement.Core.SPModel.SP_Responses
         public string? LastName { get; set; }
         public string? Email { get; set; }
         public string? Phone { get; set; }
+        public string? Code { get; set; }
+        public string? Logo { get; set; }
+        public string? PrimaryColor { get; set; }
+        public string? SecondaryColor { get; set; }
         public Guid? TenantId { get; set; }
 
     }

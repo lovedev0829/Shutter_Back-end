@@ -21,14 +21,18 @@ namespace ShutterManagement.Business.Services
     public class SubtenantServices :  BaseRepository<ShutterDbContext, TblTenant>, ISubtenantService
     {
         private readonly DataServices dataServices;
+        private readonly IUserService userService;
         private readonly ClaimsProperty claimsProperty;
+        private readonly ITenantBrandingService tenantBrandingService;
 
-        public SubtenantServices(DataServices dataServices
-            , ClaimsProperty claimsProperty
+        public SubtenantServices(DataServices dataServices, IUserService userService
+            , ClaimsProperty claimsProperty, ITenantBrandingService tenantBrandingService
             )
         {
             this.dataServices = dataServices;
+            this.userService = userService;
             this.claimsProperty = claimsProperty;
+            this.tenantBrandingService = tenantBrandingService;
         }
         
         public async Task<IResponseVm<string>> SubTenantCreate(CreateSubTenant model)
@@ -145,13 +149,14 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var TenantDetails = GetAllQuerable().Where(x => x.TenantId.ToString() == TenantId && x.Code == AppConstant.LoggedInCompanyCode).FirstOrDefault();
+                var TenantDetails = GetAllQuerable().Where(x => x.TenantId.ToString() == TenantId && x.ParentTenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
                 if (TenantDetails != null)
                 {
                     TenantDetails.IsDelete = true;
                     TenantDetails.IsActive = false;
-
-                    var TenantUser = TenantDetails.TblUsers.Where(x => x.TenantId.ToString() == TenantId);
+                    TenantDetails.ModifiedBy = AppConstant.LoggedInUserID;
+                    TenantDetails.UpdatedAt = DateTime.Now;
+                    var TenantUser = userService.GetAllQuerable().Where(x => x.TenantId.ToString() == TenantId).ToList();
 
                     foreach (var item in TenantUser)
                     {
@@ -159,10 +164,9 @@ namespace ShutterManagement.Business.Services
                         item.IsDelete = true;
                         item.ModifiedAt = DateTime.Now;
                         item.ModifiedBy = AppConstant.LoggedInUserID;
-
-                        var result = await Update(TenantDetails);
-
+                        await userService.Update(item);
                     }
+                    await Update(TenantDetails);
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.DeleteSuccessMsg;
                 }
@@ -185,12 +189,14 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var TenantDetails = GetAllQuerable().Where(x => x.TenantId.ToString() == TenantId && x.Code == AppConstant.LoggedInCompanyCode).FirstOrDefault();
+                var TenantDetails = GetAllQuerable().Where(x => x.TenantId.ToString() == TenantId && x.ParentTenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
                 if (TenantDetails != null)
                 {
                     TenantDetails.IsActive = !TenantDetails.IsActive;
+                    TenantDetails.ModifiedBy = AppConstant.LoggedInUserID;
+                    TenantDetails.UpdatedAt = DateTime.Now;
 
-                    var TenantUser = TenantDetails.TblUsers.Where(x => x.TenantId.ToString() == TenantId);
+                    var TenantUser = userService.GetAllQuerable().Where(x => x.TenantId.ToString() == TenantId).ToList();
 
                     foreach (var item in TenantUser)
                     {
@@ -198,12 +204,17 @@ namespace ShutterManagement.Business.Services
                         item.ModifiedAt = DateTime.Now;
                         item.ModifiedBy = AppConstant.LoggedInUserID;
 
-                        var result = await Update(TenantDetails);
-
+                        await userService.Update(item);
                     }
+                    await Update(TenantDetails);
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = AppConstant.UpdateSuccessMsg;
                 }
-                responseVm.IsSuccess = true;
-                responseVm.Message = AppConstant.UpdateSuccessMsg;
+                else
+                {
+                    responseVm.Message = AppConstant.NoDataFound;
+                }
+
 
             }
             catch (Exception ex)
@@ -214,27 +225,36 @@ namespace ShutterManagement.Business.Services
 
         }
 
-        public async Task<IResponseVm<dynamic>> SubTenantGetAll(Guid TenantId,Pagination filter)
+        public async Task<IResponseVm<dynamic>> SubTenantGetAll(Pagination filter)
         {
             IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
             try
             {
-                var SubTenantList = GetAllQuerable().Where(x => x.IsDelete == false && x.ParentTenantId == TenantId).ToList();
-                var FilterRecords = SubTenantList
+                var TenantList = GetAllQuerable().Where(x => x.IsDelete == false && x.ParentTenantId == AppConstant.LoggedInTenantId ).ToList();
+                foreach (var item in TenantList)
+                {
+                    item.BrandingInfoNavigation = tenantBrandingService.GetAllQuerable().Where(x => x.Id == item.BrandingInfo).FirstOrDefault();
+                }
+                var FilterRecords = TenantList
                                     .Where(x =>
                                     (filter.SearchValue != "" ?
-                                    (x.BrandingInfoNavigation.Email.Contains(filter.SearchValue)
-                                    || x.BrandingInfoNavigation.PhoneNmber.Contains(filter.SearchValue)
-                                    || x.FirstName.Contains(filter.SearchValue) || x.LastName.Contains(filter.SearchValue)
-                                    || x.MiddleName.Contains(filter.SearchValue)
-                                    ) : true)).ToList()
-                                    .Skip(filter.PageNo).Take(filter.RecordPerPage);
-                if (FilterRecords != null)
+                                    ((x.BrandingInfoNavigation?.Email ?? "").Contains(filter.SearchValue)
+                                    || (x.BrandingInfoNavigation?.PhoneNmber ?? "").Contains(filter.SearchValue)
+                                    || (x.FirstName ?? "").Contains(filter.SearchValue) || (x.LastName ?? "").Contains(filter.SearchValue)
+                                    || (x.MiddleName ?? "").Contains(filter.SearchValue)
+                                    ) : true))
+                                    .Skip((filter.PageNo - 1) * filter.RecordPerPage).Take(filter.RecordPerPage).ToList();
+                if (FilterRecords != null && FilterRecords.Count > 0)
                 {
                     responseVm.Data = FilterRecords;
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.UpdateSuccessMsg;
-                    responseVm.TotalRecords = SubTenantList.Count;
+                    responseVm.TotalRecords = TenantList.Count;
+                }
+                else
+                {
+                    responseVm.Message = AppConstant.NoDataFound;
+                    responseVm.TotalRecords = TenantList.Count;
                 }
 
 
