@@ -1,4 +1,5 @@
 ﻿using Azure;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core.SPModel;
@@ -22,6 +23,7 @@ namespace ShutterManagement.Controllers
         }
 
         [HttpPost("GetAll")]
+        [Authorize(Roles = "ContactView")]
         public async Task<IActionResult> GetAllContacts()
         {
             IResponseVm<List<Sp_Contact>> res = new ResponseVm<List<Sp_Contact>>();   
@@ -43,6 +45,8 @@ namespace ShutterManagement.Controllers
         }
 
         [HttpGet("{id}")]
+        [Authorize(Roles = "ContactView")]
+
         public async Task<IActionResult> GetContactById(Guid id)
         {
             IResponseVm<Sp_Contact> res = new ResponseVm<Sp_Contact>();
@@ -71,6 +75,7 @@ namespace ShutterManagement.Controllers
         }
 
         [HttpPost("Create")]
+        [Authorize(Roles = "ContactAdd")]
         public async Task<IActionResult> CreateContact([FromBody] Sp_Contact model)
         {
             IResponseVm<Sp_Contact> res = new ResponseVm<Sp_Contact>();
@@ -99,6 +104,7 @@ namespace ShutterManagement.Controllers
         }
 
         [HttpPost("Update")]
+        [Authorize(Roles = "ContactEdit")]
         public async Task<IActionResult> UpdateContact(Guid id, [FromBody] Sp_Contact model)
         {
             IResponseVm<Sp_Contact> res = new ResponseVm<Sp_Contact>();
@@ -162,6 +168,7 @@ namespace ShutterManagement.Controllers
         }
 
         [HttpPost("ActiveInactive")]
+        [Authorize(Roles = "ContactEdit")]
         public async Task<IActionResult> ActiveInActiveContact(string ContactId)
         {
             Guid guid = Guid.Parse(ContactId);
@@ -170,6 +177,7 @@ namespace ShutterManagement.Controllers
         }
 
         [HttpPost("Delete")]
+        [Authorize(Roles = "ContactDelete")]
         public async Task<IActionResult> DeleteContact(string ContactId)
         {
             Guid guid = Guid.Parse(ContactId);

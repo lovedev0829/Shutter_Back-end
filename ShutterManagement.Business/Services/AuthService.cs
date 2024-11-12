@@ -29,8 +29,8 @@ namespace ShutterManagement.Services
         private readonly ITenantService tenantService;
         private readonly ITenantBrandingService tenantBrandingService;
 
-        public AuthService(DataServices dataServices,IMapper mapper, IConfiguration config,
-            ITenantService tenantService, ITenantBrandingService tenantBrandingService )
+        public AuthService(DataServices dataServices, IMapper mapper, IConfiguration config,
+            ITenantService tenantService, ITenantBrandingService tenantBrandingService)
         {
             this.dataServices = dataServices;
             this.mapper = mapper;
@@ -71,29 +71,44 @@ namespace ShutterManagement.Services
                     Phone = reader.GetString(reader.GetOrdinal("Phone"))
                 };
             },
-             new SqlParameter("@Username", SqlDbType.NVarChar,100) { SqlValue = user.Username },
+             new SqlParameter("@Username", SqlDbType.NVarChar, 100) { SqlValue = user.Username },
              new SqlParameter("@Password", SqlDbType.NVarChar, 100) { SqlValue = user.Password },
              new SqlParameter("@CompanyCode", SqlDbType.NVarChar, 100) { SqlValue = user.CompanyCode },
-             new SqlParameter("@Result", SqlDbType.VarChar, 1000) { Direction = ParameterDirection.Output}
+             new SqlParameter("@Result", SqlDbType.VarChar, 1000) { Direction = ParameterDirection.Output }
              );
 
             if (UserDetails.Count > 0)
             {
+                var UserRole = await dataServices.CallSPtoRead<UserRoles>("Sp_GetLoggedinUserRoles", reader =>
+                {
+                    return new UserRoles
+                    {
+                        PermissionId = reader.GetGuid(reader.GetOrdinal("Id")),
+                        PermissionName = reader.GetString(reader.GetOrdinal("Name")),
+                        PermissionDisplayName = reader.GetString(reader.GetOrdinal("DisplayName"))
+                    };
+                },
+                new SqlParameter("@UserId", SqlDbType.UniqueIdentifier) { SqlValue = UserDetails[0].UserId }
+                );
+                var claims = new ClaimsIdentity();
+                foreach(var item in UserRole)
+                {
+                    claims.AddClaim(new Claim(ClaimTypes.Role, item.PermissionName));
+                }
+
+                claims.AddClaim(new Claim("UserId", UserDetails[0].UserId.ToString()));
+                claims.AddClaim(new Claim("Username", UserDetails[0].Username ?? ""));
+                claims.AddClaim(new Claim(ClaimTypes.Name, UserDetails[0].FirstName + " " + UserDetails[0].MiddleName + " " + UserDetails[0].LastName));
+                claims.AddClaim(new Claim(ClaimTypes.Email, UserDetails[0].Email ?? ""));
+                claims.AddClaim(new Claim("Phone", UserDetails[0].Phone ?? ""));
+                claims.AddClaim(new Claim("TenantId", UserDetails[0].TenantId.ToString() ?? ""));
+                claims.AddClaim(new Claim("CompanyCode", user.CompanyCode));
 
                 var tokenHandler = new JwtSecurityTokenHandler();
                 var key = Encoding.UTF8.GetBytes(AppConstant.JWTSecretKey);
                 var tokenDescriptor = new SecurityTokenDescriptor
                 {
-                    Subject = new ClaimsIdentity(new[]
-                    {
-                    new Claim("UserId", UserDetails[0].UserId.ToString()),
-                    new Claim("Username", UserDetails[0].Username),
-                    new Claim(ClaimTypes.Name, UserDetails[0].FirstName + " " + UserDetails[0].MiddleName + " " + UserDetails[0].LastName ),
-                    new Claim(ClaimTypes.Email, UserDetails[0].Email),
-                    new Claim("Phone",UserDetails[0].Phone),
-                    new Claim("TenantId",UserDetails[0].TenantId.ToString()),
-                    new Claim("CompanyCode",user.CompanyCode),
-                }),
+                    Subject = claims,
                     Expires = DateTime.UtcNow.AddHours(Convert.ToDouble(AppConstant.JwtExpiryTime)),
                     Issuer = AppConstant.JwtIssuer,
                     Audience = AppConstant.JwtAudience,
@@ -104,6 +119,7 @@ namespace ShutterManagement.Services
                 string TokenValue = tokenHandler.WriteToken(token);
 
                 responseVm.Data = mapper.Map(UserDetails[0], loginDetails);
+                responseVm.Data.Roles = UserRole.Select(x => x.PermissionName).ToArray();
                 responseVm.Data.Token = TokenValue;
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.LoginSuccessMessgae;
@@ -124,9 +140,10 @@ namespace ShutterManagement.Services
                 return responseVm;
             }
 
-            var TenantHomePageData = tenantService.GetAllQuerable().Where(x=>x.Code == CompanyCode
+            var TenantHomePageData = tenantService.GetAllQuerable().Where(x => x.Code == CompanyCode
             && x.IsDelete == false && x.IsActive == true && x.ParentTenantId == null).FirstOrDefault();
-            if (TenantHomePageData != null) {
+            if (TenantHomePageData != null)
+            {
                 var brandInfo = tenantBrandingService.GetAllQuerable().Where(x => x.Id == TenantHomePageData.BrandingInfo).FirstOrDefault();
                 if (brandInfo != null)
                 {
@@ -146,7 +163,7 @@ namespace ShutterManagement.Services
                     responseVm.IsSuccess = true;
                     responseVm.Data = homePageContent;
                 }
-               
+
             }
             else
             {

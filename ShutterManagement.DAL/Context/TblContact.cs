@@ -31,10 +31,6 @@ public partial class TblContact
 
     public Guid? TenantId { get; set; }
 
-    public Guid? CreatedBy { get; set; }
-
-    public Guid? ModifiedBy { get; set; }
-
     public virtual ICollection<TblAddress> TblAddresses { get; set; } = new List<TblAddress>();
 
     public virtual ICollection<TblContactBillingAddress> TblContactBillingAddresses { get; set; } = new List<TblContactBillingAddress>();

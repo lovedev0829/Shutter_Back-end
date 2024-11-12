@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 
 namespace ShutterManagement.Controllers
 {
-    [Authorize]
+   
     [Route("api/[controller]")]
     [ApiController]
     public class TenantController : ControllerBase
@@ -28,6 +28,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("Create")]
+        [Authorize(Roles = "TenantAdd")]
         public async Task<IActionResult> TenantCreate([FromBody] Tenant model)
         {
             var res = await tenantService.TenantCreate(model);
@@ -36,6 +37,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("Update")]
+        [Authorize(Roles = "TenantEdit")]
         public async Task<IActionResult> TenantUpdate([FromBody] UpdateTenant model)
         {
             var res = await tenantService.TenantUpdate(model);
@@ -44,7 +46,8 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("Delete")]
-        public async Task<IActionResult> TenantDelete([FromBody] string TenantId)
+        [Authorize(Roles = "TenantDelete")]
+        public async Task<IActionResult> TenantDelete(string TenantId)
         {
             var res = await tenantService.TenantDelete(TenantId);
             return Ok(res);
@@ -52,7 +55,8 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("ActiveInActive")]
-        public async Task<IActionResult> TenantActiveInactive([FromBody] string TenantId)
+        [Authorize(Roles = "TenantEdit")]
+        public async Task<IActionResult> TenantActiveInactive(string TenantId)
         {
             var res = await tenantService.TenantActiveInactive(TenantId);
             return Ok(res);
@@ -60,6 +64,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("GetAll")]
+        [Authorize(Roles = "TenantView")]
         public async Task<IActionResult> GetAll(Pagination filter)
         {
             var res = await tenantService.TenantGetAll(filter);

@@ -16,6 +16,4 @@ public partial class MstModule
     public bool? IsDelete { get; set; }
 
     public virtual ICollection<MstModulePermission> MstModulePermissions { get; set; } = new List<MstModulePermission>();
-
-    public virtual ICollection<TblRole> TblRoles { get; set; } = new List<TblRole>();
 }
