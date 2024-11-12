@@ -9,11 +9,11 @@ namespace ShutterManagement.Core.ViewModels
 {
     public class LoginDetailVM
     {
-        
+        [Required]
         public string? Username { get; set; }
-
+        [Required]
         public string? Password { get; set; }
-
+        [Required]
         public string? CompanyCode { get; set; }
     }
 }

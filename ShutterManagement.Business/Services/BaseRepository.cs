@@ -21,7 +21,7 @@ namespace ShutterManagement.Services
             List<T> query = await dbContext.Set<T>().ToListAsync();
             return query;
         }
-        public async virtual Task<T> GetById(int Id)
+        public async virtual Task<T> GetById(Guid Id)
         {
             return await dbContext.Set<T>().FindAsync(Id);
         }

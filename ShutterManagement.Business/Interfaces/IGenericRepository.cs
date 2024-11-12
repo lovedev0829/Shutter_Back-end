@@ -12,7 +12,7 @@ namespace ShutterManagement.Interfaces
         T FirstOrDefault(Expression<Func<T, bool>> predicate);
         Task<bool> AnyAsync(Expression<Func<T, bool>> predicate);
         bool Any(Expression<Func<T, bool>> predicate);
-        Task<T> GetById(int Id);
+        Task<T> GetById(Guid Id);
         Task<T> Add(T entity);
         Task Delete(T entity);
         Task<T> Update(T entity);
