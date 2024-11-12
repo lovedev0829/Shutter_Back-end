@@ -39,6 +39,8 @@ public partial class TblTenant
 
     public virtual TblTenant? ParentTenant { get; set; }
 
+    public virtual ICollection<TblAddress> TblAddresses { get; set; } = new List<TblAddress>();
+
     public virtual ICollection<TblContact> TblContacts { get; set; } = new List<TblContact>();
 
     public virtual ICollection<TblRole> TblRoles { get; set; } = new List<TblRole>();

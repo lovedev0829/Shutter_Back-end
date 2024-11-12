@@ -13,38 +13,37 @@ namespace ShutterManagement.Core.SPModel
 
         [Required]
         [MaxLength(100)]
-        [RegularExpression("^[a-zA-Z]+$\r\n")]
-        public string Label { get; set; }
+        [RegularExpression("^[a-zA-Z]")]
+        public string Label { get; set; } = string.Empty;
 
         [Required]
         [MaxLength(255)]
-        public string AddressLine1 { get; set; }
+        public string AddressLine1 { get; set; } = string.Empty ;
 
         [Required]
         [MaxLength(255)]
-        public string AddressLine2 { get; set; }
+        public string AddressLine2 { get; set; } = string.Empty;
 
         [Required]
         [MaxLength(100)]
-        [RegularExpression("^[a-zA-Z]+$\r\n")]
+        [RegularExpression("^[a-zA-Z]")]
 
-        public string City { get; set; }
-
+        public string City { get; set; } = string.Empty;
         [Required]
         [MaxLength(100)]
-        [RegularExpression("^[a-zA-Z]+$\r\n")]
+        [RegularExpression("^[a-zA-Z]")]
 
-        public string  State {  get; set; }
+        public string State { get; set; } = string.Empty;
 
         [Required]
         [MaxLength(20)]
         [RegularExpression("^(0-9)")]
 
-        public string ZipCode { get; set; }
+        public string ZipCode { get; set; } = string.Empty;
 
         [Required]
         [MaxLength(100)]
-        [RegularExpression("^[a-zA-Z]+$\r\n")]
-        public string Country { get; set; }
+        [RegularExpression("^[a-zA-Z]")]
+        public string Country { get; set; } = string.Empty;
     }
 }

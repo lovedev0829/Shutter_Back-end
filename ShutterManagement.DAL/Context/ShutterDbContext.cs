@@ -130,6 +130,10 @@ public partial class ShutterDbContext : DbContext
             entity.HasOne(d => d.Contact).WithMany(p => p.TblAddresses)
                 .HasForeignKey(d => d.ContactId)
                 .HasConstraintName("FK__TblAddres__Conta__571DF1D5");
+
+            entity.HasOne(d => d.Tenant).WithMany(p => p.TblAddresses)
+                .HasForeignKey(d => d.TenantId)
+                .HasConstraintName("FK__TblAddres__Tenan__58671BC9");
         });
 
         modelBuilder.Entity<TblAssembly>(entity =>

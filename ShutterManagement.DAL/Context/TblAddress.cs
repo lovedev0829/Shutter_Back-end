@@ -31,6 +31,12 @@ public partial class TblAddress
 
     public bool? IsDelete { get; set; }
 
+    public Guid? CreatedBy { get; set; }
+
+    public Guid? ModifiedBy { get; set; }
+
+    public Guid? TenantId { get; set; }
+
     public virtual TblContact? Contact { get; set; }
 
     public virtual ICollection<TblJob> TblJobs { get; set; } = new List<TblJob>();
@@ -38,4 +44,6 @@ public partial class TblAddress
     public virtual ICollection<TblMeasurement> TblMeasurements { get; set; } = new List<TblMeasurement>();
 
     public virtual ICollection<TblWindow> TblWindows { get; set; } = new List<TblWindow>();
+
+    public virtual TblTenant? Tenant { get; set; }
 }

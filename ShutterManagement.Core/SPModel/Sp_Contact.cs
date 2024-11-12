@@ -13,12 +13,12 @@ namespace ShutterManagement.Core.SPModel
 
         [Required]
         [MaxLength(50)]
-        [RegularExpression("^[a-zA-Z]+$\r\n")]
+        //[RegularExpression("^[a-zA-Z]")]
         public string ContactType { get; set; } = string.Empty;
 
         [Required]
         [MaxLength(255)]
-        [RegularExpression("^[a-zA-Z]+$\r\n")]
+        //[RegularExpression("^[a-zA-Z]")]
         public string Name { get; set; }
 
         [Required]
@@ -40,5 +40,7 @@ namespace ShutterManagement.Core.SPModel
         public bool IsBillingAddressSameAsAddress { get; set; } = false;
 
         public BillingAddressVm billingAddressVm { get; set; }  
+
+        public Sp_Tenant Sp_Tenant { get; set; }
     }
 }
