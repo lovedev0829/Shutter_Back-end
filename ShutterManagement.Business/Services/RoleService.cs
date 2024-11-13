@@ -61,7 +61,7 @@ namespace ShutterManagement.Business.Services
                             RoleId = res.Id,
                             ModulePermissionId = item
                         };
-                        await rolePermissionService.Add(tblRolesPermission);
+                         await rolePermissionService.Add(tblRolesPermission);
 
                     }
                 }

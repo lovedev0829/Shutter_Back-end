@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core;
@@ -14,53 +13,26 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace ShutterManagement.Business.Services
 {
 
 
     public class AddressService : BaseRepository<ShutterDbContext, TblAddress>, IAddress
-      {
-       private readonly ShutterDbContext _context;
+    {
+        private readonly ShutterDbContext _context;
+        private readonly ClaimsProperty claimsProperty;
+        private readonly IContactService contactService;
 
-      public AddressService(ShutterDbContext context)
-      {
-        _context = context;
-       }
-
-      public Task<IResponseVm<string>> ActiveInActiveAddress(Guid id)
-      {
-            IResponseVm<string> responseVm = new ResponseVm<string>();
-            try
-            {
-                var address = GetAllQuerable()
-                    .Where(c => c.AddressId == id && c.TenantId == AppConstant.LoggedInTenantId)
-                    .FirstOrDefault();
-
-                if (address != null)
-                {
-
-                    address.IsActive = false;
-                    address.ModifiedBy = AppConstant.LoggedInUserID;
-                    address.UpdatedAt = DateTime.Now;
-                    Update(address);
-
-                    responseVm.IsSuccess = true;
-                    responseVm.Message = AppConstant.DeleteSuccessMsg;
-                }
-                else
-                {
-                    responseVm.Message = AppConstant.NoUserFound;
-                }
-            }
-            catch (Exception ex)
-            {
-                responseVm.Message = AppConstant.ExceptionError + ex.Message;
-            }
-
-            return Task.FromResult(responseVm);
-
+        public AddressService(ShutterDbContext context,ClaimsProperty claimsProperty, IContactService contactService)
+        {
+            _context = context;
+            this.claimsProperty = claimsProperty;
+            this.contactService = contactService;
         }
+
+       
 
         public async Task<IResponseVm<string>> Create_Address(CreateAddress model)
         {
@@ -68,35 +40,44 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var address = new TblAddress
+                var IsContactExists = await contactService.AnyAsync(x => x.ContactId.ToString() == model.ContactId
+                 && x.TenantId == AppConstant.LoggedInTenantId);
+                if (IsContactExists)
                 {
-                    ContactId = model.ContactId,
-                    Label = model.Label,
-                    AddressLine1 = model.AddressLine1,
-                    AddressLine2 = model.AddressLine2,
-                    City = model.City,
-                    State = model.State,
-                    ZipCode = model.ZipCode,
-                    Country = model.Country,
-                    CreatedAt = DateTime.Now,
-                    CreatedBy = AppConstant.LoggedInUserID,
-                    IsActive = true,
-                    IsDelete = false,
-                    TenantId = AppConstant.LoggedInTenantId
-                };
-                if (address != null)
-                {
-                    _context.TblAddresses.Add(address);
-                    await _context.SaveChangesAsync();
-                    responseVm.IsSuccess = true;
-                    responseVm.Message = AppConstant.InsertSuccessMsg;
+                    var address = new TblAddress
+                    {
+                        ContactId = Guid.Parse(model.ContactId),
+                        Label = model.Label,
+                        AddressLine1 = model.AddressLine1,
+                        AddressLine2 = model.AddressLine2,
+                        City = model.City,
+                        State = model.State,
+                        ZipCode = model.ZipCode,
+                        Country = model.Country,
+                        IsActive = true,
+                        IsDelete = false,
+                        CreatedAt = DateTime.Now,
+                        CreatedBy = AppConstant.LoggedInUserID,
+                        TenantId = AppConstant.LoggedInTenantId
+                    };
+
+                    var res = await Add(address);
+                    if (res.AddressId != Guid.Empty)
+                    {
+                        responseVm.IsSuccess = true;
+                        responseVm.Message = AppConstant.InsertSuccessMsg;
+                    }
+                    else
+                    {
+                        responseVm.Message = AppConstant.NoDataFound;
+                    }
                 }
                 else
                 {
-                    responseVm.Message = AppConstant.NoDataFound;
+                    responseVm.Message = AppConstant.NotRelatesToTenant;
                 }
             }
-               
+
             catch (Exception ex)
             {
                 responseVm.Message = AppConstant.ExceptionError + ex.Message;
@@ -105,42 +86,115 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-
-        public Task<IResponseVm<string>> DeleteAddress(Guid id)
+        public async Task<IResponseVm<AddressResponse>> Update_Address(UpdateAddress model)
         {
-            IResponseVm<string> responseVm = new ResponseVm<string>();
+            IResponseVm<AddressResponse> responseVm = new ResponseVm<AddressResponse>();
             try
-            { 
-                var address = GetAllQuerable()
-                    .Where(c => c.AddressId == id && c.TenantId == AppConstant.LoggedInTenantId)
-                    .FirstOrDefault();
-
-                if (address != null)
+            {
+                var IsContactExists = await contactService.AnyAsync(x => x.ContactId.ToString() == model.ContactId
+                 && x.TenantId == AppConstant.LoggedInTenantId);
+                if (IsContactExists)
                 {
+                    var AddressDetails = GetAllQuerable().Where(x => x.AddressId.ToString() == model.AddressId && x.TenantId == AppConstant.LoggedInTenantId
+                    && x.IsActive == true && x.IsDelete == false).FirstOrDefault();
 
-                    address.IsActive = false;
-                    address.IsDelete = true;
-                    address.ModifiedBy = AppConstant.LoggedInUserID;
-                    address.UpdatedAt = DateTime.Now;
-                    Update(address);
+                    if(AddressDetails != null)
+                    {
+                        AddressDetails.AddressLine1 = model.AddressLine1;
+                        AddressDetails.AddressLine2 = model.AddressLine2;
+                        AddressDetails.City = model.City;
+                        AddressDetails.State = model.State;
+                        AddressDetails.ZipCode = model.ZipCode;
+                        AddressDetails.Country = model.Country;
+                        AddressDetails.ModifiedBy = AppConstant.LoggedInUserID;
+                        AddressDetails.UpdatedAt = DateTime.Now;
 
-                    responseVm.IsSuccess = true;
-                    responseVm.Message = AppConstant.DeleteSuccessMsg;
+                        await Update(AddressDetails);
+
+                        responseVm.IsSuccess = true;
+                        responseVm.Message = AppConstant.UpdateSuccessMsg;
+                    }
+                    else
+                    {
+                        responseVm.Message = AppConstant.NoDataFound;
+                    }
                 }
                 else
                 {
-                    responseVm.Message = AppConstant.NoUserFound;
+                    responseVm.Message = AppConstant.NotRelatesToTenant;
                 }
             }
             catch (Exception ex)
             {
                 responseVm.Message = AppConstant.ExceptionError + ex.Message;
             }
+            return responseVm;
 
-            return Task.FromResult(responseVm);
         }
 
+        public async Task<IResponseVm<string>> DeleteAddress(Guid AddressId)
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+            try
+            {
+                var AddressDetails = GetAllQuerable().Where(x => x.AddressId == AddressId && x.TenantId == AppConstant.LoggedInTenantId
+                && x.IsActive == true && x.IsDelete == false).FirstOrDefault();
 
+                if (AddressDetails != null)
+                {
+                    AddressDetails.IsDelete = true;
+                    AddressDetails.IsActive = false;
+                    AddressDetails.ModifiedBy = AppConstant.LoggedInUserID;
+                    AddressDetails.UpdatedAt = DateTime.Now;
+
+                    await Update(AddressDetails);
+
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = AppConstant.UpdateSuccessMsg;
+                }
+                else
+                {
+                    responseVm.Message = AppConstant.NoDataFound;
+                }
+            }
+            catch (Exception ex)
+            {
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+            }
+            return responseVm;
+        }
+
+        public async Task<IResponseVm<string>> ActiveInActiveAddress(Guid AddressId)
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+            try
+            {
+                var AddressDetails = GetAllQuerable().Where(x => x.AddressId == AddressId && x.TenantId == AppConstant.LoggedInTenantId
+                && x.IsDelete == false).FirstOrDefault();
+
+                if (AddressDetails != null)
+                {
+                    AddressDetails.IsActive = !AddressDetails.IsActive;
+                    AddressDetails.ModifiedBy = AppConstant.LoggedInUserID;
+                    AddressDetails.UpdatedAt = DateTime.Now;
+
+                    await Update(AddressDetails);
+
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = AppConstant.UpdateSuccessMsg;
+                }
+                else
+                {
+                    responseVm.Message = AppConstant.NoDataFound;
+                }
+            }
+            catch (Exception ex)
+            {
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+            }
+            return responseVm;
+
+        }
 
         public async Task<IResponseVm<List<AddressResponse>>> GetAll_Address()
         {
@@ -163,7 +217,7 @@ namespace ShutterManagement.Business.Services
                     })
                     .ToListAsync();
 
-                if (addresses != null && addresses.Any())  
+                if (addresses != null && addresses.Any())
                 {
                     responseVm.IsSuccess = true;
                     responseVm.Message = $"{AppConstant.FetchSuccessMsg}";
@@ -181,12 +235,12 @@ namespace ShutterManagement.Business.Services
                 responseVm.IsSuccess = false;
                 responseVm.Message = AppConstant.ExceptionError + ex.Message;
             }
-            return responseVm;  
+            return responseVm;
         }
 
         public async Task<IResponseVm<AddressResponse>> GetById_Address(Guid id)
         {
-            IResponseVm<AddressResponse> responseVm = new ResponseVm<AddressResponse>();    
+            IResponseVm<AddressResponse> responseVm = new ResponseVm<AddressResponse>();
             try
             {
                 var address = await _context.TblAddresses
@@ -201,12 +255,12 @@ namespace ShutterManagement.Business.Services
                         State = c.State,
                         ZipCode = c.ZipCode,
                         Country = c.Country,
-                        
+
                     })
                     .FirstOrDefaultAsync();
                 if (address != null)
                 {
-                    responseVm.IsSuccess=true;
+                    responseVm.IsSuccess = true;
                     responseVm.Message = $"{AppConstant.FetchSuccessMsg}";
                     responseVm.Data = address;
                     responseVm.TotalRecords = 1;
@@ -216,44 +270,14 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.NoDataFound;
                 }
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 responseVm.Message = AppConstant.ExceptionError + ex.Message;
             }
             return responseVm;
         }
 
-        public async Task<IResponseVm<AddressResponse>> Update_Address(UpdateAddress model)
-        {
-            IResponseVm<AddressResponse> responseVm = new ResponseVm<AddressResponse>();
-            try
-            {
-                var address = await _context.TblAddresses
-                    .FirstOrDefaultAsync(c => c.AddressId == model.AddressId && c.IsActive == true && c.TenantId == AppConstant.LoggedInTenantId);
 
-                if (address == null)
-                {
-                    address.ContactId = model.ContactId;    
-                    address.AddressLine1 = model.AddressLine1;
-                    address.AddressLine2 = model.AddressLine2;
-                    address.City = model.City;
-                    address.State = model.State;
-                    address.ZipCode = model.ZipCode;
-                    address.Country = model.Country;
-                    address.TenantId = model.TenantId;
-                    address.ModifiedBy = AppConstant.LoggedInUserID;
-                    address.UpdatedAt= DateTime.Now;    
-                }
 
-                await _context.SaveChangesAsync();
-            }
-            catch (Exception ex)
-            {
-
-            }
-            return responseVm;
-
-        }
-
-       
     }
 }

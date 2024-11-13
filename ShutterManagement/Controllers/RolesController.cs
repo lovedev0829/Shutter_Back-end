@@ -20,7 +20,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("Create")]
-        [Authorize(Roles = "RoleAdd")]
+        //[Authorize(Roles = "RoleAdd")]
         public async Task<IActionResult> Create([FromBody] AddRole model)
         {
             var res = await roleService.Create(model);

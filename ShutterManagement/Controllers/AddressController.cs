@@ -20,47 +20,62 @@ namespace ShutterManagement.Controllers
             _address = address;
         }
 
-        [HttpPost("Create")]
+
+        [HttpPost]
+        [Route("Create")]
+        [Authorize(Roles = "AddressAdd")]
         public async Task<IActionResult> Create([FromBody] CreateAddress addressVm)
         {
             var result = await _address.Create_Address(addressVm);
             return Ok(result);
         }
 
-        [HttpPost("Update")]
+        [HttpPost]
+        [Route("Update")]
+        [Authorize(Roles = "AddressEdit")]
         public async Task<IActionResult> Update([FromBody] UpdateAddress address)
         {
             var result = await _address.Update_Address(address);
             return Ok(result);
         }
 
-        [HttpPost("Delete")]
+        [HttpPost]
+        [Route("Delete")]
+        [Authorize(Roles = "AddressDelete")]
         public async Task<IActionResult> Delete(Guid Id)
         {
             var result = await _address.DeleteAddress(Id);
             return Ok(result);
         }
 
-        [HttpGet("GetAll")]
-        public async Task<IActionResult> GetAllAddresses()
-        {
-            var result = await _address.GetAll_Address();
-            return Ok(result);
-        }
-
-        [HttpGet("GetById")]
-        public async Task<IActionResult> GetById(Guid Id)
-        {
-            var result = await _address.GetById_Address(Id);
-            return Ok(result);
-        }
-
-
-        [HttpPost("ActiveInActive")]
+        [HttpPost]
+        [Route("ActiveInActive")]
+        [Authorize(Roles = "AddressEdit")]
         public async Task<IActionResult> ActiveInactive(Guid Id)
         {
             var result = await _address.ActiveInActiveAddress(Id);
             return Ok(result);
         }
+
+        //[HttpGet]
+        //[Route("GetAll")]
+        //[Authorize(Roles = "AddressView")]
+        //public async Task<IActionResult> GetAllAddresses()
+        //{
+        //    var result = await _address.GetAll_Address();
+        //    return Ok(result);
+        //}
+
+        //[HttpGet]
+        //[Route("GetById")]
+        //[Authorize(Roles = "AddressView")]
+        //public async Task<IActionResult> GetById(Guid Id)
+        //{
+        //    var result = await _address.GetById_Address(Id);
+        //    return Ok(result);
+        //}
+
+
+   
     }
 }

@@ -8,7 +8,7 @@ namespace ShutterManagement.Core.ViewModels.Request
 {
      public class UpdateAddress : CreateAddress
      {
-        public Guid AddressId { get; set; }
+        public string? AddressId { get; set; }
 
 
     }
