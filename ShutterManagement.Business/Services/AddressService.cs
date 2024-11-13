@@ -22,11 +22,13 @@ namespace ShutterManagement.Business.Services
     public class AddressService : BaseRepository<ShutterDbContext, TblAddress>, IAddress
       {
        private readonly ShutterDbContext _context;
+        private readonly ClaimsProperty claimsProperty;
 
-      public AddressService(ShutterDbContext context)
+        public AddressService(ShutterDbContext context,ClaimsProperty claimsProperty)
       {
         _context = context;
-       }
+        this.claimsProperty = claimsProperty;
+        }
 
       public Task<IResponseVm<string>> ActiveInActiveAddress(Guid id)
       {
@@ -46,7 +48,7 @@ namespace ShutterManagement.Business.Services
                     Update(address);
 
                     responseVm.IsSuccess = true;
-                    responseVm.Message = AppConstant.DeleteSuccessMsg;
+                    responseVm.Message = AppConstant.InactivationMsg;
                 }
                 else
                 {
@@ -90,6 +92,7 @@ namespace ShutterManagement.Business.Services
                     await _context.SaveChangesAsync();
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.InsertSuccessMsg;
+                    responseVm.TotalRecords = 1;
                 }
                 else
                 {
@@ -147,7 +150,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<List<AddressResponse>> responseVm = new ResponseVm<List<AddressResponse>>();
             try
             {
-                var addresses = await _context.TblAddresses
+                var addresses = await GetAllQuerable()
                     .Where(c => c.IsActive == true && c.TenantId == AppConstant.LoggedInTenantId)
                     .Select(c => new AddressResponse
                     {
@@ -163,7 +166,7 @@ namespace ShutterManagement.Business.Services
                     })
                     .ToListAsync();
 
-                if (addresses != null && addresses.Any())  
+                if (addresses != null)  
                 {
                     responseVm.IsSuccess = true;
                     responseVm.Message = $"{AppConstant.FetchSuccessMsg}";
@@ -186,10 +189,10 @@ namespace ShutterManagement.Business.Services
 
         public async Task<IResponseVm<AddressResponse>> GetById_Address(Guid id)
         {
-            IResponseVm<AddressResponse> responseVm = new ResponseVm<AddressResponse>();    
+            IResponseVm<AddressResponse> responseVm = new ResponseVm<AddressResponse>();
             try
             {
-                var address = await _context.TblAddresses
+                var address = await GetAllQuerable() 
                     .Where(c => c.AddressId == id && c.IsActive == true && c.TenantId == AppConstant.LoggedInTenantId)
                     .Select(c => new AddressResponse
                     {
@@ -201,12 +204,12 @@ namespace ShutterManagement.Business.Services
                         State = c.State,
                         ZipCode = c.ZipCode,
                         Country = c.Country,
-                        
                     })
-                    .FirstOrDefaultAsync();
+                    .FirstOrDefaultAsync();  
+
                 if (address != null)
                 {
-                    responseVm.IsSuccess=true;
+                    responseVm.IsSuccess = true;
                     responseVm.Message = $"{AppConstant.FetchSuccessMsg}";
                     responseVm.Data = address;
                     responseVm.TotalRecords = 1;
@@ -216,39 +219,46 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.NoDataFound;
                 }
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 responseVm.Message = AppConstant.ExceptionError + ex.Message;
             }
-            return responseVm;
+            return responseVm;  
         }
+
 
         public async Task<IResponseVm<AddressResponse>> Update_Address(UpdateAddress model)
         {
             IResponseVm<AddressResponse> responseVm = new ResponseVm<AddressResponse>();
             try
             {
-                var address = await _context.TblAddresses
-                    .FirstOrDefaultAsync(c => c.AddressId == model.AddressId && c.IsActive == true && c.TenantId == AppConstant.LoggedInTenantId);
+                var address = GetAllQuerable().Where(c => c.AddressId == model.AddressId && c.IsActive == true && c.TenantId == AppConstant.LoggedInTenantId)
+                    .FirstOrDefault();
 
-                if (address == null)
+                if (address != null)
                 {
-                    address.ContactId = model.ContactId;    
                     address.AddressLine1 = model.AddressLine1;
                     address.AddressLine2 = model.AddressLine2;
                     address.City = model.City;
                     address.State = model.State;
                     address.ZipCode = model.ZipCode;
                     address.Country = model.Country;
-                    address.TenantId = model.TenantId;
                     address.ModifiedBy = AppConstant.LoggedInUserID;
-                    address.UpdatedAt= DateTime.Now;    
+                    address.UpdatedAt= DateTime.Now;
+                    await Update(address);
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = AppConstant.UpdateSuccessMsg;
+                    responseVm.TotalRecords = 1;
+                }
+                else
+                {
+                    responseVm.Message = AppConstant.NoDataFound;
                 }
 
-                await _context.SaveChangesAsync();
             }
             catch (Exception ex)
             {
-
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
             }
             return responseVm;
 
