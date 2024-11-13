@@ -20,7 +20,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("Create")]
-        //[Authorize(Roles = "RoleAdd")]
+        [Authorize(Roles = "RolesAdd")]
         public async Task<IActionResult> Create([FromBody] AddRole model)
         {
             var res = await roleService.Create(model);
@@ -29,7 +29,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("Update")]
-        [Authorize(Roles = "RoleEdit")]
+        [Authorize(Roles = "RolesEdit")]
         public async Task<IActionResult> Update([FromBody] UpdateRole model)
         {
             var res = await roleService.Update(model);
@@ -38,7 +38,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("Delete")]
-        [Authorize(Roles = "RoleDelete")]
+        [Authorize(Roles = "RolesDelete")]
         public async Task<IActionResult> Delete(string TenantId)
         {
             var res = await roleService.Delete(TenantId);
@@ -47,7 +47,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("ActiveInActive")]
-        [Authorize(Roles = "RoleEdit")]
+        [Authorize(Roles = "RolesEdit")]
         public async Task<IActionResult> ActiveInactive(string TenantId)
         {
             var res = await roleService.ActiveInactive(TenantId);
@@ -56,7 +56,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("GetAll")]
-        [Authorize(Roles = "RoleView")]
+        [Authorize(Roles = "RolesView")]
         public async Task<IActionResult> GetAll(Pagination filter)
         {
             var res = await roleService.GetAll(filter);

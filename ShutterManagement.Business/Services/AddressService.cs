@@ -196,43 +196,41 @@ namespace ShutterManagement.Business.Services
 
         }
 
-        public async Task<IResponseVm<List<AddressResponse>>> GetAll_Address()
+        public async Task<IResponseVm<dynamic>> GetAll_Address(Pagination filter)
         {
-            IResponseVm<List<AddressResponse>> responseVm = new ResponseVm<List<AddressResponse>>();
+            IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
             try
             {
-                var addresses = await GetAllQuerable()
-                    .Where(c => c.IsActive == true && c.TenantId == AppConstant.LoggedInTenantId)
-                    .Select(c => new AddressResponse
-                    {
-                        AddressId = c.AddressId,
-                        ContactId = c.ContactId,
-                        Label = c.Label,
-                        AddressLine1 = c.AddressLine1,
-                        AddressLine2 = c.AddressLine2,
-                        City = c.City,
-                        State = c.State,
-                        ZipCode = c.ZipCode,
-                        Country = c.Country,
-                    })
-                    .ToListAsync();
+                var AddressList = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId).ToList();
 
-                if (addresses != null && addresses.Any())
+                var FilterRecords = AddressList
+                                    .Where(x =>
+                                    (filter.SearchValue != "" ?
+                                    ((x.AddressLine1 ?? "").Contains(filter.SearchValue)
+                                    || (x.AddressLine2 ?? "").Contains(filter.SearchValue)
+                                    || (x.Label ?? "").Contains(filter.SearchValue) || (x.ZipCode ?? "").Contains(filter.SearchValue)
+                                    || (x.City ?? "").Contains(filter.SearchValue)
+                                    || (x.State ?? "").Contains(filter.SearchValue)
+                                    || (x.Country ?? "").Contains(filter.SearchValue)
+                                    ) : true)).ToList();
+                var TakenRecords = FilterRecords
+                                    .Skip((filter.PageNo - 1) * filter.RecordPerPage).Take(filter.RecordPerPage).ToList();
+                if (TakenRecords != null && TakenRecords.Count > 0)
                 {
+                    responseVm.Data = TakenRecords;
                     responseVm.IsSuccess = true;
-                    responseVm.Message = $"{AppConstant.FetchSuccessMsg}";
-                    responseVm.Data = addresses;
-                    responseVm.TotalRecords = addresses.Count;
+                    responseVm.Message = AppConstant.UpdateSuccessMsg;
+                    responseVm.TotalRecords = FilterRecords.Count;
                 }
                 else
                 {
-                    responseVm.IsSuccess = false;
-                    responseVm.Message = "No addresses found.";
+                    responseVm.Message = AppConstant.NoDataFound;
                 }
+
+
             }
             catch (Exception ex)
             {
-                responseVm.IsSuccess = false;
                 responseVm.Message = AppConstant.ExceptionError + ex.Message;
             }
             return responseVm;

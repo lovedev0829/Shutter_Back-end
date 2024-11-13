@@ -89,7 +89,9 @@ namespace ShutterManagement.Services
                     {
                         PermissionId = reader.GetGuid(reader.GetOrdinal("Id")),
                         PermissionName = reader.GetString(reader.GetOrdinal("Name")),
-                        PermissionDisplayName = reader.GetString(reader.GetOrdinal("DisplayName"))
+                        PermissionDisplayName = reader.GetString(reader.GetOrdinal("DisplayName")),
+                        Icon = reader.GetString(reader.GetOrdinal("Icon")),
+                        Url = reader.GetString(reader.GetOrdinal("Url"))
                     };
                 },
                 new SqlParameter("@UserId", SqlDbType.UniqueIdentifier) { SqlValue = UserDetails[0].UserId }
@@ -123,10 +125,12 @@ namespace ShutterManagement.Services
                 string TokenValue = tokenHandler.WriteToken(token);
 
                 responseVm.Data = mapper.Map(UserDetails[0], loginDetails);
-                responseVm.Data.Roles = UserRole.Select(x => x.PermissionName).ToArray();
+                responseVm.Data.Roles = UserRole
+                    .Select(x => new LoginRoles { RoleName = x.PermissionName, Url = x.Url, Icon = x.Icon }).ToArray();
                 responseVm.Data.Token = TokenValue;
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.LoginSuccessMessgae;
+                responseVm.TotalRecords = 1;
             }
             else
             {

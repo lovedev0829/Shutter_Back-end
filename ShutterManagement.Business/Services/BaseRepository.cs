@@ -67,6 +67,7 @@ namespace ShutterManagement.Services
             return entity;
         }
 
+       
         public async virtual Task Delete(T entity)
         {
             dbContext.Set<T>().Remove(entity);

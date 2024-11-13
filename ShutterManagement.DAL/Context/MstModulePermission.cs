@@ -17,5 +17,11 @@ public partial class MstModulePermission
 
     public string? PermissionDisplayName { get; set; }
 
+    public string? Icon { get; set; }
+
+    public string? Url { get; set; }
+
     public virtual MstModule? Module { get; set; }
+
+    public virtual ICollection<TblRolesPermission> TblRolesPermissions { get; set; } = new List<TblRolesPermission>();
 }

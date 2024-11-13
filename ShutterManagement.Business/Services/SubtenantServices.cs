@@ -40,21 +40,25 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                if(model.ParentTenantId == null || model.ParentTenantId == "")
+                var IsCodeExists = await AnyAsync(x => x.IsActive == true
+                    && x.IsDelete == false && x.Code == model.Code);
+                if (!IsCodeExists)
                 {
-                    responseVm.Message = AppConstant.ParentTenantIdNull;
-                    return responseVm;
-                }
-                bool IsParentExists = await AnyAsync(x => x.TenantId.ToString() == model.ParentTenantId 
-                && x.IsDelete == false && x.IsActive == true && x.Code == model.Code);
-                if (!IsParentExists)
-                {
-                    responseVm.Message = AppConstant.TenantNotFound;
-                    return responseVm;
-                }
+                    if (model.ParentTenantId == null || model.ParentTenantId == "")
+                    {
+                        responseVm.Message = AppConstant.ParentTenantIdNull;
+                        return responseVm;
+                    }
+                    bool IsParentExists = await AnyAsync(x => x.TenantId.ToString() == model.ParentTenantId
+                    && x.IsDelete == false && x.IsActive == true && x.Code == model.Code);
+                    if (!IsParentExists)
+                    {
+                        responseVm.Message = AppConstant.TenantNotFound;
+                        return responseVm;
+                    }
 
-                SqlParameter[] sqlParameters =
-                {
+                    SqlParameter[] sqlParameters =
+                    {
                     new SqlParameter("@ParentTenantId", SqlDbType.UniqueIdentifier) { SqlValue = model.ParentTenantId },
                     new SqlParameter("@FirstName", SqlDbType.NVarChar) { SqlValue = model.FirstName },
                     new SqlParameter("@MiddleName", SqlDbType.NVarChar) { SqlValue = model.MiddleName },
@@ -70,10 +74,10 @@ namespace ShutterManagement.Business.Services
                     new SqlParameter("@Action", SqlDbType.NVarChar) { SqlValue = "Create" },
                 };
 
-                await dataServices.CallSP("sp_TenantCRUD", null, sqlParameters);
-                responseVm.IsSuccess = true;
-                responseVm.Message = AppConstant.InsertSuccessMsg;
-
+                    await dataServices.CallSP("sp_TenantCRUD", null, sqlParameters);
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = AppConstant.InsertSuccessMsg;
+                }
             }
             catch (Exception ex)
             {
@@ -87,35 +91,39 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                if (model.TenantId == null || model.TenantId == "")
+                var IsCodeExists = await AnyAsync(x => x.IsActive == true
+                    && x.IsDelete == false && x.Code == model.Code && x.TenantId.ToString() != model.TenantId);
+                if (!IsCodeExists)
                 {
-                    responseVm.Message = AppConstant.TenantIdNull;
-                    return responseVm;
-                }
-                if (model.ParentTenantId == null || model.ParentTenantId == "")
-                {
-                    responseVm.Message = AppConstant.ParentTenantIdNull;
-                    return responseVm;
-                }
-                bool IsParentExists = await AnyAsync(x => x.TenantId.ToString() == model.ParentTenantId
-                && x.IsDelete == false && x.IsActive == true && x.Code == model.Code);
-                if (!IsParentExists)
-                {
-                    responseVm.Message = AppConstant.TenantNotFound;
-                    return responseVm;
-                }
-                bool IsTenantExists = await AnyAsync(x => x.TenantId.ToString() == model.TenantId
-                && x.IsDelete == false && x.IsActive == true && x.Code == model.Code);
-                if (!IsParentExists)
-                {
-                    responseVm.Message = AppConstant.TenantNotFound;
-                    return responseVm;
-                }
+                    if (model.TenantId == null || model.TenantId == "")
+                    {
+                        responseVm.Message = AppConstant.TenantIdNull;
+                        return responseVm;
+                    }
+                    if (model.ParentTenantId == null || model.ParentTenantId == "")
+                    {
+                        responseVm.Message = AppConstant.ParentTenantIdNull;
+                        return responseVm;
+                    }
+                    bool IsParentExists = await AnyAsync(x => x.TenantId.ToString() == model.ParentTenantId
+                    && x.IsDelete == false && x.IsActive == true && x.Code == model.Code);
+                    if (!IsParentExists)
+                    {
+                        responseVm.Message = AppConstant.TenantNotFound;
+                        return responseVm;
+                    }
+                    bool IsTenantExists = await AnyAsync(x => x.TenantId.ToString() == model.TenantId
+                    && x.IsDelete == false && x.IsActive == true && x.Code == model.Code);
+                    if (!IsParentExists)
+                    {
+                        responseVm.Message = AppConstant.TenantNotFound;
+                        return responseVm;
+                    }
 
-                var tenantid = Guid.Parse(model.TenantId);
-                var Parenttenantid = Guid.Parse(model.ParentTenantId);
-                SqlParameter[] sqlParameters =
-                {
+                    var tenantid = Guid.Parse(model.TenantId);
+                    var Parenttenantid = Guid.Parse(model.ParentTenantId);
+                    SqlParameter[] sqlParameters =
+                    {
                     new SqlParameter("@TenantId", SqlDbType.UniqueIdentifier) { SqlValue = tenantid},
                     new SqlParameter("@ParentTenantId", SqlDbType.UniqueIdentifier) { SqlValue = Parenttenantid },
                     new SqlParameter("@FirstName", SqlDbType.VarChar) { SqlValue = model.FirstName },
@@ -132,10 +140,10 @@ namespace ShutterManagement.Business.Services
                     new SqlParameter("@Action", SqlDbType.NVarChar) { SqlValue = "Update" },
                 };
 
-                await dataServices.CallSP("sp_TenantCRUD", null, sqlParameters);
-                responseVm.IsSuccess = true;
-                responseVm.Message = AppConstant.UpdateSuccessMsg;
-
+                    await dataServices.CallSP("sp_TenantCRUD", null, sqlParameters);
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = AppConstant.UpdateSuccessMsg;
+                }
             }
             catch (Exception ex)
             {
@@ -230,7 +238,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
             try
             {
-                var TenantList = GetAllQuerable().Where(x => x.IsDelete == false && x.ParentTenantId == AppConstant.LoggedInTenantId ).ToList();
+                var TenantList = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId).ToList();
                 foreach (var item in TenantList)
                 {
                     item.BrandingInfoNavigation = tenantBrandingService.GetAllQuerable().Where(x => x.Id == item.BrandingInfo).FirstOrDefault();
@@ -242,19 +250,19 @@ namespace ShutterManagement.Business.Services
                                     || (x.BrandingInfoNavigation?.PhoneNmber ?? "").Contains(filter.SearchValue)
                                     || (x.FirstName ?? "").Contains(filter.SearchValue) || (x.LastName ?? "").Contains(filter.SearchValue)
                                     || (x.MiddleName ?? "").Contains(filter.SearchValue)
-                                    ) : true))
+                                    ) : true)).ToList();
+                var TakenRecords =FilterRecords
                                     .Skip((filter.PageNo - 1) * filter.RecordPerPage).Take(filter.RecordPerPage).ToList();
-                if (FilterRecords != null && FilterRecords.Count > 0)
+                if (TakenRecords != null && TakenRecords.Count > 0)
                 {
-                    responseVm.Data = FilterRecords;
+                    responseVm.Data = TakenRecords;
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.UpdateSuccessMsg;
-                    responseVm.TotalRecords = TenantList.Count;
+                    responseVm.TotalRecords = FilterRecords.Count;
                 }
                 else
                 {
                     responseVm.Message = AppConstant.NoDataFound;
-                    responseVm.TotalRecords = TenantList.Count;
                 }
 
 

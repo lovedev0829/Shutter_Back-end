@@ -99,8 +99,12 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.ToTable("MstModule_Permission", "dbo");
 
             entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.Icon).HasMaxLength(500);
             entity.Property(e => e.ModulePermission).HasMaxLength(100);
             entity.Property(e => e.PermissionDisplayName).HasMaxLength(100);
+            entity.Property(e => e.Url)
+                .HasMaxLength(1000)
+                .HasColumnName("URL");
 
             entity.HasOne(d => d.Module).WithMany(p => p.MstModulePermissions)
                 .HasForeignKey(d => d.ModuleId)
@@ -133,6 +137,10 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.HasOne(d => d.Contact).WithMany(p => p.TblAddresses)
                 .HasForeignKey(d => d.ContactId)
                 .HasConstraintName("FK__TblAddres__Conta__59C55456");
+
+            entity.HasOne(d => d.Tenant).WithMany(p => p.TblAddresses)
+                .HasForeignKey(d => d.TenantId)
+                .HasConstraintName("FK__TblAddres__Tenan__3FD07829");
         });
 
         modelBuilder.Entity<TblAssembly>(entity =>
@@ -521,6 +529,7 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
 
             entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.IsShow).HasDefaultValue(false);
             entity.Property(e => e.ModifiedAt).HasColumnType("datetime");
             entity.Property(e => e.RoleName).HasMaxLength(100);
 
@@ -531,15 +540,17 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
 
         modelBuilder.Entity<TblRolesPermission>(entity =>
         {
-            entity
-                .HasNoKey()
-                .ToTable("TblRoles_Permission", "dbo");
+            entity.HasKey(e => e.Id).HasName("PK__TblRoles__3214EC07B4BAD913");
 
-            entity.HasOne(d => d.ModulePermission).WithMany()
+            entity.ToTable("TblRoles_Permission", "dbo");
+
+            entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+
+            entity.HasOne(d => d.ModulePermission).WithMany(p => p.TblRolesPermissions)
                 .HasForeignKey(d => d.ModulePermissionId)
                 .HasConstraintName("FK__TblRoles___Modul__2EA5EC27");
 
-            entity.HasOne(d => d.Role).WithMany()
+            entity.HasOne(d => d.Role).WithMany(p => p.TblRolesPermissions)
                 .HasForeignKey(d => d.RoleId)
                 .HasConstraintName("FK__TblRoles___RoleI__2DB1C7EE");
         });

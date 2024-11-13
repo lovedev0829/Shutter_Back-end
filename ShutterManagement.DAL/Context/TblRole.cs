@@ -23,6 +23,10 @@ public partial class TblRole
 
     public string? RoleName { get; set; }
 
+    public bool? IsShow { get; set; }
+
+    public virtual ICollection<TblRolesPermission> TblRolesPermissions { get; set; } = new List<TblRolesPermission>();
+
     public virtual ICollection<TblUserRole> TblUserRoles { get; set; } = new List<TblUserRole>();
 
     public virtual TblTenant? Tenant { get; set; }

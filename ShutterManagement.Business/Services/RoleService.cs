@@ -16,15 +16,17 @@ namespace ShutterManagement.Business.Services
     {
         private readonly DataServices dataServices;
         private readonly IUserService userService;
+        private readonly ShutterDbContext dbContext;
         private readonly ClaimsProperty claimsProperty;
         private readonly IRolePermissionService rolePermissionService;
 
-        public RoleService(DataServices dataServices, IUserService userService
+        public RoleService(DataServices dataServices, IUserService userService, ShutterDbContext dbContext
             , ClaimsProperty claimsProperty, IRolePermissionService rolePermissionService
             )
         {
             this.dataServices = dataServices;
             this.userService = userService;
+            this.dbContext = dbContext;
             this.claimsProperty = claimsProperty;
             this.rolePermissionService = rolePermissionService;
         }
@@ -61,7 +63,9 @@ namespace ShutterManagement.Business.Services
                             RoleId = res.Id,
                             ModulePermissionId = item
                         };
-                         await rolePermissionService.Add(tblRolesPermission);
+                        dbContext.TblRolesPermissions.Add(tblRolesPermission);
+                        dbContext.SaveChanges();
+                         //await rolePermissionService.Add(tblRolesPermission);
 
                     }
                 }
@@ -83,13 +87,13 @@ namespace ShutterManagement.Business.Services
             {
 
                 bool IsRoleExists = await AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId
-                && x.IsDelete == false && x.IsActive == true && x.Id == model.RoleId);
+                && x.IsDelete == false && x.IsActive == true && x.Id != model.RoleId && x.RoleName == model.RoleName);
                 if (!IsRoleExists)
                 {
                     responseVm.Message = AppConstant.NoDataFound;
                     return responseVm;
                 }
-                var RoleDetails = GetAllQuerable().Where(x => x.Id == model.RoleId && x.IsDelete == false
+                var RoleDetails = GetAllQuerable().Where(x => x.Id == model.RoleId && x.IsShow == false && x.IsDelete == false
                 && x.IsActive == true && x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
 
                 if (RoleDetails != null)
@@ -114,10 +118,14 @@ namespace ShutterManagement.Business.Services
                             await rolePermissionService.Add(tblRolesPermission);
 
                         }
+                        responseVm.IsSuccess = true;
+                        responseVm.Message = AppConstant.UpdateSuccessMsg;
                     }
                 }
-                responseVm.IsSuccess = true;
-                responseVm.Message = AppConstant.UpdateSuccessMsg;
+                else
+                {
+                    responseVm.Message = AppConstant.NoDataFound;
+                }
 
             }
             catch (Exception ex)
@@ -132,7 +140,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var RoleDetails = GetAllQuerable().Where(x => x.Id.ToString() == RoleId && x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
+                var RoleDetails = GetAllQuerable().Where(x => x.Id.ToString() == RoleId && x.IsShow == false && x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
                 if (RoleDetails != null)
                 {
                     RoleDetails.IsActive = false;
@@ -165,7 +173,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var RoleDetails = GetAllQuerable().Where(x => x.Id.ToString() == RoleId && x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
+                var RoleDetails = GetAllQuerable().Where(x => x.Id.ToString() == RoleId && x.IsShow == false && x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
                 if (RoleDetails != null)
                 {
                     RoleDetails.IsActive = !RoleDetails.IsActive;
@@ -197,7 +205,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
             try
             {
-                var RoleList = GetAllQuerable().Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId).ToList();
+                var RoleList = GetAllQuerable().Where(x => x.IsDelete == false && x.IsShow == false && x.TenantId == AppConstant.LoggedInTenantId).ToList();
                 
                 var FilterRecords = RoleList
                                     .Where(x =>

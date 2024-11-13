@@ -14,7 +14,7 @@ namespace ShutterManagement.Business.Interfaces
     {
         Task<IResponseVm<string>> Create_Address(CreateAddress model);
         Task<IResponseVm<AddressResponse>> Update_Address(UpdateAddress model);
-        Task<IResponseVm<List<AddressResponse>>> GetAll_Address();
+        Task<IResponseVm<dynamic>> GetAll_Address(Pagination filter);
         Task<IResponseVm<AddressResponse>> GetById_Address(Guid AddressId);
 
         Task<IResponseVm<string>> ActiveInActiveAddress(Guid AddressId);

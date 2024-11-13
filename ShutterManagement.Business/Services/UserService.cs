@@ -186,5 +186,44 @@ namespace ShutterManagement.Services
             return result;
         }
 
+        public async Task<IResponseVm<dynamic>> GetAll(Pagination filter)
+        {
+            IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
+            try
+            {
+                var UserList = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId).ToList();
+                var FilterRecords = UserList
+                                    .Where(x =>
+                                    (filter.SearchValue != "" ?
+                                    ((x.Email ?? "").Contains(filter.SearchValue)
+                                    || (x.Phone ?? "").Contains(filter.SearchValue)
+                                    || (x.FirstName ?? "").Contains(filter.SearchValue) 
+                                    || (x.MiddleName ?? "").Contains(filter.SearchValue)
+                                    || (x.LastName ?? "").Contains(filter.SearchValue)
+                                    || (x.Username ?? "").Contains(filter.SearchValue)
+                                    ) : true)).ToList();
+                var TakenRecords = FilterRecords
+                                    .Skip((filter.PageNo - 1) * filter.RecordPerPage).Take(filter.RecordPerPage).ToList();
+                if (TakenRecords != null && TakenRecords.Count > 0)
+                {
+                    responseVm.Data = TakenRecords;
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = AppConstant.UpdateSuccessMsg;
+                    responseVm.TotalRecords = FilterRecords.Count;
+                }
+                else
+                {
+                    responseVm.Message = AppConstant.NoDataFound;
+                }
+
+
+            }
+            catch (Exception ex)
+            {
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+            }
+            return responseVm;
+        }
+
     }
 }

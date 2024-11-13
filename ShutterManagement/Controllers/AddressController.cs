@@ -57,14 +57,14 @@ namespace ShutterManagement.Controllers
             return Ok(result);
         }
 
-        //[HttpGet]
-        //[Route("GetAll")]
-        //[Authorize(Roles = "AddressView")]
-        //public async Task<IActionResult> GetAllAddresses()
-        //{
-        //    var result = await _address.GetAll_Address();
-        //    return Ok(result);
-        //}
+        [HttpGet]
+        [Route("GetAll")]
+        [Authorize(Roles = "AddressView")]
+        public async Task<IActionResult> GetAllAddresses(Pagination filter)
+        {
+            var result = await _address.GetAll_Address(filter);
+            return Ok(result);
+        }
 
         //[HttpGet]
         //[Route("GetById")]
@@ -76,6 +76,6 @@ namespace ShutterManagement.Controllers
         //}
 
 
-   
+
     }
 }
