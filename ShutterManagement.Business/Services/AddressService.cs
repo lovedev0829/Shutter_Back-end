@@ -201,7 +201,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<List<AddressResponse>> responseVm = new ResponseVm<List<AddressResponse>>();
             try
             {
-                var addresses = await _context.TblAddresses
+                var addresses = await GetAllQuerable()
                     .Where(c => c.IsActive == true && c.TenantId == AppConstant.LoggedInTenantId)
                     .Select(c => new AddressResponse
                     {
@@ -243,7 +243,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<AddressResponse> responseVm = new ResponseVm<AddressResponse>();
             try
             {
-                var address = await _context.TblAddresses
+                var address = await GetAllQuerable() 
                     .Where(c => c.AddressId == id && c.IsActive == true && c.TenantId == AppConstant.LoggedInTenantId)
                     .Select(c => new AddressResponse
                     {
@@ -257,7 +257,8 @@ namespace ShutterManagement.Business.Services
                         Country = c.Country,
 
                     })
-                    .FirstOrDefaultAsync();
+                    .FirstOrDefaultAsync();  
+
                 if (address != null)
                 {
                     responseVm.IsSuccess = true;
@@ -278,6 +279,6 @@ namespace ShutterManagement.Business.Services
         }
 
 
-
+       
     }
 }

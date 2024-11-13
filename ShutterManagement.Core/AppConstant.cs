@@ -30,6 +30,7 @@ namespace ShutterManagement.Core
         public static string AlreadyExists { get; set; } = "Data already exists!";
         public static string IncorrectDetails { get; set; } = "Incorrect details";
 
+        public static string InactivationMsg { get; set; } = "Inactivated Successfully";
         public static string FetchSuccessMsg { get; set; } = "Data fetched Successfully";
         public static string InvalidGuid { get; set; } = "Invalid Data Id";
         public static string LoginSuccessMessgae { get; set; } = "User loggedin successfully.";
@@ -46,5 +47,6 @@ namespace ShutterManagement.Core
         public static string LoggedInPhone { get; set; } = string.Empty;
         public static string LoggedInName { get; set; } = string.Empty;
         public static string LoggedInCompanyCode { get; set; } = string.Empty;
+
     }
 }
