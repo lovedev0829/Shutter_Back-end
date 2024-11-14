@@ -30,7 +30,7 @@ namespace ShutterManagement.Controllers
         [Route("Create")]
         [Authorize(Roles = "SubTenantAdd")]
 
-        public async Task<IActionResult> Create([FromBody] CreateSubTenant model)
+        public async Task<IActionResult> Create([FromBody] Tenant model)
         {
             var res = await tenantService.SubTenantCreate(model);
             return Ok(res);

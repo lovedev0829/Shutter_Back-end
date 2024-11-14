@@ -13,7 +13,7 @@ namespace ShutterManagement.Business.Interfaces
 {
      public interface ISubtenantService : IGenericRepository<TblTenant>
     {
-        Task<IResponseVm<string>> SubTenantCreate(CreateSubTenant model);
+        Task<IResponseVm<string>> SubTenantCreate(Tenant model);
         Task<IResponseVm<string>> SubTenantUpdate(UpdateSubTenant model);
         Task<IResponseVm<string>> SubTenantDelete(string TenantId);
         Task<IResponseVm<string>> SubTenantActiveInactive(string TenantId);
