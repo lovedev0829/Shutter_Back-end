@@ -47,5 +47,6 @@ namespace ShutterManagement.API.Controllers
             var result = await _userService.ActiveInactive(UserId);
             return Ok(result);
         }
+
     }
 }

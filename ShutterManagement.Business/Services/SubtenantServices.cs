@@ -56,7 +56,7 @@ namespace ShutterManagement.Business.Services
                         responseVm.Message = AppConstant.TenantNotFound;
                         return responseVm;
                     }
-
+                    var HashPassword = AesEncryptionHelper.Encrypt(model.Password ?? "");
                     SqlParameter[] sqlParameters =
                     {
                     new SqlParameter("@ParentTenantId", SqlDbType.UniqueIdentifier) { SqlValue = AppConstant.LoggedInTenantId },
@@ -129,6 +129,8 @@ namespace ShutterManagement.Business.Services
 
                     var tenantid = Guid.Parse(model.TenantId);
                     var Parenttenantid = AppConstant.LoggedInTenantId;
+                    var Parenttenantid = Guid.Parse(model.ParentTenantId);
+                    var HashPassword = AesEncryptionHelper.Encrypt(model.Password ?? "");
                     SqlParameter[] sqlParameters =
                     {
                     new SqlParameter("@TenantId", SqlDbType.UniqueIdentifier) { SqlValue = tenantid},

@@ -239,5 +239,14 @@ namespace ShutterManagement.Services
             return responseVm;
         }
 
+        public async Task PasswordEnc()
+        {
+            var users = GetAllQuerable().Where(x => x.IsActive == true).ToList();
+            foreach (var user in users) {
+                user.Pwd = AesEncryptionHelper.Encrypt(user.Pwd);
+                await Update(user);
+            }
+        }
+
     }
 }

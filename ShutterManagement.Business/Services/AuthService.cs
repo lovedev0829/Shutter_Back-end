@@ -18,6 +18,7 @@ using Microsoft.Extensions.Logging;
 using AutoMapper;
 using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.Business.Interfaces;
+using ShutterManagement.Core.Common;
 
 namespace ShutterManagement.Services
 {
@@ -57,6 +58,7 @@ namespace ShutterManagement.Services
                 return responseVm;
             }
             UserLoginDetails loginDetails = new UserLoginDetails();
+            var HashPassword = AesEncryptionHelper.Encrypt(user.Password ?? "");
             var UserDetails = await dataServices.CallSPtoRead<LoginDetails>("Sp_GetUserDetailsOnLogin", reader =>
             {
                 return new LoginDetails
@@ -77,7 +79,7 @@ namespace ShutterManagement.Services
                 };
             },
              new SqlParameter("@Username", SqlDbType.NVarChar, 100) { SqlValue = user.Username },
-             new SqlParameter("@Password", SqlDbType.NVarChar, 100) { SqlValue = user.Password },
+             new SqlParameter("@Password", SqlDbType.NVarChar, 100) { SqlValue = HashPassword },
              new SqlParameter("@CompanyCode", SqlDbType.NVarChar, 100) { SqlValue = user.CompanyCode },
              new SqlParameter("@Result", SqlDbType.VarChar, 1000) { Direction = ParameterDirection.Output }
              );
@@ -180,5 +182,7 @@ namespace ShutterManagement.Services
             }
             return responseVm;
         }
+
+        
     }
 }

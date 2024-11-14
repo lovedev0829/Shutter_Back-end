@@ -47,6 +47,7 @@ namespace ShutterManagement.Business.Services
                     && x.IsDelete == false && x.Code == model.Code);
                 if (!IsCodeExists)
                 {
+                    var HashPassword = AesEncryptionHelper.Encrypt(model.Password ?? "");
                     SqlParameter[] sqlParameters =
                     {
                     new SqlParameter("@FirstName", SqlDbType.NVarChar) { SqlValue = model.FirstName },
@@ -96,6 +97,8 @@ namespace ShutterManagement.Business.Services
                     && x.IsDelete == false && x.Code == model.Code && x.TenantId != tenantid);
                 if (!IsCodeExists)
                 {
+                    var HashPassword = AesEncryptionHelper.Encrypt(model.Password ?? "");
+
                     SqlParameter[] sqlParameters =
                 {
                     new SqlParameter("@TenantId", SqlDbType.UniqueIdentifier) { SqlValue = tenantid},
