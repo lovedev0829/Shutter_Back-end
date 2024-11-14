@@ -68,6 +68,7 @@ namespace ShutterManagement.Services
                     LastName = reader.GetString(reader.GetOrdinal("LastName")),
                     Email = reader.GetString(reader.GetOrdinal("Email")),
                     TenantId = reader.GetGuid(reader.GetOrdinal("TenantId")),
+                    ParentTenantId = reader.GetGuid(reader.GetOrdinal("ParentTenantId")).ToString(),
                     Phone = reader.GetString(reader.GetOrdinal("Phone")),
                     Code = reader.GetString(reader.GetOrdinal("Code")),
                     Logo = reader.GetString(reader.GetOrdinal("Logo")),
@@ -134,7 +135,7 @@ namespace ShutterManagement.Services
             }
             else
             {
-                responseVm.Message = AppConstant.NoUserFound;
+                responseVm.Message = AppConstant.InvalidCred;
             }
             return responseVm;
         }

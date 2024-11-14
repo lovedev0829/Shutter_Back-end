@@ -28,8 +28,9 @@ namespace ShutterManagement.Core
         public static string DeleteSuccessMsg { get; set; } = "Data Deleted Successfully";
         public static string NoDataFound { get; set; } = "Data not added.";
         public static string AlreadyExists { get; set; } = "Data already exists!";
+        public static string CodeAlreadyExists { get; set; } = "Code already exists!";
         public static string IncorrectDetails { get; set; } = "Incorrect details";
-
+        public static string InvalidCred { get; set; } = "Invalid Credentials";
         public static string InactivationMsg { get; set; } = "Inactivated Successfully";
         public static string FetchSuccessMsg { get; set; } = "Data fetched Successfully";
         public static string InvalidGuid { get; set; } = "Invalid Data Id";
@@ -47,6 +48,7 @@ namespace ShutterManagement.Core
         public static string LoggedInPhone { get; set; } = string.Empty;
         public static string LoggedInName { get; set; } = string.Empty;
         public static string LoggedInCompanyCode { get; set; } = string.Empty;
+        public static Guid? LoggedInParentTenantId { get; set; } = Guid.Empty;
 
     }
 }

@@ -9,6 +9,6 @@ namespace ShutterManagement.Core.ViewModels.Request
     public class UpdateSubTenant : Tenant
     {
         public string? TenantId { get; set; }
-        public string? ParentTenantId { get; set; }
+        //public string? ParentTenantId { get; set; }
     }
 }

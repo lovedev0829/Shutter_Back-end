@@ -35,14 +35,28 @@ namespace ShutterManagement.Services
             IResponseVm<string> result = new ResponseVm<string>();
             try
             {
-                var IsUserExists = GetAllQuerable().Where(x => x.IsActive == true && x.IsDelete == false &&
-                (x.Username == UserDetails.Email || x.Phone == UserDetails.PhoneNumber)
-                && x.TenantId == AppConstant.LoggedInTenantId
+                var IsUserExists;
+                if (AppConstant.LoggedInParentTenantId == null)
+                {
+
+                    IsUserExists = GetAllQuerable().Where(x => x.IsActive == true && x.IsDelete == false &&
+                   (x.Username == UserDetails.Email || x.Phone == UserDetails.PhoneNumber)
+                   && (x.TenantId == AppConstant.LoggedInTenantId || x.ParentTenantId == AppConstant.LoggedInTenantId)
+                   );
+                }
+                else
+                {
+                    IsUserExists = GetAllQuerable().Where(x => x.IsActive == true && x.IsDelete == false &&
+                   (x.Username == UserDetails.Email || x.Phone == UserDetails.PhoneNumber)
+                   && (x.TenantId == AppConstant.LoggedInParentTenantId || x.ParentTenantId == AppConstant.LoggedInParentTenantId)
+                   );
                 );
+                }
                 if (IsUserExists.Count() == 0)
                 {
                     TblUser tblUser = new TblUser();
                     mapper.Map(UserDetails, tblUser);
+                    tblUser.Id = Guid.NewGuid();
                     tblUser.CreatedBy = AppConstant.LoggedInUserID;
                     tblUser.CreatedAt = DateTime.Now;
                     var res = await Add(tblUser);

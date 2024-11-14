@@ -35,7 +35,7 @@ namespace ShutterManagement.Business.Services
             this.tenantBrandingService = tenantBrandingService;
         }
         
-        public async Task<IResponseVm<string>> SubTenantCreate(CreateSubTenant model)
+        public async Task<IResponseVm<string>> SubTenantCreate(Tenant model)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
@@ -44,13 +44,13 @@ namespace ShutterManagement.Business.Services
                     && x.IsDelete == false && x.Code == model.Code);
                 if (!IsCodeExists)
                 {
-                    if (model.ParentTenantId == null || model.ParentTenantId == "")
-                    {
-                        responseVm.Message = AppConstant.ParentTenantIdNull;
-                        return responseVm;
-                    }
-                    bool IsParentExists = await AnyAsync(x => x.TenantId.ToString() == model.ParentTenantId
-                    && x.IsDelete == false && x.IsActive == true && x.Code == model.Code);
+                    //if (model.ParentTenantId == null || model.ParentTenantId == "")
+                    //{
+                    //    responseVm.Message = AppConstant.ParentTenantIdNull;
+                    //    return responseVm;
+                    //}
+                    bool IsParentExists = await AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId
+                    && x.IsDelete == false && x.IsActive == true);
                     if (!IsParentExists)
                     {
                         responseVm.Message = AppConstant.TenantNotFound;
@@ -59,7 +59,7 @@ namespace ShutterManagement.Business.Services
 
                     SqlParameter[] sqlParameters =
                     {
-                    new SqlParameter("@ParentTenantId", SqlDbType.UniqueIdentifier) { SqlValue = model.ParentTenantId },
+                    new SqlParameter("@ParentTenantId", SqlDbType.UniqueIdentifier) { SqlValue = AppConstant.LoggedInTenantId },
                     new SqlParameter("@FirstName", SqlDbType.NVarChar) { SqlValue = model.FirstName },
                     new SqlParameter("@MiddleName", SqlDbType.NVarChar) { SqlValue = model.MiddleName },
                     new SqlParameter("@LastName", SqlDbType.NVarChar) { SqlValue = model.LastName },
@@ -71,12 +71,19 @@ namespace ShutterManagement.Business.Services
                     new SqlParameter("@PrimaryColor", SqlDbType.NVarChar) { SqlValue = model.PrimaryColor },
                     new SqlParameter("@SecondaryColor", SqlDbType.NVarChar) { SqlValue = model.SecondaryColor },
                     new SqlParameter("@Password", SqlDbType.NVarChar) { SqlValue = model.Password },
+                    new SqlParameter("@LoggedInUser", SqlDbType.UniqueIdentifier) { SqlValue = AppConstant.LoggedInUserID },
+
                     new SqlParameter("@Action", SqlDbType.NVarChar) { SqlValue = "Create" },
                 };
 
                     await dataServices.CallSP("sp_TenantCRUD", null, sqlParameters);
+                    
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.InsertSuccessMsg;
+                }
+                else
+                {
+                    responseVm.Message = AppConstant.CodeAlreadyExists;
                 }
             }
             catch (Exception ex)
@@ -100,28 +107,28 @@ namespace ShutterManagement.Business.Services
                         responseVm.Message = AppConstant.TenantIdNull;
                         return responseVm;
                     }
-                    if (model.ParentTenantId == null || model.ParentTenantId == "")
-                    {
-                        responseVm.Message = AppConstant.ParentTenantIdNull;
-                        return responseVm;
-                    }
-                    bool IsParentExists = await AnyAsync(x => x.TenantId.ToString() == model.ParentTenantId
-                    && x.IsDelete == false && x.IsActive == true && x.Code == model.Code);
+                    //if (model.ParentTenantId == null || model.ParentTenantId == "")
+                    //{
+                    //    responseVm.Message = AppConstant.ParentTenantIdNull;
+                    //    return responseVm;
+                    //}
+                    bool IsParentExists = await AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId
+                    && x.IsDelete == false && x.IsActive == true );
                     if (!IsParentExists)
                     {
                         responseVm.Message = AppConstant.TenantNotFound;
                         return responseVm;
                     }
-                    bool IsTenantExists = await AnyAsync(x => x.TenantId.ToString() == model.TenantId
-                    && x.IsDelete == false && x.IsActive == true && x.Code == model.Code);
-                    if (!IsParentExists)
+                    bool IsTenantExists = await AnyAsync(x => x.TenantId.ToString() == model.TenantId && x.ParentTenantId == AppConstant.LoggedInTenantId
+                    && x.IsDelete == false && x.IsActive == true );
+                    if (!IsTenantExists)
                     {
                         responseVm.Message = AppConstant.TenantNotFound;
                         return responseVm;
                     }
 
                     var tenantid = Guid.Parse(model.TenantId);
-                    var Parenttenantid = Guid.Parse(model.ParentTenantId);
+                    var Parenttenantid = AppConstant.LoggedInTenantId;
                     SqlParameter[] sqlParameters =
                     {
                     new SqlParameter("@TenantId", SqlDbType.UniqueIdentifier) { SqlValue = tenantid},
@@ -137,12 +144,17 @@ namespace ShutterManagement.Business.Services
                     new SqlParameter("@PrimaryColor", SqlDbType.VarChar) { SqlValue = model.PrimaryColor },
                     new SqlParameter("@SecondaryColor", SqlDbType.VarChar) { SqlValue = model.SecondaryColor },
                     new SqlParameter("@Password", SqlDbType.VarChar) { SqlValue = model.Password },
+                    new SqlParameter("@LoggedInUser", SqlDbType.UniqueIdentifier) { SqlValue = AppConstant.LoggedInUserID },
                     new SqlParameter("@Action", SqlDbType.NVarChar) { SqlValue = "Update" },
                 };
 
                     await dataServices.CallSP("sp_TenantCRUD", null, sqlParameters);
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.UpdateSuccessMsg;
+                }
+                else
+                {
+                    responseVm.Message = AppConstant.CodeAlreadyExists;
                 }
             }
             catch (Exception ex)

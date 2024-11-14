@@ -60,6 +60,7 @@ namespace ShutterManagement.Business.Services
                     new SqlParameter("@PrimaryColor", SqlDbType.NVarChar) { SqlValue = model.PrimaryColor },
                     new SqlParameter("@SecondaryColor", SqlDbType.NVarChar) { SqlValue = model.SecondaryColor },
                     new SqlParameter("@Password", SqlDbType.NVarChar) { SqlValue = model.Password },
+                    new SqlParameter("@LoggedInUser", SqlDbType.UniqueIdentifier) { SqlValue = AppConstant.LoggedInUserID },
                     new SqlParameter("@Action", SqlDbType.NVarChar) { SqlValue = "Create" },
                 };
 
@@ -67,6 +68,10 @@ namespace ShutterManagement.Business.Services
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.InsertSuccessMsg;
 
+                }
+                else
+                {
+                    responseVm.Message = AppConstant.CodeAlreadyExists;
                 }
             }
             catch (Exception ex)
@@ -105,6 +110,8 @@ namespace ShutterManagement.Business.Services
                     new SqlParameter("@PrimaryColor", SqlDbType.VarChar) { SqlValue = model.PrimaryColor },
                     new SqlParameter("@SecondaryColor", SqlDbType.VarChar) { SqlValue = model.SecondaryColor },
                     new SqlParameter("@Password", SqlDbType.VarChar) { SqlValue = model.Password },
+                    new SqlParameter("@LoggedInUser", SqlDbType.UniqueIdentifier) { SqlValue = AppConstant.LoggedInUserID },
+
                     new SqlParameter("@Action", SqlDbType.NVarChar) { SqlValue = "Update" },
                 };
 
@@ -112,6 +119,10 @@ namespace ShutterManagement.Business.Services
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.UpdateSuccessMsg;
 
+                }
+                else
+                {
+                    responseVm.Message = AppConstant.CodeAlreadyExists;
                 }
             }
             catch (Exception ex)
