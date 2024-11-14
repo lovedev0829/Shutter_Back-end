@@ -16,5 +16,7 @@ namespace ShutterManagement.Business.Interfaces
         Task<IResponseVm<string>> Update(UpdateUser UserDetails);
         Task<IResponseVm<string>> Delete(string UserId);
         Task<IResponseVm<string>> ActiveInactive(string UserId);
+
+        Task PasswordEnc();
     }
 }

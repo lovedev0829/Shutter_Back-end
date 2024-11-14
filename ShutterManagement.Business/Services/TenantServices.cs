@@ -47,6 +47,7 @@ namespace ShutterManagement.Business.Services
                     && x.IsDelete == false && x.Code == model.Code);
                 if (!IsCodeExists)
                 {
+                    var HashPassword = AesEncryptionHelper.Encrypt(model.Password ?? "");
                     SqlParameter[] sqlParameters =
                     {
                     new SqlParameter("@FirstName", SqlDbType.NVarChar) { SqlValue = model.FirstName },
@@ -59,7 +60,7 @@ namespace ShutterManagement.Business.Services
                     new SqlParameter("@Logo", SqlDbType.NVarChar) { SqlValue = model.Logo },
                     new SqlParameter("@PrimaryColor", SqlDbType.NVarChar) { SqlValue = model.PrimaryColor },
                     new SqlParameter("@SecondaryColor", SqlDbType.NVarChar) { SqlValue = model.SecondaryColor },
-                    new SqlParameter("@Password", SqlDbType.NVarChar) { SqlValue = model.Password },
+                    new SqlParameter("@Password", SqlDbType.NVarChar) { SqlValue = HashPassword },
                     new SqlParameter("@Action", SqlDbType.NVarChar) { SqlValue = "Create" },
                 };
 
@@ -91,6 +92,8 @@ namespace ShutterManagement.Business.Services
                     && x.IsDelete == false && x.Code == model.Code && x.TenantId != tenantid);
                 if (!IsCodeExists)
                 {
+                    var HashPassword = AesEncryptionHelper.Encrypt(model.Password ?? "");
+
                     SqlParameter[] sqlParameters =
                 {
                     new SqlParameter("@TenantId", SqlDbType.UniqueIdentifier) { SqlValue = tenantid},
@@ -104,7 +107,7 @@ namespace ShutterManagement.Business.Services
                     new SqlParameter("@Logo", SqlDbType.VarChar) { SqlValue = model.Logo },
                     new SqlParameter("@PrimaryColor", SqlDbType.VarChar) { SqlValue = model.PrimaryColor },
                     new SqlParameter("@SecondaryColor", SqlDbType.VarChar) { SqlValue = model.SecondaryColor },
-                    new SqlParameter("@Password", SqlDbType.VarChar) { SqlValue = model.Password },
+                    new SqlParameter("@Password", SqlDbType.VarChar) { SqlValue = HashPassword },
                     new SqlParameter("@Action", SqlDbType.NVarChar) { SqlValue = "Update" },
                 };
 

@@ -44,6 +44,7 @@ namespace ShutterManagement.Business.Services
                     && x.IsDelete == false && x.Code == model.Code);
                 if (!IsCodeExists)
                 {
+
                     if (model.ParentTenantId == null || model.ParentTenantId == "")
                     {
                         responseVm.Message = AppConstant.ParentTenantIdNull;
@@ -56,7 +57,7 @@ namespace ShutterManagement.Business.Services
                         responseVm.Message = AppConstant.TenantNotFound;
                         return responseVm;
                     }
-
+                    var HashPassword = AesEncryptionHelper.Encrypt(model.Password ?? "");
                     SqlParameter[] sqlParameters =
                     {
                     new SqlParameter("@ParentTenantId", SqlDbType.UniqueIdentifier) { SqlValue = model.ParentTenantId },
@@ -70,7 +71,7 @@ namespace ShutterManagement.Business.Services
                     new SqlParameter("@Logo", SqlDbType.NVarChar) { SqlValue = model.Logo },
                     new SqlParameter("@PrimaryColor", SqlDbType.NVarChar) { SqlValue = model.PrimaryColor },
                     new SqlParameter("@SecondaryColor", SqlDbType.NVarChar) { SqlValue = model.SecondaryColor },
-                    new SqlParameter("@Password", SqlDbType.NVarChar) { SqlValue = model.Password },
+                    new SqlParameter("@Password", SqlDbType.NVarChar) { SqlValue = HashPassword },
                     new SqlParameter("@Action", SqlDbType.NVarChar) { SqlValue = "Create" },
                 };
 
@@ -122,6 +123,7 @@ namespace ShutterManagement.Business.Services
 
                     var tenantid = Guid.Parse(model.TenantId);
                     var Parenttenantid = Guid.Parse(model.ParentTenantId);
+                    var HashPassword = AesEncryptionHelper.Encrypt(model.Password ?? "");
                     SqlParameter[] sqlParameters =
                     {
                     new SqlParameter("@TenantId", SqlDbType.UniqueIdentifier) { SqlValue = tenantid},
@@ -136,7 +138,7 @@ namespace ShutterManagement.Business.Services
                     new SqlParameter("@Logo", SqlDbType.VarChar) { SqlValue = model.Logo },
                     new SqlParameter("@PrimaryColor", SqlDbType.VarChar) { SqlValue = model.PrimaryColor },
                     new SqlParameter("@SecondaryColor", SqlDbType.VarChar) { SqlValue = model.SecondaryColor },
-                    new SqlParameter("@Password", SqlDbType.VarChar) { SqlValue = model.Password },
+                    new SqlParameter("@Password", SqlDbType.VarChar) { SqlValue = HashPassword },
                     new SqlParameter("@Action", SqlDbType.NVarChar) { SqlValue = "Update" },
                 };
 
