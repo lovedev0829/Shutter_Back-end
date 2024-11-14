@@ -70,7 +70,7 @@ namespace ShutterManagement.Services
                     LastName = reader.GetString(reader.GetOrdinal("LastName")),
                     Email = reader.GetString(reader.GetOrdinal("Email")),
                     TenantId = reader.GetGuid(reader.GetOrdinal("TenantId")),
-                    ParentTenantId = reader.GetGuid(reader.GetOrdinal("ParentTenantId")).ToString(),
+                    ParentTenantId = reader.GetString(reader.GetOrdinal("ParentTenantId")),
                     Phone = reader.GetString(reader.GetOrdinal("Phone")),
                     Code = reader.GetString(reader.GetOrdinal("Code")),
                     Logo = reader.GetString(reader.GetOrdinal("Logo")),
@@ -111,6 +111,7 @@ namespace ShutterManagement.Services
                 claims.AddClaim(new Claim(ClaimTypes.Email, UserDetails[0].Email ?? ""));
                 claims.AddClaim(new Claim("Phone", UserDetails[0].Phone ?? ""));
                 claims.AddClaim(new Claim("TenantId", UserDetails[0].TenantId.ToString() ?? ""));
+                claims.AddClaim(new Claim("ParentTenantId", loginDetails.ParentTenantId ?? ""));
                 claims.AddClaim(new Claim("CompanyCode", user.CompanyCode));
 
                 var tokenHandler = new JwtSecurityTokenHandler();

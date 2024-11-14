@@ -35,23 +35,24 @@ namespace ShutterManagement.Services
             IResponseVm<string> result = new ResponseVm<string>();
             try
             {
-                var IsUserExists;
-                if (AppConstant.LoggedInParentTenantId == null)
+               
+                var IsUserExists = new List<TblUser>();
+                var AllTenantSubTenants = new List<string>();
+                if (string.IsNullOrEmpty(AppConstant.LoggedInParentTenantId))
                 {
-
-                    IsUserExists = GetAllQuerable().Where(x => x.IsActive == true && x.IsDelete == false &&
-                   (x.Username == UserDetails.Email || x.Phone == UserDetails.PhoneNumber)
-                   && (x.TenantId == AppConstant.LoggedInTenantId || x.ParentTenantId == AppConstant.LoggedInTenantId)
-                   );
+                    AllTenantSubTenants = dbContext.TblTenants.Where(x => x.IsActive == true && x.IsDelete == false
+                   && (x.ParentTenantId == AppConstant.LoggedInTenantId || x.TenantId == AppConstant.LoggedInTenantId)).Select(x => x.TenantId.ToString()).ToList();
                 }
                 else
                 {
-                    IsUserExists = GetAllQuerable().Where(x => x.IsActive == true && x.IsDelete == false &&
-                   (x.Username == UserDetails.Email || x.Phone == UserDetails.PhoneNumber)
-                   && (x.TenantId == AppConstant.LoggedInParentTenantId || x.ParentTenantId == AppConstant.LoggedInParentTenantId)
-                   );
-                );
+                    AllTenantSubTenants = dbContext.TblTenants.Where(x => x.IsActive == true && x.IsDelete == false
+                  && (x.ParentTenantId.ToString() == AppConstant.LoggedInParentTenantId || x.TenantId.ToString() == AppConstant.LoggedInParentTenantId)).Select(x => x.TenantId.ToString()).ToList();
                 }
+
+                IsUserExists = GetAllQuerable().Where(x => x.IsActive == true && x.IsDelete == false &&
+                  (x.Username == UserDetails.Email || x.Phone == UserDetails.PhoneNumber)
+                  && AllTenantSubTenants.Contains(x.TenantId.ToString())
+                  ).ToList();
                 if (IsUserExists.Count() == 0)
                 {
                     TblUser tblUser = new TblUser();
@@ -93,6 +94,10 @@ namespace ShutterManagement.Services
                 );
                 if (IsUserExists.Count() == 1)
                 {
+                    var IsEmailExists = GetAllQuerable().Where(x => x.IsActive == true && x.IsDelete == false &&
+                   (x.Username == UserDetails.Email || x.Phone == UserDetails.PhoneNumber) && x.Id != Guid.Parse(UserDetails.UserId)
+                   && (x.TenantId == AppConstant.LoggedInTenantId || x.TenantId.ToString() == AppConstant.LoggedInParentTenantId)
+                   );
                     var UpdateUserDetails = IsUserExists.FirstOrDefault();
                     mapper.Map(UserDetails, UpdateUserDetails);
                     if (UpdateUserDetails != null)

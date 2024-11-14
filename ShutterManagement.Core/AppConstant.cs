@@ -48,7 +48,7 @@ namespace ShutterManagement.Core
         public static string LoggedInPhone { get; set; } = string.Empty;
         public static string LoggedInName { get; set; } = string.Empty;
         public static string LoggedInCompanyCode { get; set; } = string.Empty;
-        public static Guid? LoggedInParentTenantId { get; set; } = Guid.Empty;
+        public static string? LoggedInParentTenantId { get; set; } 
 
     }
 }

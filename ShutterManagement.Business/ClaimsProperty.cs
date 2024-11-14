@@ -20,6 +20,7 @@ namespace ShutterManagement.Business
                 AppConstant.LoggedInName = httpContext.HttpContext.User.Claims.First(c => c.Type == ClaimTypes.Name).Value;
                 AppConstant.LoggedInPhone = httpContext.HttpContext.User.Claims.First(c => c.Type == "Phone").Value;
                 AppConstant.LoggedInEmail = httpContext.HttpContext.User.Claims.First(c => c.Type == ClaimTypes.Email).Value;
+                AppConstant.LoggedInParentTenantId = httpContext.HttpContext.User.Claims.First(c => c.Type == "ParentTenantId").Value;
             }
             
         }
