@@ -129,7 +129,6 @@ namespace ShutterManagement.Business.Services
 
                     var tenantid = Guid.Parse(model.TenantId);
                     var Parenttenantid = AppConstant.LoggedInTenantId;
-                    var Parenttenantid = Guid.Parse(model.ParentTenantId);
                     var HashPassword = AesEncryptionHelper.Encrypt(model.Password ?? "");
                     SqlParameter[] sqlParameters =
                     {
