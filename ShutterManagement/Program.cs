@@ -106,6 +106,7 @@ builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IModulePermission, ModuleService>();
 builder.Services.AddScoped<IContactService,ContactServices>();  
+builder.Services.AddScoped<IContactBillingService,ContactBillingService>();  
 builder.Services.AddScoped<IUserService,UserService>();  
 
 var app = builder.Build();

@@ -44,11 +44,6 @@ namespace ShutterManagement.Business.Services
                     && x.IsDelete == false && x.Code == model.Code);
                 if (!IsCodeExists)
                 {
-                    //if (model.ParentTenantId == null || model.ParentTenantId == "")
-                    //{
-                    //    responseVm.Message = AppConstant.ParentTenantIdNull;
-                    //    return responseVm;
-                    //}
                     bool IsParentExists = await AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId
                     && x.IsDelete == false && x.IsActive == true);
                     if (!IsParentExists)
@@ -70,7 +65,7 @@ namespace ShutterManagement.Business.Services
                     new SqlParameter("@Logo", SqlDbType.NVarChar) { SqlValue = model.Logo },
                     new SqlParameter("@PrimaryColor", SqlDbType.NVarChar) { SqlValue = model.PrimaryColor },
                     new SqlParameter("@SecondaryColor", SqlDbType.NVarChar) { SqlValue = model.SecondaryColor },
-                    new SqlParameter("@Password", SqlDbType.NVarChar) { SqlValue = model.Password },
+                    new SqlParameter("@Password", SqlDbType.NVarChar) { SqlValue = HashPassword },
                     new SqlParameter("@LoggedInUser", SqlDbType.UniqueIdentifier) { SqlValue = AppConstant.LoggedInUserID },
 
                     new SqlParameter("@Action", SqlDbType.NVarChar) { SqlValue = "Create" },
@@ -107,11 +102,6 @@ namespace ShutterManagement.Business.Services
                         responseVm.Message = AppConstant.TenantIdNull;
                         return responseVm;
                     }
-                    //if (model.ParentTenantId == null || model.ParentTenantId == "")
-                    //{
-                    //    responseVm.Message = AppConstant.ParentTenantIdNull;
-                    //    return responseVm;
-                    //}
                     bool IsParentExists = await AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId
                     && x.IsDelete == false && x.IsActive == true );
                     if (!IsParentExists)
@@ -144,7 +134,7 @@ namespace ShutterManagement.Business.Services
                     new SqlParameter("@Logo", SqlDbType.VarChar) { SqlValue = model.Logo },
                     new SqlParameter("@PrimaryColor", SqlDbType.VarChar) { SqlValue = model.PrimaryColor },
                     new SqlParameter("@SecondaryColor", SqlDbType.VarChar) { SqlValue = model.SecondaryColor },
-                    new SqlParameter("@Password", SqlDbType.VarChar) { SqlValue = model.Password },
+                    new SqlParameter("@Password", SqlDbType.VarChar) { SqlValue = HashPassword },
                     new SqlParameter("@LoggedInUser", SqlDbType.UniqueIdentifier) { SqlValue = AppConstant.LoggedInUserID },
                     new SqlParameter("@Action", SqlDbType.NVarChar) { SqlValue = "Update" },
                 };
@@ -251,24 +241,40 @@ namespace ShutterManagement.Business.Services
             IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
             try
             {
-                var TenantList = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId).ToList();
+                var TenantList = (await GetAll()).Where(x => x.IsDelete == false && x.ParentTenantId == AppConstant.LoggedInTenantId).ToList();
                 foreach (var item in TenantList)
                 {
                     item.BrandingInfoNavigation = tenantBrandingService.GetAllQuerable().Where(x => x.Id == item.BrandingInfo).FirstOrDefault();
                 }
                 var FilterRecords = TenantList
                                     .Where(x =>
+                                    (filter.TenantId != "" ?
+                                    x.TenantId.ToString() == filter.TenantId.ToString() : true)
+                                    &&
                                     (filter.SearchValue != "" ?
                                     ((x.BrandingInfoNavigation?.Email ?? "").Contains(filter.SearchValue)
                                     || (x.BrandingInfoNavigation?.PhoneNmber ?? "").Contains(filter.SearchValue)
                                     || (x.FirstName ?? "").Contains(filter.SearchValue) || (x.LastName ?? "").Contains(filter.SearchValue)
                                     || (x.MiddleName ?? "").Contains(filter.SearchValue)
                                     ) : true)).ToList();
-                var TakenRecords =FilterRecords
+                var TakenRecords = FilterRecords
                                     .Skip((filter.PageNo - 1) * filter.RecordPerPage).Take(filter.RecordPerPage).ToList();
                 if (TakenRecords != null && TakenRecords.Count > 0)
                 {
-                    responseVm.Data = TakenRecords;
+                    responseVm.Data = TakenRecords.Select(x => new
+                    {
+                        x.TenantId,
+                        x.FirstName,
+                        x.MiddleName,
+                        x.LastName,
+                        x.Code,
+                        x.Url,
+                        x.BrandingInfoNavigation.Email,
+                        x.BrandingInfoNavigation.PhoneNmber,
+                        x.BrandingInfoNavigation.Logo,
+                        x.BrandingInfoNavigation.PrimaryColor,
+                        x.BrandingInfoNavigation.SecondaryColor,
+                    });
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.UpdateSuccessMsg;
                     responseVm.TotalRecords = FilterRecords.Count;

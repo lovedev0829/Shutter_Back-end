@@ -27,20 +27,7 @@ namespace ShutterManagement.Controllers
         [Authorize(Roles = "ContactView")]
         public async Task<IActionResult> GetAllContacts(Pagination filter)
         {
-            IResponseVm<List<Sp_Contact>> res = new ResponseVm<List<Sp_Contact>>();   
-            try
-            {
-                var contacts = await _contactService.GetAll_Contact(filter);
-                res.IsSuccess = true;
-                res.Message = "Contacts fetched successfully";
-                res.Data = contacts;
-                res.TotalRecords = contacts.Count;
-            }
-            catch (Exception ex)
-            {
-                res.IsSuccess = false;
-                res.Message = $"Error fetching contacts: {ex.Message}";
-            }
+             var res= await _contactService.GetAll_Contact(filter);
             return Ok(res);
 
         }

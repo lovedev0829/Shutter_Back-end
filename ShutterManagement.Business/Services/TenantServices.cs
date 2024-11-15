@@ -45,9 +45,13 @@ namespace ShutterManagement.Business.Services
             {
                 var IsCodeExists = await AnyAsync(x => x.IsActive == true
                     && x.IsDelete == false && x.Code == model.Code);
-                if (!IsCodeExists)
+                if (IsCodeExists)
                 {
-                    var HashPassword = AesEncryptionHelper.Encrypt(model.Password ?? "");
+                    responseVm.Message = AppConstant.CodeAlreadyExists;
+                    return responseVm;
+                }
+
+                var HashPassword = AesEncryptionHelper.Encrypt(model.Password ?? "");
                     SqlParameter[] sqlParameters =
                     {
                     new SqlParameter("@FirstName", SqlDbType.NVarChar) { SqlValue = model.FirstName },
@@ -60,7 +64,7 @@ namespace ShutterManagement.Business.Services
                     new SqlParameter("@Logo", SqlDbType.NVarChar) { SqlValue = model.Logo },
                     new SqlParameter("@PrimaryColor", SqlDbType.NVarChar) { SqlValue = model.PrimaryColor },
                     new SqlParameter("@SecondaryColor", SqlDbType.NVarChar) { SqlValue = model.SecondaryColor },
-                    new SqlParameter("@Password", SqlDbType.NVarChar) { SqlValue = model.Password },
+                    new SqlParameter("@Password", SqlDbType.NVarChar) { SqlValue = HashPassword },
                     new SqlParameter("@LoggedInUser", SqlDbType.UniqueIdentifier) { SqlValue = AppConstant.LoggedInUserID },
                     new SqlParameter("@Action", SqlDbType.NVarChar) { SqlValue = "Create" },
                 };
@@ -69,11 +73,6 @@ namespace ShutterManagement.Business.Services
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.InsertSuccessMsg;
 
-                }
-                else
-                {
-                    responseVm.Message = AppConstant.CodeAlreadyExists;
-                }
             }
             catch (Exception ex)
             {
@@ -112,7 +111,7 @@ namespace ShutterManagement.Business.Services
                     new SqlParameter("@Logo", SqlDbType.VarChar) { SqlValue = model.Logo },
                     new SqlParameter("@PrimaryColor", SqlDbType.VarChar) { SqlValue = model.PrimaryColor },
                     new SqlParameter("@SecondaryColor", SqlDbType.VarChar) { SqlValue = model.SecondaryColor },
-                    new SqlParameter("@Password", SqlDbType.VarChar) { SqlValue = model.Password },
+                    new SqlParameter("@Password", SqlDbType.VarChar) { SqlValue = HashPassword },
                     new SqlParameter("@LoggedInUser", SqlDbType.UniqueIdentifier) { SqlValue = AppConstant.LoggedInUserID },
 
                     new SqlParameter("@Action", SqlDbType.NVarChar) { SqlValue = "Update" },
@@ -228,6 +227,9 @@ namespace ShutterManagement.Business.Services
                 }
                 var FilterRecords = TenantList
                                     .Where(x =>
+                                    (filter.TenantId != "" ? 
+                                    x.TenantId.ToString() == filter.TenantId.ToString() : true)
+                                    &&
                                     (filter.SearchValue != "" ?
                                     ((x.BrandingInfoNavigation?.Email ?? "").Contains(filter.SearchValue)
                                     || (x.BrandingInfoNavigation?.PhoneNmber ?? "").Contains(filter.SearchValue)
@@ -238,7 +240,20 @@ namespace ShutterManagement.Business.Services
                                     .Skip((filter.PageNo - 1)*filter.RecordPerPage).Take(filter.RecordPerPage).ToList();
                 if (TakenRecords != null && TakenRecords.Count > 0)
                 {
-                    responseVm.Data = TakenRecords;
+                    responseVm.Data = TakenRecords.Select( x=> new
+                    {
+                        x.TenantId,
+                        x.FirstName,
+                        x.MiddleName,
+                        x.LastName,
+                        x.Code,
+                        x.Url,
+                        x.BrandingInfoNavigation.Email,
+                        x.BrandingInfoNavigation.PhoneNmber,
+                        x.BrandingInfoNavigation.Logo,
+                        x.BrandingInfoNavigation.PrimaryColor,
+                        x.BrandingInfoNavigation.SecondaryColor,
+                    });
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.UpdateSuccessMsg;
                     responseVm.TotalRecords = FilterRecords.Count;

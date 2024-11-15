@@ -17,12 +17,15 @@ namespace ShutterManagement.Business.Services
     public class ContactServices :BaseRepository<ShutterDbContext,TblContact> ,IContactService
     {
         private readonly ShutterDbContext _context;
+        private readonly IContactBillingService billingService;
         private readonly ITenantService tenantService;
         private readonly ClaimsProperty claimsProperty;
 
-        public ContactServices(ShutterDbContext context,ITenantService tenantService,ClaimsProperty claimsProperty)
+        public ContactServices(ShutterDbContext context, IContactBillingService billingService,
+            ITenantService tenantService,ClaimsProperty claimsProperty)
         {
             _context = context;
+            this.billingService = billingService;
             this.tenantService = tenantService;
             this.claimsProperty = claimsProperty;
         }
@@ -203,6 +206,11 @@ namespace ShutterManagement.Business.Services
                 {
                     ContactList = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId).ToList();
                 }
+                //foreach (var contact in ContactList) {
+                //    contact.TblContactBillingAddresses = billingService.GetAllQuerable()
+                //        .Where(x => x.ContactId == contact.ContactId && x.IsActive == true
+                //        && x.IsDelete == false).FirstOrDefault();
+                //}
                 var FilterRecords = ContactList
                                     .Where(x =>
                                     (filter.SearchValue != "" ?
@@ -216,7 +224,19 @@ namespace ShutterManagement.Business.Services
                                     .Skip((filter.PageNo - 1) * filter.RecordPerPage).Take(filter.RecordPerPage).ToList();
                 if (TakenRecords != null && TakenRecords.Count > 0)
                 {
-                    responseVm.Data = TakenRecords;
+                    responseVm.Data = TakenRecords.Select(x=> new
+                    {
+                        x.ContactId,
+                        x.TenantId,
+                        x.ContactType,
+                        x.Email,
+                        x.PhoneNumber,
+                        x.Name,
+                        x.Website,
+                        x.Notes,
+                        x.IsBillingAddressSameAsAddress,
+                        x.TblContactBillingAddresses
+                    });
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.UpdateSuccessMsg;
                     responseVm.TotalRecords = FilterRecords.Count;

@@ -22,13 +22,17 @@ namespace ShutterManagement.Core.ViewModels.Request
         [MaxLength(255)]
         [RegularExpression("^[a-zA-Z]+$")]
         public string? LastName { get; set; }
+        [Required]
+        [MaxLength(20)]
         public string? Code { get; set; }
+        [Required]
+        [MaxLength(100)]
         public string? URL { get; set; }
 
 
         [Required, MaxLength(100)]
         [RegularExpression(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", ErrorMessage = "Invalid email address.")]
-        [EmailAddress(ErrorMessage = "Invalid email address")]
+        [EmailAddress]
         public string? Email { get; set; }
 
 
@@ -38,12 +42,10 @@ namespace ShutterManagement.Core.ViewModels.Request
         public string? PhoneNumber { get; set; }
         public string? Logo { get; set; }
 
-        [MaxLength(20)]
-        [RegularExpression("^[a-zA-Z]+$")]
+        [RegularExpression("^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$")]
         public string? PrimaryColor { get; set; }
 
-        [MaxLength(20)]
-        [RegularExpression("^[a-zA-Z]+$")]
+        [RegularExpression("^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$")]
         public string? SecondaryColor { get; set; }
 
         [Required]
