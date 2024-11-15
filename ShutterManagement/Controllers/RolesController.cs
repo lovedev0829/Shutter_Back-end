@@ -39,18 +39,18 @@ namespace ShutterManagement.Controllers
         [HttpPost]
         [Route("Delete")]
         [Authorize(Roles = "RolesDelete")]
-        public async Task<IActionResult> Delete(string TenantId)
+        public async Task<IActionResult> Delete(string RoleId)
         {
-            var res = await roleService.Delete(TenantId);
+            var res = await roleService.Delete(RoleId);
             return Ok(res);
         }
 
         [HttpPost]
         [Route("ActiveInActive")]
         [Authorize(Roles = "RolesEdit")]
-        public async Task<IActionResult> ActiveInactive(string TenantId)
+        public async Task<IActionResult> ActiveInactive(string RoleId)
         {
-            var res = await roleService.ActiveInactive(TenantId);
+            var res = await roleService.ActiveInactive(RoleId);
             return Ok(res);
         }
 
