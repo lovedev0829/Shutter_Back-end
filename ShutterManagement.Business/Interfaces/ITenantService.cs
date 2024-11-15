@@ -15,7 +15,7 @@ namespace ShutterManagement.Business.Interfaces
 {
     public interface ITenantService : IGenericRepository<TblTenant> 
     {
-        Task<IResponseVm<string>> TenantCreate(Tenant model);
+        Task<IResponseVm<string>> TenantCreate(CreateTenant model);
         Task<IResponseVm<string>> TenantUpdate(UpdateTenant model);
         Task<IResponseVm<string>> TenantDelete(string TenantId);
         Task<IResponseVm<string>> TenantActiveInactive(string TenantId);

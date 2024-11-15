@@ -30,7 +30,7 @@ namespace ShutterManagement.Controllers
         [Route("Create")]
         [Authorize(Roles = "SubTenantAdd")]
 
-        public async Task<IActionResult> Create([FromBody] Tenant model)
+        public async Task<IActionResult> Create([FromBody] CreateTenant model)
         {
             var res = await tenantService.SubTenantCreate(model);
             return Ok(res);
@@ -48,7 +48,7 @@ namespace ShutterManagement.Controllers
         [HttpPost]
         [Route("Delete")]
         [Authorize(Roles = "SubTenantDelete")]
-        public async Task<IActionResult> Delete([FromBody] string TenantId)
+        public async Task<IActionResult> Delete(string TenantId)
         {
             var res = await tenantService.SubTenantDelete(TenantId);
             return Ok(res);
@@ -57,7 +57,7 @@ namespace ShutterManagement.Controllers
         [HttpPost]
         [Route("ActiveInActive")]
         [Authorize(Roles = "SubTenantEdit")]
-        public async Task<IActionResult> ActiveInactive([FromBody] string TenantId)
+        public async Task<IActionResult> ActiveInactive(string TenantId)
         {
             var res = await tenantService.SubTenantActiveInactive(TenantId);
             return Ok(res);

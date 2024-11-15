@@ -13,4 +13,10 @@ namespace ShutterManagement.Core.Common
         Assembly,
         Address,
     }
+    public enum FileType
+    {
+        
+        Image,
+        Document
+    }
 }

@@ -205,12 +205,12 @@ namespace ShutterManagement.Business.Services
             IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
             try
             {
-                var RoleList = GetAllQuerable().Where(x => x.IsDelete == false && x.IsShow == false && x.TenantId == AppConstant.LoggedInTenantId).ToList();
+                var RoleList = (await GetAll()).Where(x => x.IsDelete == false && x.IsShow == false && x.TenantId == AppConstant.LoggedInTenantId).ToList().OrderByDescending(x => x.CreatedAt);
                 
                 var FilterRecords = RoleList
                                     .Where(x =>
                                     (filter.SearchValue != "" ?
-                                    ((x.RoleName ?? "").Contains(filter.SearchValue)
+                                    ((x.RoleName ?? "").ToLower().Contains(filter.SearchValue)
                                     ) : true))
                                     .Skip((filter.PageNo - 1) * filter.RecordPerPage).Take(filter.RecordPerPage).ToList();
                 if (FilterRecords != null && FilterRecords.Count > 0)
@@ -218,12 +218,12 @@ namespace ShutterManagement.Business.Services
                     responseVm.Data = FilterRecords;
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.FetchSuccessMsg;
-                    responseVm.TotalRecords = RoleList.Count;
+                    responseVm.TotalRecords = RoleList.Count();
                 }
                 else
                 {
                     responseVm.Message = AppConstant.NoDataFound;
-                    responseVm.TotalRecords = RoleList.Count;
+                    responseVm.TotalRecords = RoleList.Count();
                 }
 
 

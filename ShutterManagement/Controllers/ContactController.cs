@@ -27,7 +27,7 @@ namespace ShutterManagement.Controllers
         [Authorize(Roles = "ContactView")]
         public async Task<IActionResult> GetAllContacts(Pagination filter)
         {
-             var res= await _contactService.GetAll_Contact(filter);
+            var res = await _contactService.GetAll_Contact(filter);
             return Ok(res);
 
         }
@@ -36,18 +36,18 @@ namespace ShutterManagement.Controllers
         [Authorize(Roles = "ContactAdd")]
         public async Task<IActionResult> CreateContact([FromBody] Sp_Contact model)
         {
-            
-             var res =  await _contactService.Create_Contact(model);
-            return Ok(res );    
+
+            var res = await _contactService.Create_Contact(model);
+            return Ok(res);
         }
 
         [HttpPost("Update")]
         [Authorize(Roles = "ContactEdit")]
         public async Task<IActionResult> UpdateContact([FromBody] Sp_Contact model)
         {
-           
-            var updatedContact = _contactService.Update_Contact(model);
-            return Ok(updatedContact);  
+
+            var res = await _contactService.Update_Contact(model);
+            return Ok(res);
         }
 
         [HttpPost("ActiveInactive")]

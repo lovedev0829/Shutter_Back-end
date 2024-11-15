@@ -29,7 +29,7 @@ namespace ShutterManagement.Controllers
         [HttpPost]
         [Route("Create")]
         [Authorize(Roles = "TenantAdd")]
-        public async Task<IActionResult> TenantCreate([FromBody] Tenant model)
+        public async Task<IActionResult> TenantCreate([FromBody] CreateTenant model)
         {
             var res = await tenantService.TenantCreate(model);
             return Ok(res);

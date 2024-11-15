@@ -11,10 +11,12 @@ using ShutterManagement.Core;
 using ShutterManagement.Services;
 using Azure;
 using ShutterManagement.Core.ViewModels.Request;
+using System.Diagnostics.Metrics;
+using System.Reflection.Emit;
 
 namespace ShutterManagement.Business.Services
 {
-    public class ContactServices :BaseRepository<ShutterDbContext,TblContact> ,IContactService
+    public class ContactServices : BaseRepository<ShutterDbContext, TblContact>, IContactService
     {
         private readonly ShutterDbContext _context;
         private readonly IContactBillingService billingService;
@@ -22,7 +24,7 @@ namespace ShutterManagement.Business.Services
         private readonly ClaimsProperty claimsProperty;
 
         public ContactServices(ShutterDbContext context, IContactBillingService billingService,
-            ITenantService tenantService,ClaimsProperty claimsProperty)
+            ITenantService tenantService, ClaimsProperty claimsProperty)
         {
             _context = context;
             this.billingService = billingService;
@@ -30,41 +32,32 @@ namespace ShutterManagement.Business.Services
             this.claimsProperty = claimsProperty;
         }
 
-        public async Task<IResponseVm<Sp_Contact>> Create_Contact(Sp_Contact model)
+        public async Task<IResponseVm<string>> Create_Contact(Sp_Contact model)
         {
-            IResponseVm<Sp_Contact> responseVm = new ResponseVm<Sp_Contact>();
+            IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsContactExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId); 
-                if (IsContactExists != null)
+                var IsTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
+
+                if (IsTenantExists)
                 {
-                    if (!model.IsBillingAddressSameAsAddress)
+                    var IsContactExists = GetAllQuerable()
+                        .Where(c => (c.Email == model.Email || c.PhoneNumber == model.PhoneNumber)
+                        && c.TenantId == AppConstant.LoggedInTenantId
+                        && c.IsActive == true && c.IsDelete == false).ToList();
+                    if (IsContactExists.Count > 0)
                     {
-                        if (model.billingAddressVm == null ||
-                            string.IsNullOrEmpty(model.billingAddressVm.Label) ||
-                            string.IsNullOrEmpty(model.billingAddressVm.AddressLine1) ||
-                            string.IsNullOrEmpty(model.billingAddressVm.City) ||
-                            string.IsNullOrEmpty(model.billingAddressVm.State) ||
-                            string.IsNullOrEmpty(model.billingAddressVm.ZipCode) ||
-                            string.IsNullOrEmpty(model.billingAddressVm.Country))
-                        {
-                            string missingFields = "";
-
-                            if (string.IsNullOrEmpty(model.billingAddressVm.Label)) missingFields += "Label, ";
-                            if (string.IsNullOrEmpty(model.billingAddressVm.AddressLine1)) missingFields += "Address Line 1, ";
-                            if (string.IsNullOrEmpty(model.billingAddressVm.City)) missingFields += "City, ";
-                            if (string.IsNullOrEmpty(model.billingAddressVm.State)) missingFields += "State, ";
-                            if (string.IsNullOrEmpty(model.billingAddressVm.ZipCode)) missingFields += "Zip Code, ";
-                            if (string.IsNullOrEmpty(model.billingAddressVm.Country)) missingFields += "Country, ";
-
-                            missingFields = missingFields.TrimEnd(',', ' ');
-
-                            responseVm.Message = $"Billing address information is incomplete. The following fields are required: {missingFields}.";
-                        }
+                        responseVm.Message = "Email or Phone " + AppConstant.AlreadyExists;
+                        return responseVm;
+                    }
+                    if (model.IsBillingAddressSameAsAddress && model.billingAddressVm == null) {
+                        responseVm.Message = "Billing detaild required.";
+                        return responseVm;
                     }
 
-                    var contact = new TblContact
+                    TblContact CreateContact = new TblContact
                     {
+                        ContactId = Guid.NewGuid(),
                         ContactType = model.ContactType,
                         Name = model.Name,
                         PhoneNumber = model.PhoneNumber,
@@ -72,52 +65,41 @@ namespace ShutterManagement.Business.Services
                         Website = model.Website,
                         Notes = model.Notes,
                         IsBillingAddressSameAsAddress = model.IsBillingAddressSameAsAddress,
-                        IsActive = true,
-                        CreatedAt = DateTime.Now,
                         CreatedBy = AppConstant.LoggedInUserID,
-                        TenantId = AppConstant.LoggedInTenantId,
-
-                        TblContactBillingAddresses = model.IsBillingAddressSameAsAddress
-                            ? new List<TblContactBillingAddress>()
-                            : new List<TblContactBillingAddress>
-                            {
-                new TblContactBillingAddress
-                {
-                    Label = model.billingAddressVm?.Label,
-                    AddressLine1 = model.billingAddressVm?.AddressLine1,
-                    AddressLine2 = model.billingAddressVm?.AddressLine2,
-                    City = model.billingAddressVm?.City,
-                    State = model.billingAddressVm?.State,
-                    ZipCode = model.billingAddressVm?.ZipCode,
-                    Country = model.billingAddressVm?.Country
-                }
-                }
-                };
-
-                    if (contact != null)
+                        CreatedAt = DateTime.Now
+                    };
+                    var res = await Add(CreateContact);
+                    if (res.ContactId != Guid.Empty)
                     {
-                        try
+                        if (!model.IsBillingAddressSameAsAddress)
                         {
-                            var res = await Add(contact);
-                            responseVm.IsSuccess = true;
-                            responseVm.Message = $"{AppConstant.InsertSuccessMsg}";
+
+                            TblContactBillingAddress CreateContactBillingAddress = new TblContactBillingAddress
+                            {
+                                ContactId = res.ContactId,
+                                Label = model.billingAddressVm?.Label,
+                                AddressLine1 = model.billingAddressVm?.AddressLine1,
+                                AddressLine2 = model.billingAddressVm?.AddressLine2,
+                                City = model.billingAddressVm?.City,
+                                State = model.billingAddressVm?.State,
+                                ZipCode = model.billingAddressVm?.ZipCode,
+                                Country = model.billingAddressVm?.Country,
+                                CreatedAt = DateTime.Now,
+                            };
+                            await billingService.Add(CreateContactBillingAddress);
                         }
-                        catch (Exception ex)
-                        {
-                            responseVm.IsSuccess = false;
-                            responseVm.Message = AppConstant.ExceptionError + ex.Message;
-                        }
-                        
-                       
-                        
+                        responseVm.IsSuccess = true;
+                        responseVm.Message = AppConstant.InsertSuccessMsg;
+                    }
+                    else
+                    {
+                        responseVm.Message = AppConstant.NoDataFound;
                     }
                 }
                 else
                 {
-                    responseVm.IsSuccess = false;
-                    responseVm.Message = $"{AppConstant.AlreadyExists}";
+                    responseVm.Message = AppConstant.TenantNotFound;
                 }
-
             }
             catch (Exception ex)
             {
@@ -126,6 +108,86 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
+        public async Task<IResponseVm<string>> Update_Contact(Sp_Contact model)
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+            try
+            {
+                var IsTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
+
+                if (IsTenantExists)
+                {
+                    var contact = await GetAllQuerable()
+                        .FirstOrDefaultAsync(c => c.ContactId == model.ContactId && c.TenantId == AppConstant.LoggedInTenantId
+                        && c.IsActive == true && c.IsDelete == false);
+
+                    if (contact != null)
+                    {
+                        contact.ContactType = model.ContactType;
+                        contact.Name = model.Name;
+                        contact.PhoneNumber = model.PhoneNumber;
+                        contact.Email = model.Email;
+                        contact.Website = model.Website;
+                        contact.Notes = model.Notes;
+                        contact.IsBillingAddressSameAsAddress = model.IsBillingAddressSameAsAddress;
+                        contact.ModifiedBy = AppConstant.LoggedInUserID;
+                        contact.UpdatedAt = DateTime.Now;
+
+                        await Update(contact);
+                        if (!model.IsBillingAddressSameAsAddress)
+                        {
+                            var contactBillingAddress = billingService.GetAllQuerable()
+                                .Where(x => x.ContactId == contact.ContactId).FirstOrDefault();
+                            if (contactBillingAddress != null)
+                            {
+                                contactBillingAddress.Label = model.billingAddressVm?.Label;
+                                contactBillingAddress.AddressLine1 = model.billingAddressVm?.AddressLine1;
+                                contactBillingAddress.AddressLine2 = model.billingAddressVm?.AddressLine2;
+                                contactBillingAddress.City = model.billingAddressVm?.City;
+                                contactBillingAddress.State = model.billingAddressVm?.State;
+                                contactBillingAddress.ZipCode = model.billingAddressVm?.ZipCode;
+                                contactBillingAddress.Country = model.billingAddressVm?.Country;
+                                contactBillingAddress.UpdatedAt = DateTime.Now;
+
+                                await billingService.Update(contactBillingAddress);
+                            }
+                            else
+                            {
+                                TblContactBillingAddress CreateContactBillingAddress = new TblContactBillingAddress
+                                {
+                                    ContactId = contact.ContactId,
+                                    Label = model.billingAddressVm?.Label,
+                                    AddressLine1 = model.billingAddressVm?.AddressLine1,
+                                    AddressLine2 = model.billingAddressVm?.AddressLine2,
+                                    City = model.billingAddressVm?.City,
+                                    State = model.billingAddressVm?.State,
+                                    ZipCode = model.billingAddressVm?.ZipCode,
+                                    Country = model.billingAddressVm?.Country,
+                                    CreatedAt = DateTime.Now,
+                                };
+                                await billingService.Add(CreateContactBillingAddress);
+                            }
+                        }
+
+                        responseVm.IsSuccess = true;
+                        responseVm.Message = AppConstant.UpdateSuccessMsg;
+                    }
+                    else
+                    {
+                        responseVm.Message = AppConstant.NoDataFound;
+                    }
+                }
+                else
+                {
+                    responseVm.Message = AppConstant.TenantNotFound;
+                }
+            }
+            catch (Exception ex)
+            {
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+            }
+            return responseVm;
+        }
         public async Task<IResponseVm<string>> ActiveInActiveContact(Guid id)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
@@ -177,7 +239,8 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.NoUserFound;
                 }
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 responseVm.Message = AppConstant.ExceptionError + ex.Message;
             }
             return responseVm;
@@ -214,9 +277,9 @@ namespace ShutterManagement.Business.Services
                 var FilterRecords = ContactList
                                     .Where(x =>
                                     (filter.SearchValue != "" ?
-                                    ((x.Notes?? "").Contains(filter.SearchValue)
+                                    ((x.Notes ?? "").Contains(filter.SearchValue)
                                     || (x.Email ?? "").Contains(filter.SearchValue)
-                                    || (x.Website ?? "").Contains(filter.SearchValue) 
+                                    || (x.Website ?? "").Contains(filter.SearchValue)
                                     || (x.PhoneNumber ?? "").Contains(filter.SearchValue)
                                     || (x.Name ?? "").Contains(filter.SearchValue)
                                     ) : true)).ToList();
@@ -224,7 +287,7 @@ namespace ShutterManagement.Business.Services
                                     .Skip((filter.PageNo - 1) * filter.RecordPerPage).Take(filter.RecordPerPage).ToList();
                 if (TakenRecords != null && TakenRecords.Count > 0)
                 {
-                    responseVm.Data = TakenRecords.Select(x=> new
+                    responseVm.Data = TakenRecords.Select(x => new
                     {
                         x.ContactId,
                         x.TenantId,
@@ -235,7 +298,7 @@ namespace ShutterManagement.Business.Services
                         x.Website,
                         x.Notes,
                         x.IsBillingAddressSameAsAddress,
-                        x.TblContactBillingAddresses
+                        //x.TblContactBillingAddresses
                     });
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.UpdateSuccessMsg;
@@ -254,56 +317,7 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        public async Task Update_Contact(Sp_Contact model)
-        {
-            IResponseVm<Sp_Contact> responseVm = new ResponseVm<Sp_Contact>();
-            try
-            {
-                var IsContactExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId);
 
-                if (IsContactExists)
-                {
-                    var contact = await GetAllQuerable()
-                        .FirstOrDefaultAsync(c => c.ContactId == model.ContactId);
 
-                    if (contact != null)
-                    {
-                        contact.ContactType = model.ContactType;
-                        contact.Name = model.Name;
-                        contact.PhoneNumber = model.PhoneNumber;
-                        contact.Email = model.Email;
-                        contact.Website = model.Website;
-                        contact.Notes = model.Notes;
-                        contact.IsBillingAddressSameAsAddress = model.IsBillingAddressSameAsAddress;
-                        contact.IsActive = true;
-
-                        if (!model.IsBillingAddressSameAsAddress)
-                        {
-                            contact.TblContactBillingAddresses = new List<TblContactBillingAddress>
-                    {
-                        new TblContactBillingAddress
-                        {
-                            Label = model.billingAddressVm?.Label,
-                            AddressLine1 = model.billingAddressVm?.AddressLine1,
-                            AddressLine2 = model.billingAddressVm?.AddressLine2,
-                            City = model.billingAddressVm?.City,
-                            State = model.billingAddressVm?.State,
-                            ZipCode = model.billingAddressVm?.ZipCode,
-                            Country = model.billingAddressVm?.Country
-                        }
-                    };
-                        }
-
-                        Update(contact);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                responseVm.Message = AppConstant.ExceptionError + ex.Message;
-            }
-
-            }
-
-        }
     }
+}

@@ -11,5 +11,6 @@ namespace ShutterManagement.Core.ViewModels.Response
     {
         public string? Token { get; set; }
         public LoginRoles[]? Roles { get; set; }
+        public string[]? Menu { get; set; }
     }
 }
