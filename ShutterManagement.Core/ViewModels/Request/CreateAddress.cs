@@ -36,7 +36,7 @@ namespace ShutterManagement.Core.ViewModels.Request
 
         [Required]
         [MaxLength(6)]
-        [RegularExpression(@"^\d{10}$")]
+        [RegularExpression(@"^\d{6}$")]
         public string? ZipCode { get; set; }
 
         [Required]
