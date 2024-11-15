@@ -50,6 +50,7 @@ namespace ShutterManagement.Business.Services
                     CreatedBy = AppConstant.LoggedInUserID,
                     IsActive = true,
                     IsDelete = false,
+                    IsShow = false,
                     TenantId = AppConstant.LoggedInTenantId
 
                 };
@@ -85,12 +86,18 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-
                 bool IsRoleExists = await AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId
-                && x.IsDelete == false && x.IsActive == true && x.Id != model.RoleId && x.RoleName == model.RoleName);
+                && x.IsDelete == false && x.IsActive == true && x.Id == model.RoleId);
                 if (!IsRoleExists)
                 {
                     responseVm.Message = AppConstant.NoDataFound;
+                    return responseVm;
+                }
+                bool IsRoleNameExists = await AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId
+                && x.IsDelete == false && x.IsActive == true && x.Id != model.RoleId && x.RoleName == model.RoleName);
+                if (IsRoleNameExists)
+                {
+                    responseVm.Message = AppConstant.AlreadyExists;
                     return responseVm;
                 }
                 var RoleDetails = GetAllQuerable().Where(x => x.Id == model.RoleId && x.IsShow == false && x.IsDelete == false

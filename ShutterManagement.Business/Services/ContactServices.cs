@@ -35,7 +35,10 @@ namespace ShutterManagement.Business.Services
             IResponseVm<Sp_Contact> responseVm = new ResponseVm<Sp_Contact>();
             try
             {
-                var IsContactExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId); 
+                var IsContactExists  = GetAllQuerable().Where(x => x.IsActive == true && x.IsDelete == false &&
+                x.ContactId == model.ContactId
+                && x.TenantId == AppConstant.LoggedInTenantId
+                );
                 if (IsContactExists != null)
                 {
                     if (!model.IsBillingAddressSameAsAddress)
@@ -261,7 +264,7 @@ namespace ShutterManagement.Business.Services
             {
                 var IsContactExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId);
 
-                if (IsContactExists)
+                 if (IsContactExists)
                 {
                     var contact = await GetAllQuerable()
                         .FirstOrDefaultAsync(c => c.ContactId == model.ContactId);
