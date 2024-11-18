@@ -211,15 +211,16 @@ namespace ShutterManagement.Services
             try
             {
                 var UserList = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId).ToList();
+                filter.SearchValue = (filter.SearchValue ?? "").ToLower();
                 var FilterRecords = UserList
                                     .Where(x =>
                                     (filter.SearchValue != "" ?
-                                    ((x.Email ?? "").Contains(filter.SearchValue)
-                                    || (x.Phone ?? "").Contains(filter.SearchValue)
-                                    || (x.FirstName ?? "").Contains(filter.SearchValue) 
-                                    || (x.MiddleName ?? "").Contains(filter.SearchValue)
-                                    || (x.LastName ?? "").Contains(filter.SearchValue)
-                                    || (x.Username ?? "").Contains(filter.SearchValue)
+                                    ((x.Email ?? "").ToLower().Contains(filter.SearchValue)
+                                    || (x.Phone ?? "").ToLower().Contains(filter.SearchValue)
+                                    || (x.FirstName ?? "").ToLower().Contains(filter.SearchValue) 
+                                    || (x.MiddleName ?? "").ToLower().Contains(filter.SearchValue)
+                                    || (x.LastName ?? "").ToLower().Contains(filter.SearchValue)
+                                    || (x.Username ?? "").ToLower().Contains(filter.SearchValue)
                                     ) : true)).ToList();
                 var TakenRecords = FilterRecords
                                     .Skip((filter.PageNo - 1) * filter.RecordPerPage).Take(filter.RecordPerPage).ToList();

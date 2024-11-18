@@ -7,6 +7,7 @@ using ShutterManagement.Core.SPModel;
 using Azure;
 using Microsoft.AspNetCore.Authorization;
 using ShutterManagement.Core;
+using ShutterManagement.Business;
 
 namespace ShutterManagement.Controllers
 {
@@ -17,11 +18,13 @@ namespace ShutterManagement.Controllers
     {
         private readonly IMasterCreate masterCreate;
         private readonly FileUploadHelper fileUpload;
+        private readonly ClaimsProperty claimsProperty;
 
-        public CommonController(IMasterCreate masterCreate, FileUploadHelper fileUpload)
+        public CommonController(IMasterCreate masterCreate, FileUploadHelper fileUpload, ClaimsProperty claimsProperty)
         {
             this.masterCreate = masterCreate;
             this.fileUpload = fileUpload;
+            this.claimsProperty = claimsProperty;
         }
 
 

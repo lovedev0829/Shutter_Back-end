@@ -171,7 +171,7 @@ namespace ShutterManagement.Services
                         LastName = TenantHomePageData.LastName,
                         MiddleName = TenantHomePageData.MiddleName,
                         Email = brandInfo.Email,
-                        PhoneNumber = brandInfo.PhoneNmber,
+                        PhoneNumber = brandInfo.PhoneNumber,
                         Logo = brandInfo.Logo,
                         PrimaryColor = brandInfo.PrimaryColor,
                         SecondaryColor = brandInfo.SecondaryColor,

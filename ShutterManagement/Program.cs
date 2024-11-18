@@ -14,6 +14,7 @@ using System.Configuration;
 using AutoMapper;
 using ShutterManagement.Business;
 using ShutterManagement.Core.Common;
+using Microsoft.Extensions.FileProviders;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -103,6 +104,7 @@ builder.Services.AddScoped<IAddress, AddressService>();
 builder.Services.AddScoped<IRolePermissionService, RolePermissionService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IMaterial, MaterialService>();
+builder.Services.AddScoped<FileUploadHelper>();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IModulePermission, ModuleService>();
@@ -117,6 +119,13 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    string path = "D:\\Shutter\\ShutterManagement\\Files";
+    app.UseFileServer(new FileServerOptions
+    {
+        FileProvider = new PhysicalFileProvider(path),
+        RequestPath = new PathString("/Files"),
+        EnableDirectoryBrowsing = false
+    });
 }
 app.UseCors("AllowedCorsPolicy");
 app.UseSwagger();

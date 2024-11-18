@@ -51,12 +51,12 @@ namespace ShutterManagement.API.Controllers
         }
 
 
-        //[HttpPost]
-        //[Route("GetAll")]
-        //public async Task<IResponseVm<dynamic>> GetAll(Pagination filter)
-        //{
-        //    var res = await _userService.GetAll(filter);
-        //    return Ok(res);
-        //}
+        [HttpPost]
+        [Route("GetAll")]
+        public async Task<IActionResult> GetAll(Pagination filter)
+        {
+            var res = await _userService.GetAll(filter);
+            return Ok(res);
+        }
     }
 }

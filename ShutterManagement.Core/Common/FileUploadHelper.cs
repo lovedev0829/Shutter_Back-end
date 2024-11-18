@@ -33,7 +33,7 @@ namespace ShutterManagement.Core.Common
 
                 if (fileType == FileType.Image)
                 {
-                    string[] ImageExAllow = ["jpg", "png", "jpeg"];
+                    string[] ImageExAllow = [".jpg", ".png", ".jpeg"];
                     if (!ImageExAllow.Contains(fileext))
                     {
                         responseVm.Message = "Images accpect only Extensions: " + ImageExAllow.ToString();
@@ -42,22 +42,23 @@ namespace ShutterManagement.Core.Common
                 }
                 if (fileType == FileType.Document)
                 {
-                    string[] DocExAllow = ["doc", "docx"];
+                    string[] DocExAllow = [".doc", ".docx"];
                     if (!DocExAllow.Contains(fileext))
                     {
                         responseVm.Message = "Document accpect only Extensions: " + DocExAllow.ToString();
                         return responseVm;
                     }
                 }
-                var tenantFolderPath = Path.Combine(environment.ContentRootPath, "Files", tenantId);
+                var rootPath = Path.Combine(environment.ContentRootPath, "Files", tenantId);
 
-                if (!Directory.Exists(tenantFolderPath))
+                if (!Directory.Exists(rootPath))
                 {
-                    Directory.CreateDirectory(tenantFolderPath);
+                    Directory.CreateDirectory(rootPath);
                 }
 
-                var fileName = Guid.NewGuid().ToString() + fileext.Replace(" ", "");
-                var savePath = Path.Combine(tenantFolderPath, fileName);
+                var fileName = Guid.NewGuid().ToString() + "_" + file.FileName.Replace(" ", "");
+                var tenantPath = Path.Combine(tenantId, fileName);
+                var savePath = Path.Combine(rootPath, fileName);
 
                 using (var stream = new FileStream(savePath, FileMode.Create))
                 {
@@ -65,7 +66,7 @@ namespace ShutterManagement.Core.Common
                 }
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.UploadSuccessMsg;
-                responseVm.Data = savePath;
+                responseVm.Data = tenantPath;
             }
             catch (Exception ex)
             {

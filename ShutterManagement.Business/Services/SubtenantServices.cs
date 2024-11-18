@@ -254,7 +254,7 @@ namespace ShutterManagement.Business.Services
                                     &&
                                     (filter.SearchValue != "" ?
                                     ((x.BrandingInfoNavigation?.Email ?? "").ToLower().Contains(filter.SearchValue)
-                                    || (x.BrandingInfoNavigation?.PhoneNmber ?? "").ToLower().Contains(filter.SearchValue)
+                                    || (x.BrandingInfoNavigation?.PhoneNumber ?? "").ToLower().Contains(filter.SearchValue)
                                     || (x.FirstName ?? "").ToLower().Contains(filter.SearchValue) 
                                     || (x.LastName ?? "").ToLower().Contains(filter.SearchValue)
                                     || (x.MiddleName ?? "").ToLower().Contains(filter.SearchValue)
@@ -273,7 +273,7 @@ namespace ShutterManagement.Business.Services
                         x.Code,
                         x.Url,
                         x.BrandingInfoNavigation.Email,
-                        x.BrandingInfoNavigation.PhoneNmber,
+                        x.BrandingInfoNavigation.PhoneNumber,
                         x.BrandingInfoNavigation.Logo,
                         x.BrandingInfoNavigation.PrimaryColor,
                         x.BrandingInfoNavigation.SecondaryColor,
