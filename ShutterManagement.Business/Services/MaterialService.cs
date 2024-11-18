@@ -18,11 +18,13 @@ namespace ShutterManagement.Business.Services
     {
         private readonly ShutterDbContext _context;
         private readonly ClaimsProperty claimsProperty;
+        private readonly ITenantService tenantService;
 
-        public MaterialService(ShutterDbContext context, ClaimsProperty claimsProperty)
+        public MaterialService(ShutterDbContext context, ClaimsProperty claimsProperty,ITenantService tenantService)
         {
             _context = context;
             this.claimsProperty = claimsProperty;
+            this.tenantService = tenantService;
         }
 
         public Task<IResponseVm<string>> ActiveInActive(Guid Id)
@@ -30,6 +32,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
+                var IsTenant =  tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null);
                 var IsMaterialExists = GetAllQuerable()
                       .Where(c => c.RawMaterialId == Id
                                   && c.TenantId == AppConstant.LoggedInTenantId
@@ -65,6 +68,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null);
                 var IsTenantExists = _context.TblTenants.Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false && x.IsActive == true);
                 if (IsTenantExists != null)
                 {
@@ -182,12 +186,13 @@ namespace ShutterManagement.Business.Services
         }
 
 
-        public Task<IResponseVm<string>> Update_Material(UpdateMaterial model)
+        public async Task<IResponseVm<string>> Update_Material(UpdateMaterial model)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
 
             try
             {
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null);
                 if (Guid.TryParse(model.RawMaterialId, out Guid rawMaterialIdGuid))
                 {
                     var IsMaterialExists = GetAllQuerable()
@@ -221,7 +226,7 @@ namespace ShutterManagement.Business.Services
             {
                 responseVm.Message = AppConstant.ExceptionError + ex.Message;
             }
-            return Task.FromResult(responseVm);
+            return (responseVm);
         }
     }
 }

@@ -87,7 +87,7 @@ namespace ShutterManagement.Services
         {
             IResponseVm<string> result = new ResponseVm<string>();
             try
-            {
+            { 
                 var IsUserExists = GetAllQuerable().Where(x => x.IsActive == true && x.IsDelete == false &&
                 x.Id == Guid.Parse(UserDetails.UserId)
                 && x.TenantId == AppConstant.LoggedInTenantId
