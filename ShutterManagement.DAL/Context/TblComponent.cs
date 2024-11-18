@@ -21,7 +21,19 @@ public partial class TblComponent
 
     public DateTime? UpdatedAt { get; set; }
 
+    public Guid? CreatedBy { get; set; }
+
+    public Guid? ModifiedBy { get; set; }
+
+    public Guid? TenantId { get; set; }
+
+    public bool? IsActive { get; set; }
+
+    public bool? IsDelete { get; set; }
+
     public virtual ICollection<TblComponentMaterial> TblComponentMaterials { get; set; } = new List<TblComponentMaterial>();
 
     public virtual ICollection<TblJobComponent> TblJobComponents { get; set; } = new List<TblJobComponent>();
+
+    public virtual TblTenant? Tenant { get; set; }
 }

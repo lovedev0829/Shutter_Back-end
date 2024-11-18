@@ -98,10 +98,11 @@ builder.Services.AddScoped<IMasterCreate, MasterCreate>();
 builder.Services.AddScoped<ITenantService, TenantServices>();
 builder.Services.AddScoped<ITenantBrandingService, TenantBrandingService>();
 builder.Services.AddScoped<ISubtenantService, SubtenantServices>();
-
+builder.Services.AddScoped<IComponentService, ComponentService>();
 builder.Services.AddScoped<IAddress, AddressService>();
 builder.Services.AddScoped<IRolePermissionService, RolePermissionService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
+builder.Services.AddScoped<IMaterial, MaterialService>();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IModulePermission, ModuleService>();

@@ -11,7 +11,7 @@ public partial class TblOption
 
     public string? OptionType { get; set; }
 
-    public string? ProductType { get; set; }
+    public Guid? ProductType { get; set; }
 
     public string? Description { get; set; }
 
@@ -24,4 +24,14 @@ public partial class TblOption
     public bool? IsActive { get; set; }
 
     public bool? IsDelete { get; set; }
+
+    public Guid? CreatedBy { get; set; }
+
+    public Guid? ModifiedBy { get; set; }
+
+    public Guid? TenantId { get; set; }
+
+    public virtual MstProductType? ProductTypeNavigation { get; set; }
+
+    public virtual TblTenant? Tenant { get; set; }
 }

@@ -35,6 +35,10 @@ public partial class TblUser
 
     public string? Phone { get; set; }
 
+    public string? Token { get; set; }
+
+    public DateTime? ExpireAt { get; set; }
+
     public virtual ICollection<TblUserRole> TblUserRoles { get; set; } = new List<TblUserRole>();
 
     public virtual TblTenant? Tenant { get; set; }

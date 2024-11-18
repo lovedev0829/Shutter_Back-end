@@ -10,7 +10,7 @@ public partial class ShutterDbContext : DbContext
     {
     }
 
-    public ShutterDbContext(DbContextOptions<ShutterDbContext> options)
+    public ShutterDbContext(DbContextOptions<BtprojecShuttermanagementDevContext> options)
         : base(options)
     {
     }
@@ -40,6 +40,8 @@ public partial class ShutterDbContext : DbContext
     public virtual DbSet<TblJob> TblJobs { get; set; }
 
     public virtual DbSet<TblJobComponent> TblJobComponents { get; set; }
+
+    public virtual DbSet<TblJobStatus> TblJobStatuses { get; set; }
 
     public virtual DbSet<TblMeasurement> TblMeasurements { get; set; }
 
@@ -75,7 +77,7 @@ public partial class ShutterDbContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Server=103.93.16.117;Database=btprojec_shuttermanagement_dev;user id=btprojec_admin;password=Bwy0w65ixN*bsE9wy;Integrated Security=false;TrustServerCertificate=true;");
+        => optionsBuilder.UseSqlServer("Server=103.93.16.117;Database=btprojec_shuttermanagement_dev;User Id=btprojec_admin;Password=Bwy0w65ixN*bsE9wy;Integrated Security=false;TrustServerCertificate=true;");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -99,8 +101,12 @@ public partial class ShutterDbContext : DbContext
             entity.ToTable("MstModule_Permission", "dbo");
 
             entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.Icon).HasMaxLength(500);
             entity.Property(e => e.ModulePermission).HasMaxLength(100);
             entity.Property(e => e.PermissionDisplayName).HasMaxLength(100);
+            entity.Property(e => e.Url)
+                .HasMaxLength(1000)
+                .HasColumnName("URL");
 
             entity.HasOne(d => d.Module).WithMany(p => p.MstModulePermissions)
                 .HasForeignKey(d => d.ModuleId)
@@ -185,6 +191,10 @@ public partial class ShutterDbContext : DbContext
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
+
+            entity.HasOne(d => d.Tenant).WithMany(p => p.TblComponents)
+                .HasForeignKey(d => d.TenantId)
+                .HasConstraintName("FK__TblCompon__Tenan__79FD19BE");
         });
 
         modelBuilder.Entity<TblComponentMaterial>(entity =>
@@ -212,6 +222,10 @@ public partial class ShutterDbContext : DbContext
             entity.HasOne(d => d.RawMaterial).WithMany(p => p.TblComponentMaterials)
                 .HasForeignKey(d => d.RawMaterialId)
                 .HasConstraintName("FK__TblCompon__RawMa__5BAD9CC8");
+
+            entity.HasOne(d => d.Tenant).WithMany(p => p.TblComponentMaterials)
+                .HasForeignKey(d => d.TenantId)
+                .HasConstraintName("FK__TblCompon__Tenan__7AF13DF7");
         });
 
         modelBuilder.Entity<TblContact>(entity =>
@@ -362,9 +376,6 @@ public partial class ShutterDbContext : DbContext
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
             entity.Property(e => e.JobLabel).HasMaxLength(255);
             entity.Property(e => e.ScheduledDate).HasColumnType("datetime");
-            entity.Property(e => e.Status)
-                .HasMaxLength(50)
-                .IsUnicode(false);
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
@@ -376,6 +387,14 @@ public partial class ShutterDbContext : DbContext
             entity.HasOne(d => d.Contact).WithMany(p => p.TblJobs)
                 .HasForeignKey(d => d.ContactId)
                 .HasConstraintName("FK__TblJob__ContactI__625A9A57");
+
+            entity.HasOne(d => d.Status).WithMany(p => p.TblJobs)
+                .HasForeignKey(d => d.StatusId)
+                .HasConstraintName("FK__TblJob__StatusId__6BAEFA67");
+
+            entity.HasOne(d => d.Tenant).WithMany(p => p.TblJobs)
+                .HasForeignKey(d => d.TenantId)
+                .HasConstraintName("FK__TblJob__TenantId__65F62111");
         });
 
         modelBuilder.Entity<TblJobComponent>(entity =>
@@ -417,6 +436,20 @@ public partial class ShutterDbContext : DbContext
             entity.HasOne(d => d.Job).WithMany(p => p.TblJobComponents)
                 .HasForeignKey(d => d.JobId)
                 .HasConstraintName("FK__TblJobCom__JobId__65370702");
+        });
+
+        modelBuilder.Entity<TblJobStatus>(entity =>
+        {
+            entity.HasKey(e => e.StatusId).HasName("PK__TblJobSt__C8EE206385D884DA");
+
+            entity.ToTable("TblJobStatus");
+
+            entity.Property(e => e.StatusId).ValueGeneratedNever();
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.StatusName)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
         });
 
         modelBuilder.Entity<TblMeasurement>(entity =>
@@ -512,6 +545,10 @@ public partial class ShutterDbContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
 
+            entity.HasOne(d => d.Tenant).WithMany(p => p.TblRawMaterials)
+                .HasForeignKey(d => d.TenantId)
+                .HasConstraintName("FK__TblRawMat__Tenan__7908F585");
+
             entity.HasOne(d => d.Vendor).WithMany(p => p.TblRawMaterials)
                 .HasForeignKey(d => d.VendorId)
                 .HasConstraintName("FK__TblRawMat__Vendo__681373AD");
@@ -525,6 +562,7 @@ public partial class ShutterDbContext : DbContext
 
             entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.IsShow).HasDefaultValue(false);
             entity.Property(e => e.ModifiedAt).HasColumnType("datetime");
             entity.Property(e => e.RoleName).HasMaxLength(100);
 
@@ -652,6 +690,7 @@ public partial class ShutterDbContext : DbContext
                 .HasColumnType("datetime")
                 .HasColumnName("CreatedAT");
             entity.Property(e => e.Email).HasMaxLength(100);
+            entity.Property(e => e.ExpireAt).HasColumnType("datetime");
             entity.Property(e => e.FirstName)
                 .HasMaxLength(100)
                 .IsUnicode(false);
@@ -668,6 +707,7 @@ public partial class ShutterDbContext : DbContext
             entity.Property(e => e.Pwd)
                 .HasMaxLength(128)
                 .HasColumnName("pwd");
+            entity.Property(e => e.Token).HasMaxLength(500);
             entity.Property(e => e.Username)
                 .HasMaxLength(128)
                 .HasColumnName("username");

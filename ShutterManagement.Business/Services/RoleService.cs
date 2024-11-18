@@ -219,7 +219,7 @@ namespace ShutterManagement.Business.Services
                                     (filter.SearchValue != "" ?
                                     ((x.RoleName ?? "").Contains(filter.SearchValue)
                                     ) : true))
-                                    .Skip((filter.PageNo - 1) * filter.RecordPerPage).Take(filter.RecordPerPage).ToList();
+                                    .Skip((filter.PageNo - 1) * filter.RecordPerPage).Take(filter.RecordPerPage).ToList(); 
                 if (FilterRecords != null && FilterRecords.Count > 0)
                 {
                     responseVm.Data = FilterRecords;

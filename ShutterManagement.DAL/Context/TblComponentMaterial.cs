@@ -23,7 +23,15 @@ public partial class TblComponentMaterial
 
     public bool? IsDelete { get; set; }
 
+    public Guid? CreatedBy { get; set; }
+
+    public Guid? ModifiedBy { get; set; }
+
+    public Guid? TenantId { get; set; }
+
     public virtual TblComponent? Component { get; set; }
 
     public virtual TblRawMaterial? RawMaterial { get; set; }
+
+    public virtual TblTenant? Tenant { get; set; }
 }
