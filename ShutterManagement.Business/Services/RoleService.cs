@@ -2,6 +2,7 @@
 using ShutterManagement.Core;
 using ShutterManagement.Core.ViewModels;
 using ShutterManagement.Core.ViewModels.Request;
+using ShutterManagement.Core.ViewModels.Response;
 using ShutterManagement.DAL.Context;
 using ShutterManagement.Services;
 using System;
@@ -64,9 +65,9 @@ namespace ShutterManagement.Business.Services
                             RoleId = res.Id,
                             ModulePermissionId = item
                         };
-                        dbContext.TblRolesPermissions.Add(tblRolesPermission);
-                        dbContext.SaveChanges();
-                         //await rolePermissionService.Add(tblRolesPermission);
+                        //dbContext.TblRolesPermissions.Add(tblRolesPermission);
+                        //dbContext.SaveChanges();
+                         await rolePermissionService.Add(tblRolesPermission);
 
                     }
                 }
@@ -212,28 +213,48 @@ namespace ShutterManagement.Business.Services
             IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
             try
             {
-                var RoleList = (await GetAll()).Where(x => x.IsDelete == false && x.IsShow == false && x.TenantId == AppConstant.LoggedInTenantId).ToList().OrderByDescending(x => x.CreatedAt);
-                
+                List<RoleList> roleLists = new List<RoleList>();
+                var RoleList = (await GetAll())
+                    .Where(x => x.IsDelete == false 
+                    && x.IsShow == false 
+                    && x.TenantId == AppConstant.LoggedInTenantId)
+                    .ToList().OrderByDescending(x => x.CreatedAt);
+
+                roleLists.AddRange(RoleList.Select(x => new RoleList
+                {
+                    TenantId = x.TenantId,
+                    IsActive = x.IsActive,
+                    RoleId = x.Id,
+                    RoleName = x.RoleName
+                }));
+                foreach(var role in roleLists)
+                {
+                   var rolePermission = rolePermissionService.GetAllQuerable()
+                        .Where(x => x.RoleId == role.RoleId).ToList();
+                    role.RolePermissionList.AddRange(rolePermission.Select(x=>new RolePermissionList
+                    {
+                        PermissionId = x.ModulePermissionId
+                    }));
+                }
+
                 var FilterRecords = RoleList
                                     .Where(x =>
                                     (filter.SearchValue != "" ?
                                     ((x.RoleName ?? "").ToLower().Contains(filter.SearchValue)
-                                    ) : true))
+                                    ) : true)).ToList();
+                var TakenRecords = FilterRecords
                                     .Skip((filter.PageNo - 1) * filter.RecordPerPage).Take(filter.RecordPerPage).ToList(); 
-                if (FilterRecords != null && FilterRecords.Count > 0)
+                if (TakenRecords != null && TakenRecords.Count > 0)
                 {
-                    responseVm.Data = FilterRecords;
+                    responseVm.Data = TakenRecords;
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.FetchSuccessMsg;
-                    responseVm.TotalRecords = RoleList.Count();
+                    responseVm.TotalRecords = FilterRecords.Count;
                 }
                 else
                 {
                     responseVm.Message = AppConstant.NoDataFound;
-                    responseVm.TotalRecords = RoleList.Count();
                 }
-
-
             }
             catch (Exception ex)
             {
