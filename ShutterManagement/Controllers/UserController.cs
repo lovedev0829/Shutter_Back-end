@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using ShutterManagement.Business.Interfaces;
+using ShutterManagement.Business.Services;
 using ShutterManagement.Core;
 using ShutterManagement.Core.SPModel;
 using ShutterManagement.Core.ViewModels;
@@ -48,5 +50,13 @@ namespace ShutterManagement.API.Controllers
             return Ok(result);
         }
 
+
+        //[HttpPost]
+        //[Route("GetAll")]
+        //public async Task<IResponseVm<dynamic>> GetAll(Pagination filter)
+        //{
+        //    var res = await _userService.GetAll(filter);
+        //    return Ok(res);
+        //}
     }
 }

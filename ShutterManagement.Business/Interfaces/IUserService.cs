@@ -1,4 +1,5 @@
-﻿using ShutterManagement.Core.ViewModels;
+﻿using Microsoft.AspNetCore.Mvc;
+using ShutterManagement.Core.ViewModels;
 using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.DAL.Context;
 using ShutterManagement.Interfaces;
@@ -17,6 +18,7 @@ namespace ShutterManagement.Business.Interfaces
         Task<IResponseVm<string>> Delete(string UserId);
         Task<IResponseVm<string>> ActiveInactive(string UserId);
 
+        //Task<IResponseVm<dynamic>> GetAll(Pagination filter);
         Task PasswordEnc();
     }
 }

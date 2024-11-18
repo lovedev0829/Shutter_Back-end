@@ -41,7 +41,17 @@ public partial class TblTenant
 
     public virtual ICollection<TblAddress> TblAddresses { get; set; } = new List<TblAddress>();
 
+    public virtual ICollection<TblComponentMaterial> TblComponentMaterials { get; set; } = new List<TblComponentMaterial>();
+
+    public virtual ICollection<TblComponent> TblComponents { get; set; } = new List<TblComponent>();
+
     public virtual ICollection<TblContact> TblContacts { get; set; } = new List<TblContact>();
+
+    public virtual ICollection<TblJob> TblJobs { get; set; } = new List<TblJob>();
+
+    public virtual ICollection<TblOption> TblOptions { get; set; } = new List<TblOption>();
+
+    public virtual ICollection<TblRawMaterial> TblRawMaterials { get; set; } = new List<TblRawMaterial>();
 
     public virtual ICollection<TblRole> TblRoles { get; set; } = new List<TblRole>();
 
