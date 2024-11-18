@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ShutterManagement.Core.SPModel.SP_Responses;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -9,7 +10,6 @@ namespace ShutterManagement.Core.SPModel
 {
     public class Sp_Contact
     {
-        public Guid ContactId { get; set; } = Guid.Empty;
 
         [Required]
         [MaxLength(50)]
@@ -39,7 +39,9 @@ namespace ShutterManagement.Core.SPModel
 
         public bool IsBillingAddressSameAsAddress { get; set; } = false;
 
-        public BillingAddressVm? billingAddressVm { get; set; } 
+        public BillingAddressVm? billingAddressVm { get; set; }
+        public bool? IstaxApplied { get; set; } = false;
 
+        public TaxExemption taxExemptionVm { get; set; } 
     }
 }

@@ -13,6 +13,7 @@ using Azure;
 using ShutterManagement.Core.ViewModels.Request;
 using System.Diagnostics.Metrics;
 using System.Reflection.Emit;
+using ShutterManagement.Core.SPModel.SP_Responses;
 
 namespace ShutterManagement.Business.Services
 {
@@ -21,14 +22,16 @@ namespace ShutterManagement.Business.Services
         private readonly ShutterDbContext _context;
         private readonly IContactBillingService billingService;
         private readonly ITenantService tenantService;
+        private readonly ITaxExemption taxExemption;
         private readonly ClaimsProperty claimsProperty;
 
         public ContactServices(ShutterDbContext context, IContactBillingService billingService,
-            ITenantService tenantService, ClaimsProperty claimsProperty)
+            ITenantService tenantService,ITaxExemption taxExemption, ClaimsProperty claimsProperty)
         {
             _context = context;
             this.billingService = billingService;
             this.tenantService = tenantService;
+            this.taxExemption = taxExemption;
             this.claimsProperty = claimsProperty;
         }
 
@@ -88,6 +91,22 @@ namespace ShutterManagement.Business.Services
                             };
                             await billingService.Add(CreateContactBillingAddress);
                         }
+                        if(model.IstaxApplied != false)
+                        {
+                            TblTaxExemption taxExemption1 = new TblTaxExemption
+                            {
+                                ContactId = res.ContactId,
+                                ExemptionCertificate = model.taxExemptionVm?.ExemptionCertificate,
+                                EffectiveDate = model.taxExemptionVm?.EffectiveDate,
+                                ExpiryDate = model.taxExemptionVm?.ExpiryDate,
+                                CreatedBy = AppConstant.LoggedInUserID,
+                                CreatedAt = DateTime.Now,
+                                IsActive = true,
+                                IsDelete = false
+
+                            };
+                            await taxExemption.Add(taxExemption1);
+                        }
                         responseVm.IsSuccess = true;
                         responseVm.Message = AppConstant.InsertSuccessMsg;
                     }
@@ -108,7 +127,7 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        public async Task<IResponseVm<string>> Update_Contact(Sp_Contact model)
+        public async Task<IResponseVm<string>> Update_Contact(UpdateContact model)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
@@ -169,6 +188,36 @@ namespace ShutterManagement.Business.Services
                             }
                         }
 
+                        if(model.IstaxApplied != false)
+                        {
+                            var contactTaxExemption = taxExemption.GetAllQuerable()
+                                .Where(x => x.ContactId == contact.ContactId).FirstOrDefault();
+                            if (contactTaxExemption != null)
+                            {
+                                contactTaxExemption.ExemptionCertificate = model.taxExemptionVm?.ExemptionCertificate;
+                                contactTaxExemption.EffectiveDate = model.taxExemptionVm?.EffectiveDate;
+                                contactTaxExemption.ExpiryDate = model.taxExemptionVm?.ExpiryDate;
+                                contactTaxExemption.ModifiedBy = AppConstant.LoggedInUserID;
+                                contactTaxExemption.UpdatedAt = DateTime.Now;
+                                await taxExemption.Update(contactTaxExemption);
+                            }
+                            else
+                            {
+                                TblTaxExemption taxExemption1 = new TblTaxExemption
+                                {
+                                    ContactId = contact.ContactId,
+                                    ExemptionCertificate = model.taxExemptionVm?.ExemptionCertificate,
+                                    EffectiveDate = model.taxExemptionVm?.EffectiveDate,
+                                    ExpiryDate = model.taxExemptionVm?.ExpiryDate,
+                                    CreatedBy = AppConstant.LoggedInUserID,
+                                    CreatedAt = DateTime.Now,
+                                    IsActive = true,
+                                    IsDelete = false
+
+                                };
+                                await taxExemption.Add(taxExemption1);
+                            }
+                        }
                         responseVm.IsSuccess = true;
                         responseVm.Message = AppConstant.UpdateSuccessMsg;
                     }
@@ -197,6 +246,31 @@ namespace ShutterManagement.Business.Services
                     .Where(c => c.ContactId == id
                     && c.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
 
+                var billingaddress = (await billingService.GetAll())
+                   .Where(c => c.ContactId == id && c.IsActive == true && c.IsDelete == false)
+                   .ToList();
+
+                if (billingaddress.Any())
+                {
+                    foreach (var billingaddress1 in billingaddress)
+                    {
+                        billingaddress1.IsActive = false;
+                        await billingService.Update(billingaddress1);
+                    }
+                }
+                var taxExemptionVm = (await taxExemption.GetAll())  
+                    .Where(c => c.ContactId == id && c.IsActive == true && c.IsDelete == false)
+                    .ToList();  
+
+                if (taxExemptionVm.Any()) 
+                {
+                    foreach (var taxExemption2 in taxExemptionVm)
+                    {
+                        taxExemption2.IsActive = false; 
+                        await taxExemption.Update(taxExemption2);    
+                    }
+                }
+
                 if (contact != null)
                 {
                     contact.IsActive = !contact.IsActive;
@@ -224,7 +298,32 @@ namespace ShutterManagement.Business.Services
                 var contact = GetAllQuerable()
                     .Where(c => c.ContactId == id
                     && c.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
+                var billingaddress = (await billingService.GetAll())
+                    .Where(c => c.ContactId == id && c.IsActive == true && c.IsDelete == false)
+                    .ToList();
 
+                if (billingaddress.Any())
+                {
+                    foreach (var billingaddress1 in billingaddress)
+                    {
+                        billingaddress1.IsActive = false;
+                        billingaddress1.IsDelete = true;
+                        await billingService.Update(billingaddress1);
+                    }
+                }
+                var taxExemptionVm = (await taxExemption.GetAll())
+                    .Where(c => c.ContactId == id && c.IsActive == true && c.IsDelete == false)
+                    .ToList();
+
+                if (taxExemptionVm.Any())
+                {
+                    foreach (var taxExemption2 in taxExemptionVm)
+                    {
+                        taxExemption2.IsActive = false;
+                        taxExemption2.IsDelete = true;
+                        await taxExemption.Update(taxExemption2);
+                    }
+                }
                 if (contact != null)
                 {
                     contact.IsActive = false;
