@@ -110,7 +110,8 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IModulePermission, ModuleService>();
 builder.Services.AddScoped<IContactService,ContactServices>();  
 builder.Services.AddScoped<IContactBillingService,ContactBillingService>();  
-builder.Services.AddScoped<IUserService,UserService>();  
+builder.Services.AddScoped<IUserService,UserService>();
+builder.Services.AddScoped<ITaxExemption, TaxExemptionService>();
 
 var app = builder.Build();
 
@@ -119,7 +120,7 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
-    string path = "D:\\Shutter\\ShutterManagement\\Files";
+    string path = "C:\\Users\\shrip\\source\\repos\\ShutterManagement\\ShutterManagement\\Files\\";
     app.UseFileServer(new FileServerOptions
     {
         FileProvider = new PhysicalFileProvider(path),
