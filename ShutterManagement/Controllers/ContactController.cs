@@ -43,7 +43,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost("Update")]
         [Authorize(Roles = "ContactEdit")]
-        public async Task<IActionResult> UpdateContact([FromBody] Sp_Contact model)
+        public async Task<IActionResult> UpdateContact([FromBody] UpdateContact model)
         {
 
             var res = await _contactService.Update_Contact(model);

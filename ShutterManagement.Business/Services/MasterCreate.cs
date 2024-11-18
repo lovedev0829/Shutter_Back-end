@@ -14,6 +14,7 @@ using System.Text;
 using System.Threading.Tasks;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 using Newtonsoft.Json;
+using ShutterManagement.Core.ViewModels.Request;
 
 namespace ShutterManagement.Business.Services
 {
@@ -69,7 +70,7 @@ namespace ShutterManagement.Business.Services
             switch (model.Type)
             {
                 case MasterItemEnum.Contact:
-                    var contactData = JsonConvert.DeserializeObject<Sp_Contact>(model.Data.ToString());
+                    var contactData = JsonConvert.DeserializeObject<UpdateContact>(model.Data.ToString());
 
                     if (contactData != null)
                     {
@@ -114,9 +115,9 @@ namespace ShutterManagement.Business.Services
         public async Task<GetContactResponse> GetAll()
         {
             
-            var contacts = await dataServices.CallSPtoRead<Sp_Contact>("sp_GetAll", reader =>
+            var contacts = await dataServices.CallSPtoRead<UpdateContact>("sp_GetAll", reader =>
             {
-                return new Sp_Contact
+                return new UpdateContact
                 {
                     ContactId = reader.GetGuid(reader.GetOrdinal("ContactId")),
                     ContactType = reader.GetString(reader.GetOrdinal("ContactType")),
@@ -141,9 +142,9 @@ namespace ShutterManagement.Business.Services
                 throw new ArgumentException("Invalid ID specified.");
             }
 
-            var contacts = await dataServices.CallSPtoRead<Sp_Contact>("sp_GetById", reader =>
+            var contacts = await dataServices.CallSPtoRead<UpdateContact>("sp_GetById", reader =>
             {
-                return new Sp_Contact
+                return new UpdateContact
                 {
                     ContactId = reader.GetGuid(reader.GetOrdinal("ContactId")),
                     ContactType = reader.GetString(reader.GetOrdinal("ContactType")),

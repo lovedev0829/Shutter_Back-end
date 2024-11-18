@@ -23,5 +23,9 @@ public partial class TblTaxExemption
 
     public bool? IsDelete { get; set; }
 
+    public Guid? CreatedBy { get; set; }
+
+    public Guid? ModifiedBy { get; set; }
+
     public virtual TblContact? Contact { get; set; }
 }

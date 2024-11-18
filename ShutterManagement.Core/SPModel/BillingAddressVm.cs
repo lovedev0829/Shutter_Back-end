@@ -9,7 +9,6 @@ namespace ShutterManagement.Core.SPModel
 {
      public class BillingAddressVm
     {
-        public Guid BillingAddessId { get; set; }
 
         [Required]
         [MaxLength(100)]
