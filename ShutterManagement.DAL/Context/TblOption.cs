@@ -11,8 +11,6 @@ public partial class TblOption
 
     public string? OptionType { get; set; }
 
-    public Guid? ProductType { get; set; }
-
     public string? Description { get; set; }
 
     public decimal? AdditionalCost { get; set; }
@@ -31,7 +29,9 @@ public partial class TblOption
 
     public Guid? TenantId { get; set; }
 
-    public virtual MstProductType? ProductTypeNavigation { get; set; }
+    public Guid? ProductTypeId { get; set; }
+
+    public virtual MstProductType? ProductType { get; set; }
 
     public virtual TblTenant? Tenant { get; set; }
 }

@@ -79,7 +79,7 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Server=103.93.16.117;Database=btprojec_shuttermanagement_dev;User Id=btprojec_admin;Password=Bwy0w65ixN*bsE9wy;Integrated Security=false;TrustServerCertificate=true;");
+        => optionsBuilder.UseSqlServer("Server=103.93.16.117;Database=btprojec_shuttermanagement_dev;user id=btprojec_admin;password=Bwy0w65ixN*bsE9wy;Integrated Security=false;TrustServerCertificate=true;");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -117,12 +117,16 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
 
         modelBuilder.Entity<MstProductType>(entity =>
         {
-            entity.HasKey(e => e.ProductId);
+            entity.HasKey(e => e.ProductId).HasName("PK__MstProdu__B40CC6CD3183F577");
 
-            entity.ToTable("MstProductType");
+            entity.ToTable("MstProductType", "dbo");
 
-            entity.Property(e => e.ProductId).HasDefaultValueSql("(newid())");
-            entity.Property(e => e.ProductName).HasMaxLength(255);
+            entity.Property(e => e.ProductId).ValueGeneratedNever();
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.ProductName)
+                .HasMaxLength(200)
+                .IsUnicode(false);
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
         });
 
         modelBuilder.Entity<TblAddress>(entity =>
@@ -402,7 +406,7 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
 
             entity.HasOne(d => d.Status).WithMany(p => p.TblJobs)
                 .HasForeignKey(d => d.StatusId)
-                .HasConstraintName("FK__TblJob__StatusId__6BAEFA67");
+                .HasConstraintName("FK__TblJob__StatusId__0E04126B");
 
             entity.HasOne(d => d.Tenant).WithMany(p => p.TblJobs)
                 .HasForeignKey(d => d.TenantId)
@@ -452,14 +456,14 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
 
         modelBuilder.Entity<TblJobStatus>(entity =>
         {
-            entity.HasKey(e => e.StatusId).HasName("PK__TblJobSt__C8EE206385D884DA");
+            entity.HasKey(e => e.StatusId).HasName("PK__tblJobSt__C8EE20634E71110F");
 
-            entity.ToTable("TblJobStatus");
+            entity.ToTable("tblJobStatus", "dbo");
 
             entity.Property(e => e.StatusId).ValueGeneratedNever();
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
             entity.Property(e => e.StatusName)
-                .HasMaxLength(100)
+                .HasMaxLength(200)
                 .IsUnicode(false);
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
         });
@@ -507,9 +511,9 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
 
-            entity.HasOne(d => d.ProductTypeNavigation).WithMany(p => p.TblOptions)
-                .HasForeignKey(d => d.ProductType)
-                .HasConstraintName("FK_TblOptions_ProductType");
+            entity.HasOne(d => d.ProductType).WithMany(p => p.TblOptions)
+                .HasForeignKey(d => d.ProductTypeId)
+                .HasConstraintName("FK__TblOption__Produ__10E07F16");
 
             entity.HasOne(d => d.Tenant).WithMany(p => p.TblOptions)
                 .HasForeignKey(d => d.TenantId)

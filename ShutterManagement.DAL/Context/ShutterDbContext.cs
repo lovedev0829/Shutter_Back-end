@@ -19,6 +19,8 @@ public partial class ShutterDbContext : DbContext
 
     public virtual DbSet<MstModulePermission> MstModulePermissions { get; set; }
 
+    public virtual DbSet<MstProductType> MstProductTypes { get; set; }
+
     public virtual DbSet<TblAddress> TblAddresses { get; set; }
 
     public virtual DbSet<TblAssembly> TblAssemblies { get; set; }
@@ -77,7 +79,7 @@ public partial class ShutterDbContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Server=103.93.16.117;Database=btprojec_shuttermanagement_dev;User Id=btprojec_admin;Password=Bwy0w65ixN*bsE9wy;Integrated Security=false;TrustServerCertificate=true;");
+        => optionsBuilder.UseSqlServer("Server=103.93.16.117;Database=btprojec_shuttermanagement_dev;user id=btprojec_admin;password=Bwy0w65ixN*bsE9wy;Integrated Security=false;TrustServerCertificate=true;");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -111,6 +113,20 @@ public partial class ShutterDbContext : DbContext
             entity.HasOne(d => d.Module).WithMany(p => p.MstModulePermissions)
                 .HasForeignKey(d => d.ModuleId)
                 .HasConstraintName("FK__MstModule__Modul__58D1301D");
+        });
+
+        modelBuilder.Entity<MstProductType>(entity =>
+        {
+            entity.HasKey(e => e.ProductId).HasName("PK__MstProdu__B40CC6CD3183F577");
+
+            entity.ToTable("MstProductType", "dbo");
+
+            entity.Property(e => e.ProductId).ValueGeneratedNever();
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.ProductName)
+                .HasMaxLength(200)
+                .IsUnicode(false);
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
         });
 
         modelBuilder.Entity<TblAddress>(entity =>
@@ -390,7 +406,7 @@ public partial class ShutterDbContext : DbContext
 
             entity.HasOne(d => d.Status).WithMany(p => p.TblJobs)
                 .HasForeignKey(d => d.StatusId)
-                .HasConstraintName("FK__TblJob__StatusId__6BAEFA67");
+                .HasConstraintName("FK__TblJob__StatusId__0E04126B");
 
             entity.HasOne(d => d.Tenant).WithMany(p => p.TblJobs)
                 .HasForeignKey(d => d.TenantId)
@@ -440,14 +456,14 @@ public partial class ShutterDbContext : DbContext
 
         modelBuilder.Entity<TblJobStatus>(entity =>
         {
-            entity.HasKey(e => e.StatusId).HasName("PK__TblJobSt__C8EE206385D884DA");
+            entity.HasKey(e => e.StatusId).HasName("PK__tblJobSt__C8EE20634E71110F");
 
-            entity.ToTable("TblJobStatus");
+            entity.ToTable("tblJobStatus", "dbo");
 
             entity.Property(e => e.StatusId).ValueGeneratedNever();
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
             entity.Property(e => e.StatusName)
-                .HasMaxLength(100)
+                .HasMaxLength(200)
                 .IsUnicode(false);
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
         });
@@ -491,10 +507,17 @@ public partial class ShutterDbContext : DbContext
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
             entity.Property(e => e.OptionName).HasMaxLength(255);
             entity.Property(e => e.OptionType).HasMaxLength(100);
-            entity.Property(e => e.ProductType).HasMaxLength(100);
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
+
+            entity.HasOne(d => d.ProductType).WithMany(p => p.TblOptions)
+                .HasForeignKey(d => d.ProductTypeId)
+                .HasConstraintName("FK__TblOption__Produ__10E07F16");
+
+            entity.HasOne(d => d.Tenant).WithMany(p => p.TblOptions)
+                .HasForeignKey(d => d.TenantId)
+                .HasConstraintName("FK__TblOption__Tenan__7DCDAAA2");
         });
 
         modelBuilder.Entity<TblPayment>(entity =>

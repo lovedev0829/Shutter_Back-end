@@ -13,5 +13,13 @@ public partial class MstProductType
 
     public bool? IsDelete { get; set; }
 
+    public Guid? CreatedBy { get; set; }
+
+    public Guid? ModifiedBy { get; set; }
+
+    public DateTime? UpdatedAt { get; set; }
+
+    public DateTime? CreatedAt { get; set; }
+
     public virtual ICollection<TblOption> TblOptions { get; set; } = new List<TblOption>();
 }
