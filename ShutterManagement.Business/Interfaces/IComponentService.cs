@@ -5,10 +5,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ShutterManagement.DAL.Context;
+using ShutterManagement.Interfaces;
 
 namespace ShutterManagement.Business.Interfaces
 {
-    public interface IComponentService
+    public interface IComponentService : IGenericRepository<TblComponent>
     {
         Task<IResponseVm<string>> Create_Component(CreateComponent model);
         Task<IResponseVm<dynamic>> Update_Component(UpdateComponent model);

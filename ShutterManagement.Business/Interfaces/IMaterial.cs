@@ -6,10 +6,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ShutterManagement.DAL.Context;
+using ShutterManagement.Interfaces;
 
 namespace ShutterManagement.Business.Interfaces
 {
-     public interface IMaterial
+     public interface IMaterial : IGenericRepository<TblRawMaterial>
     {
         Task<IResponseVm<string>> Create_Material(CreateMaterial model);
         Task<IResponseVm<string>> Update_Material(UpdateMaterial model);
