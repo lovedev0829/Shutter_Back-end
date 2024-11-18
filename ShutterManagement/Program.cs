@@ -104,6 +104,7 @@ builder.Services.AddScoped<IAddress, AddressService>();
 builder.Services.AddScoped<IRolePermissionService, RolePermissionService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IMaterial, MaterialService>();
+builder.Services.AddScoped<ITaxExemption, TaxExemptionService>();
 builder.Services.AddScoped<FileUploadHelper>();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
