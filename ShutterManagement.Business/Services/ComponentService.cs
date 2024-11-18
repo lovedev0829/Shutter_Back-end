@@ -18,11 +18,13 @@ namespace ShutterManagement.Business.Services
     {
         private readonly ShutterDbContext _dbContext;
         private readonly ClaimsProperty claimsProperty;
+        private readonly ITenantService tenantService;
 
-        public ComponentService(ShutterDbContext dbContext, ClaimsProperty claimsProperty)
+        public ComponentService(ShutterDbContext dbContext, ClaimsProperty claimsProperty,ITenantService tenantService)
         {
             _dbContext = dbContext;
             this.claimsProperty = claimsProperty;
+            this.tenantService = tenantService;
         }
 
 
@@ -31,6 +33,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
+                var IsTenant =  tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null);
                 var IsComponentExists = GetAllQuerable()
                       .Where(c => c.ComponentId == Id
                                   && c.TenantId == AppConstant.LoggedInTenantId
@@ -66,6 +69,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
+                var IsTenant =  tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null);
                 var IsTenantExists = _dbContext.TblTenants.Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false && x.IsActive == true);
                 if (IsTenantExists != null)
                 {
@@ -111,6 +115,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
+                var IsTenant =  tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null);
                 var IsMaterialExists = GetAllQuerable()
                       .Where(c => c.ComponentId == Id
                                   && c.TenantId == AppConstant.LoggedInTenantId

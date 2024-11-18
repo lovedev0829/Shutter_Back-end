@@ -111,7 +111,8 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IModulePermission, ModuleService>();
 builder.Services.AddScoped<IContactService,ContactServices>();  
 builder.Services.AddScoped<IContactBillingService,ContactBillingService>();  
-builder.Services.AddScoped<IUserService,UserService>();  
+builder.Services.AddScoped<IUserService,UserService>();
+builder.Services.AddScoped<ITaxExemption, TaxExemptionService>();
 
 var app = builder.Build();
 
