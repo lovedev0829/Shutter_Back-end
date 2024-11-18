@@ -12,7 +12,9 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string?  RoleName { get; set; }
         public bool? IsActive { get; set; }
         public Guid? TenantId { get; set; }
-        public List<RolePermissionList>? RolePermissionList { get; set; } = new List<RolePermissionList>();
+        public Guid?[]? RolePermissionId { get; set; }
+
+        //public List<RolePermissionList>? RolePermissionList { get; set; } = new List<RolePermissionList>();
     }
     public class RolePermissionList
     {

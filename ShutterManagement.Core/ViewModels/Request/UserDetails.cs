@@ -33,7 +33,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         [MaxLength(10)]
         [RegularExpression(@"^\d{10}$", ErrorMessage = "Phone number must be exactly 10 digits.")]
 
-        public string? PhoneNumber { get; set; }
+        public string? Phone { get; set; }
 
         [Required]
         [MinLength(8), MaxLength(12)]

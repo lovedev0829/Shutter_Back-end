@@ -130,11 +130,17 @@ namespace ShutterManagement.Services
 
                 responseVm.Data = mapper.Map(UserDetails[0], loginDetails);
                 responseVm.Data.Roles = UserRole
-                    .Select(x => new LoginRoles { RoleName = x.PermissionName, Url = x.Url, Icon = x.Icon }).ToArray();
+                    .Select(x => x.PermissionName).ToArray();
+
                 responseVm.Data.Menu = UserRole
-                    .Select(x=>x.PermissionName
-                    .Replace("Edit","").Replace("View","").Replace("Delete","")
-                    .Replace("Address","Adress").Replace("Add","").Replace("Adress", "Address")).Distinct().ToArray();
+                    .Select(x => new LoginRoles
+                    {
+                        RoleName = x.PermissionName.Replace("Edit", "").Replace("View", "").Replace("Delete", "")
+                    .Replace("Address", "Adress").Replace("Add", "").Replace("Adress", "Address"),
+                        Icon = x.Icon,
+                        Url = x.Url
+                    })
+                    .Distinct().ToArray();
                 responseVm.Data.Token = TokenValue;
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.LoginSuccessMessgae;

@@ -230,14 +230,11 @@ namespace ShutterManagement.Business.Services
                 foreach(var role in roleLists)
                 {
                    var rolePermission = rolePermissionService.GetAllQuerable()
-                        .Where(x => x.RoleId == role.RoleId).ToList();
-                    role.RolePermissionList.AddRange(rolePermission.Select(x=>new RolePermissionList
-                    {
-                        PermissionId = x.ModulePermissionId
-                    }));
+                        .Where(x => x.RoleId == role.RoleId).Select(x=>x.ModulePermissionId).ToArray();
+                    role.RolePermissionId = rolePermission;
                 }
 
-                var FilterRecords = RoleList
+                var FilterRecords = roleLists
                                     .Where(x =>
                                     (filter.SearchValue != "" ?
                                     ((x.RoleName ?? "").ToLower().Contains(filter.SearchValue)

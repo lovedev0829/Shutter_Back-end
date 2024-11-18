@@ -10,7 +10,7 @@ namespace ShutterManagement.Core.ViewModels.Response
     public class UserLoginDetails : LoginDetails
     {
         public string? Token { get; set; }
-        public LoginRoles[]? Roles { get; set; }
-        public string[]? Menu { get; set; }
+        public string[]? Roles { get; set; } = [];
+        public LoginRoles[]? Menu { get; set; }
     }
 }

@@ -35,7 +35,7 @@ namespace ShutterManagement.Services
             IResponseVm<string> result = new ResponseVm<string>();
             try
             {
-               
+
                 var IsUserExists = new List<TblUser>();
                 var AllTenantSubTenants = new List<string>();
                 if (string.IsNullOrEmpty(AppConstant.LoggedInParentTenantId))
@@ -49,32 +49,40 @@ namespace ShutterManagement.Services
                   && (x.ParentTenantId.ToString() == AppConstant.LoggedInParentTenantId || x.TenantId.ToString() == AppConstant.LoggedInParentTenantId)).Select(x => x.TenantId.ToString()).ToList();
                 }
 
-                IsUserExists = GetAllQuerable().Where(x => x.IsActive == true && x.IsDelete == false &&
-                  (x.Username == UserDetails.Email || x.Phone == UserDetails.PhoneNumber)
-                  && AllTenantSubTenants.Contains(x.TenantId.ToString())
-                  ).ToList();
-                if (IsUserExists.Count() == 0)
+                bool IsPhoneExists = await AnyAsync(x => x.IsActive == true && x.IsDelete == false &&
+                  (x.Phone == UserDetails.Phone)
+                  && AllTenantSubTenants.Contains(x.TenantId.ToString()));
+                if (IsPhoneExists)
                 {
-                    TblUser tblUser = new TblUser();
-                    mapper.Map(UserDetails, tblUser);
-                    tblUser.Id = Guid.NewGuid();
-                    tblUser.CreatedBy = AppConstant.LoggedInUserID;
-                    tblUser.CreatedAt = DateTime.Now;
-                    var res = await Add(tblUser);
-                    if (res.Id != Guid.Empty)
-                    {
-                        result.IsSuccess = true;
-                        result.Message = AppConstant.InsertSuccessMsg;
-                    }
-                    else
-                    {
-                        result.Message = AppConstant.NoDataFound;
-                    }
+                    result.Message = "Phone " + AppConstant.AlreadyExists;
+                    return result;
+                }
+
+                bool IsEmailExists = await AnyAsync(x => x.IsActive == true && x.IsDelete == false &&
+                  (x.Email == UserDetails.Email)
+                  && AllTenantSubTenants.Contains(x.TenantId.ToString()));
+                if (IsEmailExists)
+                {
+                    result.Message = "Email " + AppConstant.AlreadyExists;
+                    return result;
+                }
+
+                TblUser tblUser = new TblUser();
+                mapper.Map(UserDetails, tblUser);
+                tblUser.Id = Guid.NewGuid();
+                tblUser.CreatedBy = AppConstant.LoggedInUserID;
+                tblUser.CreatedAt = DateTime.Now;
+                var res = await Add(tblUser);
+                if (res.Id != Guid.Empty)
+                {
+                    result.IsSuccess = true;
+                    result.Message = AppConstant.InsertSuccessMsg;
                 }
                 else
                 {
-                    result.Message = AppConstant.AlreadyExists;
+                    result.Message = AppConstant.NoDataFound;
                 }
+
             }
             catch (Exception ex)
             {
@@ -88,17 +96,43 @@ namespace ShutterManagement.Services
             IResponseVm<string> result = new ResponseVm<string>();
             try
             {
-                var IsUserExists = GetAllQuerable().Where(x => x.IsActive == true && x.IsDelete == false &&
+                var AllTenantSubTenants = new List<string>();
+                if (string.IsNullOrEmpty(AppConstant.LoggedInParentTenantId))
+                {
+                    AllTenantSubTenants = dbContext.TblTenants.Where(x => x.IsActive == true && x.IsDelete == false
+                   && (x.ParentTenantId == AppConstant.LoggedInTenantId || x.TenantId == AppConstant.LoggedInTenantId)).Select(x => x.TenantId.ToString()).ToList();
+                }
+                else
+                {
+                    AllTenantSubTenants = dbContext.TblTenants.Where(x => x.IsActive == true && x.IsDelete == false
+                  && (x.ParentTenantId.ToString() == AppConstant.LoggedInParentTenantId || x.TenantId.ToString() == AppConstant.LoggedInParentTenantId)).Select(x => x.TenantId.ToString()).ToList();
+                }
+
+                var UserExistsDetails = GetAllQuerable().Where(x => x.IsActive == true && x.IsDelete == false &&
                 x.Id == Guid.Parse(UserDetails.UserId)
                 && x.TenantId == AppConstant.LoggedInTenantId
                 );
-                if (IsUserExists.Count() == 1)
+                if (UserExistsDetails.Count() == 1)
                 {
-                    var IsEmailExists = GetAllQuerable().Where(x => x.IsActive == true && x.IsDelete == false &&
-                   (x.Username == UserDetails.Email || x.Phone == UserDetails.PhoneNumber) && x.Id != Guid.Parse(UserDetails.UserId)
-                   && (x.TenantId == AppConstant.LoggedInTenantId || x.TenantId.ToString() == AppConstant.LoggedInParentTenantId)
-                   );
-                    var UpdateUserDetails = IsUserExists.FirstOrDefault();
+                    bool IsPhoneExists = await AnyAsync(x => x.IsActive == true && x.IsDelete == false &&
+                  (x.Phone == UserDetails.Phone) && x.Id != Guid.Parse(UserDetails.UserId)
+                  && AllTenantSubTenants.Contains(x.TenantId.ToString()));
+                    if (IsPhoneExists)
+                    {
+                        result.Message = "Phone " + AppConstant.AlreadyExists;
+                        return result;
+                    }
+
+                    bool IsEmailExists = await AnyAsync(x => x.IsActive == true && x.IsDelete == false &&
+                      (x.Email == UserDetails.Email) && x.Id != Guid.Parse(UserDetails.UserId)
+                      && AllTenantSubTenants.Contains(x.TenantId.ToString()));
+                    if (IsEmailExists)
+                    {
+                        result.Message = "Email " + AppConstant.AlreadyExists;
+                        return result;
+                    }
+
+                    var UpdateUserDetails = UserExistsDetails.FirstOrDefault();
                     mapper.Map(UserDetails, UpdateUserDetails);
                     if (UpdateUserDetails != null)
                     {
@@ -131,7 +165,7 @@ namespace ShutterManagement.Services
             IResponseVm<string> result = new ResponseVm<string>();
             try
             {
-                var IsUserExists = GetAllQuerable().Where(x => x.IsActive == true && x.IsDelete == false &&
+                var IsUserExists = GetAllQuerable().Where(x => x.IsDelete == false &&
                 x.Id == Guid.Parse(UserId)
                 && x.TenantId == AppConstant.LoggedInTenantId
                 );
@@ -171,7 +205,7 @@ namespace ShutterManagement.Services
             IResponseVm<string> result = new ResponseVm<string>();
             try
             {
-                var IsUserExists = GetAllQuerable().Where(x => x.IsActive == true && x.IsDelete == false &&
+                var IsUserExists = GetAllQuerable().Where(x => x.IsDelete == false &&
                 x.Id == Guid.Parse(UserId)
                 && x.TenantId == AppConstant.LoggedInTenantId
                 );
@@ -217,7 +251,7 @@ namespace ShutterManagement.Services
                                     (filter.SearchValue != "" ?
                                     ((x.Email ?? "").ToLower().Contains(filter.SearchValue)
                                     || (x.Phone ?? "").ToLower().Contains(filter.SearchValue)
-                                    || (x.FirstName ?? "").ToLower().Contains(filter.SearchValue) 
+                                    || (x.FirstName ?? "").ToLower().Contains(filter.SearchValue)
                                     || (x.MiddleName ?? "").ToLower().Contains(filter.SearchValue)
                                     || (x.LastName ?? "").ToLower().Contains(filter.SearchValue)
                                     || (x.Username ?? "").ToLower().Contains(filter.SearchValue)
@@ -235,8 +269,6 @@ namespace ShutterManagement.Services
                 {
                     responseVm.Message = AppConstant.NoDataFound;
                 }
-
-
             }
             catch (Exception ex)
             {
@@ -248,7 +280,8 @@ namespace ShutterManagement.Services
         public async Task PasswordEnc()
         {
             var users = GetAllQuerable().Where(x => x.IsActive == true).ToList();
-            foreach (var user in users) {
+            foreach (var user in users)
+            {
                 user.Pwd = AesEncryptionHelper.Encrypt(user.Pwd);
                 await Update(user);
             }

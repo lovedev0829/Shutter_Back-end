@@ -1,8 +1,10 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using ShutterManagement.Core.ViewModels;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -13,10 +15,12 @@ namespace ShutterManagement.Core.Common
     public class FileUploadHelper
     {
         private readonly IHostEnvironment environment;
+        private readonly IConfiguration configuration;
 
-        public FileUploadHelper(IHostEnvironment environment)
+        public FileUploadHelper(IHostEnvironment environment,IConfiguration configuration)
         {
             this.environment = environment;
+            this.configuration = configuration;
         }
 
         public async Task<IResponseVm<string>> UploadFile(IFormFile file, FileType fileType, string tenantId)
@@ -49,7 +53,7 @@ namespace ShutterManagement.Core.Common
                         return responseVm;
                     }
                 }
-                var rootPath = Path.Combine(environment.ContentRootPath, "Files", tenantId);
+                var rootPath = Path.Combine(AppConstant.FileUploadPath, tenantId);
 
                 if (!Directory.Exists(rootPath))
                 {
@@ -66,7 +70,7 @@ namespace ShutterManagement.Core.Common
                 }
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.UploadSuccessMsg;
-                responseVm.Data = tenantPath;
+                responseVm.Data = Path.Combine(AppConstant.FileVirtualPath, tenantPath);
             }
             catch (Exception ex)
             {

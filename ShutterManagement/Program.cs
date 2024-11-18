@@ -120,7 +120,24 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
-    string path = "D:\\Shutter\\ShutterManagement\\Files";
+    string path = configuration.GetSection("FileUploadPhysicalPathLocal").Value.ToString();
+    string virtualPath = configuration.GetSection("FileVirtualPathLocal").Value.ToString();
+    AppConstant.FileUploadPath = path;
+    AppConstant.FileVirtualPath = virtualPath;
+    app.UseFileServer(new FileServerOptions
+    {
+        FileProvider = new PhysicalFileProvider(path),
+        RequestPath = new PathString("/Files"),
+        EnableDirectoryBrowsing = false
+    });
+}
+else
+{
+    string path = configuration.GetSection("FileUploadPhysicalPathDev").Value.ToString();
+    string virtualPath = configuration.GetSection("FileVirtualPathDev").Value.ToString();
+
+    AppConstant.FileUploadPath = path;
+    AppConstant.FileVirtualPath = virtualPath;
     app.UseFileServer(new FileServerOptions
     {
         FileProvider = new PhysicalFileProvider(path),
