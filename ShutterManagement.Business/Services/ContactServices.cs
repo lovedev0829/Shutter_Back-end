@@ -22,16 +22,16 @@ namespace ShutterManagement.Business.Services
         private readonly ShutterDbContext _context;
         private readonly IContactBillingService billingService;
         private readonly ITenantService tenantService;
-        private readonly ITaxExemption taxExemption;
+        private readonly ITaxExemption taxExemptionService;
         private readonly ClaimsProperty claimsProperty;
 
         public ContactServices(ShutterDbContext context, IContactBillingService billingService,
-            ITenantService tenantService,ITaxExemption taxExemption, ClaimsProperty claimsProperty)
+            ITenantService tenantService, ITaxExemption taxExemptionService, ClaimsProperty claimsProperty)
         {
             _context = context;
             this.billingService = billingService;
             this.tenantService = tenantService;
-            this.taxExemption = taxExemption;
+            this.taxExemptionService = taxExemptionService;
             this.claimsProperty = claimsProperty;
         }
 
@@ -53,8 +53,9 @@ namespace ShutterManagement.Business.Services
                         responseVm.Message = "Email or Phone " + AppConstant.AlreadyExists;
                         return responseVm;
                     }
-                    if (model.IsBillingAddressSameAsAddress && model.billingAddressVm == null) {
-                        responseVm.Message = "Billing detaild required.";
+                    if (!model.IsBillingAddressSameAsAddress && model.BillingAddressVm == null)
+                    {
+                        responseVm.Message = "Billing details required.";
                         return responseVm;
                     }
 
@@ -67,9 +68,13 @@ namespace ShutterManagement.Business.Services
                         Email = model.Email,
                         Website = model.Website,
                         Notes = model.Notes,
+                        Referral = model.Referral,
+                        IsTaxExemption = model.IsTaxExemption,
                         IsBillingAddressSameAsAddress = model.IsBillingAddressSameAsAddress,
                         CreatedBy = AppConstant.LoggedInUserID,
-                        CreatedAt = DateTime.Now
+                        CreatedAt = DateTime.Now,
+                        TenantId = AppConstant.LoggedInTenantId
+
                     };
                     var res = await Add(CreateContact);
                     if (res.ContactId != Guid.Empty)
@@ -80,32 +85,30 @@ namespace ShutterManagement.Business.Services
                             TblContactBillingAddress CreateContactBillingAddress = new TblContactBillingAddress
                             {
                                 ContactId = res.ContactId,
-                                Label = model.billingAddressVm?.Label,
-                                AddressLine1 = model.billingAddressVm?.AddressLine1,
-                                AddressLine2 = model.billingAddressVm?.AddressLine2,
-                                City = model.billingAddressVm?.City,
-                                State = model.billingAddressVm?.State,
-                                ZipCode = model.billingAddressVm?.ZipCode,
-                                Country = model.billingAddressVm?.Country,
+                                Label = model.BillingAddressVm?.Label,
+                                AddressLine1 = model.BillingAddressVm?.AddressLine1,
+                                AddressLine2 = model.BillingAddressVm?.AddressLine2,
+                                City = model.BillingAddressVm?.City,
+                                State = model.BillingAddressVm?.State,
+                                ZipCode = model.BillingAddressVm?.ZipCode,
+                                Country = model.BillingAddressVm?.Country,
                                 CreatedAt = DateTime.Now,
                             };
                             await billingService.Add(CreateContactBillingAddress);
                         }
-                        if(model.IstaxApplied != false)
+                        if (!model.IsTaxExemption)
                         {
                             TblTaxExemption taxExemption1 = new TblTaxExemption
                             {
                                 ContactId = res.ContactId,
-                                ExemptionCertificate = model.taxExemptionVm?.ExemptionCertificate,
-                                EffectiveDate = model.taxExemptionVm?.EffectiveDate,
-                                ExpiryDate = model.taxExemptionVm?.ExpiryDate,
-                                CreatedBy = AppConstant.LoggedInUserID,
+                                ExemptionCertificate = model.TaxExemptionVm?.ExemptionCertificate,
+                                EffectiveDate = model.TaxExemptionVm?.EffectiveDate,
+                                ExpiryDate = model.TaxExemptionVm?.ExpiryDate,
                                 CreatedAt = DateTime.Now,
                                 IsActive = true,
-                                IsDelete = false
-
+                                IsDelete = false,
                             };
-                            await taxExemption.Add(taxExemption1);
+                            await taxExemptionService.Add(taxExemption1);
                         }
                         responseVm.IsSuccess = true;
                         responseVm.Message = AppConstant.InsertSuccessMsg;
@@ -148,6 +151,8 @@ namespace ShutterManagement.Business.Services
                         contact.Email = model.Email;
                         contact.Website = model.Website;
                         contact.Notes = model.Notes;
+                        contact.Referral = model.Referral;
+                        contact.IsTaxExemption = model.IsTaxExemption;
                         contact.IsBillingAddressSameAsAddress = model.IsBillingAddressSameAsAddress;
                         contact.ModifiedBy = AppConstant.LoggedInUserID;
                         contact.UpdatedAt = DateTime.Now;
@@ -159,13 +164,13 @@ namespace ShutterManagement.Business.Services
                                 .Where(x => x.ContactId == contact.ContactId).FirstOrDefault();
                             if (contactBillingAddress != null)
                             {
-                                contactBillingAddress.Label = model.billingAddressVm?.Label;
-                                contactBillingAddress.AddressLine1 = model.billingAddressVm?.AddressLine1;
-                                contactBillingAddress.AddressLine2 = model.billingAddressVm?.AddressLine2;
-                                contactBillingAddress.City = model.billingAddressVm?.City;
-                                contactBillingAddress.State = model.billingAddressVm?.State;
-                                contactBillingAddress.ZipCode = model.billingAddressVm?.ZipCode;
-                                contactBillingAddress.Country = model.billingAddressVm?.Country;
+                                contactBillingAddress.Label = model.BillingAddressVm?.Label;
+                                contactBillingAddress.AddressLine1 = model.BillingAddressVm?.AddressLine1;
+                                contactBillingAddress.AddressLine2 = model.BillingAddressVm?.AddressLine2;
+                                contactBillingAddress.City = model.BillingAddressVm?.City;
+                                contactBillingAddress.State = model.BillingAddressVm?.State;
+                                contactBillingAddress.ZipCode = model.BillingAddressVm?.ZipCode;
+                                contactBillingAddress.Country = model.BillingAddressVm?.Country;
                                 contactBillingAddress.UpdatedAt = DateTime.Now;
 
                                 await billingService.Update(contactBillingAddress);
@@ -175,47 +180,47 @@ namespace ShutterManagement.Business.Services
                                 TblContactBillingAddress CreateContactBillingAddress = new TblContactBillingAddress
                                 {
                                     ContactId = contact.ContactId,
-                                    Label = model.billingAddressVm?.Label,
-                                    AddressLine1 = model.billingAddressVm?.AddressLine1,
-                                    AddressLine2 = model.billingAddressVm?.AddressLine2,
-                                    City = model.billingAddressVm?.City,
-                                    State = model.billingAddressVm?.State,
-                                    ZipCode = model.billingAddressVm?.ZipCode,
-                                    Country = model.billingAddressVm?.Country,
+                                    Label = model.BillingAddressVm?.Label,
+                                    AddressLine1 = model.BillingAddressVm?.AddressLine1,
+                                    AddressLine2 = model.BillingAddressVm?.AddressLine2,
+                                    City = model.BillingAddressVm?.City,
+                                    State = model.BillingAddressVm?.State,
+                                    ZipCode = model.BillingAddressVm?.ZipCode,
+                                    Country = model.BillingAddressVm?.Country,
                                     CreatedAt = DateTime.Now,
                                 };
                                 await billingService.Add(CreateContactBillingAddress);
                             }
                         }
 
-                        if(model.IstaxApplied != false)
+                        if (!model.IsTaxExemption)
                         {
-                            var contactTaxExemption = taxExemption.GetAllQuerable()
+                            var contactTaxExemption = taxExemptionService.GetAllQuerable()
                                 .Where(x => x.ContactId == contact.ContactId).FirstOrDefault();
                             if (contactTaxExemption != null)
                             {
-                                contactTaxExemption.ExemptionCertificate = model.taxExemptionVm?.ExemptionCertificate;
-                                contactTaxExemption.EffectiveDate = model.taxExemptionVm?.EffectiveDate;
-                                contactTaxExemption.ExpiryDate = model.taxExemptionVm?.ExpiryDate;
-                                contactTaxExemption.ModifiedBy = AppConstant.LoggedInUserID;
+                                contactTaxExemption.ExemptionCertificate = model.TaxExemptionVm?.ExemptionCertificate;
+                                contactTaxExemption.EffectiveDate = model.TaxExemptionVm?.EffectiveDate;
+                                contactTaxExemption.ExpiryDate = model.TaxExemptionVm?.ExpiryDate;
                                 contactTaxExemption.UpdatedAt = DateTime.Now;
-                                await taxExemption.Update(contactTaxExemption);
+                                contactTaxExemption.IsActive = true;
+                                contactTaxExemption.IsDelete = false;
+                                await taxExemptionService.Update(contactTaxExemption);
                             }
                             else
                             {
                                 TblTaxExemption taxExemption1 = new TblTaxExemption
                                 {
                                     ContactId = contact.ContactId,
-                                    ExemptionCertificate = model.taxExemptionVm?.ExemptionCertificate,
-                                    EffectiveDate = model.taxExemptionVm?.EffectiveDate,
-                                    ExpiryDate = model.taxExemptionVm?.ExpiryDate,
-                                    CreatedBy = AppConstant.LoggedInUserID,
+                                    ExemptionCertificate = model.TaxExemptionVm?.ExemptionCertificate,
+                                    EffectiveDate = model.TaxExemptionVm?.EffectiveDate,
+                                    ExpiryDate = model.TaxExemptionVm?.ExpiryDate,
                                     CreatedAt = DateTime.Now,
                                     IsActive = true,
                                     IsDelete = false
 
                                 };
-                                await taxExemption.Add(taxExemption1);
+                                await taxExemptionService.Add(taxExemption1);
                             }
                         }
                         responseVm.IsSuccess = true;
@@ -258,16 +263,17 @@ namespace ShutterManagement.Business.Services
                         await billingService.Update(billingaddress1);
                     }
                 }
-                var taxExemptionVm = (await taxExemption.GetAll())  
+                var taxExemptionList = (await taxExemptionService.GetAll())
                     .Where(c => c.ContactId == id && c.IsActive == true && c.IsDelete == false)
-                    .ToList();  
+                    .ToList();
 
-                if (taxExemptionVm.Any()) 
+                if (taxExemptionList.Any())
                 {
-                    foreach (var taxExemption2 in taxExemptionVm)
+                    foreach (var taxExemption in taxExemptionList)
                     {
-                        taxExemption2.IsActive = false; 
-                        await taxExemption.Update(taxExemption2);    
+                        taxExemption.IsActive = false;
+                        taxExemption.UpdatedAt = DateTime.Now;
+                        await taxExemptionService.Update(taxExemption);
                     }
                 }
 
@@ -298,45 +304,45 @@ namespace ShutterManagement.Business.Services
                 var contact = GetAllQuerable()
                     .Where(c => c.ContactId == id
                     && c.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
-                var billingaddress = (await billingService.GetAll())
-                    .Where(c => c.ContactId == id && c.IsActive == true && c.IsDelete == false)
-                    .ToList();
-
-                if (billingaddress.Any())
+                if (contact == null)
                 {
-                    foreach (var billingaddress1 in billingaddress)
+                    responseVm.Message = AppConstant.NoDataFound;
+                    return responseVm;
+                }
+                var billingAddressList = (await billingService.GetAll())
+                .Where(c => c.ContactId == id && c.IsActive == true && c.IsDelete == false)
+                .ToList();
+
+                if (billingAddressList.Any())
+                {
+                    foreach (var billingAddress in billingAddressList)
                     {
-                        billingaddress1.IsActive = false;
-                        billingaddress1.IsDelete = true;
-                        await billingService.Update(billingaddress1);
+                        billingAddress.IsActive = false;
+                        billingAddress.IsDelete = true;
+                        await billingService.Update(billingAddress);
                     }
                 }
-                var taxExemptionVm = (await taxExemption.GetAll())
+                var taxExemptionVm = (await taxExemptionService.GetAll())
                     .Where(c => c.ContactId == id && c.IsActive == true && c.IsDelete == false)
                     .ToList();
 
                 if (taxExemptionVm.Any())
                 {
-                    foreach (var taxExemption2 in taxExemptionVm)
+                    foreach (var taxExemption in taxExemptionVm)
                     {
-                        taxExemption2.IsActive = false;
-                        taxExemption2.IsDelete = true;
-                        await taxExemption.Update(taxExemption2);
+                        taxExemption.IsActive = false;
+                        taxExemption.IsDelete = true;
+                        await taxExemptionService.Update(taxExemption);
                     }
                 }
-                if (contact != null)
-                {
-                    contact.IsActive = false;
-                    contact.IsDelete = true;
-                    await Update(contact);
 
-                    responseVm.IsSuccess = true;
-                    responseVm.Message = AppConstant.DeleteSuccessMsg;
-                }
-                else
-                {
-                    responseVm.Message = AppConstant.NoUserFound;
-                }
+                contact.IsActive = false;
+                contact.IsDelete = true;
+                await Update(contact);
+
+                responseVm.IsSuccess = true;
+                responseVm.Message = AppConstant.DeleteSuccessMsg;
+
             }
             catch (Exception ex)
             {
@@ -373,6 +379,7 @@ namespace ShutterManagement.Business.Services
                 //        .Where(x => x.ContactId == contact.ContactId && x.IsActive == true
                 //        && x.IsDelete == false).FirstOrDefault();
                 //}
+                filter.SearchValue = filter.SearchValue.Trim().ToLower();
                 var FilterRecords = ContactList
                                     .Where(x =>
                                     (filter.SearchValue != "" ?
@@ -396,8 +403,9 @@ namespace ShutterManagement.Business.Services
                         x.Name,
                         x.Website,
                         x.Notes,
+                        x.Referral,
+                        x.IsTaxExemption,
                         x.IsBillingAddressSameAsAddress,
-                        //x.TblContactBillingAddresses
                     });
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.UpdateSuccessMsg;

@@ -202,7 +202,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var AddressList = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId).ToList();
-
+                filter.SearchValue = filter.SearchValue.Trim().ToLower();
                 var FilterRecords = AddressList
                                     .Where(x =>
                                     (filter.SearchValue != "" ?

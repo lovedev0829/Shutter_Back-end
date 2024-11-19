@@ -140,7 +140,7 @@ namespace ShutterManagement.Services
                         Icon = x.Icon,
                         Url = x.Url
                     })
-                    .Distinct().ToArray();
+                    .DistinctBy(x=>x.RoleName).ToArray();
                 responseVm.Data.Token = TokenValue;
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.LoginSuccessMessgae;

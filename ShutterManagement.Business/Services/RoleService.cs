@@ -16,17 +16,15 @@ namespace ShutterManagement.Business.Services
     public class RoleService : BaseRepository<ShutterDbContext,TblRole>,IRoleService
     {
         private readonly DataServices dataServices;
-        private readonly IUserService userService;
         private readonly ShutterDbContext dbContext;
         private readonly ClaimsProperty claimsProperty;
         private readonly IRolePermissionService rolePermissionService;
 
-        public RoleService(DataServices dataServices, IUserService userService, ShutterDbContext dbContext
+        public RoleService(DataServices dataServices, ShutterDbContext dbContext
             , ClaimsProperty claimsProperty, IRolePermissionService rolePermissionService
             )
         {
             this.dataServices = dataServices;
-            this.userService = userService;
             this.dbContext = dbContext;
             this.claimsProperty = claimsProperty;
             this.rolePermissionService = rolePermissionService;
@@ -233,7 +231,7 @@ namespace ShutterManagement.Business.Services
                         .Where(x => x.RoleId == role.RoleId).Select(x=>x.ModulePermissionId).ToArray();
                     role.RolePermissionId = rolePermission;
                 }
-
+                filter.SearchValue = filter.SearchValue.Trim().ToLower();
                 var FilterRecords = roleLists
                                     .Where(x =>
                                     (filter.SearchValue != "" ?

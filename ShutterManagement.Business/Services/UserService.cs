@@ -18,15 +18,19 @@ namespace ShutterManagement.Services
     public class UserService : BaseRepository<ShutterDbContext, TblUser>, IUserService
     {
         private readonly DataServices _dataServices;
+        private readonly RoleService roleService;
         private readonly ClaimsProperty claimsProperty;
+        private readonly IUserRoleService userRoleService;
         private readonly IMapper mapper;
 
-        public UserService(DataServices dataServices
-            , ClaimsProperty claimsProperty
+        public UserService(DataServices dataServices, RoleService roleService
+            , ClaimsProperty claimsProperty, IUserRoleService userRoleService
             , IMapper mapper)
         {
             _dataServices = dataServices;
+            this.roleService = roleService;
             this.claimsProperty = claimsProperty;
+            this.userRoleService = userRoleService;
             this.mapper = mapper;
         }
 
@@ -35,7 +39,6 @@ namespace ShutterManagement.Services
             IResponseVm<string> result = new ResponseVm<string>();
             try
             {
-
                 var IsUserExists = new List<TblUser>();
                 var AllTenantSubTenants = new List<string>();
                 if (string.IsNullOrEmpty(AppConstant.LoggedInParentTenantId))
@@ -67,6 +70,14 @@ namespace ShutterManagement.Services
                     return result;
                 }
 
+
+                bool IsRoleExists = await roleService.AnyAsync(x => x.Id == UserDetails.RoleId
+                && x.IsShow == false && x.IsActive == true && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
+                if (!IsRoleExists)
+                {
+                    result.Message = "Role " + AppConstant.NoDataFound;
+                    return result;
+                }
                 TblUser tblUser = new TblUser();
                 mapper.Map(UserDetails, tblUser);
                 tblUser.Id = Guid.NewGuid();
@@ -75,8 +86,21 @@ namespace ShutterManagement.Services
                 var res = await Add(tblUser);
                 if (res.Id != Guid.Empty)
                 {
+                    TblUserRole tblUserRole = new TblUserRole
+                    {
+                        CreatedAt = DateTime.Now,
+                        CreatedBy = AppConstant.LoggedInUserID,
+                        UserId = res.Id,
+                        RoleId = UserDetails.RoleId,
+                        IsActive = true,
+                        IsDelete = false,
+                        Id = Guid.NewGuid()
+                    };
+                    var resRole = await userRoleService.Add(tblUserRole);
+
                     result.IsSuccess = true;
                     result.Message = AppConstant.InsertSuccessMsg;
+
                 }
                 else
                 {

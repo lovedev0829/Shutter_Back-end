@@ -36,12 +36,11 @@ namespace ShutterManagement.Core.SPModel
         public string? Website { get; set; }
 
         public string? Notes { get; set; }
+        public string? Referral { get; set; }
 
         public bool IsBillingAddressSameAsAddress { get; set; } = false;
-
-        public BillingAddressVm? billingAddressVm { get; set; }
-        public bool? IstaxApplied { get; set; } = false;
-
-        public TaxExemption taxExemptionVm { get; set; } 
+        public BillingAddressVm? BillingAddressVm { get; set; }
+        public bool IsTaxExemption { get; set; } = false;
+        public TaxExemption? TaxExemptionVm { get; set; }
     }
 }
