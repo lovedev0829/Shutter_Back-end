@@ -112,6 +112,7 @@ builder.Services.AddScoped<IModulePermission, ModuleService>();
 builder.Services.AddScoped<IContactService,ContactServices>();  
 builder.Services.AddScoped<IContactBillingService,ContactBillingService>();  
 builder.Services.AddScoped<ITaxExemption, TaxExemptionService>();
+builder.Services.AddScoped<IJobTitleService, JobTitleService>();
 
 var app = builder.Build();
 
@@ -127,7 +128,7 @@ if (app.Environment.IsDevelopment())
     app.UseFileServer(new FileServerOptions
     {
         FileProvider = new PhysicalFileProvider(path),
-        RequestPath = new PathString("/Files"),
+        RequestPath = new PathString("/File"),
         EnableDirectoryBrowsing = false
     });
 }

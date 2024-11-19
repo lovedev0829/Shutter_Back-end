@@ -8,6 +8,8 @@ using Azure;
 using Microsoft.AspNetCore.Authorization;
 using ShutterManagement.Core;
 using ShutterManagement.Business;
+using ShutterManagement.Core.ViewModels.Request;
+using ShutterManagement.Services;
 
 namespace ShutterManagement.Controllers
 {
@@ -19,12 +21,13 @@ namespace ShutterManagement.Controllers
         private readonly IMasterCreate masterCreate;
         private readonly FileUploadHelper fileUpload;
         private readonly ClaimsProperty claimsProperty;
-
-        public CommonController(IMasterCreate masterCreate, FileUploadHelper fileUpload, ClaimsProperty claimsProperty)
+        private readonly IJobTitleService jobTitleService;
+        public CommonController(IMasterCreate masterCreate, FileUploadHelper fileUpload, ClaimsProperty claimsProperty,IJobTitleService jobTitleService)
         {
             this.masterCreate = masterCreate;
             this.fileUpload = fileUpload;
             this.claimsProperty = claimsProperty;
+            this.jobTitleService = jobTitleService;
         }
 
 
@@ -39,6 +42,15 @@ namespace ShutterManagement.Controllers
                 result.Add(res);
             }
             return Ok(result);
+        }
+
+
+        [HttpPost]
+        [Route("GetAll")]
+        public async Task<IActionResult> GetAll(Pagination filter)
+        {
+            var res = await jobTitleService.GetAll(filter);
+            return Ok(res);
         }
 
         //[HttpPost]
