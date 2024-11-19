@@ -15,6 +15,8 @@ public partial class ShutterDbContext : DbContext
     {
     }
 
+    public virtual DbSet<MstJobTitle> MstJobTitles { get; set; }
+
     public virtual DbSet<MstModule> MstModules { get; set; }
 
     public virtual DbSet<MstModulePermission> MstModulePermissions { get; set; }
@@ -84,6 +86,20 @@ public partial class ShutterDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("btprojec_admin");
+
+        modelBuilder.Entity<MstJobTitle>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__MstJobTi__3214EC07381DB551");
+
+            entity.ToTable("MstJobTitle", "dbo");
+
+            entity.Property(e => e.Id).ValueGeneratedNever();
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.JobTitleName)
+                .HasMaxLength(200)
+                .IsUnicode(false);
+            entity.Property(e => e.ModifiedAt).HasColumnType("datetime");
+        });
 
         modelBuilder.Entity<MstModule>(entity =>
         {
@@ -737,6 +753,10 @@ public partial class ShutterDbContext : DbContext
             entity.Property(e => e.Username)
                 .HasMaxLength(128)
                 .HasColumnName("username");
+
+            entity.HasOne(d => d.JobTitle).WithMany(p => p.TblUsers)
+                .HasForeignKey(d => d.JobTitleId)
+                .HasConstraintName("FK__TblUser__JobTitl__2116E6DF");
 
             entity.HasOne(d => d.Tenant).WithMany(p => p.TblUsers)
                 .HasForeignKey(d => d.TenantId)

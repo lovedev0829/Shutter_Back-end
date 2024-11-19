@@ -19,9 +19,9 @@ namespace ShutterManagement.Business.Services
             IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
             try
             {
-                var UserList = (await GetAll()).Where(x => x.IsDelete == false).ToList();
+                var JobTitleList = (await GetAll()).Where(x => x.IsDelete == false).ToList();
                 filter.SearchValue = (filter.SearchValue.Trim() ?? "").ToLower();
-                var FilterRecords = UserList
+                var FilterRecords = JobTitleList
                                     .Where(x =>
                                     (filter.SearchValue != "" ?
                                     ((x.JobTitleName ?? "").ToLower().Contains(filter.SearchValue)
@@ -30,7 +30,11 @@ namespace ShutterManagement.Business.Services
                                     .Skip((filter.PageNo - 1) * filter.RecordPerPage).Take(filter.RecordPerPage).ToList();
                 if (TakenRecords != null && TakenRecords.Count > 0)
                 {
-                    responseVm.Data = TakenRecords;
+                    responseVm.Data = TakenRecords.Select(x => new
+                    {
+                        x.JobTitleName,
+                        x.IsActive,
+                    });
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.UpdateSuccessMsg;
                     responseVm.TotalRecords = FilterRecords.Count;
