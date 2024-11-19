@@ -19,12 +19,14 @@ namespace ShutterManagement.Business.Services
         private readonly ShutterDbContext _context;
         private readonly ClaimsProperty claimsProperty;
         private readonly ITenantService tenantService;
+        private readonly IVendorService _vendorService;
 
-        public MaterialService(ShutterDbContext context, ClaimsProperty claimsProperty,ITenantService tenantService)
+        public MaterialService(ShutterDbContext context, ClaimsProperty claimsProperty,ITenantService tenantService,IVendorService vendorService)
         {
             _context = context;
             this.claimsProperty = claimsProperty;
             this.tenantService = tenantService;
+            _vendorService = vendorService;
         }
 
         public Task<IResponseVm<string>> ActiveInActive(Guid Id)
@@ -70,7 +72,7 @@ namespace ShutterManagement.Business.Services
             {
                 var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null);
                 var IsTenantExists = _context.TblTenants.Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false && x.IsActive == true);
-                var IsVendorExist = _context.TblVendors.Where(x => x.VendorId == model.VendorId && x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+                var IsVendorExist = _vendorService.AnyAsync(x => x.VendorId == model.VendorId && x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
                 if (IsTenantExists != null)
                 {
                     if (IsVendorExist != null)
@@ -203,7 +205,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null);
-                var IsVendorExist = _context.TblVendors.Where(x => x.VendorId == model.VendorId && x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+                var IsVendorExist = _vendorService.AnyAsync(x => x.VendorId == model.VendorId && x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
 
                 if (IsTenant)
                 {
