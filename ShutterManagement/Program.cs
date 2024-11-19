@@ -91,10 +91,9 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
 
 builder.Services.AddScoped<DataServices>();
-
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 builder.Services.AddScoped<ClaimsProperty>();
-
+builder.Services.AddScoped<FileUploadHelper>();
 builder.Services.AddScoped<IMasterCreate, MasterCreate>();
 builder.Services.AddScoped<ITenantService, TenantServices>();
 builder.Services.AddScoped<ITenantBrandingService, TenantBrandingService>();
@@ -103,15 +102,15 @@ builder.Services.AddScoped<IComponentService, ComponentService>();
 builder.Services.AddScoped<IAddress, AddressService>();
 builder.Services.AddScoped<IRolePermissionService, RolePermissionService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
-builder.Services.AddScoped<IMaterial, MaterialService>();
 builder.Services.AddScoped<ITaxExemption, TaxExemptionService>();
-builder.Services.AddScoped<FileUploadHelper>();
-
+builder.Services.AddScoped<IMaterial, MaterialService>();
+builder.Services.AddScoped<IOption, OptionService>();
+builder.Services.AddScoped<IUserRoleService,UserRoleService>();
+builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IModulePermission, ModuleService>();
 builder.Services.AddScoped<IContactService,ContactServices>();  
 builder.Services.AddScoped<IContactBillingService,ContactBillingService>();  
-builder.Services.AddScoped<IUserService,UserService>();
 builder.Services.AddScoped<ITaxExemption, TaxExemptionService>();
 
 var app = builder.Build();

@@ -19,12 +19,12 @@ namespace ShutterManagement.Services
     public class UserService : BaseRepository<ShutterDbContext, TblUser>, IUserService
     {
         private readonly DataServices _dataServices;
-        private readonly RoleService roleService;
+        private readonly IRoleService roleService;
         private readonly ClaimsProperty claimsProperty;
         private readonly IUserRoleService userRoleService;
         private readonly IMapper mapper;
 
-        public UserService(DataServices dataServices, RoleService roleService
+        public UserService(DataServices dataServices, IRoleService roleService
             , ClaimsProperty claimsProperty, IUserRoleService userRoleService
             , IMapper mapper)
         {
