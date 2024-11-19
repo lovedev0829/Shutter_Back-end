@@ -70,37 +70,34 @@ namespace ShutterManagement.Business.Services
                 var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null);
                 if (IsTenant)
                 {
-                    TblOption options = new TblOption
+                    foreach (var item in model.Options)
                     {
-                        OptionName = model.OptionName,
-                        OptionType = model.OptionType,
-                        Description = model.Description,
-                        AdditionalCost = model.AdditionalCost,
-                        ProductTypeId = Guid.Parse(model.ProductTypeId),
-                        CreatedAt = DateTime.Now,
-                        CreatedBy = AppConstant.LoggedInUserID
-                    };
-                    if(options != null)
-                    {
-                        try
+                        TblOption options = new TblOption
                         {
-                            await Add(options);
-                            responseVm.IsSuccess = true;
-                            responseVm.Message = $"{AppConstant.InsertSuccessMsg}";
-                        }
-                        catch (Exception ex)
-                        {
-                            responseVm.Message = AppConstant.ExceptionError + ex.Message;
-                        }
+                            OptionId = Guid.NewGuid(),
+                            OptionName = item.OptionName,
+                            OptionType = model.OptionType,
+                            AdditionalCost = item.AdditionalCost,
+                            ProductTypeId = model.ProductTypeId,
+                            CreatedAt = DateTime.Now,
+                            CreatedBy = AppConstant.LoggedInUserID,
+                            IsActive = true,
+                            IsDelete = false
+                        };
+                        await Add(options);
+                        responseVm.IsSuccess = true;
+                        responseVm.Message = AppConstant.InsertSuccessMsg;
                     }
-
+                }
+                else
+                {
+                    responseVm.Message = AppConstant.AccessDenied;
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 responseVm.Message = AppConstant.ExceptionError + ex.Message;
-            } 
-
+            }
             return responseVm;
         }
 

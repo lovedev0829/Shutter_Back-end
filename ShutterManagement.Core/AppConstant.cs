@@ -44,6 +44,7 @@ namespace ShutterManagement.Core
         public static string TenantIdNull { get; set; } = "Need Tenant ID to update Sub Tenant.. ";
         public static string TenantNotFound { get; set; } = "Tenant not found.";
         public static string NotRelatesToTenant { get; set; } = "This data is not related to this tenant.";
+        public static string AccessDenied { get; set; } = "Access Denied";
         public static Guid? LoggedInUserID { get; set; } = Guid.Empty;
         public static string LoggedInUserName { get; set; } = string.Empty;
         public static Guid? LoggedInTenantId { get; set; } = Guid.Empty;

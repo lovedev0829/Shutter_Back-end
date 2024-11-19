@@ -1,4 +1,5 @@
-﻿using ShutterManagement.Core.ViewModels.Response;
+﻿using ShutterManagement.Core.ViewModels;
+using ShutterManagement.Core.ViewModels.Response;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,9 +10,6 @@ namespace ShutterManagement.Business.Interfaces
 {
     public interface IModulePermission
     {
-
-        Task<List<ModuleResponse>> GetModulesWithPermissionsAsync();
-
-
+        Task<IResponseVm<List<ModuleResponse>>> GetModulesWithPermissionsAsync();
     }
 }
