@@ -81,6 +81,7 @@ namespace ShutterManagement.Business.Services
                             ProductTypeId = model.ProductTypeId,
                             CreatedAt = DateTime.Now,
                             CreatedBy = AppConstant.LoggedInUserID,
+                            TenantId = AppConstant.LoggedInTenantId,
                             IsActive = true,
                             IsDelete = false
                         };
@@ -140,27 +141,56 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        public Task<IResponseVm<dynamic>> GetAll_Option(Pagination filter)
+
+
+        public async Task<IResponseVm<dynamic>> GetAll_Option(Pagination filter)
         {
-            throw new NotImplementedException();
+            IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
+            try
+            {
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null);
+                if (IsTenant)
+                {
+                    var IsOptionExists = (await GetAll())
+                        .Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId)
+                        .ToList();
+
+                    var FilterRecords = IsOptionExists
+                    .Where(x => string.IsNullOrEmpty(filter.SearchValue.Trim()) ||
+                     (x.OptionName ?? "").Contains(filter.SearchValue.Trim())
+                    ||
+                    (x.OptionType ?? "").Contains(filter.SearchValue.Trim()))
+                    .ToList();
+
+
+                    var TakenRecords = FilterRecords
+                        .Skip((filter.PageNo - 1) * filter.RecordPerPage)
+                        .Take(filter.RecordPerPage)
+                        .ToList();
+
+                    if (TakenRecords != null && TakenRecords.Count > 0)
+                    {
+                        responseVm.Data = TakenRecords.Select(x => new
+                        {
+                            x.OptionId,
+                            x.OptionName,
+                            x.OptionType,
+                            x.AdditionalCost,
+                            //x.IsActive
+                        });
+                    }
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = $"{AppConstant.FetchSuccessMsg}";
+                    responseVm.TotalRecords = FilterRecords.Count;  
+                }
+            }
+            catch (Exception ex)
+            {
+                responseVm.IsSuccess = false;
+                responseVm.Message = $"Error: {ex.Message}";
+            }
+            return responseVm;
         }
-
-        //public async Task<IResponseVm<dynamic>> GetAll_Option(Pagination filter)
-        //{
-        //    var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null);
-        //    var IsSubTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == Guid.Parse(AppConstant.LoggedInParentTenantId));
-        //    if (IsTenant || IsSubTenant) { }
-        //}
-
-        //public async Task<IResponseVm<dynamic>> GetAll_Option(Pagination filter)
-        //{
-        //    var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null);
-        //    var IsSubTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == Guid.Parse(AppConstant.LoggedInParentTenantId));
-        //    if (IsTenant || IsSubTenant) { } 
-
-
-        //}
-
 
 
         public async Task<IResponseVm<string>> Update_Option(UpdateOption model)
@@ -172,27 +202,30 @@ namespace ShutterManagement.Business.Services
                 if (IsTenant)
                 {
                     var IsOptionExists = GetAllQuerable()
-                        .Where(c => c.OptionId == Guid.Parse(model.OptionId)
+                        .Where(c => c.OptionId == model.OptionId
                                     && c.TenantId == AppConstant.LoggedInTenantId
                                     && c.IsActive == true
                                     && c.IsDelete == false)
                         .FirstOrDefault();
-                    if(IsOptionExists != null)
+                    foreach (var item in model.Options)
                     {
-                        IsOptionExists.OptionName = model.OptionName;
-                        IsOptionExists.OptionType = model.OptionType;
-                        IsOptionExists.Description = model.Description;
-                        IsOptionExists.AdditionalCost = model.AdditionalCost;
-                        IsOptionExists.ProductTypeId = Guid.Parse(model.ProductTypeId);
-                        IsOptionExists.UpdatedAt = DateTime.Now;
-                        IsOptionExists.ModifiedBy = AppConstant.LoggedInUserID;
-                        var res = Update(IsOptionExists);
-                        responseVm.IsSuccess = true;
-                        responseVm.Message = $"{AppConstant.UpdateSuccessMsg}";
-                    }
-                     else
-                    {
-                        responseVm.Message = AppConstant.NoUserFound;
+                        if (IsOptionExists != null)
+                        {
+                            IsOptionExists.OptionName = item.OptionName;
+                            IsOptionExists.OptionType = model.OptionType;
+                            IsOptionExists.AdditionalCost = item.AdditionalCost;
+                            IsOptionExists.ProductTypeId = model.ProductTypeId;
+                            IsOptionExists.UpdatedAt = DateTime.Now;
+                            IsOptionExists.ModifiedBy = AppConstant.LoggedInUserID;
+                            var res = Update(IsOptionExists);
+                            responseVm.IsSuccess = true;
+                            responseVm.Message = $"{AppConstant.UpdateSuccessMsg}";
+                        }
+
+                        else
+                        {
+                            responseVm.Message = AppConstant.NoUserFound;
+                        }
                     }
                 }
             }
