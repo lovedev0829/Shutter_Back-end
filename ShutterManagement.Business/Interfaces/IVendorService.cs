@@ -12,8 +12,8 @@ namespace ShutterManagement.Business.Interfaces
 {
     public  interface IVendorService : IGenericRepository<TblVendor>
     {
-        Task<IResponseVm<string>> Create_Vendor(CreateComponent model);
-        Task<IResponseVm<dynamic>> Update_Vendor(UpdateComponent model);
+        Task<IResponseVm<string>> Create_Vendor(CreateVendor model);
+        Task<IResponseVm<string>> Update_Vendor(UpdateVendor model);
         Task<IResponseVm<dynamic>> GetAll_Vendor(Pagination filter);
         Task<IResponseVm<string>> ActiveInActive(Guid Id);
         Task<IResponseVm<string>> Delete(Guid Id);
