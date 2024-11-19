@@ -74,7 +74,9 @@ namespace ShutterManagement.Business.Services
                         IsBillingAddressSameAsAddress = model.IsBillingAddressSameAsAddress,
                         CreatedBy = AppConstant.LoggedInUserID,
                         CreatedAt = DateTime.Now,
-                        TenantId = AppConstant.LoggedInTenantId
+                        TenantId = AppConstant.LoggedInTenantId,
+                        IsActive = true,
+                        IsDelete = false
 
                     };
                     var res = await Add(CreateContact);
@@ -94,6 +96,8 @@ namespace ShutterManagement.Business.Services
                                 ZipCode = model.BillingAddressVm?.ZipCode,
                                 StreetAddress = model.BillingAddressVm?.StreetAddress,
                                 CreatedAt = DateTime.Now,
+                                IsActive = true,
+                                IsDelete = false
                             };
                             await billingService.Add(CreateContactBillingAddress);
                         }

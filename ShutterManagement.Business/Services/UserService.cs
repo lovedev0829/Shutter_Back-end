@@ -76,10 +76,11 @@ namespace ShutterManagement.Services
                 && x.IsShow == false && x.IsActive == true && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
                 if (IsRoleExists)
                 {
+                    var HashPassword = AesEncryptionHelper.Encrypt(UserDetails.Password ?? "");
                     TblUser tblUser = new TblUser();
                     mapper.Map(UserDetails, tblUser);
                     tblUser.Id = Guid.NewGuid();
-                    tblUser.Pwd = UserDetails.Password;
+                    tblUser.Pwd = HashPassword;
                     tblUser.Username = UserDetails.Email;
                     tblUser.CreatedBy = AppConstant.LoggedInUserID;
                     tblUser.CreatedAt = DateTime.Now;
