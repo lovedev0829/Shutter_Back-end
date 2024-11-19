@@ -204,7 +204,6 @@ namespace ShutterManagement.Business.Services
                     var IsOptionExists = GetAllQuerable()
                         .Where(c => c.OptionId == model.OptionId
                                     && c.TenantId == AppConstant.LoggedInTenantId
-                                    && c.IsActive == true
                                     && c.IsDelete == false)
                         .FirstOrDefault();
                     foreach (var item in model.Options)
