@@ -143,6 +143,11 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
+        public Task<IResponseVm<dynamic>> GetAll_Option(Pagination filter)
+        {
+            throw new NotImplementedException();
+        }
+
         //public async Task<IResponseVm<dynamic>> GetAll_Option(Pagination filter)
         //{
         //    var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null);

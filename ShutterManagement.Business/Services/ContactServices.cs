@@ -86,13 +86,13 @@ namespace ShutterManagement.Business.Services
                             TblContactBillingAddress CreateContactBillingAddress = new TblContactBillingAddress
                             {
                                 ContactId = res.ContactId,
-                                Label = model.BillingAddressVm?.Label,
-                                AddressLine1 = model.BillingAddressVm?.AddressLine1,
-                                AddressLine2 = model.BillingAddressVm?.AddressLine2,
+                                FullName = model.BillingAddressVm?.FullName,
+                                PhoneNumber = model.BillingAddressVm?.PhoneNumber,
+                                Email = model.BillingAddressVm?.Email,
                                 City = model.BillingAddressVm?.City,
                                 State = model.BillingAddressVm?.State,
                                 ZipCode = model.BillingAddressVm?.ZipCode,
-                                Country = model.BillingAddressVm?.Country,
+                                StreetAddress = model.BillingAddressVm?.StreetAddress,
                                 CreatedAt = DateTime.Now,
                             };
                             await billingService.Add(CreateContactBillingAddress);
@@ -165,13 +165,13 @@ namespace ShutterManagement.Business.Services
                                 .Where(x => x.ContactId == contact.ContactId).FirstOrDefault();
                             if (contactBillingAddress != null)
                             {
-                                contactBillingAddress.Label = model.BillingAddressVm?.Label;
-                                contactBillingAddress.AddressLine1 = model.BillingAddressVm?.AddressLine1;
-                                contactBillingAddress.AddressLine2 = model.BillingAddressVm?.AddressLine2;
+                                contactBillingAddress.FullName = model.BillingAddressVm?.FullName;
+                                contactBillingAddress.PhoneNumber = model.BillingAddressVm?.PhoneNumber;
+                                contactBillingAddress.Email = model.BillingAddressVm?.Email;
                                 contactBillingAddress.City = model.BillingAddressVm?.City;
                                 contactBillingAddress.State = model.BillingAddressVm?.State;
                                 contactBillingAddress.ZipCode = model.BillingAddressVm?.ZipCode;
-                                contactBillingAddress.Country = model.BillingAddressVm?.Country;
+                                contactBillingAddress.StreetAddress = model.BillingAddressVm?.StreetAddress;
                                 contactBillingAddress.UpdatedAt = DateTime.Now;
 
                                 await billingService.Update(contactBillingAddress);
@@ -181,13 +181,13 @@ namespace ShutterManagement.Business.Services
                                 TblContactBillingAddress CreateContactBillingAddress = new TblContactBillingAddress
                                 {
                                     ContactId = contact.ContactId,
-                                    Label = model.BillingAddressVm?.Label,
-                                    AddressLine1 = model.BillingAddressVm?.AddressLine1,
-                                    AddressLine2 = model.BillingAddressVm?.AddressLine2,
+                                    FullName = model.BillingAddressVm?.FullName,
+                                    PhoneNumber = model.BillingAddressVm?.PhoneNumber,
+                                    Email = model.BillingAddressVm?.Email,
                                     City = model.BillingAddressVm?.City,
                                     State = model.BillingAddressVm?.State,
                                     ZipCode = model.BillingAddressVm?.ZipCode,
-                                    Country = model.BillingAddressVm?.Country,
+                                    StreetAddress = model.BillingAddressVm?.StreetAddress,
                                     CreatedAt = DateTime.Now,
                                 };
                                 await billingService.Add(CreateContactBillingAddress);

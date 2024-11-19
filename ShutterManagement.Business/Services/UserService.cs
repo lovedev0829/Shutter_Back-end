@@ -74,7 +74,7 @@ namespace ShutterManagement.Services
 
                 bool IsRoleExists = await roleService.AnyAsync(x => x.Id == UserDetails.RoleId
                 && x.IsShow == false && x.IsActive == true && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
-                if (!IsRoleExists)
+                if (IsRoleExists)
                 {
                     TblUser tblUser = new TblUser();
                     mapper.Map(UserDetails, tblUser);
@@ -92,12 +92,12 @@ namespace ShutterManagement.Services
                     }
                     else
                     {
-                    result.Message = AppConstant.NoDataFound;
+                    result.Message = AppConstant.ExternalError;
                     }
                 }
                 else
                 {
-                    result.Message = AppConstant.AlreadyExists;
+                    result.Message = "Role " + AppConstant.NoDataFound;
                 }
             }
             catch (Exception ex)
@@ -147,8 +147,14 @@ namespace ShutterManagement.Services
                         result.Message = "Email " + AppConstant.AlreadyExists;
                         return result;
                     }
-
-                    var UpdateUserDetails = UserExistsDetails.FirstOrDefault();
+                    bool IsRoleExists = await roleService.AnyAsync(x => x.Id == UserDetails.RoleId
+                        && x.IsShow == false && x.IsActive == true && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
+                    if (!IsRoleExists)
+                    {
+                        result.Message = "Role " + AppConstant.NoDataFound;
+                        return result;
+                    }
+                        var UpdateUserDetails = UserExistsDetails.FirstOrDefault();
                     mapper.Map(UserDetails, UpdateUserDetails);
                     if (UpdateUserDetails != null)
                     {

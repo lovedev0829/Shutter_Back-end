@@ -262,6 +262,7 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
             entity.Property(e => e.Name).HasMaxLength(255);
             entity.Property(e => e.PhoneNumber).HasMaxLength(50);
+            entity.Property(e => e.Referral).HasMaxLength(100);
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
@@ -279,14 +280,16 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.ToTable("TblContact_billingAddress", "dbo");
 
             entity.Property(e => e.BillingAddressId).HasDefaultValueSql("(newid())");
-            entity.Property(e => e.AddressLine1).HasMaxLength(255);
-            entity.Property(e => e.AddressLine2).HasMaxLength(255);
             entity.Property(e => e.City).HasMaxLength(100);
-            entity.Property(e => e.Country).HasMaxLength(100);
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.Email).HasMaxLength(250);
+            entity.Property(e => e.FullName)
+                .HasMaxLength(128)
+                .IsUnicode(false);
             entity.Property(e => e.IsActive).HasDefaultValue(true);
-            entity.Property(e => e.Label).HasMaxLength(100);
+            entity.Property(e => e.PhoneNumber).HasMaxLength(20);
             entity.Property(e => e.State).HasMaxLength(100);
+            entity.Property(e => e.StreetAddress).HasMaxLength(250);
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
             entity.Property(e => e.ZipCode).HasMaxLength(20);
 
