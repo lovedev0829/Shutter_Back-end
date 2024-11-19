@@ -1,4 +1,5 @@
 ﻿using ShutterManagement.Business.Interfaces;
+using ShutterManagement.Core;
 using ShutterManagement.Core.ViewModels;
 using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.DAL.Context;
@@ -28,9 +29,38 @@ namespace ShutterManagement.Business.Services
             throw new NotImplementedException();
         }
 
-        public Task<IResponseVm<dynamic>> GetAll_Vendor(Pagination filter)
+        public async Task<IResponseVm<dynamic>> GetAll_Vendor(Pagination filter)
         {
-            throw new NotImplementedException();
+            IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
+            try
+            {
+                var IsComponentExists = (await GetAll())
+                    .Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId)
+                    .ToList();
+
+                var FilterRecords = IsComponentExists
+                    .Where(x => string.IsNullOrEmpty(filter.SearchValue) ||
+                                (x.VendorName ?? "").Contains(filter.SearchValue.Trim()) ||
+                                (x.Notes ?? "").Contains(filter.SearchValue.Trim()) ||
+                                (x.ContactInformation ?? "").Contains(filter.SearchValue.Trim()))
+                    .ToList();
+
+                var TakenRecords = FilterRecords
+                    .Skip((filter.PageNo - 1) * filter.RecordPerPage)
+                    .Take(filter.RecordPerPage)
+                    .ToList();
+
+                responseVm.IsSuccess = true;
+                responseVm.Data = TakenRecords;
+                responseVm.Message = $"{AppConstant.FetchSuccessMsg}";
+            }
+            catch (Exception ex)
+            {
+                responseVm.IsSuccess = false;
+                responseVm.Message = $"Error: {ex.Message}";
+            }
+
+            return await Task.FromResult(responseVm);
         }
 
         public Task<IResponseVm<dynamic>> Update_Vendor(UpdateComponent model)
