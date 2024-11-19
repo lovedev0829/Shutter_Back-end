@@ -39,6 +39,10 @@ public partial class TblUser
 
     public DateTime? ExpireAt { get; set; }
 
+    public Guid? JobTitleId { get; set; }
+
+    public virtual MstJobTitle? JobTitle { get; set; }
+
     public virtual ICollection<TblUserRole> TblUserRoles { get; set; } = new List<TblUserRole>();
 
     public virtual TblTenant? Tenant { get; set; }

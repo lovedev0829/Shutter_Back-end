@@ -82,6 +82,7 @@ namespace ShutterManagement.Services
                     tblUser.Id = Guid.NewGuid();
                     tblUser.Pwd = HashPassword;
                     tblUser.Username = UserDetails.Email;
+                    tblUser.JobTitleId = UserDetails.JobTitle;
                     tblUser.CreatedBy = AppConstant.LoggedInUserID;
                     tblUser.CreatedAt = DateTime.Now;
                     tblUser.TenantId = AppConstant.LoggedInTenantId;
