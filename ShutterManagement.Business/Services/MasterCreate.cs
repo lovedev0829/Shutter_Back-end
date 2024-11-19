@@ -112,28 +112,28 @@ namespace ShutterManagement.Business.Services
             }
         }
 
-        public async Task<GetContactResponse> GetAll()
-        {
+        //public async Task<GetContactResponse> GetAll()
+        //{
             
-            var contacts = await dataServices.CallSPtoRead<UpdateContact>("sp_GetAll", reader =>
-            {
-                return new UpdateContact
-                {
-                    ContactId = reader.GetGuid(reader.GetOrdinal("ContactId")),
-                    ContactType = reader.GetString(reader.GetOrdinal("ContactType")),
-                    Name = reader.GetString(reader.GetOrdinal("Name")),
-                    PhoneNumber = reader.IsDBNull(reader.GetOrdinal("PhoneNumber")) ? null : reader.GetString(reader.GetOrdinal("PhoneNumber")),
-                    Email = reader.IsDBNull(reader.GetOrdinal("Email")) ? null : reader.GetString(reader.GetOrdinal("Email")),
-                    Website = reader.IsDBNull(reader.GetOrdinal("Website")) ? null : reader.GetString(reader.GetOrdinal("Website")),
-                    Notes = reader.IsDBNull(reader.GetOrdinal("Notes")) ? null : reader.GetString(reader.GetOrdinal("Notes")),
-                };
-            });
+        //    var contacts = await dataServices.CallSPtoRead<UpdateContact>("sp_GetAll", reader =>
+        //    {
+        //        return new UpdateContact
+        //        {
+        //            ContactId = reader.GetGuid(reader.GetOrdinal("ContactId")),
+        //            ContactType = reader.GetString(reader.GetOrdinal("ContactType")),
+        //            Name = reader.GetString(reader.GetOrdinal("Name")),
+        //            PhoneNumber = reader.IsDBNull(reader.GetOrdinal("PhoneNumber")) ? null : reader.GetString(reader.GetOrdinal("PhoneNumber")),
+        //            Email = reader.IsDBNull(reader.GetOrdinal("Email")) ? null : reader.GetString(reader.GetOrdinal("Email")),
+        //            Website = reader.IsDBNull(reader.GetOrdinal("Website")) ? null : reader.GetString(reader.GetOrdinal("Website")),
+        //            Notes = reader.IsDBNull(reader.GetOrdinal("Notes")) ? null : reader.GetString(reader.GetOrdinal("Notes")),
+        //        };
+        //    });
 
-            return new GetContactResponse
-            {
-                Contacts = contacts, 
-            };
-        }
+        //    return new GetContactResponse
+        //    {
+        //        Contacts = contacts, 
+        //    };
+        //}
 
         public async Task<Sp_Contact> GetById(Guid id)
         {

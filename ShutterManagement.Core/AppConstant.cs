@@ -15,6 +15,7 @@ namespace ShutterManagement.Core
         public static string JwtIssuer = string.Empty;
         public static string JwtAudience = string.Empty;
         public static string JwtExpiryTime = string.Empty;
+        public static bool IsAdminRolesShow = false;
 
 
         //Error Message//

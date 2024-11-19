@@ -49,7 +49,7 @@ namespace ShutterManagement.Business.Services
                     CreatedBy = AppConstant.LoggedInUserID,
                     IsActive = true,
                     IsDelete = false,
-                    IsShow = false,
+                    IsShow = AppConstant.IsAdminRolesShow,
                     TenantId = AppConstant.LoggedInTenantId
 
                 };
@@ -99,7 +99,7 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.AlreadyExists;
                     return responseVm;
                 }
-                var RoleDetails = GetAllQuerable().Where(x => x.Id == model.RoleId && x.IsShow == false && x.IsDelete == false
+                var RoleDetails = GetAllQuerable().Where(x => x.Id == model.RoleId && x.IsShow == AppConstant.IsAdminRolesShow && x.IsDelete == false
                 && x.IsActive == true && x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
 
                 if (RoleDetails != null)
@@ -214,7 +214,7 @@ namespace ShutterManagement.Business.Services
                 List<RoleList> roleLists = new List<RoleList>();
                 var RoleList = (await GetAll())
                     .Where(x => x.IsDelete == false 
-                    && x.IsShow == false 
+                    && x.IsShow == AppConstant.IsAdminRolesShow 
                     && x.TenantId == AppConstant.LoggedInTenantId)
                     .ToList().OrderByDescending(x => x.CreatedAt);
 
