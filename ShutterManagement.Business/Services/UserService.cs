@@ -268,7 +268,7 @@ namespace ShutterManagement.Services
             IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
             try
             {
-                var UserList = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId).ToList();
+                var UserList = (await GetAll()).Where(x => x.IsDelete == false && x.Id != AppConstant.LoggedInUserID && x.TenantId == AppConstant.LoggedInTenantId).ToList();
                 filter.SearchValue= (filter.SearchValue.Trim() ?? "").ToLower();
                 var FilterRecords = UserList
                                     .Where(x =>

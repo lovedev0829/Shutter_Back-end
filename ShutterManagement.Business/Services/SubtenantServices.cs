@@ -110,7 +110,7 @@ namespace ShutterManagement.Business.Services
                         return responseVm;
                     }
                     bool IsTenantExists = await AnyAsync(x => x.TenantId.ToString() == model.TenantId && x.ParentTenantId == AppConstant.LoggedInTenantId
-                    && x.IsDelete == false && x.IsActive == true );
+                    && x.IsDelete == false );
                     if (!IsTenantExists)
                     {
                         responseVm.Message = AppConstant.TenantNotFound;

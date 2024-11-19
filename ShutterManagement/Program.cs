@@ -82,6 +82,7 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = true,
         ValidateIssuerSigningKey = true
     };
+    
 });
 
 

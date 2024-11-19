@@ -204,7 +204,6 @@ namespace ShutterManagement.Business.Services
                     var IsOptionExists = GetAllQuerable()
                         .Where(c => c.OptionId == model.OptionId
                                     && c.TenantId == AppConstant.LoggedInTenantId
-                                    && c.IsActive == true
                                     && c.IsDelete == false)
                         .FirstOrDefault();
                     foreach (var item in model.Options)
@@ -234,7 +233,7 @@ namespace ShutterManagement.Business.Services
                 responseVm.Message = AppConstant.ExceptionError + ex.Message;
             }
 
-            return responseVm;
+          return responseVm;
         }
 
         
