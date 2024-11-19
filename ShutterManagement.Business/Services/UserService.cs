@@ -10,6 +10,7 @@ using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.DAL.Context;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Data;
 using System.Threading.Tasks;
 
@@ -75,38 +76,29 @@ namespace ShutterManagement.Services
                 && x.IsShow == false && x.IsActive == true && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
                 if (!IsRoleExists)
                 {
-                    result.Message = "Role " + AppConstant.NoDataFound;
-                    return result;
-                }
-                TblUser tblUser = new TblUser();
-                mapper.Map(UserDetails, tblUser);
-                tblUser.Id = Guid.NewGuid();
-                tblUser.CreatedBy = AppConstant.LoggedInUserID;
-                tblUser.CreatedAt = DateTime.Now;
-                var res = await Add(tblUser);
-                if (res.Id != Guid.Empty)
-                {
-                    TblUserRole tblUserRole = new TblUserRole
+                    TblUser tblUser = new TblUser();
+                    mapper.Map(UserDetails, tblUser);
+                    tblUser.Id = Guid.NewGuid();
+                    tblUser.Pwd = UserDetails.Password;
+                    tblUser.Username = UserDetails.Email;
+                    tblUser.CreatedBy = AppConstant.LoggedInUserID;
+                    tblUser.CreatedAt = DateTime.Now;
+                    tblUser.TenantId = AppConstant.LoggedInTenantId;
+                    var res = await Add(tblUser);
+                    if (res.Id != Guid.Empty)
                     {
-                        CreatedAt = DateTime.Now,
-                        CreatedBy = AppConstant.LoggedInUserID,
-                        UserId = res.Id,
-                        RoleId = UserDetails.RoleId,
-                        IsActive = true,
-                        IsDelete = false,
-                        Id = Guid.NewGuid()
-                    };
-                    var resRole = await userRoleService.Add(tblUserRole);
-
-                    result.IsSuccess = true;
-                    result.Message = AppConstant.InsertSuccessMsg;
-
+                        result.IsSuccess = true;
+                        result.Message = AppConstant.InsertSuccessMsg;
+                    }
+                    else
+                    {
+                    result.Message = AppConstant.NoDataFound;
+                    }
                 }
                 else
                 {
-                    result.Message = AppConstant.NoDataFound;
+                    result.Message = AppConstant.AlreadyExists;
                 }
-
             }
             catch (Exception ex)
             {
@@ -269,7 +261,7 @@ namespace ShutterManagement.Services
             try
             {
                 var UserList = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId).ToList();
-                filter.SearchValue = (filter.SearchValue ?? "").ToLower();
+                filter.SearchValue= (filter.SearchValue.Trim() ?? "").ToLower();
                 var FilterRecords = UserList
                                     .Where(x =>
                                     (filter.SearchValue != "" ?
