@@ -74,12 +74,13 @@ namespace ShutterManagement.Services
 
                 bool IsRoleExists = await roleService.AnyAsync(x => x.Id == UserDetails.RoleId
                 && x.IsShow == false && x.IsActive == true && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
-                if (!IsRoleExists)
+                if (IsRoleExists)
                 {
+                    var HashPassword = AesEncryptionHelper.Encrypt(UserDetails.Password ?? "");
                     TblUser tblUser = new TblUser();
                     mapper.Map(UserDetails, tblUser);
                     tblUser.Id = Guid.NewGuid();
-                    tblUser.Pwd = UserDetails.Password;
+                    tblUser.Pwd = HashPassword;
                     tblUser.Username = UserDetails.Email;
                     tblUser.JobTitleId = UserDetails.JobTitle;
                     tblUser.CreatedBy = AppConstant.LoggedInUserID;
@@ -93,12 +94,12 @@ namespace ShutterManagement.Services
                     }
                     else
                     {
-                    result.Message = AppConstant.NoDataFound;
+                    result.Message = AppConstant.ExternalError;
                     }
                 }
                 else
                 {
-                    result.Message = AppConstant.AlreadyExists;
+                    result.Message = "Role " + AppConstant.NoDataFound;
                 }
             }
             catch (Exception ex)
@@ -148,8 +149,14 @@ namespace ShutterManagement.Services
                         result.Message = "Email " + AppConstant.AlreadyExists;
                         return result;
                     }
-
-                    var UpdateUserDetails = UserExistsDetails.FirstOrDefault();
+                    bool IsRoleExists = await roleService.AnyAsync(x => x.Id == UserDetails.RoleId
+                        && x.IsShow == false && x.IsActive == true && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
+                    if (!IsRoleExists)
+                    {
+                        result.Message = "Role " + AppConstant.NoDataFound;
+                        return result;
+                    }
+                        var UpdateUserDetails = UserExistsDetails.FirstOrDefault();
                     mapper.Map(UserDetails, UpdateUserDetails);
                     if (UpdateUserDetails != null)
                     {
