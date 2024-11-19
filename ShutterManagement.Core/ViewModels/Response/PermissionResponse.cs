@@ -10,5 +10,6 @@ namespace ShutterManagement.Core.ViewModels.Response
     {
         public Guid PermissionId { get; set; }
         public string ModulePermission { get; set; }
+        public string ModulePermissionDisplay { get; set; }
     }
 }
