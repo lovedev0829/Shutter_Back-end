@@ -158,9 +158,9 @@ namespace ShutterManagement.Business.Services
 
                 var FilterRecords = IsComponentExists
                     .Where(x => string.IsNullOrEmpty(filter.SearchValue) ||
-                                (x.ComponentName ?? "").Contains(filter.SearchValue) ||
-                                (x.ProductType ?? "").Contains(filter.SearchValue) ||
-                                (x.PricingExpression ?? "").Contains(filter.SearchValue))
+                                (x.ComponentName ?? "").Contains(filter.SearchValue.Trim()) ||
+                                (x.ProductType ?? "").Contains(filter.SearchValue.Trim()) ||
+                                (x.PricingExpression ?? "").Contains(filter.SearchValue.Trim()))
                     .ToList();
 
                 var TakenRecords = FilterRecords

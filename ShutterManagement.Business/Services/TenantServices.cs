@@ -225,7 +225,7 @@ namespace ShutterManagement.Business.Services
                 foreach (var item in TenantList) {
                     item.BrandingInfoNavigation = tenantBrandingService.GetAllQuerable().Where(x => x.Id == item.BrandingInfo).FirstOrDefault();
                 }
-                filter.SearchValue = filter.SearchValue.ToLower();
+                filter.SearchValue = filter.SearchValue.ToLower().Trim();
                 var FilterRecords = TenantList
                                     .Where(x =>
                                     (filter.TenantId != "" ? 

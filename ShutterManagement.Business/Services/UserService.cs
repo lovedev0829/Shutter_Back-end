@@ -10,6 +10,7 @@ using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.DAL.Context;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Data;
 using System.Threading.Tasks;
 
@@ -58,8 +59,11 @@ namespace ShutterManagement.Services
                     TblUser tblUser = new TblUser();
                     mapper.Map(UserDetails, tblUser);
                     tblUser.Id = Guid.NewGuid();
+                    tblUser.Pwd = UserDetails.Password;
+                    tblUser.Username = UserDetails.Email;
                     tblUser.CreatedBy = AppConstant.LoggedInUserID;
                     tblUser.CreatedAt = DateTime.Now;
+                    tblUser.TenantId = AppConstant.LoggedInTenantId;
                     var res = await Add(tblUser);
                     if (res.Id != Guid.Empty)
                     {
@@ -68,7 +72,7 @@ namespace ShutterManagement.Services
                     }
                     else
                     {
-                        result.Message = AppConstant.NoDataFound;
+                    result.Message = AppConstant.NoDataFound;
                     }
                 }
                 else
@@ -211,7 +215,7 @@ namespace ShutterManagement.Services
             try
             {
                 var UserList = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId).ToList();
-                filter.SearchValue = (filter.SearchValue ?? "").ToLower();
+                filter.SearchValue= (filter.SearchValue.Trim() ?? "").ToLower();
                 var FilterRecords = UserList
                                     .Where(x =>
                                     (filter.SearchValue != "" ?

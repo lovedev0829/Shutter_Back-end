@@ -143,15 +143,22 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        public async Task<IResponseVm<dynamic>> GetAll_Option(Pagination filter)
+        public Task<IResponseVm<dynamic>> GetAll_Option(Pagination filter)
         {
-            var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null);
-            var IsSubTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == Guid.Parse(AppConstant.LoggedInParentTenantId));
-            if (IsTenant || IsSubTenant) { }
+            throw new NotImplementedException();
         }
 
-      
-    
+        //public async Task<IResponseVm<dynamic>> GetAll_Option(Pagination filter)
+        //{
+        //    var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null);
+        //    var IsSubTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == Guid.Parse(AppConstant.LoggedInParentTenantId));
+        //    if (IsTenant || IsSubTenant) { } 
+
+
+        //}
+
+
+
         public async Task<IResponseVm<string>> Update_Option(UpdateOption model)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();

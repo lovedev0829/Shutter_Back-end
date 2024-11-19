@@ -206,12 +206,12 @@ namespace ShutterManagement.Business.Services
                 var FilterRecords = AddressList
                                     .Where(x =>
                                     (filter.SearchValue != "" ?
-                                    ((x.AddressLine1 ?? "").Contains(filter.SearchValue)
-                                    || (x.AddressLine2 ?? "").Contains(filter.SearchValue)
-                                    || (x.Label ?? "").Contains(filter.SearchValue) || (x.ZipCode ?? "").Contains(filter.SearchValue)
-                                    || (x.City ?? "").Contains(filter.SearchValue)
-                                    || (x.State ?? "").Contains(filter.SearchValue)
-                                    || (x.Country ?? "").Contains(filter.SearchValue)
+                                    ((x.AddressLine1 ?? "").Contains(filter.SearchValue.Trim())
+                                    || (x.AddressLine2 ?? "").Contains(filter.SearchValue.Trim())
+                                    || (x.Label ?? "").Contains(filter.SearchValue.Trim()) || (x.ZipCode ?? "").Contains(filter.SearchValue.Trim())
+                                    || (x.City ?? "").Contains(filter.SearchValue.Trim())
+                                    || (x.State ?? "").Contains(filter.SearchValue.Trim())
+                                    || (x.Country ?? "").Contains(filter.SearchValue.Trim())
                                     ) : true)).ToList();
                 var TakenRecords = FilterRecords
                                     .Skip((filter.PageNo - 1) * filter.RecordPerPage).Take(filter.RecordPerPage).ToList();

@@ -157,8 +157,8 @@ namespace ShutterManagement.Business.Services
                     .ToList();
 
                 var FilterRecords = IsMaterialExists
-                .Where(x => string.IsNullOrEmpty(filter.SearchValue) ||
-                 (x.MaterialName ?? "").Contains(filter.SearchValue))
+                .Where(x => string.IsNullOrEmpty(filter.SearchValue.Trim()) ||
+                 (x.MaterialName ?? "").Contains(filter.SearchValue.Trim()))
                 .ToList();
 
                 //(x.VendorId ?? "").Contains(filter.SearchValue)) &&  
