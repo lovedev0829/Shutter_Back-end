@@ -13,7 +13,7 @@ namespace ShutterManagement.Business.Interfaces
     {
         Task Create(CreateServiceVm model);
         Task Update(CreateServiceVm model);
-        Task<GetContactResponse> GetAll();
+        //Task<GetContactResponse> GetAll();
         Task<Sp_Contact> GetById(Guid id);
         Task DeleteContact(Guid id);
     }

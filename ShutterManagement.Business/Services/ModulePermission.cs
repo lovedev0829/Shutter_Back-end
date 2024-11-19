@@ -32,7 +32,7 @@ namespace ShutterManagement.Business.Services
 
                 var LoggedUserRoleName = (from u in _context.TblUsers
                                           join t in _context.TblTenants on u.TenantId equals t.TenantId
-                                          join ur in _context.TblUserRoles on u.Id equals ur.RoleId
+                                          join ur in _context.TblUserRoles on u.Id equals ur.UserId
                                           join r in _context.TblRoles on ur.RoleId equals r.Id
                                           join rp in _context.TblRolesPermissions on r.Id equals rp.RoleId
                                           where u.Id == AppConstant.LoggedInUserID
@@ -51,7 +51,7 @@ namespace ShutterManagement.Business.Services
 
 
                     var modules = await _context.MstModules
-                        .Where(m => (m.IsActive == true) && (m.IsDelete == false) && permissionList.Select(x => x.ModuleId).Distinct().Contains(m.Id))
+                        .Where(m => (m.IsActive == true) && (m.IsDelete == false) && (AppConstant.IsAdminRolesShow ? true : permissionList.Select(x => x.ModuleId).Distinct().Contains(m.Id)))
                         .Select(m => new ModuleResponse
                         {
                             ModuleName = m.ModuleName,

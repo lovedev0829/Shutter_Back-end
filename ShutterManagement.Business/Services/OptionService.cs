@@ -163,46 +163,46 @@ namespace ShutterManagement.Business.Services
 
 
 
-        public async Task<IResponseVm<string>> Update_Option(UpdateOption model)
-        {
-            IResponseVm<string> responseVm = new ResponseVm<string>();
-            try
-            {
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null);
-                if (IsTenant)
-                {
-                    var IsOptionExists = GetAllQuerable()
-                        .Where(c => c.OptionId == Guid.Parse(model.OptionId)
-                                    && c.TenantId == AppConstant.LoggedInTenantId
-                                    && c.IsActive == true
-                                    && c.IsDelete == false)
-                        .FirstOrDefault();
-                    if(IsOptionExists != null)
-                    {
-                        IsOptionExists.OptionName = model.OptionName;
-                        IsOptionExists.OptionType = model.OptionType;
-                        IsOptionExists.Description = model.Description;
-                        IsOptionExists.AdditionalCost = model.AdditionalCost;
-                        IsOptionExists.ProductTypeId = Guid.Parse(model.ProductTypeId);
-                        IsOptionExists.UpdatedAt = DateTime.Now;
-                        IsOptionExists.ModifiedBy = AppConstant.LoggedInUserID;
-                        var res = Update(IsOptionExists);
-                        responseVm.IsSuccess = true;
-                        responseVm.Message = $"{AppConstant.UpdateSuccessMsg}";
-                    }
-                     else
-                    {
-                        responseVm.Message = AppConstant.NoUserFound;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                responseVm.Message = AppConstant.ExceptionError + ex.Message;
-            }
+        //public async Task<IResponseVm<string>> Update_Option(UpdateOption model)
+        //{
+        //    IResponseVm<string> responseVm = new ResponseVm<string>();
+        //    try
+        //    {
+        //        var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null);
+        //        if (IsTenant)
+        //        {
+        //            var IsOptionExists = GetAllQuerable()
+        //                .Where(c => c.OptionId == Guid.Parse(model.OptionId)
+        //                            && c.TenantId == AppConstant.LoggedInTenantId
+        //                            && c.IsActive == true
+        //                            && c.IsDelete == false)
+        //                .FirstOrDefault();
+        //            if(IsOptionExists != null)
+        //            {
+        //                IsOptionExists.OptionName = model.OptionName;
+        //                IsOptionExists.OptionType = model.OptionType;
+        //                IsOptionExists.Description = model.Description;
+        //                IsOptionExists.AdditionalCost = model.AdditionalCost;
+        //                IsOptionExists.ProductTypeId = Guid.Parse(model.ProductTypeId);
+        //                IsOptionExists.UpdatedAt = DateTime.Now;
+        //                IsOptionExists.ModifiedBy = AppConstant.LoggedInUserID;
+        //                var res = Update(IsOptionExists);
+        //                responseVm.IsSuccess = true;
+        //                responseVm.Message = $"{AppConstant.UpdateSuccessMsg}";
+        //            }
+        //             else
+        //            {
+        //                responseVm.Message = AppConstant.NoUserFound;
+        //            }
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        responseVm.Message = AppConstant.ExceptionError + ex.Message;
+        //    }
 
-            return responseVm;
-        }
+        //    return responseVm;
+        //}
 
         
     }
