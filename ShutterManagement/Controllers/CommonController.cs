@@ -22,12 +22,14 @@ namespace ShutterManagement.Controllers
         private readonly FileUploadHelper fileUpload;
         private readonly ClaimsProperty claimsProperty;
         private readonly IJobTitleService jobTitleService;
-        public CommonController(IMasterCreate masterCreate, FileUploadHelper fileUpload, ClaimsProperty claimsProperty,IJobTitleService jobTitleService)
+        private readonly IMaterial material;
+        public CommonController(IMasterCreate masterCreate, FileUploadHelper fileUpload, ClaimsProperty claimsProperty,IJobTitleService jobTitleService,IMaterial material)
         {
             this.masterCreate = masterCreate;
             this.fileUpload = fileUpload;
             this.claimsProperty = claimsProperty;
             this.jobTitleService = jobTitleService;
+            this.material = material;
         }
 
 
@@ -46,12 +48,33 @@ namespace ShutterManagement.Controllers
 
 
         [HttpPost]
-        [Route("GetAll")]
-        public async Task<IActionResult> GetAll(Pagination filter)
+        [Route("GetAllJobTitle")]
+        public async Task<IActionResult> GetAllJobTitle(Pagination filter)
         {
             var res = await jobTitleService.GetAll(filter);
             return Ok(res);
         }
+        [HttpPost]
+        [Route("GetAllMeterial")]
+        public async Task<IActionResult> GetAllMeterial(Pagination filter)
+        {
+            var res = await material.GetAll_Material(filter);
+            return Ok(res);
+        }
+
+        [HttpPost]
+        [Route("GetAllVendor")]
+        public async Task<IActionResult> GetAllVendor(Pagination filter)
+        {
+            var res = await material.GetAll_Material(filter);
+            return Ok(res);
+        }
+
+
+
+
+
+
 
         //[HttpPost]
         //[Route("MasterCreate")]

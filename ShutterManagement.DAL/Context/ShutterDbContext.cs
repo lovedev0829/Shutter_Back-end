@@ -798,6 +798,10 @@ public partial class ShutterDbContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.VendorName).HasMaxLength(255);
+
+            entity.HasOne(d => d.Tenant).WithMany(p => p.TblVendors)
+                .HasForeignKey(d => d.TenantId)
+                .HasConstraintName("FK__TblVendor__Tenan__324172E1");
         });
 
         modelBuilder.Entity<TblVendorOrder>(entity =>

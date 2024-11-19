@@ -23,5 +23,13 @@ public partial class TblVendor
 
     public bool? IsDelete { get; set; }
 
+    public Guid? TenantId { get; set; }
+
+    public Guid? CreatedBy { get; set; }
+
+    public Guid? ModifiedBy { get; set; }
+
     public virtual ICollection<TblVendorOrder> TblVendorOrders { get; set; } = new List<TblVendorOrder>();
+
+    public virtual TblTenant? Tenant { get; set; }
 }

@@ -14,8 +14,8 @@ namespace ShutterManagement.Business.Interfaces
     public interface IOption : IGenericRepository<TblOption>
     {
         Task<IResponseVm<string>> Create_Option(CreateOption model);
-        //Task<IResponseVm<string>> Update_Option(UpdateOption model);
-        //Task<IResponseVm<dynamic>> GetAll_Option(Pagination filter);
+        Task<IResponseVm<string>> Update_Option(UpdateOption model);
+        Task<IResponseVm<dynamic>> GetAll_Option(Pagination filter);
         Task<IResponseVm<string>> ActiveInActive(Guid Id);
         Task<IResponseVm<string>> Delete(Guid Id);
     }
