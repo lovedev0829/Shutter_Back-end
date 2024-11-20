@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using ShutterManagement.DAL.Context;
 using ShutterManagement.Interfaces;
+using ShutterManagement.Core.ViewModels.Response;
 
 namespace ShutterManagement.Business.Interfaces
 {
@@ -14,7 +15,7 @@ namespace ShutterManagement.Business.Interfaces
     {
         Task<IResponseVm<string>> Create_Component(CreateComponent model);
         Task<IResponseVm<dynamic>> Update_Component(UpdateComponent model);
-        Task<IResponseVm<dynamic>> GetAll_Component(Pagination filter);
+        Task<IResponseVm<List<ComponentListVm>>> GetAll_Component(Pagination filter);
         Task<IResponseVm<string>> ActiveInActive(Guid Id);
         Task<IResponseVm<string>> Delete(Guid Id);
     }

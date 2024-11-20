@@ -11,6 +11,7 @@ using ShutterManagement.Business;
 using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.Services;
 using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.ComponentModel;
 
 namespace ShutterManagement.Controllers
 {
@@ -25,8 +26,9 @@ namespace ShutterManagement.Controllers
         private readonly IJobTitleService jobTitleService;
         private readonly IMaterial material;
         public Pagination filter = new Pagination();
-
-        public CommonController(IMasterCreate masterCreate, FileUploadHelper fileUpload, ClaimsProperty claimsProperty,IJobTitleService jobTitleService,IMaterial material)
+        private readonly IVendorService vendorService;
+        private readonly IComponentService componentService;
+        public CommonController(IMasterCreate masterCreate, FileUploadHelper fileUpload, ClaimsProperty claimsProperty,IJobTitleService jobTitleService,IMaterial material,IVendorService vendorService, IComponentService componentService)
         {
             this.masterCreate = masterCreate;
             this.fileUpload = fileUpload;
@@ -37,6 +39,8 @@ namespace ShutterManagement.Controllers
             filter.RecordPerPage = 100;
             filter.SearchValue = "";
             filter.TenantId = "";
+            this.vendorService = vendorService;
+            this.componentService = componentService;
         }
 
 
@@ -76,10 +80,18 @@ namespace ShutterManagement.Controllers
         [Route("GetAllVendor")]
         public async Task<IActionResult> GetAllVendor()
         {
-            var res = await material.GetAll_Material(filter);
+            var res = await vendorService.GetAll_Vendor(filter);
+            res.Data = res.Data.Where(x => x.IsActive == true).ToList();
             return Ok(res);
         }
-
+        [HttpPost]
+        [Route("GetAllComponent")]
+        public async Task<IActionResult> GetAllComponent()
+        {
+            var res = await componentService.GetAll_Component(filter);
+            res.Data = res.Data.Where(x => x.IsActive == true).ToList();
+            return Ok(res);
+        }
 
 
 

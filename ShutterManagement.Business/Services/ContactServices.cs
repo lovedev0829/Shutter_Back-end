@@ -15,6 +15,7 @@ using System.Diagnostics.Metrics;
 using System.Reflection.Emit;
 using ShutterManagement.Core.SPModel.SP_Responses;
 using Microsoft.IdentityModel.Tokens;
+using ShutterManagement.Core.ViewModels.Response;
 
 namespace ShutterManagement.Business.Services
 {
@@ -134,7 +135,6 @@ namespace ShutterManagement.Business.Services
             }
             return responseVm;
         }
-
         public async Task<IResponseVm<string>> Update_Contact(UpdateContact model)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
@@ -166,7 +166,7 @@ namespace ShutterManagement.Business.Services
                         if (!model.IsBillingAddressSameAsAddress)
                         {
                             var contactBillingAddress = billingService.GetAllQuerable()
-                                .Where(x => x.ContactId == contact.ContactId).FirstOrDefault();
+                                .Where(x => x.ContactId == contact.ContactId && x.IsDelete == false).FirstOrDefault();
                             if (contactBillingAddress != null)
                             {
                                 contactBillingAddress.FullName = model.BillingAddressVm?.FullName;
@@ -193,6 +193,8 @@ namespace ShutterManagement.Business.Services
                                     ZipCode = model.BillingAddressVm?.ZipCode,
                                     StreetAddress = model.BillingAddressVm?.StreetAddress,
                                     CreatedAt = DateTime.Now,
+                                    IsActive = true,
+                                    IsDelete = false
                                 };
                                 await billingService.Add(CreateContactBillingAddress);
                             }
@@ -201,7 +203,7 @@ namespace ShutterManagement.Business.Services
                         if (!model.IsTaxExemption)
                         {
                             var contactTaxExemption = taxExemptionService.GetAllQuerable()
-                                .Where(x => x.ContactId == contact.ContactId).FirstOrDefault();
+                                .Where(x => x.ContactId == contact.ContactId && x.IsDelete == false).FirstOrDefault();
                             if (contactTaxExemption != null)
                             {
                                 contactTaxExemption.ExemptionCertificate = model.TaxExemptionVm?.ExemptionCertificate;
@@ -247,106 +249,45 @@ namespace ShutterManagement.Business.Services
             }
             return responseVm;
         }
-        public async Task<IResponseVm<string>> ActiveInActiveContact(Guid id)
+        public async Task<IResponseVm<string>> ActiveInActiveContact(Guid ContactId)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
                 var contact = GetAllQuerable()
-                    .Where(c => c.ContactId == id
-                    && c.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
-
-                var billingaddress = (await billingService.GetAll())
-                   .Where(c => c.ContactId == id && c.IsActive == true && c.IsDelete == false)
-                   .ToList();
-
-                if (billingaddress.Any())
-                {
-                    foreach (var billingaddress1 in billingaddress)
-                    {
-                        billingaddress1.IsActive = false;
-                        await billingService.Update(billingaddress1);
-                    }
-                }
-                var taxExemptionList = (await taxExemptionService.GetAll())
-                    .Where(c => c.ContactId == id && c.IsActive == true && c.IsDelete == false)
-                    .ToList();
-
-                if (taxExemptionList.Any())
-                {
-                    foreach (var taxExemption in taxExemptionList)
-                    {
-                        taxExemption.IsActive = false;
-                        taxExemption.UpdatedAt = DateTime.Now;
-                        await taxExemptionService.Update(taxExemption);
-                    }
-                }
-
-                if (contact != null)
-                {
-                    contact.IsActive = !contact.IsActive;
-                    await Update(contact);
-
-                    responseVm.IsSuccess = true;
-                    responseVm.Message = AppConstant.UpdateSuccessMsg;
-                }
-                else
-                {
-                    responseVm.Message = AppConstant.NoUserFound;
-                }
-            }
-            catch (Exception ex)
-            {
-                responseVm.Message = AppConstant.ExceptionError + ex.Message;
-            }
-            return responseVm;
-        }
-        public async Task<IResponseVm<string>> DeleteContact(Guid id)
-        {
-            IResponseVm<string> responseVm = new ResponseVm<string>();
-            try
-            {
-                var contact = GetAllQuerable()
-                    .Where(c => c.ContactId == id
-                    && c.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
+                    .Where(c => c.ContactId == ContactId
+                    && c.TenantId == AppConstant.LoggedInTenantId && c.IsDelete == false).FirstOrDefault();
                 if (contact == null)
                 {
                     responseVm.Message = AppConstant.NoDataFound;
                     return responseVm;
                 }
-                var billingAddressList = (await billingService.GetAll())
-                .Where(c => c.ContactId == id && c.IsActive == true && c.IsDelete == false)
-                .ToList();
-
-                if (billingAddressList.Any())
-                {
-                    foreach (var billingAddress in billingAddressList)
-                    {
-                        billingAddress.IsActive = false;
-                        billingAddress.IsDelete = true;
-                        await billingService.Update(billingAddress);
-                    }
-                }
-                var taxExemptionVm = (await taxExemptionService.GetAll())
-                    .Where(c => c.ContactId == id && c.IsActive == true && c.IsDelete == false)
-                    .ToList();
-
-                if (taxExemptionVm.Any())
-                {
-                    foreach (var taxExemption in taxExemptionVm)
-                    {
-                        taxExemption.IsActive = false;
-                        taxExemption.IsDelete = true;
-                        await taxExemptionService.Update(taxExemption);
-                    }
-                }
-
-                contact.IsActive = false;
-                contact.IsDelete = true;
+                contact.IsActive = !contact.IsActive;
+                contact.UpdatedAt = DateTime.Now;
+                contact.ModifiedBy = AppConstant.LoggedInUserID;
                 await Update(contact);
 
+                var billingaddress = (await billingService.GetAll())
+                   .Where(c => c.ContactId == ContactId && c.IsDelete == false).FirstOrDefault();
+
+                if (billingaddress != null)
+                {
+                    billingaddress.IsActive = !billingaddress.IsActive;
+                    billingaddress.UpdatedAt = DateTime.Now;
+                    await billingService.Update(billingaddress);
+                }
+                var taxExemption = (await taxExemptionService.GetAll())
+                    .Where(c => c.ContactId == ContactId && c.IsDelete == false)
+                    .FirstOrDefault();
+
+                if (taxExemption != null)
+                {
+                    taxExemption.IsActive = !taxExemption.IsActive;
+                    taxExemption.UpdatedAt = DateTime.Now;
+                    await taxExemptionService.Update(taxExemption);
+                }
                 responseVm.IsSuccess = true;
-                responseVm.Message = AppConstant.DeleteSuccessMsg;
+                responseVm.Message = AppConstant.UpdateSuccessMsg;
 
             }
             catch (Exception ex)
@@ -355,13 +296,63 @@ namespace ShutterManagement.Business.Services
             }
             return responseVm;
         }
-
-        public async Task<dynamic> GetAll_Contact(Pagination filter)
+        public async Task<IResponseVm<string>> DeleteContact(Guid ContactId)
         {
-            IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
+            IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var ContactList = new List<TblContact>();
+                var contact = GetAllQuerable()
+                    .Where(c => c.ContactId == ContactId
+                    && c.TenantId == AppConstant.LoggedInTenantId && c.IsDelete == false).FirstOrDefault();
+                if (contact == null)
+                {
+                    responseVm.Message = AppConstant.NoDataFound;
+                    return responseVm;
+                }
+                contact.IsActive = false;
+                contact.IsDelete = true;
+                contact.UpdatedAt = DateTime.Now;
+                contact.ModifiedBy = AppConstant.LoggedInUserID;
+                await Update(contact);
+
+                var billingaddress = (await billingService.GetAll())
+                   .Where(c => c.ContactId == ContactId && c.IsDelete == false).FirstOrDefault();
+
+                if (billingaddress != null)
+                {
+                    billingaddress.IsActive = false;
+                    billingaddress.IsDelete = true;
+                    billingaddress.UpdatedAt = DateTime.Now;
+                    await billingService.Update(billingaddress);
+                }
+                var taxExemption = (await taxExemptionService.GetAll())
+                    .Where(c => c.ContactId == ContactId && c.IsDelete == false)
+                    .FirstOrDefault();
+
+                if (taxExemption != null)
+                {
+                    taxExemption.IsActive = false;
+                    taxExemption.IsDelete = true;
+                    taxExemption.UpdatedAt = DateTime.Now;
+                    await taxExemptionService.Update(taxExemption);
+                }
+                responseVm.IsSuccess = true;
+                responseVm.Message = AppConstant.UpdateSuccessMsg;
+
+            }
+            catch (Exception ex)
+            {
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+            }
+            return responseVm;
+        }
+        public async Task<IResponseVm<List<ContactsList>>> GetAll_Contact(Pagination filter)
+        {
+            IResponseVm<List<ContactsList>> responseVm = new ResponseVm<List<ContactsList>>();
+            try
+            {
+                var Contacts = new List<TblContact>();
+                List<ContactsList> ContactList = new List<ContactsList>();
                 if (filter.TenantId != "")
                 {
                     var IsRealtedTenant = tenantService.GetAllQuerable().Where(x => x.TenantId.ToString() == filter.TenantId && x.ParentTenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
@@ -372,23 +363,60 @@ namespace ShutterManagement.Business.Services
                     }
                     else
                     {
-                        ContactList = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId.ToString() == filter.TenantId).ToList();
+                        Contacts = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId.ToString() == filter.TenantId).OrderByDescending(x=>x.CreatedAt).ToList();
                     }
                 }
                 else
                 {
-                    ContactList = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId).ToList();
+                    Contacts = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId).OrderByDescending(x => x.CreatedAt).ToList();
                 }
-                //foreach (var contact in ContactList) {
-                //    contact.TblContactBillingAddresses = billingService.GetAllQuerable()
-                //        .Where(x => x.ContactId == contact.ContactId && x.IsActive == true
-                //        && x.IsDelete == false).FirstOrDefault();
-                //}
+
+
+                foreach (var contact in Contacts)
+                {
+                    ContactsList contacts = new ContactsList
+                    {
+                        ContactId = contact.ContactId,
+                        ContactType = contact.ContactType ?? "",
+                        Email = contact.Email,
+                        PhoneNumber = contact.PhoneNumber,
+                        Name = contact.Name,
+                        Website = contact.Website,
+                        Notes = contact.Notes,
+                        Referral = contact.Referral,
+                        IsTaxExemption = contact.IsTaxExemption ?? false,
+                        IsBillingAddressSameAsAddress = contact.IsBillingAddressSameAsAddress,
+                        IsActive = contact.IsActive
+                    };
+
+                    contacts.billingAddressVm = billingService.GetAllQuerable()
+                        .Where(x => x.ContactId == contact.ContactId && x.IsActive == true
+                        && x.IsDelete == false).Select(x=> new BillingAddressVm
+                        {
+                            City = x.City,
+                            Email = x.Email,
+                            FullName = x.FullName,
+                            PhoneNumber = x.PhoneNumber,
+                            State = x.State,
+                            StreetAddress = x.StreetAddress,
+                            ZipCode = x.ZipCode,
+                        }).FirstOrDefault();
+                    contacts.taxExemptionVm = taxExemptionService.GetAllQuerable()
+                        .Where(x => x.ContactId == contact.ContactId && x.IsActive == true
+                        && x.IsDelete == false).Select(x => new TaxExemption
+                        {
+                            EffectiveDate = x.EffectiveDate,
+                            ExemptionCertificate = x.ExemptionCertificate,
+                            ExpiryDate = x.ExpiryDate
+                        }).FirstOrDefault();
+                    ContactList.Add(contacts);
+                }
                 filter.SearchValue = filter.SearchValue.Trim().ToLower();
                 var FilterRecords = ContactList
                                     .Where(x =>
                                     (filter.SearchValue != "" ?
                                     ((x.Notes ?? "").Contains(filter.SearchValue)
+                                    || (x.ContactId.ToString()).Contains(filter.SearchValue)
                                     || (x.Email ?? "").Contains(filter.SearchValue)
                                     || (x.Website ?? "").Contains(filter.SearchValue)
                                     || (x.PhoneNumber ?? "").Contains(filter.SearchValue)
@@ -398,20 +426,7 @@ namespace ShutterManagement.Business.Services
                                     .Skip((filter.PageNo - 1) * filter.RecordPerPage).Take(filter.RecordPerPage).ToList();
                 if (TakenRecords != null && TakenRecords.Count > 0)
                 {
-                    responseVm.Data = TakenRecords.Select(x => new
-                    {
-                        x.ContactId,
-                        x.TenantId,
-                        x.ContactType,
-                        x.Email,
-                        x.PhoneNumber,
-                        x.Name,
-                        x.Website,
-                        x.Notes,
-                        x.Referral,
-                        x.IsTaxExemption,
-                        x.IsBillingAddressSameAsAddress,
-                    });
+                    responseVm.Data = TakenRecords.ToList();
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.UpdateSuccessMsg;
                     responseVm.TotalRecords = FilterRecords.Count;
