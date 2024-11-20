@@ -9,12 +9,6 @@ public partial class TblVendor
 
     public string? VendorName { get; set; }
 
-    public string? ContactInformation { get; set; }
-
-    public bool? PreferredVendor { get; set; }
-
-    public string? Notes { get; set; }
-
     public DateTime? CreatedAt { get; set; }
 
     public DateTime? UpdatedAt { get; set; }
@@ -28,6 +22,20 @@ public partial class TblVendor
     public Guid? CreatedBy { get; set; }
 
     public Guid? ModifiedBy { get; set; }
+
+    public string? Email { get; set; }
+
+    public string? PhoneNumber { get; set; }
+
+    public string? StreetAddress { get; set; }
+
+    public string? City { get; set; }
+
+    public string? State { get; set; }
+
+    public string? ZipCode { get; set; }
+
+    public virtual ICollection<TblRawMaterial> TblRawMaterials { get; set; } = new List<TblRawMaterial>();
 
     public virtual ICollection<TblVendorOrder> TblVendorOrders { get; set; } = new List<TblVendorOrder>();
 

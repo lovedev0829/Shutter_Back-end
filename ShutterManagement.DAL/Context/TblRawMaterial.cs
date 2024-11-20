@@ -35,9 +35,13 @@ public partial class TblRawMaterial
 
     public Guid? TenantId { get; set; }
 
+    public string? Sku { get; set; }
+
+    public bool? IsCutSheet { get; set; }
+
     public virtual ICollection<TblComponentMaterial> TblComponentMaterials { get; set; } = new List<TblComponentMaterial>();
 
     public virtual TblTenant? Tenant { get; set; }
 
-    public virtual TblContact? Vendor { get; set; }
+    public virtual TblVendor? Vendor { get; set; }
 }

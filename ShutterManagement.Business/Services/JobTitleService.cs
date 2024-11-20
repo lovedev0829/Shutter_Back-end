@@ -2,6 +2,7 @@
 using ShutterManagement.Core;
 using ShutterManagement.Core.ViewModels;
 using ShutterManagement.Core.ViewModels.Request;
+using ShutterManagement.Core.ViewModels.Response;
 using ShutterManagement.DAL.Context;
 using ShutterManagement.Services;
 using System;
@@ -14,9 +15,9 @@ namespace ShutterManagement.Business.Services
 {
     public class JobTitleService : BaseRepository<ShutterDbContext, MstJobTitle>, IJobTitleService
     {
-        public async Task<IResponseVm<dynamic>> GetAll(Pagination filter)
+        public async Task<IResponseVm<List<JobTitlesList>>> GetAll(Pagination filter)
         {
-            IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
+            IResponseVm<List<JobTitlesList>> responseVm = new ResponseVm<List<JobTitlesList>>();
             try
             {
                 var JobTitleList = (await GetAll()).Where(x => x.IsDelete == false).ToList();
@@ -30,11 +31,12 @@ namespace ShutterManagement.Business.Services
                                     .Skip((filter.PageNo - 1) * filter.RecordPerPage).Take(filter.RecordPerPage).ToList();
                 if (TakenRecords != null && TakenRecords.Count > 0)
                 {
-                    responseVm.Data = TakenRecords.Select(x => new
+                    responseVm.Data = TakenRecords.Select(x => new JobTitlesList
                     {
-                        x.JobTitleName,
-                        x.IsActive,
-                    });
+                        Id = x.Id,
+                        Name = x.JobTitleName,
+                        IsActive = x.IsActive,
+                    }).ToList();
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.UpdateSuccessMsg;
                     responseVm.TotalRecords = FilterRecords.Count;

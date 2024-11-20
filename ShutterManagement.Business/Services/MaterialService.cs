@@ -17,15 +17,18 @@ namespace ShutterManagement.Business.Services
     public class MaterialService : BaseRepository<ShutterDbContext, TblRawMaterial>, IMaterial
     {
         private readonly ShutterDbContext _context;
+        private readonly IVendorService vendorService;
         private readonly ClaimsProperty claimsProperty;
         private readonly ITenantService tenantService;
 
-        public MaterialService(ShutterDbContext context, ClaimsProperty claimsProperty,ITenantService tenantService)
+        public MaterialService(ShutterDbContext context,IVendorService vendorService,
+            ClaimsProperty claimsProperty,ITenantService tenantService)
         {
             _context = context;
+            this.vendorService = vendorService;
             this.claimsProperty = claimsProperty;
             this.tenantService = tenantService;
-            //_vendorService = vendorService;
+            this.vendorService = vendorService;
         }
 
         public Task<IResponseVm<string>> ActiveInActive(Guid Id)
@@ -70,7 +73,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsActive== true);
-                var IsVendorExist = await _vendorService.AnyAsync(x => x.VendorId == model.VendorId && x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+                var IsVendorExist = await vendorService.AnyAsync(x => x.VendorId == model.VendorId && x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
                 if (IsTenant)
                 {
                     if (IsVendorExist)

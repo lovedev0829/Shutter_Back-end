@@ -47,8 +47,6 @@ public partial class TblContact
 
     public virtual ICollection<TblJob> TblJobs { get; set; } = new List<TblJob>();
 
-    public virtual ICollection<TblRawMaterial> TblRawMaterials { get; set; } = new List<TblRawMaterial>();
-
     public virtual ICollection<TblTaxExemption> TblTaxExemptions { get; set; } = new List<TblTaxExemption>();
 
     public virtual TblTenant? Tenant { get; set; }

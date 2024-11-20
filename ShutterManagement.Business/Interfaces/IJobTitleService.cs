@@ -7,11 +7,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ShutterManagement.Core.ViewModels.Response;
 
 namespace ShutterManagement.Business.Interfaces
 {
     public interface IJobTitleService :IGenericRepository<MstJobTitle>
     {
-        Task<IResponseVm<dynamic>> GetAll(Pagination filter);
+        Task<IResponseVm<List<JobTitlesList>>> GetAll(Pagination filter);
     }
 }
