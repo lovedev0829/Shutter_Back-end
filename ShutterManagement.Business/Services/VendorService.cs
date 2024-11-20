@@ -164,19 +164,19 @@ namespace ShutterManagement.Business.Services
 
             return await Task.FromResult(responseVm);
         }
-        public async Task<IResponseVm<string>> Update_Vendor(UpdateVendor model)
+        public  Task<IResponseVm<string>> Update_Vendor(UpdateVendor model)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
+                var IsTenantExists =   tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
 
-                if (IsTenantExists)
+                if (IsTenantExists!=null)
                 {
-                    var vendor = await GetAllQuerable()
-                        .FirstOrDefaultAsync(c => c.VendorId == model.VendorId && c.TenantId == AppConstant.LoggedInTenantId
-                        && c.IsActive == true && c.IsDelete == false);
-
+                    var vendor =  GetAllQuerable()
+                        .Where(c => c.VendorId == model.VendorId && c.TenantId == AppConstant.LoggedInTenantId
+                        && c.IsActive == true && c.IsDelete == false).FirstOrDefault();
+                    
                     if (vendor != null)
                     {
                         vendor.VendorName = model.VendorName;
@@ -185,7 +185,7 @@ namespace ShutterManagement.Business.Services
                         vendor.Notes = model.Notes;
                         vendor.ModifiedBy = AppConstant.LoggedInUserID;
                         vendor.UpdatedAt = DateTime.Now;
-                        await Update(vendor);
+                         Update(vendor);
                         responseVm.IsSuccess = true;
                         responseVm.Message = AppConstant.UpdateSuccessMsg;
                     }
@@ -197,7 +197,7 @@ namespace ShutterManagement.Business.Services
             {
                 responseVm.Message = AppConstant.ExceptionError + ex.Message;
             }
-            return responseVm;
+            return Task.FromResult(responseVm); 
 
         }
 
