@@ -19,14 +19,13 @@ namespace ShutterManagement.Business.Services
         private readonly ShutterDbContext _context;
         private readonly ClaimsProperty claimsProperty;
         private readonly ITenantService tenantService;
-        private readonly IVendorService _vendorService;
 
-        public MaterialService(ShutterDbContext context, ClaimsProperty claimsProperty,ITenantService tenantService,IVendorService vendorService)
+        public MaterialService(ShutterDbContext context, ClaimsProperty claimsProperty,ITenantService tenantService)
         {
             _context = context;
             this.claimsProperty = claimsProperty;
             this.tenantService = tenantService;
-            _vendorService = vendorService;
+            //_vendorService = vendorService;
         }
 
         public Task<IResponseVm<string>> ActiveInActive(Guid Id)
@@ -158,9 +157,9 @@ namespace ShutterManagement.Business.Services
 
         }
 
-        public async Task<IResponseVm<dynamic>> GetAll_Material(Pagination filter)
+        public async Task<IResponseVm<List<GetAllMaterialVm>>> GetAll_Material(Pagination filter)
         {
-            IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
+            IResponseVm<List<GetAllMaterialVm>> responseVm = new ResponseVm<List<GetAllMaterialVm>>();
             try
             {
                 var IsMaterialExists = (await GetAll())
@@ -171,20 +170,24 @@ namespace ShutterManagement.Business.Services
                 .Where(x => string.IsNullOrEmpty(filter.SearchValue.Trim()) ||
                  (x.MaterialName ?? "").Contains(filter.SearchValue.Trim()))
                 .ToList();
-
-                //(x.VendorId ?? "").Contains(filter.SearchValue)) &&  
-                //(string.IsNullOrEmpty(filter.VendorId) ||
-                //  x.TenantId.ToString() == filter.VendorId))  
-                //  .ToList();
-
-
                 var TakenRecords = FilterRecords
                     .Skip((filter.PageNo - 1) * filter.RecordPerPage)
                     .Take(filter.RecordPerPage)
                     .ToList();
 
+
+
                 responseVm.IsSuccess = true;
-                responseVm.Data = TakenRecords; 
+                responseVm.Data = (List<GetAllMaterialVm>)TakenRecords.Select( x => new
+                {
+                    x.MaterialName,
+                    x.IsActive,
+                    x.VendorId,
+                    x.UnitOfMeasurement,
+                    
+                    x.StockQuantity,
+                    x.ReorderLevel
+                });
                 responseVm.Message = $"{AppConstant.FetchSuccessMsg}";
             }
             catch (Exception ex)
@@ -204,7 +207,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null);
-                var IsVendorExist = _vendorService.AnyAsync(x => x.VendorId == model.VendorId && x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+                var IsVendorExist = _context.TblVendors.Where(x => x.VendorId == model.VendorId && x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
 
                 if (IsTenant)
                 {

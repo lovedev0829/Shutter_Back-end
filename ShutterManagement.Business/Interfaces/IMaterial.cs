@@ -15,7 +15,7 @@ namespace ShutterManagement.Business.Interfaces
     {
         Task<IResponseVm<string>> Create_Material(CreateMaterial model);
         Task<IResponseVm<string>> Update_Material(UpdateMaterial model);
-        Task<IResponseVm<dynamic>> GetAll_Material(Pagination filter);
+        Task<IResponseVm<List<GetAllMaterialVm>>> GetAll_Material(Pagination filter);
         Task<IResponseVm<string>> ActiveInActive(Guid Id);
         Task<IResponseVm<string>> Delete(Guid Id);
     }
