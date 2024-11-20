@@ -2,6 +2,7 @@
 using ShutterManagement.Core;
 using ShutterManagement.Core.ViewModels;
 using ShutterManagement.Core.ViewModels.Request;
+using ShutterManagement.Core.ViewModels.Response;
 using ShutterManagement.DAL.Context;
 using ShutterManagement.Services;
 using System;
@@ -65,6 +66,12 @@ namespace ShutterManagement.Business.Services
                     TblVendor vendor = new TblVendor
                     {
                         VendorName = model.VendorName,
+                        Email= model.Email,
+                        PhoneNumber= model.PhoneNumber,
+                        State= model.State,
+                        City= model.City,
+                        ZipCode= model.ZipCode,
+                        StreetAddress= model.StreetAddress,
                         IsActive = true,
                         IsDelete = false,
                         CreatedAt = DateTime.Now,
@@ -140,18 +147,35 @@ namespace ShutterManagement.Business.Services
 
                 var FilterRecords = IsComponentExists
                     .Where(x => string.IsNullOrEmpty(filter.SearchValue) ||
-                                (x.VendorName ?? "").Contains(filter.SearchValue.Trim())
-                                //(x.Notes ?? "").Contains(filter.SearchValue.Trim()) ||
-                                //(x.ContactInformation ?? "").Contains(filter.SearchValue.Trim()))
-                    ).ToList();
-
+                                (x.VendorName ?? "").Contains(filter.SearchValue.Trim()) ||
+                                (x.Email ?? "").Contains(filter.SearchValue.Trim()) ||
+                                (x.PhoneNumber ?? "").Contains(filter.SearchValue.Trim())||
+                                (x.City?? "").Contains(filter.SearchValue.Trim()) ||
+                                (x.State?? "").Contains(filter.SearchValue.Trim()) ||
+                                (x.StreetAddress?? "").Contains(filter.SearchValue.Trim()) ||
+                                (x.ZipCode?? "").Contains(filter.SearchValue.Trim())
+                                )
+                    .ToList();
                 var TakenRecords = FilterRecords
                     .Skip((filter.PageNo - 1) * filter.RecordPerPage)
                     .Take(filter.RecordPerPage)
                     .ToList();
 
                 responseVm.IsSuccess = true;
-                responseVm.Data = TakenRecords;
+                responseVm.Data = TakenRecords.Select(x => new VendorListVm
+                {
+                    VendorId= x.VendorId,
+                    VendorName = x.VendorName,
+                    City = x.City,
+                    State = x.State,
+                    ZipCode = x.ZipCode,
+                    Email = x.Email,
+                    StreetAddress = x.StreetAddress,
+                    PhoneNumber = x.PhoneNumber,
+                    TenantId= x.TenantId,
+                    IsActive = x.IsActive,
+                }).ToList();
+                responseVm.TotalRecords = FilterRecords.Count;
                 responseVm.Message = $"{AppConstant.FetchSuccessMsg}";
             }
             catch (Exception ex)
@@ -162,25 +186,31 @@ namespace ShutterManagement.Business.Services
 
             return await Task.FromResult(responseVm);
         }
-        public async Task<IResponseVm<string>> Update_Vendor(UpdateVendor model)
+        public  Task<IResponseVm<string>> Update_Vendor(UpdateVendor model)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenantExists = await AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
+                var IsTenantExists =   tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
 
-                if (IsTenantExists)
+                if (IsTenantExists!=null)
                 {
-                    var vendor = await GetAllQuerable()
-                        .FirstOrDefaultAsync(c => c.VendorId == model.VendorId && c.TenantId == AppConstant.LoggedInTenantId
-                        && c.IsActive == true && c.IsDelete == false);
-
+                    var vendor =  GetAllQuerable()
+                        .Where(c => c.VendorId == model.VendorId && c.TenantId == AppConstant.LoggedInTenantId
+                        && c.IsActive == true && c.IsDelete == false).FirstOrDefault();
+                    
                     if (vendor != null)
                     {
                         vendor.VendorName = model.VendorName;
+                        vendor.Email = model.Email;
+                        vendor.PhoneNumber = model.PhoneNumber;
+                        vendor.StreetAddress = model.StreetAddress;
+                        vendor.City = model.City;
+                        vendor.State = model.State;
+                        vendor.ZipCode = model.ZipCode;
                         vendor.ModifiedBy = AppConstant.LoggedInUserID;
                         vendor.UpdatedAt = DateTime.Now;
-                        await Update(vendor);
+                         Update(vendor);
                         responseVm.IsSuccess = true;
                         responseVm.Message = AppConstant.UpdateSuccessMsg;
                     }
@@ -192,7 +222,7 @@ namespace ShutterManagement.Business.Services
             {
                 responseVm.Message = AppConstant.ExceptionError + ex.Message;
             }
-            return responseVm;
+            return Task.FromResult(responseVm); 
 
         }
 
