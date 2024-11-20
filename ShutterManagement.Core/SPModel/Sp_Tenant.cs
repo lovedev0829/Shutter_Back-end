@@ -15,17 +15,17 @@ namespace ShutterManagement.Core.SPModel
 
         [Required]
         [MaxLength(255)]
-        [RegularExpression("^[a-zA-Z]+$")]
+        [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabaticalError)]
         public string FirstName { get; set; }
 
         [Required]
         [MaxLength(255)]
-        [RegularExpression("^[a-zA-Z]+$")]
+        [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabaticalError)]
         public string MiddleName { get; set; }
 
         [Required]
         [MaxLength(255)]
-        [RegularExpression("^[a-zA-Z]+$")]
+        [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabaticalError)]
         public string LastName { get; set; }
 		public string Code { get; set; }
 		public string URL { get; set; }

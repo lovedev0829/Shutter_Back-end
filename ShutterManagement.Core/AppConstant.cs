@@ -53,7 +53,10 @@ namespace ShutterManagement.Core
         public static string LoggedInPhone { get; set; } = string.Empty;
         public static string LoggedInName { get; set; } = string.Empty;
         public static string LoggedInCompanyCode { get; set; } = string.Empty;
-        public static string? LoggedInParentTenantId { get; set; } 
+        public static string? LoggedInParentTenantId { get; set; }
 
+        public const string AlphabaticalError = "Only alphabetic characters are allowed.";
+
+        public const string ColorCodeError = "Not a valid color code";
     }
 }
