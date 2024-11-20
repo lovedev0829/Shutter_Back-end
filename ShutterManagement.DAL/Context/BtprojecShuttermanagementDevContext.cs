@@ -579,6 +579,9 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
             entity.Property(e => e.MaterialName).HasMaxLength(255);
+            entity.Property(e => e.Sku)
+                .HasMaxLength(50)
+                .HasColumnName("SKU");
             entity.Property(e => e.UnitCost).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.UnitOfMeasurement)
                 .HasMaxLength(50)
@@ -593,7 +596,7 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
 
             entity.HasOne(d => d.Vendor).WithMany(p => p.TblRawMaterials)
                 .HasForeignKey(d => d.VendorId)
-                .HasConstraintName("FK__TblRawMat__Vendo__681373AD");
+                .HasConstraintName("FK_TblRawMaterial_TblVendor");
         });
 
         modelBuilder.Entity<TblRole>(entity =>
@@ -789,15 +792,29 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.ToTable("TblVendor", "dbo");
 
             entity.Property(e => e.VendorId).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.City)
+                .HasMaxLength(200)
+                .IsUnicode(false);
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
+            entity.Property(e => e.Email)
+                .HasMaxLength(200)
+                .IsUnicode(false);
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
+            entity.Property(e => e.PhoneNumber).HasMaxLength(200);
+            entity.Property(e => e.State)
+                .HasMaxLength(200)
+                .IsUnicode(false);
+            entity.Property(e => e.StreetAddress)
+                .HasMaxLength(200)
+                .IsUnicode(false);
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.VendorName).HasMaxLength(255);
+            entity.Property(e => e.ZipCode).HasMaxLength(200);
 
             entity.HasOne(d => d.Tenant).WithMany(p => p.TblVendors)
                 .HasForeignKey(d => d.TenantId)

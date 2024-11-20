@@ -24,7 +24,7 @@ namespace ShutterManagement.Controllers
         private readonly ClaimsProperty claimsProperty;
         private readonly IJobTitleService jobTitleService;
         private readonly IMaterial material;
-        Pagination filter;
+        public Pagination filter = new Pagination();
 
         public CommonController(IMasterCreate masterCreate, FileUploadHelper fileUpload, ClaimsProperty claimsProperty,IJobTitleService jobTitleService,IMaterial material)
         {
@@ -35,6 +35,8 @@ namespace ShutterManagement.Controllers
             this.material = material;
             filter.PageNo = 1;
             filter.RecordPerPage = 100;
+            filter.SearchValue = "";
+            filter.TenantId = "";
         }
 
 
@@ -54,9 +56,10 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("GetAllJobTitle")]
-        public async Task<IActionResult> GetAllJobTitle(Pagination filter)
+        public async Task<IActionResult> GetAllJobTitle()
         {
             var res = await jobTitleService.GetAll(filter);
+            res.Data = res.Data.Where(x => x.IsActive == true).ToList();
             return Ok(res);
         }
         [HttpPost]
@@ -71,7 +74,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("GetAllVendor")]
-        public async Task<IActionResult> GetAllVendor(Pagination filter)
+        public async Task<IActionResult> GetAllVendor()
         {
             var res = await material.GetAll_Material(filter);
             return Ok(res);
