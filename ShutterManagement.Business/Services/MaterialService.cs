@@ -28,35 +28,42 @@ namespace ShutterManagement.Business.Services
             this.vendorService = vendorService;
             this.claimsProperty = claimsProperty;
             this.tenantService = tenantService;
-            this.vendorService = vendorService;
+            //_vendorService = vendorService;
         }
 
-        public Task<IResponseVm<string>> ActiveInActive(Guid Id)
+        public async Task<IResponseVm<string>> ActiveInActive(Guid Id)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenant =  tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null);
-                var IsMaterialExists = GetAllQuerable()
-                      .Where(c => c.RawMaterialId == Id
-                                  && c.TenantId == AppConstant.LoggedInTenantId
-                                  && c.IsActive == true
-                                  && c.IsDelete == false)
-                      .FirstOrDefault();
-                if (IsMaterialExists != null)
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
+                if (IsTenant)
                 {
-                    IsMaterialExists.IsActive = false;
-                    IsMaterialExists.UpdatedAt = DateTime.Now;
-                    IsMaterialExists.ModifiedBy = AppConstant.LoggedInUserID;
+                    var IsMaterialExists = GetAllQuerable()
+                          .Where(c => c.RawMaterialId == Id
+                                      && c.TenantId == AppConstant.LoggedInTenantId
+                                      && c.IsActive == true
+                                      && c.IsDelete == false)
+                          .FirstOrDefault();
+                    if (IsMaterialExists != null)
+                    {
+                        IsMaterialExists.IsActive = false;
+                        IsMaterialExists.UpdatedAt = DateTime.Now;
+                        IsMaterialExists.ModifiedBy = AppConstant.LoggedInUserID;
 
-                    var res = Update(IsMaterialExists);
+                        var res = Update(IsMaterialExists);
 
-                    responseVm.IsSuccess = true;
-                    responseVm.Message = AppConstant.DeleteSuccessMsg;
+                        responseVm.IsSuccess = true;
+                        responseVm.Message = AppConstant.DeleteSuccessMsg;
+                    }
+                    else
+                    {
+                        responseVm.Message = $"{AppConstant.NoDataFound}";
+                    }
                 }
                 else
                 {
-                    responseVm.Message = $"{AppConstant.NoDataFound}";
+                    responseVm.Message = AppConstant.AccessDenied;
                 }
             }
             catch (Exception ex)
@@ -64,7 +71,7 @@ namespace ShutterManagement.Business.Services
                 responseVm.Message = AppConstant.ExceptionError + ex.Message;
             }
 
-            return Task.FromResult(responseVm);
+            return responseVm;
         }
 
         public async Task<IResponseVm<string>> Create_Material(CreateMaterial model)
@@ -110,9 +117,12 @@ namespace ShutterManagement.Business.Services
                     }
                     else
                     {
-                        responseVm.IsSuccess = false;
                         responseVm.Message = "Vendor does not exist";
                     }
+                }
+                else
+                {
+                    responseVm.Message = AppConstant.AccessDenied;
                 }
             }
             catch (Exception ex)
@@ -123,32 +133,40 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        public Task<IResponseVm<string>> Delete(Guid Id)
+        public async Task<IResponseVm<string>> Delete(Guid Id)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsMaterialExists = GetAllQuerable()
-                      .Where(c => c.RawMaterialId == Id
-                                  && c.TenantId == AppConstant.LoggedInTenantId
-                                  && c.IsActive == true
-                                  && c.IsDelete == false)
-                      .FirstOrDefault();
-                if (IsMaterialExists != null)
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
+                if (IsTenant)
                 {
-                    IsMaterialExists.IsActive = false;
-                    IsMaterialExists.IsDelete = true;
-                    IsMaterialExists.UpdatedAt = DateTime.Now;
-                    IsMaterialExists.ModifiedBy = AppConstant.LoggedInUserID;
+                    var IsMaterialExists = GetAllQuerable()
+                          .Where(c => c.RawMaterialId == Id
+                                      && c.TenantId == AppConstant.LoggedInTenantId
+                                      && c.IsActive == true
+                                      && c.IsDelete == false)
+                          .FirstOrDefault();
+                    if (IsMaterialExists != null)
+                    {
+                        IsMaterialExists.IsActive = false;
+                        IsMaterialExists.IsDelete = true;
+                        IsMaterialExists.UpdatedAt = DateTime.Now;
+                        IsMaterialExists.ModifiedBy = AppConstant.LoggedInUserID;
 
-                    var res = Update(IsMaterialExists);
+                        var res = Update(IsMaterialExists);
 
-                    responseVm.IsSuccess = true;
-                    responseVm.Message = AppConstant.DeleteSuccessMsg;
+                        responseVm.IsSuccess = true;
+                        responseVm.Message = AppConstant.DeleteSuccessMsg;
+                    }
+                    else
+                    {
+                        responseVm.Message = $"{AppConstant.NoDataFound}";
+                    }
                 }
                 else
                 {
-                    responseVm.Message = $"{AppConstant.NoDataFound}";
+                    responseVm.Message = AppConstant.AccessDenied;
                 }
             }
             catch(Exception ex)
@@ -156,7 +174,7 @@ namespace ShutterManagement.Business.Services
                 responseVm.Message = AppConstant.ExceptionError + ex.Message;
             }
 
-            return Task.FromResult(responseVm);
+            return responseVm;
 
         }
 
@@ -165,33 +183,47 @@ namespace ShutterManagement.Business.Services
             IResponseVm<List<GetAllMaterialVm>> responseVm = new ResponseVm<List<GetAllMaterialVm>>();
             try
             {
-                var IsMaterialExists = (await GetAll())
-                    .Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId)
-                    .ToList();
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
 
-                var FilterRecords = IsMaterialExists
-                .Where(x => string.IsNullOrEmpty(filter.SearchValue.Trim()) ||
-                 (x.MaterialName ?? "").Contains(filter.SearchValue.Trim()))
-                .ToList();
-                var TakenRecords = FilterRecords
-                    .Skip((filter.PageNo - 1) * filter.RecordPerPage)
-                    .Take(filter.RecordPerPage)
-                    .ToList();
-
-
-
-                responseVm.IsSuccess = true;
-                responseVm.Data = (List<GetAllMaterialVm>)TakenRecords.Select( x => new
+                if (IsTenant)
                 {
-                    x.MaterialName,
-                    x.IsActive,
-                    x.VendorId,
-                    x.UnitOfMeasurement,
-                    
-                    x.StockQuantity,
-                    x.ReorderLevel
-                });
-                responseVm.Message = $"{AppConstant.FetchSuccessMsg}";
+                    var IsMaterialExists = (await GetAll())
+                        .Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId)
+                        .ToList();
+
+                    var FilterRecords = IsMaterialExists
+                    .Where(x => string.IsNullOrEmpty(filter.SearchValue.Trim()) ||
+                     (x.MaterialName ?? "").Contains(filter.SearchValue.Trim()))
+                    .ToList();
+
+                    //(x.VendorId ?? "").Contains(filter.SearchValue)) &&  
+                    //(string.IsNullOrEmpty(filter.VendorId) ||
+                    //  x.TenantId.ToString() == filter.VendorId))  
+                    //  .ToList();
+
+
+                    var TakenRecords = FilterRecords
+                        .Skip((filter.PageNo - 1) * filter.RecordPerPage)
+                        .Take(filter.RecordPerPage)
+                        .ToList();
+
+                    responseVm.Data = (List<GetAllMaterialVm>)TakenRecords.Select(x => new
+                    {
+                        x.MaterialName,
+                        x.IsActive,
+                        x.VendorId,
+                        x.UnitOfMeasurement,
+
+                        x.StockQuantity,
+                        x.ReorderLevel
+                    });
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = $"{AppConstant.FetchSuccessMsg}";
+                }
+                else
+                {
+                    responseVm.Message = AppConstant.AccessDenied;
+                }
             }
             catch (Exception ex)
             {
@@ -248,6 +280,10 @@ namespace ShutterManagement.Business.Services
                         responseVm.IsSuccess = false;
                         responseVm.Message = "Vendor does not exist";
                     }
+                }
+                else
+                {
+                    responseVm.Message = AppConstant.AccessDenied;
                 }
             }
             catch (Exception ex)
