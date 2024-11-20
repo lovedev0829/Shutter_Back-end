@@ -64,14 +64,13 @@ namespace ShutterManagement.Business.Services
             return Task.FromResult(responseVm);
         }
 
-        public Task<IResponseVm<string>> Create_Component(CreateComponent model)
+        public async Task<IResponseVm<string>> Create_Component(CreateComponent model)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenant =  tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null);
-                var IsTenantExists = _dbContext.TblTenants.Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false && x.IsActive == true);
-                if (IsTenantExists != null)
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
+                if (IsTenant)
                 {
                     TblComponent component = new TblComponent
                     {
@@ -101,50 +100,63 @@ namespace ShutterManagement.Business.Services
                         }
                     }
                 }
+                else
+                {
+                    responseVm.Message = AppConstant.AccessDenied;
+                }
             }
             catch (Exception ex)
             {
                 responseVm.Message = AppConstant.ExceptionError + ex.Message;
             }
 
-            return Task.FromResult(responseVm);
+            return responseVm;
         }
 
-        public Task<IResponseVm<string>> Delete(Guid Id)
+        public async Task<IResponseVm<string>> Delete(Guid Id)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenant =  tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null);
-                var IsMaterialExists = GetAllQuerable()
-                      .Where(c => c.ComponentId == Id
-                                  && c.TenantId == AppConstant.LoggedInTenantId
-                                  && c.IsActive == true
-                                  && c.IsDelete == false)
-                      .FirstOrDefault();
-                if (IsMaterialExists != null)
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
+                if (IsTenant)
                 {
-                    IsMaterialExists.IsActive = false;
-                    IsMaterialExists.IsDelete = true;
-                    IsMaterialExists.UpdatedAt = DateTime.Now;
-                    IsMaterialExists.ModifiedBy = AppConstant.LoggedInUserID;
+                    var IsMaterialExists = GetAllQuerable()
+                          .Where(c => c.ComponentId == Id
+                                      && c.TenantId == AppConstant.LoggedInTenantId
+                                      && c.IsActive == true
+                                      && c.IsDelete == false)
+                          .FirstOrDefault();
+                    if (IsMaterialExists != null)
+                    {
+                        IsMaterialExists.IsActive = false;
+                        IsMaterialExists.IsDelete = true;
+                        IsMaterialExists.UpdatedAt = DateTime.Now;
+                        IsMaterialExists.ModifiedBy = AppConstant.LoggedInUserID;
 
-                    var res = Update(IsMaterialExists);
+                        var res = Update(IsMaterialExists);
 
-                    responseVm.IsSuccess = true;
-                    responseVm.Message = AppConstant.DeleteSuccessMsg;
+                        responseVm.IsSuccess = true;
+                        responseVm.Message = AppConstant.DeleteSuccessMsg;
+                    }
+                    else
+                    {
+                        responseVm.Message = $"{AppConstant.NoDataFound}";
+                    }
+
                 }
                 else
                 {
-                    responseVm.Message = $"{AppConstant.NoDataFound}";
+                    responseVm.Message = AppConstant.AccessDenied;
                 }
             }
+
             catch (Exception ex)
             {
                 responseVm.Message = AppConstant.ExceptionError + ex.Message;
             }
 
-            return Task.FromResult(responseVm);
+            return responseVm;
         }
 
         public async Task<IResponseVm<dynamic>> GetAll_Component(Pagination filter)
@@ -152,25 +164,34 @@ namespace ShutterManagement.Business.Services
             IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
             try
             {
-                var IsComponentExists = (await GetAll())
-                    .Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId)
-                    .ToList();
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
 
-                var FilterRecords = IsComponentExists
-                    .Where(x => string.IsNullOrEmpty(filter.SearchValue) ||
-                                (x.ComponentName ?? "").Contains(filter.SearchValue.Trim()) ||
-                                (x.ProductType ?? "").Contains(filter.SearchValue.Trim()) ||
-                                (x.PricingExpression ?? "").Contains(filter.SearchValue.Trim()))
-                    .ToList();
+                if (IsTenant)
+                {
+                    var IsComponentExists = (await GetAll())
+                        .Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId)
+                        .ToList();
 
-                var TakenRecords = FilterRecords
-                    .Skip((filter.PageNo - 1) * filter.RecordPerPage)
-                    .Take(filter.RecordPerPage)
-                    .ToList();
+                    var FilterRecords = IsComponentExists
+                        .Where(x => string.IsNullOrEmpty(filter.SearchValue) ||
+                                    (x.ComponentName ?? "").Contains(filter.SearchValue.Trim()) ||
+                                    (x.ProductType ?? "").Contains(filter.SearchValue.Trim()) ||
+                                    (x.PricingExpression ?? "").Contains(filter.SearchValue.Trim()))
+                        .ToList();
 
-                responseVm.IsSuccess = true;
-                responseVm.Data = TakenRecords;
-                responseVm.Message = $"{AppConstant.FetchSuccessMsg}";
+                    var TakenRecords = FilterRecords
+                        .Skip((filter.PageNo - 1) * filter.RecordPerPage)
+                        .Take(filter.RecordPerPage)
+                        .ToList();
+
+                    responseVm.IsSuccess = true;
+                    responseVm.Data = TakenRecords;
+                    responseVm.Message = $"{AppConstant.FetchSuccessMsg}";
+                }
+                else
+                {
+                    responseVm.Message = AppConstant.AccessDenied;
+                }
             }
             catch (Exception ex)
             {
@@ -182,15 +203,18 @@ namespace ShutterManagement.Business.Services
         }
 
 
-        public Task<IResponseVm<dynamic>> Update_Component(UpdateComponent model)
+        public async Task<IResponseVm<dynamic>> Update_Component(UpdateComponent model)
         {
             IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
             try
             {
-                if (Guid.TryParse(model.ComponentId, out Guid ComponentId))
-                {
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
+
+                if (IsTenant) 
+                { 
+              
                     var IsComponentExists = GetAllQuerable()
-                       .Where(c => c.ComponentId == ComponentId
+                       .Where(c => c.ComponentId == Guid.Parse(model.ComponentId)
                                    && c.TenantId == AppConstant.LoggedInTenantId
                                    && c.IsActive == true
                                    && c.IsDelete == false)
@@ -214,13 +238,17 @@ namespace ShutterManagement.Business.Services
                         responseVm.Message = $"{AppConstant.NoDataFound}";
                     }
                 }
+                else
+                {
+                    responseVm.Message = AppConstant.AccessDenied;
+                }
             }
             catch (Exception ex)
             {
                 responseVm.Message = AppConstant.ExceptionError + ex.Message;
             }
 
-            return Task.FromResult(responseVm);
+            return responseVm;
         }
     }
 }
