@@ -46,8 +46,8 @@ namespace ShutterManagement.Core.ViewModels.Request
         public string? State { get; set; }
 
         [Required]
-        [MaxLength(6)]
-        [RegularExpression(@"^\d{6}$", ErrorMessage = AppConstant.AlphabaticalError)]
+        [MaxLength(6),MinLength(5)]
+        [RegularExpression(@"^\d{5,6}$", ErrorMessage = AppConstant.AlphabaticalError)]
         [DefaultValue("")]
      
         public string? ZipCode { get; set; }

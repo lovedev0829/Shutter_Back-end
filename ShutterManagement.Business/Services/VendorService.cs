@@ -136,47 +136,56 @@ namespace ShutterManagement.Business.Services
 
         }
 
-        public async Task<IResponseVm<dynamic>> GetAll_Vendor(Pagination filter)
+        public async Task<IResponseVm<List<VendorListVm>>> GetAll_Vendor(Pagination filter)
         {
-            IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
+            IResponseVm<List<VendorListVm>> responseVm = new ResponseVm<List<VendorListVm>>();
             try
             {
-                var IsComponentExists = (await GetAll())
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null);
+                if (IsTenant)
+                {
+                    var IsComponentExists = (await GetAll())
                     .Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId)
                     .ToList();
 
-                var FilterRecords = IsComponentExists
-                    .Where(x => string.IsNullOrEmpty(filter.SearchValue) ||
-                                (x.VendorName ?? "").Contains(filter.SearchValue.Trim()) ||
-                                (x.Email ?? "").Contains(filter.SearchValue.Trim()) ||
-                                (x.PhoneNumber ?? "").Contains(filter.SearchValue.Trim())||
-                                (x.City?? "").Contains(filter.SearchValue.Trim()) ||
-                                (x.State?? "").Contains(filter.SearchValue.Trim()) ||
-                                (x.StreetAddress?? "").Contains(filter.SearchValue.Trim()) ||
-                                (x.ZipCode?? "").Contains(filter.SearchValue.Trim())
-                                )
-                    .ToList();
-                var TakenRecords = FilterRecords
-                    .Skip((filter.PageNo - 1) * filter.RecordPerPage)
-                    .Take(filter.RecordPerPage)
-                    .ToList();
+                    var FilterRecords = IsComponentExists
+                        .Where(x => string.IsNullOrEmpty(filter.SearchValue) ||
+                                    (x.VendorName ?? "").Contains(filter.SearchValue.Trim()) ||
+                                    (x.Email ?? "").Contains(filter.SearchValue.Trim()) ||
+                                    (x.PhoneNumber ?? "").Contains(filter.SearchValue.Trim()) ||
+                                    (x.City ?? "").Contains(filter.SearchValue.Trim()) ||
+                                    (x.State ?? "").Contains(filter.SearchValue.Trim()) ||
+                                    (x.StreetAddress ?? "").Contains(filter.SearchValue.Trim()) ||
+                                    (x.ZipCode ?? "").Contains(filter.SearchValue.Trim())
+                                    )
+                        .ToList();
+                    var TakenRecords = FilterRecords
+                        .Skip((filter.PageNo - 1) * filter.RecordPerPage)
+                        .Take(filter.RecordPerPage)
+                        .ToList();
 
-                responseVm.IsSuccess = true;
-                responseVm.Data = TakenRecords.Select(x => new VendorListVm
-                {
-                    VendorId= x.VendorId,
-                    VendorName = x.VendorName,
-                    City = x.City,
-                    State = x.State,
-                    ZipCode = x.ZipCode,
-                    Email = x.Email,
-                    StreetAddress = x.StreetAddress,
-                    PhoneNumber = x.PhoneNumber,
-                    TenantId= x.TenantId,
-                    IsActive = x.IsActive,
-                }).ToList();
-                responseVm.TotalRecords = FilterRecords.Count;
-                responseVm.Message = $"{AppConstant.FetchSuccessMsg}";
+                    responseVm.IsSuccess = true;
+                    responseVm.Data = TakenRecords.Select(x => new VendorListVm
+                    {
+                        VendorId = x.VendorId,
+                        VendorName = x.VendorName,
+                        City = x.City,
+                        State = x.State,
+                        ZipCode = x.ZipCode,
+                        Email = x.Email,
+                        StreetAddress = x.StreetAddress,
+                        PhoneNumber = x.PhoneNumber,
+                        TenantId = x.TenantId,
+                        IsActive = x.IsActive,
+                    }).ToList();
+                    responseVm.TotalRecords = FilterRecords.Count;
+                    responseVm.Message = $"{AppConstant.FetchSuccessMsg}";
+                }
+                else
+                 {
+                        responseVm.Message = AppConstant.AccessDenied;
+                 }
+                
             }
             catch (Exception ex)
             {

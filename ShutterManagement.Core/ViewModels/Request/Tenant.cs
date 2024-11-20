@@ -11,18 +11,18 @@ namespace ShutterManagement.Core.ViewModels.Request
     public class Tenant
     {
         [Required]
-        [MaxLength(255)]
+        [MaxLength(100)]
         [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabaticalError)]
         [DefaultValue("")]
         public string? FirstName { get; set; }
 
-        [MaxLength(255)]
+        [MaxLength(100)]
         [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabaticalError)]
         [DefaultValue("")]
         public string? MiddleName { get; set; }
 
         [Required]
-        [MaxLength(255)]
+        [MaxLength(100)]
         [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabaticalError)]
         [DefaultValue("")]
         public string? LastName { get; set; }

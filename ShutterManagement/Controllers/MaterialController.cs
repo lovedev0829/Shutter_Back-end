@@ -19,7 +19,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("Create")]
-        //[Authorize(Roles = "AddressAdd")]
+        [Authorize(Roles = "MaterialAdd")]
         public async Task<IActionResult> Create([FromBody] CreateMaterial materialVm)
         {
             var result = await _material.Create_Material(materialVm);
@@ -28,7 +28,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("Update")]
-        //[Authorize(Roles = "AddressEdit")]
+        [Authorize(Roles = "MaterialEdit")]
         public async Task<IActionResult> Update([FromBody] UpdateMaterial materialVm)
         {
             var result = await _material.Update_Material(materialVm);
@@ -37,7 +37,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("Delete")]
-        //[Authorize(Roles = "AddressDelete")]
+        [Authorize(Roles = "MaterialDelete")]
         public async Task<IActionResult> Delete(Guid Id)
         {
             var result = await _material.Delete(Id);
@@ -46,7 +46,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("ActiveInActive")]
-        //[Authorize(Roles = "AddressEdit")]
+        [Authorize(Roles = "MaterialEdit")]
         public async Task<IActionResult> ActiveInactive(Guid Id)
         {
             var result = await _material.ActiveInActive(Id);
@@ -55,7 +55,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("GetAll")]
-        //[Authorize(Roles = "AddressView")]
+        [Authorize(Roles = "MaterialView")]
         public async Task<IActionResult> GetAll(Pagination filter)
         {
             var result = await _material.GetAll_Material(filter);

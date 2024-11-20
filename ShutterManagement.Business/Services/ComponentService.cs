@@ -2,6 +2,7 @@
 using ShutterManagement.Core;
 using ShutterManagement.Core.ViewModels;
 using ShutterManagement.Core.ViewModels.Request;
+using ShutterManagement.Core.ViewModels.Response;
 using ShutterManagement.DAL.Context;
 using ShutterManagement.Services;
 using System;
@@ -118,7 +119,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsDelete == false );
                 if (IsTenant)
                 {
                     var IsMaterialExists = GetAllQuerable()
@@ -159,9 +160,9 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        public async Task<IResponseVm<dynamic>> GetAll_Component(Pagination filter)
+        public async Task<IResponseVm<List<ComponentListVm>>> GetAll_Component(Pagination filter)
         {
-            IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
+            IResponseVm<List<ComponentListVm>> responseVm = new ResponseVm<List<ComponentListVm>>();
             try
             {
                 var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
@@ -186,7 +187,16 @@ namespace ShutterManagement.Business.Services
 
 
                     responseVm.IsSuccess = true;
-                    responseVm.Data = TakenRecords;
+                    responseVm.Data = (List<ComponentListVm>)TakenRecords.Select(x => new
+                    {
+                        x.ComponentId,
+                        x.IsActive,
+                        x.ComponentName,
+                        x.TenantId,
+                       x.MarkupPercentage,
+                       x.PricingExpression,
+                       x.Notes
+                    });
                     responseVm.Message = $"{AppConstant.FetchSuccessMsg}";
                 }
                 else
@@ -217,7 +227,6 @@ namespace ShutterManagement.Business.Services
                     var IsComponentExists = GetAllQuerable()
                        .Where(c => c.ComponentId == Guid.Parse(model.ComponentId)
                                    && c.TenantId == AppConstant.LoggedInTenantId
-                                   && c.IsActive == true
                                    && c.IsDelete == false)
                        .FirstOrDefault();
                     if(IsComponentExists != null)

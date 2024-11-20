@@ -42,7 +42,6 @@ namespace ShutterManagement.Business.Services
                     var IsMaterialExists = GetAllQuerable()
                           .Where(c => c.RawMaterialId == Id
                                       && c.TenantId == AppConstant.LoggedInTenantId
-                                      && c.IsActive == true
                                       && c.IsDelete == false)
                           .FirstOrDefault();
                     if (IsMaterialExists != null)
@@ -93,6 +92,8 @@ namespace ShutterManagement.Business.Services
                             UnitOfMeasurement = model.UnitOfMeasurement,
                             StockQuantity = model.StockQuantity,
                             ReorderLevel = model.ReorderLevel,
+                            Sku = model.SKU,
+                            IsCutSheet = model.IsCutSheet,
                             VendorId = model.VendorId,
                             Notes = model.Notes,
                             CreatedAt = DateTime.Now,
@@ -207,16 +208,15 @@ namespace ShutterManagement.Business.Services
                         .Take(filter.RecordPerPage)
                         .ToList();
 
-                    responseVm.Data = (List<GetAllMaterialVm>)TakenRecords.Select(x => new
+                    responseVm.Data = TakenRecords.Select(x => new GetAllMaterialVm
                     {
-                        x.MaterialName,
-                        x.IsActive,
-                        x.VendorId,
-                        x.UnitOfMeasurement,
-
-                        x.StockQuantity,
-                        x.ReorderLevel
-                    });
+                        MaterialName = x.MaterialName,
+                        IsActive = x.IsActive,
+                        VendorId = x.VendorId,
+                        UnitOfMeasurement = x.UnitOfMeasurement,
+                        StockQuantity = x.StockQuantity,
+                        ReorderLevel = x.ReorderLevel
+                    }).ToList();
                     responseVm.IsSuccess = true;
                     responseVm.Message = $"{AppConstant.FetchSuccessMsg}";
                 }
@@ -251,7 +251,6 @@ namespace ShutterManagement.Business.Services
                         var IsMaterialExists = GetAllQuerable()
                                  .Where(c => c.RawMaterialId == Guid.Parse(model.RawMaterialId)
                                                && c.TenantId == AppConstant.LoggedInTenantId
-                                               && c.IsActive == true
                                                && c.IsDelete == false)
                                    .FirstOrDefault();
                         if (IsMaterialExists != null)

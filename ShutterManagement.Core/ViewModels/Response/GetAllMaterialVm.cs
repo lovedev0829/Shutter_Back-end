@@ -25,5 +25,6 @@ namespace ShutterManagement.Core.ViewModels.Response
         public bool? IsActive { get; set; }
 
         public Guid? TenantId { get; set; }
+        public string? SKU { get; set; }
     }
 }

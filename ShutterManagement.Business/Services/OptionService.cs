@@ -54,6 +54,10 @@ namespace ShutterManagement.Business.Services
                         responseVm.Message = AppConstant.NoUserFound;
                     }
                 }
+                else
+                {
+                    responseVm.Message = AppConstant.AccessDenied;
+                }
             }
             catch (Exception ex)
             {
@@ -133,6 +137,10 @@ namespace ShutterManagement.Business.Services
                         responseVm.Message = AppConstant.NoUserFound;
                     }
                 }
+                else
+                {
+                    responseVm.Message = AppConstant.AccessDenied;
+                }
             }
             catch (Exception ex)
             {
@@ -183,6 +191,10 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = $"{AppConstant.FetchSuccessMsg}";
                     responseVm.TotalRecords = FilterRecords.Count;  
                 }
+                else
+                {
+                    responseVm.Message = AppConstant.AccessDenied;
+                }
             }
             catch (Exception ex)
             {
@@ -226,6 +238,10 @@ namespace ShutterManagement.Business.Services
                             responseVm.Message = AppConstant.NoUserFound;
                         }
                     }
+                }
+                else
+                {
+                    responseVm.Message = AppConstant.AccessDenied;
                 }
             }
             catch (Exception ex)

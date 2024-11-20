@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ShutterManagement.Core.ViewModels.Response;
 
 namespace ShutterManagement.Business.Interfaces
 {
@@ -14,7 +15,7 @@ namespace ShutterManagement.Business.Interfaces
     {
         Task<IResponseVm<string>> Create_Vendor(CreateVendor model);
         Task<IResponseVm<string>> Update_Vendor(UpdateVendor model);
-        Task<IResponseVm<dynamic>> GetAll_Vendor(Pagination filter);
+        Task<IResponseVm<List<VendorListVm>>> GetAll_Vendor(Pagination filter);
         Task<IResponseVm<string>> ActiveInActive(Guid Id);
         Task<IResponseVm<string>> Delete(Guid Id);
     }
