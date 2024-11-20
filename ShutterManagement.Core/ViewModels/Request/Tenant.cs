@@ -12,18 +12,18 @@ namespace ShutterManagement.Core.ViewModels.Request
     {
         [Required]
         [MaxLength(255)]
-        [RegularExpression("^[a-zA-Z]+$")]
+        [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabaticalError)]
         [DefaultValue("")]
         public string? FirstName { get; set; }
 
         [MaxLength(255)]
-        [RegularExpression("^[a-zA-Z]+$")]
+        [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabaticalError)]
         [DefaultValue("")]
         public string? MiddleName { get; set; }
 
         [Required]
         [MaxLength(255)]
-        [RegularExpression("^[a-zA-Z]+$")]
+        [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabaticalError)]
         [DefaultValue("")]
         public string? LastName { get; set; }
         [Required]
@@ -50,11 +50,11 @@ namespace ShutterManagement.Core.ViewModels.Request
         public string? Logo { get; set; }
 
         [DefaultValue("")]
-        [RegularExpression("^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$")]
+        [RegularExpression("^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$", ErrorMessage = AppConstant.ColorCodeError)]
         public string? PrimaryColor { get; set; }
 
         [DefaultValue("")]
-        [RegularExpression("^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$")]
+        [RegularExpression("^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$", ErrorMessage = AppConstant.ColorCodeError)]
         public string? SecondaryColor { get; set; }
 
         //[Required]

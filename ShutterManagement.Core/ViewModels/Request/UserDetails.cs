@@ -13,16 +13,16 @@ namespace ShutterManagement.Core.ViewModels.Request
         [DefaultValue("")]
         [Required]
         [MaxLength(255)]
-        [RegularExpression("^[a-zA-Z]+$")]
+        [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabaticalError)]
         public string? FirstName { get; set; }
         [DefaultValue("")]
         [MaxLength(255)]
-        [RegularExpression("^[a-zA-Z]+$")]
+        [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabaticalError)]
         public string? MiddleName { get; set; }
         [DefaultValue("")]
         [Required]
         [MaxLength(255)]
-        [RegularExpression("^[a-zA-Z]+$")]
+        [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabaticalError)]
         public string? LastName { get; set; }
         [DefaultValue("")]
         [Required, MaxLength(100)]

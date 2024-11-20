@@ -14,13 +14,13 @@ namespace ShutterManagement.Core.SPModel
 
         [Required]
         [MaxLength(50)]
-        [RegularExpression("^[a-zA-Z]+$")]
+        [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabaticalError)]
         [DefaultValue("")]
         public string ContactType { get; set; } = string.Empty;
 
         [Required]
         [MaxLength(255)]
-        [RegularExpression("^[a-zA-Z]+$")]
+        [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabaticalError)]
         [DefaultValue("")]
         public string? Name { get; set; }
 
