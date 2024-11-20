@@ -19,12 +19,14 @@ namespace ShutterManagement.Business.Services
         private readonly ShutterDbContext _context;
         private readonly ClaimsProperty claimsProperty;
         private readonly ITenantService tenantService;
+        private readonly IVendorService _vendorService;
 
-        public MaterialService(ShutterDbContext context, ClaimsProperty claimsProperty,ITenantService tenantService)
+        public MaterialService(ShutterDbContext context, ClaimsProperty claimsProperty,ITenantService tenantService,IVendorService vendorService)
         {
             _context = context;
             this.claimsProperty = claimsProperty;
             this.tenantService = tenantService;
+            _vendorService = vendorService;
         }
 
         public Task<IResponseVm<string>> ActiveInActive(Guid Id)
@@ -70,35 +72,45 @@ namespace ShutterManagement.Business.Services
             {
                 var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null);
                 var IsTenantExists = _context.TblTenants.Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false && x.IsActive == true);
+                var IsVendorExist = _vendorService.AnyAsync(x => x.VendorId == model.VendorId && x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
                 if (IsTenantExists != null)
                 {
-                    TblRawMaterial material = new TblRawMaterial
+                    if (IsVendorExist != null)
                     {
-                        MaterialName = model.MaterialName,
-                        UnitCost = model.UnitCost,
-                        UnitOfMeasurement = model.UnitOfMeasurement,
-                        StockQuantity = model.StockQuantity,
-                        ReorderLevel = model.ReorderLevel,
-                        VendorId = model.VendorId,
-                        Notes = model.Notes,
-                        CreatedAt = DateTime.Now,
-                        CreatedBy = AppConstant.LoggedInUserID,
-                        IsActive = true,
-                        IsDelete = false,
-                        TenantId = AppConstant.LoggedInTenantId
-                    };
-                    if (material != null)
+
+                        TblRawMaterial material = new TblRawMaterial
+                        {
+                            MaterialName = model.MaterialName,
+                            UnitCost = model.UnitCost,
+                            UnitOfMeasurement = model.UnitOfMeasurement,
+                            StockQuantity = model.StockQuantity,
+                            ReorderLevel = model.ReorderLevel,
+                            VendorId = model.VendorId,
+                            Notes = model.Notes,
+                            CreatedAt = DateTime.Now,
+                            CreatedBy = AppConstant.LoggedInUserID,
+                            IsActive = true,
+                            IsDelete = false,
+                            TenantId = AppConstant.LoggedInTenantId
+                        };
+                        if (material != null)
+                        {
+                            try
+                            {
+                                await Add(material);
+                                responseVm.IsSuccess = true;
+                                responseVm.Message = $"{AppConstant.InsertSuccessMsg}";
+                            }
+                            catch (Exception ex)
+                            {
+                                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+                            }
+                        }
+                    }
+                    else
                     {
-                        try
-                        {
-                            await Add(material);
-                            responseVm.IsSuccess = true;
-                            responseVm.Message = $"{AppConstant.InsertSuccessMsg}";
-                        }
-                        catch (Exception ex)
-                        {
-                            responseVm.Message = AppConstant.ExceptionError + ex.Message;
-                        }
+                        responseVm.IsSuccess = false;
+                        responseVm.Message = "Vendor does not exist";
                     }
                 }
             }
@@ -193,32 +205,43 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null);
-                if (Guid.TryParse(model.RawMaterialId, out Guid rawMaterialIdGuid))
+                var IsVendorExist = _vendorService.AnyAsync(x => x.VendorId == model.VendorId && x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+
+                if (IsTenant)
                 {
-                    var IsMaterialExists = GetAllQuerable()
-                        .Where(c => c.RawMaterialId == rawMaterialIdGuid
-                                    && c.TenantId == AppConstant.LoggedInTenantId
-                                    && c.IsActive == true
-                                    && c.IsDelete == false)
-                        .FirstOrDefault();
-                    if (IsMaterialExists != null)
+                    if (IsVendorExist != null)
                     {
-                        IsMaterialExists.MaterialName = model.MaterialName;
-                        IsMaterialExists.UnitCost = model.UnitCost;
-                        IsMaterialExists.UnitOfMeasurement = model.UnitOfMeasurement;
-                        IsMaterialExists.StockQuantity = model.StockQuantity;   
-                        IsMaterialExists.ReorderLevel = model.ReorderLevel;
-                        IsMaterialExists.VendorId = model.VendorId;
-                        IsMaterialExists.Notes = model.Notes;
-                        IsMaterialExists.ModifiedBy = AppConstant.LoggedInUserID;
-                        IsMaterialExists.UpdatedAt = DateTime.Now;
-                        var res = Update(IsMaterialExists);
-                        responseVm.IsSuccess = true;
-                        responseVm.Message = $"{AppConstant.UpdateSuccessMsg}";
+                        var IsMaterialExists = GetAllQuerable()
+                                 .Where(c => c.RawMaterialId == Guid.Parse(model.RawMaterialId)
+                                               && c.TenantId == AppConstant.LoggedInTenantId
+                                               && c.IsActive == true
+                                               && c.IsDelete == false)
+                                   .FirstOrDefault();
+                        if (IsMaterialExists != null)
+                        {
+                            IsMaterialExists.MaterialName = model.MaterialName;
+                            IsMaterialExists.UnitCost = model.UnitCost;
+                            IsMaterialExists.UnitOfMeasurement = model.UnitOfMeasurement;
+                            IsMaterialExists.StockQuantity = model.StockQuantity;
+                            IsMaterialExists.ReorderLevel = model.ReorderLevel;
+                            IsMaterialExists.VendorId = model.VendorId;
+                            IsMaterialExists.Notes = model.Notes;
+                            IsMaterialExists.ModifiedBy = AppConstant.LoggedInUserID;
+                            IsMaterialExists.UpdatedAt = DateTime.Now;
+                            var res = Update(IsMaterialExists);
+                            responseVm.IsSuccess = true;
+                            responseVm.Message = $"{AppConstant.UpdateSuccessMsg}";
+                        }
+                        else
+                        {
+                            responseVm.Message = AppConstant.NoUserFound;
+                        }
+                    
                     }
                     else
                     {
-                        responseVm.Message = AppConstant.NoUserFound;
+                        responseVm.IsSuccess = false;
+                        responseVm.Message = "Vendor does not exist";
                     }
                 }
             }

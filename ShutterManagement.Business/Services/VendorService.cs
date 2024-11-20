@@ -6,6 +6,7 @@ using ShutterManagement.DAL.Context;
 using ShutterManagement.Services;
 using System;
 using System.Collections.Generic;
+using System.Data.Entity;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,19 +15,122 @@ namespace ShutterManagement.Business.Services
 {
     public class VendorService : BaseRepository<ShutterDbContext, TblVendor>, IVendorService
     {
+        private readonly IVendorService vendorService;
+        private readonly ITenantService tenantService;
+        public VendorService(IVendorService vendorService,ITenantService tenantService)
+        {
+            this.vendorService = vendorService;
+            this.tenantService= tenantService;
+        }
         public Task<IResponseVm<string>> ActiveInActive(Guid Id)
         {
-            throw new NotImplementedException();
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+            try
+            {
+                var IsTenant = tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null);
+                var IsVendorExist = GetAllQuerable()
+                      .Where(c => c.VendorId == Id
+                                  && c.TenantId == AppConstant.LoggedInTenantId
+                                  && c.IsActive == true
+                                  && c.IsDelete == false)
+                      .FirstOrDefault();
+                if (IsVendorExist != null)
+                {
+                    IsVendorExist.IsActive = false;
+                    IsVendorExist.UpdatedAt = DateTime.Now;
+                    IsVendorExist.ModifiedBy = AppConstant.LoggedInUserID;
+
+                    var res = Update(IsVendorExist);
+
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = AppConstant.DeleteSuccessMsg;
+                }
+                else
+                {
+                    responseVm.Message = $"{AppConstant.NoDataFound}";
+                }
+            }
+            catch (Exception ex)
+            {
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+            }
+
+            return Task.FromResult(responseVm);
         }
 
-        public Task<IResponseVm<string>> Create_Vendor(CreateComponent model)
+        public async Task<IResponseVm<string>> Create_Vendor(CreateVendor model)
         {
-            throw new NotImplementedException();
+
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+            try
+            {
+                    TblVendor vendor = new TblVendor
+                    {
+                        VendorName = model.VendorName,
+                        ContactInformation= model.ContactInformation,
+                        PreferredVendor= model.PreferredVendor,
+                        IsActive = true,
+                        IsDelete = false,
+                        CreatedAt = DateTime.Now,
+                        CreatedBy = AppConstant.LoggedInUserID,
+                        TenantId = AppConstant.LoggedInTenantId
+                    };
+
+                    var res = await Add(vendor);
+                    if (res.VendorId != Guid.Empty)
+                    {
+                        responseVm.IsSuccess = true;
+                        responseVm.Message = AppConstant.InsertSuccessMsg;
+                    }
+                    else
+                    {
+                        responseVm.Message = AppConstant.NoDataFound;
+                    }
+            }
+
+            catch (Exception ex)
+            {
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+            }
+
+            return responseVm;
         }
 
         public Task<IResponseVm<string>> Delete(Guid Id)
         {
-            throw new NotImplementedException();
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+            try
+            {
+                var IsVendorExist = GetAllQuerable()
+                      .Where(c => c.VendorId == Id
+                                  && c.TenantId == AppConstant.LoggedInTenantId
+                                  && c.IsActive == true
+                                  && c.IsDelete == false)
+                      .FirstOrDefault();
+                if (IsVendorExist != null)
+                {
+                    IsVendorExist.IsActive = false;
+                    IsVendorExist.IsDelete = true;
+                    IsVendorExist.UpdatedAt = DateTime.Now;
+                    IsVendorExist.ModifiedBy = AppConstant.LoggedInUserID;
+
+                    var res = Update(IsVendorExist);
+
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = AppConstant.DeleteSuccessMsg;
+                }
+                else
+                {
+                    responseVm.Message = $"{AppConstant.NoDataFound}";
+                }
+            }
+            catch (Exception ex)
+            {
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+            }
+
+            return Task.FromResult(responseVm);
+
         }
 
         public async Task<IResponseVm<dynamic>> GetAll_Vendor(Pagination filter)
@@ -62,10 +166,40 @@ namespace ShutterManagement.Business.Services
 
             return await Task.FromResult(responseVm);
         }
-
-        public Task<IResponseVm<dynamic>> Update_Vendor(UpdateComponent model)
+        public async Task<IResponseVm<string>> Update_Vendor(UpdateVendor model)
         {
-            throw new NotImplementedException();
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+            try
+            {
+                var IsTenantExists = await  vendorService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
+
+                if (IsTenantExists)
+                {
+                    var vendor = await GetAllQuerable()
+                        .FirstOrDefaultAsync(c => c.VendorId == model.VendorId && c.TenantId == AppConstant.LoggedInTenantId
+                        && c.IsActive == true && c.IsDelete == false);
+
+                    if (vendor != null)
+                    {
+
+                        vendor.VendorName = model.VendorName;
+                        vendor.Notes = model.Notes;
+                        vendor.ModifiedBy = AppConstant.LoggedInUserID;
+                        vendor.UpdatedAt = DateTime.Now;
+
+                        await Update(vendor);
+
+
+                    }
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = AppConstant.UpdateSuccessMsg;
+                }
+            }
+            catch (Exception ex)
+            {
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+            }
+            return responseVm;
         }
     }
 }
