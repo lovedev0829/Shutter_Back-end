@@ -106,6 +106,7 @@ builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<ITaxExemption, TaxExemptionService>();
 builder.Services.AddScoped<IVendorService, VendorService>();
 builder.Services.AddScoped<IMaterial, MaterialService>();
+builder.Services.AddScoped<IVendorService, VendorService>();
 builder.Services.AddScoped<IOption, OptionService>();
 builder.Services.AddScoped<IUserRoleService,UserRoleService>();
 builder.Services.AddScoped<IUserService, UserService>();

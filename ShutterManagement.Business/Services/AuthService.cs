@@ -119,7 +119,7 @@ namespace ShutterManagement.Services
                 var tokenDescriptor = new SecurityTokenDescriptor
                 {
                     Subject = claims,
-                    Expires = DateTime.UtcNow.AddHours(Convert.ToDouble(AppConstant.JwtExpiryTime)),
+                    Expires = DateTime.UtcNow.AddMinutes(Convert.ToDouble(AppConstant.JwtExpiryTime)),
                     Issuer = AppConstant.JwtIssuer,
                     Audience = AppConstant.JwtAudience,
                     SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
