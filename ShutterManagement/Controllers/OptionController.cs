@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core.ViewModels.Request;
@@ -18,7 +19,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("Create")]
-        //[Authorize(Roles = "AddressAdd")]
+        [Authorize(Roles = "OptionAdd")]
         public async Task<IActionResult> Create([FromBody] CreateOption optionVm)
         {
             var result = await _option.Create_Option(optionVm);
@@ -27,7 +28,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("Update")]
-        //[Authorize(Roles = "AddressEdit")]
+        [Authorize(Roles = "OptionEdit")]
         public async Task<IActionResult> Update([FromBody] UpdateOption optionVm)
         {
             var result = await _option.Update_Option(optionVm);
@@ -36,7 +37,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("Delete")]
-        //[Authorize(Roles = "AddressDelete")]
+        [Authorize(Roles = "OptionDelete")]
         public async Task<IActionResult> Delete(Guid Id)
         {
             var result = await _option.Delete(Id);
@@ -45,7 +46,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("ActiveInActive")]
-        //[Authorize(Roles = "AddressEdit")]
+        [Authorize(Roles = "OptionEdit")]
         public async Task<IActionResult> ActiveInactive(Guid Id)
         {
             var result = await _option.ActiveInActive(Id);

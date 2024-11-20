@@ -118,7 +118,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsDelete == false );
                 if (IsTenant)
                 {
                     var IsMaterialExists = GetAllQuerable()
@@ -217,7 +217,6 @@ namespace ShutterManagement.Business.Services
                     var IsComponentExists = GetAllQuerable()
                        .Where(c => c.ComponentId == Guid.Parse(model.ComponentId)
                                    && c.TenantId == AppConstant.LoggedInTenantId
-                                   && c.IsActive == true
                                    && c.IsDelete == false)
                        .FirstOrDefault();
                     if(IsComponentExists != null)

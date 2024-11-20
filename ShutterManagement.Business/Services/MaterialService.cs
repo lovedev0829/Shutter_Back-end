@@ -42,7 +42,6 @@ namespace ShutterManagement.Business.Services
                     var IsMaterialExists = GetAllQuerable()
                           .Where(c => c.RawMaterialId == Id
                                       && c.TenantId == AppConstant.LoggedInTenantId
-                                      && c.IsActive == true
                                       && c.IsDelete == false)
                           .FirstOrDefault();
                     if (IsMaterialExists != null)
@@ -93,6 +92,8 @@ namespace ShutterManagement.Business.Services
                             UnitOfMeasurement = model.UnitOfMeasurement,
                             StockQuantity = model.StockQuantity,
                             ReorderLevel = model.ReorderLevel,
+                            Sku = model.SKU,
+                            IsCutSheet = model.IsCutSheet,
                             VendorId = model.VendorId,
                             Notes = model.Notes,
                             CreatedAt = DateTime.Now,
@@ -213,7 +214,7 @@ namespace ShutterManagement.Business.Services
                         x.IsActive,
                         x.VendorId,
                         x.UnitOfMeasurement,
-
+                        x.Sku,
                         x.StockQuantity,
                         x.ReorderLevel
                     });
@@ -251,7 +252,6 @@ namespace ShutterManagement.Business.Services
                         var IsMaterialExists = GetAllQuerable()
                                  .Where(c => c.RawMaterialId == Guid.Parse(model.RawMaterialId)
                                                && c.TenantId == AppConstant.LoggedInTenantId
-                                               && c.IsActive == true
                                                && c.IsDelete == false)
                                    .FirstOrDefault();
                         if (IsMaterialExists != null)

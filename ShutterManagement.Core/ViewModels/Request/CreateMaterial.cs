@@ -12,34 +12,34 @@ namespace ShutterManagement.Core.ViewModels.Request
     {
         [DefaultValue("")]
         [Required]
-        [MaxLength(255)]
-        [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabaticalError)]
+        [MaxLength(100)]
+        [RegularExpression(@"^[a-zA-Z0-9!@#$%^&*()_+={}\[\]:;""'<>,.?/\|`~ \s-]*$", ErrorMessage = AppConstant.AlphabaticalError)]
         public string? MaterialName { get; set; }
 
         [DefaultValue("")]
         [Required]
-        [MaxLength(255)]
         public decimal? UnitCost { get; set; }
 
         [DefaultValue("")]
         [Required]
-        [MaxLength(255)]
         public string? UnitOfMeasurement { get; set; }
 
         [DefaultValue("")]
         [Required]
-        [MaxLength(255)]
         public int? StockQuantity { get; set; }
 
         [DefaultValue("")]
         [Required]
-        [MaxLength(255)]
         public int? ReorderLevel { get; set; }
 
         [DefaultValue("")]
         [Required]
       
         public Guid? VendorId { get; set; }
+
+        public string SKU { get; set; }
+
+        public bool IsCutSheet { get; set; } = false;
 
         public string? Notes { get; set; }
     }

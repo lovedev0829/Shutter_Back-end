@@ -12,24 +12,23 @@ namespace ShutterManagement.Core.ViewModels.Request
     {
         [DefaultValue("")]
         [Required]
-        [MaxLength(255)]
-        [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabaticalError)]
+        [MaxLength(100)]
+        [RegularExpression(@"^[a-zA-Z0-9!@#$%^&*()_+={}\[\]:;""'<>,.?/\|`~ \s-]*$", ErrorMessage = AppConstant.AlphabaticalError)]
         public string? ComponentName { get; set; }
 
         [DefaultValue("")]
         [Required]
-        [MaxLength(255)]
+        [MaxLength(100)]
         //[RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabaticalError)]
         public string? ProductType { get; set; }
 
         [DefaultValue("")]
         [Required]
-        [MaxLength(255)]
         public decimal? MarkupPercentage { get; set; }
 
         [DefaultValue("")]
         [Required]
-        [MaxLength(255)]
+        [MaxLength(500)]
         public string? PricingExpression { get; set; }
 
         public string? Notes { get; set; }
