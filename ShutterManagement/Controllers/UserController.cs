@@ -23,7 +23,7 @@ namespace ShutterManagement.API.Controllers
         }
 
         [HttpPost("Create")]
-        public async Task<IActionResult> Create([FromBody] UserDetails UserDetails)
+        public async Task<IActionResult> Create([FromBody] CreateUser UserDetails)
         {
             var result = await _userService.Create(UserDetails);
             return Ok(result);

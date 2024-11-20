@@ -18,13 +18,11 @@ namespace ShutterManagement.Core.ViewModels.Request
 
         [DefaultValue("")]
         [Required]
-        [MaxLength(255)]
         //[RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabaticalError)]
         public string? ProductType { get; set; }
 
         [DefaultValue("")]
         [Required]
-        [MaxLength(255)]
         public decimal? MarkupPercentage { get; set; }
 
         [DefaultValue("")]

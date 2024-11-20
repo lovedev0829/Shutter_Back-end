@@ -189,7 +189,7 @@ namespace ShutterManagement.Services
             }
             else
             {
-                responseVm.Message = AppConstant.NoDataFound;
+                responseVm.Message = AppConstant.TenantNotFound;
             }
             return responseVm;
         }

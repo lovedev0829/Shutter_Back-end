@@ -5,8 +5,10 @@ using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Business.Services;
 using ShutterManagement.Core;
 using ShutterManagement.Core.Common;
+using ShutterManagement.Core.SPModel.SP_Responses;
 using ShutterManagement.Core.ViewModels;
 using ShutterManagement.Core.ViewModels.Request;
+using ShutterManagement.Core.ViewModels.Response;
 using ShutterManagement.DAL.Context;
 using System;
 using System.Collections.Generic;
@@ -35,7 +37,7 @@ namespace ShutterManagement.Services
             this.mapper = mapper;
         }
 
-        public async Task<IResponseVm<string>> Create(UserDetails UserDetails)
+        public async Task<IResponseVm<string>> Create(CreateUser UserDetails)
         {
             IResponseVm<string> result = new ResponseVm<string>();
             try
@@ -53,7 +55,7 @@ namespace ShutterManagement.Services
                   && (x.ParentTenantId.ToString() == AppConstant.LoggedInParentTenantId || x.TenantId.ToString() == AppConstant.LoggedInParentTenantId)).Select(x => x.TenantId.ToString()).ToList();
                 }
 
-                bool IsPhoneExists = await AnyAsync(x => x.IsActive == true && x.IsDelete == false &&
+                bool IsPhoneExists = await AnyAsync(x => x.IsDelete == false &&
                   (x.Phone == UserDetails.Phone)
                   && AllTenantSubTenants.Contains(x.TenantId.ToString()));
                 if (IsPhoneExists)
@@ -62,7 +64,7 @@ namespace ShutterManagement.Services
                     return result;
                 }
 
-                bool IsEmailExists = await AnyAsync(x => x.IsActive == true && x.IsDelete == false &&
+                bool IsEmailExists = await AnyAsync(x => x.IsDelete == false &&
                   (x.Email == UserDetails.Email)
                   && AllTenantSubTenants.Contains(x.TenantId.ToString()));
                 if (IsEmailExists)
@@ -77,24 +79,42 @@ namespace ShutterManagement.Services
                 if (IsRoleExists)
                 {
                     var HashPassword = AesEncryptionHelper.Encrypt(UserDetails.Password ?? "");
-                    TblUser tblUser = new TblUser();
-                    mapper.Map(UserDetails, tblUser);
-                    tblUser.Id = Guid.NewGuid();
-                    tblUser.Pwd = HashPassword;
-                    tblUser.Username = UserDetails.Email;
-                    tblUser.JobTitleId = UserDetails.JobTitle;
-                    tblUser.CreatedBy = AppConstant.LoggedInUserID;
-                    tblUser.CreatedAt = DateTime.Now;
-                    tblUser.TenantId = AppConstant.LoggedInTenantId;
+                    TblUser tblUser = new TblUser
+                    {
+                        Id = Guid.NewGuid(),
+                        FirstName = UserDetails.FirstName,
+                        MiddleName = UserDetails.MiddleName,
+                        LastName = UserDetails.LastName,
+                        Username = UserDetails.Email,
+                        Email = UserDetails.Email,
+                        Pwd = HashPassword,
+                        JobTitleId = string.IsNullOrEmpty(UserDetails.JobTitle) ? null : Guid.Parse(UserDetails.JobTitle),
+                        Phone = UserDetails.Phone,
+                        CreatedBy = AppConstant.LoggedInUserID,
+                        CreatedAt = DateTime.Now,
+                        TenantId = AppConstant.LoggedInTenantId,
+                        IsActive = true,
+                        IsDelete = false,
+                    };
                     var res = await Add(tblUser);
                     if (res.Id != Guid.Empty)
                     {
+                        TblUserRole userRole = new TblUserRole
+                        {
+                            UserId = res.Id,
+                            RoleId = UserDetails.RoleId,
+                            CreatedBy = AppConstant.LoggedInUserID,
+                            CreatedAt = DateTime.Now,
+                            IsActive = true,
+                            IsDelete = false
+                        };
+                        await userRoleService.Add(userRole);
                         result.IsSuccess = true;
                         result.Message = AppConstant.InsertSuccessMsg;
                     }
                     else
                     {
-                    result.Message = AppConstant.ExternalError;
+                        result.Message = AppConstant.ExternalError;
                     }
                 }
                 else
@@ -114,25 +134,27 @@ namespace ShutterManagement.Services
             IResponseVm<string> result = new ResponseVm<string>();
             try
             {
-                var AllTenantSubTenants = new List<string>();
-                if (string.IsNullOrEmpty(AppConstant.LoggedInParentTenantId))
-                {
-                    AllTenantSubTenants = dbContext.TblTenants.Where(x => x.IsActive == true && x.IsDelete == false
-                   && (x.ParentTenantId == AppConstant.LoggedInTenantId || x.TenantId == AppConstant.LoggedInTenantId)).Select(x => x.TenantId.ToString()).ToList();
-                }
-                else
-                {
-                    AllTenantSubTenants = dbContext.TblTenants.Where(x => x.IsActive == true && x.IsDelete == false
-                  && (x.ParentTenantId.ToString() == AppConstant.LoggedInParentTenantId || x.TenantId.ToString() == AppConstant.LoggedInParentTenantId)).Select(x => x.TenantId.ToString()).ToList();
-                }
 
-                var UserExistsDetails = GetAllQuerable().Where(x => x.IsActive == true && x.IsDelete == false &&
+                var UserExistsDetails = GetAllQuerable().Where(x => x.IsDelete == false &&
                 x.Id == Guid.Parse(UserDetails.UserId)
                 && x.TenantId == AppConstant.LoggedInTenantId
                 );
                 if (UserExistsDetails.Count() == 1)
                 {
-                    bool IsPhoneExists = await AnyAsync(x => x.IsActive == true && x.IsDelete == false &&
+                    var AllTenantSubTenants = new List<string>();
+                    if (string.IsNullOrEmpty(AppConstant.LoggedInParentTenantId))
+                    {
+                        AllTenantSubTenants = dbContext.TblTenants.Where(x => x.IsActive == true && x.IsDelete == false
+                       && (x.ParentTenantId == AppConstant.LoggedInTenantId || x.TenantId == AppConstant.LoggedInTenantId)).Select(x => x.TenantId.ToString()).ToList();
+                    }
+                    else
+                    {
+                        AllTenantSubTenants = dbContext.TblTenants.Where(x => x.IsActive == true && x.IsDelete == false
+                      && (x.ParentTenantId.ToString() == AppConstant.LoggedInParentTenantId || x.TenantId.ToString() == AppConstant.LoggedInParentTenantId)).Select(x => x.TenantId.ToString()).ToList();
+                    }
+
+
+                    bool IsPhoneExists = await AnyAsync(x => x.IsDelete == false &&
                   (x.Phone == UserDetails.Phone) && x.Id != Guid.Parse(UserDetails.UserId)
                   && AllTenantSubTenants.Contains(x.TenantId.ToString()));
                     if (IsPhoneExists)
@@ -141,7 +163,7 @@ namespace ShutterManagement.Services
                         return result;
                     }
 
-                    bool IsEmailExists = await AnyAsync(x => x.IsActive == true && x.IsDelete == false &&
+                    bool IsEmailExists = await AnyAsync(x => x.IsDelete == false &&
                       (x.Email == UserDetails.Email) && x.Id != Guid.Parse(UserDetails.UserId)
                       && AllTenantSubTenants.Contains(x.TenantId.ToString()));
                     if (IsEmailExists)
@@ -156,14 +178,41 @@ namespace ShutterManagement.Services
                         result.Message = "Role " + AppConstant.NoDataFound;
                         return result;
                     }
-                        var UpdateUserDetails = UserExistsDetails.FirstOrDefault();
-                    mapper.Map(UserDetails, UpdateUserDetails);
+                    var UpdateUserDetails = UserExistsDetails.FirstOrDefault();
                     if (UpdateUserDetails != null)
                     {
+                        UpdateUserDetails.FirstName = UserDetails.FirstName;
+                        UpdateUserDetails.MiddleName = UserDetails.MiddleName;
+                        UpdateUserDetails.LastName = UserDetails.LastName;
+                        UpdateUserDetails.Username = UserDetails.Email;
+                        UpdateUserDetails.Email = UserDetails.Email;
+                        UpdateUserDetails.JobTitleId = string.IsNullOrEmpty(UserDetails.JobTitle) ? null : Guid.Parse(UserDetails.JobTitle);
+                        UpdateUserDetails.Phone = UserDetails.Phone;
                         UpdateUserDetails.ModifiedAt = DateTime.Now;
                         UpdateUserDetails.ModifiedBy = AppConstant.LoggedInUserID;
                         var res = await Update(UpdateUserDetails);
 
+                        var UserRoleDeatils = (await userRoleService.GetAll()).Where(x => x.UserId == Guid.Parse(UserDetails.UserId) && x.IsDelete == false).FirstOrDefault();
+                        if (UserRoleDeatils != null)
+                        {
+                            UserRoleDeatils.RoleId = UserDetails.RoleId;
+                            UserRoleDeatils.ModifiedBy = AppConstant.LoggedInUserID;
+                            UserRoleDeatils.ModifiedAt = DateTime.Now;
+                            await userRoleService.Update(UserRoleDeatils);
+                        }
+                        else
+                        {
+                            TblUserRole userRole = new TblUserRole
+                            {
+                                UserId = res.Id,
+                                RoleId = UserDetails.RoleId,
+                                CreatedBy = AppConstant.LoggedInUserID,
+                                CreatedAt = DateTime.Now,
+                                IsActive = true,
+                                IsDelete = false
+                            };
+                            await userRoleService.Add(userRole);
+                        }
                         result.IsSuccess = true;
                         result.Message = AppConstant.UpdateSuccessMsg;
                     }
@@ -209,7 +258,7 @@ namespace ShutterManagement.Services
                     }
                     else
                     {
-                        result.Message = AppConstant.IncorrectDetails;
+                        result.Message = AppConstant.NoUserFound;
                     }
                 }
                 else
@@ -248,7 +297,7 @@ namespace ShutterManagement.Services
                     }
                     else
                     {
-                        result.Message = AppConstant.IncorrectDetails;
+                        result.Message = AppConstant.NoUserFound;
                     }
                 }
                 else
@@ -263,22 +312,68 @@ namespace ShutterManagement.Services
             return result;
         }
 
-        public async Task<IResponseVm<dynamic>> GetAll(Pagination filter)
+        public async Task<IResponseVm<List<UsersList>>> GetAll(Pagination filter)
         {
-            IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
+            IResponseVm<List<UsersList>> responseVm = new ResponseVm<List<UsersList>>();
             try
             {
-                var UserList = (await GetAll()).Where(x => x.IsDelete == false && x.Id != AppConstant.LoggedInUserID && x.TenantId == AppConstant.LoggedInTenantId).ToList();
-                filter.SearchValue= (filter.SearchValue.Trim() ?? "").ToLower();
-                var FilterRecords = UserList
+                var Users = new List<TblUser>();
+                List<UsersList> UsersList = new List<UsersList>();
+                if (filter.TenantId != "")
+                {
+                    var IsRealtedTenant = dbContext.TblTenants.Where(x => x.TenantId.ToString() == filter.TenantId && x.ParentTenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
+                    if (IsRealtedTenant == null)
+                    {
+                        responseVm.Message = AppConstant.NoDataFound;
+                        return responseVm;
+                    }
+                    else
+                    {
+                        Users = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId.ToString() == filter.TenantId).OrderByDescending(x => x.CreatedAt).ToList();
+                    }
+                }
+                else
+                {
+                    Users = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId).OrderByDescending(x => x.CreatedAt).ToList();
+                }
+                foreach (var user in Users)
+                {
+                    UsersList users = new UsersList
+                    {
+                        FirstName = user.FirstName,
+                        MiddleName = user.MiddleName,
+                        LastName = user.LastName,
+                        Email = user.Email,
+                        UserId = user.Id,
+                        UserName = user.Username,
+                        Phone = user.Phone,
+                        JobTitle = user.JobTitleId,
+                        IsActive = user.IsActive
+                    };
+                    users.JobTitleName = dbContext.MstJobTitles
+                        .Where(x => x.Id == users.JobTitle
+                        && x.IsActive == true && x.IsDelete == false)
+                        .Select(x => x.JobTitleName).FirstOrDefault();
+                    var UserRoleId = userRoleService.GetAllQuerable()
+                        .Where(x => x.UserId == users.UserId).Select(x => x.RoleId).FirstOrDefault();
+                    users.RoleName = dbContext.TblRoles
+                        .Where(x => x.Id == UserRoleId
+                        && x.IsActive == true && x.IsDelete == false)
+                        .Select(x => x.RoleName).FirstOrDefault();
+
+                    UsersList.Add(users);
+                }
+                filter.SearchValue = (filter.SearchValue.Trim() ?? "").ToLower();
+                var FilterRecords = UsersList
                                     .Where(x =>
                                     (filter.SearchValue != "" ?
                                     ((x.Email ?? "").ToLower().Contains(filter.SearchValue)
+                                    || (x.UserId.ToString() ?? "").Contains(filter.SearchValue)
                                     || (x.Phone ?? "").ToLower().Contains(filter.SearchValue)
                                     || (x.FirstName ?? "").ToLower().Contains(filter.SearchValue)
                                     || (x.MiddleName ?? "").ToLower().Contains(filter.SearchValue)
                                     || (x.LastName ?? "").ToLower().Contains(filter.SearchValue)
-                                    || (x.Username ?? "").ToLower().Contains(filter.SearchValue)
+                                    || (x.UserName ?? "").ToLower().Contains(filter.SearchValue)
                                     ) : true)).ToList();
                 var TakenRecords = FilterRecords
                                     .Skip((filter.PageNo - 1) * filter.RecordPerPage).Take(filter.RecordPerPage).ToList();
