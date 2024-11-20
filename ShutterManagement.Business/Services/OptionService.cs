@@ -233,9 +233,9 @@ namespace ShutterManagement.Business.Services
                 responseVm.Message = AppConstant.ExceptionError + ex.Message;
             }
 
-          return responseVm;
+            return responseVm;
         }
 
-        
+
     }
 }

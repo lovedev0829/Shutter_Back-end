@@ -25,6 +25,7 @@ namespace ShutterManagement.Business.Services
             _context = context;
             this.claimsProperty = claimsProperty;
             this.tenantService = tenantService;
+            //_vendorService = vendorService;
         }
 
         public Task<IResponseVm<string>> ActiveInActive(Guid Id)
