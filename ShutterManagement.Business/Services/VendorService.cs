@@ -15,11 +15,9 @@ namespace ShutterManagement.Business.Services
 {
     public class VendorService : BaseRepository<ShutterDbContext, TblVendor>, IVendorService
     {
-        private readonly IVendorService vendorService;
         private readonly ITenantService tenantService;
-        public VendorService(IVendorService vendorService,ITenantService tenantService)
+        public VendorService(ITenantService tenantService)
         {
-            this.vendorService = vendorService;
             this.tenantService= tenantService;
         }
         public Task<IResponseVm<string>> ActiveInActive(Guid Id)
@@ -171,7 +169,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenantExists = await  vendorService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
+                var IsTenantExists = await AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
 
                 if (IsTenantExists)
                 {
