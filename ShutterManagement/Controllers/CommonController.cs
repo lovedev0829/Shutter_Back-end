@@ -10,6 +10,7 @@ using ShutterManagement.Core;
 using ShutterManagement.Business;
 using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.Services;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace ShutterManagement.Controllers
 {
@@ -23,6 +24,8 @@ namespace ShutterManagement.Controllers
         private readonly ClaimsProperty claimsProperty;
         private readonly IJobTitleService jobTitleService;
         private readonly IMaterial material;
+        Pagination filter;
+
         public CommonController(IMasterCreate masterCreate, FileUploadHelper fileUpload, ClaimsProperty claimsProperty,IJobTitleService jobTitleService,IMaterial material)
         {
             this.masterCreate = masterCreate;
@@ -30,6 +33,8 @@ namespace ShutterManagement.Controllers
             this.claimsProperty = claimsProperty;
             this.jobTitleService = jobTitleService;
             this.material = material;
+            filter.PageNo = 1;
+            filter.RecordPerPage = 100;
         }
 
 
@@ -56,9 +61,11 @@ namespace ShutterManagement.Controllers
         }
         [HttpPost]
         [Route("GetAllMeterial")]
-        public async Task<IActionResult> GetAllMeterial(Pagination filter)
+        public async Task<IActionResult> GetAllMeterial()
         {
+
             var res = await material.GetAll_Material(filter);
+            res.Data = res.Data.Where(x => x.IsActive == true).ToList();
             return Ok(res);
         }
 
