@@ -1,6 +1,7 @@
 ﻿using ShutterManagement.Core.SPModel;
 using ShutterManagement.Core.ViewModels;
 using ShutterManagement.Core.ViewModels.Request;
+using ShutterManagement.Core.ViewModels.Response;
 using ShutterManagement.DAL.Context;
 using ShutterManagement.Interfaces;
 using System;
@@ -15,9 +16,8 @@ namespace ShutterManagement.Business.Interfaces
     {
         Task<IResponseVm<string>> Create_Contact(Sp_Contact model);
         Task<IResponseVm<string>> Update_Contact(UpdateContact model);
-        Task<dynamic> GetAll_Contact(Pagination filter);
-
-        Task<IResponseVm<string>> ActiveInActiveContact(Guid id);
-        Task<IResponseVm<string>> DeleteContact(Guid id);
+        Task<IResponseVm<List<ContactsList>>> GetAll_Contact(Pagination filter);
+        Task<IResponseVm<string>> ActiveInActiveContact(Guid ContactId);
+        Task<IResponseVm<string>> DeleteContact(Guid ContactId);
     }
 }
