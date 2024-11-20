@@ -41,6 +41,7 @@ namespace ShutterManagement.Core.SPModel
         public string? Website { get; set; }
 
         [DefaultValue("")]
+        [MaxLength(1000)]
         public string? Notes { get; set; }
 
         [DefaultValue("")]

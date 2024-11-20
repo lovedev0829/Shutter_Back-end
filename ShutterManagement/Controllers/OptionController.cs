@@ -19,7 +19,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("Create")]
-        [Authorize(Roles = "OptionAdd")]
+        [Authorize(Roles = "OptionsAdd")]
         public async Task<IActionResult> Create([FromBody] CreateOption optionVm)
         {
             var result = await _option.Create_Option(optionVm);
@@ -28,7 +28,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("Update")]
-        [Authorize(Roles = "OptionEdit")]
+        [Authorize(Roles = "OptionsEdit")]
         public async Task<IActionResult> Update([FromBody] UpdateOption optionVm)
         {
             var result = await _option.Update_Option(optionVm);
@@ -37,7 +37,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("Delete")]
-        [Authorize(Roles = "OptionDelete")]
+        [Authorize(Roles = "OptionsDelete")]
         public async Task<IActionResult> Delete(Guid Id)
         {
             var result = await _option.Delete(Id);
@@ -46,7 +46,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("ActiveInActive")]
-        [Authorize(Roles = "OptionEdit")]
+        [Authorize(Roles = "OptionsEdit")]
         public async Task<IActionResult> ActiveInactive(Guid Id)
         {
             var result = await _option.ActiveInActive(Id);
@@ -55,7 +55,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("GetAll")]
-        //[Authorize(Roles = "AddressView")]
+        [Authorize(Roles = "OptionsView")]
         public async Task<IActionResult> GetAll(Pagination filter)
         {
             var result = await _option.GetAll_Option(filter);

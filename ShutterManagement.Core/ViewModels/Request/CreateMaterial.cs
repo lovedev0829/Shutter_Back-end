@@ -41,6 +41,7 @@ namespace ShutterManagement.Core.ViewModels.Request
 
         public bool IsCutSheet { get; set; } = false;
 
+        [MaxLength(1000)]
         public string? Notes { get; set; }
     }
 }

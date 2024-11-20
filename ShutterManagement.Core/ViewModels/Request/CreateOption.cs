@@ -29,7 +29,6 @@ namespace ShutterManagement.Core.ViewModels.Request
 
         [DefaultValue("")]
         [Required]
-        [MaxLength(255)]
         public decimal? AdditionalCost { get; set; }
 
         public bool? IsDefault { get; set; }

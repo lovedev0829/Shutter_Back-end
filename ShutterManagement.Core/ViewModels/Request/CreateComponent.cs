@@ -31,6 +31,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         [MaxLength(500)]
         public string? PricingExpression { get; set; }
 
+        [MaxLength(1000)]
         public string? Notes { get; set; }
 
     }
