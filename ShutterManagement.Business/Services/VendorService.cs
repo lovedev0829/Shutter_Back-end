@@ -65,8 +65,6 @@ namespace ShutterManagement.Business.Services
                     TblVendor vendor = new TblVendor
                     {
                         VendorName = model.VendorName,
-                        ContactInformation= model.ContactInformation,
-                        PreferredVendor= model.PreferredVendor,
                         IsActive = true,
                         IsDelete = false,
                         CreatedAt = DateTime.Now,
@@ -142,10 +140,10 @@ namespace ShutterManagement.Business.Services
 
                 var FilterRecords = IsComponentExists
                     .Where(x => string.IsNullOrEmpty(filter.SearchValue) ||
-                                (x.VendorName ?? "").Contains(filter.SearchValue.Trim()) ||
-                                (x.Notes ?? "").Contains(filter.SearchValue.Trim()) ||
-                                (x.ContactInformation ?? "").Contains(filter.SearchValue.Trim()))
-                    .ToList();
+                                (x.VendorName ?? "").Contains(filter.SearchValue.Trim())
+                                //(x.Notes ?? "").Contains(filter.SearchValue.Trim()) ||
+                                //(x.ContactInformation ?? "").Contains(filter.SearchValue.Trim()))
+                    ).ToList();
 
                 var TakenRecords = FilterRecords
                     .Skip((filter.PageNo - 1) * filter.RecordPerPage)
@@ -180,9 +178,6 @@ namespace ShutterManagement.Business.Services
                     if (vendor != null)
                     {
                         vendor.VendorName = model.VendorName;
-                        vendor.ContactInformation= model.ContactInformation;
-                        vendor.PreferredVendor=model.PreferredVendor;
-                        vendor.Notes = model.Notes;
                         vendor.ModifiedBy = AppConstant.LoggedInUserID;
                         vendor.UpdatedAt = DateTime.Now;
                         await Update(vendor);
