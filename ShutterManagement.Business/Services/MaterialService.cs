@@ -203,8 +203,17 @@ namespace ShutterManagement.Business.Services
                         .Take(filter.RecordPerPage)
                         .ToList();
 
+                    responseVm.Data = (List<GetAllMaterialVm>)TakenRecords.Select(x => new
+                    {
+                        x.MaterialName,
+                        x.IsActive,
+                        x.VendorId,
+                        x.UnitOfMeasurement,
+
+                        x.StockQuantity,
+                        x.ReorderLevel
+                    });
                     responseVm.IsSuccess = true;
-                    responseVm.Data = TakenRecords;
                     responseVm.Message = $"{AppConstant.FetchSuccessMsg}";
                 }
                 else

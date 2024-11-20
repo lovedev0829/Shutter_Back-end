@@ -184,6 +184,7 @@ namespace ShutterManagement.Business.Services
                         .Take(filter.RecordPerPage)
                         .ToList();
 
+
                     responseVm.IsSuccess = true;
                     responseVm.Data = TakenRecords;
                     responseVm.Message = $"{AppConstant.FetchSuccessMsg}";
