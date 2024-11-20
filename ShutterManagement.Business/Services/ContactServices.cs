@@ -416,6 +416,7 @@ namespace ShutterManagement.Business.Services
                                     .Where(x =>
                                     (filter.SearchValue != "" ?
                                     ((x.Notes ?? "").Contains(filter.SearchValue)
+                                    || (x.ContactId.ToString()).Contains(filter.SearchValue)
                                     || (x.Email ?? "").Contains(filter.SearchValue)
                                     || (x.Website ?? "").Contains(filter.SearchValue)
                                     || (x.PhoneNumber ?? "").Contains(filter.SearchValue)
