@@ -58,5 +58,7 @@ namespace ShutterManagement.Core
         public const string AlphabaticalError = "Only alphabetic characters are allowed.";
 
         public const string ColorCodeError = "Not a valid color code";
+
+        public const string ZipCodeError = " Invalid Zip Code Format";
     }
 }
