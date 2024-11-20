@@ -65,8 +65,12 @@ namespace ShutterManagement.Business.Services
                     TblVendor vendor = new TblVendor
                     {
                         VendorName = model.VendorName,
-                        ContactInformation= model.ContactInformation,
-                        PreferredVendor= model.PreferredVendor,
+                        Email= model.Email,
+                        PhoneNumber= model.PhoneNumber,
+                        State= model.State,
+                        City= model.City,
+                        ZipCode= model.ZipCode,
+                        StreetAddress= model.StreetAddress,
                         IsActive = true,
                         IsDelete = false,
                         CreatedAt = DateTime.Now,
@@ -180,9 +184,10 @@ namespace ShutterManagement.Business.Services
                     if (vendor != null)
                     {
                         vendor.VendorName = model.VendorName;
-                        vendor.ContactInformation= model.ContactInformation;
-                        vendor.PreferredVendor=model.PreferredVendor;
-                        vendor.Notes = model.Notes;
+                        vendor.PhoneNumber = model.PhoneNumber;
+                        vendor.StreetAddress = model.StreetAddress;
+                        vendor.City = model.City;
+                        vendor.State = model.State;
                         vendor.ModifiedBy = AppConstant.LoggedInUserID;
                         vendor.UpdatedAt = DateTime.Now;
                          Update(vendor);
