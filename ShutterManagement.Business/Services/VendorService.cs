@@ -179,25 +179,27 @@ namespace ShutterManagement.Business.Services
 
                     if (vendor != null)
                     {
-
                         vendor.VendorName = model.VendorName;
+                        vendor.ContactInformation= model.ContactInformation;
+                        vendor.PreferredVendor=model.PreferredVendor;
                         vendor.Notes = model.Notes;
                         vendor.ModifiedBy = AppConstant.LoggedInUserID;
                         vendor.UpdatedAt = DateTime.Now;
-
                         await Update(vendor);
-
-
+                        responseVm.IsSuccess = true;
+                        responseVm.Message = AppConstant.UpdateSuccessMsg;
                     }
-                    responseVm.IsSuccess = true;
-                    responseVm.Message = AppConstant.UpdateSuccessMsg;
+                   
                 }
+              
             }
             catch (Exception ex)
             {
                 responseVm.Message = AppConstant.ExceptionError + ex.Message;
             }
             return responseVm;
+
         }
+
     }
 }
