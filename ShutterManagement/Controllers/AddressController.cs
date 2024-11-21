@@ -57,7 +57,7 @@ namespace ShutterManagement.Controllers
             return Ok(result);
         }
 
-        [HttpGet]
+        [HttpPost]
         [Route("GetAll")]
         [Authorize(Roles = "AddressView")]
         public async Task<IActionResult> GetAllAddresses(Pagination filter)

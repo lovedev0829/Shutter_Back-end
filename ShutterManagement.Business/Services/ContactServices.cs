@@ -146,7 +146,7 @@ namespace ShutterManagement.Business.Services
                 {
                     var contact = await GetAllQuerable()
                         .FirstOrDefaultAsync(c => c.ContactId == model.ContactId && c.TenantId == AppConstant.LoggedInTenantId
-                        && c.IsActive == true && c.IsDelete == false);
+                         && c.IsDelete == false);
 
                     if (contact != null)
                     {
