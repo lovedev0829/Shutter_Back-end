@@ -54,11 +54,11 @@ namespace ShutterManagement.Core.ViewModels.Request
 
         [Required]
         [MaxLength(100)]
-        [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabaticalError)]
+        [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.ZipCodeError)]
         [DefaultValue("")]
       
         public string? Country { get; set; }
 
-        public Guid TenantId { get; set; }
+        //public Guid TenantId { get; set; }
     }
 }

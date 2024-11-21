@@ -75,6 +75,7 @@ namespace ShutterManagement.Business.Services
                 {
                     TblComponent component = new TblComponent
                     {
+
                         ComponentName = model.ComponentName,
                         ProductType = model.ProductType,
                         PricingExpression = model.PricingExpression,
@@ -86,6 +87,7 @@ namespace ShutterManagement.Business.Services
                         IsDelete = false,
                         TenantId = AppConstant.LoggedInTenantId
                     };
+
 
                     if (component != null)
                     {

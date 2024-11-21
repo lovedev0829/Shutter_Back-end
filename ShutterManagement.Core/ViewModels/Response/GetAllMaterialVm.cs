@@ -8,6 +8,7 @@ namespace ShutterManagement.Core.ViewModels.Response
 {
     public class GetAllMaterialVm
     {
+        public Guid MaterialId { get; set; }
         public string? MaterialName { get; set; }
 
         public decimal? UnitCost { get; set; }
@@ -20,11 +21,15 @@ namespace ShutterManagement.Core.ViewModels.Response
 
         public Guid? VendorId { get; set; }
 
+        public string? VendorName { get; set; }
+
         public string? Notes { get; set; }
 
         public bool? IsActive { get; set; }
 
         public Guid? TenantId { get; set; }
         public string? SKU { get; set; }
+
+        public bool? IsCutSheet { get; set; }
     }
 }

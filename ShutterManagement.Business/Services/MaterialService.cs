@@ -28,8 +28,7 @@ namespace ShutterManagement.Business.Services
             this.vendorService = vendorService;
             this.claimsProperty = claimsProperty;
             this.tenantService = tenantService;
-            //_vendorService = vendorService;
-        }
+         }
 
         public async Task<IResponseVm<string>> ActiveInActive(Guid Id)
         {
@@ -145,7 +144,6 @@ namespace ShutterManagement.Business.Services
                     var IsMaterialExists = GetAllQuerable()
                           .Where(c => c.RawMaterialId == Id
                                       && c.TenantId == AppConstant.LoggedInTenantId
-                                      && c.IsActive == true
                                       && c.IsDelete == false)
                           .FirstOrDefault();
                     if (IsMaterialExists != null)
@@ -192,33 +190,56 @@ namespace ShutterManagement.Business.Services
                         .Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId)
                         .ToList();
 
+                    var vendorNames = from t2 in _context.TblRawMaterials
+                                      join t1 in _context.TblVendors on t2.VendorId equals t1.VendorId
+                                      where t2.TenantId == AppConstant.LoggedInTenantId && t2.IsDelete == false
+                                      select new
+                                      {
+                                          t2.RawMaterialId,
+                                          VendorName = t1.VendorName
+                                      };
+
                     var FilterRecords = IsMaterialExists
-                    .Where(x => string.IsNullOrEmpty(filter.SearchValue.Trim()) ||
-                     (x.MaterialName ?? "").Contains(filter.SearchValue.Trim()))
-                    .ToList();
-
-                    //(x.VendorId ?? "").Contains(filter.SearchValue)) &&  
-                    //(string.IsNullOrEmpty(filter.VendorId) ||
-                    //  x.TenantId.ToString() == filter.VendorId))  
-                    //  .ToList();
-
+                        .Where(x => string.IsNullOrEmpty(filter.SearchValue.Trim()) ||
+                            (x.MaterialName ?? "").ToLower().Contains(filter.SearchValue.Trim()) ||
+                            (x.UnitCost.ToString() ?? "").ToLower().Contains(filter.SearchValue.Trim()) ||
+                            (x.ReorderLevel.ToString() ?? "").ToLower().Contains(filter.SearchValue.Trim()) ||
+                            (x.StockQuantity.ToString() ?? "").ToLower().Contains(filter.SearchValue.Trim()) ||
+                            (x.Sku ?? "").ToLower().Contains(filter.SearchValue.Trim()) ||
+                            (x.UnitOfMeasurement ?? "").ToLower().Contains(filter.SearchValue.Trim()) ||
+                            vendorNames.Any(v => v.RawMaterialId == x.RawMaterialId && (v.VendorName ?? "").ToLower().Contains(filter.SearchValue.Trim()))
+                        )
+                        .ToList();
 
                     var TakenRecords = FilterRecords
                         .Skip((filter.PageNo - 1) * filter.RecordPerPage)
                         .Take(filter.RecordPerPage)
                         .ToList();
 
-                    responseVm.Data = TakenRecords.Select(x => new GetAllMaterialVm
+                    responseVm.Data = TakenRecords.Select(x =>
                     {
-                        MaterialName = x.MaterialName,
-                        IsActive = x.IsActive,
-                        VendorId = x.VendorId,
-                        UnitOfMeasurement = x.UnitOfMeasurement,
-                        StockQuantity = x.StockQuantity,
-                        ReorderLevel = x.ReorderLevel
+                        var vendorName = vendorNames.FirstOrDefault(v => v.RawMaterialId == x.RawMaterialId)?.VendorName;
+
+                        return new GetAllMaterialVm
+                        {
+                            MaterialId = x.RawMaterialId,
+                            MaterialName = x.MaterialName,
+                            UnitCost = x.UnitCost,
+                            UnitOfMeasurement = x.UnitOfMeasurement,
+                            StockQuantity = x.StockQuantity,
+                            ReorderLevel = x.ReorderLevel,
+                            VendorId = x.VendorId,
+                            VendorName = vendorName,
+                            SKU = x.Sku,
+                            IsCutSheet = x.IsCutSheet,
+                            Notes = x.Notes,
+                            IsActive = x.IsActive,
+                        };
                     }).ToList();
+
                     responseVm.IsSuccess = true;
-                    responseVm.Message = $"{AppConstant.FetchSuccessMsg}";
+                    responseVm.Message = AppConstant.FetchSuccessMsg;
+                    responseVm.TotalRecords = FilterRecords.Count; 
                 }
                 else
                 {
@@ -227,11 +248,10 @@ namespace ShutterManagement.Business.Services
             }
             catch (Exception ex)
             {
-                responseVm.IsSuccess = false;
                 responseVm.Message = $"Error: {ex.Message}";
             }
 
-            return responseVm;  
+            return responseVm;
         }
 
 

@@ -95,8 +95,8 @@ namespace ShutterManagement.Business.Services
                  && x.TenantId == AppConstant.LoggedInTenantId);
                 if (IsContactExists)
                 {
-                    var AddressDetails = GetAllQuerable().Where(x => x.AddressId.ToString() == model.AddressId && x.TenantId == AppConstant.LoggedInTenantId
-                    && x.IsActive == true && x.IsDelete == false).FirstOrDefault();
+                    var AddressDetails = GetAllQuerable().Where(x => x.AddressId.ToString() == model.AddressId && x.ContactId.ToString() == model.ContactId && x.TenantId == AppConstant.LoggedInTenantId
+                    && x.IsDelete == false).FirstOrDefault();
 
                     if(AddressDetails != null)
                     {
@@ -215,17 +215,23 @@ namespace ShutterManagement.Business.Services
                                     ) : true)).ToList();
                 var TakenRecords = FilterRecords
                                     .Skip((filter.PageNo - 1) * filter.RecordPerPage).Take(filter.RecordPerPage).ToList();
-                if (TakenRecords != null && TakenRecords.Count > 0)
+
+
+
+                responseVm.Data = TakenRecords.Select(x => new GetAllAddress
                 {
-                    responseVm.Data = TakenRecords;
-                    responseVm.IsSuccess = true;
-                    responseVm.Message = AppConstant.UpdateSuccessMsg;
-                    responseVm.TotalRecords = FilterRecords.Count;
-                }
-                else
-                {
-                    responseVm.Message = AppConstant.NoDataFound;
-                }
+                    ContactId = x.ContactId.ToString(),
+                    Label= x.Label,
+                    AddressLine1 = x.AddressLine1,
+                    AddressLine2 = x.AddressLine2,
+                    City = x.City,
+                    State = x.State,
+                    Country = x.Country,
+                    IsActive = x.IsActive,
+                }).ToList();
+                responseVm.IsSuccess = true;
+                responseVm.Message = $"{AppConstant.FetchSuccessMsg}";
+              
 
 
             }

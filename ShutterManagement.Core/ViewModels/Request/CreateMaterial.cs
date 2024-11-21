@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Newtonsoft.Json.Serialization;
 
 namespace ShutterManagement.Core.ViewModels.Request
 {
@@ -18,6 +19,7 @@ namespace ShutterManagement.Core.ViewModels.Request
 
         [DefaultValue("")]
         [Required]
+        //[OnError(AppConstant.NumericError)]
         public decimal? UnitCost { get; set; }
 
         [DefaultValue("")]
