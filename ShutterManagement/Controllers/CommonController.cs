@@ -28,7 +28,11 @@ namespace ShutterManagement.Controllers
         public Pagination filter = new Pagination();
         private readonly IVendorService vendorService;
         private readonly IComponentService componentService;
-        public CommonController(IMasterCreate masterCreate, FileUploadHelper fileUpload, ClaimsProperty claimsProperty,IJobTitleService jobTitleService,IMaterial material,IVendorService vendorService, IComponentService componentService)
+        private readonly IMstProductType mstProductType;
+
+        public CommonController(IMasterCreate masterCreate, FileUploadHelper fileUpload, ClaimsProperty claimsProperty,
+            IJobTitleService jobTitleService,IMaterial material,IVendorService vendorService, 
+            IComponentService componentService,IMstProductType mstProductType)
         {
             this.masterCreate = masterCreate;
             this.fileUpload = fileUpload;
@@ -41,6 +45,7 @@ namespace ShutterManagement.Controllers
             filter.TenantId = "";
             this.vendorService = vendorService;
             this.componentService = componentService;
+            this.mstProductType = mstProductType;
         }
 
 
@@ -93,6 +98,13 @@ namespace ShutterManagement.Controllers
             return Ok(res);
         }
 
+        [HttpGet]
+        [Route("GetAllProductType")]
+        public async Task<IActionResult> GetAllProductType()
+        {
+            var res = await mstProductType.GetAll_ProductType();
+            return Ok(res);
+        }
 
 
 
