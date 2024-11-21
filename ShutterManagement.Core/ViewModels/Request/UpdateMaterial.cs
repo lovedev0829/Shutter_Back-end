@@ -8,6 +8,6 @@ namespace ShutterManagement.Core.ViewModels.Request
 {
      public class UpdateMaterial : CreateMaterial
     {
-        public string RawMaterialId { get; set; } = string.Empty;
+        public string MaterialId { get; set; } = string.Empty;
     }
 }

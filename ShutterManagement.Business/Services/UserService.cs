@@ -356,6 +356,7 @@ namespace ShutterManagement.Services
                         .Select(x => x.JobTitleName).FirstOrDefault();
                     var UserRoleId = userRoleService.GetAllQuerable()
                         .Where(x => x.UserId == users.UserId).Select(x => x.RoleId).FirstOrDefault();
+                    users.RoleId = UserRoleId;
                     users.RoleName = dbContext.TblRoles
                         .Where(x => x.Id == UserRoleId
                         && x.IsActive == true && x.IsDelete == false)

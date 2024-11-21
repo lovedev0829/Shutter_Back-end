@@ -136,7 +136,7 @@ namespace ShutterManagement.Services
                     .Select(x => new LoginRoles
                     {
                         RoleName = x.PermissionName.Replace("Edit", "").Replace("View", "").Replace("Delete", "")
-                    .Replace("Address", "Adress").Replace("Add", "").Replace("Adress", "Address"),
+                    .Replace("Address", "Adress").Replace("Add", "").Replace("Adress", "Address").Replace("SubTenant", "Partners"),
                         Icon = x.Icon,
                         Url = x.Url
                     })
