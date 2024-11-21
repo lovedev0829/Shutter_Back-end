@@ -60,7 +60,11 @@ namespace ShutterManagement.Business.Services
                         responseVm.Message = "Billing details required.";
                         return responseVm;
                     }
-
+                    if(model.TaxExemptionVm.ExpiryDate < model.TaxExemptionVm.EffectiveDate)
+                    {
+                        responseVm.Message = "ExpiryDate must be greater than EffectiveDate.";
+                        return responseVm;
+                    }
                     TblContact CreateContact = new TblContact
                     {
                         ContactId = Guid.NewGuid(),
@@ -148,6 +152,11 @@ namespace ShutterManagement.Business.Services
                         .FirstOrDefaultAsync(c => c.ContactId == model.ContactId && c.TenantId == AppConstant.LoggedInTenantId
                         && c.IsDelete == false);
 
+                    if(model.TaxExemptionVm.ExpiryDate < model.TaxExemptionVm.EffectiveDate)
+                    {
+                        responseVm.Message = "ExpiryDate must be greater than EffectiveDate.";
+                        return responseVm;
+                    }
                     if (contact != null)
                     {
                         contact.ContactType = model.ContactType;
