@@ -21,14 +21,14 @@ namespace ShutterManagement.Business.Services
         private readonly ClaimsProperty claimsProperty;
         private readonly ITenantService tenantService;
 
-        public MaterialService(ShutterDbContext context,IVendorService vendorService,
-            ClaimsProperty claimsProperty,ITenantService tenantService)
+        public MaterialService(ShutterDbContext context, IVendorService vendorService,
+            ClaimsProperty claimsProperty, ITenantService tenantService)
         {
             _context = context;
             this.vendorService = vendorService;
             this.claimsProperty = claimsProperty;
             this.tenantService = tenantService;
-         }
+        }
 
         public async Task<IResponseVm<string>> ActiveInActive(Guid Id)
         {
@@ -45,14 +45,14 @@ namespace ShutterManagement.Business.Services
                           .FirstOrDefault();
                     if (IsMaterialExists != null)
                     {
-                        IsMaterialExists.IsActive = false;
+                        IsMaterialExists.IsActive = !IsMaterialExists.IsActive;
                         IsMaterialExists.UpdatedAt = DateTime.Now;
                         IsMaterialExists.ModifiedBy = AppConstant.LoggedInUserID;
 
-                        var res = Update(IsMaterialExists);
+                        await Update(IsMaterialExists);
 
                         responseVm.IsSuccess = true;
-                        responseVm.Message = AppConstant.DeleteSuccessMsg;
+                        responseVm.Message = AppConstant.UpdateSuccessMsg;
                     }
                     else
                     {
@@ -77,7 +77,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsActive== true);
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsActive == true && x.IsDelete == false);
                 var IsVendorExist = await vendorService.AnyAsync(x => x.VendorId == model.VendorId && x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
                 if (IsTenant)
                 {
@@ -168,7 +168,7 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.AccessDenied;
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 responseVm.Message = AppConstant.ExceptionError + ex.Message;
             }
@@ -182,64 +182,53 @@ namespace ShutterManagement.Business.Services
             IResponseVm<List<GetAllMaterialVm>> responseVm = new ResponseVm<List<GetAllMaterialVm>>();
             try
             {
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false && x.IsActive == true);
 
                 if (IsTenant)
                 {
-                    var IsMaterialExists = (await GetAll())
-                        .Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId)
-                        .ToList();
 
-                    var vendorNames = from t2 in _context.TblRawMaterials
-                                      join t1 in _context.TblVendors on t2.VendorId equals t1.VendorId
-                                      where t2.TenantId == AppConstant.LoggedInTenantId && t2.IsDelete == false
-                                      select new
-                                      {
-                                          t2.RawMaterialId,
-                                          VendorName = t1.VendorName
-                                      };
-
-                    var FilterRecords = IsMaterialExists
-                        .Where(x => string.IsNullOrEmpty(filter.SearchValue.Trim()) ||
-                            (x.MaterialName ?? "").ToLower().Contains(filter.SearchValue.Trim()) ||
-                            (x.UnitCost.ToString() ?? "").ToLower().Contains(filter.SearchValue.Trim()) ||
-                            (x.ReorderLevel.ToString() ?? "").ToLower().Contains(filter.SearchValue.Trim()) ||
-                            (x.StockQuantity.ToString() ?? "").ToLower().Contains(filter.SearchValue.Trim()) ||
-                            (x.Sku ?? "").ToLower().Contains(filter.SearchValue.Trim()) ||
-                            (x.UnitOfMeasurement ?? "").ToLower().Contains(filter.SearchValue.Trim()) ||
-                            vendorNames.Any(v => v.RawMaterialId == x.RawMaterialId && (v.VendorName ?? "").ToLower().Contains(filter.SearchValue.Trim()))
-                        )
-                        .ToList();
+                    var MaterialList = (from t2 in _context.TblRawMaterials
+                                        join t1 in _context.TblVendors on t2.VendorId equals t1.VendorId
+                                        where t2.TenantId == AppConstant.LoggedInTenantId && t2.IsDelete == false
+                                        select new GetAllMaterialVm
+                                        {
+                                            IsActive = t2.IsActive,
+                                            MaterialId = t2.RawMaterialId,
+                                            MaterialName = t2.MaterialName,
+                                            Notes = t2.Notes,
+                                            ReorderLevel = t2.ReorderLevel,
+                                            SKU = t2.Sku,
+                                            StockQuantity = t2.StockQuantity,
+                                            UnitCost = t2.UnitCost,
+                                            UnitOfMeasurement = t2.UnitOfMeasurement,
+                                            VendorId = t2.VendorId,
+                                            VendorName = t1.VendorName,
+                                            IsCutSheet = t2.IsCutSheet
+                                        }).ToList();
+                    filter.SearchValue = filter.SearchValue.Trim().ToLower();
+                    var FilterRecords = MaterialList
+                                    .Where(x =>
+                                     (string.IsNullOrEmpty(filter.SearchValue) ? true :
+                                        (x.MaterialId.ToString() == filter.SearchValue)
+                                        || (x.MaterialName ?? "").ToLower().Contains(filter.SearchValue)
+                                        || (x.UnitCost.ToString() ?? "").ToLower().Contains(filter.SearchValue)
+                                        || (x.ReorderLevel.ToString() ?? "").ToLower().Contains(filter.SearchValue)
+                                        || (x.StockQuantity.ToString() ?? "").ToLower().Contains(filter.SearchValue)
+                                        || (x.Notes.ToString() ?? "").ToLower().Contains(filter.SearchValue)
+                                        || (x.SKU ?? "").ToLower().Contains(filter.SearchValue)
+                                        || (x.VendorName ?? "").ToLower().Contains(filter.SearchValue)
+                                        || (x.UnitOfMeasurement ?? "").ToLower().Contains(filter.SearchValue)))
+                                    .ToList();
 
                     var TakenRecords = FilterRecords
                         .Skip((filter.PageNo - 1) * filter.RecordPerPage)
                         .Take(filter.RecordPerPage)
                         .ToList();
 
-                    responseVm.Data = TakenRecords.Select(x =>
-                    {
-                        var vendorName = vendorNames.FirstOrDefault(v => v.RawMaterialId == x.RawMaterialId)?.VendorName;
-
-                        return new GetAllMaterialVm
-                        {
-                            MaterialId = x.RawMaterialId,
-                            MaterialName = x.MaterialName,
-                            UnitCost = x.UnitCost,
-                            UnitOfMeasurement = x.UnitOfMeasurement,
-                            StockQuantity = x.StockQuantity,
-                            ReorderLevel = x.ReorderLevel,
-                            VendorId = x.VendorId,
-                            VendorName = vendorName,
-                            SKU = x.Sku,
-                            IsCutSheet = x.IsCutSheet,
-                            Notes = x.Notes,
-                            IsActive = x.IsActive,
-                        };
-                    }).ToList();
-
+                    responseVm.Data = TakenRecords;
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.FetchSuccessMsg;
-                    responseVm.TotalRecords = FilterRecords.Count; 
+                    responseVm.TotalRecords = FilterRecords.Count;
                 }
                 else
                 {
@@ -248,7 +237,7 @@ namespace ShutterManagement.Business.Services
             }
             catch (Exception ex)
             {
-                responseVm.Message = $"Error: {ex.Message}";
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
             }
 
             return responseVm;
@@ -261,7 +250,7 @@ namespace ShutterManagement.Business.Services
 
             try
             {
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null);
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsActive == true && x.IsDelete == false);
                 var IsVendorExist = _context.TblVendors.Where(x => x.VendorId == model.VendorId && x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
 
                 if (IsTenant)
@@ -269,7 +258,7 @@ namespace ShutterManagement.Business.Services
                     if (IsVendorExist != null)
                     {
                         var IsMaterialExists = GetAllQuerable()
-                                 .Where(c => c.RawMaterialId == Guid.Parse(model.RawMaterialId)
+                                 .Where(c => c.RawMaterialId == Guid.Parse(model.MaterialId)
                                                && c.TenantId == AppConstant.LoggedInTenantId
                                                && c.IsDelete == false)
                                    .FirstOrDefault();
@@ -292,7 +281,7 @@ namespace ShutterManagement.Business.Services
                         {
                             responseVm.Message = AppConstant.NoUserFound;
                         }
-                    
+
                     }
                     else
                     {
