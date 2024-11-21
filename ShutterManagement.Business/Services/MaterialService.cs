@@ -264,8 +264,10 @@ namespace ShutterManagement.Business.Services
                                    .FirstOrDefault();
                         if (IsMaterialExists != null)
                         {
+                            IsMaterialExists.IsCutSheet = model.IsCutSheet;
                             IsMaterialExists.MaterialName = model.MaterialName;
                             IsMaterialExists.UnitCost = model.UnitCost;
+                            IsMaterialExists.Sku = model.SKU;
                             IsMaterialExists.UnitOfMeasurement = model.UnitOfMeasurement;
                             IsMaterialExists.StockQuantity = model.StockQuantity;
                             IsMaterialExists.ReorderLevel = model.ReorderLevel;
