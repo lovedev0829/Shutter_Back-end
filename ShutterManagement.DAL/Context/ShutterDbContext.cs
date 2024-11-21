@@ -151,17 +151,19 @@ public partial class ShutterDbContext : DbContext
             entity.ToTable("TblAddress", "dbo");
 
             entity.Property(e => e.AddressId).HasDefaultValueSql("(newid())");
-            entity.Property(e => e.AddressLine1).HasMaxLength(255);
-            entity.Property(e => e.AddressLine2).HasMaxLength(255);
+            entity.Property(e => e.AccessCode).HasMaxLength(128);
             entity.Property(e => e.City).HasMaxLength(100);
-            entity.Property(e => e.Country).HasMaxLength(100);
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
+            entity.Property(e => e.Email).HasMaxLength(128);
+            entity.Property(e => e.FullName).HasMaxLength(128);
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
             entity.Property(e => e.Label).HasMaxLength(100);
+            entity.Property(e => e.Phone).HasMaxLength(128);
             entity.Property(e => e.State).HasMaxLength(100);
+            entity.Property(e => e.StreetAddress).HasMaxLength(128);
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");

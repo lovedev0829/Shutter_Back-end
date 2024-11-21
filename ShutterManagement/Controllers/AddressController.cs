@@ -12,7 +12,7 @@ namespace ShutterManagement.Controllers
     [Route("api/[controller]")]
     [ApiController]
     public class AddressController : ControllerBase
-    { 
+    {
         private readonly IAddress _address;
 
         public AddressController(IAddress address)

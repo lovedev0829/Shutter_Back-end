@@ -11,27 +11,18 @@ namespace ShutterManagement.Core.ViewModels.Response
     public class GetAllAddress
     {
 
+        public Guid AddressId { get; set; }
         public string? ContactId { get; set; }
-
-        public string? Label { get; set; }
-
-
-        public string? AddressLine1 { get; set; }
-
-
-        public string? AddressLine2 { get; set; }
-
+       public string? Label { get; set; }
+        public string? StreetAddress { get; set; }
+        public string? Notes { get; set; }
         public string? City { get; set; }
-
-       
-
         public string? State { get; set; }
-
-      
         public string? ZipCode { get; set; }
-
-
-        public string? Country { get; set; }
+        public string? AccessCode { get; set; }
+        public string? FullName { get; set; }
+        public string? Email { get; set; }
+        public string? Phone { get; set; }
         public bool? IsActive { get; set; }
     }
 }

@@ -21,15 +21,11 @@ namespace ShutterManagement.Core.ViewModels.Request
         public string? Label { get; set; }
 
         [Required]
-        [MaxLength(200)]
+        [MaxLength(100)]
         [DefaultValue("")]
        
-        public string? AddressLine1 { get; set; }
+        public string? StreetAddress { get; set; }
 
-        [DefaultValue("")]
-        [MaxLength(200)]
-
-        public string? AddressLine2 { get; set; }
 
         [Required]
         [MaxLength(50)]
@@ -52,13 +48,35 @@ namespace ShutterManagement.Core.ViewModels.Request
      
         public string? ZipCode { get; set; }
 
+        [DefaultValue("")]
+        [MaxLength(1000)]
+        public string?  Notes { get; set; }
+
+        [MaxLength(20)]
+        [DefaultValue("")]
+        public string? AccessCode { get; set; }
+
+        [DefaultValue("")]
         [Required]
         [MaxLength(100)]
-        [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.ZipCodeError)]
-        [DefaultValue("")]
-      
-        public string? Country { get; set; }
+        [RegularExpression("^[\\p{L} .'-]+$", ErrorMessage = AppConstant.AlphabaticalError)]
+        public string? FullName { get; set; }
 
-        //public Guid TenantId { get; set; }
+        [Required, MaxLength(100)]
+        [RegularExpression(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", ErrorMessage = "Invalid email address.")]
+        [EmailAddress]
+        [DefaultValue("")]
+        public string Email { get; set; }
+
+        [Required]
+        [DefaultValue("")]
+        [MaxLength(10)]
+        [RegularExpression(@"^\d{10}$", ErrorMessage = "Phone number must be exactly 10 digits.")]
+        public string Phone { get; set; }
+
+
+
+
+
     }
 }
