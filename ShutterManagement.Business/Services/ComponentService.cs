@@ -187,16 +187,17 @@ namespace ShutterManagement.Business.Services
 
 
                     responseVm.IsSuccess = true;
-                    responseVm.Data = (List<ComponentListVm>)TakenRecords.Select(x => new
+                    responseVm.Data = TakenRecords.Select(x => new ComponentListVm
                     {
-                        x.ComponentId,
-                        x.IsActive,
-                        x.ComponentName,
-                        x.TenantId,
-                       x.MarkupPercentage,
-                       x.PricingExpression,
-                       x.Notes
-                    });
+                        ComponentName = x.ComponentName,
+                        IsActive = x.IsActive,
+                        ComponentId = x.ComponentId,
+                        Notes = x.Notes,
+                        PricingExpression = x.PricingExpression,
+                        TenantId = x.TenantId,
+                        MarkupPercentage=x.MarkupPercentage,
+                    }).ToList();
+                    responseVm.TotalRecords = FilterRecords.Count;
                     responseVm.Message = $"{AppConstant.FetchSuccessMsg}";
                 }
                 else

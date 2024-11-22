@@ -28,7 +28,10 @@ namespace ShutterManagement.Controllers
         public Pagination filter = new Pagination();
         private readonly IVendorService vendorService;
         private readonly IComponentService componentService;
-        public CommonController(IMasterCreate masterCreate, FileUploadHelper fileUpload, ClaimsProperty claimsProperty,IJobTitleService jobTitleService,IMaterial material,IVendorService vendorService, IComponentService componentService)
+        private readonly IAddress address;
+        private readonly IContactService contactService;
+        private readonly IOption option;
+        public CommonController(IMasterCreate masterCreate, FileUploadHelper fileUpload, ClaimsProperty claimsProperty,IJobTitleService jobTitleService,IMaterial material,IVendorService vendorService, IComponentService componentService,IAddress address,IContactService contactService,IOption option)
         {
             this.masterCreate = masterCreate;
             this.fileUpload = fileUpload;
@@ -41,6 +44,9 @@ namespace ShutterManagement.Controllers
             filter.TenantId = "";
             this.vendorService = vendorService;
             this.componentService = componentService;
+            this.address = address;
+            this.contactService = contactService;
+            this.option = option;
         }
 
 
@@ -92,7 +98,31 @@ namespace ShutterManagement.Controllers
             res.Data = res.Data.Where(x => x.IsActive == true).ToList();
             return Ok(res);
         }
+        [HttpPost]
+        [Route("GetAllAddress")]
+        public async Task<IActionResult> GetAllAddress()
+        {
+            var res = await address.GetAll_Address(filter);
+            res.Data = res.Data.Where(x => x.IsActive == true).ToList();
+            return Ok(res);
+        }
 
+        [HttpPost]
+        [Route("GetAllContact")]
+        public async Task<IActionResult> GetAllContact()
+        {
+            var res = await contactService.GetAll_Contact(filter);
+            res.Data = res.Data.Where(x => x.IsActive == true).ToList();
+            return Ok(res);
+        }
+        [HttpPost]
+        [Route("GetAllOption")]
+        public async Task<IActionResult> GetAllOption()
+        {
+            var res = await option.GetAll_Option(filter);
+            res.Data = res.Data.Where(x => x.IsActive == true).ToList();
+            return Ok(res);
+        }
 
 
 

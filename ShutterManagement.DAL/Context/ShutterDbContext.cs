@@ -14,6 +14,7 @@ public partial class ShutterDbContext : DbContext
         : base(options)
     {
     }
+
     public virtual DbSet<MstJobTitle> MstJobTitles { get; set; }
 
     public virtual DbSet<MstModule> MstModules { get; set; }

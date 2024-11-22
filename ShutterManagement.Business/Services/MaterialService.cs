@@ -212,10 +212,14 @@ namespace ShutterManagement.Business.Services
                         MaterialName = x.MaterialName,
                         IsActive = x.IsActive,
                         VendorId = x.VendorId,
+                        TenantId=x.TenantId,
+                        Notes = x.Notes,
+                        UnitCost= x.UnitCost,
                         UnitOfMeasurement = x.UnitOfMeasurement,
                         StockQuantity = x.StockQuantity,
                         ReorderLevel = x.ReorderLevel
                     }).ToList();
+                    responseVm.TotalRecords = FilterRecords.Count;
                     responseVm.IsSuccess = true;
                     responseVm.Message = $"{AppConstant.FetchSuccessMsg}";
                 }

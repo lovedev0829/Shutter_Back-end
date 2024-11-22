@@ -196,9 +196,9 @@ namespace ShutterManagement.Business.Services
 
         }
 
-        public async Task<IResponseVm<dynamic>> GetAll_Address(Pagination filter)
+        public async Task<IResponseVm<List<AddressListVm>>> GetAll_Address(Pagination filter)
         {
-            IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
+            IResponseVm<List<AddressListVm>> responseVm = new ResponseVm<List<AddressListVm>>();
             try
             {
                 var AddressList = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId).ToList();
@@ -217,7 +217,21 @@ namespace ShutterManagement.Business.Services
                                     .Skip((filter.PageNo - 1) * filter.RecordPerPage).Take(filter.RecordPerPage).ToList();
                 if (TakenRecords != null && TakenRecords.Count > 0)
                 {
-                    responseVm.Data = TakenRecords;
+                    responseVm.Data = TakenRecords.Select(x => new AddressListVm
+                    {
+                        AddressId= x.AddressId,
+                        ContactId= x.ContactId,
+                        Label = x.Label,
+                        AddressLine1 = x.AddressLine1,
+                        AddressLine2= x.AddressLine2,
+                        City = x.City,
+                        State = x.State,
+                        ZipCode = x.ZipCode,
+                        Country=x.Country,
+                        IsActive = x.IsActive,
+                        TenantId = x.TenantId,
+                    }).ToList();
+                    responseVm.TotalRecords = FilterRecords.Count;
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.UpdateSuccessMsg;
                     responseVm.TotalRecords = FilterRecords.Count;

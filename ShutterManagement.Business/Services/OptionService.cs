@@ -2,6 +2,7 @@
 using ShutterManagement.Core;
 using ShutterManagement.Core.ViewModels;
 using ShutterManagement.Core.ViewModels.Request;
+using ShutterManagement.Core.ViewModels.Response;
 using ShutterManagement.DAL.Context;
 using ShutterManagement.Services;
 using System;
@@ -143,9 +144,9 @@ namespace ShutterManagement.Business.Services
 
 
 
-        public async Task<IResponseVm<dynamic>> GetAll_Option(Pagination filter)
+        public async Task<IResponseVm<List<OptionListVm>>> GetAll_Option(Pagination filter)
         {
-            IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
+            IResponseVm<List<OptionListVm>> responseVm = new ResponseVm<List<OptionListVm>>();
             try
             {
                 var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null);
@@ -170,14 +171,18 @@ namespace ShutterManagement.Business.Services
 
                     if (TakenRecords != null && TakenRecords.Count > 0)
                     {
-                        responseVm.Data = TakenRecords.Select(x => new
+                        responseVm.Data = TakenRecords.Select(x => new OptionListVm
                         {
-                            x.OptionId,
-                            x.OptionName,
-                            x.OptionType,
-                            x.AdditionalCost,
-                            //x.IsActive
-                        });
+                            ProductTypeId = x.ProductTypeId,
+                            OptionId = x.OptionId,
+                            OptionType = x.OptionType,
+                            OptionName = x.OptionName,
+                            AdditionalCost=x.AdditionalCost,
+                            IsDefault = x.IsDefault,
+                            IsActive = x.IsActive,
+                            TenantId = x.TenantId,
+                        }).ToList();
+                        responseVm.TotalRecords = FilterRecords.Count;
                     }
                     responseVm.IsSuccess = true;
                     responseVm.Message = $"{AppConstant.FetchSuccessMsg}";
