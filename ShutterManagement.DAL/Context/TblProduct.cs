@@ -39,6 +39,8 @@ public partial class TblProduct
 
     public Guid? ModifiedBy { get; set; }
 
+    public decimal? Markup { get; set; }
+
     public virtual ICollection<TblJobComponent> TblJobComponents { get; set; } = new List<TblJobComponent>();
 
     public virtual ICollection<TblProductComponent> TblProductComponents { get; set; } = new List<TblProductComponent>();

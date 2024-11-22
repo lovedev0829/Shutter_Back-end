@@ -560,6 +560,7 @@ public partial class ShutterDbContext : DbContext
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
             entity.Property(e => e.Length).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.Markup).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.ProductName).HasMaxLength(255);
             entity.Property(e => e.ProductType)
                 .HasMaxLength(50)
