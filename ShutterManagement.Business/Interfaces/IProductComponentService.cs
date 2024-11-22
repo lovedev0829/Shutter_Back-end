@@ -13,6 +13,8 @@ namespace ShutterManagement.Business.Interfaces
 {
     public interface IProductComponentService :IGenericRepository<TblProductComponent>
     {
-       
+        Task<IResponseVm<string>> AddProductComponent(CreateProductComponentVm model);
+        Task<IResponseVm<string>> UpdateProductComponent(UpdateProductComponentVm model);
+        Task<IResponseVm<string>> Delete(Guid Id);
     }
 }

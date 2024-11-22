@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Business.Services;
 using ShutterManagement.Core.ViewModels.Request;
+using ShutterManagement.Core.ViewModels.Response;
 
 namespace ShutterManagement.Controllers
 {
@@ -12,9 +13,11 @@ namespace ShutterManagement.Controllers
     public class ProductController : ControllerBase
     {
         private readonly IProductService productservice;
-        public ProductController(IProductService productService)
+        private readonly IProductComponentService productcomponentservice;
+        public ProductController(IProductService productService,IProductComponentService productComponentService)
         {
             this.productservice = productService;
+            this.productcomponentservice=productComponentService;
         }
 
         [HttpPost]
@@ -61,5 +64,34 @@ namespace ShutterManagement.Controllers
             var result = await productservice.GetAll_Product(filter);
             return Ok(result);
         }
+
+
+        [HttpPost]
+        [Route("AddProductComponent")]
+        //[Authorize(Roles = "ComponentView")]
+        public async Task<IActionResult> AddComponentMaterial(CreateProductComponentVm model)
+        {
+            var result = await productcomponentservice.AddProductComponent(model);
+            return Ok(result);
+        }
+
+        [HttpPost]
+        [Route("UpdateProductComponent")]
+        //[Authorize(Roles = "ComponentView")]
+        public async Task<IActionResult> UpdateComponentMaterial(UpdateProductComponentVm model)
+        {
+            var result = await productcomponentservice.UpdateProductComponent(model);
+            return Ok(result);
+        }
+
+        [HttpPost]
+        [Route("DeleteProductComponent")]
+        //[Authorize(Roles = "ComponentView")]
+        public async Task<IActionResult> DeleteComponentMaterial(Guid id)
+        {
+            var result = await productcomponentservice.Delete(id);
+            return Ok(result);
+        }
+
     }
 }
