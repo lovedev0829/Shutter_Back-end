@@ -28,10 +28,11 @@ namespace ShutterManagement.Controllers
         public Pagination filter = new Pagination();
         private readonly IVendorService vendorService;
         private readonly IComponentService componentService;
-        private readonly IAddress address;
-        private readonly IContactService contactService;
-        private readonly IOption option;
-        public CommonController(IMasterCreate masterCreate, FileUploadHelper fileUpload, ClaimsProperty claimsProperty,IJobTitleService jobTitleService,IMaterial material,IVendorService vendorService, IComponentService componentService,IAddress address,IContactService contactService,IOption option)
+        private readonly IMstProductType mstProductType;
+
+        public CommonController(IMasterCreate masterCreate, FileUploadHelper fileUpload, ClaimsProperty claimsProperty,
+            IJobTitleService jobTitleService,IMaterial material,IVendorService vendorService, 
+            IComponentService componentService,IMstProductType mstProductType)
         {
             this.masterCreate = masterCreate;
             this.fileUpload = fileUpload;
@@ -44,9 +45,6 @@ namespace ShutterManagement.Controllers
             filter.TenantId = "";
             this.vendorService = vendorService;
             this.componentService = componentService;
-            this.address = address;
-            this.contactService = contactService;
-            this.option = option;
         }
 
 
@@ -107,22 +105,6 @@ namespace ShutterManagement.Controllers
             return Ok(res);
         }
 
-        [HttpPost]
-        [Route("GetAllContact")]
-        public async Task<IActionResult> GetAllContact()
-        {
-            var res = await contactService.GetAll_Contact(filter);
-            res.Data = res.Data.Where(x => x.IsActive == true).ToList();
-            return Ok(res);
-        }
-        [HttpPost]
-        [Route("GetAllOption")]
-        public async Task<IActionResult> GetAllOption()
-        {
-            var res = await option.GetAll_Option(filter);
-            res.Data = res.Data.Where(x => x.IsActive == true).ToList();
-            return Ok(res);
-        }
 
 
 

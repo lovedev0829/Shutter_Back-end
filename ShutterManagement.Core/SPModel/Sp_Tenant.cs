@@ -27,7 +27,11 @@ namespace ShutterManagement.Core.SPModel
         [MaxLength(255)]
         [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabaticalError)]
         public string LastName { get; set; }
+
+        [Required]
 		public string Code { get; set; }
+
+        [Required]
 		public string URL { get; set; }
 
 

@@ -43,7 +43,7 @@ namespace ShutterManagement.Business.Services
                        .FirstOrDefault();
                     if (IsOptionExists != null)
                     {
-                        IsOptionExists.IsActive = false;
+                        IsOptionExists.IsActive = !IsOptionExists.IsActive;
                         IsOptionExists.UpdatedAt = DateTime.Now;
                         IsOptionExists.ModifiedBy = AppConstant.LoggedInUserID;
                         var res = Update(IsOptionExists);
@@ -54,6 +54,10 @@ namespace ShutterManagement.Business.Services
                     {
                         responseVm.Message = AppConstant.NoUserFound;
                     }
+                }
+                else
+                {
+                    responseVm.Message = AppConstant.AccessDenied;
                 }
             }
             catch (Exception ex)
@@ -134,6 +138,10 @@ namespace ShutterManagement.Business.Services
                         responseVm.Message = AppConstant.NoUserFound;
                     }
                 }
+                else
+                {
+                    responseVm.Message = AppConstant.AccessDenied;
+                }
             }
             catch (Exception ex)
             {
@@ -188,6 +196,10 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = $"{AppConstant.FetchSuccessMsg}";
                     responseVm.TotalRecords = FilterRecords.Count;  
                 }
+                else
+                {
+                    responseVm.Message = AppConstant.AccessDenied;
+                }
             }
             catch (Exception ex)
             {
@@ -231,6 +243,10 @@ namespace ShutterManagement.Business.Services
                             responseVm.Message = AppConstant.NoUserFound;
                         }
                     }
+                }
+                else
+                {
+                    responseVm.Message = AppConstant.AccessDenied;
                 }
             }
             catch (Exception ex)

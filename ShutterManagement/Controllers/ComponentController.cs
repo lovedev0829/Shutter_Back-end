@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core.ViewModels.Request;
@@ -17,7 +18,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("Create")]
-        //[Authorize(Roles = "ComponentAdd")]
+        [Authorize(Roles = "ComponentAdd")]
         public async Task<IActionResult> Create([FromBody] CreateComponent componentVm)
         {
             var result = await _componentService.Create_Component(componentVm);
@@ -26,7 +27,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("Update")]
-        //[Authorize(Roles = "ComponentEdit")]
+        [Authorize(Roles = "ComponentEdit")]
         public async Task<IActionResult> Update([FromBody] UpdateComponent updateVm)
         {
             var result = await _componentService.Update_Component(updateVm);
@@ -35,7 +36,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("Delete")]
-        //[Authorize(Roles = "ComponentDelete")]
+        [Authorize(Roles = "ComponentDelete")]
         public async Task<IActionResult> Delete(Guid Id)
         {
             var result = await _componentService.Delete(Id);
@@ -44,7 +45,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("ActiveInActive")]
-        //[Authorize(Roles = "ComponentEdit")]
+        [Authorize(Roles = "ComponentEdit")]
         public async Task<IActionResult> ActiveInactive(Guid Id)
         {
             var result = await _componentService.ActiveInActive(Id);
@@ -53,7 +54,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("GetAll")]
-        //[Authorize(Roles = "ComponentView")]
+        [Authorize(Roles = "ComponentView")]
         public async Task<IActionResult> GetAll(Pagination filter)
         {
             var result = await _componentService.GetAll_Component(filter);

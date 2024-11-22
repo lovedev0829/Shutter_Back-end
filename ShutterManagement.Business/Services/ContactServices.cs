@@ -49,7 +49,7 @@ namespace ShutterManagement.Business.Services
                     var IsContactExists = GetAllQuerable()
                         .Where(c => (c.Email == model.Email || c.PhoneNumber == model.PhoneNumber)
                         && c.TenantId == AppConstant.LoggedInTenantId
-                        && c.IsActive == true && c.IsDelete == false).ToList();
+                        && c.IsDelete == false).ToList();
                     if (IsContactExists.Count > 0)
                     {
                         responseVm.Message = "Email or Phone " + AppConstant.AlreadyExists;
@@ -60,7 +60,11 @@ namespace ShutterManagement.Business.Services
                         responseVm.Message = "Billing details required.";
                         return responseVm;
                     }
-
+                    if(model.TaxExemptionVm.ExpiryDate < model.TaxExemptionVm.EffectiveDate)
+                    {
+                        responseVm.Message = "ExpiryDate must be greater than EffectiveDate.";
+                        return responseVm;
+                    }
                     TblContact CreateContact = new TblContact
                     {
                         ContactId = Guid.NewGuid(),
@@ -146,8 +150,13 @@ namespace ShutterManagement.Business.Services
                 {
                     var contact = await GetAllQuerable()
                         .FirstOrDefaultAsync(c => c.ContactId == model.ContactId && c.TenantId == AppConstant.LoggedInTenantId
-                        && c.IsActive == true && c.IsDelete == false);
+                        && c.IsDelete == false);
 
+                    if(model.TaxExemptionVm.ExpiryDate < model.TaxExemptionVm.EffectiveDate)
+                    {
+                        responseVm.Message = "ExpiryDate must be greater than EffectiveDate.";
+                        return responseVm;
+                    }
                     if (contact != null)
                     {
                         contact.ContactType = model.ContactType;
@@ -390,7 +399,7 @@ namespace ShutterManagement.Business.Services
                     };
 
                     contacts.billingAddressVm = billingService.GetAllQuerable()
-                        .Where(x => x.ContactId == contact.ContactId && x.IsActive == true
+                        .Where(x => x.ContactId == contact.ContactId
                         && x.IsDelete == false).Select(x=> new BillingAddressVm
                         {
                             City = x.City,
@@ -402,7 +411,7 @@ namespace ShutterManagement.Business.Services
                             ZipCode = x.ZipCode,
                         }).FirstOrDefault();
                     contacts.taxExemptionVm = taxExemptionService.GetAllQuerable()
-                        .Where(x => x.ContactId == contact.ContactId && x.IsActive == true
+                        .Where(x => x.ContactId == contact.ContactId
                         && x.IsDelete == false).Select(x => new TaxExemption
                         {
                             EffectiveDate = x.EffectiveDate,

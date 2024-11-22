@@ -12,7 +12,7 @@ namespace ShutterManagement.Controllers
     [Route("api/[controller]")]
     [ApiController]
     public class AddressController : ControllerBase
-    { 
+    {
         private readonly IAddress _address;
 
         public AddressController(IAddress address)
@@ -57,7 +57,7 @@ namespace ShutterManagement.Controllers
             return Ok(result);
         }
 
-        [HttpGet]
+        [HttpPost]
         [Route("GetAll")]
         [Authorize(Roles = "AddressView")]
         public async Task<IActionResult> GetAllAddresses(Pagination filter)

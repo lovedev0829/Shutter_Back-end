@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace ShutterManagement.Business.Interfaces
 {
-     public interface IAddress : IGenericRepository<TblAddress>
+    public interface IAddress : IGenericRepository<TblAddress>
     {
         Task<IResponseVm<string>> Create_Address(CreateAddress model);
         Task<IResponseVm<AddressResponse>> Update_Address(UpdateAddress model);

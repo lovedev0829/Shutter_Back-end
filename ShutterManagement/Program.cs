@@ -116,6 +116,9 @@ builder.Services.AddScoped<IContactService,ContactServices>();
 builder.Services.AddScoped<IContactBillingService,ContactBillingService>();  
 builder.Services.AddScoped<ITaxExemption, TaxExemptionService>();
 builder.Services.AddScoped<IJobTitleService, JobTitleService>();
+builder.Services.AddScoped<IComponentMaterial, ComponentMaterial>();
+builder.Services.AddScoped<IMstProductType, ProductTypeService>();
+
 
 var app = builder.Build();
 
