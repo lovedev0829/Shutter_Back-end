@@ -47,6 +47,7 @@ namespace ShutterManagement.Controllers
             this.vendorService = vendorService;
             this.componentService = componentService;
             this.address= address;
+            this.mstProductType = mstProductType;
         }
 
 
@@ -73,7 +74,7 @@ namespace ShutterManagement.Controllers
             return Ok(res);
         }
         [HttpPost]
-        [Route("GetAllMeterial")]
+        [Route("GetAllMaterial")]
         public async Task<IActionResult> GetAllMeterial()
         {
 
@@ -107,8 +108,14 @@ namespace ShutterManagement.Controllers
             return Ok(res);
         }
 
-
-
+        [HttpGet]
+        [Route("GetAllProductType")]
+        public async Task<IActionResult> GetAllProductType()
+        {
+            var res = await mstProductType.GetAll_ProductType();
+            res.Data = res.Data.Where(x => x.IsActive == true).ToList();
+            return Ok(res);
+        }
 
 
 
