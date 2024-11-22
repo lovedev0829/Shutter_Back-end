@@ -45,7 +45,6 @@ namespace ShutterManagement.Controllers
             filter.TenantId = "";
             this.vendorService = vendorService;
             this.componentService = componentService;
-            this.mstProductType = mstProductType;
         }
 
 
@@ -97,14 +96,15 @@ namespace ShutterManagement.Controllers
             res.Data = res.Data.Where(x => x.IsActive == true).ToList();
             return Ok(res);
         }
-
-        [HttpGet]
-        [Route("GetAllProductType")]
-        public async Task<IActionResult> GetAllProductType()
+        [HttpPost]
+        [Route("GetAllAddress")]
+        public async Task<IActionResult> GetAllAddress()
         {
-            var res = await mstProductType.GetAll_ProductType();
+            var res = await address.GetAll_Address(filter);
+            res.Data = res.Data.Where(x => x.IsActive == true).ToList();
             return Ok(res);
         }
+
 
 
 

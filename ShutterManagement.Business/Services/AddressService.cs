@@ -203,9 +203,9 @@ namespace ShutterManagement.Business.Services
 
         }
 
-        public async Task<IResponseVm<dynamic>> GetAll_Address(Pagination filter)
+        public async Task<IResponseVm<List<AddressListVm>>> GetAll_Address(Pagination filter)
         {
-            IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
+            IResponseVm<List<AddressListVm>> responseVm = new ResponseVm<List<AddressListVm>>();
             try
             {
                 var AddressList = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId).ToList();
