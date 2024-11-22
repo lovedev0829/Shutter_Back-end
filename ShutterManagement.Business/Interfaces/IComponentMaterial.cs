@@ -13,9 +13,9 @@ namespace ShutterManagement.Business.Interfaces
 {
     public interface IComponentMaterial: IGenericRepository<TblComponentMaterial>
     {
-        //Task<IResponseVm<string>> AddComponentMaterial(ComponentMaterialModel model);
-        //Task<IResponseVm<dynamic>> UpdateComponentMaterial(UpdateComponent model);
-        ////Task<IResponseVm<List<ComponentListVm>>> GetAll_Component(Pagination filter);
+        Task<IResponseVm<string>> AddComponentMaterial(CreateComponentMaterialVm model);
+        Task<IResponseVm<string>> UpdateComponentMaterial(UpdateComponentMaterialVm model);
+        Task<IResponseVm<string>> Delete(Guid Id);
         ////Task<IResponseVm<string>> ActiveInActive(Guid Id);
         //Task<IResponseVm<string>> Delete(Guid Id);
     }

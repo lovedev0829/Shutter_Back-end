@@ -15,41 +15,182 @@ namespace ShutterManagement.Business.Services
     public class ComponentMaterial : BaseRepository<ShutterDbContext, TblComponentMaterial>, IComponentMaterial
     {
         private readonly ShutterDbContext dbContext;
+        private readonly ITenantService tenantService;
 
-        public ComponentMaterial(ShutterDbContext dbContext)
+        public ComponentMaterial(ShutterDbContext dbContext,ITenantService tenantService)
         {
             this.dbContext = dbContext;
+            this.tenantService = tenantService;
         }
 
-        //public Task<IResponseVm<string>> AddComponentMaterial(ComponentMaterialModel model)
-        
-        //            {
-        //                TblComponentMaterial newComponentMaterial = new TblComponentMaterial
-        //                {
-        //                    ComponentId = IsComponentExists.ComponentId,
-        //                    RawMaterialId = material.MaterialId,
-        //                    Quantity = material.Qty,
-        //                    WasteFactor = material.WasteFactor,
-        //                    CreatedAt = DateTime.Now,
-        //                    CreatedBy = AppConstant.LoggedInUserID,
-        //                    IsActive = true,
-        //                    IsDelete = false,
-        //                    TenantId = AppConstant.LoggedInTenantId
-        //                };
+        public async Task<IResponseVm<string>> AddComponentMaterial(CreateComponentMaterialVm model)
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
 
-        //                _dbContext.TblComponentMaterials.Add(newComponentMaterial);
-        //                await _dbContext.SaveChangesAsync();
-                 
-        //}
+            try
+            {
+                var isTenantValid = await tenantService.AnyAsync(x =>
+                        x.TenantId == AppConstant.LoggedInTenantId &&
+                        x.ParentTenantId == null &&
+                        x.IsDelete == false &&
+                        x.IsActive == true);
+                if (isTenantValid)
+                {
+                    bool allMaterialsAddedSuccessfully = true;
 
-        //public Task<IResponseVm<string>> Delete(Guid Id)
-        //{
-        //    throw new NotImplementedException();
-        //}
+                    foreach (var material in model.Materials)
+                    {
+                        try
+                        {
+                            TblComponentMaterial newComponentMaterial = new TblComponentMaterial
+                            {
+                                ComponentId = model.ComponentId,
+                                RawMaterialId = material.MaterialId,
+                                Quantity = material.Qty,
+                                WasteFactor = material.WasteFactor,
+                                CreatedAt = DateTime.Now,
+                                CreatedBy = AppConstant.LoggedInUserID,
+                                IsActive = true,
+                                IsDelete = false,
+                                TenantId = AppConstant.LoggedInTenantId
+                            };
 
-        //public Task<IResponseVm<dynamic>> UpdateComponentMaterial(UpdateComponent model)
-        //{
-        //    throw new NotImplementedException();
-        //}
+                            dbContext.TblComponentMaterials.Add(newComponentMaterial);
+                        }
+                        catch (Exception ex)
+                        {
+                            responseVm.Message = $"Failed to add material {material.MaterialId}: {ex.Message}";
+                        }
+                    }
+
+                    if (allMaterialsAddedSuccessfully)
+                    {
+                        await dbContext.SaveChangesAsync();
+                        responseVm.IsSuccess = true;
+                        responseVm.Message = AppConstant.InsertSuccessMsg;
+                    }
+
+
+                    else
+                    {
+                        responseVm.Message = "Data not added.";
+                    }
+                }
+                else
+                {
+                    responseVm.Message = AppConstant.AccessDenied;
+                }
+            }
+            catch (Exception ex)
+            {
+                responseVm.Message = AppConstant.ExceptionError + ex.Message; 
+            }
+
+            return responseVm;
+        }
+
+        public async Task<IResponseVm<string>> Delete(Guid Id)
+        {
+
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+
+            try
+            {
+                var isTenantValid = await tenantService.AnyAsync(x =>
+                    x.TenantId == AppConstant.LoggedInTenantId &&
+                    x.ParentTenantId == null &&
+                    x.IsDelete == false &&
+                    x.IsActive == true);
+
+                if (isTenantValid)
+                {
+                    var componentMaterial = GetAllQuerable()
+                        .Where(x => x.ComponentMaterialId == Id &&
+                                    x.TenantId == AppConstant.LoggedInTenantId &&
+                                    x.IsDelete == false)
+                        .FirstOrDefault();
+
+                    if (componentMaterial != null)
+                    {
+                        componentMaterial.IsActive = false;
+                        componentMaterial.IsDelete = true;
+                        componentMaterial.UpdatedAt = DateTime.Now;
+                        componentMaterial.ModifiedBy = AppConstant.LoggedInUserID;
+
+                        await Update(componentMaterial);
+
+                        responseVm.IsSuccess = true;
+                        responseVm.Message = AppConstant.UpdateSuccessMsg;
+                    }
+                    else
+                    {
+                        responseVm.Message = AppConstant.NoDataFound;
+                    }
+                }
+                else
+                {
+                    responseVm.Message = AppConstant.AccessDenied;
+                }
+            }
+            catch (Exception ex)
+            {
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+            }
+
+            return responseVm;
+        }
+
+    
+
+    public async Task<IResponseVm<string>> UpdateComponentMaterial(UpdateComponentMaterialVm model)
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+
+            try
+            {
+                var isTenantValid = await tenantService.AnyAsync(x =>
+                    x.TenantId == AppConstant.LoggedInTenantId &&
+                    x.ParentTenantId == null &&
+                    x.IsDelete == false &&
+                    x.IsActive == true);
+
+                if (isTenantValid)
+                {
+                    var componentMaterial = GetAllQuerable()
+                        .Where(x => x.ComponentMaterialId == model.ComponentMaterialId &&
+                                    x.TenantId == AppConstant.LoggedInTenantId &&
+                                    x.IsDelete == false)
+                        .FirstOrDefault();
+
+                    if (componentMaterial != null)
+                    {
+                        componentMaterial.Quantity = model.Quantity;
+                        componentMaterial.WasteFactor = model.WasteFactor;
+                        componentMaterial.UpdatedAt = DateTime.Now;
+                        componentMaterial.ModifiedBy = AppConstant.LoggedInUserID;
+
+                        await Update(componentMaterial);
+
+                        responseVm.IsSuccess = true;
+                        responseVm.Message = AppConstant.UpdateSuccessMsg;
+                    }
+                    else
+                    {
+                        responseVm.Message = AppConstant.NoDataFound;
+                    }
+                }
+                else
+                {
+                    responseVm.Message = AppConstant.AccessDenied;
+                }
+            }
+            catch (Exception ex)
+            {
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+            }
+
+            return responseVm;
+        }
+
     }
 }

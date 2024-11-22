@@ -216,21 +216,21 @@ namespace ShutterManagement.Business.Services
                         .Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId)
                         .ToList();
 
-                    //var componentMaterials = _componentMaterial.GetAllQuerable()
-                    //    .Where(cm => cm.IsDelete == false && cm.TenantId == AppConstant.LoggedInTenantId)
-                    //    .ToList();
+                    var componentMaterials = _componentMaterial.GetAllQuerable()
+                        .Where(cm => cm.IsDelete == false && cm.TenantId == AppConstant.LoggedInTenantId)
+                        .ToList();
 
                     var filteredComponents = components
                         .Where(x =>
                             string.IsNullOrEmpty(filter.SearchValue) ||
                             (x.ComponentName ?? "").ToLower().Contains(filter.SearchValue.Trim().ToLower()) ||
                             (x.ProductType ?? "").ToLower().Contains(filter.SearchValue.Trim().ToLower()) ||
-                            (x.PricingExpression ?? "").ToLower().Contains(filter.SearchValue.Trim().ToLower()) 
-                            //componentMaterials
-                            //    .Any(cm => cm.ComponentId == x.ComponentId &&
-                            //               (cm.RawMaterialId.ToString().Contains(filter.SearchValue.Trim()) ||
-                            //                cm.Quantity.ToString().Contains(filter.SearchValue.Trim()) ||
-                            //                cm.WasteFactor.ToString().Contains(filter.SearchValue.Trim())))
+                            (x.PricingExpression ?? "").ToLower().Contains(filter.SearchValue.Trim().ToLower()) ||
+                            componentMaterials
+                                .Any(cm => cm.ComponentId == x.ComponentId &&
+                                           (cm.RawMaterialId.ToString().Contains(filter.SearchValue.Trim()) ||
+                                            cm.Quantity.ToString().Contains(filter.SearchValue.Trim()) ||
+                                            cm.WasteFactor.ToString().Contains(filter.SearchValue.Trim())))
                         )
                         .ToList();
 
@@ -248,15 +248,16 @@ namespace ShutterManagement.Business.Services
                         MarkupPercentage = x.MarkupPercentage,
                         PricingExpression = x.PricingExpression,
                         Notes = x.Notes,
-                        //ComponentMaterials = componentMaterials
-                        //    .Where(cm => cm.ComponentId == x.ComponentId)
-                        //    .Select(cm => new ComponentMaterialVm
-                        //    {
-                        //        RawMaterialId = cm.RawMaterialId,
-                        //        Quantity = cm.Quantity,
-                        //        WasteFactor = cm.WasteFactor,
-                        //        CreatedAt = cm.CreatedAt
-                        //    }).ToList()
+                        ComponentMaterials = componentMaterials
+                            .Where(cm => cm.ComponentId == x.ComponentId)
+                            .Select(cm => new ComponentMaterialVm
+                            {
+                                ComponentMaterialId = cm.ComponentMaterialId,
+                                RawMaterialId = cm.RawMaterialId,
+                                Quantity = cm.Quantity,
+                                WasteFactor = cm.WasteFactor,
+                                //CreatedAt = cm.CreatedAt
+                            }).ToList()
                     }).ToList();
 
                     responseVm.IsSuccess = true;

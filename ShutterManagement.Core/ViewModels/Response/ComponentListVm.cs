@@ -15,16 +15,17 @@ namespace ShutterManagement.Core.ViewModels.Response
         public decimal? MarkupPercentage { get; set; }
         public string? PricingExpression { get; set; }
         public string Notes { get; set; }
-        //public List<ComponentMaterialVm>? ComponentMaterials { get; set; }
+        
+        public List<ComponentMaterialVm>? ComponentMaterials { get; set; }
 
     }
 
     public class ComponentMaterialVm
     {
+        public Guid ComponentMaterialId { get; set; }
         public Guid? RawMaterialId { get; set; }
         public decimal? Quantity { get; set; }
         public decimal? WasteFactor { get; set; }
-        public DateTime? CreatedAt { get; set; }
     }
 
 }
