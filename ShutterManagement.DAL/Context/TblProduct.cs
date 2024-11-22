@@ -41,7 +41,11 @@ public partial class TblProduct
 
     public decimal? Markup { get; set; }
 
+    public Guid? TenantId { get; set; }
+
     public virtual ICollection<TblJobComponent> TblJobComponents { get; set; } = new List<TblJobComponent>();
 
     public virtual ICollection<TblProductComponent> TblProductComponents { get; set; } = new List<TblProductComponent>();
+
+    public virtual TblTenant? Tenant { get; set; }
 }

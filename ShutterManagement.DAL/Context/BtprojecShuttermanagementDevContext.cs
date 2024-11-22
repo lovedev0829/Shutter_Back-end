@@ -569,6 +569,10 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.Width).HasColumnType("decimal(10, 2)");
+
+            entity.HasOne(d => d.Tenant).WithMany(p => p.TblProducts)
+                .HasForeignKey(d => d.TenantId)
+                .HasConstraintName("FK__TblProduc__Tenan__5D2BD0E6");
         });
 
         modelBuilder.Entity<TblProductComponent>(entity =>

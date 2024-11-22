@@ -143,10 +143,11 @@ namespace ShutterManagement.Business.Services
                 var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
                 if (IsTenant)
                 {
-                    var IsMaterialExists = GetAllQuerable()
+                    var IsMaterialExists =  GetAllQuerable()
                           .Where(c => c.RawMaterialId == Id
                                       && c.TenantId == AppConstant.LoggedInTenantId
-                                      && c.IsDelete == false)
+                                      && c.IsDelete == false && c.IsActive==true
+                                      )
                           .FirstOrDefault();
                     var IsMaterialExistInComponent = componentMaterial.AnyAsync(x => x.RawMaterialId == Id && x.IsActive == true && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
                     if (IsMaterialExistInComponent != null)
