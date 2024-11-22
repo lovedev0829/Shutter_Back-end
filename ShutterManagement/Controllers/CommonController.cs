@@ -29,10 +29,11 @@ namespace ShutterManagement.Controllers
         private readonly IVendorService vendorService;
         private readonly IComponentService componentService;
         private readonly IMstProductType mstProductType;
+        private readonly IAddress address;
 
         public CommonController(IMasterCreate masterCreate, FileUploadHelper fileUpload, ClaimsProperty claimsProperty,
             IJobTitleService jobTitleService,IMaterial material,IVendorService vendorService, 
-            IComponentService componentService,IMstProductType mstProductType)
+            IComponentService componentService,IMstProductType mstProductType,IAddress address)
         {
             this.masterCreate = masterCreate;
             this.fileUpload = fileUpload;
@@ -45,6 +46,7 @@ namespace ShutterManagement.Controllers
             filter.TenantId = "";
             this.vendorService = vendorService;
             this.componentService = componentService;
+            this.address= address;
         }
 
 

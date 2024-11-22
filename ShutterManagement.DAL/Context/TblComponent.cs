@@ -35,5 +35,7 @@ public partial class TblComponent
 
     public virtual ICollection<TblJobComponent> TblJobComponents { get; set; } = new List<TblJobComponent>();
 
+    public virtual ICollection<TblProductComponent> TblProductComponents { get; set; } = new List<TblProductComponent>();
+
     public virtual TblTenant? Tenant { get; set; }
 }

@@ -41,7 +41,7 @@ public partial class TblJobComponent
 
     public bool? IsDelete { get; set; }
 
-    public virtual TblAssembly? Assembly { get; set; }
+    public virtual TblProduct? Assembly { get; set; }
 
     public virtual TblComponent? Component { get; set; }
 
