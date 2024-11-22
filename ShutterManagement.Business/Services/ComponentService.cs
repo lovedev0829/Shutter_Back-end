@@ -216,21 +216,21 @@ namespace ShutterManagement.Business.Services
                         .Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId)
                         .ToList();
 
-                    var componentMaterials = _componentMaterial.GetAllQuerable()
-                        .Where(cm => cm.IsDelete == false && cm.TenantId == AppConstant.LoggedInTenantId)
-                        .ToList();
+                    //var componentMaterials = _componentMaterial.GetAllQuerable()
+                    //    .Where(cm => cm.IsDelete == false && cm.TenantId == AppConstant.LoggedInTenantId)
+                    //    .ToList();
 
                     var filteredComponents = components
                         .Where(x =>
                             string.IsNullOrEmpty(filter.SearchValue) ||
                             (x.ComponentName ?? "").ToLower().Contains(filter.SearchValue.Trim().ToLower()) ||
                             (x.ProductType ?? "").ToLower().Contains(filter.SearchValue.Trim().ToLower()) ||
-                            (x.PricingExpression ?? "").ToLower().Contains(filter.SearchValue.Trim().ToLower()) ||
-                            componentMaterials
-                                .Any(cm => cm.ComponentId == x.ComponentId &&
-                                           (cm.RawMaterialId.ToString().Contains(filter.SearchValue.Trim()) ||
-                                            cm.Quantity.ToString().Contains(filter.SearchValue.Trim()) ||
-                                            cm.WasteFactor.ToString().Contains(filter.SearchValue.Trim())))
+                            (x.PricingExpression ?? "").ToLower().Contains(filter.SearchValue.Trim().ToLower()) 
+                            //componentMaterials
+                            //    .Any(cm => cm.ComponentId == x.ComponentId &&
+                            //               (cm.RawMaterialId.ToString().Contains(filter.SearchValue.Trim()) ||
+                            //                cm.Quantity.ToString().Contains(filter.SearchValue.Trim()) ||
+                            //                cm.WasteFactor.ToString().Contains(filter.SearchValue.Trim())))
                         )
                         .ToList();
 
@@ -248,15 +248,15 @@ namespace ShutterManagement.Business.Services
                         MarkupPercentage = x.MarkupPercentage,
                         PricingExpression = x.PricingExpression,
                         Notes = x.Notes,
-                        ComponentMaterials = componentMaterials
-                            .Where(cm => cm.ComponentId == x.ComponentId)
-                            .Select(cm => new ComponentMaterialVm
-                            {
-                                RawMaterialId = cm.RawMaterialId,
-                                Quantity = cm.Quantity,
-                                WasteFactor = cm.WasteFactor,
-                                CreatedAt = cm.CreatedAt
-                            }).ToList()
+                        //ComponentMaterials = componentMaterials
+                        //    .Where(cm => cm.ComponentId == x.ComponentId)
+                        //    .Select(cm => new ComponentMaterialVm
+                        //    {
+                        //        RawMaterialId = cm.RawMaterialId,
+                        //        Quantity = cm.Quantity,
+                        //        WasteFactor = cm.WasteFactor,
+                        //        CreatedAt = cm.CreatedAt
+                        //    }).ToList()
                     }).ToList();
 
                     responseVm.IsSuccess = true;
@@ -304,51 +304,11 @@ namespace ShutterManagement.Business.Services
                         IsComponentExists.ModifiedBy = AppConstant.LoggedInUserID;
 
                         await Update(IsComponentExists);
-
-                        if (model.Materials != null && model.Materials.Any())
-                        {
-                            foreach (var material in model.Materials)
-                            {
-                                var componentMaterial = _dbContext.TblComponentMaterials
-                                    .Where(cm => cm.ComponentId == IsComponentExists.ComponentId && cm.RawMaterialId == material.MaterialId)
-                                    .FirstOrDefault();
-
-                                if (componentMaterial != null)
-                                {
-                                    componentMaterial.Quantity = material.Qty;
-                                    componentMaterial.WasteFactor = material.WasteFactor;
-                                    componentMaterial.UpdatedAt = DateTime.Now;
-                                    componentMaterial.ModifiedBy = AppConstant.LoggedInUserID;
-
-                                    await _dbContext.SaveChangesAsync();
-                                }
-                                else
-                                {
-                                    TblComponentMaterial newComponentMaterial = new TblComponentMaterial
-                                    {
-                                        ComponentId = IsComponentExists.ComponentId,
-                                        RawMaterialId = material.MaterialId,
-                                        Quantity = material.Qty,
-                                        WasteFactor = material.WasteFactor,
-                                        CreatedAt = DateTime.Now,
-                                        CreatedBy = AppConstant.LoggedInUserID,
-                                        IsActive = true,
-                                        IsDelete = false,
-                                        TenantId = AppConstant.LoggedInTenantId
-                                    };
-
-                                    _dbContext.TblComponentMaterials.Add(newComponentMaterial);
-                                    await _dbContext.SaveChangesAsync();
-                                }
-                            }
-                        }
-
                         responseVm.IsSuccess = true;
                         responseVm.Message = AppConstant.UpdateSuccessMsg;
                     }
                     else
                     {
-                        responseVm.IsSuccess = false;
                         responseVm.Message = AppConstant.NoDataFound;
                     }
                 }
