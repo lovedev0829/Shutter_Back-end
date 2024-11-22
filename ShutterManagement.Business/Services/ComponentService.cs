@@ -21,13 +21,15 @@ namespace ShutterManagement.Business.Services
         private readonly ClaimsProperty claimsProperty;
         private readonly ITenantService tenantService;
         private readonly IComponentMaterial _componentMaterial;
+        private readonly IProductComponentService productService;
 
-        public ComponentService(ShutterDbContext dbContext, ClaimsProperty claimsProperty,ITenantService tenantService,IComponentMaterial componentMaterial)
+        public ComponentService(ShutterDbContext dbContext, ClaimsProperty claimsProperty,ITenantService tenantService,IComponentMaterial componentMaterial,IProductComponentService productService)
         {
             _dbContext = dbContext;
             this.claimsProperty = claimsProperty;
             this.tenantService = tenantService;
             _componentMaterial = componentMaterial;
+            this.productService = productService;
         }
 
 
@@ -141,6 +143,7 @@ namespace ShutterManagement.Business.Services
 
         public async Task<IResponseVm<string>> Delete(Guid Id)
         {
+
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
@@ -152,36 +155,44 @@ namespace ShutterManagement.Business.Services
                                       && c.TenantId == AppConstant.LoggedInTenantId
                                       && c.IsDelete == false)
                           .FirstOrDefault();
-                    if (IsComponentExists != null)
+                    var IsComponentInProduct = productService.AnyAsync(x => x.ComponentId == Id && x.IsActive == true && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
+                    if(IsComponentInProduct!= null)
                     {
-                        var IsMaterialInComponent = _componentMaterial.GetAllQuerable().Where
-                        (x => x.ComponentId == Id && x.IsDelete == false 
-                        && x.TenantId == AppConstant.LoggedInTenantId).ToList();
-                     
-                    if(IsMaterialInComponent != null && IsMaterialInComponent.Count > 0)
-                    {
-                        foreach (var item in IsMaterialInComponent)
+                        if (IsComponentExists != null)
                         {
-                            item.IsActive = false;
-                            item.IsDelete = true;
-                            item.UpdatedAt = DateTime.Now;
-                            item.ModifiedBy = AppConstant.LoggedInUserID;
+                            var IsMaterialInComponent = _componentMaterial.GetAllQuerable().Where
+                            (x => x.ComponentId == Id && x.IsDelete == false
+                            && x.TenantId == AppConstant.LoggedInTenantId).ToList();
+
+                            if (IsMaterialInComponent != null && IsMaterialInComponent.Count > 0)
+                            {
+                                foreach (var item in IsMaterialInComponent)
+                                {
+                                    item.IsActive = false;
+                                    item.IsDelete = true;
+                                    item.UpdatedAt = DateTime.Now;
+                                    item.ModifiedBy = AppConstant.LoggedInUserID;
+                                }
                             }
-                    }
-                    
-                        IsComponentExists.IsActive = false;
-                        IsComponentExists.IsDelete = true;
-                        IsComponentExists.UpdatedAt = DateTime.Now;
-                        IsComponentExists.ModifiedBy = AppConstant.LoggedInUserID;
 
-                        var res = Update(IsComponentExists);
+                            IsComponentExists.IsActive = false;
+                            IsComponentExists.IsDelete = true;
+                            IsComponentExists.UpdatedAt = DateTime.Now;
+                            IsComponentExists.ModifiedBy = AppConstant.LoggedInUserID;
 
-                        responseVm.IsSuccess = true;
-                        responseVm.Message = AppConstant.DeleteSuccessMsg;
+                            var res = Update(IsComponentExists);
+
+                            responseVm.IsSuccess = true;
+                            responseVm.Message = AppConstant.DeleteSuccessMsg;
+                        }
+                        else
+                        {
+                            responseVm.Message = $"{AppConstant.NoDataFound}";
+                        }
                     }
                     else
                     {
-                        responseVm.Message = $"{AppConstant.NoDataFound}";
+                        responseVm.Message = "Component exists in Product";
                     }
 
                 }
