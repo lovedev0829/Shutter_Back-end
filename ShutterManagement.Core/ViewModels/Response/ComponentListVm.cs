@@ -10,13 +10,13 @@ namespace ShutterManagement.Core.ViewModels.Response
     {
         public Guid? ComponentId { get; set; }
         public string? ComponentName { get; set; }
-        public string? ProductTypeId { get; set; }
-        public string? ProductName { get; set; }
+        public string? ProductType { get; set; }
+        public string? ProductTypeName { get; set; }
         public bool? IsActive { get; set; }
         public Guid? TenantId { get; set; }
         public decimal? MarkupPercentage { get; set; }
         public string? PricingExpression { get; set; }
-        public string Notes { get; set; }
+        public string? Notes { get; set; }
         
         public List<ComponentMaterialVm>? ComponentMaterials { get; set; }
 
