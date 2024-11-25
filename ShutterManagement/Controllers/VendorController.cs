@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core.ViewModels.Request;
@@ -16,6 +17,7 @@ namespace ShutterManagement.Controllers
         }
 
         [HttpPost("Create")]
+        [Authorize(Roles ="VendorsAdd")]
         public async Task<IActionResult> Create([FromBody] CreateVendor createVendor)
         {
             var result = await vendorService.Create_Vendor(createVendor);
@@ -23,6 +25,7 @@ namespace ShutterManagement.Controllers
         }
 
         [HttpPost("Update")]
+        [Authorize(Roles = "VendorsEdit")]
         public async Task<IActionResult> Update([FromBody] UpdateVendor updateVendor)
         {
             var result = await vendorService.Update_Vendor(updateVendor);
@@ -30,6 +33,7 @@ namespace ShutterManagement.Controllers
         }
 
         [HttpPost("Delete")]
+        [Authorize(Roles = "VendorsDelete")]
         public async Task<IActionResult> Delete(Guid VendorId)
         {
             var result = await vendorService.Delete(VendorId);
@@ -37,6 +41,7 @@ namespace ShutterManagement.Controllers
         }
 
         [HttpPost("ActiveInActive")]
+        [Authorize(Roles = "VendorsEdit")]
         public async Task<IActionResult> ActiveInactive(Guid VendorId)
         {
             var result = await vendorService.ActiveInActive(VendorId);
@@ -46,6 +51,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("GetAll")]
+        [Authorize(Roles = "VendorsView")]
         public async Task<IActionResult> GetAll(Pagination filter)
         {
             var res = await vendorService.GetAll_Vendor(filter);

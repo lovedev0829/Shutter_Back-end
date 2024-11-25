@@ -98,7 +98,8 @@ namespace ShutterManagement.Business.Services
                  && x.TenantId == AppConstant.LoggedInTenantId);
                 if (IsContactExists)
                 {
-                    var AddressDetails = GetAllQuerable().Where(x => x.AddressId.ToString() == model.AddressId && x.ContactId.ToString() == model.ContactId && x.TenantId == AppConstant.LoggedInTenantId
+                    var AddressDetails = GetAllQuerable().Where(x => x.AddressId.ToString() == model.AddressId 
+                    && x.ContactId.ToString() == model.ContactId && x.TenantId == AppConstant.LoggedInTenantId
                     && x.IsDelete == false).FirstOrDefault();
 
                     if (AddressDetails != null)

@@ -21,6 +21,8 @@ public partial class MstModulePermission
 
     public string? Url { get; set; }
 
+    public int? SortOrder { get; set; }
+
     public virtual MstModule? Module { get; set; }
 
     public virtual ICollection<TblRolesPermission> TblRolesPermissions { get; set; } = new List<TblRolesPermission>();
