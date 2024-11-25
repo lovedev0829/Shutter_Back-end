@@ -35,9 +35,8 @@ namespace ShutterManagement.Controllers
         private readonly IProductService productService;
 
         public CommonController(IMasterCreate masterCreate, FileUploadHelper fileUpload, ClaimsProperty claimsProperty,
-            IJobTitleService jobTitleService,IMaterial material,IVendorService vendorService, 
-            IComponentService componentService,IMstProductType mstProductType,IAddress address
-            ,EmailHelper emailHelper)
+            IJobTitleService jobTitleService,IMaterial material,IVendorService vendorService 
+            ,EmailHelper emailHelper,
             IComponentService componentService,IMstProductType mstProductType,IAddress address,IOption option,IProductService productService)
         {
             this.masterCreate = masterCreate;
