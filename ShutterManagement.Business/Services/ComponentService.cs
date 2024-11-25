@@ -8,6 +8,7 @@ using ShutterManagement.Services;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Data.Entity;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -22,14 +23,19 @@ namespace ShutterManagement.Business.Services
         private readonly ITenantService tenantService;
         private readonly IComponentMaterial _componentMaterial;
         private readonly IProductComponentService productService;
+        private readonly IMaterial material;
+        private readonly IMstProductType mstProductType;
 
-        public ComponentService(ShutterDbContext dbContext, ClaimsProperty claimsProperty,ITenantService tenantService,IComponentMaterial componentMaterial,IProductComponentService productService)
+        public ComponentService(ShutterDbContext dbContext, ClaimsProperty claimsProperty,ITenantService tenantService,
+            IComponentMaterial componentMaterial,IProductComponentService productService,IMaterial material,IMstProductType mstProductType)
         {
             _dbContext = dbContext;
             this.claimsProperty = claimsProperty;
             this.tenantService = tenantService;
             _componentMaterial = componentMaterial;
             this.productService = productService;
+            this.material = material;
+            this.mstProductType = mstProductType;
         }
 
 
@@ -42,7 +48,6 @@ namespace ShutterManagement.Business.Services
                 var IsComponentExists = GetAllQuerable()
                       .Where(c => c.ComponentId == Id
                                   && c.TenantId == AppConstant.LoggedInTenantId
-                                  && c.IsActive == true
                                   && c.IsDelete == false)
                       .FirstOrDefault();
                 if (IsComponentExists != null)
@@ -231,19 +236,40 @@ namespace ShutterManagement.Business.Services
                         .Where(cm => cm.IsDelete == false && cm.TenantId == AppConstant.LoggedInTenantId)
                         .ToList();
 
-                    var filteredComponents = components
-                        .Where(x =>
-                            string.IsNullOrEmpty(filter.SearchValue) ||
-                            (x.ComponentName ?? "").ToLower().Contains(filter.SearchValue.Trim().ToLower()) ||
-                            (x.ProductType ?? "").ToLower().Contains(filter.SearchValue.Trim().ToLower()) ||
-                            (x.PricingExpression ?? "").ToLower().Contains(filter.SearchValue.Trim().ToLower()) ||
-                            componentMaterials
-                                .Any(cm => cm.ComponentId == x.ComponentId &&
-                                           (cm.RawMaterialId.ToString().Contains(filter.SearchValue.Trim()) ||
-                                            cm.Quantity.ToString().Contains(filter.SearchValue.Trim()) ||
-                                            cm.WasteFactor.ToString().Contains(filter.SearchValue.Trim())))
-                        )
+                    var materials = material.GetAllQuerable()
+                        .Where(m => m.IsDelete == false && m.TenantId == AppConstant.LoggedInTenantId)
+                        .Select(m => new GetAllMaterialVm
+                        {
+                            MaterialId = m.RawMaterialId,
+                            MaterialName = m.MaterialName
+                        })
                         .ToList();
+                    var products = mstProductType
+                        .GetAllQuerable() 
+                        .Where(p => p.IsDelete == false && p.IsActive == true) 
+                        .ToList();
+
+                    var filteredComponents = components
+                              .Where(x =>
+         (x.ComponentId.ToString() == filter.SearchValue) || 
+         (x.ComponentName ?? "").ToLower().Contains(filter.SearchValue.Trim().ToLower()) || 
+         (x.ProductType.ToString() ?? "").ToLower().Contains(filter.SearchValue.Trim().ToLower()) || 
+         (x.PricingExpression ?? "").ToLower().Contains(filter.SearchValue.Trim().ToLower()) || 
+         componentMaterials
+             .Any(cm => cm.ComponentId == x.ComponentId &&
+                 (cm.RawMaterialId.ToString().Contains(filter.SearchValue.Trim()) || 
+                  cm.Quantity.ToString().Contains(filter.SearchValue.Trim()) || 
+                  cm.WasteFactor.ToString().Contains(filter.SearchValue.Trim())) || 
+         materials
+             .Any(m => m.MaterialId == cm.RawMaterialId && 
+                 m.MaterialName.ToLower().Contains(filter.SearchValue.Trim()))) || 
+         products
+             .Any(p => p.ProductId == Guid.Parse(x.ProductType) &&
+                 p.ProductName.ToString().ToLower().Contains(filter.SearchValue.Trim()))
+     )
+     .ToList();
+
+                     
 
                     var paginatedRecords = filteredComponents
                         .Skip((filter.PageNo - 1) * filter.RecordPerPage)
@@ -255,10 +281,12 @@ namespace ShutterManagement.Business.Services
                         ComponentId = x.ComponentId,
                         ComponentName = x.ComponentName,
                         IsActive = x.IsActive,
-                        TenantId = x.TenantId,  
+                        TenantId = x.TenantId,
                         MarkupPercentage = x.MarkupPercentage,
                         PricingExpression = x.PricingExpression,
                         Notes = x.Notes,
+                        ProductTypeId = x.ProductType.ToString(),
+                        ProductName = products.Where(p => p.ProductId == Guid.Parse(x.ProductType)).ToString(),
                         ComponentMaterials = componentMaterials
                             .Where(cm => cm.ComponentId == x.ComponentId)
                             .Select(cm => new ComponentMaterialVm
@@ -267,13 +295,14 @@ namespace ShutterManagement.Business.Services
                                 RawMaterialId = cm.RawMaterialId,
                                 Quantity = cm.Quantity,
                                 WasteFactor = cm.WasteFactor,
-                                //CreatedAt = cm.CreatedAt
+                                MaterialName = materials
+                                    .FirstOrDefault(m => m.MaterialId == cm.RawMaterialId)?.MaterialName ?? "Material Not Found"
                             }).ToList()
                     }).ToList();
 
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.FetchSuccessMsg;
-                    responseVm.TotalRecords = filteredComponents.Count;  
+                    responseVm.TotalRecords = filteredComponents.Count;
                 }
                 else
                 {
