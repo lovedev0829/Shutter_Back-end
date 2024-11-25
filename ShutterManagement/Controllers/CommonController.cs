@@ -30,10 +30,12 @@ namespace ShutterManagement.Controllers
         private readonly IComponentService componentService;
         private readonly IMstProductType mstProductType;
         private readonly IAddress address;
+        private readonly EmailHelper emailHelper;
 
         public CommonController(IMasterCreate masterCreate, FileUploadHelper fileUpload, ClaimsProperty claimsProperty,
             IJobTitleService jobTitleService,IMaterial material,IVendorService vendorService, 
-            IComponentService componentService,IMstProductType mstProductType,IAddress address)
+            IComponentService componentService,IMstProductType mstProductType,IAddress address
+            ,EmailHelper emailHelper)
         {
             this.masterCreate = masterCreate;
             this.fileUpload = fileUpload;
@@ -47,6 +49,7 @@ namespace ShutterManagement.Controllers
             this.vendorService = vendorService;
             this.componentService = componentService;
             this.address= address;
+            this.emailHelper = emailHelper;
             this.mstProductType = mstProductType;
         }
 
@@ -118,7 +121,12 @@ namespace ShutterManagement.Controllers
         }
 
 
-
+        [HttpPost]
+        [Route("SendEmail")]
+        public void SendMail(SendEmail sendEmail)
+        {
+            emailHelper.SendMail(sendEmail);
+        }
         //[HttpPost]
         //[Route("MasterCreate")]
         //public IActionResult MasterCreate(CreatePayloadVm model)
