@@ -14,6 +14,7 @@ public partial class ShutterDbContext : DbContext
         : base(options)
     {
     }
+
     public virtual DbSet<MstJobTitle> MstJobTitles { get; set; }
 
     public virtual DbSet<MstModule> MstModules { get; set; }
@@ -23,8 +24,6 @@ public partial class ShutterDbContext : DbContext
     public virtual DbSet<MstProductType> MstProductTypes { get; set; }
 
     public virtual DbSet<TblAddress> TblAddresses { get; set; }
-
-    public virtual DbSet<TblAssembly> TblAssemblies { get; set; }
 
     public virtual DbSet<TblComponent> TblComponents { get; set; }
 
@@ -51,6 +50,10 @@ public partial class ShutterDbContext : DbContext
     public virtual DbSet<TblOption> TblOptions { get; set; }
 
     public virtual DbSet<TblPayment> TblPayments { get; set; }
+
+    public virtual DbSet<TblProduct> TblProducts { get; set; }
+
+    public virtual DbSet<TblProductComponent> TblProductComponents { get; set; }
 
     public virtual DbSet<TblRawMaterial> TblRawMaterials { get; set; }
 
@@ -118,7 +121,7 @@ public partial class ShutterDbContext : DbContext
             entity.ToTable("MstModule_Permission", "dbo");
 
             entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
-            entity.Property(e => e.Icon).HasMaxLength(500);
+            entity.Property(e => e.Icon).IsUnicode(false);
             entity.Property(e => e.ModulePermission).HasMaxLength(100);
             entity.Property(e => e.PermissionDisplayName).HasMaxLength(100);
             entity.Property(e => e.Url)
@@ -176,34 +179,6 @@ public partial class ShutterDbContext : DbContext
             entity.HasOne(d => d.Tenant).WithMany(p => p.TblAddresses)
                 .HasForeignKey(d => d.TenantId)
                 .HasConstraintName("FK__TblAddres__Tenan__3FD07829");
-        });
-
-        modelBuilder.Entity<TblAssembly>(entity =>
-        {
-            entity.HasKey(e => e.AssemblyId).HasName("PK__TblAssem__1C02BDABE36F3A37");
-
-            entity.ToTable("TblAssembly", "dbo");
-
-            entity.Property(e => e.AssemblyId).HasDefaultValueSql("(newid())");
-            entity.Property(e => e.AdditionalWidth).HasColumnType("decimal(10, 2)");
-            entity.Property(e => e.ArchHeight).HasColumnType("decimal(10, 2)");
-            entity.Property(e => e.Area).HasColumnType("decimal(10, 2)");
-            entity.Property(e => e.AssemblyName).HasMaxLength(255);
-            entity.Property(e => e.Color).HasMaxLength(100);
-            entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
-            entity.Property(e => e.Height).HasColumnType("decimal(10, 2)");
-            entity.Property(e => e.IsActive).HasDefaultValue(true);
-            entity.Property(e => e.IsDelete).HasDefaultValue(false);
-            entity.Property(e => e.Length).HasColumnType("decimal(10, 2)");
-            entity.Property(e => e.ProductType)
-                .HasMaxLength(50)
-                .IsUnicode(false);
-            entity.Property(e => e.UpdatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
-            entity.Property(e => e.Width).HasColumnType("decimal(10, 2)");
         });
 
         modelBuilder.Entity<TblComponent>(entity =>
@@ -565,6 +540,63 @@ public partial class ShutterDbContext : DbContext
             entity.HasOne(d => d.Invoice).WithMany(p => p.TblPayments)
                 .HasForeignKey(d => d.InvoiceId)
                 .HasConstraintName("FK__TblPaymen__Invoi__671F4F74");
+        });
+
+        modelBuilder.Entity<TblProduct>(entity =>
+        {
+            entity.HasKey(e => e.ProductId).HasName("PK__TblAssem__1C02BDABE36F3A37");
+
+            entity.ToTable("TblProduct", "dbo");
+
+            entity.Property(e => e.ProductId).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.AdditionalWidth).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.ArchHeight).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.Area).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.Color).HasMaxLength(100);
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Height).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
+            entity.Property(e => e.IsDelete).HasDefaultValue(false);
+            entity.Property(e => e.Length).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.Markup).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.ProductName).HasMaxLength(255);
+            entity.Property(e => e.ProductType)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Width).HasColumnType("decimal(10, 2)");
+
+            entity.HasOne(d => d.Tenant).WithMany(p => p.TblProducts)
+                .HasForeignKey(d => d.TenantId)
+                .HasConstraintName("FK__TblProduc__Tenan__5D2BD0E6");
+        });
+
+        modelBuilder.Entity<TblProductComponent>(entity =>
+        {
+            entity.HasKey(e => e.ProductComponentId).HasName("PK__TblProdu__E29891DF9ACD9DBE");
+
+            entity.ToTable("TblProductComponent", "dbo");
+
+            entity.Property(e => e.ProductComponentId).ValueGeneratedNever();
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.Quantity).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+
+            entity.HasOne(d => d.Component).WithMany(p => p.TblProductComponents)
+                .HasForeignKey(d => d.ComponentId)
+                .HasConstraintName("FK__TblProduc__Compo__5A4F643B");
+
+            entity.HasOne(d => d.Product).WithMany(p => p.TblProductComponents)
+                .HasForeignKey(d => d.ProductId)
+                .HasConstraintName("FK__TblProduc__Produ__5B438874");
+
+            entity.HasOne(d => d.Tenant).WithMany(p => p.TblProductComponents)
+                .HasForeignKey(d => d.TenantId)
+                .HasConstraintName("FK__TblProduc__Tenan__5C37ACAD");
         });
 
         modelBuilder.Entity<TblRawMaterial>(entity =>

@@ -11,9 +11,12 @@ namespace ShutterManagement.Controllers
     public class ComponentController : ControllerBase
     {
         private readonly IComponentService _componentService;
-        public ComponentController(IComponentService componentService)
+        private readonly IComponentMaterial componentMaterial;
+
+        public ComponentController(IComponentService componentService, IComponentMaterial componentMaterial)
         {
             _componentService = componentService;
+            this.componentMaterial = componentMaterial;
         }
 
         [HttpPost]
@@ -60,5 +63,33 @@ namespace ShutterManagement.Controllers
             var result = await _componentService.GetAll_Component(filter);
             return Ok(result);
         }
+
+        [HttpPost]
+        [Route("AddComponentMaterial")]
+        //[Authorize(Roles = "ComponentView")]
+        public async Task<IActionResult> AddComponentMaterial(CreateComponentMaterialVm model)
+        {
+            var result = await componentMaterial.AddComponentMaterial(model);
+            return Ok(result);
+        }
+
+        [HttpPost]
+        [Route("UpdateComponentMaterial")]
+        //[Authorize(Roles = "ComponentView")]
+        public async Task<IActionResult> UpdateComponentMaterial(UpdateComponentMaterialVm model)
+        {
+            var result = await componentMaterial.UpdateComponentMaterial(model);
+            return Ok(result);
+        }
+
+        [HttpPost]
+        [Route("DeleteComponentMaterial")]
+        //[Authorize(Roles = "ComponentView")]
+        public async Task<IActionResult> DeleteComponentMaterial(Guid id)
+        {
+            var result = await componentMaterial.Delete(id);
+            return Ok(result);
+        }
+
     }
 }

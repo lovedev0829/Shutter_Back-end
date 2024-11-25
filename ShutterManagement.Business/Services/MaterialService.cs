@@ -20,14 +20,16 @@ namespace ShutterManagement.Business.Services
         private readonly IVendorService vendorService;
         private readonly ClaimsProperty claimsProperty;
         private readonly ITenantService tenantService;
+        private readonly IComponentMaterial componentMaterial;
 
         public MaterialService(ShutterDbContext context, IVendorService vendorService,
-            ClaimsProperty claimsProperty, ITenantService tenantService)
+            ClaimsProperty claimsProperty, ITenantService tenantService,IComponentMaterial componentMaterial)
         {
             _context = context;
             this.vendorService = vendorService;
             this.claimsProperty = claimsProperty;
             this.tenantService = tenantService;
+            this.componentMaterial = componentMaterial;
         }
 
         public async Task<IResponseVm<string>> ActiveInActive(Guid Id)
@@ -141,26 +143,35 @@ namespace ShutterManagement.Business.Services
                 var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
                 if (IsTenant)
                 {
-                    var IsMaterialExists = GetAllQuerable()
+                    var IsMaterialExists =  GetAllQuerable()
                           .Where(c => c.RawMaterialId == Id
                                       && c.TenantId == AppConstant.LoggedInTenantId
-                                      && c.IsDelete == false)
+                                      && c.IsDelete == false && c.IsActive==true
+                                      )
                           .FirstOrDefault();
-                    if (IsMaterialExists != null)
+                    var IsMaterialExistInComponent = componentMaterial.AnyAsync(x => x.RawMaterialId == Id && x.IsActive == true && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
+                    if (IsMaterialExistInComponent != null)
                     {
-                        IsMaterialExists.IsActive = false;
-                        IsMaterialExists.IsDelete = true;
-                        IsMaterialExists.UpdatedAt = DateTime.Now;
-                        IsMaterialExists.ModifiedBy = AppConstant.LoggedInUserID;
+                        if (IsMaterialExists != null)
+                        {
+                            IsMaterialExists.IsActive = false;
+                            IsMaterialExists.IsDelete = true;
+                            IsMaterialExists.UpdatedAt = DateTime.Now;
+                            IsMaterialExists.ModifiedBy = AppConstant.LoggedInUserID;
 
-                        var res = Update(IsMaterialExists);
+                            var res = Update(IsMaterialExists);
 
-                        responseVm.IsSuccess = true;
-                        responseVm.Message = AppConstant.DeleteSuccessMsg;
+                            responseVm.IsSuccess = true;
+                            responseVm.Message = AppConstant.DeleteSuccessMsg;
+                        }
+                        else
+                        {
+                            responseVm.Message = $"{AppConstant.NoDataFound}";
+                        }
                     }
                     else
                     {
-                        responseVm.Message = $"{AppConstant.NoDataFound}";
+                        responseVm.Message = "Material exists in Component";
                     }
                 }
                 else
@@ -225,6 +236,19 @@ namespace ShutterManagement.Business.Services
                         .Take(filter.RecordPerPage)
                         .ToList();
 
+                    responseVm.Data = TakenRecords.Select(x => new GetAllMaterialVm
+                    {
+                        MaterialName = x.MaterialName,
+                        IsActive = x.IsActive,
+                        VendorId = x.VendorId,
+                        TenantId=x.TenantId,
+                        Notes = x.Notes,
+                        UnitCost= x.UnitCost,
+                        UnitOfMeasurement = x.UnitOfMeasurement,
+                        StockQuantity = x.StockQuantity,
+                        ReorderLevel = x.ReorderLevel
+                    }).ToList();
+                    responseVm.TotalRecords = FilterRecords.Count;
                     responseVm.Data = TakenRecords;
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.FetchSuccessMsg;

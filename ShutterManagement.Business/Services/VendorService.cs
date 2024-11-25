@@ -35,7 +35,7 @@ namespace ShutterManagement.Business.Services
                       .FirstOrDefault();
                 if (IsVendorExist != null)
                 {
-                    IsVendorExist.IsActive = false;
+                    IsVendorExist.IsActive = !IsVendorExist.IsActive;
                     IsVendorExist.UpdatedAt = DateTime.Now;
                     IsVendorExist.ModifiedBy = AppConstant.LoggedInUserID;
 
