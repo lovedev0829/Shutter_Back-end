@@ -67,7 +67,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         [RegularExpression(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", ErrorMessage = "Invalid email address.")]
         [EmailAddress]
         [DefaultValue("")]
-        public string Email { get; set; }
+        public string? Email { get; set; }
 
         //[Required]
         [DefaultValue("")]

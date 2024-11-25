@@ -1,4 +1,5 @@
-﻿using ShutterManagement.Business.Interfaces;
+﻿using Microsoft.EntityFrameworkCore;
+using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core;
 using ShutterManagement.Core.ViewModels;
 using ShutterManagement.Core.ViewModels.Request;
@@ -26,8 +27,8 @@ namespace ShutterManagement.Business.Services
         private readonly IMaterial material;
         private readonly IMstProductType mstProductType;
 
-        public ComponentService(ShutterDbContext dbContext, ClaimsProperty claimsProperty,ITenantService tenantService,
-            IComponentMaterial componentMaterial,IProductComponentService productService,IMaterial material,IMstProductType mstProductType)
+        public ComponentService(ShutterDbContext dbContext, ClaimsProperty claimsProperty, ITenantService tenantService,
+            IComponentMaterial componentMaterial, IProductComponentService productService, IMaterial material, IMstProductType mstProductType)
         {
             _dbContext = dbContext;
             this.claimsProperty = claimsProperty;
@@ -44,7 +45,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenant =  tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null);
+                var IsTenant = tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null);
                 var IsComponentExists = GetAllQuerable()
                       .Where(c => c.ComponentId == Id
                                   && c.TenantId == AppConstant.LoggedInTenantId
@@ -152,7 +153,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null &&x.IsActive== true && x.IsDelete == false );
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsActive == true && x.IsDelete == false);
                 if (IsTenant)
                 {
                     var IsComponentExists = GetAllQuerable()
@@ -161,7 +162,7 @@ namespace ShutterManagement.Business.Services
                                       && c.IsDelete == false)
                           .FirstOrDefault();
                     var IsComponentInProduct = productService.AnyAsync(x => x.ComponentId == Id && x.IsActive == true && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
-                    if(IsComponentInProduct!= null)
+                    if (IsComponentInProduct != null)
                     {
                         if (IsComponentExists != null)
                         {
@@ -228,81 +229,73 @@ namespace ShutterManagement.Business.Services
 
                 if (isTenantValid)
                 {
-                    var components = (await GetAll())
-                        .Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId)
-                        .ToList();
+                    var componentList = (from c in dbContext.TblComponents
+                                        
+                                         join pt in dbContext.MstProductTypes on c.ProductType equals pt.ProductId.ToString()
+                                         where c.IsDelete == false
+                                         select new ComponentListVm
+                                         {
+                                             ComponentId = c.ComponentId,
+                                             ComponentName = c.ComponentName,
+                                             IsActive = c.IsActive,
+                                             MarkupPercentage = c.MarkupPercentage,
+                                             Notes = c.Notes,
+                                             PricingExpression = c.PricingExpression,
+                                             ProductType = pt.ProductId.ToString(),
+                                             ProductTypeName = pt.ProductName,
+                                             TenantId = c.TenantId,
+                                            
+                                         }).ToList();
+                    foreach(var item in componentList)
+                    {
+                        var ComponentMaterial = (from cm in dbContext.TblComponentMaterials
+                                                 join m in dbContext.TblRawMaterials on cm.RawMaterialId equals m.RawMaterialId
+                                                 where cm.ComponentId == item.ComponentId
+                                                 select new ComponentMaterialVm
+                                                 {
+                                                     ComponentMaterialId = cm.ComponentMaterialId,
+                                                     RawMaterialId = cm.RawMaterialId,
+                                                     WasteFactor = cm.WasteFactor,
+                                                     Quantity = cm.Quantity,
+                                                     MaterialName = m.MaterialName
+                                                 }).ToList();
 
-                    var componentMaterials = _componentMaterial.GetAllQuerable()
-                        .Where(cm => cm.IsDelete == false && cm.TenantId == AppConstant.LoggedInTenantId)
-                        .ToList();
+                        item.ComponentMaterials = ComponentMaterial;
+                    }
 
-                    var materials = material.GetAllQuerable()
-                        .Where(m => m.IsDelete == false && m.TenantId == AppConstant.LoggedInTenantId)
-                        .Select(m => new GetAllMaterialVm
-                        {
-                            MaterialId = m.RawMaterialId,
-                            MaterialName = m.MaterialName
-                        })
-                        .ToList();
-                    var products = mstProductType
-                        .GetAllQuerable() 
-                        .Where(p => p.IsDelete == false && p.IsActive == true) 
-                        .ToList();
 
-                    var filteredComponents = components
+
+                    filter.SearchValue = filter.SearchValue.Trim().ToLower();
+                    var FilterRecords = componentList
                               .Where(x =>
-         (x.ComponentId.ToString() == filter.SearchValue) || 
-         (x.ComponentName ?? "").ToLower().Contains(filter.SearchValue.Trim().ToLower()) || 
-         (x.ProductType.ToString() ?? "").ToLower().Contains(filter.SearchValue.Trim().ToLower()) || 
-         (x.PricingExpression ?? "").ToLower().Contains(filter.SearchValue.Trim().ToLower()) || 
-         componentMaterials
-             .Any(cm => cm.ComponentId == x.ComponentId &&
-                 (cm.RawMaterialId.ToString().Contains(filter.SearchValue.Trim()) || 
-                  cm.Quantity.ToString().Contains(filter.SearchValue.Trim()) || 
-                  cm.WasteFactor.ToString().Contains(filter.SearchValue.Trim())) || 
-         materials
-             .Any(m => m.MaterialId == cm.RawMaterialId && 
-                 m.MaterialName.ToLower().Contains(filter.SearchValue.Trim()))) || 
-         products
-             .Any(p => p.ProductId == Guid.Parse(x.ProductType) &&
-                 p.ProductName.ToString().ToLower().Contains(filter.SearchValue.Trim()))
-     )
-     .ToList();
+                              (string.IsNullOrEmpty(filter.SearchValue) ? true :
+                                 (x.ComponentId.ToString() == filter.SearchValue) ||
+                                 (x.ComponentName ?? "").ToLower().Contains(filter.SearchValue) ||
+                                 (x.ProductType.ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
+                                 (x.PricingExpression ?? "").ToLower().Contains(filter.SearchValue) ||
+                                 (x.Notes ?? "").ToLower().Contains(filter.SearchValue) ||
+                                 (x.MarkupPercentage.ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
+                                 (x.ProductTypeName ?? "").ToLower().Contains(filter.SearchValue))
+                             ).ToList();
 
-                     
 
-                    var paginatedRecords = filteredComponents
+
+                    var TakenRecords = FilterRecords
                         .Skip((filter.PageNo - 1) * filter.RecordPerPage)
                         .Take(filter.RecordPerPage)
                         .ToList();
-
-                    responseVm.Data = paginatedRecords.Select(x => new ComponentListVm
-                    {
-                        ComponentId = x.ComponentId,
-                        ComponentName = x.ComponentName,
-                        IsActive = x.IsActive,
-                        TenantId = x.TenantId,
-                        MarkupPercentage = x.MarkupPercentage,
-                        PricingExpression = x.PricingExpression,
-                        Notes = x.Notes,
-                        ProductTypeId = x.ProductType.ToString(),
-                        ProductName = products.Where(p => p.ProductId == Guid.Parse(x.ProductType)).ToString(),
-                        ComponentMaterials = componentMaterials
-                            .Where(cm => cm.ComponentId == x.ComponentId)
-                            .Select(cm => new ComponentMaterialVm
-                            {
-                                ComponentMaterialId = cm.ComponentMaterialId,
-                                RawMaterialId = cm.RawMaterialId,
-                                Quantity = cm.Quantity,
-                                WasteFactor = cm.WasteFactor,
-                                MaterialName = materials
-                                    .FirstOrDefault(m => m.MaterialId == cm.RawMaterialId)?.MaterialName ?? "Material Not Found"
-                            }).ToList()
-                    }).ToList();
-
                     responseVm.IsSuccess = true;
-                    responseVm.Message = AppConstant.FetchSuccessMsg;
-                    responseVm.TotalRecords = filteredComponents.Count;
+
+                    if (TakenRecords != null && TakenRecords.Count > 0)
+                    {
+                        responseVm.Data = TakenRecords.ToList();
+                        responseVm.Message = AppConstant.UpdateSuccessMsg;
+                        responseVm.TotalRecords = FilterRecords.Count;
+                    }
+                    else
+                    {
+                        responseVm.Message = AppConstant.NoDataFound;
+                    }
                 }
                 else
                 {
@@ -311,8 +304,7 @@ namespace ShutterManagement.Business.Services
             }
             catch (Exception ex)
             {
-                responseVm.IsSuccess = false;
-                responseVm.Message = $"Error: {ex.Message}";
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
             }
 
             return await Task.FromResult(responseVm);
