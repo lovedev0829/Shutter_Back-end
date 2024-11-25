@@ -115,22 +115,26 @@ namespace ShutterManagement.Business.Services
 
                     foreach (var material in model.Materials)
                     {
-                        TblComponentMaterial componentmaterial = new TblComponentMaterial
+                        var isMaterialExists = await _componentMaterial.AnyAsync(x => x.RawMaterialId == material.MaterialId && x.ComponentId == component.ComponentId
+                        && x.IsDelete == false);
+                        if (!isMaterialExists)
                         {
-                            ComponentId = component.ComponentId,
-                            RawMaterialId = material.MaterialId,
-                            Quantity = material.Qty,
-                            WasteFactor = material.WasteFactor,
-                            CreatedAt = DateTime.Now,
-                            CreatedBy = AppConstant.LoggedInUserID,
-                            IsActive = true,
-                            IsDelete = false,
-                            TenantId = AppConstant.LoggedInTenantId
-                        };
+                            TblComponentMaterial componentmaterial = new TblComponentMaterial
+                            {
+                                ComponentId = component.ComponentId,
+                                RawMaterialId = material.MaterialId,
+                                Quantity = material.Qty,
+                                WasteFactor = material.WasteFactor,
+                                CreatedAt = DateTime.Now,
+                                CreatedBy = AppConstant.LoggedInUserID,
+                                IsActive = true,
+                                IsDelete = false,
+                                TenantId = AppConstant.LoggedInTenantId
+                            };
 
-                        await _componentMaterial.Add(componentmaterial);
+                            await _componentMaterial.Add(componentmaterial);
+                        }
                     }
-
                     responseVm.IsSuccess = true;
                     responseVm.Message = $"{AppConstant.InsertSuccessMsg}";
                 }

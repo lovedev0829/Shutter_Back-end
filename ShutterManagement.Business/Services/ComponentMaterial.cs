@@ -177,27 +177,29 @@ namespace ShutterManagement.Business.Services
 
                 if (isTenantValid)
                 {
-                    var componentMaterial = GetAllQuerable()
-                        .Where(x => x.ComponentMaterialId == model.ComponentMaterialId &&
-                                    x.TenantId == AppConstant.LoggedInTenantId &&
-                                    x.IsDelete == false)
-                        .FirstOrDefault();
+                    var componentMaterialExist = GetAllQuerable().Where
+                        (x => x.ComponentMaterialId != model.ComponentMaterialId && x.ComponentId == model.ComponentId
+                        && x.RawMaterialId == model.RawMaterialId &&
+                        x.TenantId == AppConstant.LoggedInTenantId &&
+                        x.IsDelete == false).FirstOrDefault();
+                        
 
-                    if (componentMaterial != null)
+                    if (componentMaterialExist == null)
                     {
-                        componentMaterial.Quantity = model.Quantity;
-                        componentMaterial.WasteFactor = model.WasteFactor;
-                        componentMaterial.UpdatedAt = DateTime.Now;
-                        componentMaterial.ModifiedBy = AppConstant.LoggedInUserID;
+                        componentMaterialExist.RawMaterialId = model.RawMaterialId;
+                        componentMaterialExist.Quantity = model.Quantity;
+                        componentMaterialExist.WasteFactor = model.WasteFactor;
+                        componentMaterialExist.UpdatedAt = DateTime.Now;
+                        componentMaterialExist.ModifiedBy = AppConstant.LoggedInUserID;
 
-                        await Update(componentMaterial);
+                         Update(componentMaterialExist);
 
                         responseVm.IsSuccess = true;
                         responseVm.Message = AppConstant.UpdateSuccessMsg;
                     }
                     else
                     {
-                        responseVm.Message = AppConstant.NoDataFound;
+                        responseVm.Message = AppConstant.AlreadyExists;
                     }
                 }
                 else

@@ -1,4 +1,5 @@
-﻿using ShutterManagement.Business.Interfaces;
+﻿using Microsoft.EntityFrameworkCore;
+using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core;
 using ShutterManagement.Core.ViewModels;
 using ShutterManagement.Core.ViewModels.Request;
@@ -37,28 +38,44 @@ namespace ShutterManagement.Business.Services
 
                     foreach (var productcomp in model.ProductComponents)
                     {
-                        try
-                        {
-                            TblProductComponent newproductcomponent = new TblProductComponent
-                            {
-                                ProductComponentId = new Guid(),
-                                ProductId = model.ProductId,
-                                ComponentId = productcomp.ComponentId,
-                                Quantity = productcomp.Quantity,
-                                CreatedAt = DateTime.Now,
-                                CreatedBy = AppConstant.LoggedInUserID,
-                                IsActive = true,
-                                IsDelete = false,
-                                TenantId = AppConstant.LoggedInTenantId
-                            };
+                        
+                        var IsproductExist = await dbContext.TblProducts
+                            .AnyAsync(x => x.ProductId == model.ProductId
+                                           && x.TenantId == AppConstant.LoggedInTenantId
+                                           && x.IsDelete == false); 
 
-                            dbContext.TblProductComponents.Add(newproductcomponent);
-                        }
-                        catch (Exception ex)
+                        if (IsproductExist) 
                         {
-                            responseVm.Message = $"Failed to add material {productcomp.ComponentId}: {ex.Message}";
+                            try
+                            {
+                                TblProductComponent newProductComponent = new TblProductComponent
+                                {
+                                    ProductId = model.ProductId,
+                                    ComponentId = productcomp.ComponentId,
+                                    Quantity = productcomp.Quantity,
+                                    CreatedAt = DateTime.Now,
+                                    CreatedBy = AppConstant.LoggedInUserID,
+                                    IsActive = true,
+                                    IsDelete = false,
+                                    TenantId = AppConstant.LoggedInTenantId
+                                };
+
+                                await dbContext.TblProductComponents.AddAsync(newProductComponent);
+
+                                await dbContext.SaveChangesAsync();
+
+                            }
+                            catch (Exception ex)
+                            {
+                                responseVm.Message = $"Failed to add component with ID {productcomp.ComponentId}: {ex.Message}";
+                            }
+                        }
+                        else
+                        {
+                            responseVm.Message = "The specified product does not exist or has been deleted.";
                         }
                     }
+
 
                     if (allProductAddedSuccessfully)
                     {
@@ -153,13 +170,14 @@ namespace ShutterManagement.Business.Services
                 if (isTenantValid)
                 {
                     var productComponent = GetAllQuerable()
-                        .Where(x => x.ProductComponentId == model.ProductComponentId &&
+                        .Where(x => x.ProductComponentId != model.ProductComponentId && x.ProductId == model.ProductId && x.ComponentId == model.ComponentId &&
                                     x.TenantId == AppConstant.LoggedInTenantId &&
                                     x.IsDelete == false)
                         .FirstOrDefault();
 
-                    if (productComponent != null)
+                    if (productComponent == null)
                     {
+                        productComponent.ComponentId = model.ProductComponentId;
                         productComponent.Quantity = model.Quantity;
                         productComponent.UpdatedAt = DateTime.Now;
                         productComponent.ModifiedBy = AppConstant.LoggedInUserID;
@@ -171,7 +189,7 @@ namespace ShutterManagement.Business.Services
                     }
                     else
                     {
-                        responseVm.Message = AppConstant.NoDataFound;
+                        responseVm.Message = AppConstant.AlreadyExists;
                     }
                 }
                 else

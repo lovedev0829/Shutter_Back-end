@@ -10,6 +10,7 @@ namespace ShutterManagement.Core.ViewModels.Request
     {
         public Guid ComponentMaterialId { get; set; }
         public Guid? RawMaterialId { get; set; }
+        public Guid? ComponentId { get; set; }
         public decimal? Quantity { get; set; }
         public decimal? WasteFactor { get; set; }
     }
