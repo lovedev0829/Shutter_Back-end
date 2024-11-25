@@ -14,8 +14,8 @@ namespace ShutterManagement.Core.ViewModels.Request
         public string? ContactId { get; set; }
 
         [Required]
-        [MaxLength(100)]
-        [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabaticalError)]
+        [MaxLength(20)]
+        [RegularExpression("^[\\p{L} .'-]+$", ErrorMessage = AppConstant.AlphabaticalError)]
         [DefaultValue("")]
        
         public string? Label { get; set; }
@@ -29,14 +29,14 @@ namespace ShutterManagement.Core.ViewModels.Request
 
         [Required]
         [MaxLength(50)]
-        [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabaticalError)]
+        [RegularExpression("^[\\p{L} .'-]+$", ErrorMessage = AppConstant.AlphabaticalError)]
         [DefaultValue("")]
       
         public string? City { get; set; }
 
         [Required]
         [MaxLength(50)]
-        [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabaticalError)]
+        [RegularExpression("^[\\p{L} .'-]+$", ErrorMessage = AppConstant.AlphabaticalError)]
         [DefaultValue("")]
       
         public string? State { get; set; }
@@ -57,18 +57,19 @@ namespace ShutterManagement.Core.ViewModels.Request
         public string? AccessCode { get; set; }
 
         [DefaultValue("")]
-        [Required]
+        //[Required]
         [MaxLength(100)]
         [RegularExpression("^[\\p{L} .'-]+$", ErrorMessage = AppConstant.AlphabaticalError)]
         public string? FullName { get; set; }
 
-        [Required, MaxLength(100)]
+        //[Required,
+        [MaxLength(100)]
         [RegularExpression(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", ErrorMessage = "Invalid email address.")]
         [EmailAddress]
         [DefaultValue("")]
         public string Email { get; set; }
 
-        [Required]
+        //[Required]
         [DefaultValue("")]
         [MaxLength(10)]
         [RegularExpression(@"^\d{10}$", ErrorMessage = "Phone number must be exactly 10 digits.")]
