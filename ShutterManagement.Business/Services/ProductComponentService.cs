@@ -41,6 +41,7 @@ namespace ShutterManagement.Business.Services
                         {
                             TblProductComponent newproductcomponent = new TblProductComponent
                             {
+                                ProductComponentId = new Guid(),
                                 ProductId = model.ProductId,
                                 ComponentId = productcomp.ComponentId,
                                 Quantity = productcomp.Quantity,

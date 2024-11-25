@@ -1,9 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using ShutterManagement.Core;
 using ShutterManagement.Core.SPModel;
-using ShutterManagement.Core.ViewModels; 
+using ShutterManagement.Core.ViewModels;
+using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.DAL.Context;
 using ShutterManagement.Services;
+using System.IdentityModel.Tokens.Jwt;
 using System.Threading.Tasks;
 
 namespace ShutterManagement.Controllers
@@ -31,6 +33,13 @@ namespace ShutterManagement.Controllers
         {
             var UserDetails = await _authService.HomePageContent(CompanyCode);
             return Ok(UserDetails);
+        }
+        [HttpPost]
+        [Route("ResetPassword")]
+        public async Task<IActionResult> ResetPassword(PasswordChangeVm passwordChange)
+        {
+            var passwordDetails = await _authService.ResetPassWord(passwordChange);
+            return Ok(passwordDetails);
         }
 
     }

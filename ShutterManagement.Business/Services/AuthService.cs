@@ -19,10 +19,11 @@ using AutoMapper;
 using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core.Common;
+using System.Security.AccessControl;
 
 namespace ShutterManagement.Services
 {
-    public class AuthService : IAuthService
+    public class AuthService : BaseRepository<ShutterDbContext,TblUser >, IAuthService
     {
         private readonly DataServices dataServices;
         private readonly IMapper mapper;
@@ -194,6 +195,28 @@ namespace ShutterManagement.Services
             return responseVm;
         }
 
-        
+        public async Task<IResponseVm<PasswordChangeVm>> ResetPassWord(PasswordChangeVm passwordChangeVm)
+        {
+            IResponseVm<PasswordChangeVm> result = new ResponseVm<PasswordChangeVm>();
+            try
+            {
+                var passwordCheck = (await GetAll()).Where(x => x.Pwd == passwordChangeVm.OldPassWord && x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
+                {
+                    passwordCheck.Pwd = ShutterManagement.Core.Common.AesEncryptionHelper.Encrypt(passwordChangeVm.PassWord);
+                    passwordCheck.ModifiedAt = DateTime.Now;
+                    passwordCheck.ModifiedBy= AppConstant.LoggedInUserID;
+                    await Update(passwordCheck);
+                    result.IsSuccess = true;
+                    result.Message = "Password Change Successfully";
+                }
+            }
+            catch (Exception ex)
+            {
+                result.Message = ex.Message;
+                return result;
+            }
+            return result;
+        }
     }
-}
+ }
+

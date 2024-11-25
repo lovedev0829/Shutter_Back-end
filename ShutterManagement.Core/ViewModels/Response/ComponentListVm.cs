@@ -10,6 +10,8 @@ namespace ShutterManagement.Core.ViewModels.Response
     {
         public Guid? ComponentId { get; set; }
         public string? ComponentName { get; set; }
+        public string? ProductTypeId { get; set; }
+        public string? ProductName { get; set; }
         public bool? IsActive { get; set; }
         public Guid? TenantId { get; set; }
         public decimal? MarkupPercentage { get; set; }
@@ -26,6 +28,10 @@ namespace ShutterManagement.Core.ViewModels.Response
         public Guid? RawMaterialId { get; set; }
         public decimal? Quantity { get; set; }
         public decimal? WasteFactor { get; set; }
+
+        public string? MaterialName { get; set; }
     }
+
+  
 
 }
