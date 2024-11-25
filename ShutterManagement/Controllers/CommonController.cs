@@ -30,10 +30,12 @@ namespace ShutterManagement.Controllers
         private readonly IComponentService componentService;
         private readonly IMstProductType mstProductType;
         private readonly IAddress address;
+        private readonly IOption option;
+        private readonly IProductService productService;
 
         public CommonController(IMasterCreate masterCreate, FileUploadHelper fileUpload, ClaimsProperty claimsProperty,
             IJobTitleService jobTitleService,IMaterial material,IVendorService vendorService, 
-            IComponentService componentService,IMstProductType mstProductType,IAddress address)
+            IComponentService componentService,IMstProductType mstProductType,IAddress address,IOption option,IProductService productService)
         {
             this.masterCreate = masterCreate;
             this.fileUpload = fileUpload;
@@ -48,6 +50,8 @@ namespace ShutterManagement.Controllers
             this.componentService = componentService;
             this.address= address;
             this.mstProductType = mstProductType;
+            this.option = option;
+            this.productService = productService;
         }
 
 
@@ -65,7 +69,7 @@ namespace ShutterManagement.Controllers
         }
 
 
-        [HttpPost]
+        [HttpGet]
         [Route("GetAllJobTitle")]
         public async Task<IActionResult> GetAllJobTitle()
         {
@@ -73,7 +77,7 @@ namespace ShutterManagement.Controllers
             res.Data = res.Data.Where(x => x.IsActive == true).ToList();
             return Ok(res);
         }
-        [HttpPost]
+        [HttpGet]
         [Route("GetAllMaterial")]
         public async Task<IActionResult> GetAllMeterial()
         {
@@ -83,7 +87,7 @@ namespace ShutterManagement.Controllers
             return Ok(res);
         }
 
-        [HttpPost]
+        [HttpGet]
         [Route("GetAllVendor")]
         public async Task<IActionResult> GetAllVendor()
         {
@@ -91,7 +95,7 @@ namespace ShutterManagement.Controllers
             res.Data = res.Data.Where(x => x.IsActive == true).ToList();
             return Ok(res);
         }
-        [HttpPost]
+        [HttpGet]
         [Route("GetAllComponent")]
         public async Task<IActionResult> GetAllComponent()
         {
@@ -99,7 +103,7 @@ namespace ShutterManagement.Controllers
             res.Data = res.Data.Where(x => x.IsActive == true).ToList();
             return Ok(res);
         }
-        [HttpPost]
+        [HttpGet]
         [Route("GetAllAddress")]
         public async Task<IActionResult> GetAllAddress()
         {
@@ -116,9 +120,6 @@ namespace ShutterManagement.Controllers
             res.Data = res.Data.Where(x => x.IsActive == true).ToList();
             return Ok(res);
         }
-
-
-
         //[HttpPost]
         //[Route("MasterCreate")]
         //public IActionResult MasterCreate(CreatePayloadVm model)
@@ -270,6 +271,24 @@ namespace ShutterManagement.Controllers
         //    return Ok($"Contact with ID {id} successfully deleted.");
 
         //}
+        [HttpGet]
+        [Route("GetAllOption")]
+        public async Task<IActionResult> GetAllOption()
+        {
+            var res = await option.GetAll_Option(filter);
+            res.Data = res.Data.Where(x => x.IsActive == true).ToList();
+            return Ok(res);
+        }
+
+        [HttpGet]
+        [Route("")]
+        public async Task<IActionResult> GetAllProduct()
+        {
+            var res =await productService.GetAll_Product(filter);
+            res.Data=res.Data.Where(x=>x.IsActive == true).ToList();    
+            return Ok(res);
+        }
+       
 
 
     }
