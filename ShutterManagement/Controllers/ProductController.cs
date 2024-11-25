@@ -68,7 +68,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("AddProductComponent")]
-        //[Authorize(Roles = "ComponentView")]
+        [Authorize(Roles = "ProductsEdit")]
         public async Task<IActionResult> AddComponentMaterial(CreateProductComponentVm model)
         {
             var result = await productcomponentservice.AddProductComponent(model);
@@ -77,7 +77,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("UpdateProductComponent")]
-        //[Authorize(Roles = "ComponentView")]
+        [Authorize(Roles = "ProductsEdit")]
         public async Task<IActionResult> UpdateComponentMaterial(UpdateProductComponentVm model)
         {
             var result = await productcomponentservice.UpdateProductComponent(model);
@@ -86,7 +86,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("DeleteProductComponent")]
-        //[Authorize(Roles = "ComponentView")]
+        [Authorize(Roles = "ProductsEdit")]
         public async Task<IActionResult> DeleteComponentMaterial(Guid id)
         {
             var result = await productcomponentservice.Delete(id);
