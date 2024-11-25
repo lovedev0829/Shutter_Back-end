@@ -250,14 +250,16 @@ namespace ShutterManagement.Business.Services
                     {
                         var ComponentMaterial = (from cm in dbContext.TblComponentMaterials
                                                  join m in dbContext.TblRawMaterials on cm.RawMaterialId equals m.RawMaterialId
-                                                 where cm.ComponentId == item.ComponentId
+                                                 where cm.ComponentId == item.ComponentId && cm.IsDelete == false
                                                  select new ComponentMaterialVm
                                                  {
                                                      ComponentMaterialId = cm.ComponentMaterialId,
                                                      RawMaterialId = cm.RawMaterialId,
                                                      WasteFactor = cm.WasteFactor,
                                                      Quantity = cm.Quantity,
-                                                     MaterialName = m.MaterialName
+                                                     MaterialName = m.MaterialName,
+                                                     IsDelete = cm.IsDelete,
+                                                     IsActive = cm.IsActive
                                                  }).ToList();
 
                         item.ComponentMaterials = ComponentMaterial;

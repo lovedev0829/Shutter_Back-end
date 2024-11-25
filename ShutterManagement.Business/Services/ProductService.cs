@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static Azure.Core.HttpHeader;
 
 namespace ShutterManagement.Business.Services
 {
@@ -193,34 +194,58 @@ namespace ShutterManagement.Business.Services
 
                 if (isTenantValid)
                 {
-                    var product = (await GetAll())
-                        .Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId)
-                        .ToList();
 
-                    var productComponents = productComponentService.GetAllQuerable()
-                        .Where(cm => cm.IsDelete == false && cm.TenantId == AppConstant.LoggedInTenantId)
-                        .ToList();
+                    var productslist = (from p in dbContext.TblProducts
+                                    join pt in dbContext.MstProductTypes on p.ProductType equals pt.ProductId.ToString()
+                                    where p.IsDelete == false
+                                    select new ProductListVm
+                                    {
+                                        ProductId = p.ProductId,
+                                        ProductName = p.ProductName,
+                                        ProductType = p.ProductType,
+                                        ProductTypeName = pt.ProductName,
+                                        Notes = p.Notes,
+                                        Markup = p.Markup,
+                                        IsActive = p.IsActive,
+                                        TenantId = p.TenantId,
+                                    }).ToList();
 
-                    var filteredComponents = product
+
+                    foreach (var item in productslist)
+                    {
+                        var productComponents1 = (from pc in dbContext.TblProductComponents
+                                                 join c in dbContext.TblComponents on pc.ComponentId equals c.ComponentId
+                                                 where pc.ProductId == item.ProductId && pc.IsDelete == false
+                                                 select new ProductComponents
+                                                 {
+                                                     ProductComponentId = pc.ProductComponentId,
+                                                     ComponentId = pc.ComponentId,
+                                                     Quantity = pc.Quantity,
+                                                     ComponentName = c.ComponentName
+                                                 }).ToList();
+
+                        item.ProductComponents = productComponents1;
+                    }
+
+
+                 
+
+                    var filteredComponents = productslist
                         .Where(x =>
                             string.IsNullOrEmpty(filter.SearchValue) ||
                             (x.ProductName ?? "").ToLower().Contains(filter.SearchValue.Trim().ToLower()) ||
                             (x.ProductType ?? "").ToLower().Contains(filter.SearchValue.Trim().ToLower()) ||
                             (x.Markup.ToString() ?? "").ToLower().Contains(filter.SearchValue.Trim().ToLower()) ||
-                            productComponents
-                                .Any(cm => cm.ProductId == x.ProductId &&
-                                           (cm.ComponentId.ToString().Contains(filter.SearchValue.Trim()) ||
-                                            cm.Quantity.ToString().Contains(filter.SearchValue.Trim()))) 
-                                            
-                        )
+                            (x.ProductType.ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
+                            (x.ProductTypeName ?? "").ToLower().Contains(filter.SearchValue))
                         .ToList();
 
-                    var paginatedRecords = filteredComponents
+                    var filteredRecords = filteredComponents
                         .Skip((filter.PageNo - 1) * filter.RecordPerPage)
                         .Take(filter.RecordPerPage)
                         .ToList();
 
-                    responseVm.Data = paginatedRecords.Select(x => new ProductListVm
+                    responseVm.Data = filteredRecords.Select(x => new ProductListVm
                     {
                         ProductId = x.ProductId,
                         ProductName = x.ProductName,
@@ -228,20 +253,26 @@ namespace ShutterManagement.Business.Services
                         TenantId = x.TenantId,
                         Notes = x.Notes,
                         Markup = x.Markup,
-                        ProductComponents = productComponents
-                            .Where(cm => cm.ProductId == x.ProductId)
-                            .Select(cm => new ProductComponents
-                            {
-                                ProductComponentId = cm.ProductComponentId,
-                                ComponentId = cm.ComponentId,
-                                Quantity = cm.Quantity
-                                //CreatedAt = cm.CreatedAt
-                            }).ToList()
+                        ProductType = x.ProductType,
+                        ProductTypeName = x.ProductTypeName
                     }).ToList();
 
+                    var TakenRecords = filteredRecords
+                        .Skip((filter.PageNo - 1) * filter.RecordPerPage)
+                        .Take(filter.RecordPerPage)
+                        .ToList();
                     responseVm.IsSuccess = true;
-                    responseVm.Message = AppConstant.FetchSuccessMsg;
-                    responseVm.TotalRecords = filteredComponents.Count;
+
+                    if (TakenRecords != null && TakenRecords.Count > 0)
+                    {
+                        responseVm.Data = TakenRecords.ToList();
+                        responseVm.Message = AppConstant.UpdateSuccessMsg;
+                        responseVm.TotalRecords = filteredRecords.Count;
+                    }
+                    else
+                    {
+                        responseVm.Message = AppConstant.NoDataFound;
+                    }
                 }
                 else
                 {
@@ -250,13 +281,13 @@ namespace ShutterManagement.Business.Services
             }
             catch (Exception ex)
             {
-                responseVm.IsSuccess = false;
-                responseVm.Message = $"Error: {ex.Message}";
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
             }
 
             return await Task.FromResult(responseVm);
         }
-        
+
+
 
         public async Task<IResponseVm<string>> Update_Product(UpdateProduct model)
         {
