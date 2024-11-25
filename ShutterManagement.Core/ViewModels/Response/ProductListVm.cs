@@ -11,6 +11,8 @@ namespace ShutterManagement.Core.ViewModels.Response
         public Guid ProductId { get; set; }
         public string? ProductName { get; set; }
         public string? ProductType { get; set; }
+
+        public string? ProductTypeName { get; set; }
         public string? Notes { get; set; }
         public decimal? Markup { get; set; }
         public bool? IsActive { get; set; }
@@ -22,6 +24,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public Guid ProductComponentId { get; set; }
         public decimal? Quantity { get; set; }
         public Guid? ComponentId { get; set; }
+        public string? ComponentName { get; set; }
     }
 }
 

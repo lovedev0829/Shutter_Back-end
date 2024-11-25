@@ -30,6 +30,9 @@ namespace ShutterManagement.Core.ViewModels.Response
         public decimal? WasteFactor { get; set; }
 
         public string? MaterialName { get; set; }
+
+        public bool?  IsActive { get; set; }
+        public bool?  IsDelete { get; set; }
     }
 
   

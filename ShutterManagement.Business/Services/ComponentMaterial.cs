@@ -2,10 +2,12 @@
 using ShutterManagement.Core;
 using ShutterManagement.Core.ViewModels;
 using ShutterManagement.Core.ViewModels.Request;
+using ShutterManagement.Core.ViewModels.Response;
 using ShutterManagement.DAL.Context;
 using ShutterManagement.Services;
 using System;
 using System.Collections.Generic;
+using System.Data.Entity;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -37,45 +39,64 @@ namespace ShutterManagement.Business.Services
                 if (isTenantValid)
                 {
                     bool allMaterialsAddedSuccessfully = true;
+                    var IsComponentExist =  await dbContext.TblComponents
+                            .AnyAsync(x => x.ComponentId == model.ComponentId && x.TenantId == AppConstant.LoggedInTenantId                                         
+                                           && x.IsDelete == true);
 
-                    foreach (var material in model.Materials)
-                    {
-                        try
+                    if (IsComponentExist) {
+                        foreach (var material in model.Materials)
                         {
-                            TblComponentMaterial newComponentMaterial = new TblComponentMaterial
+                            var existingMaterial = await dbContext.TblComponentMaterials
+                                .AnyAsync(x => x.RawMaterialId == material.MaterialId
+                                               && x.ComponentId == model.ComponentId
+                                               && x.IsActive == true);
+
+                            if (!existingMaterial)
                             {
-                                ComponentId = model.ComponentId,
-                                RawMaterialId = material.MaterialId,
-                                Quantity = material.Qty,
-                                WasteFactor = material.WasteFactor,
-                                CreatedAt = DateTime.Now,
-                                CreatedBy = AppConstant.LoggedInUserID,
-                                IsActive = true,
-                                IsDelete = false,
-                                TenantId = AppConstant.LoggedInTenantId
-                            };
+                                try
+                                {
+                                    TblComponentMaterial newComponentMaterial = new TblComponentMaterial
+                                    {
+                                        ComponentId = model.ComponentId,
+                                        RawMaterialId = material.MaterialId,
+                                        Quantity = material.Qty,
+                                        WasteFactor = material.WasteFactor,
+                                        CreatedAt = DateTime.Now,
+                                        CreatedBy = AppConstant.LoggedInUserID,
+                                        IsActive = true,
+                                        IsDelete = false,
+                                        TenantId = AppConstant.LoggedInTenantId
+                                    };
 
-                            dbContext.TblComponentMaterials.Add(newComponentMaterial);
+                                }
+                                catch (Exception ex)
+                                {
+                                    responseVm.Message = $"Failed to add material {material.MaterialId}: {ex.Message}";
+                                }
+
+                            }
+                            else
+                            {
+                                responseVm.Message = "Material already added.";
+                            }
+
+                            if (allMaterialsAddedSuccessfully)
+                            {
+                                await dbContext.SaveChangesAsync();
+                                responseVm.IsSuccess = true;
+                                responseVm.Message = AppConstant.InsertSuccessMsg;
+                            }
+                            else
+                            {
+                                responseVm.Message = "Data not added.";
+                            }
                         }
-                        catch (Exception ex)
-                        {
-                            responseVm.Message = $"Failed to add material {material.MaterialId}: {ex.Message}";
-                        }
-                    }
-
-                    if (allMaterialsAddedSuccessfully)
-                    {
-                        await dbContext.SaveChangesAsync();
-                        responseVm.IsSuccess = true;
-                        responseVm.Message = AppConstant.InsertSuccessMsg;
-                    }
-
-
+                     }
                     else
                     {
-                        responseVm.Message = "Data not added.";
+                        responseVm.Message = "Component Does not exist.";
                     }
-                }
+                    }
                 else
                 {
                     responseVm.Message = AppConstant.AccessDenied;
@@ -156,27 +177,29 @@ namespace ShutterManagement.Business.Services
 
                 if (isTenantValid)
                 {
-                    var componentMaterial = GetAllQuerable()
-                        .Where(x => x.ComponentMaterialId == model.ComponentMaterialId &&
-                                    x.TenantId == AppConstant.LoggedInTenantId &&
-                                    x.IsDelete == false)
-                        .FirstOrDefault();
+                    var componentMaterialExist = GetAllQuerable().Where
+                        (x => x.ComponentMaterialId != model.ComponentMaterialId && x.ComponentId == model.ComponentId
+                        && x.RawMaterialId == model.RawMaterialId &&
+                        x.TenantId == AppConstant.LoggedInTenantId &&
+                        x.IsDelete == false).FirstOrDefault();
+                        
 
-                    if (componentMaterial != null)
+                    if (componentMaterialExist == null)
                     {
-                        componentMaterial.Quantity = model.Quantity;
-                        componentMaterial.WasteFactor = model.WasteFactor;
-                        componentMaterial.UpdatedAt = DateTime.Now;
-                        componentMaterial.ModifiedBy = AppConstant.LoggedInUserID;
+                        componentMaterialExist.RawMaterialId = model.RawMaterialId;
+                        componentMaterialExist.Quantity = model.Quantity;
+                        componentMaterialExist.WasteFactor = model.WasteFactor;
+                        componentMaterialExist.UpdatedAt = DateTime.Now;
+                        componentMaterialExist.ModifiedBy = AppConstant.LoggedInUserID;
 
-                        await Update(componentMaterial);
+                         Update(componentMaterialExist);
 
                         responseVm.IsSuccess = true;
                         responseVm.Message = AppConstant.UpdateSuccessMsg;
                     }
                     else
                     {
-                        responseVm.Message = AppConstant.NoDataFound;
+                        responseVm.Message = AppConstant.AlreadyExists;
                     }
                 }
                 else
@@ -192,5 +215,7 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
+    
+     
     }
 }

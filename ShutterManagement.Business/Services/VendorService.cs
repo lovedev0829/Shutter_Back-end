@@ -30,7 +30,7 @@ namespace ShutterManagement.Business.Services
                 var IsVendorExist = GetAllQuerable()
                       .Where(c => c.VendorId == Id
                                   && c.TenantId == AppConstant.LoggedInTenantId
-                                  && c.IsActive == true
+                                
                                   && c.IsDelete == false)
                       .FirstOrDefault();
                 if (IsVendorExist != null)
@@ -107,7 +107,6 @@ namespace ShutterManagement.Business.Services
                 var IsVendorExist = GetAllQuerable()
                       .Where(c => c.VendorId == Id
                                   && c.TenantId == AppConstant.LoggedInTenantId
-                                  && c.IsActive == true
                                   && c.IsDelete == false)
                       .FirstOrDefault();
                 if (IsVendorExist != null)
@@ -206,7 +205,7 @@ namespace ShutterManagement.Business.Services
                 {
                     var vendor =  GetAllQuerable()
                         .Where(c => c.VendorId == model.VendorId && c.TenantId == AppConstant.LoggedInTenantId
-                        && c.IsActive == true && c.IsDelete == false).FirstOrDefault();
+                        && c.IsDelete == false).FirstOrDefault();
                     
                     if (vendor != null)
                     {

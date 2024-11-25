@@ -16,6 +16,8 @@ namespace ShutterManagement.Business.Interfaces
         Task<IResponseVm<string>> AddComponentMaterial(CreateComponentMaterialVm model);
         Task<IResponseVm<string>> UpdateComponentMaterial(UpdateComponentMaterialVm model);
         Task<IResponseVm<string>> Delete(Guid Id);
+
+
         ////Task<IResponseVm<string>> ActiveInActive(Guid Id);
         //Task<IResponseVm<string>> Delete(Guid Id);
     }
