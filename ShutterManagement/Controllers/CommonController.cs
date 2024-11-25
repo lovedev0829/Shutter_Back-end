@@ -33,11 +33,12 @@ namespace ShutterManagement.Controllers
         private readonly EmailHelper emailHelper;
         private readonly IOption option;
         private readonly IProductService productService;
+        private readonly IUnitofMeasurementService unitofMeasurementService;
 
         public CommonController(IMasterCreate masterCreate, FileUploadHelper fileUpload, ClaimsProperty claimsProperty,
             IJobTitleService jobTitleService,IMaterial material,IVendorService vendorService 
             ,EmailHelper emailHelper,
-            IComponentService componentService,IMstProductType mstProductType,IAddress address,IOption option,IProductService productService)
+            IComponentService componentService,IMstProductType mstProductType,IAddress address,IOption option,IProductService productService,IUnitofMeasurementService unitofMeasurementService)
         {
             this.masterCreate = masterCreate;
             this.fileUpload = fileUpload;
@@ -55,6 +56,7 @@ namespace ShutterManagement.Controllers
             this.mstProductType = mstProductType;
             this.option = option;
             this.productService = productService;
+            this.unitofMeasurementService = unitofMeasurementService;
         }
 
 
@@ -299,8 +301,15 @@ namespace ShutterManagement.Controllers
             res.Data=res.Data.Where(x=>x.IsActive == true).ToList();    
             return Ok(res);
         }
-       
 
+        [HttpGet]
+        [Route("GetAllUnitOfMeasurement")]
+        public async Task<IActionResult> GetAllUnitOfMeasurement()
+        {
+            var res = await unitofMeasurementService.GetAll(filter);
+            res.Data = res.Data.Where(x => x.IsActive == true).ToList();
+            return Ok(res);
+        }
 
     }
 }

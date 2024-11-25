@@ -23,6 +23,8 @@ public partial class ShutterDbContext : DbContext
 
     public virtual DbSet<MstProductType> MstProductTypes { get; set; }
 
+    public virtual DbSet<MstUnitofMeasurement> MstUnitofMeasurements { get; set; }
+
     public virtual DbSet<TblAddress> TblAddresses { get; set; }
 
     public virtual DbSet<TblComponent> TblComponents { get; set; }
@@ -145,6 +147,21 @@ public partial class ShutterDbContext : DbContext
                 .HasMaxLength(200)
                 .IsUnicode(false);
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+        });
+
+        modelBuilder.Entity<MstUnitofMeasurement>(entity =>
+        {
+            entity.HasKey(e => e.UnitofMeasurementId).HasName("PK__MstUnito__21E7C5537FB3558A");
+
+            entity.ToTable("MstUnitofMeasurement", "dbo");
+
+            entity.Property(e => e.UnitofMeasurementId)
+                .ValueGeneratedNever()
+                .HasColumnName("unitofMeasurementId");
+            entity.Property(e => e.UnitofMeasurementName)
+                .HasMaxLength(200)
+                .IsUnicode(false)
+                .HasColumnName("unitofMeasurementName");
         });
 
         modelBuilder.Entity<TblAddress>(entity =>

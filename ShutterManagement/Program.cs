@@ -121,6 +121,7 @@ builder.Services.AddScoped<IComponentMaterial, ComponentMaterial>();
 builder.Services.AddScoped<IMstProductType, ProductTypeService>();
 builder.Services.AddScoped<IProductComponentService,ProductComponentService>();
 builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<IUnitofMeasurementService, UnitofMeasurementService>();
 
 var app = builder.Build();
 
