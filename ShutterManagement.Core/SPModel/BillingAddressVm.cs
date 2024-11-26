@@ -10,10 +10,10 @@ namespace ShutterManagement.Core.SPModel
 {
      public class BillingAddressVm
     {
-
-        [MaxLength(128)]
-        [RegularExpression("^[a-zA-Z]+$")]
         [DefaultValue("")]
+        //[Required]
+        [MaxLength(100)]
+        [RegularExpression("^[\\p{L} .'-]+$", ErrorMessage = AppConstant.AlphabaticalError)]
         public string? FullName { get; set; } = string.Empty;
 
       
@@ -27,22 +27,27 @@ namespace ShutterManagement.Core.SPModel
         [DefaultValue("")]
         public string? Email { get; set; } = string.Empty;
 
-        [MaxLength(100)]
-        [RegularExpression("^[a-zA-Z]+$")]
+        [Required]
+        [MaxLength(50)]
+        [RegularExpression("^[\\p{L} .'-]+$", ErrorMessage = AppConstant.AlphabaticalError)]
         [DefaultValue("")]
         public string? City { get; set; } = string.Empty;
 
-        [MaxLength(100)]
-        [RegularExpression("^[a-zA-Z]+$")]
+        [Required]
+        [MaxLength(50)]
+        [RegularExpression("^[\\p{L} .'-]+$", ErrorMessage = AppConstant.AlphabaticalError)]
         [DefaultValue("")]
         public string? State { get; set; } = string.Empty;
 
-        [MaxLength(6)]
-        [RegularExpression(@"^\d{6}$")]
+        [Required]
+        [MaxLength(6), MinLength(5)]
+        [RegularExpression(@"^\d{5,6}$", ErrorMessage = AppConstant.ZipCodeError)]
         [DefaultValue("")]
         public string? ZipCode { get; set; } = string.Empty;
 
-        [MaxLength(250)]
+        [Required]
+        [MaxLength(50)]
+        [RegularExpression("^[\\p{L} .'-]+$", ErrorMessage = AppConstant.AlphabaticalError)]
         [DefaultValue("")]
         public string? StreetAddress { get; set; } = string.Empty;
     }
