@@ -217,6 +217,103 @@ namespace ShutterManagement.Services
             }
             return result;
         }
+
+        public async Task<IResponseVm<string>> ProfileUpdate(ProfileUpdateVm profileUpdate)
+        {
+            IResponseVm<string> result = new ResponseVm<string>();
+            try
+            {
+                var UserExistsDetails = GetAllQuerable().Where(x => x.IsDelete == false && x.IsActive == true &&
+                x.Id == (AppConstant.LoggedInUserID)
+                && x.TenantId == AppConstant.LoggedInTenantId
+                );
+                if (UserExistsDetails.Count() == 1)
+                {
+
+                    bool IsPhoneExists = await AnyAsync(x => x.IsDelete == false &&
+                  (x.Phone == profileUpdate.Phone) && x.Id != AppConstant.LoggedInUserID
+                  );
+                    if (IsPhoneExists)
+                    {
+                        result.Message = "Phone " + AppConstant.AlreadyExists;
+                        return result;
+                    }
+
+                    bool IsEmailExists = await AnyAsync(x => x.IsDelete == false &&
+                      (x.Email == profileUpdate.Email) && x.Id != AppConstant.LoggedInUserID
+                      );
+                    if (IsEmailExists)
+                    {
+                        result.Message = "Email " + AppConstant.AlreadyExists;
+                        return result;
+                    }
+
+                    var UpdateUserDetails = UserExistsDetails.FirstOrDefault();
+                    if (UpdateUserDetails != null)
+                    {
+                        UpdateUserDetails.FirstName = profileUpdate.FirstName;
+                        UpdateUserDetails.LastName = profileUpdate.LastName;
+                        UpdateUserDetails.Username = profileUpdate.Email;
+                        UpdateUserDetails.Phone = profileUpdate.Phone;
+                        UpdateUserDetails.ModifiedAt = DateTime.Now;
+                        UpdateUserDetails.ModifiedBy = AppConstant.LoggedInUserID;
+                        var res = await Update(UpdateUserDetails);
+                        result.IsSuccess = true;
+                        result.Message = AppConstant.UpdateSuccessMsg;
+                    }
+                    else
+                    {
+                        result.Message = AppConstant.NoUserFound;
+                    }
+                }
+                else
+                {
+                    result.Message = AppConstant.NoUserFound;
+                }
+            }
+            catch (Exception ex)
+            {
+                result.Message = AppConstant.ExceptionError + ex.Message;
+            }
+            return result;
+        }
+
+        public async Task<IResponseVm<UserResponse>> ProfileGetById()
+        {
+            IResponseVm<UserResponse> responseVm = new ResponseVm<UserResponse>();
+            try
+            {
+                var address = await GetAllQuerable()
+                    .Where(c => c.Id == AppConstant.LoggedInUserID && c.IsActive == true && c.TenantId == AppConstant.LoggedInTenantId)
+                    .Select(c => new UserResponse
+                    {
+                        FirstName = c.FirstName,
+                        LastName = c.LastName,
+                        Email = c.Email,
+                        UserName=c.Username,
+                        Phone=c.Phone
+                    })
+                    .FirstOrDefaultAsync();
+
+                if (address != null)
+                {
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = $"{AppConstant.FetchSuccessMsg}";
+                    responseVm.Data = address;
+                    responseVm.TotalRecords = 1;
+                }
+                else
+                {
+                    responseVm.Message = AppConstant.NoDataFound;
+                }
+            }
+            catch (Exception ex)
+            {
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+            }
+            return responseVm;
+        }
     }
- }
+}
+
 

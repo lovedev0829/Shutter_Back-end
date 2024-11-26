@@ -41,6 +41,19 @@ namespace ShutterManagement.Controllers
             var passwordDetails = await _authService.ResetPassWord(passwordChange);
             return Ok(passwordDetails);
         }
-
+        [HttpPost]
+        [Route("ProfileUpdate")]
+        public async Task<IActionResult> ProfileUpdate(ProfileUpdateVm vm)
+        {
+            var profileUpdateDetails = await _authService.ProfileUpdate(vm);
+            return Ok(profileUpdateDetails);
+        }
+        [HttpPost]
+        [Route("ProfileGetById")]
+        public async Task<IActionResult> ProfileGetById()
+        {
+            var profileGetById = await _authService.ProfileGetById();
+            return Ok(profileGetById);
+        }
     }
 }

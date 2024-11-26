@@ -11,5 +11,8 @@ namespace ShutterManagement.Services
         Task<IResponseVm<UserLoginDetails>> LoginAsync(LoginDetailVM user);
         Task<IResponseVm<HomePageContent>> HomePageContent(string CompanyCode);
         Task<IResponseVm<PasswordChangeVm>> ResetPassWord(PasswordChangeVm passwordChangeVm);
+        Task<IResponseVm<string>> ProfileUpdate(ProfileUpdateVm vm);
+        Task<IResponseVm<UserResponse>> ProfileGetById();
+
     }
 }
