@@ -186,7 +186,7 @@ namespace ShutterManagement.Services
                         UpdateUserDetails.LastName = UserDetails.LastName;
                         UpdateUserDetails.Username = UserDetails.Email;
                         UpdateUserDetails.Email = UserDetails.Email;
-                        UpdateUserDetails.JobTitleId = string.IsNullOrEmpty(UserDetails.JobTitle) ? null : Guid.Parse(UserDetails.JobTitle);
+                        UpdateUserDetails.JobTitleId = string.IsNullOrEmpty(UserDetails?.JobTitle) ? (Guid?)null: (Guid.TryParse(UserDetails.JobTitle, out var parsedGuid) ? parsedGuid : (Guid?)null);
                         UpdateUserDetails.Phone = UserDetails.Phone;
                         UpdateUserDetails.ModifiedAt = DateTime.Now;
                         UpdateUserDetails.ModifiedBy = AppConstant.LoggedInUserID;
@@ -291,7 +291,6 @@ namespace ShutterManagement.Services
                         UpdateUserDetails.ModifiedAt = DateTime.Now;
                         UpdateUserDetails.ModifiedBy = AppConstant.LoggedInUserID;
                         var res = await Update(UpdateUserDetails);
-
                         result.IsSuccess = true;
                         result.Message = AppConstant.UpdateSuccessMsg;
                     }
