@@ -40,54 +40,6 @@ namespace ShutterManagement.Business.Services
         }
 
 
-        public Task<IResponseVm<string>> ActiveInActive(Guid Id)
-        {
-            IResponseVm<string> responseVm = new ResponseVm<string>();
-            try
-            {
-                var IsTenant = tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null);
-                var IsComponentExists = GetAllQuerable()
-                      .Where(c => c.ComponentId == Id
-                                  && c.TenantId == AppConstant.LoggedInTenantId
-                                  && c.IsDelete == false)
-                      .FirstOrDefault();
-                if (IsComponentExists != null)
-                {
-                    var IsMaterialInComponent = _componentMaterial.GetAllQuerable().Where
-                      (x => x.ComponentId == Id && x.IsDelete == false
-                      && x.TenantId == AppConstant.LoggedInTenantId).ToList();
-                    if (IsMaterialInComponent != null && IsMaterialInComponent.Count > 0)
-                    {
-                        foreach (var item in IsMaterialInComponent)
-                        {
-                            item.IsActive = !item.IsActive;
-                            item.UpdatedAt = DateTime.Now;
-                            item.ModifiedBy = AppConstant.LoggedInUserID;
-                        }
-                    }
-
-                    IsComponentExists.IsActive = !IsComponentExists.IsActive;
-                    IsComponentExists.UpdatedAt = DateTime.Now;
-                    IsComponentExists.ModifiedBy = AppConstant.LoggedInUserID;
-
-                    var res = Update(IsComponentExists);
-
-                    responseVm.IsSuccess = true;
-                    responseVm.Message = AppConstant.UpdateSuccessMsg;
-                }
-                else
-                {
-                    responseVm.Message = $"{AppConstant.NoDataFound}";
-                }
-            }
-            catch (Exception ex)
-            {
-                responseVm.Message = AppConstant.ExceptionError + ex.Message;
-            }
-
-            return Task.FromResult(responseVm);
-        }
-
         public async Task<IResponseVm<string>> Create_Component(CreateComponent model)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
@@ -98,7 +50,7 @@ namespace ShutterManagement.Business.Services
                 {
                     TblComponent component = new TblComponent
                     {
-                        ComponentId = new Guid(),
+                        ComponentId = Guid.NewGuid(),
                         ComponentName = model.ComponentName,
                         ProductType = model.ProductType,
                         PricingExpression = model.PricingExpression,
@@ -151,6 +103,103 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
+        public async Task<IResponseVm<dynamic>> Update_Component(UpdateComponent model)
+        {
+            IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
+            try
+            {
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
+
+                if (IsTenant)
+                {
+                    var IsComponentExists = GetAllQuerable()
+                        .Where(c => c.ComponentId == Guid.Parse(model.ComponentId)
+                                    && c.TenantId == AppConstant.LoggedInTenantId
+                                    && c.IsDelete == false)
+                        .FirstOrDefault();
+
+                    if (IsComponentExists != null)
+                    {
+                        IsComponentExists.ComponentName = model.ComponentName;
+                        IsComponentExists.ProductType = model.ProductType;
+                        IsComponentExists.PricingExpression = model.PricingExpression;
+                        IsComponentExists.MarkupPercentage = model.MarkupPercentage;
+                        IsComponentExists.Notes = model.Notes;
+                        IsComponentExists.UpdatedAt = DateTime.Now;
+                        IsComponentExists.ModifiedBy = AppConstant.LoggedInUserID;
+
+                        await Update(IsComponentExists);
+                        responseVm.IsSuccess = true;
+                        responseVm.Message = AppConstant.UpdateSuccessMsg;
+                    }
+                    else
+                    {
+                        responseVm.Message = AppConstant.NoDataFound;
+                    }
+                }
+                else
+                {
+                    responseVm.Message = AppConstant.AccessDenied;
+                }
+            }
+            catch (Exception ex)
+            {
+                responseVm.IsSuccess = false;
+                responseVm.Message = $"{AppConstant.ExceptionError} {ex.Message}";
+            }
+
+            return responseVm;
+        }
+
+        public async Task<IResponseVm<string>> ActiveInActive(Guid Id)
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+            try
+            {
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
+                var IsComponentExists = GetAllQuerable()
+                      .Where(c => c.ComponentId == Id
+                                  && c.TenantId == AppConstant.LoggedInTenantId
+                                  && c.IsDelete == false)
+                      .FirstOrDefault();
+                if (IsComponentExists != null)
+                {
+                    var IsMaterialInComponent = _componentMaterial.GetAllQuerable().Where
+                      (x => x.ComponentId == Id && x.IsDelete == false
+                      && x.TenantId == AppConstant.LoggedInTenantId).ToList();
+                    if (IsMaterialInComponent != null && IsMaterialInComponent.Count > 0)
+                    {
+                        foreach (var item in IsMaterialInComponent)
+                        {
+                            item.IsActive = !item.IsActive;
+                            item.UpdatedAt = DateTime.Now;
+                            item.ModifiedBy = AppConstant.LoggedInUserID;
+                            await _componentMaterial.Update(item);
+                        }
+                    }
+
+                    IsComponentExists.IsActive = !IsComponentExists.IsActive;
+                    IsComponentExists.UpdatedAt = DateTime.Now;
+                    IsComponentExists.ModifiedBy = AppConstant.LoggedInUserID;
+
+                    var res = Update(IsComponentExists);
+
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = AppConstant.UpdateSuccessMsg;
+                }
+                else
+                {
+                    responseVm.Message = $"{AppConstant.NoDataFound}";
+                }
+            }
+            catch (Exception ex)
+            {
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+            }
+
+            return responseVm;
+        }
+
         public async Task<IResponseVm<string>> Delete(Guid Id)
         {
 
@@ -165,8 +214,8 @@ namespace ShutterManagement.Business.Services
                                       && c.TenantId == AppConstant.LoggedInTenantId
                                       && c.IsDelete == false)
                           .FirstOrDefault();
-                    var IsComponentInProduct = productService.AnyAsync(x => x.ComponentId == Id && x.IsActive == true && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
-                    if (IsComponentInProduct != null)
+                    var IsComponentInProduct = await productService.AnyAsync(x => x.ComponentId == Id && x.IsActive == true && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
+                    if (!IsComponentInProduct)
                     {
                         if (IsComponentExists != null)
                         {
@@ -182,6 +231,7 @@ namespace ShutterManagement.Business.Services
                                     item.IsDelete = true;
                                     item.UpdatedAt = DateTime.Now;
                                     item.ModifiedBy = AppConstant.LoggedInUserID;
+                                    await _componentMaterial.Update(item);
                                 }
                             }
 
@@ -190,7 +240,7 @@ namespace ShutterManagement.Business.Services
                             IsComponentExists.UpdatedAt = DateTime.Now;
                             IsComponentExists.ModifiedBy = AppConstant.LoggedInUserID;
 
-                            var res = Update(IsComponentExists);
+                            var res = await Update(IsComponentExists);
 
                             responseVm.IsSuccess = true;
                             responseVm.Message = AppConstant.DeleteSuccessMsg;
@@ -233,8 +283,7 @@ namespace ShutterManagement.Business.Services
 
                 if (isTenantValid)
                 {
-                    var componentList = (from c in dbContext.TblComponents
-                                        
+                    var componentList = (from c in dbContext.TblComponents.OrderByDescending(x=>x.CreatedAt)
                                          join pt in dbContext.MstProductTypes on c.ProductType equals pt.ProductId.ToString()
                                          where c.IsDelete == false
                                          select new ComponentListVm
@@ -313,56 +362,9 @@ namespace ShutterManagement.Business.Services
                 responseVm.Message = AppConstant.ExceptionError + ex.Message;
             }
 
-            return await Task.FromResult(responseVm);
-        }
-
-
-        public async Task<IResponseVm<dynamic>> Update_Component(UpdateComponent model)
-        {
-            IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
-            try
-            {
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
-
-                if (IsTenant)
-                {
-                    var IsComponentExists = GetAllQuerable()
-                        .Where(c => c.ComponentId == Guid.Parse(model.ComponentId)
-                                    && c.TenantId == AppConstant.LoggedInTenantId
-                                    && c.IsDelete == false)
-                        .FirstOrDefault();
-
-                    if (IsComponentExists != null)
-                    {
-                        IsComponentExists.ComponentName = model.ComponentName;
-                        IsComponentExists.ProductType = model.ProductType;
-                        IsComponentExists.PricingExpression = model.PricingExpression;
-                        IsComponentExists.MarkupPercentage = model.MarkupPercentage;
-                        IsComponentExists.Notes = model.Notes;
-                        IsComponentExists.UpdatedAt = DateTime.Now;
-                        IsComponentExists.ModifiedBy = AppConstant.LoggedInUserID;
-
-                        await Update(IsComponentExists);
-                        responseVm.IsSuccess = true;
-                        responseVm.Message = AppConstant.UpdateSuccessMsg;
-                    }
-                    else
-                    {
-                        responseVm.Message = AppConstant.NoDataFound;
-                    }
-                }
-                else
-                {
-                    responseVm.Message = AppConstant.AccessDenied;
-                }
-            }
-            catch (Exception ex)
-            {
-                responseVm.IsSuccess = false;
-                responseVm.Message = $"{AppConstant.ExceptionError} {ex.Message}";
-            }
-
             return responseVm;
         }
+
+
     }
 }

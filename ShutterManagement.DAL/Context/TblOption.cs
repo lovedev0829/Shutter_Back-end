@@ -9,11 +9,7 @@ public partial class TblOption
 
     public string? OptionName { get; set; }
 
-    public string? OptionType { get; set; }
-
     public string? Description { get; set; }
-
-    public decimal? AdditionalCost { get; set; }
 
     public DateTime? CreatedAt { get; set; }
 
@@ -34,6 +30,8 @@ public partial class TblOption
     public bool? IsDefault { get; set; }
 
     public virtual MstProductType? ProductType { get; set; }
+
+    public virtual ICollection<TblOptionsType> TblOptionsTypes { get; set; } = new List<TblOptionsType>();
 
     public virtual TblTenant? Tenant { get; set; }
 }

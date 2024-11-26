@@ -19,7 +19,7 @@ namespace ShutterManagement.Business.Services
         private readonly ShutterDbContext dbContext;
         private readonly ITenantService tenantService;
 
-        public ComponentMaterial(ShutterDbContext dbContext,ITenantService tenantService)
+        public ComponentMaterial(ShutterDbContext dbContext, ITenantService tenantService)
         {
             this.dbContext = dbContext;
             this.tenantService = tenantService;
@@ -28,7 +28,7 @@ namespace ShutterManagement.Business.Services
         public async Task<IResponseVm<string>> AddComponentMaterial(CreateComponentMaterialVm model)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
-
+            string MaterialExistsMessage = "";
             try
             {
                 var isTenantValid = await tenantService.AnyAsync(x =>
@@ -38,65 +38,49 @@ namespace ShutterManagement.Business.Services
                         x.IsActive == true);
                 if (isTenantValid)
                 {
-                    bool allMaterialsAddedSuccessfully = true;
-                    var IsComponentExist =  await dbContext.TblComponents
-                            .AnyAsync(x => x.ComponentId == model.ComponentId && x.TenantId == AppConstant.LoggedInTenantId                                         
+                    var IsComponentExist = await dbContext.TblComponents
+                            .AnyAsync(x => x.ComponentId == model.ComponentId && x.TenantId == AppConstant.LoggedInTenantId
                                            && x.IsDelete == true);
 
-                    if (IsComponentExist) {
+                    if (IsComponentExist)
+                    {
                         foreach (var material in model.Materials)
                         {
-                            var existingMaterial = await dbContext.TblComponentMaterials
-                                .AnyAsync(x => x.RawMaterialId == material.MaterialId
+                            var existingMaterial = await AnyAsync(x => x.RawMaterialId == material.MaterialId
                                                && x.ComponentId == model.ComponentId
-                                               && x.IsActive == true);
+                                               && x.IsActive == true && x.IsDelete == false);
 
                             if (!existingMaterial)
                             {
-                                try
+                                TblComponentMaterial newComponentMaterial = new TblComponentMaterial
                                 {
-                                    TblComponentMaterial newComponentMaterial = new TblComponentMaterial
-                                    {
-                                        ComponentId = model.ComponentId,
-                                        RawMaterialId = material.MaterialId,
-                                        Quantity = material.Qty,
-                                        WasteFactor = material.WasteFactor,
-                                        CreatedAt = DateTime.Now,
-                                        CreatedBy = AppConstant.LoggedInUserID,
-                                        IsActive = true,
-                                        IsDelete = false,
-                                        TenantId = AppConstant.LoggedInTenantId
-                                    };
-
-                                }
-                                catch (Exception ex)
-                                {
-                                    responseVm.Message = $"Failed to add material {material.MaterialId}: {ex.Message}";
-                                }
+                                    ComponentId = model.ComponentId,
+                                    RawMaterialId = material.MaterialId,
+                                    Quantity = material.Qty,
+                                    WasteFactor = material.WasteFactor,
+                                    CreatedAt = DateTime.Now,
+                                    CreatedBy = AppConstant.LoggedInUserID,
+                                    IsActive = true,
+                                    IsDelete = false,
+                                    TenantId = AppConstant.LoggedInTenantId
+                                };
+                                await Add(newComponentMaterial);
 
                             }
                             else
                             {
-                                responseVm.Message = "Material already added.";
+                                MaterialExistsMessage +=  AppConstant.MaterialAlreadyExists;
                             }
-
-                            if (allMaterialsAddedSuccessfully)
-                            {
-                                await dbContext.SaveChangesAsync();
-                                responseVm.IsSuccess = true;
-                                responseVm.Message = AppConstant.InsertSuccessMsg;
-                            }
-                            else
-                            {
-                                responseVm.Message = "Data not added.";
-                            }
+                            responseVm.IsSuccess = true;
+                            responseVm.Message = AppConstant.InsertSuccessMsg + MaterialExistsMessage;
+                          
                         }
-                     }
+                    }
                     else
                     {
-                        responseVm.Message = "Component Does not exist.";
+                        responseVm.Message = AppConstant.ComponentNotExists;
                     }
-                    }
+                }
                 else
                 {
                     responseVm.Message = AppConstant.AccessDenied;
@@ -104,7 +88,7 @@ namespace ShutterManagement.Business.Services
             }
             catch (Exception ex)
             {
-                responseVm.Message = AppConstant.ExceptionError + ex.Message; 
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
             }
 
             return responseVm;
@@ -141,6 +125,66 @@ namespace ShutterManagement.Business.Services
                         await Update(componentMaterial);
 
                         responseVm.IsSuccess = true;
+                        responseVm.Message = AppConstant.DeleteSuccessMsg;
+                    }
+                    else
+                    {
+                        responseVm.Message = AppConstant.NoDataFound;
+                    }
+                }
+                else
+                {
+                    responseVm.Message = AppConstant.AccessDenied;
+                }
+            }
+            catch (Exception ex)
+            {
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+            }
+
+            return responseVm;
+        }
+
+        public async Task<IResponseVm<string>> UpdateComponentMaterial(UpdateComponentMaterialVm model)
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+
+            try
+            {
+                var isTenantValid = await tenantService.AnyAsync(x =>
+                    x.TenantId == AppConstant.LoggedInTenantId &&
+                    x.ParentTenantId == null &&
+                    x.IsDelete == false &&
+                    x.IsActive == true);
+
+                if (isTenantValid)
+                { 
+                    
+                    var IsComponentMaterialExists = GetAllQuerable()
+                        .Where(x => x.ComponentMaterialId == model.ComponentMaterialId && x.ComponentId == model.ComponentId
+                         && x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true
+                         && x.IsDelete == false).FirstOrDefault();
+
+                    if (IsComponentMaterialExists != null)
+                    {
+                        var IsMaterialAlreadyExists = await AnyAsync(x => x.ComponentMaterialId != model.ComponentMaterialId &&
+                        x.ComponentId != model.ComponentId &&
+                        x.RawMaterialId == model.RawMaterialId && x.IsActive == true && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
+                        if (IsMaterialAlreadyExists)
+                        {
+                            responseVm.Message = AppConstant.MaterialAlreadyExists;
+                            return responseVm;
+                        }
+
+                        IsComponentMaterialExists.RawMaterialId = model.RawMaterialId;
+                        IsComponentMaterialExists.Quantity = model.Quantity;
+                        IsComponentMaterialExists.WasteFactor = model.WasteFactor;
+                        IsComponentMaterialExists.UpdatedAt = DateTime.Now;
+                        IsComponentMaterialExists.ModifiedBy = AppConstant.LoggedInUserID;
+
+                        await Update(IsComponentMaterialExists);
+
+                        responseVm.IsSuccess = true;
                         responseVm.Message = AppConstant.UpdateSuccessMsg;
                     }
                     else
@@ -161,61 +205,7 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-    
 
-    public async Task<IResponseVm<string>> UpdateComponentMaterial(UpdateComponentMaterialVm model)
-        {
-            IResponseVm<string> responseVm = new ResponseVm<string>();
 
-            try
-            {
-                var isTenantValid = await tenantService.AnyAsync(x =>
-                    x.TenantId == AppConstant.LoggedInTenantId &&
-                    x.ParentTenantId == null &&
-                    x.IsDelete == false &&
-                    x.IsActive == true);
-
-                if (isTenantValid)
-                {
-                    var componentMaterialExist = GetAllQuerable().Where
-                        (x => x.ComponentMaterialId != model.ComponentMaterialId && x.ComponentId == model.ComponentId
-                        && x.RawMaterialId == model.RawMaterialId &&
-                        x.TenantId == AppConstant.LoggedInTenantId &&
-                        x.IsDelete == false).FirstOrDefault();
-                        
-
-                    if (componentMaterialExist == null)
-                    {
-                        componentMaterialExist.RawMaterialId = model.RawMaterialId;
-                        componentMaterialExist.Quantity = model.Quantity;
-                        componentMaterialExist.WasteFactor = model.WasteFactor;
-                        componentMaterialExist.UpdatedAt = DateTime.Now;
-                        componentMaterialExist.ModifiedBy = AppConstant.LoggedInUserID;
-
-                         Update(componentMaterialExist);
-
-                        responseVm.IsSuccess = true;
-                        responseVm.Message = AppConstant.UpdateSuccessMsg;
-                    }
-                    else
-                    {
-                        responseVm.Message = AppConstant.AlreadyExists;
-                    }
-                }
-                else
-                {
-                    responseVm.Message = AppConstant.AccessDenied;
-                }
-            }
-            catch (Exception ex)
-            {
-                responseVm.Message = AppConstant.ExceptionError + ex.Message;
-            }
-
-            return responseVm;
-        }
-
-    
-     
     }
 }

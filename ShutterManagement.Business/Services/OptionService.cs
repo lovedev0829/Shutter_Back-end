@@ -1,4 +1,5 @@
-﻿using ShutterManagement.Business.Interfaces;
+﻿using Microsoft.Extensions.Options;
+using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core;
 using ShutterManagement.Core.ViewModels;
 using ShutterManagement.Core.ViewModels.Request;
@@ -17,28 +18,31 @@ namespace ShutterManagement.Business.Services
     public class OptionService : BaseRepository<ShutterDbContext, TblOption>, IOption
     {
         private readonly ShutterDbContext _context;
+        private readonly IOptionsTypeService optionsTypeService;
         private readonly ClaimsProperty claimsProperty;
         private readonly ITenantService tenantService;
 
-        public OptionService(ShutterDbContext context, ClaimsProperty claimsProperty, ITenantService tenantService)
+        public OptionService(ShutterDbContext context, IOptionsTypeService optionsTypeService,
+            ClaimsProperty claimsProperty, ITenantService tenantService)
         {
             _context = context;
+            this.optionsTypeService = optionsTypeService;
             this.claimsProperty = claimsProperty;
             this.tenantService = tenantService;
         }
+
         public async Task<IResponseVm<string>> ActiveInActive(Guid Id)
         {
 
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null);
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsActive == true && x.IsDelete == false);
                 if (IsTenant)
                 {
                     var IsOptionExists = GetAllQuerable()
                        .Where(c => c.OptionId == Id
                                    && c.TenantId == AppConstant.LoggedInTenantId
-                                   && c.IsActive == true
                                    && c.IsDelete == false)
                        .FirstOrDefault();
                     if (IsOptionExists != null)
@@ -52,7 +56,7 @@ namespace ShutterManagement.Business.Services
                     }
                     else
                     {
-                        responseVm.Message = AppConstant.NoUserFound;
+                        responseVm.Message = AppConstant.NoDataFound;
                     }
                 }
                 else
@@ -75,14 +79,15 @@ namespace ShutterManagement.Business.Services
                 var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null);
                 if (IsTenant)
                 {
-                    foreach (var item in model.Options)
+                    var IsOptionNameExists = await AnyAsync(x => x.OptionName == model.OptionName
+                    && x.IsActive == true && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId
+                    && x.ProductTypeId == model.ProductTypeId);
+                    if (!IsOptionNameExists)
                     {
                         TblOption options = new TblOption
                         {
                             OptionId = Guid.NewGuid(),
-                            OptionName = item.OptionName,
-                            OptionType = model.OptionType,
-                            AdditionalCost = item.AdditionalCost,
+                            OptionName = model.OptionName,
                             ProductTypeId = model.ProductTypeId,
                             CreatedAt = DateTime.Now,
                             CreatedBy = AppConstant.LoggedInUserID,
@@ -91,8 +96,39 @@ namespace ShutterManagement.Business.Services
                             IsDelete = false
                         };
                         await Add(options);
-                        responseVm.IsSuccess = true;
-                        responseVm.Message = AppConstant.InsertSuccessMsg;
+                        if (options.OptionId != Guid.Empty)
+                        {
+                            foreach (var item in model.Options)
+                            {
+                                var IsOptionTypeExists = await optionsTypeService.AnyAsync(x => x.IsActive == true
+                                && x.IsDelete == false && x.OptionId == options.OptionId && x.OptionType == item.OptionType);
+                                if (!IsOptionTypeExists)
+                                {
+                                    TblOptionsType optionsType = new TblOptionsType
+                                    {
+                                        OptionId = options.OptionId,
+                                        OptionType = item.OptionType,
+                                        AdditionalCost = item.AdditionalCost.ToString(),
+                                        IsDefault = item.IsDefault,
+                                        CreatedAt = DateTime.Now,
+                                        CreatedBy = AppConstant.LoggedInUserID,
+                                        IsActive = true,
+                                        IsDelete = false
+                                    };
+                                    await optionsTypeService.Add(optionsType);
+                                }
+                            }
+                            responseVm.IsSuccess = true;
+                            responseVm.Message = AppConstant.InsertSuccessMsg;
+                        }
+                        else
+                        {
+                            responseVm.Message = AppConstant.ExternalError;
+                        }
+                    }
+                    else
+                    {
+                        responseVm.Message = AppConstant.AlreadyExists;
                     }
                 }
                 else
@@ -107,20 +143,17 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        
-
         public async Task<IResponseVm<string>> Delete(Guid Id)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null);
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsActive == true && x.IsDelete == false);
                 if (IsTenant)
                 {
                     var IsOptionExists = GetAllQuerable()
                        .Where(c => c.OptionId == Id
                                    && c.TenantId == AppConstant.LoggedInTenantId
-                                   && c.IsActive == true
                                    && c.IsDelete == false)
                        .FirstOrDefault();
                     if (IsOptionExists != null)
@@ -135,7 +168,7 @@ namespace ShutterManagement.Business.Services
                     }
                     else
                     {
-                        responseVm.Message = AppConstant.NoUserFound;
+                        responseVm.Message = AppConstant.NoDataFound;
                     }
                 }
                 else
@@ -150,26 +183,50 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-
-
-        public async Task<IResponseVm<List<OptionListVm>>> GetAll_Option(Pagination filter)
+        public async Task<IResponseVm<List<OptionsList>>> GetAll_Option(Pagination filter)
         {
-            IResponseVm<List<OptionListVm>> responseVm = new ResponseVm<List<OptionListVm>>();
+            IResponseVm<List<OptionsList>> responseVm = new ResponseVm<List<OptionsList>>();
             try
             {
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null);
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsActive == true && x.IsDelete == false);
                 if (IsTenant)
                 {
                     var IsOptionExists = (await GetAll())
-                        .Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId)
+                        .Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId).OrderByDescending(x=>x.CreatedAt)
+                        .Select(x=> new OptionsList
+                        {
+                            OptionId = x.OptionId,
+                            IsActive = x.IsActive,
+                            OptionName = x.OptionName,
+                            ProductTypeId = x.ProductTypeId,
+                            ProductTypeName = dbContext.MstProductTypes.Where(y=>y.ProductId == x.ProductTypeId).Select(z=>z.ProductName).FirstOrDefault()
+                        })
                         .ToList();
 
+                    foreach(var item in IsOptionExists)
+                    {
+                        
+                        var optionsType = optionsTypeService.GetAllQuerable().
+                            Where(x => x.IsDelete == false && x.OptionId == item.OptionId)
+                            .Select(x=> new OptionsType
+                            {
+                                AdditionalCost = x.AdditionalCost,
+                                IsDefault = x.IsDefault,
+                                OptionType = x.OptionType,
+                                OptionTypeId = x.OptionTypeId
+                            })
+                            .ToList();
+                        item.Options = optionsType;
+                    }
+                    
+                    filter.SearchValue = filter.SearchValue.Trim().ToLower();
+
                     var FilterRecords = IsOptionExists
-                    .Where(x => string.IsNullOrEmpty(filter.SearchValue.Trim()) ||
-                     (x.OptionName ?? "").Contains(filter.SearchValue.Trim())
-                    ||
-                    (x.OptionType ?? "").Contains(filter.SearchValue.Trim()))
-                    .ToList();
+                                    .Where(x => (string.IsNullOrEmpty(filter.SearchValue) ? true :
+                                     x.OptionId.ToString() == filter.SearchValue
+                                    || (x.ProductTypeName ?? "").Contains(filter.SearchValue)
+                                    || (x.OptionName ?? "").Contains(filter.SearchValue)))
+                                    .ToList();
 
 
                     var TakenRecords = FilterRecords
@@ -177,23 +234,9 @@ namespace ShutterManagement.Business.Services
                         .Take(filter.RecordPerPage)
                         .ToList();
 
-                    if (TakenRecords != null && TakenRecords.Count > 0)
-                    {
-                        responseVm.Data = TakenRecords.Select(x => new OptionListVm
-                        {
-                            ProductTypeId = x.ProductTypeId,
-                            OptionId = x.OptionId,
-                            OptionType = x.OptionType,
-                            OptionName = x.OptionName,
-                            AdditionalCost=x.AdditionalCost,
-                            IsDefault = x.IsDefault,
-                            IsActive = x.IsActive,
-                            TenantId = x.TenantId,
-                        }).ToList();
-                        responseVm.TotalRecords = FilterRecords.Count;
-                    }
                     responseVm.IsSuccess = true;
-                    responseVm.Message = $"{AppConstant.FetchSuccessMsg}";
+                    responseVm.Data = TakenRecords;
+                    responseVm.Message = AppConstant.FetchSuccessMsg;
                     responseVm.TotalRecords = FilterRecords.Count;  
                 }
                 else
@@ -209,13 +252,12 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-
         public async Task<IResponseVm<string>> Update_Option(UpdateOption model)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null);
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsActive == true && x.IsDelete == false);
                 if (IsTenant)
                 {
                     var IsOptionExists = GetAllQuerable()
@@ -223,25 +265,67 @@ namespace ShutterManagement.Business.Services
                                     && c.TenantId == AppConstant.LoggedInTenantId
                                     && c.IsDelete == false)
                         .FirstOrDefault();
-                    foreach (var item in model.Options)
+
+                    if(IsOptionExists != null)
                     {
-                        if (IsOptionExists != null)
+                        IsOptionExists.OptionName = model.OptionName;
+                        IsOptionExists.ModifiedBy = AppConstant.LoggedInUserID;
+                        IsOptionExists.UpdatedAt = DateTime.Now;
+                        IsOptionExists.ProductTypeId = model.ProductTypeId;
+
+                        await Update(IsOptionExists);
+
+                        var OptionsTypes = optionsTypeService.GetAllQuerable().Where(x => x.IsActive == true
+                        && x.IsDelete == false && x.OptionId == IsOptionExists.OptionId).Select(x=> new OptionsType
                         {
-                            IsOptionExists.OptionName = item.OptionName;
-                            IsOptionExists.OptionType = model.OptionType;
-                            IsOptionExists.AdditionalCost = item.AdditionalCost;
-                            IsOptionExists.ProductTypeId = model.ProductTypeId;
-                            IsOptionExists.UpdatedAt = DateTime.Now;
-                            IsOptionExists.ModifiedBy = AppConstant.LoggedInUserID;
-                            var res = Update(IsOptionExists);
-                            responseVm.IsSuccess = true;
-                            responseVm.Message = $"{AppConstant.UpdateSuccessMsg}";
+                            AdditionalCost = x.AdditionalCost,
+                            IsDefault = x.IsDefault ,
+                            OptionType = x.OptionType,
+                            OptionTypeId = x.OptionTypeId
+                        }).ToArray();
+
+                       
+                        var InsertRecords = model.Options.Where(a1 => !OptionsTypes.Any(a2 => a1.OptionType == a2.OptionType && a1.AdditionalCost == a2.AdditionalCost && a1.IsDefault == a2.IsDefault)).ToList();
+                        var DeleteRecords = OptionsTypes.Where(a1 => !model.Options.Any(a2 => a1.OptionType == a2.OptionType && a1.AdditionalCost == a2.AdditionalCost && a1.IsDefault == a2.IsDefault)).ToList();
+
+                        foreach (var item in DeleteRecords)
+                        {
+                            var data = optionsTypeService.GetAllQuerable().Where(x => x.OptionTypeId == item.OptionTypeId
+                             && x.IsDelete == false).FirstOrDefault();
+                            data.IsDelete = true;
+                            data.IsActive = false;
+                            await optionsTypeService.Update(data);
                         }
 
-                        else
+                        foreach (var item in InsertRecords)
                         {
-                            responseVm.Message = AppConstant.NoUserFound;
+                            var IsOptionTypeExists = await optionsTypeService.AnyAsync(x => x.IsActive == true 
+                                && x.IsDelete == false && x.OptionId == IsOptionExists.OptionId && x.OptionType == item.OptionType);
+                            if (!IsOptionTypeExists)
+                            {
+                                TblOptionsType optionsType = new TblOptionsType
+                                {
+                                    OptionId = IsOptionExists.OptionId,
+                                    OptionType = item.OptionType,
+                                    AdditionalCost = item.AdditionalCost.ToString(),
+                                    IsDefault = item.IsDefault,
+                                    CreatedAt = DateTime.Now,
+                                    CreatedBy = AppConstant.LoggedInUserID,
+                                    IsActive = true,
+                                    IsDelete = false
+                                };
+                                await optionsTypeService.Add(optionsType);
+                            }
                         }
+
+                        
+
+                        responseVm.IsSuccess = true;
+                        responseVm.Message = AppConstant.UpdateSuccessMsg;
+                    }
+                    else
+                    {
+                        responseVm.Message = AppConstant.NoDataFound;
                     }
                 }
                 else

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -8,6 +9,7 @@ namespace ShutterManagement.Core.ViewModels.Response
 {
     public class ComponentListVm
     {
+        [DefaultValue("")]
         public Guid? ComponentId { get; set; }
         public string? ComponentName { get; set; }
         public string? ProductType { get; set; }

@@ -25,6 +25,9 @@ namespace ShutterManagement.Core
         public static string ModelError { get; set; } = "Something incorrect in details. ";
 
         public static string SuccessMsg { get; set; } = "Success";
+        public static string PasswordChangeMessage { get; set; } = "Password Change Successfully";
+        public static string ComponentNotExists { get; set; } = "Component Does not exist.";
+        public static string MaterialAlreadyExists { get; set; } = "Material is already exists.";
 
         public static string InsertSuccessMsg { get; set; } = "Data Added Successfully";
         public static string UpdateSuccessMsg { get; set; } = "Data Updated Successfully";

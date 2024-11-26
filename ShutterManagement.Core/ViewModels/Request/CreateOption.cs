@@ -13,9 +13,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         [DefaultValue("")]
         public Guid? ProductTypeId { get; set; }
         [DefaultValue("")]
-        public string? OptionType { get; set; }
-
-
+        public string? OptionName { get; set; }
         public Options[]? Options { get; set; }
     }
 
@@ -25,7 +23,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         [Required]
         [MaxLength(100)]
         [RegularExpression(@"^[a-zA-Z0-9!@#$%^&*()_+={}\[\]:;""'<>,.?/\|`~ \s-]*$", ErrorMessage = AppConstant.AlphabaticalError)]
-        public string? OptionName { get; set; }
+        public string? OptionType { get; set; }
 
         [DefaultValue("")]
         [Required]

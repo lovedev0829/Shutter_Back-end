@@ -195,19 +195,26 @@ namespace ShutterManagement.Services
             return responseVm;
         }
 
-        public async Task<IResponseVm<PasswordChangeVm>> ResetPassWord(PasswordChangeVm passwordChangeVm)
+        public async Task<IResponseVm<PasswordChangeVm>> ResetPassWord(PasswordChangeVm vm)
         {
             IResponseVm<PasswordChangeVm> result = new ResponseVm<PasswordChangeVm>();
             try
             {
-                var passwordCheck = (await GetAll()).Where(x => x.Pwd == passwordChangeVm.OldPassWord && x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
+                var IsUserExists = (await GetAll()).Where(x => x.Pwd == AesEncryptionHelper.Encrypt(vm.OldPassWord ?? "") && x.TenantId == AppConstant.LoggedInTenantId && x.Id == AppConstant.LoggedInUserID).FirstOrDefault();
+                if(IsUserExists != null)
                 {
-                    passwordCheck.Pwd = ShutterManagement.Core.Common.AesEncryptionHelper.Encrypt(passwordChangeVm.PassWord);
-                    passwordCheck.ModifiedAt = DateTime.Now;
-                    passwordCheck.ModifiedBy= AppConstant.LoggedInUserID;
-                    await Update(passwordCheck);
+                    IsUserExists.Pwd = AesEncryptionHelper.Encrypt(vm.PassWord ?? "");
+                    IsUserExists.ModifiedAt = DateTime.Now;
+                    IsUserExists.ModifiedBy= AppConstant.LoggedInUserID;
+                    IsUserExists.ExpireAt = null;
+                    IsUserExists.Token = null;
+                    await Update(IsUserExists);
                     result.IsSuccess = true;
-                    result.Message = "Password Change Successfully";
+                    result.Message = AppConstant.PasswordChangeMessage;
+                }
+                else
+                {
+                    result.Message = AppConstant.NoUserFound;
                 }
             }
             catch (Exception ex)

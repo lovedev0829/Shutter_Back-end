@@ -33,12 +33,13 @@ namespace ShutterManagement.Core.ViewModels.Request
         [MaxLength(1000)]
         public string? Notes { get; set; }
 
-        public List<ComponentMaterialModel> Materials { get; set; }
+        public List<ComponentMaterialModel>? Materials { get; set; }
 
     }
 
     public class ComponentMaterialModel
     {
+        [DefaultValue("")]
         public Guid MaterialId { get; set; }
         public decimal? Qty { get; set; }
         public decimal? WasteFactor { get; set; }

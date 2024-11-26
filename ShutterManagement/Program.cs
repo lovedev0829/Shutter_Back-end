@@ -109,6 +109,7 @@ builder.Services.AddScoped<IVendorService, VendorService>();
 builder.Services.AddScoped<IMaterial, MaterialService>();
 builder.Services.AddScoped<IVendorService, VendorService>();
 builder.Services.AddScoped<IOption, OptionService>();
+builder.Services.AddScoped<IOptionsTypeService, OptionsTypeService>();
 builder.Services.AddScoped<IUserRoleService,UserRoleService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAuthService, AuthService>();

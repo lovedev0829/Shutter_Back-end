@@ -51,6 +51,8 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
 
     public virtual DbSet<TblOption> TblOptions { get; set; }
 
+    public virtual DbSet<TblOptionsType> TblOptionsTypes { get; set; }
+
     public virtual DbSet<TblPayment> TblPayments { get; set; }
 
     public virtual DbSet<TblProduct> TblProducts { get; set; }
@@ -511,14 +513,12 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.ToTable("TblOptions", "dbo");
 
             entity.Property(e => e.OptionId).HasDefaultValueSql("(newid())");
-            entity.Property(e => e.AdditionalCost).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
             entity.Property(e => e.OptionName).HasMaxLength(255);
-            entity.Property(e => e.OptionType).HasMaxLength(100);
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
@@ -530,6 +530,25 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.HasOne(d => d.Tenant).WithMany(p => p.TblOptions)
                 .HasForeignKey(d => d.TenantId)
                 .HasConstraintName("FK__TblOption__Tenan__7DCDAAA2");
+        });
+
+        modelBuilder.Entity<TblOptionsType>(entity =>
+        {
+            entity.HasKey(e => e.OptionTypeId).HasName("PK__TblOptio__96A2FCCE4B23055B");
+
+            entity.ToTable("TblOptions_Type");
+
+            entity.Property(e => e.OptionTypeId).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.AdditionalCost)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.ModifiedAt).HasColumnType("datetime");
+            entity.Property(e => e.OptionType).HasMaxLength(200);
+
+            entity.HasOne(d => d.Option).WithMany(p => p.TblOptionsTypes)
+                .HasForeignKey(d => d.OptionId)
+                .HasConstraintName("FK__TblOption__Optio__0169315C");
         });
 
         modelBuilder.Entity<TblPayment>(entity =>

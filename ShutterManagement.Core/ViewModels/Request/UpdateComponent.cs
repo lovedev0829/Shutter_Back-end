@@ -10,6 +10,7 @@ namespace ShutterManagement.Core.ViewModels.Request
 {
     public class UpdateComponent 
     {
+        [DefaultValue("")]
         public string ComponentId { get; set; } = string.Empty;
 
         [DefaultValue("")]
