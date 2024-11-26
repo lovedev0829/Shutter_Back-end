@@ -92,10 +92,28 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
                 var tenantid = Guid.Parse(model.TenantId);
+                var braindingInfo = GetAllQuerable().Where(x => x.TenantId.ToString() == model.TenantId && x.IsDelete == false).Select(x => x.BrandingInfo).FirstOrDefault();
+                if (braindingInfo != null)
+                {
+                    bool IsTenantEmailExists = await tenantBrandingService.AnyAsync(x => x.Id != braindingInfo && x.Email == model.Email);
+                    if (IsTenantEmailExists)
+                    {
+                        responseVm.Message = "Email " + AppConstant.AlreadyExists;
+                        return responseVm;
+                    }
+                    bool IsTenantPhoneExists = await tenantBrandingService.AnyAsync(x => x.Id != braindingInfo && x.PhoneNumber == model.PhoneNumber);
+                    if (IsTenantPhoneExists)
+                    {
+                        responseVm.Message = "Phone " + AppConstant.AlreadyExists;
+                        return responseVm;
+                    }
+
+                }
                 var IsCodeExists = await AnyAsync(x => x.IsActive == true
                     && x.IsDelete == false && x.Code == model.Code && x.TenantId != tenantid);
                 if (!IsCodeExists)
                 {
+
                     //var HashPassword = AesEncryptionHelper.Encrypt(model.Password ?? "");
 
                     SqlParameter[] sqlParameters =
@@ -133,7 +151,6 @@ namespace ShutterManagement.Business.Services
             }
             return responseVm;
         }
-
 
         public async Task<IResponseVm<string>> TenantDelete(string TenantId)
         {

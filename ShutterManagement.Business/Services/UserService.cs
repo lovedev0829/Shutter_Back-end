@@ -134,7 +134,11 @@ namespace ShutterManagement.Services
             IResponseVm<string> result = new ResponseVm<string>();
             try
             {
-
+                if(UserDetails.UserId == AppConstant.LoggedInUserID.ToString())
+                {
+                    result.Message = AppConstant.AccessDenied;
+                    return result;
+                }
                 var UserExistsDetails = GetAllQuerable().Where(x => x.IsDelete == false &&
                 x.Id == Guid.Parse(UserDetails.UserId)
                 && x.TenantId == AppConstant.LoggedInTenantId
@@ -238,6 +242,11 @@ namespace ShutterManagement.Services
             IResponseVm<string> result = new ResponseVm<string>();
             try
             {
+                if (UserId == AppConstant.LoggedInUserID.ToString())
+                {
+                    result.Message = AppConstant.AccessDenied;
+                    return result;
+                }
                 var IsUserExists = GetAllQuerable().Where(x => x.IsDelete == false &&
                 x.Id == Guid.Parse(UserId)
                 && x.TenantId == AppConstant.LoggedInTenantId
@@ -278,6 +287,11 @@ namespace ShutterManagement.Services
             IResponseVm<string> result = new ResponseVm<string>();
             try
             {
+                if (UserId == AppConstant.LoggedInUserID.ToString())
+                {
+                    result.Message = AppConstant.AccessDenied;
+                    return result;
+                }
                 var IsUserExists = GetAllQuerable().Where(x => x.IsDelete == false &&
                 x.Id == Guid.Parse(UserId)
                 && x.TenantId == AppConstant.LoggedInTenantId
@@ -335,6 +349,7 @@ namespace ShutterManagement.Services
                 {
                     Users = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId).OrderByDescending(x => x.CreatedAt).ToList();
                 }
+                Users = Users.Where(x => x.Id != AppConstant.LoggedInUserID ).ToList();
                 foreach (var user in Users)
                 {
                     UsersList users = new UsersList

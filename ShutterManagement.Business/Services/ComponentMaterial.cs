@@ -69,11 +69,11 @@ namespace ShutterManagement.Business.Services
                             }
                             else
                             {
-                                MaterialExistsMessage +=  AppConstant.MaterialAlreadyExists;
+                                MaterialExistsMessage += "but some " + AppConstant.MaterialAlreadyExists;
                             }
                         }
                         responseVm.IsSuccess = true;
-                        responseVm.Message = AppConstant.UpdateSuccessMsg + "but some " + MaterialExistsMessage;
+                        responseVm.Message = AppConstant.UpdateSuccessMsg + MaterialExistsMessage;
 
                     }
                     else
@@ -168,7 +168,7 @@ namespace ShutterManagement.Business.Services
                     if (IsComponentMaterialExists != null)
                     {
                         var IsMaterialAlreadyExists = await AnyAsync(x => x.ComponentMaterialId != model.ComponentMaterialId &&
-                        x.ComponentId != model.ComponentId &&
+                        x.ComponentId == model.ComponentId &&
                         x.RawMaterialId == model.RawMaterialId && x.IsActive == true && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
                         if (IsMaterialAlreadyExists)
                         {
