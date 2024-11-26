@@ -38,9 +38,9 @@ namespace ShutterManagement.Business.Services
                         x.IsActive == true);
                 if (isTenantValid)
                 {
-                    var IsComponentExist = await dbContext.TblComponents
-                            .AnyAsync(x => x.ComponentId == model.ComponentId && x.TenantId == AppConstant.LoggedInTenantId
-                                           && x.IsDelete == true);
+                    var IsComponentExist = dbContext.TblComponents
+                            .Any(x => x.ComponentId == model.ComponentId && x.TenantId == AppConstant.LoggedInTenantId
+                                           && x.IsDelete == false);
 
                     if (IsComponentExist)
                     {
@@ -71,10 +71,10 @@ namespace ShutterManagement.Business.Services
                             {
                                 MaterialExistsMessage +=  AppConstant.MaterialAlreadyExists;
                             }
-                            responseVm.IsSuccess = true;
-                            responseVm.Message = AppConstant.InsertSuccessMsg + MaterialExistsMessage;
-                          
                         }
+                        responseVm.IsSuccess = true;
+                        responseVm.Message = AppConstant.UpdateSuccessMsg + "but some " + MaterialExistsMessage;
+
                     }
                     else
                     {
