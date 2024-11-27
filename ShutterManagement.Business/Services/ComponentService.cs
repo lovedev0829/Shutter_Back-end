@@ -48,6 +48,17 @@ namespace ShutterManagement.Business.Services
                 var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
                 if (IsTenant)
                 {
+
+                    bool IsComponentExists = await AnyAsync(x => x.IsDelete == false &&
+                      (x.ComponentName == model.ComponentName)
+                      && x.TenantId==AppConstant.LoggedInTenantId);
+                      
+                    if (IsComponentExists)
+                    {
+                        responseVm.Message = "Component Name " + AppConstant.AlreadyExists;
+                        return responseVm;
+                    }
+
                     TblComponent component = new TblComponent
                     {
                         ComponentId = Guid.NewGuid(),
@@ -117,7 +128,15 @@ namespace ShutterManagement.Business.Services
                                     && c.TenantId == AppConstant.LoggedInTenantId
                                     && c.IsDelete == false)
                         .FirstOrDefault();
+                    bool IsComponentNameExists = await AnyAsync(x => x.IsDelete == false &&
+                    (x.ComponentName == model.ComponentName)
+                    && x.TenantId == AppConstant.LoggedInTenantId && x.ComponentName!=model.ComponentName);
 
+                    if (IsComponentNameExists)
+                    {
+                        responseVm.Message = "Component Name " + AppConstant.AlreadyExists;
+                        return responseVm;
+                    }
                     if (IsComponentExists != null)
                     {
                         IsComponentExists.ComponentName = model.ComponentName;
@@ -127,7 +146,6 @@ namespace ShutterManagement.Business.Services
                         IsComponentExists.Notes = model.Notes;
                         IsComponentExists.UpdatedAt = DateTime.Now;
                         IsComponentExists.ModifiedBy = AppConstant.LoggedInUserID;
-
                         await Update(IsComponentExists);
                         responseVm.IsSuccess = true;
                         responseVm.Message = AppConstant.UpdateSuccessMsg;
@@ -147,10 +165,8 @@ namespace ShutterManagement.Business.Services
                 responseVm.IsSuccess = false;
                 responseVm.Message = $"{AppConstant.ExceptionError} {ex.Message}";
             }
-
             return responseVm;
         }
-
         public async Task<IResponseVm<string>> ActiveInActive(Guid Id)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
@@ -364,7 +380,5 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
-
-
     }
 }

@@ -63,7 +63,24 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                    TblVendor vendor = new TblVendor
+                bool IsVendorEmailExists = await AnyAsync(x => x.IsDelete == false &&
+                     (x.Email == model.Email)
+                     && x.TenantId == AppConstant.LoggedInTenantId);
+                if (IsVendorEmailExists)
+                {
+                    responseVm.Message = "Vendor Email " + AppConstant.AlreadyExists;
+                    return responseVm;
+                }
+                bool IsVendorPhoneExists = await AnyAsync(x => x.IsDelete == false &&
+                                        (x.PhoneNumber == model.PhoneNumber)
+                                        && x.TenantId == AppConstant.LoggedInTenantId);
+
+                if (IsVendorPhoneExists)
+                {
+                    responseVm.Message = "Vendor Phone " + AppConstant.AlreadyExists;
+                    return responseVm;
+                }
+                TblVendor vendor = new TblVendor
                     {
                         VendorName = model.VendorName,
                         Email= model.Email,
@@ -206,7 +223,24 @@ namespace ShutterManagement.Business.Services
                     var vendor =  GetAllQuerable()
                         .Where(c => c.VendorId == model.VendorId && c.TenantId == AppConstant.LoggedInTenantId
                         && c.IsDelete == false).FirstOrDefault();
-                    
+                    bool IsVendorEmail =  Any(x => x.IsDelete == false &&(x.Email == model.Email)
+                                           && x.TenantId == AppConstant.LoggedInTenantId && x.VendorId!=model.VendorId );
+
+                    if (IsVendorEmail)
+                    {
+                        responseVm.Message = "Vendor Email " + AppConstant.AlreadyExists;
+                        return Task.FromResult(responseVm);
+                    }
+                    bool IsVendorPhoneExists =  Any(x => x.IsDelete == false &&
+                                        (x.PhoneNumber == model.PhoneNumber)
+                                        && x.TenantId == AppConstant.LoggedInTenantId && x.VendorId != model.VendorId);
+
+                    if (IsVendorPhoneExists)
+                    {
+                        responseVm.Message = "Vendor Phone " + AppConstant.AlreadyExists;
+                        return Task.FromResult(responseVm);
+                    }
+
                     if (vendor != null)
                     {
                         vendor.VendorName = model.VendorName;
