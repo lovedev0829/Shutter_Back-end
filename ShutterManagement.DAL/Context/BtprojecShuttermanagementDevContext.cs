@@ -534,9 +534,9 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
 
         modelBuilder.Entity<TblOptionsType>(entity =>
         {
-            entity.HasKey(e => e.OptionTypeId).HasName("PK__TblOptio__96A2FCCE4B23055B");
+            entity.HasKey(e => e.OptionTypeId).HasName("PK__TblOptio__96A2FCCE87EE3A55");
 
-            entity.ToTable("TblOptions_Type");
+            entity.ToTable("TblOptions_Type", "dbo");
 
             entity.Property(e => e.OptionTypeId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.AdditionalCost)
@@ -548,7 +548,7 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
 
             entity.HasOne(d => d.Option).WithMany(p => p.TblOptionsTypes)
                 .HasForeignKey(d => d.OptionId)
-                .HasConstraintName("FK__TblOption__Optio__0169315C");
+                .HasConstraintName("FK__TblOption__Optio__1C1D2798");
         });
 
         modelBuilder.Entity<TblPayment>(entity =>

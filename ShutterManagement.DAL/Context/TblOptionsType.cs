@@ -24,6 +24,7 @@ public partial class TblOptionsType
     public Guid? CreatedBy { get; set; }
 
     public Guid? ModifiedBy { get; set; }
+
     public bool? IsDefault { get; set; }
 
     public virtual TblOption? Option { get; set; }

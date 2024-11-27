@@ -285,8 +285,8 @@ namespace ShutterManagement.Business.Services
                         }).ToArray();
 
                        
-                        var InsertRecords = model.Options.Where(a1 => !OptionsTypes.Any(a2 => a1.OptionType == a2.OptionType && a1.AdditionalCost == a2.AdditionalCost && a1.IsDefault == a2.IsDefault)).ToList();
-                        var DeleteRecords = OptionsTypes.Where(a1 => !model.Options.Any(a2 => a1.OptionType == a2.OptionType && a1.AdditionalCost == a2.AdditionalCost && a1.IsDefault == a2.IsDefault)).ToList();
+                        var InsertRecords = model.Options.Where(a1 => !OptionsTypes.Any(a2 => a1.OptionType == a2.OptionType && a1.AdditionalCost.ToString() == a2.AdditionalCost && a1.IsDefault == a2.IsDefault)).ToList();
+                        var DeleteRecords = OptionsTypes.Where(a1 => !model.Options.Any(a2 => a1.OptionType == a2.OptionType && a1.AdditionalCost.ToString() == a2.AdditionalCost && a1.IsDefault == a2.IsDefault)).ToList();
 
                         foreach (var item in DeleteRecords)
                         {
