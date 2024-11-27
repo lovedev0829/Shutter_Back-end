@@ -15,6 +15,7 @@ using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.Core;
 using Microsoft.AspNetCore.Http;
 using ShutterManagement.Core.Common;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace ShutterManagement.Business.Services
 {
@@ -49,6 +50,12 @@ namespace ShutterManagement.Business.Services
                     if (!IsParentExists)
                     {
                         responseVm.Message = AppConstant.TenantNotFound;
+                        return responseVm;
+                    }
+                    bool IsSubTenantEmailExists = await userService.AnyAsync(x => x.Email == model.Email && x.TenantId == AppConstant.LoggedInTenantId);
+                    if (IsSubTenantEmailExists)
+                    {
+                        responseVm.Message = "Email " + AppConstant.AlreadyExists;
                         return responseVm;
                     }
                     var HashPassword = AesEncryptionHelper.Encrypt(model.Password ?? "");
@@ -118,7 +125,7 @@ namespace ShutterManagement.Business.Services
                     }
                     var braindingInfo = GetAllQuerable().Where(x => x.TenantId.ToString() == model.TenantId && x.IsDelete == false).Select(x => x.BrandingInfo).FirstOrDefault();
                     if (braindingInfo != null) {
-                        bool IsSubTenantEmailExists = await tenantBrandingService.AnyAsync(x => x.Id != braindingInfo && x.Email == model.Email);
+                        bool IsSubTenantEmailExists = await userService.AnyAsync(x => x.Id != braindingInfo && x.Email == model.Email);
                         if (IsSubTenantEmailExists) {
                             responseVm.Message = "Email " + AppConstant.AlreadyExists;
                             return responseVm;

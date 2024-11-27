@@ -16,6 +16,7 @@ using ShutterManagement.Core.ViewModels.Response;
 using ShutterManagement.Core;
 using AutoMapper;
 using ShutterManagement.Core.Common;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace ShutterManagement.Business.Services
 {
@@ -50,7 +51,12 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.CodeAlreadyExists;
                     return responseVm;
                 }
-
+                bool IsTenantEmailExists = await tenantBrandingService.AnyAsync(x => x.Email == model.Email);
+                if (IsTenantEmailExists)
+                {
+                    responseVm.Message = "Email " + AppConstant.AlreadyExists;
+                    return responseVm;
+                }
                 var HashPassword = AesEncryptionHelper.Encrypt(model.Password ?? "");
                     SqlParameter[] sqlParameters =
                     {
@@ -101,12 +107,12 @@ namespace ShutterManagement.Business.Services
                         responseVm.Message = "Email " + AppConstant.AlreadyExists;
                         return responseVm;
                     }
-                    bool IsTenantPhoneExists = await tenantBrandingService.AnyAsync(x => x.Id != braindingInfo && x.PhoneNumber == model.PhoneNumber);
-                    if (IsTenantPhoneExists)
-                    {
-                        responseVm.Message = "Phone " + AppConstant.AlreadyExists;
-                        return responseVm;
-                    }
+                    //bool IsTenantPhoneExists = await tenantBrandingService.AnyAsync(x => x.Id != braindingInfo && x.PhoneNumber == model.PhoneNumber);
+                    //if (IsTenantPhoneExists)
+                    //{
+                    //    responseVm.Message = "Phone " + AppConstant.AlreadyExists;
+                    //    return responseVm;
+                    //}
 
                 }
                 var IsCodeExists = await AnyAsync(x => x.IsActive == true
