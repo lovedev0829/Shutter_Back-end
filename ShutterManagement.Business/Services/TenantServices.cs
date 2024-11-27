@@ -102,11 +102,15 @@ namespace ShutterManagement.Business.Services
                 if (braindingInfo != null)
                 {
                     bool IsTenantEmailExists = await tenantBrandingService.AnyAsync(x => x.Id != braindingInfo && x.Email == model.Email);
-                    if (IsTenantEmailExists)
+                    var TenantUser = userService.GetAllQuerable().Where(x => x.Email == model.Email && x.TenantId.ToString() == model.TenantId).OrderBy(x => x.CreatedAt).FirstOrDefault();
+                    bool IsUserEmailExists = await userService.AnyAsync(x => x.Id != TenantUser.Id && x.Email == model.Email && x.TenantId.ToString() == model.TenantId);
+
+                    if (IsTenantEmailExists || IsUserEmailExists)
                     {
                         responseVm.Message = "Email " + AppConstant.AlreadyExists;
                         return responseVm;
                     }
+                    
                     //bool IsTenantPhoneExists = await tenantBrandingService.AnyAsync(x => x.Id != braindingInfo && x.PhoneNumber == model.PhoneNumber);
                     //if (IsTenantPhoneExists)
                     //{

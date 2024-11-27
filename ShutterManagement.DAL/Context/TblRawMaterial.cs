@@ -15,7 +15,7 @@ public partial class TblRawMaterial
 
     public decimal? StockQuantity { get; set; }
 
-    public int? ReorderLevel { get; set; }
+    public decimal? ReorderLevel { get; set; }
 
     public Guid? VendorId { get; set; }
 

@@ -125,17 +125,20 @@ namespace ShutterManagement.Business.Services
                     }
                     var braindingInfo = GetAllQuerable().Where(x => x.TenantId.ToString() == model.TenantId && x.IsDelete == false).Select(x => x.BrandingInfo).FirstOrDefault();
                     if (braindingInfo != null) {
-                        bool IsSubTenantEmailExists = await userService.AnyAsync(x => x.Id != braindingInfo && x.Email == model.Email);
-                        if (IsSubTenantEmailExists) {
+                        bool IsSubTenantEmailExists = await tenantBrandingService.AnyAsync(x => x.Id != braindingInfo && x.Email == model.Email);
+                        var SubTenantUser = userService.GetAllQuerable().Where(x => x.Email == model.Email && x.TenantId.ToString() == model.TenantId).OrderBy(x => x.CreatedAt).FirstOrDefault();
+                        bool IsUserEmailExists = await userService.AnyAsync(x => x.Id != SubTenantUser.Id && x.Email == model.Email && x.TenantId.ToString() == model.TenantId);
+
+                        if (IsSubTenantEmailExists || IsUserEmailExists) {
                             responseVm.Message = "Email " + AppConstant.AlreadyExists;
                             return responseVm;
                         }
-                        bool IsSubTenantPhoneExists = await tenantBrandingService.AnyAsync(x => x.Id != braindingInfo && x.PhoneNumber == model.PhoneNumber);
-                        if (IsSubTenantPhoneExists)
-                        {
-                            responseVm.Message = "Phone " + AppConstant.AlreadyExists;
-                            return responseVm;
-                        }
+                       //bool IsSubTenantPhoneExists = await tenantBrandingService.AnyAsync(x => x.Id != braindingInfo && x.PhoneNumber == model.PhoneNumber);
+                       // if (IsSubTenantPhoneExists)
+                       // {
+                       //     responseVm.Message = "Phone " + AppConstant.AlreadyExists;
+                       //     return responseVm;
+                       // }
 
                     }
                     var tenantid = Guid.Parse(model.TenantId);

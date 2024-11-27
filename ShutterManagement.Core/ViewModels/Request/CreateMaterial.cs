@@ -28,11 +28,11 @@ namespace ShutterManagement.Core.ViewModels.Request
 
         [DefaultValue("")]
         [Required]
-        public int? StockQuantity { get; set; }
+        public decimal? StockQuantity { get; set; }
 
         [DefaultValue("")]
         [Required]
-        public int? ReorderLevel { get; set; }
+        public decimal? ReorderLevel { get; set; }
 
         [DefaultValue("")]
         [Required]
