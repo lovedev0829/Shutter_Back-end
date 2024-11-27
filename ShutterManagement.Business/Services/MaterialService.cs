@@ -88,6 +88,8 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = "SKU " + AppConstant.AlreadyExists;
                     return responseVm;
                 }
+               
+
                 if (IsTenant)
                 {
                     if (IsVendorExist)
@@ -284,12 +286,13 @@ namespace ShutterManagement.Business.Services
             {
                 var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsActive == true && x.IsDelete == false);
                 var IsVendorExist = _context.TblVendors.Where(x => x.VendorId == model.VendorId && x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
-                var IsSKUExist = _context.TblRawMaterials.Any(x => x.VendorId == model.VendorId && x.Sku == model.SKU && x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false && x.RawMaterialId != Guid.Parse(model.MaterialId));
+                var IsSKUExist = await AnyAsync(x => x.VendorId == model.VendorId && x.Sku == model.SKU && x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false && x.RawMaterialId != Guid.Parse(model.MaterialId));
                 if (IsSKUExist)
                 {
                     responseVm.Message = "SKU" + " " +AppConstant.AlreadyExists;
                     return responseVm;
                 }
+               
                 if (IsTenant)
                 {
                     if (IsVendorExist != null)

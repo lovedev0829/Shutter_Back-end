@@ -130,7 +130,7 @@ namespace ShutterManagement.Business.Services
                         .FirstOrDefault();
                     bool IsComponentNameExists = await AnyAsync(x => x.IsDelete == false &&
                     (x.ComponentName == model.ComponentName)
-                    && x.TenantId == AppConstant.LoggedInTenantId && x.ComponentName!=model.ComponentName);
+                    && x.TenantId == AppConstant.LoggedInTenantId && x.ComponentId.ToString()!=model.ComponentId);
 
                     if (IsComponentNameExists)
                     {

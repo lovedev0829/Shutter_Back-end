@@ -82,7 +82,6 @@ namespace ShutterManagement.Business.Services
                         TenantId = AppConstant.LoggedInTenantId,
                         IsActive = true,
                         IsDelete = false
-
                     };
                     var res = await Add(CreateContact);
                     if (res.ContactId != Guid.Empty)
@@ -151,8 +150,18 @@ namespace ShutterManagement.Business.Services
                     var contact = await GetAllQuerable()
                         .FirstOrDefaultAsync(c => c.ContactId == model.ContactId && c.TenantId == AppConstant.LoggedInTenantId
                         && c.IsDelete == false);
+                    var IsContactExists = GetAllQuerable()
+                        .Where(c => (c.Email == model.Email || c.PhoneNumber == model.PhoneNumber)
+                        && c.TenantId == AppConstant.LoggedInTenantId
+                        && c.IsDelete == false && c.ContactId!=model.ContactId).ToList();
+                    if (IsContactExists.Count > 0)
+                    {
+                        responseVm.Message = "Email or Phone " + AppConstant.AlreadyExists;
+                        return responseVm;
+                    }
 
-                    if(model.TaxExemptionVm.ExpiryDate < model.TaxExemptionVm.EffectiveDate)
+
+                    if (model.TaxExemptionVm.ExpiryDate < model.TaxExemptionVm.EffectiveDate)
                     {
                         responseVm.Message = "ExpiryDate must be greater than EffectiveDate.";
                         return responseVm;
