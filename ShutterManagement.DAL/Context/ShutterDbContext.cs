@@ -15,7 +15,6 @@ public partial class ShutterDbContext : DbContext
     {
     }
 
-
     public virtual DbSet<MstJobTitle> MstJobTitles { get; set; }
 
     public virtual DbSet<MstModule> MstModules { get; set; }
@@ -652,6 +651,7 @@ public partial class ShutterDbContext : DbContext
             entity.Property(e => e.Sku)
                 .HasMaxLength(50)
                 .HasColumnName("SKU");
+            entity.Property(e => e.StockQuantity).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.UnitCost).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.UnitOfMeasurement)
                 .HasMaxLength(50)

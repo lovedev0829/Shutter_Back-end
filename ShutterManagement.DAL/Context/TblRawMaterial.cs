@@ -13,7 +13,7 @@ public partial class TblRawMaterial
 
     public string? UnitOfMeasurement { get; set; }
 
-    public int? StockQuantity { get; set; }
+    public decimal? StockQuantity { get; set; }
 
     public int? ReorderLevel { get; set; }
 
