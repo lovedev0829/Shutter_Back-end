@@ -7,6 +7,7 @@ using ShutterManagement.DAL.Context;
 using ShutterManagement.Services;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Metrics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -84,7 +85,7 @@ namespace ShutterManagement.Business.Services
                 var IsSKUExist = _context.TblRawMaterials.Any(x => x.VendorId == model.VendorId && x.Sku == model.SKU && x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false);
                 if (IsSKUExist)
                 {
-                    responseVm.Message = "SKU" + AppConstant.AlreadyExists;
+                    responseVm.Message = "SKU " + AppConstant.AlreadyExists;
                     return responseVm;
                 }
                 if (IsTenant)
@@ -283,7 +284,12 @@ namespace ShutterManagement.Business.Services
             {
                 var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsActive == true && x.IsDelete == false);
                 var IsVendorExist = _context.TblVendors.Where(x => x.VendorId == model.VendorId && x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
-
+                var IsSKUExist = _context.TblRawMaterials.Any(x => x.VendorId == model.VendorId && x.Sku == model.SKU && x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false && x.RawMaterialId != Guid.Parse(model.MaterialId));
+                if (IsSKUExist)
+                {
+                    responseVm.Message = "SKU" + " " +AppConstant.AlreadyExists;
+                    return responseVm;
+                }
                 if (IsTenant)
                 {
                     if (IsVendorExist != null)
