@@ -209,11 +209,13 @@ namespace ShutterManagement.Business.Services
             IResponseVm<List<GetAllAddress>> responseVm = new ResponseVm<List<GetAllAddress>>();
             try
             {
-                var AddressList = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId).ToList();
+                var AddressList = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId).OrderByDescending(x=>x.CreatedAt).ToList();
                 filter.SearchValue = filter.SearchValue.Trim().ToLower();
                 var FilterRecords = AddressList
                                     .Where(x =>
                                     (filter.SearchValue != "" ?
+                                    (x.ContactId.ToString() == filter.SearchValue) ||
+                                    (x.AddressId.ToString() == filter.SearchValue) ||
                                     ((x.StreetAddress ?? "").ToLower().Contains(filter.SearchValue.Trim())
                                     || (x.AccessCode ?? "").ToLower().Contains(filter.SearchValue.Trim())
                                     || (x.Label ?? "").ToLower().Contains(filter.SearchValue.Trim())

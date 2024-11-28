@@ -688,6 +688,10 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
 
+            entity.HasOne(d => d.ProductTypeNavigation).WithMany(p => p.TblRawMaterials)
+                .HasForeignKey(d => d.ProductType)
+                .HasConstraintName("FK__TblRawMat__Produ__39AD8A7F");
+
             entity.HasOne(d => d.Tenant).WithMany(p => p.TblRawMaterials)
                 .HasForeignKey(d => d.TenantId)
                 .HasConstraintName("FK__TblRawMat__Tenan__7908F585");

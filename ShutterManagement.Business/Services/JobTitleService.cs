@@ -20,11 +20,12 @@ namespace ShutterManagement.Business.Services
             IResponseVm<List<JobTitlesList>> responseVm = new ResponseVm<List<JobTitlesList>>();
             try
             {
-                var JobTitleList = (await GetAll()).Where(x => x.IsDelete == false).ToList();
+                var JobTitleList = (await GetAll()).Where(x => x.IsDelete == false).OrderByDescending(x => x.CreatedAt).ToList();
                 filter.SearchValue = (filter.SearchValue.Trim() ?? "").ToLower();
                 var FilterRecords = JobTitleList
                                     .Where(x =>
                                     (filter.SearchValue != "" ?
+                                    (x.Id.ToString() == filter.SearchValue) ||
                                     ((x.JobTitleName ?? "").ToLower().Contains(filter.SearchValue)
                                     ) : true)).ToList();
                 var TakenRecords = FilterRecords

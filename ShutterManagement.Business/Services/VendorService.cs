@@ -162,10 +162,12 @@ namespace ShutterManagement.Business.Services
                 {
                     var IsComponentExists = (await GetAll())
                     .Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId)
+                    .OrderByDescending(x => x.CreatedAt)
                     .ToList();
 
                     var FilterRecords = IsComponentExists
                         .Where(x => string.IsNullOrEmpty(filter.SearchValue) ||
+                                    (x.VendorId.ToString() == filter.SearchValue) ||
                                     (x.VendorName ?? "").Contains(filter.SearchValue.Trim()) ||
                                     (x.Email ?? "").Contains(filter.SearchValue.Trim()) ||
                                     (x.PhoneNumber ?? "").Contains(filter.SearchValue.Trim()) ||

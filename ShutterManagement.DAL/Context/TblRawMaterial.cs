@@ -39,6 +39,10 @@ public partial class TblRawMaterial
 
     public bool? IsCutSheet { get; set; }
 
+    public Guid? ProductType { get; set; }
+
+    public virtual MstProductType? ProductTypeNavigation { get; set; }
+
     public virtual ICollection<TblComponentMaterial> TblComponentMaterials { get; set; } = new List<TblComponentMaterial>();
 
     public virtual TblTenant? Tenant { get; set; }

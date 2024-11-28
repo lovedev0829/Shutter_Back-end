@@ -33,7 +33,8 @@ namespace ShutterManagement.Core.ViewModels.Request
         [DefaultValue("")]
         [Required]
         public decimal? ReorderLevel { get; set; }
-
+        [Required]
+        public string? ProductType { get; set; }
         [DefaultValue("")]
         [Required]
       

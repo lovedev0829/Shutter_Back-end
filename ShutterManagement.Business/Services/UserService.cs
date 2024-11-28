@@ -382,8 +382,8 @@ namespace ShutterManagement.Services
                 var FilterRecords = UsersList
                                     .Where(x =>
                                     (filter.SearchValue != "" ?
+                                    (x.UserId.ToString() == filter.SearchValue) ||
                                     ((x.Email ?? "").ToLower().Contains(filter.SearchValue)
-                                    || (x.UserId.ToString() ?? "").Contains(filter.SearchValue)
                                     || (x.Phone ?? "").ToLower().Contains(filter.SearchValue)
                                     || (x.FirstName ?? "").ToLower().Contains(filter.SearchValue)
                                     || (x.MiddleName ?? "").ToLower().Contains(filter.SearchValue)

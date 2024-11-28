@@ -208,7 +208,7 @@ namespace ShutterManagement.Business.Services
                 if (IsTenant)
                 {
 
-                    var MaterialList = (from t2 in _context.TblRawMaterials
+                    var MaterialList = (from t2 in _context.TblRawMaterials.OrderByDescending(x => x.CreatedAt)
                                         join t1 in _context.TblVendors on t2.VendorId equals t1.VendorId
                                         where t2.TenantId == AppConstant.LoggedInTenantId && t2.IsDelete == false
                                         select new GetAllMaterialVm
@@ -221,16 +221,18 @@ namespace ShutterManagement.Business.Services
                                             SKU = t2.Sku,
                                             StockQuantity = t2.StockQuantity,
                                             UnitCost = t2.UnitCost,
+                                            ProductType = t2.ProductType,
                                             UnitOfMeasurement = t2.UnitOfMeasurement,
                                             VendorId = t2.VendorId,
                                             VendorName = t1.VendorName,
-                                            IsCutSheet = t2.IsCutSheet
+                                            IsCutSheet = t2.IsCutSheet,
                                         }).ToList();
                     filter.SearchValue = filter.SearchValue.Trim().ToLower();
                     var FilterRecords = MaterialList
                                     .Where(x =>
                                      (string.IsNullOrEmpty(filter.SearchValue) ? true :
                                         (x.MaterialId.ToString() == filter.SearchValue)
+                                        || (x.ProductType.ToString() == filter.SearchValue)
                                         || (x.MaterialName ?? "").ToLower().Contains(filter.SearchValue)
                                         || (x.UnitCost.ToString() ?? "").ToLower().Contains(filter.SearchValue)
                                         || (x.ReorderLevel.ToString() ?? "").ToLower().Contains(filter.SearchValue)
@@ -308,6 +310,7 @@ namespace ShutterManagement.Business.Services
                             IsMaterialExists.MaterialName = model.MaterialName;
                             IsMaterialExists.UnitCost = model.UnitCost;
                             IsMaterialExists.Sku = model.SKU;
+                            IsMaterialExists.ProductType = Guid.Parse(model.ProductType);
                             IsMaterialExists.UnitOfMeasurement = model.UnitOfMeasurement;
                             IsMaterialExists.StockQuantity = model.StockQuantity;
                             IsMaterialExists.ReorderLevel = model.ReorderLevel;

@@ -207,7 +207,7 @@ namespace ShutterManagement.Business.Services
                     {
 
                         var optionsType = optionsTypeService.GetAllQuerable().
-                            Where(x => x.IsDelete == false && x.OptionId == item.OptionId)
+                            Where(x => x.IsDelete == false && x.OptionId == item.OptionId).OrderBy(x => x.CreatedAt)
                             .Select(x => new OptionsType
                             {
                                 AdditionalCost = x.AdditionalCost,
@@ -223,7 +223,7 @@ namespace ShutterManagement.Business.Services
 
                     var FilterRecords = IsOptionExists
                                     .Where(x => (string.IsNullOrEmpty(filter.SearchValue) ? true :
-                                     x.OptionId.ToString() == filter.SearchValue
+                                    (x.OptionId.ToString() == filter.SearchValue)
                                     || (x.ProductTypeName ?? "").Contains(filter.SearchValue)
                                     || (x.OptionName ?? "").Contains(filter.SearchValue)))
                                     .ToList();

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using ShutterManagement.Core;
 using ShutterManagement.Core.SPModel;
 using ShutterManagement.Core.ViewModels;
@@ -34,6 +35,7 @@ namespace ShutterManagement.Controllers
             var UserDetails = await _authService.HomePageContent(CompanyCode);
             return Ok(UserDetails);
         }
+        [Authorize]
         [HttpPost]
         [Route("ResetPassword")]
         public async Task<IActionResult> ResetPassword(PasswordChangeVm passwordChange)
@@ -41,6 +43,7 @@ namespace ShutterManagement.Controllers
             var passwordDetails = await _authService.ResetPassWord(passwordChange);
             return Ok(passwordDetails);
         }
+        [Authorize]
         [HttpPost]
         [Route("ProfileUpdate")]
         public async Task<IActionResult> ProfileUpdate(ProfileUpdateVm vm)
@@ -48,8 +51,9 @@ namespace ShutterManagement.Controllers
             var profileUpdateDetails = await _authService.ProfileUpdate(vm);
             return Ok(profileUpdateDetails);
         }
+        [Authorize]
         [HttpPost]
-        [Route("ProfileGetById")]
+        [Route("ProfileDetails")]
         public async Task<IActionResult> ProfileGetById()
         {
             var profileGetById = await _authService.ProfileGetById();
