@@ -90,6 +90,16 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
+                var IsProductName = await AnyAsync(x => x.ProductName == model.ProductName
+                    && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId
+                    && x.ProductType == model.ProductType);
+                if (IsProductName)
+                {
+                    responseVm.Message = "ProductName " + AppConstant.AlreadyExists;
+                    return responseVm;
+                }
+
+
                 var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
                 if (IsTenant)
                 {
