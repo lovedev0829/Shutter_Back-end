@@ -152,8 +152,8 @@ namespace ShutterManagement.Business.Services
                 if (isTenantValid)
                 {
                     var productComponent = GetAllQuerable()
-                        .Where(x => x.ProductComponentId == model.ProductComponentId && x.ProductId == model.ProductId && x.ComponentId == model.ComponentId &&
-                                    x.TenantId == AppConstant.LoggedInTenantId &&
+                        .Where(x => x.ProductComponentId == model.ProductComponentId && x.ProductId == model.ProductId &&
+                                    x.TenantId == AppConstant.LoggedInTenantId && 
                                     x.IsDelete == false)
                         .FirstOrDefault();
 
