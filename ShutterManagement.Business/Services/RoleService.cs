@@ -235,6 +235,7 @@ namespace ShutterManagement.Business.Services
                 var FilterRecords = roleLists
                                     .Where(x =>
                                     (filter.SearchValue != "" ?
+                                    (x.RoleId.ToString() == filter.SearchValue) ||
                                     ((x.RoleName ?? "").ToLower().Contains(filter.SearchValue.Trim())
                                     ) : true)).ToList();
                 var TakenRecords = FilterRecords

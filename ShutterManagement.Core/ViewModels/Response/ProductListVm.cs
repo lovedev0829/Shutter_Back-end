@@ -17,14 +17,16 @@ namespace ShutterManagement.Core.ViewModels.Response
         public decimal? Markup { get; set; }
         public bool? IsActive { get; set; }
         public Guid? TenantId { get; set; }
-        public List<ProductComponents> ProductComponents { get; set; }
+        public List<ProductComponentVmm> ProductComponents { get; set; }
     }
-    public class ProductComponents
+    public class ProductComponentVmm
     {
         public Guid ProductComponentId { get; set; }
         public decimal? Quantity { get; set; }
         public Guid? ComponentId { get; set; }
         public string? ComponentName { get; set; }
+        public bool? IsActive { get; set; }
+        public bool? IsDelete { get; set; }
     }
 }
 

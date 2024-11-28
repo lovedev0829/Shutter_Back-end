@@ -31,13 +31,17 @@ namespace ShutterManagement.Controllers
         private readonly IMstProductType mstProductType;
         private readonly IAddress address;
         private readonly EmailHelper emailHelper;
+        private readonly IUserService userService;
+        private readonly IJobStatusService jobStatusService;
+        private readonly IJobTypeService jobTypeService;
         private readonly IOption option;
         private readonly IProductService productService;
         private readonly IUnitofMeasurementService unitofMeasurementService;
 
         public CommonController(IMasterCreate masterCreate, FileUploadHelper fileUpload, ClaimsProperty claimsProperty,
             IJobTitleService jobTitleService,IMaterial material,IVendorService vendorService 
-            ,EmailHelper emailHelper,
+            ,EmailHelper emailHelper,IUserService userService, IJobStatusService jobStatusService,
+            IJobTypeService jobTypeService,
             IComponentService componentService,IMstProductType mstProductType,IAddress address,IOption option,IProductService productService,IUnitofMeasurementService unitofMeasurementService)
         {
             this.masterCreate = masterCreate;
@@ -53,6 +57,9 @@ namespace ShutterManagement.Controllers
             this.componentService = componentService;
             this.address= address;
             this.emailHelper = emailHelper;
+            this.userService = userService;
+            this.jobStatusService = jobStatusService;
+            this.jobTypeService = jobTypeService;
             this.mstProductType = mstProductType;
             this.option = option;
             this.productService = productService;
@@ -83,10 +90,35 @@ namespace ShutterManagement.Controllers
             return Ok(res);
         }
         [HttpGet]
-        [Route("GetAllMaterial")]
-        public async Task<IActionResult> GetAllMeterial()
+        [Route("GetAllAssignedPerson")]
+        public async Task<IActionResult> GetAllAssignedPerson()
         {
+            var res = await userService.GetAll(filter);
+            res.Data = res.Data.Where(x => x.IsActive == true).ToList();
+            return Ok(res);
+        }
+        [HttpGet]
+        [Route("GetAllJobStatus")]
+        public async Task<IActionResult> GetAllJobStatus()
+        {
+            var res = await jobStatusService.GetAll(filter);
+            res.Data = res.Data.Where(x => x.IsActive == true).ToList();
+            return Ok(res);
+        }
 
+        [HttpGet]
+        [Route("GetAllJobType")]
+        public async Task<IActionResult> GetAllJobType()
+        {
+            var res = await jobTypeService.GetAll(filter);
+            res.Data = res.Data.Where(x => x.IsActive == true).ToList();
+            return Ok(res);
+        }
+        [HttpGet]
+        [Route("GetAllMaterial")]
+        public async Task<IActionResult> GetAllMeterial(string ProductType)
+        {
+            filter.SearchValue = ProductType;
             var res = await material.GetAll_Material(filter);
             res.Data = res.Data.Where(x => x.IsActive == true).ToList();
             return Ok(res);
@@ -102,16 +134,18 @@ namespace ShutterManagement.Controllers
         }
         [HttpGet]
         [Route("GetAllComponent")]
-        public async Task<IActionResult> GetAllComponent()
+        public async Task<IActionResult> GetAllComponent(string ProductType)
         {
+            filter.SearchValue = ProductType;
             var res = await componentService.GetAll_Component(filter);
             res.Data = res.Data.Where(x => x.IsActive == true).ToList();
             return Ok(res);
         }
         [HttpGet]
         [Route("GetAllAddress")]
-        public async Task<IActionResult> GetAllAddress()
+        public async Task<IActionResult> GetAllAddress(string ContactId)
         {
+            filter.SearchValue = ContactId;
             var res = await address.GetAll_Address(filter);
             res.Data = res.Data.Where(x => x.IsActive == true).ToList();
             return Ok(res);

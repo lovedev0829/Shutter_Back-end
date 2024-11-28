@@ -200,7 +200,8 @@ namespace ShutterManagement.Services
             IResponseVm<PasswordChangeVm> result = new ResponseVm<PasswordChangeVm>();
             try
             {
-                var IsUserExists = (await GetAll()).Where(x => x.Pwd == AesEncryptionHelper.Encrypt(vm.OldPassWord ?? "") && x.TenantId == AppConstant.LoggedInTenantId && x.Id == AppConstant.LoggedInUserID).FirstOrDefault();
+                var IsUserExists = (await GetAll()).Where(x => x.IsDelete == false 
+                && x.IsActive == true && x.Id == AppConstant.LoggedInUserID && x.Pwd == AesEncryptionHelper.Encrypt(vm.OldPassWord ?? "") && x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
                 if(IsUserExists != null)
                 {
                     IsUserExists.Pwd = AesEncryptionHelper.Encrypt(vm.PassWord ?? "");
@@ -233,13 +234,12 @@ namespace ShutterManagement.Services
                 var UserExistsDetails = GetAllQuerable().Where(x => x.IsDelete == false && x.IsActive == true &&
                 x.Id == (AppConstant.LoggedInUserID)
                 && x.TenantId == AppConstant.LoggedInTenantId
-                );
-                if (UserExistsDetails.Count() == 1)
+                ).FirstOrDefault();
+                if (UserExistsDetails != null)
                 {
 
                     bool IsPhoneExists = await AnyAsync(x => x.IsDelete == false &&
-                  (x.Phone == profileUpdate.Phone) && x.Id != AppConstant.LoggedInUserID
-                  );
+                    (x.Phone == profileUpdate.Phone) && x.Id != AppConstant.LoggedInUserID && x.TenantId == AppConstant.LoggedInTenantId);
                     if (IsPhoneExists)
                     {
                         result.Message = "Phone " + AppConstant.AlreadyExists;
@@ -247,20 +247,20 @@ namespace ShutterManagement.Services
                     }
 
                     bool IsEmailExists = await AnyAsync(x => x.IsDelete == false &&
-                      (x.Email == profileUpdate.Email) && x.Id != AppConstant.LoggedInUserID
-                      );
+                      (x.Email == profileUpdate.Email) && x.Id != AppConstant.LoggedInUserID && x.TenantId == AppConstant.LoggedInTenantId);
                     if (IsEmailExists)
                     {
                         result.Message = "Email " + AppConstant.AlreadyExists;
                         return result;
                     }
 
-                    var UpdateUserDetails = UserExistsDetails.FirstOrDefault();
+                    var UpdateUserDetails = UserExistsDetails;
                     if (UpdateUserDetails != null)
                     {
                         UpdateUserDetails.FirstName = profileUpdate.FirstName;
                         UpdateUserDetails.LastName = profileUpdate.LastName;
                         UpdateUserDetails.Username = profileUpdate.Email;
+                        UpdateUserDetails.Email = profileUpdate.Email;
                         UpdateUserDetails.Phone = profileUpdate.Phone;
                         UpdateUserDetails.ModifiedAt = DateTime.Now;
                         UpdateUserDetails.ModifiedBy = AppConstant.LoggedInUserID;
@@ -291,7 +291,7 @@ namespace ShutterManagement.Services
             try
             {
                 var address = await GetAllQuerable()
-                    .Where(c => c.Id == AppConstant.LoggedInUserID && c.IsActive == true && c.TenantId == AppConstant.LoggedInTenantId)
+                    .Where(c => c.Id == AppConstant.LoggedInUserID && c.IsActive == true && c.IsDelete == false && c.TenantId == AppConstant.LoggedInTenantId)
                     .Select(c => new UserResponse
                     {
                         FirstName = c.FirstName,

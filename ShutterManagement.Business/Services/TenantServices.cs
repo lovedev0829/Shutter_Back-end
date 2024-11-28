@@ -102,7 +102,7 @@ namespace ShutterManagement.Business.Services
                 if (braindingInfo != null)
                 {
                     bool IsTenantEmailExists = await tenantBrandingService.AnyAsync(x => x.Id != braindingInfo && x.Email == model.Email);
-                    var TenantUser = userService.GetAllQuerable().Where(x => x.Email == model.Email && x.TenantId.ToString() == model.TenantId).OrderBy(x => x.CreatedAt).FirstOrDefault();
+                    var TenantUser = userService.GetAllQuerable().Where(x => x.TenantId.ToString() == model.TenantId).OrderBy(x => x.CreatedAt).FirstOrDefault();
                     bool IsUserEmailExists = await userService.AnyAsync(x => x.Id != TenantUser.Id && x.Email == model.Email && x.TenantId.ToString() == model.TenantId);
 
                     if (IsTenantEmailExists || IsUserEmailExists)
@@ -259,6 +259,7 @@ namespace ShutterManagement.Business.Services
                                     x.TenantId.ToString() == filter.TenantId.ToString() : true)
                                     &&
                                     (filter.SearchValue != "" ?
+                                    (x.TenantId.ToString() == filter.SearchValue) ||
                                     ((x.BrandingInfoNavigation?.Email ?? "").ToLower().Contains(filter.SearchValue)
                                     || (x.BrandingInfoNavigation?.PhoneNumber ?? "").ToLower().Contains(filter.SearchValue)
                                     || (x.FirstName ?? "").ToLower().Contains(filter.SearchValue)

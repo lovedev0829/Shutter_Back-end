@@ -301,7 +301,7 @@ namespace ShutterManagement.Business.Services
                 {
                     var componentList = (from c in dbContext.TblComponents.OrderByDescending(x=>x.CreatedAt)
                                          join pt in dbContext.MstProductTypes on c.ProductType equals pt.ProductId.ToString()
-                                         where c.IsDelete == false
+                                         where c.IsDelete == false && c.TenantId == AppConstant.LoggedInTenantId
                                          select new ComponentListVm
                                          {
                                              ComponentId = c.ComponentId,
@@ -313,13 +313,12 @@ namespace ShutterManagement.Business.Services
                                              ProductType = pt.ProductId.ToString(),
                                              ProductTypeName = pt.ProductName,
                                              TenantId = c.TenantId,
-                                            
                                          }).ToList();
                     foreach(var item in componentList)
                     {
-                        var ComponentMaterial = (from cm in dbContext.TblComponentMaterials
+                        var ComponentMaterial = (from cm in dbContext.TblComponentMaterials.OrderByDescending(x => x.CreatedAt)
                                                  join m in dbContext.TblRawMaterials on cm.RawMaterialId equals m.RawMaterialId
-                                                 where cm.ComponentId == item.ComponentId && cm.IsDelete == false
+                                                 where cm.ComponentId == item.ComponentId && cm.IsDelete == false && cm.TenantId == AppConstant.LoggedInTenantId
                                                  select new ComponentMaterialVm
                                                  {
                                                      ComponentMaterialId = cm.ComponentMaterialId,
@@ -341,6 +340,7 @@ namespace ShutterManagement.Business.Services
                               .Where(x =>
                               (string.IsNullOrEmpty(filter.SearchValue) ? true :
                                  (x.ComponentId.ToString() == filter.SearchValue) ||
+                                 (x.ProductType.ToString() == filter.SearchValue) ||
                                  (x.ComponentName ?? "").ToLower().Contains(filter.SearchValue) ||
                                  (x.ProductType.ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
                                  (x.PricingExpression ?? "").ToLower().Contains(filter.SearchValue) ||

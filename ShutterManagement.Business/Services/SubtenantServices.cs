@@ -126,7 +126,7 @@ namespace ShutterManagement.Business.Services
                     var braindingInfo = GetAllQuerable().Where(x => x.TenantId.ToString() == model.TenantId && x.IsDelete == false).Select(x => x.BrandingInfo).FirstOrDefault();
                     if (braindingInfo != null) {
                         bool IsSubTenantEmailExists = await tenantBrandingService.AnyAsync(x => x.Id != braindingInfo && x.Email == model.Email);
-                        var SubTenantUser = userService.GetAllQuerable().Where(x => x.Email == model.Email && x.TenantId.ToString() == model.TenantId).OrderBy(x => x.CreatedAt).FirstOrDefault();
+                        var SubTenantUser = userService.GetAllQuerable().Where(x => x.TenantId.ToString() == model.TenantId).OrderBy(x => x.CreatedAt).FirstOrDefault();
                         bool IsUserEmailExists = await userService.AnyAsync(x => x.Id != SubTenantUser.Id && x.Email == model.Email && x.TenantId.ToString() == model.TenantId);
 
                         if (IsSubTenantEmailExists || IsUserEmailExists) {
@@ -265,7 +265,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
             try
             {
-                var TenantList = (await GetAll()).Where(x => x.IsDelete == false && x.ParentTenantId == AppConstant.LoggedInTenantId).ToList().OrderByDescending(x=>x.CreatedAt);
+                var TenantList = (await GetAll()).Where(x => x.IsDelete == false && x.ParentTenantId == AppConstant.LoggedInTenantId).OrderByDescending(x => x.CreatedAt).ToList();
                 foreach (var item in TenantList)
                 {
                     item.BrandingInfoNavigation = tenantBrandingService.GetAllQuerable().Where(x => x.Id == item.BrandingInfo).FirstOrDefault();
@@ -277,6 +277,7 @@ namespace ShutterManagement.Business.Services
                                     x.TenantId.ToString() == filter.TenantId.ToString() : true)
                                     &&
                                     (filter.SearchValue != "" ?
+                                    (x.TenantId.ToString() == filter.SearchValue) ||
                                     ((x.BrandingInfoNavigation?.Email ?? "").ToLower().Contains(filter.SearchValue)
                                     || (x.BrandingInfoNavigation?.PhoneNumber ?? "").ToLower().Contains(filter.SearchValue)
                                     || (x.FirstName ?? "").ToLower().Contains(filter.SearchValue) 
