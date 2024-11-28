@@ -86,7 +86,7 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> GetAllJobTitle()
         {
             var res = await jobTitleService.GetAll(filter);
-            res.Data = res.Data.Where(x => x.IsActive == true).ToList();
+            res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
             return Ok(res);
         }
         [HttpGet]
@@ -94,7 +94,7 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> GetAllAssignedPerson()
         {
             var res = await userService.GetAll(filter);
-            res.Data = res.Data.Where(x => x.IsActive == true).ToList();
+            res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
             return Ok(res);
         }
         [HttpGet]
@@ -102,7 +102,7 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> GetAllJobStatus()
         {
             var res = await jobStatusService.GetAll(filter);
-            res.Data = res.Data.Where(x => x.IsActive == true).ToList();
+            res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
             return Ok(res);
         }
 
@@ -111,7 +111,7 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> GetAllJobType()
         {
             var res = await jobTypeService.GetAll(filter);
-            res.Data = res.Data.Where(x => x.IsActive == true).ToList();
+            res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
             return Ok(res);
         }
         [HttpGet]
@@ -120,7 +120,7 @@ namespace ShutterManagement.Controllers
         {
             filter.SearchValue = ProductType;
             var res = await material.GetAll_Material(filter);
-            res.Data = res.Data.Where(x => x.IsActive == true).ToList();
+            res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
             return Ok(res);
         }
 
@@ -129,7 +129,7 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> GetAllVendor()
         {
             var res = await vendorService.GetAll_Vendor(filter);
-            res.Data = res.Data.Where(x => x.IsActive == true).ToList();
+            res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
             return Ok(res);
         }
         [HttpGet]
@@ -138,7 +138,7 @@ namespace ShutterManagement.Controllers
         {
             filter.SearchValue = ProductType;
             var res = await componentService.GetAll_Component(filter);
-            res.Data = res.Data.Where(x => x.IsActive == true).ToList();
+            res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
             return Ok(res);
         }
         [HttpGet]
@@ -147,7 +147,7 @@ namespace ShutterManagement.Controllers
         {
             filter.SearchValue = ContactId;
             var res = await address.GetAll_Address(filter);
-            res.Data = res.Data.Where(x => x.IsActive == true).ToList();
+            res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
             return Ok(res);
         }
 
@@ -156,7 +156,7 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> GetAllProductType()
         {
             var res = await mstProductType.GetAll_ProductType();
-            res.Data = res.Data.Where(x => x.IsActive == true).ToList();
+            res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
             return Ok(res);
         }
 
@@ -323,7 +323,7 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> GetAllOption()
         {
             var res = await option.GetAll_Option(filter);
-            res.Data = res.Data.Where(x => x.IsActive == true).ToList();
+            res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
             return Ok(res);
         }
 
@@ -332,7 +332,7 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> GetAllProduct()
         {
             var res =await productService.GetAll_Product(filter);
-            res.Data=res.Data.Where(x=>x.IsActive == true).ToList();    
+            res.Data=res.Data?.Where(x=>x.IsActive == true).ToList();    
             return Ok(res);
         }
 
@@ -341,7 +341,7 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> GetAllUnitOfMeasurement()
         {
             var res = await unitofMeasurementService.GetAll(filter);
-            res.Data = res.Data.Where(x => x.IsActive == true).ToList();
+            res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
             return Ok(res);
         }
 

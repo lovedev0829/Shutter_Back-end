@@ -17,7 +17,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public decimal? Markup { get; set; }
         public bool? IsActive { get; set; }
         public Guid? TenantId { get; set; }
-        public List<ProductComponentVmm> ProductComponents { get; set; }
+        public List<ProductComponentVmm> ProductComponents { get; set; } = new List<ProductComponentVmm>();
     }
     public class ProductComponentVmm
     {

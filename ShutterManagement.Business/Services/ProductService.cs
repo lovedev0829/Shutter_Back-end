@@ -238,7 +238,7 @@ namespace ShutterManagement.Business.Services
                                            ProductName = p.ProductName,
                                            Markup = p.Markup,
                                            Notes = p.Notes,
-                                           ProductType = pt.ProductId.ToString(),
+                                           ProductType = pt.ProductId.ToString().ToLower(),
                                            ProductTypeName = pt.ProductName,
                                            TenantId = p.TenantId,
                                            IsActive = p.IsActive,
@@ -247,12 +247,13 @@ namespace ShutterManagement.Business.Services
                     {
                         var productComponent = (from pm in dbContext.TblProductComponents.OrderByDescending(x => x.CreatedAt)
                                                 join c in dbContext.TblComponents on pm.ComponentId equals c.ComponentId
-                                                where pm.ComponentId == item.ProductId && pm.IsDelete == false
+                                                where pm.ProductId == item.ProductId && pm.IsDelete == false
                                                 select new ProductComponentVmm
                                                 {
                                                     ComponentId = pm.ComponentId,
+                                                    ComponentName = c.ComponentName,
                                                     Quantity = pm.Quantity,
-                                                    ProductComponentId = item.ProductId,
+                                                    ProductComponentId = pm.ProductComponentId,
                                                     IsActive = pm.IsActive,
                                                 }).ToList();
 
