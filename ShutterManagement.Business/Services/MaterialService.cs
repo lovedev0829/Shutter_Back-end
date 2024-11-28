@@ -222,7 +222,7 @@ namespace ShutterManagement.Business.Services
                                             SKU = t2.Sku,
                                             StockQuantity = t2.StockQuantity,
                                             UnitCost = t2.UnitCost,
-                                            ProductType = t2.ProductType,
+                                            ProductType = t2.ProductType.Value,
                                             UnitOfMeasurement = t2.UnitOfMeasurement,
                                             VendorId = t2.VendorId,
                                             VendorName = t1.VendorName,

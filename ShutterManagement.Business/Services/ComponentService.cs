@@ -310,7 +310,7 @@ namespace ShutterManagement.Business.Services
                                              MarkupPercentage = c.MarkupPercentage,
                                              Notes = c.Notes,
                                              PricingExpression = c.PricingExpression,
-                                             ProductType = pt.ProductId.ToString(),
+                                             ProductType = pt.ProductId.ToString().ToLower(),
                                              ProductTypeName = pt.ProductName,
                                              TenantId = c.TenantId,
                                          }).ToList();
@@ -335,7 +335,7 @@ namespace ShutterManagement.Business.Services
 
 
 
-                    filter.SearchValue = filter.SearchValue.Trim().ToLower();
+                    filter.SearchValue = filter.SearchValue?.Trim().ToLower();
                     var FilterRecords = componentList
                               .Where(x =>
                               (string.IsNullOrEmpty(filter.SearchValue) ? true :
