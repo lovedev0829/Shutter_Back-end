@@ -241,7 +241,7 @@ namespace ShutterManagement.Business.Services
                 {
                     var productList = (from p in dbContext.TblProducts.OrderByDescending(x => x.CreatedAt)
                                        join pt in dbContext.MstProductTypes on p.ProductType equals pt.ProductId.ToString()
-                                       where p.IsDelete == false
+                                       where p.IsDelete == false && p.TenantId == AppConstant.LoggedInTenantId
                                        select new ProductListVm
                                        {
                                            ProductId = p.ProductId,
