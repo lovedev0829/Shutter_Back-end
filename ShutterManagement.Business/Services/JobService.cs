@@ -36,21 +36,21 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                bool IsTenantvalid = await AnyAsync(x => x.IsActive == true && x.IsDelete == false
+                bool IsTenantvalid = await tenantService.AnyAsync(x => x.IsActive == true && x.IsDelete == false
                 && x.TenantId == AppConstant.LoggedInTenantId);
                 if (!IsTenantvalid)
                 {
                     responseVm.Message = AppConstant.TenantNotFound;
                     return responseVm;
                 }
-                var IsAddressExist = (await GetAll()).Where(x => x.JobId.ToString() == Id &&
-                  x.IsDelete == false).FirstOrDefault();
-                if (IsAddressExist != null)
+                var IsJobExist = GetAllQuerable().Where(x => x.JobId.ToString() == Id &&
+                  x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
+                if (IsJobExist != null)
                 {
-                    IsAddressExist.IsActive = !IsAddressExist.IsActive;
-                    IsAddressExist.UpdatedAt = DateTime.Now;
-                    IsAddressExist.ModifiedBy = AppConstant.LoggedInUserID;
-                    var res = await Update(IsAddressExist);
+                    IsJobExist.IsActive = !IsJobExist.IsActive;
+                    IsJobExist.UpdatedAt = DateTime.Now;
+                    IsJobExist.ModifiedBy = AppConstant.LoggedInUserID;
+                    var res = await Update(IsJobExist);
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.UpdateSuccessMsg;
                 }
@@ -127,22 +127,22 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                bool IsTenantvalid = await AnyAsync(x => x.IsActive == true && x.IsDelete == false
+                bool IsTenantvalid = await tenantService.AnyAsync(x => x.IsActive == true && x.IsDelete == false
                 && x.TenantId == AppConstant.LoggedInTenantId);
                 if (!IsTenantvalid)
                 {
                     responseVm.Message = AppConstant.TenantNotFound;
                     return responseVm;
                 }
-                var IsAddressExist = (await GetAll()).Where(x => x.JobId.ToString() == Id &&
-                  x.IsDelete == false).FirstOrDefault();
-                if (IsAddressExist != null)
+                var IsJobExist = GetAllQuerable().Where(x => x.JobId.ToString() == Id &&
+                   x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
+                if (IsJobExist != null)
                 {
-                    IsAddressExist.IsActive = !IsAddressExist.IsActive;
-                    IsAddressExist.IsDelete = false;
-                    IsAddressExist.UpdatedAt = DateTime.Now;
-                    IsAddressExist.ModifiedBy = AppConstant.LoggedInUserID;
-                    var res = await Update(IsAddressExist);
+                    IsJobExist.IsActive = !IsJobExist.IsActive;
+                    IsJobExist.IsDelete = true;
+                    IsJobExist.UpdatedAt = DateTime.Now;
+                    IsJobExist.ModifiedBy = AppConstant.LoggedInUserID;
+                    var res = await Update(IsJobExist);
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.UpdateSuccessMsg;
                 }
@@ -263,7 +263,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                bool IsTenantvalid = await AnyAsync(x => x.IsActive == true && x.IsDelete == false
+                bool IsTenantvalid = await tenantService.AnyAsync(x => x.IsActive == true && x.IsDelete == false
                 && x.TenantId == AppConstant.LoggedInTenantId );
                 if (!IsTenantvalid)
                 {
