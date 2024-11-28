@@ -19,11 +19,11 @@ namespace ShutterManagement.Business.Services
         private readonly ITenantService tenantService;
         private readonly IProductComponentService productComponentService;
         private readonly ClaimsProperty claimProperty;
-        public ProductService(ITenantService tenantService,IProductComponentService productComponentService,ClaimsProperty claimsProperty)
+        public ProductService(ITenantService tenantService, IProductComponentService productComponentService, ClaimsProperty claimsProperty)
         {
-             this.tenantService = tenantService;
-             this.claimProperty = claimsProperty;
-             this.productComponentService = productComponentService;
+            this.tenantService = tenantService;
+            this.claimProperty = claimsProperty;
+            this.productComponentService = productComponentService;
         }
         public async Task<IResponseVm<string>> ActiveInActiveProduct(Guid ProductId)
         {
@@ -43,12 +43,27 @@ namespace ShutterManagement.Business.Services
 
                     if (IsProductExists != null)
                     {
-                       IsProductExists.IsActive = !IsProductExists.IsActive;
-                       IsProductExists.UpdatedAt = DateTime.Now;
-                       IsProductExists.ModifiedBy = AppConstant.LoggedInUserID;
-                       await Update(IsProductExists);
-                       responseVm.IsSuccess = true;
-                       responseVm.Message = AppConstant.UpdateSuccessMsg;
+                        var IsProductInComponent = productComponentService
+                    .GetAllQuerable().Where(x => x.ProductId == ProductId &&
+                                         x.IsDelete == false &&
+                                         x.TenantId == AppConstant.LoggedInTenantId)
+                    .ToList();
+                        foreach (var component in IsProductInComponent)
+                        {
+                            component.IsActive = false;
+                            component.IsDelete = true;
+                            component.UpdatedAt = DateTime.Now;
+                            component.ModifiedBy = AppConstant.LoggedInUserID;
+                            await productComponentService.Update(component);
+                        }
+
+
+                        IsProductExists.IsActive = !IsProductExists.IsActive;
+                        IsProductExists.UpdatedAt = DateTime.Now;
+                        IsProductExists.ModifiedBy = AppConstant.LoggedInUserID;
+                        await Update(IsProductExists);
+                        responseVm.IsSuccess = true;
+                        responseVm.Message = AppConstant.UpdateSuccessMsg;
                     }
                     else
                     {
@@ -68,7 +83,7 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
-        
+
 
         public async Task<IResponseVm<string>> Create_Product(CreateProduct model)
         {
@@ -80,18 +95,18 @@ namespace ShutterManagement.Business.Services
                 {
                     TblProduct product = new TblProduct
                     {
-                        ProductId = new Guid(),
+                        ProductId = Guid.NewGuid(),
                         ProductName = model.ProductName,
                         ProductType = model.ProductType,
                         Markup = model.Markup,
                         Notes = model.Notes,
                         Area = 0,
                         Width = 0,
-                        AdditionalWidth= 0,
+                        AdditionalWidth = 0,
                         Height = 0,
                         ArchHeight = 0,
                         Length = 0,
-                        Color=null,
+                        Color = null,
                         CreatedAt = DateTime.Now,
                         CreatedBy = AppConstant.LoggedInUserID,
                         IsActive = true,
@@ -104,13 +119,13 @@ namespace ShutterManagement.Business.Services
                     foreach (var item in model.ProductComponents)
                     {
 
-                       var isComponentExists = await productComponentService.AnyAsync(x => x.ComponentId == item.ComponentId && x.ProductId == product.ProductId
-                       && x.IsDelete == false);
+                        var isComponentExists = await productComponentService.AnyAsync(x => x.ComponentId == item.ComponentId && x.ProductId == product.ProductId
+                        && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
                         if (!isComponentExists)
                         {
                             TblProductComponent productcomponent = new TblProductComponent
                             {
-                                ProductComponentId = new Guid(),
+                                ProductComponentId = Guid.NewGuid(),
                                 ProductId = product.ProductId,
                                 ComponentId = item.ComponentId,
                                 Quantity = item.Quantity,
@@ -155,9 +170,23 @@ namespace ShutterManagement.Business.Services
                                     && c.TenantId == AppConstant.LoggedInTenantId
                                     && c.IsDelete == false)
                         .FirstOrDefault();
-
                     if (IsProductExists != null)
                     {
+                        var IsProductInComponent = productComponentService
+                    .GetAllQuerable().Where(x => x.ProductId == ProductId &&
+                                         x.IsDelete == false &&
+                                         x.TenantId == AppConstant.LoggedInTenantId)
+                    .ToList();
+                        foreach (var component in IsProductInComponent)
+                        {
+                            component.IsActive = false;
+                            component.IsDelete = true;
+                            component.UpdatedAt = DateTime.Now;
+                            component.ModifiedBy = AppConstant.LoggedInUserID;
+                            await productComponentService.Update(component);
+                        }
+
+
                         IsProductExists.IsActive = false;
                         IsProductExists.IsDelete = true;
                         IsProductExists.UpdatedAt = DateTime.Now;
@@ -184,11 +213,12 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
-        
+
 
         public async Task<IResponseVm<List<ProductListVm>>> GetAll_Product(Pagination filter)
         {
             IResponseVm<List<ProductListVm>> responseVm = new ResponseVm<List<ProductListVm>>();
+
             try
             {
                 var isTenantValid = await tenantService.AnyAsync(x =>
@@ -199,70 +229,51 @@ namespace ShutterManagement.Business.Services
 
                 if (isTenantValid)
                 {
-
-                    var productslist = (from p in dbContext.TblProducts
-                                    join pt in dbContext.MstProductTypes on p.ProductType equals pt.ProductId.ToString()
-                                    where p.IsDelete == false
-                                    select new ProductListVm
-                                    {
-                                        ProductId = p.ProductId,
-                                        ProductName = p.ProductName,
-                                        ProductType = p.ProductType,
-                                        ProductTypeName = pt.ProductName,
-                                        Notes = p.Notes,
-                                        Markup = p.Markup,
-                                        IsActive = p.IsActive,
-                                        TenantId = p.TenantId,
-                                    }).ToList();
-
-
-                    foreach (var item in productslist)
+                    var productList = (from p in dbContext.TblProducts.OrderByDescending(x => x.CreatedAt)
+                                       join pt in dbContext.MstProductTypes on p.ProductType equals pt.ProductId.ToString()
+                                       where p.IsDelete == false
+                                       select new ProductListVm
+                                       {
+                                           ProductId = p.ProductId,
+                                           ProductName = p.ProductName,
+                                           Markup = p.Markup,
+                                           Notes = p.Notes,
+                                           ProductType = pt.ProductId.ToString(),
+                                           ProductTypeName = pt.ProductName,
+                                           TenantId = p.TenantId,
+                                           IsActive = p.IsActive,
+                                       }).ToList();
+                    foreach (var item in productList)
                     {
-                        var productComponents1 = (from pc in dbContext.TblProductComponents
-                                                 join c in dbContext.TblComponents on pc.ComponentId equals c.ComponentId
-                                                 where pc.ProductId == item.ProductId && pc.IsDelete == false
-                                                 select new ProductComponents
-                                                 {
-                                                     ProductComponentId = pc.ProductComponentId,
-                                                     ComponentId = pc.ComponentId,
-                                                     Quantity = pc.Quantity,
-                                                     ComponentName = c.ComponentName
-                                                 }).ToList();
+                        var productComponent = (from pm in dbContext.TblProductComponents.OrderByDescending(x => x.CreatedAt)
+                                                join c in dbContext.TblComponents on pm.ComponentId equals c.ComponentId
+                                                where pm.ComponentId == item.ProductId && pm.IsDelete == false
+                                                select new ProductComponentVmm
+                                                {
+                                                    ComponentId = pm.ComponentId,
+                                                    Quantity = pm.Quantity,
+                                                    ProductComponentId = item.ProductId,
+                                                    IsActive = pm.IsActive,
+                                                }).ToList();
 
-                        item.ProductComponents = productComponents1;
+                        item.ProductComponents = productComponent;
                     }
 
+                    filter.SearchValue = filter.SearchValue?.Trim().ToLower();
+                    var FilterRecords = productList
+                              .Where(x =>
+                              (string.IsNullOrEmpty(filter.SearchValue) ? true :
+                                 (x.ProductId.ToString() == filter.SearchValue) ||
+                                 (x.ProductType.ToString() == filter.SearchValue) ||
+                                 (x.ProductName ?? "").ToLower().Contains(filter.SearchValue) ||
+                                 (x.Notes ?? "").ToLower().Contains(filter.SearchValue) ||
+                                 (x.Markup.ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
+                                 (x.ProductTypeName ?? "").ToLower().Contains(filter.SearchValue))
+                             ).ToList();
 
-                 
 
-                    var filteredComponents = productslist
-                        .Where(x =>
-                            string.IsNullOrEmpty(filter.SearchValue) ||
-                            (x.ProductName ?? "").ToLower().Contains(filter.SearchValue.Trim().ToLower()) ||
-                            (x.ProductType ?? "").ToLower().Contains(filter.SearchValue.Trim().ToLower()) ||
-                            (x.Markup.ToString() ?? "").ToLower().Contains(filter.SearchValue.Trim().ToLower()) ||
-                            (x.ProductType.ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
-                            (x.ProductTypeName ?? "").ToLower().Contains(filter.SearchValue))
-                        .ToList();
 
-                    var filteredRecords = filteredComponents
-                        .Skip((filter.PageNo - 1) * filter.RecordPerPage)
-                        .Take(filter.RecordPerPage)
-                        .ToList();
-
-                    responseVm.Data = filteredRecords.Select(x => new ProductListVm
-                    {
-                        ProductId = x.ProductId,
-                        ProductName = x.ProductName,
-                        IsActive = x.IsActive,
-                        TenantId = x.TenantId,
-                        Notes = x.Notes,
-                        Markup = x.Markup,
-                        ProductType = x.ProductType,
-                        ProductTypeName = x.ProductTypeName
-                    }).ToList();
-
-                    var TakenRecords = filteredRecords
+                    var TakenRecords = FilterRecords
                         .Skip((filter.PageNo - 1) * filter.RecordPerPage)
                         .Take(filter.RecordPerPage)
                         .ToList();
@@ -270,9 +281,9 @@ namespace ShutterManagement.Business.Services
 
                     if (TakenRecords != null && TakenRecords.Count > 0)
                     {
-                        responseVm.Data = TakenRecords.ToList();
+                        responseVm.Data = TakenRecords;
                         responseVm.Message = AppConstant.UpdateSuccessMsg;
-                        responseVm.TotalRecords = filteredRecords.Count;
+                        responseVm.TotalRecords = FilterRecords.Count;
                     }
                     else
                     {
@@ -289,7 +300,7 @@ namespace ShutterManagement.Business.Services
                 responseVm.Message = AppConstant.ExceptionError + ex.Message;
             }
 
-            return await Task.FromResult(responseVm);
+            return responseVm;
         }
 
 
@@ -341,5 +352,5 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
     }
-    }
+}
 
