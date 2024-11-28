@@ -324,6 +324,14 @@ namespace ShutterManagement.Business.Services
             {
                 var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
 
+                var IsProductName = await AnyAsync(x => x.ProductName == model.ProductName
+                    && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId
+                    && x.ProductType == model.ProductType && x.ProductId!=model.ProductId);
+                if (IsProductName)
+                {
+                    responseVm.Message = "ProductName " + AppConstant.AlreadyExists;
+                    return responseVm;
+                }
                 if (IsTenant)
                 {
                     var IsProductExists = GetAllQuerable()
