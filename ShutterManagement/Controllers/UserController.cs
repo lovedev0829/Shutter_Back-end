@@ -23,6 +23,7 @@ namespace ShutterManagement.API.Controllers
         }
 
         [HttpPost("Create")]
+        [Authorize(Roles = "UsersAdd")]
         public async Task<IActionResult> Create([FromBody] CreateUser UserDetails)
         {
             var result = await _userService.Create(UserDetails);
@@ -30,6 +31,7 @@ namespace ShutterManagement.API.Controllers
         }
 
         [HttpPost("Update")]
+        [Authorize(Roles = "UsersEdit")]
         public async Task<IActionResult> Update([FromBody] UpdateUser UserDetails)
         {
             var result = await _userService.Update(UserDetails);
@@ -37,6 +39,7 @@ namespace ShutterManagement.API.Controllers
         }
 
         [HttpPost("Delete")]
+        [Authorize(Roles = "UsersDelete")]
         public async Task<IActionResult> Delete(string UserId)
         {
             var result = await _userService.Delete(UserId);
@@ -44,15 +47,17 @@ namespace ShutterManagement.API.Controllers
         }
 
         [HttpPost("ActiveInActive")]
+        [Authorize(Roles = "UsersEdit")]
         public async Task<IActionResult> ActiveInactive(string UserId)
         {
             var result = await _userService.ActiveInactive(UserId);
             return Ok(result);
         }
 
-
+        
         [HttpPost]
         [Route("GetAll")]
+        [Authorize(Roles = "UsersView")]
         public async Task<IActionResult> GetAll(Pagination filter)
         {
             var res = await _userService.GetAll(filter);
