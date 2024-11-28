@@ -20,6 +20,4 @@ public partial class TblJobStatus
     public DateTime? UpdatedAt { get; set; }
 
     public DateTime? CreatedAt { get; set; }
-
-    public virtual ICollection<TblJob> TblJobs { get; set; } = new List<TblJob>();
 }
