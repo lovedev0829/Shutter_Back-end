@@ -11,8 +11,6 @@ public partial class TblJob
 
     public Guid? AddressId { get; set; }
 
-    public string? JobLabel { get; set; }
-
     public DateTime? ScheduledDate { get; set; }
 
     public string? Notes { get; set; }
@@ -31,13 +29,21 @@ public partial class TblJob
 
     public Guid? CreatedBy { get; set; }
 
-    public Guid? StatusId { get; set; }
+    public Guid? AssignedPersonnel { get; set; }
+
+    public string? AttachmentAny { get; set; }
+
+    public Guid? JobStatus { get; set; }
+
+    public Guid? JobType { get; set; }
+
+    public string? JobName { get; set; }
 
     public virtual TblAddress? Address { get; set; }
 
     public virtual TblContact? Contact { get; set; }
 
-    public virtual TblJobStatus? Status { get; set; }
+    public virtual MstJobStatus? JobStatusNavigation { get; set; }
 
     public virtual ICollection<TblEstimate> TblEstimates { get; set; } = new List<TblEstimate>();
 

@@ -123,6 +123,7 @@ builder.Services.AddScoped<IMstProductType, ProductTypeService>();
 builder.Services.AddScoped<IProductComponentService,ProductComponentService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IUnitofMeasurementService, UnitofMeasurementService>();
+builder.Services.AddScoped<IJobService, JobService>();
 
 var app = builder.Build();
 

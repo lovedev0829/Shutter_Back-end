@@ -15,7 +15,11 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
     {
     }
 
+    public virtual DbSet<MstJobStatus> MstJobStatuses { get; set; }
+
     public virtual DbSet<MstJobTitle> MstJobTitles { get; set; }
+
+    public virtual DbSet<MstJobType> MstJobTypes { get; set; }
 
     public virtual DbSet<MstModule> MstModules { get; set; }
 
@@ -93,6 +97,18 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
     {
         modelBuilder.HasDefaultSchema("btprojec_admin");
 
+        modelBuilder.Entity<MstJobStatus>(entity =>
+        {
+            entity.HasKey(e => e.JobStatusId).HasName("PK__MstJobSt__EB485721C90CE1FD");
+
+            entity.ToTable("MstJobStatus", "dbo");
+
+            entity.Property(e => e.JobStatusId).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.JobStatusName)
+                .HasMaxLength(200)
+                .IsUnicode(false);
+        });
+
         modelBuilder.Entity<MstJobTitle>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK__MstJobTi__3214EC07381DB551");
@@ -105,6 +121,16 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
                 .HasMaxLength(200)
                 .IsUnicode(false);
             entity.Property(e => e.ModifiedAt).HasColumnType("datetime");
+        });
+
+        modelBuilder.Entity<MstJobType>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToTable("MstJobType", "dbo");
+
+            entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.JobTypeName).HasMaxLength(128);
         });
 
         modelBuilder.Entity<MstModule>(entity =>
@@ -399,12 +425,13 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.ToTable("TblJob", "dbo");
 
             entity.Property(e => e.JobId).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.AttachmentAny).HasMaxLength(250);
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
-            entity.Property(e => e.JobLabel).HasMaxLength(255);
+            entity.Property(e => e.JobName).HasMaxLength(250);
             entity.Property(e => e.ScheduledDate).HasColumnType("datetime");
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(getdate())")
@@ -418,9 +445,9 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
                 .HasForeignKey(d => d.ContactId)
                 .HasConstraintName("FK__TblJob__ContactI__625A9A57");
 
-            entity.HasOne(d => d.Status).WithMany(p => p.TblJobs)
-                .HasForeignKey(d => d.StatusId)
-                .HasConstraintName("FK__TblJob__StatusId__0E04126B");
+            entity.HasOne(d => d.JobStatusNavigation).WithMany(p => p.TblJobs)
+                .HasForeignKey(d => d.JobStatus)
+                .HasConstraintName("FK__TblJob__JobStatu__278EDA44");
 
             entity.HasOne(d => d.Tenant).WithMany(p => p.TblJobs)
                 .HasForeignKey(d => d.TenantId)
@@ -648,6 +675,7 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
             entity.Property(e => e.MaterialName).HasMaxLength(255);
+            entity.Property(e => e.ReorderLevel).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.Sku)
                 .HasMaxLength(50)
                 .HasColumnName("SKU");
