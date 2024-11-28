@@ -432,6 +432,7 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
             entity.Property(e => e.JobName).HasMaxLength(250);
+            entity.Property(e => e.JobUniqueId).HasMaxLength(200);
             entity.Property(e => e.ScheduledDate).HasColumnType("datetime");
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(getdate())")
@@ -687,6 +688,10 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
+
+            entity.HasOne(d => d.ProductTypeNavigation).WithMany(p => p.TblRawMaterials)
+                .HasForeignKey(d => d.ProductType)
+                .HasConstraintName("FK__TblRawMat__Produ__39AD8A7F");
 
             entity.HasOne(d => d.Tenant).WithMany(p => p.TblRawMaterials)
                 .HasForeignKey(d => d.TenantId)

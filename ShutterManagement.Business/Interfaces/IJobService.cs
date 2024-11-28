@@ -15,9 +15,9 @@ namespace ShutterManagement.Business.Interfaces
     {
         Task<IResponseVm<string>> Create(CreateJob model);
         Task<IResponseVm<string>> Update(UpdateJob model);
-        Task<IResponseVm<string>> Delete(string UserId);
-        Task<IResponseVm<string>> ActiveInactive(string UserId);
+        Task<IResponseVm<string>> Delete(string Id);
+        Task<IResponseVm<string>> ActiveInactive(string Id);
 
-        Task<IResponseVm<List<UsersList>>> GetAll(Pagination filter);
+        Task<IResponseVm<List<GetAllJobsdetails>>> GetAll(Pagination filter);
     }
 }

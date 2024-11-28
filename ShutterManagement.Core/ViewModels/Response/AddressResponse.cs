@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace ShutterManagement.Core.ViewModels.Response
 {
+
     public class AddressResponse
     {
         public Guid AddressId { get; set; }

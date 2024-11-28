@@ -20,4 +20,12 @@ namespace ShutterManagement.Core.Common
         Image,
         Document
     }
+
+    public enum ModuleName
+    {
+        Job,
+        Estimation,
+        Order,
+        Invoice
+    }
 }

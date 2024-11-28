@@ -39,6 +39,8 @@ public partial class TblJob
 
     public string? JobName { get; set; }
 
+    public string? JobUniqueId { get; set; }
+
     public virtual TblAddress? Address { get; set; }
 
     public virtual TblContact? Contact { get; set; }
