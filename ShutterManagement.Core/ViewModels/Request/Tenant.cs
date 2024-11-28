@@ -54,7 +54,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         public string? PrimaryColor { get; set; }
 
         [DefaultValue("")]
-        [RegularExpression("^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$", ErrorMessage = AppConstant.ColorCodeError)]
+        //[RegularExpression("^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$", ErrorMessage = AppConstant.ColorCodeError)]
         public string? SecondaryColor { get; set; }
 
         //[Required]
