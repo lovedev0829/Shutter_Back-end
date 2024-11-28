@@ -96,6 +96,7 @@ namespace ShutterManagement.Business.Services
                         Notes = model.Notes,
                         AttachmentAny = model.AttachmentsAny,
                         JobUniqueId = generateUnique.GenerateUniqueIds(ModuleName.Job),
+                        TenantId = AppConstant.LoggedInTenantId,
                         IsActive = true,
                         IsDelete = false,
                         CreatedAt = DateTime.Now,

@@ -55,15 +55,10 @@ namespace ShutterManagement.Services
 
         public async virtual Task<T> Add(T entity)
         {
-            try
-            {
+            
                 dbContext.Set<T>().Add(entity);
                 await dbContext.SaveChangesAsync();
-            }
-            catch (Exception ex)
-            {
-                string msg = ex.Message;
-            }
+           
             return entity;
         }
 

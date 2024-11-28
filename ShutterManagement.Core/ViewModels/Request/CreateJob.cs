@@ -30,9 +30,9 @@ namespace ShutterManagement.Core.ViewModels.Request
         [Required]
         public Guid? AssignedPersonnel { get; set; }
 
-        [DefaultValue("")]
+        //[DefaultValue(Dat)]
         //[Required]
-        public DateTime ScheduledDate { get; set; }
+        public DateTime? ScheduledDate { get; set; }
 
         [DefaultValue("")]
         [Required]
