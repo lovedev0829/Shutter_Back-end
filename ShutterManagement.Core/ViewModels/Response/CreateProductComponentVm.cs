@@ -11,7 +11,7 @@ namespace ShutterManagement.Core.ViewModels.Response
     public class CreateProductComponentVm
     {
         [DefaultValue("")]
-        public Guid ProductId { get; set; }
+        public Guid? ProductId { get; set; }
         public List<ProductComponentVm>? ProductComponents { get; set; }
     }
 }

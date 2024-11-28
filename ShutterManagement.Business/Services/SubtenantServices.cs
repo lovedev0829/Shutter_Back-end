@@ -123,24 +123,25 @@ namespace ShutterManagement.Business.Services
                         responseVm.Message = AppConstant.TenantNotFound;
                         return responseVm;
                     }
-                    var braindingInfo = GetAllQuerable().Where(x => x.TenantId.ToString() == model.TenantId && x.IsDelete == false).Select(x => x.BrandingInfo).FirstOrDefault();
-                    if (braindingInfo != null) {
-                        bool IsSubTenantEmailExists = await tenantBrandingService.AnyAsync(x => x.Id != braindingInfo && x.Email == model.Email);
-                        var SubTenantUser = userService.GetAllQuerable().Where(x => x.TenantId.ToString() == model.TenantId).OrderBy(x => x.CreatedAt).FirstOrDefault();
-                        bool IsUserEmailExists = await userService.AnyAsync(x => x.Id != SubTenantUser.Id && x.Email == model.Email && x.TenantId.ToString() == model.TenantId);
+                    //var braindingInfo = GetAllQuerable().Where(x => 
+                    //x.ParentTenantId == AppConstant.LoggedInTenantId && x.IsDelete == false).Select(x => new { x.BrandingInfo, x.TenantId }).ToArray();
+                    //if (braindingInfo != null && braindingInfo.Count() > 0) 
+                    //{
+                    //    bool IsSubTenantEmailExists =  await tenantBrandingService.AnyAsync(x => braindingInfo.Select(x=>x.BrandingInfo).Contains(x.Id) && x.Email == model.Email);
+                    //    bool IsUserEmailExists = await userService.AnyAsync(x => braindingInfo.Select(y => y.TenantId).Contains((Guid)x.TenantId) && x.IsDelete == false && x.Email == model.Email);
 
-                        if (IsSubTenantEmailExists || IsUserEmailExists) {
-                            responseVm.Message = "Email " + AppConstant.AlreadyExists;
-                            return responseVm;
-                        }
-                       //bool IsSubTenantPhoneExists = await tenantBrandingService.AnyAsync(x => x.Id != braindingInfo && x.PhoneNumber == model.PhoneNumber);
-                       // if (IsSubTenantPhoneExists)
-                       // {
-                       //     responseVm.Message = "Phone " + AppConstant.AlreadyExists;
-                       //     return responseVm;
-                       // }
+                    //    if (IsSubTenantEmailExists || IsUserEmailExists) {
+                    //        responseVm.Message = "Email " + AppConstant.AlreadyExists;
+                    //        return responseVm;
+                    //    }
+                    //   //bool IsSubTenantPhoneExists = await tenantBrandingService.AnyAsync(x => x.Id != braindingInfo && x.PhoneNumber == model.PhoneNumber);
+                    //   // if (IsSubTenantPhoneExists)
+                    //   // {
+                    //   //     responseVm.Message = "Phone " + AppConstant.AlreadyExists;
+                    //   //     return responseVm;
+                    //   // }
 
-                    }
+                    //}
                     var tenantid = Guid.Parse(model.TenantId);
                     var Parenttenantid = AppConstant.LoggedInTenantId;
                     //var HashPassword = AesEncryptionHelper.Encrypt(model.Password ?? "");

@@ -34,22 +34,22 @@ namespace ShutterManagement.Business.Services
                         x.IsActive == true);
                 if (isTenantValid)
                 {
-                    bool allProductAddedSuccessfully = true;
-
-                    foreach (var productcomp in model.ProductComponents)
+                    var IsproductExist = await dbContext.TblProducts
+                           .AnyAsync(x => x.ProductId == model.ProductId
+                                          && x.TenantId == AppConstant.LoggedInTenantId
+                                          && x.IsDelete == false);
+                    if (IsproductExist)
                     {
-                        
-                        var IsproductExist = await dbContext.TblProducts
-                            .AnyAsync(x => x.ProductId == model.ProductId
-                                           && x.TenantId == AppConstant.LoggedInTenantId
-                                           && x.IsDelete == false); 
-
-                        if (IsproductExist) 
+                        foreach (var productcomp in model.ProductComponents)
                         {
-                            try
+
+                            bool IsProductComponentExists = await AnyAsync(x => x.ProductId == model.ProductId && x.ComponentId == productcomp.ComponentId
+                            && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
+                            if (!IsProductComponentExists)
                             {
                                 TblProductComponent newProductComponent = new TblProductComponent
                                 {
+                                    ProductComponentId = Guid.NewGuid(),
                                     ProductId = model.ProductId,
                                     ComponentId = productcomp.ComponentId,
                                     Quantity = productcomp.Quantity,
@@ -60,34 +60,16 @@ namespace ShutterManagement.Business.Services
                                     TenantId = AppConstant.LoggedInTenantId
                                 };
 
-                                await dbContext.TblProductComponents.AddAsync(newProductComponent);
-
-                                await dbContext.SaveChangesAsync();
+                                await Add(newProductComponent);
 
                             }
-                            catch (Exception ex)
-                            {
-                                responseVm.Message = $"Failed to add component with ID {productcomp.ComponentId}: {ex.Message}";
-                            }
                         }
-                        else
-                        {
-                            responseVm.Message = "The specified product does not exist or has been deleted.";
-                        }
-                    }
-
-
-                    if (allProductAddedSuccessfully)
-                    {
-                        await dbContext.SaveChangesAsync();
                         responseVm.IsSuccess = true;
-                        responseVm.Message = AppConstant.InsertSuccessMsg;
+                        responseVm.Message = AppConstant.UpdateSuccessMsg;
                     }
-
-
                     else
                     {
-                        responseVm.Message = "Data not added.";
+                        responseVm.Message = "Product " + AppConstant.NoDataFound;
                     }
                 }
                 else
@@ -134,7 +116,7 @@ namespace ShutterManagement.Business.Services
                         await Update(productcomponent);
 
                         responseVm.IsSuccess = true;
-                        responseVm.Message = AppConstant.UpdateSuccessMsg;
+                        responseVm.Message = AppConstant.DeleteSuccessMsg;
                     }
                     else
                     {
@@ -170,26 +152,31 @@ namespace ShutterManagement.Business.Services
                 if (isTenantValid)
                 {
                     var productComponent = GetAllQuerable()
-                        .Where(x => x.ProductComponentId != model.ProductComponentId && x.ProductId == model.ProductId && x.ComponentId == model.ComponentId &&
+                        .Where(x => x.ProductComponentId == model.ProductComponentId && x.ProductId == model.ProductId && x.ComponentId == model.ComponentId &&
                                     x.TenantId == AppConstant.LoggedInTenantId &&
                                     x.IsDelete == false)
                         .FirstOrDefault();
 
-                    if (productComponent == null)
+                    if (productComponent != null)
                     {
-                        productComponent.ComponentId = model.ProductComponentId;
-                        productComponent.Quantity = model.Quantity;
-                        productComponent.UpdatedAt = DateTime.Now;
-                        productComponent.ModifiedBy = AppConstant.LoggedInUserID;
+                        bool IsProductComponentExists = await AnyAsync(x => x.ProductComponentId != model.ProductComponentId && x.ProductId == model.ProductId && x.ComponentId == model.ComponentId &&
+                                    x.TenantId == AppConstant.LoggedInTenantId &&
+                                    x.IsDelete == false);
+                        if (!IsProductComponentExists)
+                        {
+                            productComponent.ComponentId = model.ComponentId;
+                            productComponent.Quantity = model.Quantity;
+                            productComponent.UpdatedAt = DateTime.Now;
+                            productComponent.ModifiedBy = AppConstant.LoggedInUserID;
 
-                        await Update(productComponent);
-
+                            await Update(productComponent);
+                        }
                         responseVm.IsSuccess = true;
                         responseVm.Message = AppConstant.UpdateSuccessMsg;
                     }
                     else
                     {
-                        responseVm.Message = AppConstant.AlreadyExists;
+                        responseVm.Message = AppConstant.NoDataFound;
                     }
                 }
                 else
