@@ -102,6 +102,7 @@ namespace ShutterManagement.Business.Services
                             UnitOfMeasurement = model.UnitOfMeasurement,
                             StockQuantity = model.StockQuantity,
                             ReorderLevel = model.ReorderLevel,
+                            ProductType = Guid.Parse(model.ProductType),
                             Sku = model.SKU,
                             IsCutSheet = model.IsCutSheet,
                             VendorId = model.VendorId,
