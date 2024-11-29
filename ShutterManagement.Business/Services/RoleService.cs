@@ -36,7 +36,7 @@ namespace ShutterManagement.Business.Services
             {
 
                 bool IsRoleExists = await AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId
-                && x.IsDelete == false && x.IsActive == true && x.RoleName == model.RoleName);
+                && x.IsDelete == false && x.IsActive == true && x.RoleName == model.RoleName.Trim());
                 if (IsRoleExists)
                 {
                     responseVm.Message = AppConstant.AlreadyExists;
@@ -44,7 +44,7 @@ namespace ShutterManagement.Business.Services
                 }
                 TblRole role = new TblRole
                 {
-                    RoleName = model.RoleName,
+                    RoleName = model.RoleName.Trim(),
                     CreatedAt = DateTime.Now,
                     CreatedBy = AppConstant.LoggedInUserID,
                     IsActive = true,
@@ -93,7 +93,7 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
                 bool IsRoleNameExists = await AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId
-                && x.IsDelete == false && x.IsActive == true && x.Id != model.RoleId && x.RoleName == model.RoleName);
+                && x.IsDelete == false && x.IsActive == true && x.Id != model.RoleId && x.RoleName == model.RoleName.Trim());
                 if (IsRoleNameExists)
                 {
                     responseVm.Message = AppConstant.AlreadyExists;
@@ -206,9 +206,9 @@ namespace ShutterManagement.Business.Services
 
         }
 
-        public async Task<IResponseVm<dynamic>> GetAll(Pagination filter)
+        public async Task<IResponseVm<List<RoleList>>> GetAll(Pagination filter)
         {
-            IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
+            IResponseVm<List<RoleList>> responseVm = new ResponseVm<List<RoleList>>();
             try
             {
                 List<RoleList> roleLists = new List<RoleList>();

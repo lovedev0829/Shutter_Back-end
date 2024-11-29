@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ShutterManagement.Core.ViewModels.Response;
 
 namespace ShutterManagement.Business.Interfaces
 {
@@ -16,6 +17,6 @@ namespace ShutterManagement.Business.Interfaces
         Task<IResponseVm<string>> Update(UpdateRole model);
         Task<IResponseVm<string>> Delete(string RoleId);
         Task<IResponseVm<string>> ActiveInactive(string RoleId);
-        Task<IResponseVm<dynamic>> GetAll(Pagination filter);
+        Task<IResponseVm<List<RoleList>>> GetAll(Pagination filter);
     }
 }

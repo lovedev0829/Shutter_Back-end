@@ -92,7 +92,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsProductName = await AnyAsync(x => x.ProductName == model.ProductName
+                var IsProductName = await AnyAsync(x => x.ProductName == model.ProductName.Trim()
                     && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId
                     && x.ProductType == model.ProductType);
                 if (IsProductName)
@@ -108,7 +108,7 @@ namespace ShutterManagement.Business.Services
                     TblProduct product = new TblProduct
                     {
                         ProductId = Guid.NewGuid(),
-                        ProductName = model.ProductName,
+                        ProductName = model.ProductName.Trim(),
                         ProductType = model.ProductType,
                         Markup = model.Markup,
                         Notes = model.Notes,

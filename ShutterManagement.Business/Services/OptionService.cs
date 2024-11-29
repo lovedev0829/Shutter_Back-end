@@ -79,7 +79,7 @@ namespace ShutterManagement.Business.Services
                 var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null);
                 if (IsTenant)
                 {
-                    var IsOptionNameExists = await AnyAsync(x => x.OptionName == model.OptionName
+                    var IsOptionNameExists = await AnyAsync(x => x.OptionName == model.OptionName.Trim()
                     && x.IsActive == true && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId
                     && x.ProductTypeId == model.ProductTypeId);
                     if (!IsOptionNameExists)
@@ -87,7 +87,7 @@ namespace ShutterManagement.Business.Services
                         TblOption options = new TblOption
                         {
                             OptionId = Guid.NewGuid(),
-                            OptionName = model.OptionName,
+                            OptionName = model.OptionName.Trim(),
                             ProductTypeId = model.ProductTypeId,
                             CreatedAt = DateTime.Now,
                             CreatedBy = AppConstant.LoggedInUserID,
@@ -265,7 +265,7 @@ namespace ShutterManagement.Business.Services
                                     && c.TenantId == AppConstant.LoggedInTenantId
                                     && c.IsDelete == false)
                         .FirstOrDefault();
-                    var IsOptionNameExists = await AnyAsync(x => x.OptionName == model.OptionName
+                    var IsOptionNameExists = await AnyAsync(x => x.OptionName == model.OptionName.Trim()
                   && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId
                   && x.ProductTypeId == model.ProductTypeId && x.OptionId != model.OptionId);
                     if (IsOptionExists == null)

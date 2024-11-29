@@ -63,8 +63,16 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
+                bool IsVendorNameExist = await AnyAsync(x => x.IsDelete == false &&
+                                        x.VendorName == model.VendorName.Trim() && x.TenantId == AppConstant.LoggedInTenantId);
+
+                if (IsVendorNameExist)
+                {
+                    responseVm.Message = "Vendor Name " + AppConstant.AlreadyExists;
+                    return responseVm;
+                }
                 bool IsVendorEmailExists = await AnyAsync(x => x.IsDelete == false &&
-                     (x.Email == model.Email)
+                     (x.Email == model.Email.Trim())
                      && x.TenantId == AppConstant.LoggedInTenantId);
                 if (IsVendorEmailExists)
                 {
@@ -72,7 +80,7 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
                 bool IsVendorPhoneExists = await AnyAsync(x => x.IsDelete == false &&
-                                        (x.PhoneNumber == model.PhoneNumber)
+                                        (x.PhoneNumber == model.PhoneNumber.Trim())
                                         && x.TenantId == AppConstant.LoggedInTenantId);
 
                 if (IsVendorPhoneExists)
