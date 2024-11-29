@@ -49,7 +49,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         public string? PhoneNumber { get; set; }
         public string? Logo { get; set; }
 
-        [DefaultValue("")]
+        [DefaultValue("#1d7e8b")]
         [RegularExpression("^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$", ErrorMessage = AppConstant.ColorCodeError)]
         public string? PrimaryColor { get; set; }
 

@@ -63,7 +63,7 @@ namespace ShutterManagement.Business.Services
                     new SqlParameter("@FirstName", SqlDbType.NVarChar) { SqlValue = model.FirstName },
                     new SqlParameter("@MiddleName", SqlDbType.NVarChar) { SqlValue = model.MiddleName },
                     new SqlParameter("@LastName", SqlDbType.NVarChar) { SqlValue = model.LastName },
-                    new SqlParameter("@Code", SqlDbType.NVarChar) { SqlValue = model.Code },
+                    new SqlParameter("@Code", SqlDbType.NVarChar) { SqlValue = model.Code.Trim() },
                     new SqlParameter("@URL", SqlDbType.NVarChar) { SqlValue = model.URL },
                     new SqlParameter("@Email", SqlDbType.NVarChar) { SqlValue = model.Email },
                     new SqlParameter("@PhoneNumber", SqlDbType.NVarChar) { SqlValue = model.PhoneNumber },

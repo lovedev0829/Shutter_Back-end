@@ -82,7 +82,7 @@ namespace ShutterManagement.Business.Services
             {
                 var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsActive == true && x.IsDelete == false);
                 var IsVendorExist = await vendorService.AnyAsync(x => x.VendorId == model.VendorId && x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
-                var IsSKUExist = _context.TblRawMaterials.Any(x => x.VendorId == model.VendorId && x.Sku == model.SKU && x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false);
+                var IsSKUExist = _context.TblRawMaterials.Any(x => x.VendorId == model.VendorId && x.Sku == model.SKU.Trim() && x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false);
                 if (IsSKUExist)
                 {
                     responseVm.Message = "SKU " + AppConstant.AlreadyExists;
@@ -97,13 +97,13 @@ namespace ShutterManagement.Business.Services
 
                         TblRawMaterial material = new TblRawMaterial
                         {
-                            MaterialName = model.MaterialName,
+                            MaterialName = model.MaterialName.Trim(),
                             UnitCost = model.UnitCost,
                             UnitOfMeasurement = model.UnitOfMeasurement,
                             StockQuantity = model.StockQuantity,
                             ReorderLevel = model.ReorderLevel,
                             ProductType = Guid.Parse(model.ProductType),
-                            Sku = model.SKU,
+                            Sku = model.SKU.Trim(),
                             IsCutSheet = model.IsCutSheet,
                             VendorId = model.VendorId,
                             Notes = model.Notes,

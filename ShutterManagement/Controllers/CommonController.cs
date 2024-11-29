@@ -37,12 +37,13 @@ namespace ShutterManagement.Controllers
         private readonly IOption option;
         private readonly IProductService productService;
         private readonly IUnitofMeasurementService unitofMeasurementService;
+        private readonly IRoleService roleService;
 
         public CommonController(IMasterCreate masterCreate, FileUploadHelper fileUpload, ClaimsProperty claimsProperty,
             IJobTitleService jobTitleService,IMaterial material,IVendorService vendorService 
             ,EmailHelper emailHelper,IUserService userService, IJobStatusService jobStatusService,
             IJobTypeService jobTypeService,
-            IComponentService componentService,IMstProductType mstProductType,IAddress address,IOption option,IProductService productService,IUnitofMeasurementService unitofMeasurementService)
+            IComponentService componentService,IMstProductType mstProductType,IAddress address,IOption option,IProductService productService,IUnitofMeasurementService unitofMeasurementService,IRoleService roleService)
         {
             this.masterCreate = masterCreate;
             this.fileUpload = fileUpload;
@@ -64,6 +65,7 @@ namespace ShutterManagement.Controllers
             this.option = option;
             this.productService = productService;
             this.unitofMeasurementService = unitofMeasurementService;
+            this.roleService = roleService;
         }
 
 
@@ -341,6 +343,14 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> GetAllUnitOfMeasurement()
         {
             var res = await unitofMeasurementService.GetAll(filter);
+            res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
+            return Ok(res);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAllRoles()
+        {
+            var res = await roleService.GetAll(filter);
             res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
             return Ok(res);
         }
