@@ -174,7 +174,9 @@ namespace ShutterManagement.Business.Services
                     .ToList();
 
                     var FilterRecords = IsComponentExists
-                        .Where(x => string.IsNullOrEmpty(filter.SearchValue) ||
+                        .Where(x =>
+                        (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
+                            (string.IsNullOrEmpty(filter.SearchValue) ? true :
                                     (x.VendorId.ToString() == filter.SearchValue) ||
                                     (x.VendorName ?? "").Contains(filter.SearchValue.Trim()) ||
                                     (x.Email ?? "").Contains(filter.SearchValue.Trim()) ||
@@ -183,7 +185,7 @@ namespace ShutterManagement.Business.Services
                                     (x.State ?? "").Contains(filter.SearchValue.Trim()) ||
                                     (x.StreetAddress ?? "").Contains(filter.SearchValue.Trim()) ||
                                     (x.ZipCode ?? "").Contains(filter.SearchValue.Trim())
-                                    )
+                                    ))
                         .ToList();
                     var TakenRecords = FilterRecords
                         .Skip((filter.PageNo - 1) * filter.RecordPerPage)

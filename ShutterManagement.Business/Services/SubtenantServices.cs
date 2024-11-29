@@ -282,15 +282,15 @@ new SqlParameter("@Password", SqlDbType.NVarChar) { SqlValue = HashPassword },
                 {
                     item.BrandingInfoNavigation = tenantBrandingService.GetAllQuerable().Where(x => x.Id == item.BrandingInfo).FirstOrDefault();
                 }
-                filter.SearchValue = filter.SearchValue.Trim().ToLower();
+                filter.SearchValue = filter.SearchValue?.Trim().ToLower();
                 var FilterRecords = TenantList
                                     .Where(x =>
+                                    (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
                                     (filter.TenantId != "" ?
-                                    x.TenantId.ToString() == filter.TenantId.ToString() : true)
+                                    x.TenantId.ToString() == filter.TenantId?.ToString() : true)
                                     &&
                                     (filter.SearchValue != "" ?
                                     (x.TenantId.ToString() == filter.SearchValue) ||
-                                    (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) ||
                                     ((x.BrandingInfoNavigation?.Email ?? "").ToLower().Contains(filter.SearchValue)
                                     || (x.BrandingInfoNavigation?.PhoneNumber ?? "").ToLower().Contains(filter.SearchValue)
                                     || (x.FirstName ?? "").ToLower().Contains(filter.SearchValue)

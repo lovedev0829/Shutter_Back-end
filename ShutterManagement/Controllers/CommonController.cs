@@ -54,6 +54,7 @@ namespace ShutterManagement.Controllers
             filter.RecordPerPage = 100;
             filter.SearchValue = "";
             filter.TenantId = "";
+            filter.Status = 1;
             this.vendorService = vendorService;
             this.componentService = componentService;
             this.address= address;
@@ -330,7 +331,7 @@ namespace ShutterManagement.Controllers
         }
 
         [HttpGet]
-        [Route("")]
+        [Route("GetAllProduct")]
         public async Task<IActionResult> GetAllProduct()
         {
             var res =await productService.GetAll_Product(filter);
@@ -348,6 +349,7 @@ namespace ShutterManagement.Controllers
         }
 
         [HttpGet]
+        [Route("GetAllRoles")]
         public async Task<IActionResult> GetAllRoles()
         {
             var res = await roleService.GetAll(filter);

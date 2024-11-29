@@ -219,12 +219,13 @@ namespace ShutterManagement.Business.Services
                         item.Options = optionsType;
                     }
 
-                    filter.SearchValue = filter.SearchValue.Trim().ToLower();
+                    filter.SearchValue = filter.SearchValue?.Trim().ToLower();
 
                     var FilterRecords = IsOptionExists
-                                    .Where(x => (string.IsNullOrEmpty(filter.SearchValue) ? true :
-                                    (x.OptionId.ToString() == filter.SearchValue)||
-                                    (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true))
+                                    .Where(x =>
+                                    (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
+                                    (string.IsNullOrEmpty(filter.SearchValue) ? true :
+                                    (x.OptionId.ToString() == filter.SearchValue)
                                     || (x.ProductTypeName ?? "").Contains(filter.SearchValue)
                                     || (x.OptionName ?? "").Contains(filter.SearchValue)))
                                     .ToList();

@@ -21,9 +21,10 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var JobTitleList = (await GetAll()).Where(x => x.IsDelete == false).OrderByDescending(x => x.CreatedAt).ToList();
-                filter.SearchValue = (filter.SearchValue.Trim() ?? "").ToLower();
+                filter.SearchValue = (filter.SearchValue?.Trim() ?? "").ToLower();
                 var FilterRecords = JobTitleList
                                     .Where(x =>
+                                    (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
                                     (filter.SearchValue != "" ?
                                     (x.Id.ToString() == filter.SearchValue) ||
                                     ((x.JobTitleName ?? "").ToLower().Contains(filter.SearchValue)

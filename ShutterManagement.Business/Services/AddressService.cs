@@ -213,6 +213,7 @@ namespace ShutterManagement.Business.Services
                 filter.SearchValue = filter.SearchValue.Trim().ToLower();
                 var FilterRecords = AddressList
                                     .Where(x =>
+                                    (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
                                     (filter.SearchValue != "" ?
                                     (x.ContactId.ToString() == filter.SearchValue) ||
                                     (x.AddressId.ToString() == filter.SearchValue) ||

@@ -228,9 +228,10 @@ namespace ShutterManagement.Business.Services
                                             VendorName = t1.VendorName,
                                             IsCutSheet = t2.IsCutSheet,
                                         }).ToList();
-                    filter.SearchValue = filter.SearchValue.Trim().ToLower();
+                    filter.SearchValue = filter.SearchValue?.Trim().ToLower();
                     var FilterRecords = MaterialList
                                     .Where(x =>
+                                    (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
                                      (string.IsNullOrEmpty(filter.SearchValue) ? true :
                                         (x.MaterialId.ToString() == filter.SearchValue)
                                         || (x.ProductType.ToString() == filter.SearchValue)

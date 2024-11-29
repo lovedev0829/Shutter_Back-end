@@ -36,7 +36,7 @@ namespace ShutterManagement.Business.Services
             {
 
                 bool IsRoleExists = await AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId
-                && x.IsDelete == false && x.IsActive == true && x.RoleName == model.RoleName.Trim());
+                && x.IsDelete == false && x.RoleName.Trim() == model.RoleName.Trim());
                 if (IsRoleExists)
                 {
                     responseVm.Message = AppConstant.AlreadyExists;
@@ -86,21 +86,21 @@ namespace ShutterManagement.Business.Services
             try
             {
                 bool IsRoleExists = await AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId
-                && x.IsDelete == false && x.IsActive == true && x.Id == model.RoleId);
+                && x.IsDelete == false && x.Id == model.RoleId);
                 if (!IsRoleExists)
                 {
                     responseVm.Message = AppConstant.NoDataFound;
                     return responseVm;
                 }
                 bool IsRoleNameExists = await AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId
-                && x.IsDelete == false && x.IsActive == true && x.Id != model.RoleId && x.RoleName == model.RoleName.Trim());
+                && x.IsDelete == false && x.Id != model.RoleId && x.RoleName.Trim() == model.RoleName.Trim());
                 if (IsRoleNameExists)
                 {
                     responseVm.Message = AppConstant.AlreadyExists;
                     return responseVm;
                 }
                 var RoleDetails = GetAllQuerable().Where(x => x.Id == model.RoleId && x.IsShow == AppConstant.IsAdminRolesShow && x.IsDelete == false
-                && x.IsActive == true && x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
+                && x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
 
                 if (RoleDetails != null)
                 {
@@ -234,6 +234,7 @@ namespace ShutterManagement.Business.Services
                 filter.SearchValue = filter.SearchValue.Trim().ToLower();
                 var FilterRecords = roleLists
                                     .Where(x =>
+                                    (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
                                     (filter.SearchValue != "" ?
                                     (x.RoleId.ToString() == filter.SearchValue) ||
                                     ((x.RoleName ?? "").ToLower().Contains(filter.SearchValue.Trim())

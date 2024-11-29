@@ -12,7 +12,7 @@ namespace ShutterManagement
             AppConstant.JwtIssuer = Configuration["Jwt:Issuer"] ?? ""; 
             AppConstant.JwtAudience = Configuration["Jwt:Audience"] ?? "";
             AppConstant.JwtExpiryTime = Configuration["Jwt:ExpireTimeOut"] ?? "";
-            AppConstant.IsAdminRolesShow = Convert.ToBoolean(Configuration["IsAdminRolesShow"] ?? "false");
+            //AppConstant.IsAdminRolesShow = Convert.ToBoolean(Configuration["IsAdminRolesShow"] ?? "false");
         }
     }
 }

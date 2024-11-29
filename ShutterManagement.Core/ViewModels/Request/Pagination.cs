@@ -17,6 +17,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         public int PageNo { get; set; }
         [DefaultValue(10)]
         public int RecordPerPage { get; set; }
+        [DefaultValue(2)]
         public int Status { get; set; } 
     }
 }
