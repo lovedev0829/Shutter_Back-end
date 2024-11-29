@@ -12,7 +12,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         public string? PassWord { get; set; }
         public string? OldPassWord { get; set; }
         [Required]
-        [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
+        [Compare("PassWord", ErrorMessage = "The password and confirmation password do not match.")]
         public string? ConfirmPassWord { get; set; }
 
     }

@@ -246,21 +246,21 @@ namespace ShutterManagement.Services
                         return result;
                     }
 
-                    bool IsEmailExists = await AnyAsync(x => x.IsDelete == false &&
-                      (x.Email == profileUpdate.Email) && x.Id != AppConstant.LoggedInUserID && x.TenantId == AppConstant.LoggedInTenantId);
-                    if (IsEmailExists)
-                    {
-                        result.Message = "Email " + AppConstant.AlreadyExists;
-                        return result;
-                    }
+                    //bool IsEmailExists = await AnyAsync(x => x.IsDelete == false &&
+                    //  (x.Email == profileUpdate.Email) && x.Id != AppConstant.LoggedInUserID && x.TenantId == AppConstant.LoggedInTenantId);
+                    //if (IsEmailExists)
+                    //{
+                    //    result.Message = "Email " + AppConstant.AlreadyExists;
+                    //    return result;
+                    //}
 
                     var UpdateUserDetails = UserExistsDetails;
                     if (UpdateUserDetails != null)
                     {
                         UpdateUserDetails.FirstName = profileUpdate.FirstName;
                         UpdateUserDetails.LastName = profileUpdate.LastName;
-                        UpdateUserDetails.Username = profileUpdate.Email;
-                        UpdateUserDetails.Email = profileUpdate.Email;
+                        //UpdateUserDetails.Username = profileUpdate.Email;
+                        //UpdateUserDetails.Email = profileUpdate.Email;
                         UpdateUserDetails.Phone = profileUpdate.Phone;
                         UpdateUserDetails.ModifiedAt = DateTime.Now;
                         UpdateUserDetails.ModifiedBy = AppConstant.LoggedInUserID;
