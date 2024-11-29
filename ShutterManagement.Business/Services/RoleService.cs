@@ -36,7 +36,7 @@ namespace ShutterManagement.Business.Services
             {
 
                 bool IsRoleExists = await AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId
-                && x.IsDelete == false && x.IsActive == true && x.RoleName == model.RoleName);
+                && x.IsDelete == false && x.RoleName == model.RoleName);
                 if (IsRoleExists)
                 {
                     responseVm.Message = AppConstant.AlreadyExists;
@@ -93,7 +93,7 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
                 bool IsRoleNameExists = await AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId
-                && x.IsDelete == false && x.IsActive == true && x.Id != model.RoleId && x.RoleName == model.RoleName);
+                && x.IsDelete == false && x.Id != model.RoleId && x.RoleName == model.RoleName);
                 if (IsRoleNameExists)
                 {
                     responseVm.Message = AppConstant.AlreadyExists;
