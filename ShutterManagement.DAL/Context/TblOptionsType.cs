@@ -11,7 +11,7 @@ public partial class TblOptionsType
 
     public string? OptionType { get; set; }
 
-    public string? AdditionalCost { get; set; }
+    public decimal? AdditionalCost { get; set; }
 
     public bool? IsActive { get; set; }
 

@@ -57,6 +57,35 @@ namespace ShutterManagement.Core.ViewModels.Request
         //[RegularExpression("^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$", ErrorMessage = AppConstant.ColorCodeError)]
         public string? SecondaryColor { get; set; }
 
+        [Required]
+        [MaxLength(100)]
+        [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabaticalError)]
+        [DefaultValue("")]
+        public string? UserFirstName { get; set; }
+
+        [MaxLength(100)]
+        [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabaticalError)]
+        [DefaultValue("")]
+        public string? UserMiddleName { get; set; }
+
+        [Required]
+        [MaxLength(100)]
+        [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabaticalError)]
+        [DefaultValue("")]
+        public string? UserLastName { get; set; }
+        [Required, MaxLength(100)]
+        [RegularExpression(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", ErrorMessage = "Invalid email address.")]
+        [EmailAddress]
+        [DefaultValue("")]
+        public string? UserEmail { get; set; }
+
+
+        [Required]
+        [DefaultValue("")]
+        [MaxLength(10)]
+        [RegularExpression(@"^\d{10}$", ErrorMessage = "Phone number must be exactly 10 digits.")]
+        public string? UserPhoneNumber { get; set; }
+
         //[Required]
         //[DefaultValue("")]
         //[MinLength(8), MaxLength(12)]

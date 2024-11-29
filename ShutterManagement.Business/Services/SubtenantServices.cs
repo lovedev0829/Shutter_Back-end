@@ -19,7 +19,7 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace ShutterManagement.Business.Services
 {
-    public class SubtenantServices :  BaseRepository<ShutterDbContext, TblTenant>, ISubtenantService
+    public class SubtenantServices : BaseRepository<ShutterDbContext, TblTenant>, ISubtenantService
     {
         private readonly DataServices dataServices;
         private readonly IUserService userService;
@@ -35,7 +35,7 @@ namespace ShutterManagement.Business.Services
             this.claimsProperty = claimsProperty;
             this.tenantBrandingService = tenantBrandingService;
         }
-        
+
         public async Task<IResponseVm<string>> SubTenantCreate(CreateTenant model)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
@@ -62,24 +62,29 @@ namespace ShutterManagement.Business.Services
                     SqlParameter[] sqlParameters =
                     {
                     new SqlParameter("@ParentTenantId", SqlDbType.UniqueIdentifier) { SqlValue = AppConstant.LoggedInTenantId },
-                    new SqlParameter("@FirstName", SqlDbType.NVarChar) { SqlValue = model.FirstName },
-                    new SqlParameter("@MiddleName", SqlDbType.NVarChar) { SqlValue = model.MiddleName },
-                    new SqlParameter("@LastName", SqlDbType.NVarChar) { SqlValue = model.LastName },
-                    new SqlParameter("@Code", SqlDbType.NVarChar) { SqlValue = model.Code },
-                    new SqlParameter("@URL", SqlDbType.NVarChar) { SqlValue = model.URL },
-                    new SqlParameter("@Email", SqlDbType.NVarChar) { SqlValue = model.Email },
-                    new SqlParameter("@PhoneNumber", SqlDbType.NVarChar) { SqlValue = model.PhoneNumber },
-                    new SqlParameter("@Logo", SqlDbType.NVarChar) { SqlValue = model.Logo },
-                    new SqlParameter("@PrimaryColor", SqlDbType.NVarChar) { SqlValue = model.PrimaryColor },
-                    new SqlParameter("@SecondaryColor", SqlDbType.NVarChar) { SqlValue = model.SecondaryColor },
-                    new SqlParameter("@Password", SqlDbType.NVarChar) { SqlValue = HashPassword },
+                   new SqlParameter("@FirstName", SqlDbType.NVarChar) { SqlValue = model.FirstName },
+new SqlParameter("@MiddleName", SqlDbType.NVarChar) { SqlValue = model.MiddleName },
+new SqlParameter("@LastName", SqlDbType.NVarChar) { SqlValue = model.LastName },
+new SqlParameter("@Code", SqlDbType.NVarChar) { SqlValue = model.Code },
+new SqlParameter("@URL", SqlDbType.NVarChar) { SqlValue = model.URL },
+new SqlParameter("@Email", SqlDbType.NVarChar) { SqlValue = model.Email },
+new SqlParameter("@PhoneNumber", SqlDbType.NVarChar) { SqlValue = model.PhoneNumber },
+new SqlParameter("@Logo", SqlDbType.NVarChar) { SqlValue = model.Logo },
+new SqlParameter("@PrimaryColor", SqlDbType.NVarChar) { SqlValue = model.PrimaryColor },
+new SqlParameter("@SecondaryColor", SqlDbType.NVarChar) { SqlValue = model.SecondaryColor },
+new SqlParameter("@UserFirstName", SqlDbType.NVarChar) { SqlValue = model.FirstName },
+new SqlParameter("@UserMiddleName", SqlDbType.NVarChar) { SqlValue = model.MiddleName },
+new SqlParameter("@UserLastName", SqlDbType.NVarChar) { SqlValue = model.LastName },
+new SqlParameter("@UserEmail", SqlDbType.NVarChar) { SqlValue = model.Email },
+new SqlParameter("@UserPhoneNumber", SqlDbType.NVarChar) { SqlValue = model.PhoneNumber },
+new SqlParameter("@Password", SqlDbType.NVarChar) { SqlValue = HashPassword },
                     new SqlParameter("@LoggedInUser", SqlDbType.UniqueIdentifier) { SqlValue = AppConstant.LoggedInUserID },
 
                     new SqlParameter("@Action", SqlDbType.NVarChar) { SqlValue = "Create" },
                 };
 
                     await dataServices.CallSP("sp_TenantCRUD", null, sqlParameters);
-                    
+
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.InsertSuccessMsg;
                 }
@@ -94,7 +99,7 @@ namespace ShutterManagement.Business.Services
             }
             return responseVm;
         }
-        
+
         public async Task<IResponseVm<string>> SubTenantUpdate(UpdateSubTenant model)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
@@ -110,14 +115,14 @@ namespace ShutterManagement.Business.Services
                         return responseVm;
                     }
                     bool IsParentExists = await AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId
-                    && x.IsDelete == false && x.IsActive == true );
+                    && x.IsDelete == false && x.IsActive == true);
                     if (!IsParentExists)
                     {
                         responseVm.Message = AppConstant.TenantNotFound;
                         return responseVm;
                     }
                     bool IsTenantExists = await AnyAsync(x => x.TenantId.ToString() == model.TenantId && x.ParentTenantId == AppConstant.LoggedInTenantId
-                    && x.IsDelete == false );
+                    && x.IsDelete == false);
                     if (!IsTenantExists)
                     {
                         responseVm.Message = AppConstant.TenantNotFound;
@@ -144,22 +149,28 @@ namespace ShutterManagement.Business.Services
                     //}
                     var tenantid = Guid.Parse(model.TenantId);
                     var Parenttenantid = AppConstant.LoggedInTenantId;
-                    //var HashPassword = AesEncryptionHelper.Encrypt(model.Password ?? "");
+                    var HashPassword = string.IsNullOrEmpty(model.Password) ? "" : AesEncryptionHelper.Encrypt(model.Password ?? "");
+
                     SqlParameter[] sqlParameters =
                     {
                     new SqlParameter("@TenantId", SqlDbType.UniqueIdentifier) { SqlValue = tenantid},
                     new SqlParameter("@ParentTenantId", SqlDbType.UniqueIdentifier) { SqlValue = Parenttenantid },
-                    new SqlParameter("@FirstName", SqlDbType.VarChar) { SqlValue = model.FirstName },
-                    new SqlParameter("@MiddleName", SqlDbType.VarChar) { SqlValue = model.MiddleName },
-                    new SqlParameter("@LastName", SqlDbType.VarChar) { SqlValue = model.LastName },
-                    new SqlParameter("@Code", SqlDbType.VarChar) { SqlValue = model.Code },
-                    new SqlParameter("@URL", SqlDbType.VarChar) { SqlValue = model.URL },
-                    new SqlParameter("@Email", SqlDbType.VarChar) { SqlValue = model.Email },
-                    new SqlParameter("@PhoneNumber", SqlDbType.VarChar) { SqlValue = model.PhoneNumber },
-                    new SqlParameter("@Logo", SqlDbType.VarChar) { SqlValue = model.Logo },
-                    new SqlParameter("@PrimaryColor", SqlDbType.VarChar) { SqlValue = model.PrimaryColor },
-                    new SqlParameter("@SecondaryColor", SqlDbType.VarChar) { SqlValue = model.SecondaryColor },
-                    //new SqlParameter("@Password", SqlDbType.VarChar) { SqlValue = HashPassword },
+                    new SqlParameter("@FirstName", SqlDbType.NVarChar) { SqlValue = model.FirstName },
+                    new SqlParameter("@MiddleName", SqlDbType.NVarChar) { SqlValue = model.MiddleName },
+                    new SqlParameter("@LastName", SqlDbType.NVarChar) { SqlValue = model.LastName },
+                    new SqlParameter("@Code", SqlDbType.NVarChar) { SqlValue = model.Code },
+                    new SqlParameter("@URL", SqlDbType.NVarChar) { SqlValue = model.URL },
+                    new SqlParameter("@Email", SqlDbType.NVarChar) { SqlValue = model.Email },
+                    new SqlParameter("@PhoneNumber", SqlDbType.NVarChar) { SqlValue = model.PhoneNumber },
+                    new SqlParameter("@Logo", SqlDbType.NVarChar) { SqlValue = model.Logo },
+                    new SqlParameter("@PrimaryColor", SqlDbType.NVarChar) { SqlValue = model.PrimaryColor },
+                    new SqlParameter("@SecondaryColor", SqlDbType.NVarChar) { SqlValue = model.SecondaryColor },
+                    new SqlParameter("@UserFirstName", SqlDbType.NVarChar) { SqlValue = model.FirstName },
+                    new SqlParameter("@UserMiddleName", SqlDbType.NVarChar) { SqlValue = model.MiddleName },
+                    new SqlParameter("@UserLastName", SqlDbType.NVarChar) { SqlValue = model.LastName },
+                    new SqlParameter("@UserEmail", SqlDbType.NVarChar) { SqlValue = model.Email },
+                    new SqlParameter("@UserPhoneNumber", SqlDbType.NVarChar) { SqlValue = model.PhoneNumber },
+                    new SqlParameter("@Password", SqlDbType.NVarChar) { SqlValue = HashPassword },
                     new SqlParameter("@LoggedInUser", SqlDbType.UniqueIdentifier) { SqlValue = AppConstant.LoggedInUserID },
                     new SqlParameter("@Action", SqlDbType.NVarChar) { SqlValue = "Update" },
                 };
@@ -279,9 +290,10 @@ namespace ShutterManagement.Business.Services
                                     &&
                                     (filter.SearchValue != "" ?
                                     (x.TenantId.ToString() == filter.SearchValue) ||
+                                    (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) ||
                                     ((x.BrandingInfoNavigation?.Email ?? "").ToLower().Contains(filter.SearchValue)
                                     || (x.BrandingInfoNavigation?.PhoneNumber ?? "").ToLower().Contains(filter.SearchValue)
-                                    || (x.FirstName ?? "").ToLower().Contains(filter.SearchValue) 
+                                    || (x.FirstName ?? "").ToLower().Contains(filter.SearchValue)
                                     || (x.LastName ?? "").ToLower().Contains(filter.SearchValue)
                                     || (x.MiddleName ?? "").ToLower().Contains(filter.SearchValue)
                                     || (x.Code ?? "").ToLower().Contains(filter.SearchValue)

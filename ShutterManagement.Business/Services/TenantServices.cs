@@ -28,7 +28,7 @@ namespace ShutterManagement.Business.Services
         private readonly ClaimsProperty claimsProperty;
         private readonly IUserService userService;
 
-        public TenantServices(DataServices dataServices,IMapper mapper, ITenantBrandingService tenantBrandingService
+        public TenantServices(DataServices dataServices, IMapper mapper, ITenantBrandingService tenantBrandingService
             , ClaimsProperty claimsProperty, IUserService userService
             )
         {
@@ -58,8 +58,8 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
                 var HashPassword = AesEncryptionHelper.Encrypt(model.Password ?? "");
-                    SqlParameter[] sqlParameters =
-                    {
+                SqlParameter[] sqlParameters =
+                {
                     new SqlParameter("@FirstName", SqlDbType.NVarChar) { SqlValue = model.FirstName },
                     new SqlParameter("@MiddleName", SqlDbType.NVarChar) { SqlValue = model.MiddleName },
                     new SqlParameter("@LastName", SqlDbType.NVarChar) { SqlValue = model.LastName },
@@ -70,14 +70,19 @@ namespace ShutterManagement.Business.Services
                     new SqlParameter("@Logo", SqlDbType.NVarChar) { SqlValue = model.Logo },
                     new SqlParameter("@PrimaryColor", SqlDbType.NVarChar) { SqlValue = model.PrimaryColor },
                     new SqlParameter("@SecondaryColor", SqlDbType.NVarChar) { SqlValue = model.SecondaryColor },
+                    new SqlParameter("@UserFirstName", SqlDbType.NVarChar) { SqlValue = model.FirstName },
+                    new SqlParameter("@UserMiddleName", SqlDbType.NVarChar) { SqlValue = model.MiddleName },
+                    new SqlParameter("@UserLastName", SqlDbType.NVarChar) { SqlValue = model.LastName },
+                    new SqlParameter("@UserEmail", SqlDbType.NVarChar) { SqlValue = model.Email },
+                    new SqlParameter("@UserPhoneNumber", SqlDbType.NVarChar) { SqlValue = model.PhoneNumber },
                     new SqlParameter("@Password", SqlDbType.NVarChar) { SqlValue = HashPassword },
                     new SqlParameter("@LoggedInUser", SqlDbType.UniqueIdentifier) { SqlValue = AppConstant.LoggedInUserID },
                     new SqlParameter("@Action", SqlDbType.NVarChar) { SqlValue = "Create" },
                 };
 
-                    await dataServices.CallSP("sp_TenantCRUD", null, sqlParameters);
-                    responseVm.IsSuccess = true;
-                    responseVm.Message = AppConstant.InsertSuccessMsg;
+                await dataServices.CallSP("sp_TenantCRUD", null, sqlParameters);
+                responseVm.IsSuccess = true;
+                responseVm.Message = AppConstant.InsertSuccessMsg;
 
             }
             catch (Exception ex)
@@ -110,7 +115,7 @@ namespace ShutterManagement.Business.Services
                         responseVm.Message = "Email " + AppConstant.AlreadyExists;
                         return responseVm;
                     }
-                    
+
                     //bool IsTenantPhoneExists = await tenantBrandingService.AnyAsync(x => x.Id != braindingInfo && x.PhoneNumber == model.PhoneNumber);
                     //if (IsTenantPhoneExists)
                     //{
@@ -124,22 +129,28 @@ namespace ShutterManagement.Business.Services
                 if (!IsCodeExists)
                 {
 
-                    //var HashPassword = AesEncryptionHelper.Encrypt(model.Password ?? "");
+                    var HashPassword = string.IsNullOrEmpty(model.Password) ? "" : AesEncryptionHelper.Encrypt(model.Password ?? "");
 
                     SqlParameter[] sqlParameters =
                 {
                     new SqlParameter("@TenantId", SqlDbType.UniqueIdentifier) { SqlValue = tenantid},
-                    new SqlParameter("@FirstName", SqlDbType.VarChar) { SqlValue = model.FirstName },
-                    new SqlParameter("@MiddleName", SqlDbType.VarChar) { SqlValue = model.MiddleName },
-                    new SqlParameter("@LastName", SqlDbType.VarChar) { SqlValue = model.LastName },
-                    new SqlParameter("@Code", SqlDbType.VarChar) { SqlValue = model.Code },
-                    new SqlParameter("@URL", SqlDbType.VarChar) { SqlValue = model.URL },
-                    new SqlParameter("@Email", SqlDbType.VarChar) { SqlValue = model.Email },
-                    new SqlParameter("@PhoneNumber", SqlDbType.VarChar) { SqlValue = model.PhoneNumber },
-                    new SqlParameter("@Logo", SqlDbType.VarChar) { SqlValue = model.Logo },
-                    new SqlParameter("@PrimaryColor", SqlDbType.VarChar) { SqlValue = model.PrimaryColor },
-                    new SqlParameter("@SecondaryColor", SqlDbType.VarChar) { SqlValue = model.SecondaryColor },
-                    //new SqlParameter("@Password", SqlDbType.VarChar) { SqlValue = HashPassword },
+                    new SqlParameter("@FirstName", SqlDbType.NVarChar) { SqlValue = model.FirstName },
+                    new SqlParameter("@MiddleName", SqlDbType.NVarChar) { SqlValue = model.MiddleName },
+                    new SqlParameter("@LastName", SqlDbType.NVarChar) { SqlValue = model.LastName },
+                    new SqlParameter("@Code", SqlDbType.NVarChar) { SqlValue = model.Code },
+                    new SqlParameter("@URL", SqlDbType.NVarChar) { SqlValue = model.URL },
+                    new SqlParameter("@Email", SqlDbType.NVarChar) { SqlValue = model.Email },
+                    new SqlParameter("@PhoneNumber", SqlDbType.NVarChar) { SqlValue = model.PhoneNumber },
+                    new SqlParameter("@Logo", SqlDbType.NVarChar) { SqlValue = model.Logo },
+                    new SqlParameter("@PrimaryColor", SqlDbType.NVarChar) { SqlValue = model.PrimaryColor },
+                    new SqlParameter("@SecondaryColor", SqlDbType.NVarChar) { SqlValue = model.SecondaryColor },
+                    new SqlParameter("@UserFirstName", SqlDbType.NVarChar) { SqlValue = model.FirstName },
+                    new SqlParameter("@UserMiddleName", SqlDbType.NVarChar) { SqlValue = model.MiddleName },
+                    new SqlParameter("@UserLastName", SqlDbType.NVarChar) { SqlValue = model.LastName },
+                    new SqlParameter("@UserEmail", SqlDbType.NVarChar) { SqlValue = model.Email },
+                    new SqlParameter("@UserPhoneNumber", SqlDbType.NVarChar) { SqlValue = model.PhoneNumber },
+                    new SqlParameter("@Password", SqlDbType.NVarChar) { SqlValue = HashPassword },
+                    new SqlParameter("@LoggedInUser", SqlDbType.UniqueIdentifier) { SqlValue = AppConstant.LoggedInUserID },
                     new SqlParameter("@LoggedInUser", SqlDbType.UniqueIdentifier) { SqlValue = AppConstant.LoggedInUserID },
 
                     new SqlParameter("@Action", SqlDbType.NVarChar) { SqlValue = "Update" },
@@ -211,7 +222,7 @@ namespace ShutterManagement.Business.Services
                 if (TenantDetails != null)
                 {
                     TenantDetails.IsActive = !TenantDetails.IsActive;
-                    TenantDetails.ModifiedBy =  AppConstant.LoggedInUserID;
+                    TenantDetails.ModifiedBy = AppConstant.LoggedInUserID;
                     TenantDetails.UpdatedAt = DateTime.Now;
 
                     var TenantUser = userService.GetAllQuerable().Where(x => x.TenantId.ToString() == TenantId).ToList();
@@ -232,7 +243,7 @@ namespace ShutterManagement.Business.Services
                 {
                     responseVm.Message = AppConstant.NoDataFound;
                 }
-                
+
 
             }
             catch (Exception ex)
@@ -249,17 +260,18 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var TenantList = (await GetAll()).Where(x => x.IsDelete == false && x.ParentTenantId == null && x.TenantId != AppConstant.LoggedInTenantId).ToList().OrderByDescending(x => x.CreatedAt);
-                foreach (var item in TenantList) {
+                foreach (var item in TenantList)
+                {
                     item.BrandingInfoNavigation = tenantBrandingService.GetAllQuerable().Where(x => x.Id == item.BrandingInfo).FirstOrDefault();
                 }
-                filter.SearchValue = filter.SearchValue.Trim().ToLower();
+                filter.SearchValue = filter.SearchValue?.Trim().ToLower();
                 var FilterRecords = TenantList
                                     .Where(x =>
-                                    (filter.TenantId != "" ? 
-                                    x.TenantId.ToString() == filter.TenantId.ToString() : true)
-                                    &&
+                                    (filter.TenantId != "" ?
+                                    x.TenantId.ToString() == filter.TenantId?.ToString() : true) &&
                                     (filter.SearchValue != "" ?
                                     (x.TenantId.ToString() == filter.SearchValue) ||
+                                    (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) ||
                                     ((x.BrandingInfoNavigation?.Email ?? "").ToLower().Contains(filter.SearchValue)
                                     || (x.BrandingInfoNavigation?.PhoneNumber ?? "").ToLower().Contains(filter.SearchValue)
                                     || (x.FirstName ?? "").ToLower().Contains(filter.SearchValue)
@@ -268,10 +280,10 @@ namespace ShutterManagement.Business.Services
                                     || (x.Code ?? "").ToLower().Contains(filter.SearchValue)
                                     ) : true)).ToList();
                 var TakenRecords = FilterRecords
-                                    .Skip((filter.PageNo - 1)*filter.RecordPerPage).Take(filter.RecordPerPage).ToList();
+                                    .Skip((filter.PageNo - 1) * filter.RecordPerPage).Take(filter.RecordPerPage).ToList();
                 if (TakenRecords != null && TakenRecords.Count > 0)
                 {
-                    responseVm.Data = TakenRecords.Select( x=> new
+                    responseVm.Data = TakenRecords.Select(x => new
                     {
                         x.TenantId,
                         x.FirstName,
@@ -294,7 +306,7 @@ namespace ShutterManagement.Business.Services
                 {
                     responseVm.Message = AppConstant.NoDataFound;
                 }
-                
+
 
             }
             catch (Exception ex)
