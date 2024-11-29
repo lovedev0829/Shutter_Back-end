@@ -7,6 +7,7 @@ using ShutterManagement.DAL.Context;
 using ShutterManagement.Services;
 using System;
 using System.Collections.Generic;
+using System.Data.Entity;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -19,7 +20,8 @@ namespace ShutterManagement.Business.Services
         private readonly ITenantService tenantService;
         private readonly IProductComponentService productComponentService;
         private readonly ClaimsProperty claimProperty;
-        public ProductService(ITenantService tenantService, IProductComponentService productComponentService, ClaimsProperty claimsProperty)
+        private readonly IComponentService componentService;
+        public ProductService(ITenantService tenantService, IProductComponentService productComponentService, ClaimsProperty claimsProperty,IComponentService componentService)
         {
             this.tenantService = tenantService;
             this.claimProperty = claimsProperty;
@@ -340,6 +342,12 @@ namespace ShutterManagement.Business.Services
                                     && c.IsDelete == false)
                         .FirstOrDefault();
 
+                    var componentExist =  productComponentService.GetAllQuerable().Where(x=>x.ProductId==model.ProductId &&x.IsDelete==false && x.IsActive==true).Count(); // Fetch the component details
+                   if(componentExist>0 && IsProductExists.ProductType != model.ProductType)
+                    {
+                        responseVm.Message = "You can't edit  Product Component";
+                        return responseVm;
+                    }
                     if (IsProductExists != null)
                     {
                         IsProductExists.ProductName = model.ProductName;
@@ -367,7 +375,6 @@ namespace ShutterManagement.Business.Services
                 responseVm.IsSuccess = false;
                 responseVm.Message = $"{AppConstant.ExceptionError} {ex.Message}";
             }
-
             return responseVm;
         }
     }
