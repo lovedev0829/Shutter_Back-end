@@ -22,7 +22,7 @@ namespace ShutterManagement.Core.ViewModels.Response
     {
         public Guid? OptionTypeId { get; set; }
         public string? OptionType { get; set; }
-        public string? AdditionalCost { get; set; }
+        public decimal? AdditionalCost { get; set; }
         public bool? IsDefault { get; set; }
     }
 }
