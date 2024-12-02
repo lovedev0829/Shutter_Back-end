@@ -151,7 +151,6 @@ namespace ShutterManagement.Business.Services
                     new SqlParameter("@UserPhoneNumber", SqlDbType.NVarChar) { SqlValue = model.PhoneNumber },
                     new SqlParameter("@Password", SqlDbType.NVarChar) { SqlValue = HashPassword },
                     new SqlParameter("@LoggedInUser", SqlDbType.UniqueIdentifier) { SqlValue = AppConstant.LoggedInUserID },
-                    new SqlParameter("@LoggedInUser", SqlDbType.UniqueIdentifier) { SqlValue = AppConstant.LoggedInUserID },
 
                     new SqlParameter("@Action", SqlDbType.NVarChar) { SqlValue = "Update" },
                 };
@@ -267,11 +266,11 @@ namespace ShutterManagement.Business.Services
                 filter.SearchValue = filter.SearchValue?.Trim().ToLower();
                 var FilterRecords = TenantList
                                     .Where(x =>
+                                    (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
                                     (filter.TenantId != "" ?
                                     x.TenantId.ToString() == filter.TenantId?.ToString() : true) &&
                                     (filter.SearchValue != "" ?
                                     (x.TenantId.ToString() == filter.SearchValue) ||
-                                    (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) ||
                                     ((x.BrandingInfoNavigation?.Email ?? "").ToLower().Contains(filter.SearchValue)
                                     || (x.BrandingInfoNavigation?.PhoneNumber ?? "").ToLower().Contains(filter.SearchValue)
                                     || (x.FirstName ?? "").ToLower().Contains(filter.SearchValue)

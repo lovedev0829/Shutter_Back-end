@@ -26,6 +26,7 @@ namespace ShutterManagement.Business.Services
                 filter.SearchValue = filter.SearchValue?.Trim().ToLower();
                 var FilterRecords = JobTypeList
                           .Where(x =>
+                          (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
                           (string.IsNullOrEmpty(filter.SearchValue) ? true :
                              (x.Id.ToString() == filter.SearchValue) ||
                              (x.JobTypeName ?? "").ToLower().Contains(filter.SearchValue)

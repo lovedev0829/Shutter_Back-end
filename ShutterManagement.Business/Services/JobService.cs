@@ -196,6 +196,7 @@ namespace ShutterManagement.Business.Services
                     filter.SearchValue = filter.SearchValue.Trim().ToLower();
                     var FilterRecords = JobList
                                     .Where(x =>
+                                    (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
                                      (string.IsNullOrEmpty(filter.SearchValue) ? true :
                                         (x.JobId.ToString() == filter.SearchValue) ||
                                         (x.ContactId.ToString() == filter.SearchValue) ||

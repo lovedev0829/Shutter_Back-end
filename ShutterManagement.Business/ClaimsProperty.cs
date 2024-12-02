@@ -1,5 +1,6 @@
 ﻿using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 using ShutterManagement.Core;
 
 namespace ShutterManagement.Business
@@ -7,10 +8,12 @@ namespace ShutterManagement.Business
     public class ClaimsProperty
     {
         private readonly IHttpContextAccessor httpContext;
+        private readonly IConfiguration configuration;
 
-        public ClaimsProperty(IHttpContextAccessor httpContext)
+        public ClaimsProperty(IHttpContextAccessor httpContext, IConfiguration configuration)
         {
             this.httpContext = httpContext;
+            this.configuration = configuration;
             if (httpContext.HttpContext.User.Identity.IsAuthenticated)
             {
                 AppConstant.LoggedInUserID = Guid.Parse(httpContext.HttpContext.User.Claims.First(c => c.Type == "UserId").Value ?? "");
@@ -21,6 +24,7 @@ namespace ShutterManagement.Business
                 AppConstant.LoggedInPhone = httpContext.HttpContext.User.Claims.First(c => c.Type == "Phone").Value;
                 AppConstant.LoggedInEmail = httpContext.HttpContext.User.Claims.First(c => c.Type == ClaimTypes.Email).Value;
                 AppConstant.LoggedInParentTenantId = httpContext.HttpContext.User.Claims.First(c => c.Type == "ParentTenantId").Value;
+                AppConstant.IsAdminRolesShow = Convert.ToBoolean(configuration["IsAdminRolesShow"] ?? "false");
             }
             
         }
