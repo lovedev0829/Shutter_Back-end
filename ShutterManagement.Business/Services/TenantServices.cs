@@ -111,27 +111,15 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
                 var tenantid = Guid.Parse(model.TenantId);
-                var braindingInfo = GetAllQuerable().Where(x => x.TenantId.ToString() == model.TenantId && x.IsDelete == false).Select(x => x.BrandingInfo).FirstOrDefault();
-                if (braindingInfo != null)
+                //var braindingInfo = GetAllQuerable().Where(x => x.TenantId.ToString() == model.TenantId && x.IsDelete == false).Select(x => x.BrandingInfo).FirstOrDefault();
+                var TenantDetails = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId.ToString() != model.TenantId).Select(x => x.BrandingInfo).ToList();
+                bool IsTenantEmailExists = await tenantBrandingService.AnyAsync(x => x.Email == model.Email && TenantDetails.Contains(x.Id));
+                if (IsTenantEmailExists)
                 {
-                    bool IsTenantEmailExists = await tenantBrandingService.AnyAsync(x => x.Id != braindingInfo && x.Email == model.Email.Trim());
-                    var TenantUser = userService.GetAllQuerable().Where(x => x.TenantId.ToString() == model.TenantId).OrderBy(x => x.CreatedAt).FirstOrDefault();
-                    bool IsUserEmailExists = await userService.AnyAsync(x => x.Id != TenantUser.Id && x.Email == model.Email.Trim() && x.TenantId.ToString() == model.TenantId);
-
-                    if (IsTenantEmailExists || IsUserEmailExists)
-                    {
-                        responseVm.Message = "Email " + AppConstant.AlreadyExists;
-                        return responseVm;
-                    }
-
-                    //bool IsTenantPhoneExists = await tenantBrandingService.AnyAsync(x => x.Id != braindingInfo && x.PhoneNumber == model.PhoneNumber);
-                    //if (IsTenantPhoneExists)
-                    //{
-                    //    responseVm.Message = "Phone " + AppConstant.AlreadyExists;
-                    //    return responseVm;
-                    //}
-
+                    responseVm.Message = "Email " + AppConstant.AlreadyExists;
+                    return responseVm;
                 }
+              
                 var IsCodeExists = await AnyAsync(x => x.IsActive == true
                     && x.IsDelete == false && x.Code == model.Code.Trim() && x.TenantId != tenantid);
                 if (!IsCodeExists)
