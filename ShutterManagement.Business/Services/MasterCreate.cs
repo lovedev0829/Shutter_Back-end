@@ -26,11 +26,11 @@ namespace ShutterManagement.Business.Services
         private readonly ITenantService tenantService;
         private readonly ITenantBrandingService tenantBrandingService;
 
-        public MasterCreate(DataServices dataServices,ITenantService tenantService, ITenantBrandingService tenantBrandingService)
+        public MasterCreate(DataServices dataServices, ITenantService tenantService, ITenantBrandingService tenantBrandingService)
         {
             this.dataServices = dataServices;
-            this.tenantService=tenantService;
-            this.tenantBrandingService= tenantBrandingService;
+            this.tenantService = tenantService;
+            this.tenantBrandingService = tenantBrandingService;
         }
 
         public async Task Create(CreateServiceVm model)
@@ -120,7 +120,7 @@ namespace ShutterManagement.Business.Services
 
         //public async Task<GetContactResponse> GetAll()
         //{
-            
+
         //    var contacts = await dataServices.CallSPtoRead<UpdateContact>("sp_GetAll", reader =>
         //    {
         //        return new UpdateContact
@@ -162,7 +162,7 @@ namespace ShutterManagement.Business.Services
                 };
             }, new SqlParameter("@ContactId", SqlDbType.UniqueIdentifier) { SqlValue = id });
 
-            return contacts.FirstOrDefault(); 
+            return contacts.FirstOrDefault();
         }
 
         public async Task DeleteContact(Guid id)
@@ -182,24 +182,23 @@ namespace ShutterManagement.Business.Services
             }
         }
 
-        public async  Task<IResponseVm<BrandingInfoResponse>> SettingGetById()
+        public async Task<IResponseVm<BrandingInfoResponse>> SettingGetById()
         {
             IResponseVm<BrandingInfoResponse> responseVm = new ResponseVm<BrandingInfoResponse>();
             try
             {
-                var tenantinfo =  tenantService.GetAllQuerable()
-                    .Where(t => t.TenantId == AppConstant.LoggedInTenantId && t.IsActive == true && t.IsDelete == false  && t.ParentTenantId.ToString()==AppConstant.LoggedInParentTenantId)
+                var tenantinfo = (await tenantService.GetAll())
+                    .Where(t => t.TenantId == AppConstant.LoggedInTenantId && t.IsActive == true && t.IsDelete == false && t.ParentTenantId.ToString() == AppConstant.LoggedInParentTenantId)
                     .Select(t => t.BrandingInfo).FirstOrDefault();
-                   
-                var brandinginfo= tenantBrandingService.GetAllQuerable()
-                                 .Where(c=>c.Id==tenantinfo).Select(c => new BrandingInfoResponse
+
+                var brandinginfo = tenantBrandingService.GetAllQuerable()
+                                 .Where(c => c.Id == tenantinfo).Select(c => new BrandingInfoResponse
                                  {
                                      Logo = c.Logo,
-                                     PrimaryColor=c.PrimaryColor,
-                                     PhoneNumber=c.PhoneNumber,
-                                     Email=c.Email,
-                                     SecondaryColor=c.SecondaryColor,
-
+                                     PrimaryColor = c.PrimaryColor,
+                                     PhoneNumber = c.PhoneNumber,
+                                     Email = c.Email,
+                                     SecondaryColor = c.SecondaryColor,
                                  })
                     .FirstOrDefault();
 
@@ -227,21 +226,27 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> result = new ResponseVm<string>();
             try
             {
-                var tenantinfo = tenantService.GetAllQuerable()
+                var tenantinfo = (await tenantService.GetAll())
                     .Where(t => t.TenantId == AppConstant.LoggedInTenantId && t.IsActive == true && t.IsDelete == false && t.ParentTenantId.ToString() == AppConstant.LoggedInParentTenantId)
                     .Select(t => t.BrandingInfo).FirstOrDefault();
 
-                var brandinginfo =  tenantBrandingService.GetAllQuerable()
+                var brandinginfo = tenantBrandingService.GetAllQuerable()
                                  .Where(c => c.Id == tenantinfo).FirstOrDefault();
 
                 if (brandinginfo != null)
                 {
+                    var IsEmailExists = await tenantBrandingService.AnyAsync(x=>x.Email == updatesetting.Email && x.Id != brandinginfo.Id);
+                    if (IsEmailExists)
+                    {
+                        result.Message = "Email " + AppConstant.AlreadyExists;
+                        return result;
+                    }
                     brandinginfo.Logo = updatesetting.Logo;
                     brandinginfo.PrimaryColor = updatesetting.PrimaryColor;
                     brandinginfo.SecondaryColor = updatesetting.SecondaryColor;
                     brandinginfo.Email = updatesetting.Email;
                     brandinginfo.PhoneNumber = updatesetting.PhoneNumber;
-                    var res =  tenantBrandingService.Update(brandinginfo);
+                    var res = tenantBrandingService.Update(brandinginfo);
                     result.IsSuccess = true;
                     result.Message = AppConstant.UpdateSuccessMsg;
                 }
@@ -257,5 +262,5 @@ namespace ShutterManagement.Business.Services
             return result;
         }
     }
-    }
+}
 
