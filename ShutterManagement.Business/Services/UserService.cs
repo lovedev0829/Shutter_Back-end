@@ -194,6 +194,10 @@ namespace ShutterManagement.Services
                         UpdateUserDetails.Phone = UserDetails.Phone;
                         UpdateUserDetails.ModifiedAt = DateTime.Now;
                         UpdateUserDetails.ModifiedBy = AppConstant.LoggedInUserID;
+                        if (string.IsNullOrEmpty(UserDetails.Password))
+                        {
+                            UpdateUserDetails.Pwd = AesEncryptionHelper.Encrypt(UserDetails.Password);
+                        };
                         var res = await Update(UpdateUserDetails);
 
                         var UserRoleDeatils = (await userRoleService.GetAll()).Where(x => x.UserId == Guid.Parse(UserDetails.UserId) && x.IsDelete == false).FirstOrDefault();

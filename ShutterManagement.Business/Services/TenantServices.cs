@@ -297,6 +297,17 @@ namespace ShutterManagement.Business.Services
                         x.BrandingInfoNavigation.SecondaryColor,
                         x.IsActive
                     });
+                    foreach (var item in responseVm.Data)
+                    {
+                        var UserDetails = (await userService.GetAll()).
+                            Where(x => x.TenantId == item.TenantId).OrderBy(x => x.CreatedAt).FirstOrDefault();
+                        item.UserFirstName = UserDetails.FirstName;
+                        item.UserMiddleName = UserDetails.MiddleName;
+                        item.UserLastName = UserDetails.LastName;
+                        item.PhoneNumber = UserDetails.Phone;
+                        item.Email = UserDetails.Email;
+
+                    }
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.UpdateSuccessMsg;
                     responseVm.TotalRecords = FilterRecords.Count;
