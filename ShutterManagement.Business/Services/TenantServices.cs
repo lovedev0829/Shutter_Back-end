@@ -51,10 +51,18 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.CodeAlreadyExists;
                     return responseVm;
                 }
-                bool IsTenantEmailExists = await tenantBrandingService.AnyAsync(x => x.Email == model.Email);
+
+                var TenantDetails = (await GetAll()).Where(x => x.IsDelete == false).Select(x => x.BrandingInfo).ToList();
+                bool IsTenantEmailExists = await tenantBrandingService.AnyAsync(x => x.Email == model.Email && TenantDetails.Contains(x.Id));
                 if (IsTenantEmailExists)
                 {
                     responseVm.Message = "Email " + AppConstant.AlreadyExists;
+                    return responseVm;
+                }
+                bool IsUserEmailExists = await userService.AnyAsync(x => x.Email == model.Email && x.IsDelete == false);
+                if (IsUserEmailExists)
+                {
+                    responseVm.Message = "User Email " + AppConstant.AlreadyExists;
                     return responseVm;
                 }
                 var HashPassword = AesEncryptionHelper.Encrypt(model.Password ?? "");
@@ -301,11 +309,11 @@ namespace ShutterManagement.Business.Services
                     {
                         var UserDetails = (await userService.GetAll()).
                             Where(x => x.TenantId == item.TenantId).OrderBy(x => x.CreatedAt).FirstOrDefault();
-                        item.UserFirstName = UserDetails.FirstName;
-                        item.UserMiddleName = UserDetails.MiddleName;
-                        item.UserLastName = UserDetails.LastName;
-                        item.PhoneNumber = UserDetails.Phone;
-                        item.Email = UserDetails.Email;
+                        //item.UserFirstName = UserDetails.FirstName;
+                        //item.UserMiddleName = UserDetails.MiddleName;
+                        //item.UserLastName = UserDetails.LastName;
+                        //item.PhoneNumber = UserDetails.Phone;
+                        //item.Email = UserDetails.Email;
 
                     }
                     responseVm.IsSuccess = true;
