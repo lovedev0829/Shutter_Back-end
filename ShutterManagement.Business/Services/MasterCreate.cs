@@ -15,16 +15,22 @@ using System.Threading.Tasks;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 using Newtonsoft.Json;
 using ShutterManagement.Core.ViewModels.Request;
+using ShutterManagement.Core.ViewModels.Response;
+using ShutterManagement.Core;
 
 namespace ShutterManagement.Business.Services
 {
     public class MasterCreate : IMasterCreate
     {
         private readonly DataServices dataServices;
+        private readonly ITenantService tenantService;
+        private readonly ITenantBrandingService tenantBrandingService;
 
-        public MasterCreate(DataServices dataServices)
+        public MasterCreate(DataServices dataServices,ITenantService tenantService, ITenantBrandingService tenantBrandingService)
         {
             this.dataServices = dataServices;
+            this.tenantService=tenantService;
+            this.tenantBrandingService= tenantBrandingService;
         }
 
         public async Task Create(CreateServiceVm model)
@@ -176,6 +182,80 @@ namespace ShutterManagement.Business.Services
             }
         }
 
+        public async  Task<IResponseVm<BrandingInfoResponse>> SettingGetById()
+        {
+            IResponseVm<BrandingInfoResponse> responseVm = new ResponseVm<BrandingInfoResponse>();
+            try
+            {
+                var tenantinfo =  tenantService.GetAllQuerable()
+                    .Where(t => t.TenantId == AppConstant.LoggedInTenantId && t.IsActive == true && t.IsDelete == false  && t.ParentTenantId.ToString()==AppConstant.LoggedInParentTenantId)
+                    .Select(t => t.BrandingInfo).FirstOrDefault();
+                   
+                var brandinginfo= tenantBrandingService.GetAllQuerable()
+                                 .Where(c=>c.Id==tenantinfo).Select(c => new BrandingInfoResponse
+                                 {
+                                     Logo = c.Logo,
+                                     PrimaryColor=c.PrimaryColor,
+                                     PhoneNumber=c.PhoneNumber,
+                                     Email=c.Email,
+                                     SecondaryColor=c.SecondaryColor,
 
+                                 })
+                    .FirstOrDefault();
+
+                if (brandinginfo != null)
+                {
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = $"{AppConstant.FetchSuccessMsg}";
+                    responseVm.Data = brandinginfo;
+                    responseVm.TotalRecords = 1;
+                }
+                else
+                {
+                    responseVm.Message = AppConstant.NoDataFound;
+                }
+            }
+            catch (Exception ex)
+            {
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+            }
+            return responseVm;
+        }
+
+        public async Task<IResponseVm<string>> UpdateSetting(SettingUpdate updatesetting)
+        {
+            IResponseVm<string> result = new ResponseVm<string>();
+            try
+            {
+                var tenantinfo = tenantService.GetAllQuerable()
+                    .Where(t => t.TenantId == AppConstant.LoggedInTenantId && t.IsActive == true && t.IsDelete == false && t.ParentTenantId.ToString() == AppConstant.LoggedInParentTenantId)
+                    .Select(t => t.BrandingInfo).FirstOrDefault();
+
+                var brandinginfo =  tenantBrandingService.GetAllQuerable()
+                                 .Where(c => c.Id == tenantinfo).FirstOrDefault();
+
+                if (brandinginfo != null)
+                {
+                    brandinginfo.Logo = updatesetting.Logo;
+                    brandinginfo.PrimaryColor = updatesetting.PrimaryColor;
+                    brandinginfo.SecondaryColor = updatesetting.SecondaryColor;
+                    brandinginfo.Email = updatesetting.Email;
+                    brandinginfo.PhoneNumber = updatesetting.PhoneNumber;
+                    var res =  tenantBrandingService.Update(brandinginfo);
+                    result.IsSuccess = true;
+                    result.Message = AppConstant.UpdateSuccessMsg;
+                }
+                else
+                {
+                    result.Message = AppConstant.NoDataFound;
+                }
+            }
+            catch (Exception ex)
+            {
+                result.Message = AppConstant.ExceptionError + ex.Message;
+            }
+            return result;
+        }
     }
-}
+    }
+

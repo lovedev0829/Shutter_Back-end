@@ -355,5 +355,19 @@ namespace ShutterManagement.Controllers
             return Ok(res);
         }
 
+        [HttpPost]
+        [Route("SettingById")]
+        public async Task<IActionResult> SettingById()
+        {
+            var settingGetById = await masterCreate.SettingGetById();
+            return Ok(settingGetById);
+        }
+        [HttpPost]
+        [Route("UpdateSettingById")]
+        public async Task<IActionResult> UpdateSettingById(SettingUpdate model)
+        {
+            var settingGetById = await masterCreate.UpdateSetting(model);
+            return Ok(settingGetById);
+        }
     }
 }

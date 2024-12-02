@@ -50,7 +50,7 @@ namespace ShutterManagement.Business.Services
                 {
 
                     bool IsComponentExists = await AnyAsync(x => x.IsDelete == false &&
-                      (x.ComponentName == model.ComponentName)
+                      (x.ComponentName == model.ComponentName.Trim())
                       && x.TenantId==AppConstant.LoggedInTenantId);
                       
                     if (IsComponentExists)
@@ -62,7 +62,7 @@ namespace ShutterManagement.Business.Services
                     TblComponent component = new TblComponent
                     {
                         ComponentId = Guid.NewGuid(),
-                        ComponentName = model.ComponentName,
+                        ComponentName = model.ComponentName.Trim(),
                         ProductType = model.ProductType,
                         PricingExpression = model.PricingExpression,
                         MarkupPercentage = model.MarkupPercentage,
@@ -129,7 +129,7 @@ namespace ShutterManagement.Business.Services
                                     && c.IsDelete == false)
                         .FirstOrDefault();
                     bool IsComponentNameExists = await AnyAsync(x => x.IsDelete == false &&
-                    (x.ComponentName == model.ComponentName)
+                    (x.ComponentName == model.ComponentName.Trim())
                     && x.TenantId == AppConstant.LoggedInTenantId && x.ComponentId.ToString()!=model.ComponentId);
 
                     if (IsComponentNameExists)
@@ -139,7 +139,7 @@ namespace ShutterManagement.Business.Services
                     }
                     if (IsComponentExists != null)
                     {
-                        IsComponentExists.ComponentName = model.ComponentName;
+                        IsComponentExists.ComponentName = model.ComponentName.Trim();
                         IsComponentExists.ProductType = model.ProductType;
                         IsComponentExists.PricingExpression = model.PricingExpression;
                         IsComponentExists.MarkupPercentage = model.MarkupPercentage;

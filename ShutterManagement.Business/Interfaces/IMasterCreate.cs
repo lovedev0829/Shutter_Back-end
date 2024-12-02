@@ -1,6 +1,8 @@
 ﻿using ShutterManagement.Core.Common;
 using ShutterManagement.Core.SPModel;
 using ShutterManagement.Core.ViewModels;
+using ShutterManagement.Core.ViewModels.Request;
+using ShutterManagement.Core.ViewModels.Response;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,5 +18,9 @@ namespace ShutterManagement.Business.Interfaces
         //Task<GetContactResponse> GetAll();
         Task<Sp_Contact> GetById(Guid id);
         Task DeleteContact(Guid id);
+        Task<IResponseVm<BrandingInfoResponse>> SettingGetById();
+  
+        Task<IResponseVm<string>> UpdateSetting(SettingUpdate UpdateSetting);
+
     }
 }

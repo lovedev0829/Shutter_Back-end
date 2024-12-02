@@ -320,6 +320,8 @@ namespace ShutterManagement.Services
             }
             return responseVm;
         }
+
+       
     }
 }
 

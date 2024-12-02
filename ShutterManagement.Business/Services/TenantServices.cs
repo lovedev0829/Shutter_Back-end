@@ -106,9 +106,9 @@ namespace ShutterManagement.Business.Services
                 var braindingInfo = GetAllQuerable().Where(x => x.TenantId.ToString() == model.TenantId && x.IsDelete == false).Select(x => x.BrandingInfo).FirstOrDefault();
                 if (braindingInfo != null)
                 {
-                    bool IsTenantEmailExists = await tenantBrandingService.AnyAsync(x => x.Id != braindingInfo && x.Email == model.Email);
+                    bool IsTenantEmailExists = await tenantBrandingService.AnyAsync(x => x.Id != braindingInfo && x.Email == model.Email.Trim());
                     var TenantUser = userService.GetAllQuerable().Where(x => x.TenantId.ToString() == model.TenantId).OrderBy(x => x.CreatedAt).FirstOrDefault();
-                    bool IsUserEmailExists = await userService.AnyAsync(x => x.Id != TenantUser.Id && x.Email == model.Email && x.TenantId.ToString() == model.TenantId);
+                    bool IsUserEmailExists = await userService.AnyAsync(x => x.Id != TenantUser.Id && x.Email == model.Email.Trim() && x.TenantId.ToString() == model.TenantId);
 
                     if (IsTenantEmailExists || IsUserEmailExists)
                     {
@@ -125,7 +125,7 @@ namespace ShutterManagement.Business.Services
 
                 }
                 var IsCodeExists = await AnyAsync(x => x.IsActive == true
-                    && x.IsDelete == false && x.Code == model.Code && x.TenantId != tenantid);
+                    && x.IsDelete == false && x.Code == model.Code.Trim() && x.TenantId != tenantid);
                 if (!IsCodeExists)
                 {
 
@@ -137,9 +137,9 @@ namespace ShutterManagement.Business.Services
                     new SqlParameter("@FirstName", SqlDbType.NVarChar) { SqlValue = model.FirstName },
                     new SqlParameter("@MiddleName", SqlDbType.NVarChar) { SqlValue = model.MiddleName },
                     new SqlParameter("@LastName", SqlDbType.NVarChar) { SqlValue = model.LastName },
-                    new SqlParameter("@Code", SqlDbType.NVarChar) { SqlValue = model.Code },
+                    new SqlParameter("@Code", SqlDbType.NVarChar) { SqlValue = model.Code.Trim() },
                     new SqlParameter("@URL", SqlDbType.NVarChar) { SqlValue = model.URL },
-                    new SqlParameter("@Email", SqlDbType.NVarChar) { SqlValue = model.Email },
+                    new SqlParameter("@Email", SqlDbType.NVarChar) { SqlValue = model.Email.Trim() },
                     new SqlParameter("@PhoneNumber", SqlDbType.NVarChar) { SqlValue = model.PhoneNumber },
                     new SqlParameter("@Logo", SqlDbType.NVarChar) { SqlValue = model.Logo },
                     new SqlParameter("@PrimaryColor", SqlDbType.NVarChar) { SqlValue = model.PrimaryColor },
