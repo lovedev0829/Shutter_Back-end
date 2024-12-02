@@ -359,12 +359,14 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("SettingById")]
+        [Authorize]
         public async Task<IActionResult> SettingById()
         {
             var settingGetById = await masterCreate.SettingGetById();
             return Ok(settingGetById);
         }
         [HttpPost]
+        [Authorize]
         [Route("UpdateSettingById")]
         public async Task<IActionResult> UpdateSettingById(SettingUpdate model)
         {
