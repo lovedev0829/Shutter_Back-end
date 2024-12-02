@@ -276,6 +276,7 @@ namespace ShutterManagement.Business.Services
                     var FilterRecords = productList
                               .Where(x =>
                               (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
+                              (string.IsNullOrEmpty(filter.ProductType) ? true : (filter.ProductType == x.ProductType.ToString())) &&
                               (string.IsNullOrEmpty(filter.SearchValue) ? true :
                                  (x.ProductId.ToString() == filter.SearchValue) ||
                                  (x.ProductType.ToString() == filter.SearchValue) ||

@@ -19,5 +19,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         public int RecordPerPage { get; set; }
         [DefaultValue(2)]
         public int Status { get; set; } 
+        public string? Vendor { get; set; } 
+        public string? ProductType { get; set; } 
     }
 }

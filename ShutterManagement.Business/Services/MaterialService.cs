@@ -232,6 +232,8 @@ namespace ShutterManagement.Business.Services
                     var FilterRecords = MaterialList
                                     .Where(x =>
                                     (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
+                                    (string.IsNullOrEmpty(filter.Vendor) ? true : (filter.Vendor == x.VendorId.ToString())) &&  
+                                    (string.IsNullOrEmpty(filter.ProductType) ? true : (filter.ProductType == x.ProductType.ToString())) &&  
                                      (string.IsNullOrEmpty(filter.SearchValue) ? true :
                                         (x.MaterialId.ToString() == filter.SearchValue)
                                         || (x.ProductType.ToString() == filter.SearchValue)

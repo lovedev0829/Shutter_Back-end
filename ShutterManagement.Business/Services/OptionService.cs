@@ -224,6 +224,7 @@ namespace ShutterManagement.Business.Services
                     var FilterRecords = IsOptionExists
                                     .Where(x =>
                                     (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
+                                     (string.IsNullOrEmpty(filter.ProductType) ? true : (filter.ProductType == x.ProductTypeId.ToString())) &&
                                     (string.IsNullOrEmpty(filter.SearchValue) ? true :
                                     (x.OptionId.ToString() == filter.SearchValue)
                                     || (x.ProductTypeName ?? "").Contains(filter.SearchValue)
