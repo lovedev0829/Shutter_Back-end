@@ -43,8 +43,14 @@ namespace ShutterManagement.Business.Services
             {
                 var IsCodeExists = await AnyAsync(x => x.IsActive == true
                     && x.IsDelete == false && x.Code == model.Code);
-                if (!IsCodeExists)
+                //var IsCodeExists = await AnyAsync(x => x.IsActive == true
+                //   && x.IsDelete == false && x.Code == model.Code);
+                if (IsCodeExists)
                 {
+                    responseVm.Message = AppConstant.CodeAlreadyExists;
+                    return responseVm;
+                }
+              
                     bool IsParentExists = await AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId
                     && x.IsDelete == false && x.IsActive == true);
                     if (!IsParentExists)
@@ -52,12 +58,26 @@ namespace ShutterManagement.Business.Services
                         responseVm.Message = AppConstant.TenantNotFound;
                         return responseVm;
                     }
-                    bool IsSubTenantEmailExists = await userService.AnyAsync(x => x.Email == model.Email && x.TenantId == AppConstant.LoggedInTenantId);
-                    if (IsSubTenantEmailExists)
-                    {
-                        responseVm.Message = "Email " + AppConstant.AlreadyExists;
-                        return responseVm;
-                    }
+
+                var TenantDetails = (await GetAll()).Where(x => x.IsDelete == false).Select(x => x.BrandingInfo).ToList();
+                bool IsTenantEmailExists = await tenantBrandingService.AnyAsync(x => x.Email == model.Email && TenantDetails.Contains(x.Id));
+                if (IsTenantEmailExists)
+                {
+                    responseVm.Message = "Email " + AppConstant.AlreadyExists;
+                    return responseVm;
+                }
+                bool IsUserEmailExists = await userService.AnyAsync(x => x.Email == model.Email && x.IsDelete == false);
+                if (IsUserEmailExists)
+                {
+                    responseVm.Message = "User Email " + AppConstant.AlreadyExists;
+                    return responseVm;
+                }
+                //bool IsSubTenantEmailExists = await userService.AnyAsync(x => x.Email == model.Email && x.TenantId == AppConstant.LoggedInTenantId);
+                //    if (IsSubTenantEmailExists)
+                //    {
+                //        responseVm.Message = "Email " + AppConstant.AlreadyExists;
+                //        return responseVm;
+                //    }
                     var HashPassword = AesEncryptionHelper.Encrypt(model.Password ?? "");
                     SqlParameter[] sqlParameters =
                     {
@@ -87,11 +107,7 @@ namespace ShutterManagement.Business.Services
 
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.InsertSuccessMsg;
-                }
-                else
-                {
-                    responseVm.Message = AppConstant.CodeAlreadyExists;
-                }
+               
             }
             catch (Exception ex)
             {
@@ -121,32 +137,20 @@ namespace ShutterManagement.Business.Services
                         responseVm.Message = AppConstant.TenantNotFound;
                         return responseVm;
                     }
-                    bool IsTenantExists = await AnyAsync(x => x.TenantId.ToString() == model.TenantId && x.ParentTenantId == AppConstant.LoggedInTenantId
-                    && x.IsDelete == false);
-                    if (!IsTenantExists)
+                    //bool IsTenantExists = await AnyAsync(x => x.TenantId.ToString() == model.TenantId && x.ParentTenantId == AppConstant.LoggedInTenantId
+                    //&& x.IsDelete == false);
+                    //if (!IsTenantExists)
+                    //{
+                    //    responseVm.Message = AppConstant.TenantNotFound;
+                    //    return responseVm;
+                    //}
+                    var TenantDetails = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId.ToString() != model.TenantId).Select(x => x.BrandingInfo).ToList();
+                    bool IsTenantEmailExists = await tenantBrandingService.AnyAsync(x => x.Email == model.Email && TenantDetails.Contains(x.Id));
+                    if (IsTenantEmailExists)
                     {
-                        responseVm.Message = AppConstant.TenantNotFound;
+                        responseVm.Message = "Email " + AppConstant.AlreadyExists;
                         return responseVm;
                     }
-                    //var braindingInfo = GetAllQuerable().Where(x => 
-                    //x.ParentTenantId == AppConstant.LoggedInTenantId && x.IsDelete == false).Select(x => new { x.BrandingInfo, x.TenantId }).ToArray();
-                    //if (braindingInfo != null && braindingInfo.Count() > 0) 
-                    //{
-                    //    bool IsSubTenantEmailExists =  await tenantBrandingService.AnyAsync(x => braindingInfo.Select(x=>x.BrandingInfo).Contains(x.Id) && x.Email == model.Email);
-                    //    bool IsUserEmailExists = await userService.AnyAsync(x => braindingInfo.Select(y => y.TenantId).Contains((Guid)x.TenantId) && x.IsDelete == false && x.Email == model.Email);
-
-                    //    if (IsSubTenantEmailExists || IsUserEmailExists) {
-                    //        responseVm.Message = "Email " + AppConstant.AlreadyExists;
-                    //        return responseVm;
-                    //    }
-                    //   //bool IsSubTenantPhoneExists = await tenantBrandingService.AnyAsync(x => x.Id != braindingInfo && x.PhoneNumber == model.PhoneNumber);
-                    //   // if (IsSubTenantPhoneExists)
-                    //   // {
-                    //   //     responseVm.Message = "Phone " + AppConstant.AlreadyExists;
-                    //   //     return responseVm;
-                    //   // }
-
-                    //}
                     var tenantid = Guid.Parse(model.TenantId);
                     var Parenttenantid = AppConstant.LoggedInTenantId;
                     var HashPassword = string.IsNullOrEmpty(model.Password) ? "" : AesEncryptionHelper.Encrypt(model.Password ?? "");
