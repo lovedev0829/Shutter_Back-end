@@ -55,15 +55,15 @@ namespace ShutterManagement.Services
                   && (x.ParentTenantId.ToString() == AppConstant.LoggedInParentTenantId || x.TenantId.ToString() == AppConstant.LoggedInParentTenantId)).Select(x => x.TenantId.ToString()).ToList();
                 }
 
-                bool IsPhoneExists = await AnyAsync(x => x.IsDelete == false &&
-                  (x.Phone == UserDetails.Phone)
-                  //&& AllTenantSubTenants.Contains(x.TenantId.ToString())
-                  );
-                if (IsPhoneExists)
-                {
-                    result.Message = "Phone " + AppConstant.AlreadyExists;
-                    return result;
-                }
+                //bool IsPhoneExists = await AnyAsync(x => x.IsDelete == false &&
+                //  (x.Phone == UserDetails.Phone)
+                //  //&& AllTenantSubTenants.Contains(x.TenantId.ToString())
+                //  );
+                //if (IsPhoneExists)
+                //{
+                //    result.Message = "Phone " + AppConstant.AlreadyExists;
+                //    return result;
+                //}
 
                 bool IsEmailExists = await AnyAsync(x => x.IsDelete == false &&
                   (x.Email == UserDetails.Email)
@@ -160,15 +160,15 @@ namespace ShutterManagement.Services
                     }
 
 
-                    bool IsPhoneExists = await AnyAsync(x => x.IsDelete == false &&
-                  (x.Phone == UserDetails.Phone) && x.Id != Guid.Parse(UserDetails.UserId)
-                  //&& AllTenantSubTenants.Contains(x.TenantId.ToString())
-                  );
-                    if (IsPhoneExists)
-                    {
-                        result.Message = "Phone " + AppConstant.AlreadyExists;
-                        return result;
-                    }
+                  //  bool IsPhoneExists = await AnyAsync(x => x.IsDelete == false &&
+                  //(x.Phone == UserDetails.Phone) && x.Id != Guid.Parse(UserDetails.UserId)
+                  ////&& AllTenantSubTenants.Contains(x.TenantId.ToString())
+                  //);
+                  //  if (IsPhoneExists)
+                  //  {
+                  //      result.Message = "Phone " + AppConstant.AlreadyExists;
+                  //      return result;
+                  //  }
 
                     bool IsEmailExists = await AnyAsync(x => x.IsDelete == false &&
                       (x.Email == UserDetails.Email) && x.Id != Guid.Parse(UserDetails.UserId)

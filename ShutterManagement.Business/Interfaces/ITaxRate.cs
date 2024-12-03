@@ -1,4 +1,7 @@
-﻿using ShutterManagement.DAL.Context;
+﻿using ShutterManagement.Core.ViewModels.Request;
+using ShutterManagement.Core.ViewModels.Response;
+using ShutterManagement.Core.ViewModels;
+using ShutterManagement.DAL.Context;
 using ShutterManagement.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -10,16 +13,12 @@ namespace ShutterManagement.Business.Interfaces
 {
     public interface ITaxRate : IGenericRepository<TblTaxRate>
     {
-        public Guid TaxRateId { get; set; }
+        Task<IResponseVm<string>> CreateTax(CreateTax model);
+        Task<IResponseVm<string>> UpdateTax(UpdateTax model);
+        Task<IResponseVm<List<GetAllTax>>> GetAll_Tax(Pagination filter);
 
-        public Guid? Region { get; set; }
+        Task<IResponseVm<string>> ActiveInActiveTax(Guid Id);
+        Task<IResponseVm<string>> DeleteTax(Guid Id);
 
-        public decimal? Rate { get; set; }
-
-        public DateTime? EffectiveDate { get; set; }
-
-        public DateTime? ExpiryDate { get; set; }
-
-       
     }
 }

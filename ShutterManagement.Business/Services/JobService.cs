@@ -79,7 +79,7 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.TenantNotFound;
                     return responseVm;
                 }
-                GenerateUniqueId generateUnique = new GenerateUniqueId(_context);
+                var generateUnique = GenerateUniqueId.GenerateUniqueIds(ModuleName.Job,AppConstant.LoggedInCompanyCode);
                 bool IsAddressExist = await address.AnyAsync(x => x.AddressId == model.AddressId && x.ContactId == model.ContactId 
                 && x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false);
                 if (IsAddressExist) 
@@ -95,7 +95,7 @@ namespace ShutterManagement.Business.Services
                         JobStatus = model.JobStatus,
                         Notes = model.Notes,
                         AttachmentAny = model.AttachmentsAny,
-                        JobUniqueId = generateUnique.GenerateUniqueIds(ModuleName.Job),
+                        JobUniqueId = generateUnique,
                         TenantId = AppConstant.LoggedInTenantId,
                         IsActive = true,
                         IsDelete = false,
