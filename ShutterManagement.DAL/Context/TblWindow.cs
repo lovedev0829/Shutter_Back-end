@@ -11,8 +11,6 @@ public partial class TblWindow
 
     public string? Label { get; set; }
 
-    public string? Location { get; set; }
-
     public decimal? Width { get; set; }
 
     public decimal? Height { get; set; }
@@ -31,5 +29,21 @@ public partial class TblWindow
 
     public bool? IsDelete { get; set; }
 
+    public Guid? TenantId { get; set; }
+
+    public decimal? Quantity { get; set; }
+
+    public Guid? ModifiedBy { get; set; }
+
+    public Guid? CreatedBy { get; set; }
+
+    public Guid? JobId { get; set; }
+
     public virtual TblAddress? Address { get; set; }
+
+    public virtual TblJob? Job { get; set; }
+
+    public virtual ICollection<TblWindowProduct> TblWindowProducts { get; set; } = new List<TblWindowProduct>();
+
+    public virtual TblTenant? Tenant { get; set; }
 }
