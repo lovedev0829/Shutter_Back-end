@@ -68,5 +68,22 @@ namespace ShutterManagement.Controllers
 
             return Ok(res);
         }
+
+        [HttpPost("GetAllArchiveContacts")]
+        [Authorize]
+        public async Task<IActionResult> GetAllArchiveContacts(ArchiveUser archiveModel)
+        {
+            var res = await _contactService.GetAllArchiveContacts(archiveModel);
+
+            return Ok(res);
+        }
+        [HttpPost("ArchiveContacts")]
+        [Authorize]
+        public async Task<IActionResult> ArchiveContact(ArchiveUser archiveModel)
+        {
+            var res = await _contactService.ArchiveContacts(archiveModel);
+
+            return Ok(res);
+        }
     }
 }

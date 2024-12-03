@@ -26,6 +26,7 @@ public partial class TblContact
     public bool? IsActive { get; set; }
 
     public bool? IsDelete { get; set; }
+    public bool? IsArchive { get; set; }
 
     public bool IsBillingAddressSameAsAddress { get; set; }
 
