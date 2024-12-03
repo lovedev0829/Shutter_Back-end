@@ -188,7 +188,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var tenantinfo = (await tenantService.GetAll())
-                    .Where(t => t.TenantId == AppConstant.LoggedInTenantId && t.IsActive == true && t.IsDelete == false && t.ParentTenantId.ToString() == AppConstant.LoggedInParentTenantId)
+                    .Where(t => t.TenantId == AppConstant.LoggedInTenantId && t.IsActive == true && t.IsDelete == false )
                     .Select(t => t.BrandingInfo).FirstOrDefault();
 
                 var brandinginfo = tenantBrandingService.GetAllQuerable()
