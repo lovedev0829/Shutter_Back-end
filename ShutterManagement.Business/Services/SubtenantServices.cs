@@ -114,11 +114,15 @@ namespace ShutterManagement.Business.Services
                     && defaultRoleArray.Contains(x.RoleName)).ToList();
                     foreach (var item in DefaultRoles)
                     {
-                        var DefaultRolesPermission = item.TblRolesPermissions.ToList();
+                        var DefaultRolesPermission = dbContext.TblRolesPermissions.Where(x => x.RoleId == item.Id).ToList();
 
                         TblRole role = new TblRole();
-                        role = item;
+                        role.RoleName = item.RoleName;
                         role.IsShow = false;
+                        role.CreatedAt = DateTime.Now;
+                        role.CreatedBy = AppConstant.LoggedInUserID;
+                        role.IsActive = true;
+                        role.IsDelete = false;
                         role.TenantId = AddedTenant.TenantId;
                         role.Id = Guid.NewGuid();
                         var res = await dbContext.TblRoles.AddAsync(role);
@@ -127,11 +131,15 @@ namespace ShutterManagement.Business.Services
                         {
                             foreach (var permission in DefaultRolesPermission)
                             {
-                                permission.RoleId = role.Id;
-                                permission.Id = Guid.NewGuid();
+                                TblRolesPermission rolesPermission = new TblRolesPermission
+                                {
+                                    Id = Guid.NewGuid(),
+                                    RoleId = role.Id,
+                                    ModulePermissionId = permission.ModulePermissionId,
+                                };
+                                dbContext.TblRolesPermissions.Add(rolesPermission);
+                                dbContext.SaveChanges();
                             }
-                            await dbContext.TblRolesPermissions.AddRangeAsync(DefaultRolesPermission);
-                            dbContext.SaveChanges();
                         }
                     }
                 }
