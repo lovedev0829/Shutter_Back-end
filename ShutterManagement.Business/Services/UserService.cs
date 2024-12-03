@@ -194,7 +194,7 @@ namespace ShutterManagement.Services
                         UpdateUserDetails.Phone = UserDetails.Phone;
                         UpdateUserDetails.ModifiedAt = DateTime.Now;
                         UpdateUserDetails.ModifiedBy = AppConstant.LoggedInUserID;
-                        if (string.IsNullOrEmpty(UserDetails.Password))
+                        if (!string.IsNullOrEmpty(UserDetails.Password))
                         {
                             UpdateUserDetails.Pwd = AesEncryptionHelper.Encrypt(UserDetails.Password);
                         };

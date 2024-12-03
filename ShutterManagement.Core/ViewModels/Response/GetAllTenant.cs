@@ -15,7 +15,6 @@ namespace ShutterManagement.Core.ViewModels.Response
 
       
         public string? MiddleName { get; set; }
-
        
         public string? LastName { get; set; }
       
@@ -23,20 +22,15 @@ namespace ShutterManagement.Core.ViewModels.Response
       
         public string? URL { get; set; }
 
-
         public string? Email { get; set; }
 
-
-       
         public string? PhoneNumber { get; set; }
         public string? Logo { get; set; }
 
-  
         public string? PrimaryColor { get; set; }
         public string? SecondaryColor { get; set; }
+        public bool? IsActive { get; set; }
 
-
-     
         public string? UserFirstName { get; set; }
 
         public string? UserMiddleName { get; set; }
