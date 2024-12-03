@@ -51,14 +51,14 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.CodeAlreadyExists;
                     return responseVm;
                 }
-              
-                    bool IsParentExists = await AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId
-                    && x.IsDelete == false && x.IsActive == true);
-                    if (!IsParentExists)
-                    {
-                        responseVm.Message = AppConstant.TenantNotFound;
-                        return responseVm;
-                    }
+
+                bool IsParentExists = await AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId
+                && x.IsDelete == false && x.IsActive == true);
+                if (!IsParentExists)
+                {
+                    responseVm.Message = AppConstant.TenantNotFound;
+                    return responseVm;
+                }
 
                 var TenantDetails = (await GetAll()).Where(x => x.IsDelete == false).Select(x => x.BrandingInfo).ToList();
                 bool IsTenantEmailExists = await tenantBrandingService.AnyAsync(x => x.Email == model.Email && TenantDetails.Contains(x.Id));
@@ -79,9 +79,9 @@ namespace ShutterManagement.Business.Services
                 //        responseVm.Message = "Email " + AppConstant.AlreadyExists;
                 //        return responseVm;
                 //    }
-                    var HashPassword = AesEncryptionHelper.Encrypt(model.Password ?? "");
-                    SqlParameter[] sqlParameters =
-                    {
+                var HashPassword = AesEncryptionHelper.Encrypt(model.Password ?? "");
+                SqlParameter[] sqlParameters =
+                {
                         new SqlParameter("@ParentTenantId", SqlDbType.UniqueIdentifier) { SqlValue = AppConstant.LoggedInTenantId },
                         new SqlParameter("@FirstName", SqlDbType.NVarChar) { SqlValue = model.FirstName },
                         new SqlParameter("@MiddleName", SqlDbType.NVarChar) { SqlValue = model.MiddleName },
@@ -104,11 +104,41 @@ namespace ShutterManagement.Business.Services
                         new SqlParameter("@Action", SqlDbType.NVarChar) { SqlValue = "Create" },
                     };
 
-                    await dataServices.CallSP("sp_TenantCRUD", null, sqlParameters);
+                await dataServices.CallSP("sp_TenantCRUD", null, sqlParameters);
 
-                    responseVm.IsSuccess = true;
-                    responseVm.Message = AppConstant.InsertSuccessMsg;
-               
+                var AddedTenant = GetAllQuerable().Where(x => x.FirstName == model.FirstName && x.Code == model.Code).FirstOrDefault();
+                if (AddedTenant != null)
+                {
+                    string[] defaultRoleArray = ["SubTenant Admin", "Sales", "Installer"];
+                    var DefaultRoles = dbContext.TblRoles.Where(x => x.IsShow == true && x.IsActive == true && x.IsDelete == false
+                    && defaultRoleArray.Contains(x.RoleName)).ToList();
+                    foreach (var item in DefaultRoles)
+                    {
+                        var DefaultRolesPermission = item.TblRolesPermissions.ToList();
+
+                        TblRole role = new TblRole();
+                        role = item;
+                        role.IsShow = false;
+                        role.TenantId = AddedTenant.TenantId;
+                        role.Id = Guid.NewGuid();
+                        var res = await dbContext.TblRoles.AddAsync(role);
+                        dbContext.SaveChanges();
+                        if (DefaultRolesPermission != null)
+                        {
+                            foreach (var permission in DefaultRolesPermission)
+                            {
+                                permission.RoleId = role.Id;
+                                permission.Id = Guid.NewGuid();
+                            }
+                            await dbContext.TblRolesPermissions.AddRangeAsync(DefaultRolesPermission);
+                            dbContext.SaveChanges();
+                        }
+                    }
+                }
+
+                responseVm.IsSuccess = true;
+                responseVm.Message = AppConstant.InsertSuccessMsg;
+
             }
             catch (Exception ex)
             {
@@ -307,7 +337,7 @@ namespace ShutterManagement.Business.Services
                                     .Skip((filter.PageNo - 1) * filter.RecordPerPage).Take(filter.RecordPerPage).ToList();
                 if (TakenRecords != null && TakenRecords.Count > 0)
                 {
-                    var data =  TakenRecords.Select(x => new GetAllTenant
+                    var data = TakenRecords.Select(x => new GetAllTenant
                     {
                         TenantId = x.TenantId,
                         FirstName = x.FirstName,
@@ -323,7 +353,7 @@ namespace ShutterManagement.Business.Services
                         IsActive = x.IsActive
                     }).ToList();
 
-                    for (int i =0;i <data.Count;i++)
+                    for (int i = 0; i < data.Count; i++)
                     {
                         var UserDetails = (await userService.GetAll()).
                             Where(x => x.TenantId == data[i].TenantId).OrderBy(x => x.CreatedAt).FirstOrDefault();

@@ -89,6 +89,37 @@ namespace ShutterManagement.Business.Services
                 };
 
                 await dataServices.CallSP("sp_TenantCRUD", null, sqlParameters);
+
+                var AddedTenant = GetAllQuerable().Where(x => x.FirstName == model.FirstName && x.Code == model.Code).FirstOrDefault();
+                if (AddedTenant != null)
+                {
+                    string[] defaultRoleArray = ["Tenant Admin", "Sales", "Installer"];
+                    var DefaultRoles = dbContext.TblRoles.Where(x => x.IsShow == true && x.IsActive == true && x.IsDelete == false
+                    && defaultRoleArray.Contains(x.RoleName)).ToList();
+                    foreach (var item in DefaultRoles)
+                    {
+                        var DefaultRolesPermission = item.TblRolesPermissions.ToList();
+                        
+                        TblRole role = new TblRole();
+                        role = item;
+                        role.IsShow = false;
+                        role.TenantId = AddedTenant.TenantId;
+                        role.Id = Guid.NewGuid();
+                        var res = await dbContext.TblRoles.AddAsync(role);
+                        dbContext.SaveChanges();
+                        if (DefaultRolesPermission != null)
+                        {
+                            foreach (var permission in DefaultRolesPermission)
+                            {
+                                permission.RoleId = role.Id;
+                                permission.Id = Guid.NewGuid();
+                            }
+                            await dbContext.TblRolesPermissions.AddRangeAsync(DefaultRolesPermission);
+                            dbContext.SaveChanges();
+                        }
+                    }
+                }
+
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.InsertSuccessMsg;
 
@@ -119,7 +150,7 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = "Email " + AppConstant.AlreadyExists;
                     return responseVm;
                 }
-              
+
                 var IsCodeExists = await AnyAsync(x => x.IsActive == true
                     && x.IsDelete == false && x.Code == model.Code.Trim() && x.TenantId != tenantid);
                 if (!IsCodeExists)
@@ -278,20 +309,20 @@ namespace ShutterManagement.Business.Services
                                     .Skip((filter.PageNo - 1) * filter.RecordPerPage).Take(filter.RecordPerPage).ToList();
                 if (TakenRecords != null && TakenRecords.Count > 0)
                 {
-                   var data = TakenRecords.Select(x => new GetAllTenant
+                    var data = TakenRecords.Select(x => new GetAllTenant
                     {
-                       TenantId = x.TenantId,
-                       FirstName = x.FirstName,
-                       MiddleName = x.MiddleName,
-                       LastName = x.LastName,
-                       Code = x.Code,
-                       URL = x.Url,
-                       Email = x.BrandingInfoNavigation.Email,
-                       PhoneNumber = x.BrandingInfoNavigation.PhoneNumber,
-                       Logo = x.BrandingInfoNavigation.Logo,
-                       PrimaryColor = x.BrandingInfoNavigation.PrimaryColor,
-                       SecondaryColor = x.BrandingInfoNavigation.SecondaryColor,
-                       IsActive =  x.IsActive
+                        TenantId = x.TenantId,
+                        FirstName = x.FirstName,
+                        MiddleName = x.MiddleName,
+                        LastName = x.LastName,
+                        Code = x.Code,
+                        URL = x.Url,
+                        Email = x.BrandingInfoNavigation.Email,
+                        PhoneNumber = x.BrandingInfoNavigation.PhoneNumber,
+                        Logo = x.BrandingInfoNavigation.Logo,
+                        PrimaryColor = x.BrandingInfoNavigation.PrimaryColor,
+                        SecondaryColor = x.BrandingInfoNavigation.SecondaryColor,
+                        IsActive = x.IsActive
                     }).ToList();
                     for (int i = 0; i < data.Count; i++)
                     {
