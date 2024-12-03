@@ -89,6 +89,45 @@ namespace ShutterManagement.Business.Services
                 };
 
                 await dataServices.CallSP("sp_TenantCRUD", null, sqlParameters);
+
+                var AddedTenant = GetAllQuerable().Where(x => x.FirstName == model.FirstName && x.Code == model.Code).FirstOrDefault();
+                if (AddedTenant != null)
+                {
+                    string[] defaultRoleArray = ["Tenant Admin", "Sales", "Installer"];
+                    var DefaultRoles = dbContext.TblRoles.Where(x => x.IsShow == true && x.IsActive == true && x.IsDelete == false
+                    && defaultRoleArray.Contains(x.RoleName)).ToList();
+                    foreach (var item in DefaultRoles)
+                    {
+                        var DefaultRolesPermission = dbContext.TblRolesPermissions.Where(x => x.RoleId == item.Id).ToList();
+                        
+                        TblRole role = new TblRole();
+                        role.RoleName = item.RoleName;
+                        role.IsShow = false;
+                        role.CreatedAt = DateTime.Now;
+                        role.CreatedBy = AppConstant.LoggedInUserID;
+                        role.IsActive = true;
+                        role.IsDelete = false;
+                        role.TenantId = AddedTenant.TenantId;
+                        role.Id = Guid.NewGuid();
+                        var res = await dbContext.TblRoles.AddAsync(role);
+                        dbContext.SaveChanges();
+                        if (DefaultRolesPermission != null)
+                        {
+                            foreach (var permission in DefaultRolesPermission)
+                            {
+                                TblRolesPermission rolesPermission = new TblRolesPermission
+                                {
+                                    Id = Guid.NewGuid(),
+                                    RoleId = role.Id,
+                                    ModulePermissionId = permission.ModulePermissionId,
+                                };
+                                dbContext.TblRolesPermissions.Add(rolesPermission);
+                                dbContext.SaveChanges();
+                            }
+                        }
+                    }
+                }
+
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.InsertSuccessMsg;
 
@@ -119,7 +158,7 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = "Email " + AppConstant.AlreadyExists;
                     return responseVm;
                 }
-              
+
                 var IsCodeExists = await AnyAsync(x => x.IsActive == true
                     && x.IsDelete == false && x.Code == model.Code.Trim() && x.TenantId != tenantid);
                 if (!IsCodeExists)
@@ -278,32 +317,35 @@ namespace ShutterManagement.Business.Services
                                     .Skip((filter.PageNo - 1) * filter.RecordPerPage).Take(filter.RecordPerPage).ToList();
                 if (TakenRecords != null && TakenRecords.Count > 0)
                 {
-                    responseVm.Data = TakenRecords.Select(x => new
+                    var data = TakenRecords.Select(x => new GetAllTenant
                     {
-                        x.TenantId,
-                        x.FirstName,
-                        x.MiddleName,
-                        x.LastName,
-                        x.Code,
-                        x.Url,
-                        x.BrandingInfoNavigation.Email,
-                        x.BrandingInfoNavigation.PhoneNumber,
-                        x.BrandingInfoNavigation.Logo,
-                        x.BrandingInfoNavigation.PrimaryColor,
-                        x.BrandingInfoNavigation.SecondaryColor,
-                        x.IsActive
-                    });
-                    foreach (var item in responseVm.Data)
+                        TenantId = x.TenantId,
+                        FirstName = x.FirstName,
+                        MiddleName = x.MiddleName,
+                        LastName = x.LastName,
+                        Code = x.Code,
+                        URL = x.Url,
+                        Email = x.BrandingInfoNavigation.Email,
+                        PhoneNumber = x.BrandingInfoNavigation.PhoneNumber,
+                        Logo = x.BrandingInfoNavigation.Logo,
+                        PrimaryColor = x.BrandingInfoNavigation.PrimaryColor,
+                        SecondaryColor = x.BrandingInfoNavigation.SecondaryColor,
+                        IsActive = x.IsActive
+                    }).ToList();
+                    for (int i = 0; i < data.Count; i++)
                     {
                         var UserDetails = (await userService.GetAll()).
-                            Where(x => x.TenantId == item.TenantId).OrderBy(x => x.CreatedAt).FirstOrDefault();
-                        //item.UserFirstName = UserDetails.FirstName;
-                        //item.UserMiddleName = UserDetails.MiddleName;
-                        //item.UserLastName = UserDetails.LastName;
-                        //item.PhoneNumber = UserDetails.Phone;
-                        //item.Email = UserDetails.Email;
-
+                            Where(x => x.TenantId == data[i].TenantId).OrderBy(x => x.CreatedAt).FirstOrDefault();
+                        if (UserDetails != null)
+                        {
+                            data[i].UserFirstName = UserDetails.FirstName;
+                            data[i].UserMiddleName = UserDetails.MiddleName;
+                            data[i].UserLastName = UserDetails.LastName;
+                            data[i].UserPhoneNumber = UserDetails.Phone;
+                            data[i].UserEmail = UserDetails.Email;
+                        }
                     }
+                    responseVm.Data = data;
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.UpdateSuccessMsg;
                     responseVm.TotalRecords = FilterRecords.Count;

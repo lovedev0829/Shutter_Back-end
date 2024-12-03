@@ -16,6 +16,7 @@ using ShutterManagement.Core;
 using Microsoft.AspNetCore.Http;
 using ShutterManagement.Core.Common;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using ShutterManagement.Core.ViewModels.Response;
 
 namespace ShutterManagement.Business.Services
 {
@@ -50,14 +51,14 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.CodeAlreadyExists;
                     return responseVm;
                 }
-              
-                    bool IsParentExists = await AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId
-                    && x.IsDelete == false && x.IsActive == true);
-                    if (!IsParentExists)
-                    {
-                        responseVm.Message = AppConstant.TenantNotFound;
-                        return responseVm;
-                    }
+
+                bool IsParentExists = await AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId
+                && x.IsDelete == false && x.IsActive == true);
+                if (!IsParentExists)
+                {
+                    responseVm.Message = AppConstant.TenantNotFound;
+                    return responseVm;
+                }
 
                 var TenantDetails = (await GetAll()).Where(x => x.IsDelete == false).Select(x => x.BrandingInfo).ToList();
                 bool IsTenantEmailExists = await tenantBrandingService.AnyAsync(x => x.Email == model.Email && TenantDetails.Contains(x.Id));
@@ -78,9 +79,9 @@ namespace ShutterManagement.Business.Services
                 //        responseVm.Message = "Email " + AppConstant.AlreadyExists;
                 //        return responseVm;
                 //    }
-                    var HashPassword = AesEncryptionHelper.Encrypt(model.Password ?? "");
-                    SqlParameter[] sqlParameters =
-                    {
+                var HashPassword = AesEncryptionHelper.Encrypt(model.Password ?? "");
+                SqlParameter[] sqlParameters =
+                {
                         new SqlParameter("@ParentTenantId", SqlDbType.UniqueIdentifier) { SqlValue = AppConstant.LoggedInTenantId },
                         new SqlParameter("@FirstName", SqlDbType.NVarChar) { SqlValue = model.FirstName },
                         new SqlParameter("@MiddleName", SqlDbType.NVarChar) { SqlValue = model.MiddleName },
@@ -103,11 +104,49 @@ namespace ShutterManagement.Business.Services
                         new SqlParameter("@Action", SqlDbType.NVarChar) { SqlValue = "Create" },
                     };
 
-                    await dataServices.CallSP("sp_TenantCRUD", null, sqlParameters);
+                await dataServices.CallSP("sp_TenantCRUD", null, sqlParameters);
 
-                    responseVm.IsSuccess = true;
-                    responseVm.Message = AppConstant.InsertSuccessMsg;
-               
+                var AddedTenant = GetAllQuerable().Where(x => x.FirstName == model.FirstName && x.Code == model.Code).FirstOrDefault();
+                if (AddedTenant != null)
+                {
+                    string[] defaultRoleArray = ["SubTenant Admin", "Sales", "Installer"];
+                    var DefaultRoles = dbContext.TblRoles.Where(x => x.IsShow == true && x.IsActive == true && x.IsDelete == false
+                    && defaultRoleArray.Contains(x.RoleName)).ToList();
+                    foreach (var item in DefaultRoles)
+                    {
+                        var DefaultRolesPermission = dbContext.TblRolesPermissions.Where(x => x.RoleId == item.Id).ToList();
+
+                        TblRole role = new TblRole();
+                        role.RoleName = item.RoleName;
+                        role.IsShow = false;
+                        role.CreatedAt = DateTime.Now;
+                        role.CreatedBy = AppConstant.LoggedInUserID;
+                        role.IsActive = true;
+                        role.IsDelete = false;
+                        role.TenantId = AddedTenant.TenantId;
+                        role.Id = Guid.NewGuid();
+                        var res = await dbContext.TblRoles.AddAsync(role);
+                        dbContext.SaveChanges();
+                        if (DefaultRolesPermission != null)
+                        {
+                            foreach (var permission in DefaultRolesPermission)
+                            {
+                                TblRolesPermission rolesPermission = new TblRolesPermission
+                                {
+                                    Id = Guid.NewGuid(),
+                                    RoleId = role.Id,
+                                    ModulePermissionId = permission.ModulePermissionId,
+                                };
+                                dbContext.TblRolesPermissions.Add(rolesPermission);
+                                dbContext.SaveChanges();
+                            }
+                        }
+                    }
+                }
+
+                responseVm.IsSuccess = true;
+                responseVm.Message = AppConstant.InsertSuccessMsg;
+
             }
             catch (Exception ex)
             {
@@ -306,33 +345,36 @@ namespace ShutterManagement.Business.Services
                                     .Skip((filter.PageNo - 1) * filter.RecordPerPage).Take(filter.RecordPerPage).ToList();
                 if (TakenRecords != null && TakenRecords.Count > 0)
                 {
-                    responseVm.Data = TakenRecords.Select(x => new
+                    var data = TakenRecords.Select(x => new GetAllTenant
                     {
-                        x.TenantId,
-                        x.FirstName,
-                        x.MiddleName,
-                        x.LastName,
-                        x.Code,
-                        x.Url,
-                        x.BrandingInfoNavigation.Email,
-                        x.BrandingInfoNavigation.PhoneNumber,
-                        x.BrandingInfoNavigation.Logo,
-                        x.BrandingInfoNavigation.PrimaryColor,
-                        x.BrandingInfoNavigation.SecondaryColor,
-                        x.IsActive
-                    });
+                        TenantId = x.TenantId,
+                        FirstName = x.FirstName,
+                        MiddleName = x.MiddleName,
+                        LastName = x.LastName,
+                        Code = x.Code,
+                        URL = x.Url,
+                        Email = x.BrandingInfoNavigation.Email,
+                        PhoneNumber = x.BrandingInfoNavigation.PhoneNumber,
+                        Logo = x.BrandingInfoNavigation.Logo,
+                        PrimaryColor = x.BrandingInfoNavigation.PrimaryColor,
+                        SecondaryColor = x.BrandingInfoNavigation.SecondaryColor,
+                        IsActive = x.IsActive
+                    }).ToList();
 
-                    foreach(var item in responseVm.Data)
+                    for (int i = 0; i < data.Count; i++)
                     {
                         var UserDetails = (await userService.GetAll()).
-                            Where(x => x.TenantId == item.TenantId).OrderBy(x => x.CreatedAt).FirstOrDefault();
-                        //item.UserFirstName = UserDetails.FirstName;
-                        //item.UserMiddleName = UserDetails.MiddleName;
-                        //item.UserLastName = UserDetails.LastName;
-                        //item.PhoneNumber = UserDetails.Phone;
-                        //item.Email = UserDetails.Email;
-
+                            Where(x => x.TenantId == data[i].TenantId).OrderBy(x => x.CreatedAt).FirstOrDefault();
+                        if (UserDetails != null)
+                        {
+                            data[i].UserFirstName = UserDetails.FirstName;
+                            data[i].UserMiddleName = UserDetails.MiddleName;
+                            data[i].UserLastName = UserDetails.LastName;
+                            data[i].UserPhoneNumber = UserDetails.Phone;
+                            data[i].UserEmail = UserDetails.Email;
+                        }
                     }
+                    responseVm.Data = data;
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.UpdateSuccessMsg;
                     responseVm.TotalRecords = FilterRecords.Count;

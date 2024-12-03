@@ -7,7 +7,7 @@ public partial class TblTaxRate
 {
     public Guid TaxRateId { get; set; }
 
-    public string? Region { get; set; }
+    public Guid? Region { get; set; }
 
     public decimal? Rate { get; set; }
 
@@ -22,4 +22,8 @@ public partial class TblTaxRate
     public bool? IsActive { get; set; }
 
     public bool? IsDelete { get; set; }
+
+    public Guid? CreatedBy { get; set; }
+
+    public Guid? ModifiedBy { get; set; }
 }
