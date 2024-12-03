@@ -12,6 +12,7 @@ public partial class ShutterDbContext : DbContext
         : base(options)
     {
     }
+    public virtual DbSet<MstContactType> MstContactTypes { get; set; }
 
     public virtual DbSet<MstJobStatus> MstJobStatuses { get; set; }
 
@@ -24,6 +25,8 @@ public partial class ShutterDbContext : DbContext
     public virtual DbSet<MstModulePermission> MstModulePermissions { get; set; }
 
     public virtual DbSet<MstProductType> MstProductTypes { get; set; }
+
+    public virtual DbSet<MstRegion> MstRegions { get; set; }
 
     public virtual DbSet<MstUnitofMeasurement> MstUnitofMeasurements { get; set; }
 
@@ -96,6 +99,18 @@ public partial class ShutterDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("btprojec_admin");
+
+        modelBuilder.Entity<MstContactType>(entity =>
+        {
+            entity.HasKey(e => e.MstContactId).HasName("PK__MstConta__407CE16C606CDB01");
+
+            entity.ToTable("MstContactType", "dbo");
+
+            entity.Property(e => e.MstContactId).ValueGeneratedNever();
+            entity.Property(e => e.MstContactName)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+        });
 
         modelBuilder.Entity<MstJobStatus>(entity =>
         {
@@ -175,6 +190,16 @@ public partial class ShutterDbContext : DbContext
                 .HasMaxLength(200)
                 .IsUnicode(false);
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+        });
+
+        modelBuilder.Entity<MstRegion>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToTable("MstRegion", "dbo");
+
+            entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.RegionName).HasMaxLength(200);
         });
 
         modelBuilder.Entity<MstUnitofMeasurement>(entity =>
@@ -772,11 +797,14 @@ public partial class ShutterDbContext : DbContext
             entity.Property(e => e.ExpiryDate).HasColumnType("datetime");
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
-            entity.Property(e => e.Rate).HasColumnType("decimal(5, 2)");
-            entity.Property(e => e.Region).HasMaxLength(100);
+            entity.Property(e => e.Rate).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
+
+            entity.HasOne(d => d.Tenant).WithMany(p => p.TblTaxRates)
+                .HasForeignKey(d => d.TenantId)
+                .HasConstraintName("FK__TblTaxRat__Tenan__5EDF0F2E");
         });
 
         modelBuilder.Entity<TblTenant>(entity =>

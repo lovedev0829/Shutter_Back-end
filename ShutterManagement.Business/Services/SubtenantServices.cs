@@ -16,6 +16,7 @@ using ShutterManagement.Core;
 using Microsoft.AspNetCore.Http;
 using ShutterManagement.Core.Common;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using ShutterManagement.Core.ViewModels.Response;
 
 namespace ShutterManagement.Business.Services
 {
@@ -43,55 +44,109 @@ namespace ShutterManagement.Business.Services
             {
                 var IsCodeExists = await AnyAsync(x => x.IsActive == true
                     && x.IsDelete == false && x.Code == model.Code);
-                if (!IsCodeExists)
-                {
-                    bool IsParentExists = await AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId
-                    && x.IsDelete == false && x.IsActive == true);
-                    if (!IsParentExists)
-                    {
-                        responseVm.Message = AppConstant.TenantNotFound;
-                        return responseVm;
-                    }
-                    bool IsSubTenantEmailExists = await userService.AnyAsync(x => x.Email == model.Email && x.TenantId == AppConstant.LoggedInTenantId);
-                    if (IsSubTenantEmailExists)
-                    {
-                        responseVm.Message = "Email " + AppConstant.AlreadyExists;
-                        return responseVm;
-                    }
-                    var HashPassword = AesEncryptionHelper.Encrypt(model.Password ?? "");
-                    SqlParameter[] sqlParameters =
-                    {
-                    new SqlParameter("@ParentTenantId", SqlDbType.UniqueIdentifier) { SqlValue = AppConstant.LoggedInTenantId },
-                   new SqlParameter("@FirstName", SqlDbType.NVarChar) { SqlValue = model.FirstName },
-new SqlParameter("@MiddleName", SqlDbType.NVarChar) { SqlValue = model.MiddleName },
-new SqlParameter("@LastName", SqlDbType.NVarChar) { SqlValue = model.LastName },
-new SqlParameter("@Code", SqlDbType.NVarChar) { SqlValue = model.Code },
-new SqlParameter("@URL", SqlDbType.NVarChar) { SqlValue = model.URL },
-new SqlParameter("@Email", SqlDbType.NVarChar) { SqlValue = model.Email },
-new SqlParameter("@PhoneNumber", SqlDbType.NVarChar) { SqlValue = model.PhoneNumber },
-new SqlParameter("@Logo", SqlDbType.NVarChar) { SqlValue = model.Logo },
-new SqlParameter("@PrimaryColor", SqlDbType.NVarChar) { SqlValue = model.PrimaryColor },
-new SqlParameter("@SecondaryColor", SqlDbType.NVarChar) { SqlValue = model.SecondaryColor },
-new SqlParameter("@UserFirstName", SqlDbType.NVarChar) { SqlValue = model.FirstName },
-new SqlParameter("@UserMiddleName", SqlDbType.NVarChar) { SqlValue = model.MiddleName },
-new SqlParameter("@UserLastName", SqlDbType.NVarChar) { SqlValue = model.LastName },
-new SqlParameter("@UserEmail", SqlDbType.NVarChar) { SqlValue = model.Email },
-new SqlParameter("@UserPhoneNumber", SqlDbType.NVarChar) { SqlValue = model.PhoneNumber },
-new SqlParameter("@Password", SqlDbType.NVarChar) { SqlValue = HashPassword },
-                    new SqlParameter("@LoggedInUser", SqlDbType.UniqueIdentifier) { SqlValue = AppConstant.LoggedInUserID },
-
-                    new SqlParameter("@Action", SqlDbType.NVarChar) { SqlValue = "Create" },
-                };
-
-                    await dataServices.CallSP("sp_TenantCRUD", null, sqlParameters);
-
-                    responseVm.IsSuccess = true;
-                    responseVm.Message = AppConstant.InsertSuccessMsg;
-                }
-                else
+                //var IsCodeExists = await AnyAsync(x => x.IsActive == true
+                //   && x.IsDelete == false && x.Code == model.Code);
+                if (IsCodeExists)
                 {
                     responseVm.Message = AppConstant.CodeAlreadyExists;
+                    return responseVm;
                 }
+
+                bool IsParentExists = await AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId
+                && x.IsDelete == false && x.IsActive == true);
+                if (!IsParentExists)
+                {
+                    responseVm.Message = AppConstant.TenantNotFound;
+                    return responseVm;
+                }
+
+                var TenantDetails = (await GetAll()).Where(x => x.IsDelete == false).Select(x => x.BrandingInfo).ToList();
+                bool IsTenantEmailExists = await tenantBrandingService.AnyAsync(x => x.Email == model.Email && TenantDetails.Contains(x.Id));
+                if (IsTenantEmailExists)
+                {
+                    responseVm.Message = "Email " + AppConstant.AlreadyExists;
+                    return responseVm;
+                }
+                bool IsUserEmailExists = await userService.AnyAsync(x => x.Email == model.UserEmail && x.IsDelete == false);
+                if (IsUserEmailExists)
+                {
+                    responseVm.Message = "User Email " + AppConstant.AlreadyExists;
+                    return responseVm;
+                }
+                //bool IsSubTenantEmailExists = await userService.AnyAsync(x => x.Email == model.Email && x.TenantId == AppConstant.LoggedInTenantId);
+                //    if (IsSubTenantEmailExists)
+                //    {
+                //        responseVm.Message = "Email " + AppConstant.AlreadyExists;
+                //        return responseVm;
+                //    }
+                var HashPassword = AesEncryptionHelper.Encrypt(model.Password ?? "");
+                SqlParameter[] sqlParameters =
+                {
+                        new SqlParameter("@ParentTenantId", SqlDbType.UniqueIdentifier) { SqlValue = AppConstant.LoggedInTenantId },
+                        new SqlParameter("@FirstName", SqlDbType.NVarChar) { SqlValue = model.FirstName },
+                        new SqlParameter("@MiddleName", SqlDbType.NVarChar) { SqlValue = model.MiddleName },
+                        new SqlParameter("@LastName", SqlDbType.NVarChar) { SqlValue = model.LastName },
+                        new SqlParameter("@Code", SqlDbType.NVarChar) { SqlValue = model.Code },
+                        new SqlParameter("@URL", SqlDbType.NVarChar) { SqlValue = model.URL },
+                        new SqlParameter("@Email", SqlDbType.NVarChar) { SqlValue = model.Email },
+                        new SqlParameter("@PhoneNumber", SqlDbType.NVarChar) { SqlValue = model.PhoneNumber },
+                        new SqlParameter("@Logo", SqlDbType.NVarChar) { SqlValue = model.Logo },
+                        new SqlParameter("@PrimaryColor", SqlDbType.NVarChar) { SqlValue = model.PrimaryColor },
+                        new SqlParameter("@SecondaryColor", SqlDbType.NVarChar) { SqlValue = model.SecondaryColor },
+                        new SqlParameter("@UserFirstName", SqlDbType.NVarChar) { SqlValue = model.UserFirstName },
+                        new SqlParameter("@UserMiddleName", SqlDbType.NVarChar) { SqlValue = model.UserMiddleName },
+                        new SqlParameter("@UserLastName", SqlDbType.NVarChar) { SqlValue = model.UserLastName },
+                        new SqlParameter("@UserEmail", SqlDbType.NVarChar) { SqlValue = model.UserEmail },
+                        new SqlParameter("@UserPhoneNumber", SqlDbType.NVarChar) { SqlValue = model.UserPhoneNumber },
+                        new SqlParameter("@Password", SqlDbType.NVarChar) { SqlValue = HashPassword },
+                        new SqlParameter("@LoggedInUser", SqlDbType.UniqueIdentifier) { SqlValue = AppConstant.LoggedInUserID },
+
+                        new SqlParameter("@Action", SqlDbType.NVarChar) { SqlValue = "Create" },
+                    };
+
+                await dataServices.CallSP("sp_TenantCRUD", null, sqlParameters);
+
+                var AddedTenant = GetAllQuerable().Where(x => x.FirstName == model.FirstName && x.Code == model.Code).FirstOrDefault();
+                if (AddedTenant != null)
+                {
+                    string[] defaultRoleArray = ["SubTenant Admin", "Sales", "Installer"];
+                    var DefaultRoles = dbContext.TblRoles.Where(x => x.IsShow == true && x.IsActive == true && x.IsDelete == false
+                    && defaultRoleArray.Contains(x.RoleName)).ToList();
+                    foreach (var item in DefaultRoles)
+                    {
+                        var DefaultRolesPermission = dbContext.TblRolesPermissions.Where(x => x.RoleId == item.Id).ToList();
+
+                        TblRole role = new TblRole();
+                        role.RoleName = item.RoleName;
+                        role.IsShow = false;
+                        role.CreatedAt = DateTime.Now;
+                        role.CreatedBy = AppConstant.LoggedInUserID;
+                        role.IsActive = true;
+                        role.IsDelete = false;
+                        role.TenantId = AddedTenant.TenantId;
+                        role.Id = Guid.NewGuid();
+                        var res = await dbContext.TblRoles.AddAsync(role);
+                        dbContext.SaveChanges();
+                        if (DefaultRolesPermission != null)
+                        {
+                            foreach (var permission in DefaultRolesPermission)
+                            {
+                                TblRolesPermission rolesPermission = new TblRolesPermission
+                                {
+                                    Id = Guid.NewGuid(),
+                                    RoleId = role.Id,
+                                    ModulePermissionId = permission.ModulePermissionId,
+                                };
+                                dbContext.TblRolesPermissions.Add(rolesPermission);
+                                dbContext.SaveChanges();
+                            }
+                        }
+                    }
+                }
+
+                responseVm.IsSuccess = true;
+                responseVm.Message = AppConstant.InsertSuccessMsg;
+
             }
             catch (Exception ex)
             {
@@ -121,32 +176,20 @@ new SqlParameter("@Password", SqlDbType.NVarChar) { SqlValue = HashPassword },
                         responseVm.Message = AppConstant.TenantNotFound;
                         return responseVm;
                     }
-                    bool IsTenantExists = await AnyAsync(x => x.TenantId.ToString() == model.TenantId && x.ParentTenantId == AppConstant.LoggedInTenantId
-                    && x.IsDelete == false);
-                    if (!IsTenantExists)
+                    //bool IsTenantExists = await AnyAsync(x => x.TenantId.ToString() == model.TenantId && x.ParentTenantId == AppConstant.LoggedInTenantId
+                    //&& x.IsDelete == false);
+                    //if (!IsTenantExists)
+                    //{
+                    //    responseVm.Message = AppConstant.TenantNotFound;
+                    //    return responseVm;
+                    //}
+                    var TenantDetails = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId.ToString() != model.TenantId).Select(x => x.BrandingInfo).ToList();
+                    bool IsTenantEmailExists = await tenantBrandingService.AnyAsync(x => x.Email == model.Email && TenantDetails.Contains(x.Id));
+                    if (IsTenantEmailExists)
                     {
-                        responseVm.Message = AppConstant.TenantNotFound;
+                        responseVm.Message = "Email " + AppConstant.AlreadyExists;
                         return responseVm;
                     }
-                    //var braindingInfo = GetAllQuerable().Where(x => 
-                    //x.ParentTenantId == AppConstant.LoggedInTenantId && x.IsDelete == false).Select(x => new { x.BrandingInfo, x.TenantId }).ToArray();
-                    //if (braindingInfo != null && braindingInfo.Count() > 0) 
-                    //{
-                    //    bool IsSubTenantEmailExists =  await tenantBrandingService.AnyAsync(x => braindingInfo.Select(x=>x.BrandingInfo).Contains(x.Id) && x.Email == model.Email);
-                    //    bool IsUserEmailExists = await userService.AnyAsync(x => braindingInfo.Select(y => y.TenantId).Contains((Guid)x.TenantId) && x.IsDelete == false && x.Email == model.Email);
-
-                    //    if (IsSubTenantEmailExists || IsUserEmailExists) {
-                    //        responseVm.Message = "Email " + AppConstant.AlreadyExists;
-                    //        return responseVm;
-                    //    }
-                    //   //bool IsSubTenantPhoneExists = await tenantBrandingService.AnyAsync(x => x.Id != braindingInfo && x.PhoneNumber == model.PhoneNumber);
-                    //   // if (IsSubTenantPhoneExists)
-                    //   // {
-                    //   //     responseVm.Message = "Phone " + AppConstant.AlreadyExists;
-                    //   //     return responseVm;
-                    //   // }
-
-                    //}
                     var tenantid = Guid.Parse(model.TenantId);
                     var Parenttenantid = AppConstant.LoggedInTenantId;
                     var HashPassword = string.IsNullOrEmpty(model.Password) ? "" : AesEncryptionHelper.Encrypt(model.Password ?? "");
@@ -165,11 +208,11 @@ new SqlParameter("@Password", SqlDbType.NVarChar) { SqlValue = HashPassword },
                     new SqlParameter("@Logo", SqlDbType.NVarChar) { SqlValue = model.Logo },
                     new SqlParameter("@PrimaryColor", SqlDbType.NVarChar) { SqlValue = model.PrimaryColor },
                     new SqlParameter("@SecondaryColor", SqlDbType.NVarChar) { SqlValue = model.SecondaryColor },
-                    new SqlParameter("@UserFirstName", SqlDbType.NVarChar) { SqlValue = model.FirstName },
-                    new SqlParameter("@UserMiddleName", SqlDbType.NVarChar) { SqlValue = model.MiddleName },
-                    new SqlParameter("@UserLastName", SqlDbType.NVarChar) { SqlValue = model.LastName },
-                    new SqlParameter("@UserEmail", SqlDbType.NVarChar) { SqlValue = model.Email },
-                    new SqlParameter("@UserPhoneNumber", SqlDbType.NVarChar) { SqlValue = model.PhoneNumber },
+                    new SqlParameter("@UserFirstName", SqlDbType.NVarChar) { SqlValue = model.UserFirstName },
+                    new SqlParameter("@UserMiddleName", SqlDbType.NVarChar) { SqlValue = model.UserMiddleName },
+                    new SqlParameter("@UserLastName", SqlDbType.NVarChar) { SqlValue = model.UserLastName },
+                    new SqlParameter("@UserEmail", SqlDbType.NVarChar) { SqlValue = model.UserEmail },
+                    new SqlParameter("@UserPhoneNumber", SqlDbType.NVarChar) { SqlValue = model.UserPhoneNumber },
                     new SqlParameter("@Password", SqlDbType.NVarChar) { SqlValue = HashPassword },
                     new SqlParameter("@LoggedInUser", SqlDbType.UniqueIdentifier) { SqlValue = AppConstant.LoggedInUserID },
                     new SqlParameter("@Action", SqlDbType.NVarChar) { SqlValue = "Update" },
@@ -302,21 +345,36 @@ new SqlParameter("@Password", SqlDbType.NVarChar) { SqlValue = HashPassword },
                                     .Skip((filter.PageNo - 1) * filter.RecordPerPage).Take(filter.RecordPerPage).ToList();
                 if (TakenRecords != null && TakenRecords.Count > 0)
                 {
-                    responseVm.Data = TakenRecords.Select(x => new
+                    var data = TakenRecords.Select(x => new GetAllTenant
                     {
-                        x.TenantId,
-                        x.FirstName,
-                        x.MiddleName,
-                        x.LastName,
-                        x.Code,
-                        x.Url,
-                        x.BrandingInfoNavigation.Email,
-                        x.BrandingInfoNavigation.PhoneNumber,
-                        x.BrandingInfoNavigation.Logo,
-                        x.BrandingInfoNavigation.PrimaryColor,
-                        x.BrandingInfoNavigation.SecondaryColor,
-                        x.IsActive
-                    });
+                        TenantId = x.TenantId,
+                        FirstName = x.FirstName,
+                        MiddleName = x.MiddleName,
+                        LastName = x.LastName,
+                        Code = x.Code,
+                        URL = x.Url,
+                        Email = x.BrandingInfoNavigation.Email,
+                        PhoneNumber = x.BrandingInfoNavigation.PhoneNumber,
+                        Logo = x.BrandingInfoNavigation.Logo,
+                        PrimaryColor = x.BrandingInfoNavigation.PrimaryColor,
+                        SecondaryColor = x.BrandingInfoNavigation.SecondaryColor,
+                        IsActive = x.IsActive
+                    }).ToList();
+
+                    for (int i = 0; i < data.Count; i++)
+                    {
+                        var UserDetails = (await userService.GetAll()).
+                            Where(x => x.TenantId == data[i].TenantId).OrderBy(x => x.CreatedAt).FirstOrDefault();
+                        if (UserDetails != null)
+                        {
+                            data[i].UserFirstName = UserDetails.FirstName;
+                            data[i].UserMiddleName = UserDetails.MiddleName;
+                            data[i].UserLastName = UserDetails.LastName;
+                            data[i].UserPhoneNumber = UserDetails.Phone;
+                            data[i].UserEmail = UserDetails.Email;
+                        }
+                    }
+                    responseVm.Data = data;
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.UpdateSuccessMsg;
                     responseVm.TotalRecords = FilterRecords.Count;

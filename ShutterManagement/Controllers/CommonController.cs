@@ -38,12 +38,15 @@ namespace ShutterManagement.Controllers
         private readonly IProductService productService;
         private readonly IUnitofMeasurementService unitofMeasurementService;
         private readonly IRoleService roleService;
+        private readonly IRegion region;
 
         public CommonController(IMasterCreate masterCreate, FileUploadHelper fileUpload, ClaimsProperty claimsProperty,
             IJobTitleService jobTitleService,IMaterial material,IVendorService vendorService 
             ,EmailHelper emailHelper,IUserService userService, IJobStatusService jobStatusService,
             IJobTypeService jobTypeService,
-            IComponentService componentService,IMstProductType mstProductType,IAddress address,IOption option,IProductService productService,IUnitofMeasurementService unitofMeasurementService,IRoleService roleService)
+            IComponentService componentService,IMstProductType mstProductType,
+            IAddress address,IOption option,IProductService productService,
+            IUnitofMeasurementService unitofMeasurementService,IRoleService roleService,IRegion region)
         {
             this.masterCreate = masterCreate;
             this.fileUpload = fileUpload;
@@ -67,6 +70,7 @@ namespace ShutterManagement.Controllers
             this.productService = productService;
             this.unitofMeasurementService = unitofMeasurementService;
             this.roleService = roleService;
+            this.region = region;
         }
 
 
@@ -161,7 +165,18 @@ namespace ShutterManagement.Controllers
             var res = await mstProductType.GetAll_ProductType();
             res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
             return Ok(res);
+        } 
+        
+        [HttpGet]
+        [Route("GetAllRegion")]
+        public async Task<IActionResult> GetAllRegion()
+        {
+            var res = await region.GetAll(filter);         
+            res.Data = res.Data.Where(x => x.IsActive == true).ToList();
+            return Ok(res);
         }
+
+
 
 
         [HttpPost]
@@ -359,12 +374,14 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("SettingById")]
+        [Authorize]
         public async Task<IActionResult> SettingById()
         {
             var settingGetById = await masterCreate.SettingGetById();
             return Ok(settingGetById);
         }
         [HttpPost]
+        [Authorize]
         [Route("UpdateSettingById")]
         public async Task<IActionResult> UpdateSettingById(SettingUpdate model)
         {

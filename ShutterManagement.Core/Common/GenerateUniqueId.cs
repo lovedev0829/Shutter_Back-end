@@ -9,26 +9,15 @@ using System.Threading.Tasks;
 
 namespace ShutterManagement.Core.Common
 {
-    public class GenerateUniqueId
+    public static class GenerateUniqueId
     {
-        private readonly ShutterDbContext dbContext;
-
-        public GenerateUniqueId(ShutterDbContext dbContext)
+        public static string GenerateUniqueIds(ModuleName moduleName, string Code)
         {
-            this.dbContext = dbContext;
-        }
-
-
-
-        public string GenerateUniqueIds(ModuleName moduleName)
-        {
-            var Tenantcode = dbContext.TblTenants
-                .Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false)
-                .FirstOrDefault();
+            var Tenantcode = Code;
             var GenerateUniqueName = "";
             if (Tenantcode != null)
             {
-               GenerateUniqueName = $"{Tenantcode.Code}-{moduleName}-{DateTime.Now:yyyyMMddHHmmss}";
+               GenerateUniqueName = $"{Tenantcode}-{moduleName}-{DateTime.Now:yyyyMMddHHmmss}";
             }
             return GenerateUniqueName;
         }

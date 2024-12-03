@@ -55,18 +55,20 @@ namespace ShutterManagement.Services
                   && (x.ParentTenantId.ToString() == AppConstant.LoggedInParentTenantId || x.TenantId.ToString() == AppConstant.LoggedInParentTenantId)).Select(x => x.TenantId.ToString()).ToList();
                 }
 
-                bool IsPhoneExists = await AnyAsync(x => x.IsDelete == false &&
-                  (x.Phone == UserDetails.Phone)
-                  && AllTenantSubTenants.Contains(x.TenantId.ToString()));
-                if (IsPhoneExists)
-                {
-                    result.Message = "Phone " + AppConstant.AlreadyExists;
-                    return result;
-                }
+                //bool IsPhoneExists = await AnyAsync(x => x.IsDelete == false &&
+                //  (x.Phone == UserDetails.Phone)
+                //  //&& AllTenantSubTenants.Contains(x.TenantId.ToString())
+                //  );
+                //if (IsPhoneExists)
+                //{
+                //    result.Message = "Phone " + AppConstant.AlreadyExists;
+                //    return result;
+                //}
 
                 bool IsEmailExists = await AnyAsync(x => x.IsDelete == false &&
                   (x.Email == UserDetails.Email)
-                  && AllTenantSubTenants.Contains(x.TenantId.ToString()));
+                  //&& AllTenantSubTenants.Contains(x.TenantId.ToString())
+                  );
                 if (IsEmailExists)
                 {
                     result.Message = "Email " + AppConstant.AlreadyExists;
@@ -158,18 +160,20 @@ namespace ShutterManagement.Services
                     }
 
 
-                    bool IsPhoneExists = await AnyAsync(x => x.IsDelete == false &&
-                  (x.Phone == UserDetails.Phone) && x.Id != Guid.Parse(UserDetails.UserId)
-                  && AllTenantSubTenants.Contains(x.TenantId.ToString()));
-                    if (IsPhoneExists)
-                    {
-                        result.Message = "Phone " + AppConstant.AlreadyExists;
-                        return result;
-                    }
+                  //  bool IsPhoneExists = await AnyAsync(x => x.IsDelete == false &&
+                  //(x.Phone == UserDetails.Phone) && x.Id != Guid.Parse(UserDetails.UserId)
+                  ////&& AllTenantSubTenants.Contains(x.TenantId.ToString())
+                  //);
+                  //  if (IsPhoneExists)
+                  //  {
+                  //      result.Message = "Phone " + AppConstant.AlreadyExists;
+                  //      return result;
+                  //  }
 
                     bool IsEmailExists = await AnyAsync(x => x.IsDelete == false &&
                       (x.Email == UserDetails.Email) && x.Id != Guid.Parse(UserDetails.UserId)
-                      && AllTenantSubTenants.Contains(x.TenantId.ToString()));
+                      //&& AllTenantSubTenants.Contains(x.TenantId.ToString())
+                      );
                     if (IsEmailExists)
                     {
                         result.Message = "Email " + AppConstant.AlreadyExists;
@@ -194,6 +198,10 @@ namespace ShutterManagement.Services
                         UpdateUserDetails.Phone = UserDetails.Phone;
                         UpdateUserDetails.ModifiedAt = DateTime.Now;
                         UpdateUserDetails.ModifiedBy = AppConstant.LoggedInUserID;
+                        if (!string.IsNullOrEmpty(UserDetails.Password))
+                        {
+                            UpdateUserDetails.Pwd = AesEncryptionHelper.Encrypt(UserDetails.Password);
+                        };
                         var res = await Update(UpdateUserDetails);
 
                         var UserRoleDeatils = (await userRoleService.GetAll()).Where(x => x.UserId == Guid.Parse(UserDetails.UserId) && x.IsDelete == false).FirstOrDefault();
