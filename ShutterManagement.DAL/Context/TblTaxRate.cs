@@ -26,4 +26,8 @@ public partial class TblTaxRate
     public Guid? CreatedBy { get; set; }
 
     public Guid? ModifiedBy { get; set; }
+
+    public Guid? TenantId { get; set; }
+
+    public virtual TblTenant? Tenant { get; set; }
 }

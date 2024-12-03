@@ -126,6 +126,7 @@ builder.Services.AddScoped<IUnitofMeasurementService, UnitofMeasurementService>(
 builder.Services.AddScoped<IJobService, JobService>();
 builder.Services.AddScoped<IJobTypeService, JobTypeService>();
 builder.Services.AddScoped<IJobStatusService, JobStatusService>();
+builder.Services.AddScoped<ITaxRate, TaxService>();
 
 var app = builder.Build();
 
