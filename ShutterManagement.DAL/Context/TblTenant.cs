@@ -62,4 +62,8 @@ public partial class TblTenant
     public virtual ICollection<TblUser> TblUsers { get; set; } = new List<TblUser>();
 
     public virtual ICollection<TblVendor> TblVendors { get; set; } = new List<TblVendor>();
+
+    public virtual ICollection<TblWindowProduct> TblWindowProducts { get; set; } = new List<TblWindowProduct>();
+
+    public virtual ICollection<TblWindow> TblWindows { get; set; } = new List<TblWindow>();
 }

@@ -55,5 +55,7 @@ public partial class TblJob
 
     public virtual ICollection<TblVendorOrder> TblVendorOrders { get; set; } = new List<TblVendorOrder>();
 
+    public virtual ICollection<TblWindow> TblWindows { get; set; } = new List<TblWindow>();
+
     public virtual TblTenant? Tenant { get; set; }
 }

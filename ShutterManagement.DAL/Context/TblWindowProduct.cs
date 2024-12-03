@@ -1,0 +1,45 @@
+﻿using System;
+using System.Collections.Generic;
+
+namespace ShutterManagement.DAL.Context;
+
+public partial class TblWindowProduct
+{
+    public Guid WindowProductId { get; set; }
+
+    public Guid? WindowId { get; set; }
+
+    public Guid? ProductId { get; set; }
+
+    public Guid? ProductTypeId { get; set; }
+
+    public Guid? OptionTypeId { get; set; }
+
+    public bool? IsActive { get; set; }
+
+    public bool? IsDelete { get; set; }
+
+    public DateTime? CreatedAt { get; set; }
+
+    public DateTime? ModifiedAt { get; set; }
+
+    public Guid? CreatedBy { get; set; }
+
+    public Guid? ModifiedBy { get; set; }
+
+    public Guid? TenantId { get; set; }
+
+    public decimal? BuildWidth { get; set; }
+
+    public decimal? BuildHeight { get; set; }
+
+    public virtual TblOptionsType? OptionType { get; set; }
+
+    public virtual TblProduct? Product { get; set; }
+
+    public virtual MstProductType? ProductType { get; set; }
+
+    public virtual TblTenant? Tenant { get; set; }
+
+    public virtual TblWindow? Window { get; set; }
+}
