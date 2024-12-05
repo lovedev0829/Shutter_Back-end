@@ -169,10 +169,10 @@ namespace ShutterManagement.Business.Services
                                     (string.IsNullOrEmpty(filter.Region) ? true : (filter.Region == x.Region.ToString())) &&
                                     (string.IsNullOrEmpty(filter.TenantId) ? true : (filter.TenantId == x.TenantId.ToString())) &&
                                     (filter.SearchValue != "" ?
-                                    (x.TaxRateId.ToString() == filter.SearchValue) ||
-                                    (x.Region.ToString() == filter.SearchValue) ||
-                                    (x.Rate.ToString() == filter.SearchValue) ||
-                                    (x.RegionName == filter.SearchValue)
+                                    (x.TaxRateId.ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
+                                    (x.Region.ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
+                                    (x.Rate.ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
+                                    (x.RegionName ?? "" ).ToLower().Contains(filter.SearchValue)
                                     : true)).ToList();
 
 
