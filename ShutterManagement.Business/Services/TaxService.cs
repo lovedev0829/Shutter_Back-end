@@ -146,13 +146,32 @@ namespace ShutterManagement.Business.Services
             IResponseVm<List<GetAllTax>> responseVm = new ResponseVm<List<GetAllTax>>();
             try
             {
-                var Taxlist = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId).OrderByDescending(x => x.CreatedAt).ToList();
+                var taxlist = (from t2 in dbContext.TblTaxRates.OrderByDescending(x => x.CreatedAt)
+                              join t1 in dbContext.MstRegions on t2.Region equals t1.Id
+                              where t2.TenantId == AppConstant.LoggedInTenantId && t2.IsDelete == false
+                              select new GetAllTax
+                              {
+                                  TaxRateId = t2.TaxRateId,
+                                  Rate = t2.Rate,
+                                  EffectiveDate = t2.EffectiveDate,
+                                  ExpiryDate = t2.ExpiryDate,
+                                  IsActive = t2.IsActive,
+                                  Region = t2.Region,
+                                  RegionName = t1.RegionName
+
+                              }).ToList();
+                
                 filter.SearchValue = filter.SearchValue.Trim().ToLower();
-                var FilterRecords = Taxlist
+                var FilterRecords = taxlist
                                     .Where(x =>
                                     (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
+                                    (string.IsNullOrEmpty(filter.Region) ? true : (filter.Region == x.Region.ToString())) &&
                                     (filter.SearchValue != "" ?
-                                    (x.TaxRateId.ToString() == filter.SearchValue): true)).ToList();
+                                    (x.TaxRateId.ToString() == filter.SearchValue) ||
+                                    (x.Region.ToString() == filter.SearchValue) ||
+                                    (x.Rate.ToString() == filter.SearchValue) ||
+                                    (x.RegionName == filter.SearchValue)
+                                    : true)).ToList();
 
 
 
@@ -166,6 +185,7 @@ namespace ShutterManagement.Business.Services
                     TaxRateId = x.TaxRateId,
                     Rate = x.Rate,
                     Region = x.Region,
+                    RegionName = x.RegionName,
                     EffectiveDate = x.EffectiveDate,
                     ExpiryDate = x.ExpiryDate,
                     IsActive = x.IsActive,

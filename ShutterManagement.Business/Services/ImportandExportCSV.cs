@@ -15,6 +15,7 @@ using ShutterManagement.Core.SPModel;
 using ShutterManagement.Core.ViewModels;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 using Microsoft.AspNetCore.Mvc;
+using ShutterManagement.Core.SPModel.SP_Responses;
 
 namespace ShutterManagement.Business.Services
 {
@@ -36,7 +37,7 @@ namespace ShutterManagement.Business.Services
             this.claimsProperty = claimsProperty;
         }
 
-        public async Task<string> ImportCsvToDatabase(Stream csvStream)
+        public async Task<IResponseVm<string>> ImportCsvToDatabase(Stream csvStream)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
@@ -93,11 +94,11 @@ namespace ShutterManagement.Business.Services
             {
                 responseVm.Message = AppConstant.ExceptionError + ex.Message;
             }
-            return responseVm.Message;
+            return responseVm;
         }
        
 
-        public async Task<string> ImportCsvForContact(Stream csvStream)
+        public async Task<IResponseVm<string>> ImportCsvForContact(Stream csvStream)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
@@ -128,6 +129,7 @@ namespace ShutterManagement.Business.Services
 
                         if (record.BillingAddressVm != null)
                         {
+                            contactModel.BillingAddressVm ??= new BillingAddressVm();
                             contactModel.BillingAddressVm.FullName = record.BillingAddressVm.FullName?.Trim();
                             contactModel.BillingAddressVm.PhoneNumber = record.BillingAddressVm.PhoneNumber?.Trim();
                             contactModel.BillingAddressVm.Email = record.BillingAddressVm.Email.Trim();
@@ -139,6 +141,7 @@ namespace ShutterManagement.Business.Services
 
                         if (record.TaxExemptionVm != null)
                         {
+                            contactModel.TaxExemptionVm ??= new TaxExemption();
                             contactModel.TaxExemptionVm.ExemptionCertificate = record.TaxExemptionVm.ExemptionCertificate;
                             contactModel.TaxExemptionVm.EffectiveDate = record.TaxExemptionVm.EffectiveDate;
                             contactModel.TaxExemptionVm.ExpiryDate = record.TaxExemptionVm?.ExpiryDate;
@@ -152,6 +155,9 @@ namespace ShutterManagement.Business.Services
                             
                         }
                     }
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = AppConstant.InsertSuccessMsg;
+
                 }
             }
 
@@ -161,7 +167,7 @@ namespace ShutterManagement.Business.Services
             }
 
 
-            return responseVm.Message;
+            return responseVm;
 
   
                 }

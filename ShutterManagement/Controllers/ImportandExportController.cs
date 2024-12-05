@@ -42,21 +42,24 @@ namespace ShutterManagement.Controllers
                     switch (model.ToLower())
                     {
                         case "material":
-                            await importandExportCSV.ImportCsvToDatabase(stream);
+                            var materialresponse = await importandExportCSV.ImportCsvToDatabase(stream);
+                            responseVm.IsSuccess = materialresponse.IsSuccess;
+                            responseVm.Message = materialresponse.Message;
                             break;
 
                         case "contact":
-                            await importandExportCSV.ImportCsvForContact(stream);
+                            var contactresponse = await importandExportCSV.ImportCsvForContact(stream);
+                            responseVm.IsSuccess = contactresponse.IsSuccess;
+                            responseVm.Message = contactresponse.Message;
                             break;
 
                         default:
                             responseVm.Message = "Not Imported";
                             return responseVm;
                     }
+                  
                 }
-                responseVm.IsSuccess = true;
-                responseVm.Message = AppConstant.InsertSuccessMsg;
-                
+               
             }
             catch (Exception ex)
             {

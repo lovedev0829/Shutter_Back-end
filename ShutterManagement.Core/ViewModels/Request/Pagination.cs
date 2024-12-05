@@ -26,6 +26,9 @@ namespace ShutterManagement.Core.ViewModels.Request
         [DefaultValue("")]
         public string? JobStatusName { get; set; }
         [DefaultValue("")]
-        public string? Address { get; set; } 
+        public string? Address { get; set; }
+
+        [DefaultValue("")]
+        public string? Region { get; set; } 
     }
 }
