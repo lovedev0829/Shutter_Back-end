@@ -125,7 +125,7 @@ namespace ShutterManagement.Business.Services
                     IsTaxExist.ModifiedBy = AppConstant.LoggedInUserID;
                     var res = Update(IsTaxExist);
                     responseVm.IsSuccess = true;
-                    responseVm.Message = AppConstant.UpdateSuccessMsg;
+                    responseVm.Message = AppConstant.DeleteSuccessMsg;
                 }
 
                 else

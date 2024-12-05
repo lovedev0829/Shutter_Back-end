@@ -157,7 +157,7 @@ namespace ShutterManagement.Business.Services
 
                     await Update(RoleDetails);
                     responseVm.IsSuccess = true;
-                    responseVm.Message = AppConstant.UpdateSuccessMsg;
+                    responseVm.Message = AppConstant.DeleteSuccessMsg;
                 }
                 else
                 {

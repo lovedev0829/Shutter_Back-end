@@ -205,7 +205,7 @@ namespace ShutterManagement.Business.Services
                         IsProductExists.ModifiedBy = AppConstant.LoggedInUserID;
                         await Update(IsProductExists);
                         responseVm.IsSuccess = true;
-                        responseVm.Message = AppConstant.UpdateSuccessMsg;
+                        responseVm.Message = AppConstant.DeleteSuccessMsg;
                     }
                     else
                     {

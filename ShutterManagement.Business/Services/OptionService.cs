@@ -164,7 +164,7 @@ namespace ShutterManagement.Business.Services
                         IsOptionExists.ModifiedBy = AppConstant.LoggedInUserID;
                         var res = Update(IsOptionExists);
                         responseVm.IsSuccess = true;
-                        responseVm.Message = $"{AppConstant.UpdateSuccessMsg}";
+                        responseVm.Message = $"{AppConstant.DeleteSuccessMsg}";
                     }
                     else
                     {

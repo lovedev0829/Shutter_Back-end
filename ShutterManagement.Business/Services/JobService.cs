@@ -75,6 +75,12 @@ namespace ShutterManagement.Business.Services
                 var generateUnique = GenerateUniqueId.GenerateUniqueIds(ModuleName.Job, AppConstant.LoggedInCompanyCode);
                 bool IsAddressExist = await address.AnyAsync(x => x.AddressId == model.AddressId && x.ContactId == model.ContactId
                 && x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false);
+
+                var IsjobNameExists = AnyAsync(x => x.JobName == model.JobName.Trim() && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
+                if (IsjobNameExists != null)
+                {
+                    responseVm.Message = "JobName" + AppConstant.AlreadyExists;
+                }
                 if (IsAddressExist)
                 {
                     var jobStatus = _context.MstJobStatuses.Where(s => s.JobStatusName == "Pending" && s.IsActive == true).FirstOrDefault();
@@ -189,7 +195,8 @@ namespace ShutterManagement.Business.Services
                                        StreetAddress = t1.StreetAddress,
                                        City = t1.City,
                                        State = t1.State,
-                                       ZipCode = t1.ZipCode
+                                       ZipCode = t1.ZipCode,
+                                       JobUniqueCode = t2.JobUniqueId,
                                    }).ToList();
                     filter.SearchValue = filter.SearchValue?.Trim().ToLower();
                     var FilterRecords = JobList
@@ -253,8 +260,15 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.TenantNotFound;
                     return responseVm;
                 }
-                var IsJobExist = (await GetAll()).Where(x => x.JobId == model.JobId && x.AddressId == model.AddressId && x.ContactId == model.ContactId
+                var IsJobExist = (await GetAll()).Where(x => x.JobId == model.JobId && x.AddressId == model.AddressId &&
+                x.ContactId == model.ContactId && x.JobUniqueId == model.JobUniqueCode.Trim() 
                 && x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false).FirstOrDefault();
+                var IsjobNameExists = AnyAsync(x =>x.JobId !=model.JobId && x.JobName.Trim() == model.JobName && 
+                x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
+                if (IsjobNameExists != null)
+                {
+                    responseVm.Message = "JobName" + AppConstant.AlreadyExists;
+                }
                 if (IsJobExist != null)
                 {
 

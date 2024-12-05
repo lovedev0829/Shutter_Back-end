@@ -81,6 +81,7 @@ namespace ShutterManagement.Business.Services
                         CreatedAt = DateTime.Now,
                         TenantId = AppConstant.LoggedInTenantId,
                         IsActive = true,
+                        IsArchive = false,
                         IsDelete = false
                     };
                     var res = await Add(CreateContact);
@@ -355,7 +356,7 @@ namespace ShutterManagement.Business.Services
                     await taxExemptionService.Update(taxExemption);
                 }
                 responseVm.IsSuccess = true;
-                responseVm.Message = AppConstant.UpdateSuccessMsg;
+                responseVm.Message = AppConstant.DeleteSuccessMsg;
 
             }
             catch (Exception ex)
