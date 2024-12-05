@@ -19,5 +19,6 @@ namespace ShutterManagement.Core.ViewModels.Response
         public DateTime? ExpiryDate { get; set; }
 
         public bool? IsActive { get; set; }
+        public string? TenantId { get; set; }
     }
 }

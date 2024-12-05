@@ -157,7 +157,8 @@ namespace ShutterManagement.Business.Services
                                   ExpiryDate = t2.ExpiryDate,
                                   IsActive = t2.IsActive,
                                   Region = t2.Region,
-                                  RegionName = t1.RegionName
+                                  RegionName = t1.RegionName,
+                                  TenantId = t2.TenantId.ToString(),
 
                               }).ToList();
                 
@@ -166,6 +167,7 @@ namespace ShutterManagement.Business.Services
                                     .Where(x =>
                                     (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
                                     (string.IsNullOrEmpty(filter.Region) ? true : (filter.Region == x.Region.ToString())) &&
+                                    (string.IsNullOrEmpty(filter.TenantId) ? true : (filter.TenantId == x.TenantId.ToString())) &&
                                     (filter.SearchValue != "" ?
                                     (x.TaxRateId.ToString() == filter.SearchValue) ||
                                     (x.Region.ToString() == filter.SearchValue) ||
@@ -189,6 +191,7 @@ namespace ShutterManagement.Business.Services
                     EffectiveDate = x.EffectiveDate,
                     ExpiryDate = x.ExpiryDate,
                     IsActive = x.IsActive,
+                    TenantId = x.TenantId,
                 }).ToList();
                 responseVm.IsSuccess = true;
                 responseVm.Message = $"{AppConstant.FetchSuccessMsg}";

@@ -171,6 +171,8 @@ namespace ShutterManagement.Business.Services
 
   
                 }
+
+
             }
         }
 

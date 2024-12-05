@@ -51,6 +51,6 @@ namespace ShutterManagement.Core.ViewModels.Request
         [Required]
         [DefaultValue("")]
         [MaxLength(100)]
-        public string? VednorCode { get; set; }
+        public string? VendorCode { get; set; }
     }
 }
