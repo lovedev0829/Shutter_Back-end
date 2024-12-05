@@ -89,18 +89,24 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-                bool IsVendorCodeExists = await AnyAsync(x => x.IsDelete == false && (x.VendorCode == model.VednorCode)
+                bool IsVendorCodeExists = await AnyAsync(x => x.IsDelete == false && (x.VendorCode == model.VendorCode.Trim())
                 && x.TenantId == AppConstant.LoggedInTenantId);
+                if (IsVendorCodeExists)
+                {
+                    responseVm.Message = "Vendor Code " + AppConstant.AlreadyExists;
+                    return responseVm;
+                }
+
                 TblVendor vendor = new TblVendor
                 {
-                    VendorName = model.VendorName,
-                    Email = model.Email,
-                    PhoneNumber = model.PhoneNumber,
-                    State = model.State,
-                    City = model.City,
-                    ZipCode = model.ZipCode,
-                    StreetAddress = model.StreetAddress,
-                    VendorCode = model.VednorCode,
+                    VendorName = model.VendorName.Trim(),
+                    Email = model.Email.Trim(),
+                    PhoneNumber = model.PhoneNumber.Trim(),
+                    State = model.State.Trim(),
+                    City = model.City.Trim(),
+                    ZipCode = model.ZipCode.Trim(),
+                    StreetAddress = model.StreetAddress.Trim(),
+                    VendorCode = model.VendorCode.Trim(),
                     IsActive = true,
                     IsDelete = false,
                     CreatedAt = DateTime.Now,
@@ -188,6 +194,7 @@ namespace ShutterManagement.Business.Services
                                     (x.City ?? "").Contains(filter.SearchValue.Trim()) ||
                                     (x.State ?? "").Contains(filter.SearchValue.Trim()) ||
                                     (x.StreetAddress ?? "").Contains(filter.SearchValue.Trim()) ||
+                                    (x.VendorCode ?? "").Contains(filter.SearchValue.Trim()) ||
                                     (x.ZipCode ?? "").Contains(filter.SearchValue.Trim())
                                     ))
                         .ToList();
@@ -209,6 +216,7 @@ namespace ShutterManagement.Business.Services
                         PhoneNumber = x.PhoneNumber,
                         TenantId = x.TenantId,
                         IsActive = x.IsActive,
+                        VendorCode = x.VendorCode,
                     }).ToList();
                     responseVm.TotalRecords = FilterRecords.Count;
                     responseVm.Message = $"{AppConstant.FetchSuccessMsg}";
@@ -227,7 +235,7 @@ namespace ShutterManagement.Business.Services
 
             return await Task.FromResult(responseVm);
         }
-        public  Task<IResponseVm<string>> Update_Vendor(UpdateVendor model)
+        public   async Task<IResponseVm<string>> Update_Vendor(UpdateVendor model)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
@@ -239,24 +247,42 @@ namespace ShutterManagement.Business.Services
                     var vendor =  GetAllQuerable()
                         .Where(c => c.VendorId == model.VendorId && c.TenantId == AppConstant.LoggedInTenantId
                         && c.IsDelete == false).FirstOrDefault();
-                    bool IsVendorEmail =  Any(x => x.IsDelete == false &&(x.Email == model.Email)
+                    bool IsVendorEmail =  Any(x => x.IsDelete == false &&(x.Email == model.Email.Trim())
                                            && x.TenantId == AppConstant.LoggedInTenantId && x.VendorId!=model.VendorId );
 
+                    
                     if (IsVendorEmail)
                     {
                         responseVm.Message = "Vendor Email " + AppConstant.AlreadyExists;
-                        return Task.FromResult(responseVm);
+                        return (responseVm);
                     }
                     bool IsVendorPhoneExists =  Any(x => x.IsDelete == false &&
-                                        (x.PhoneNumber == model.PhoneNumber)
+                                        (x.PhoneNumber == model.PhoneNumber.Trim())
                                         && x.TenantId == AppConstant.LoggedInTenantId && x.VendorId != model.VendorId);
 
                     if (IsVendorPhoneExists)
                     {
                         responseVm.Message = "Vendor Phone " + AppConstant.AlreadyExists;
-                        return Task.FromResult(responseVm);
+                        return (responseVm);
                     }
+                   bool IsVendorNameEXists = Any(x => x.IsDelete == false &&
+                                        (x.VendorName == model.VendorName.Trim())
+                                        && x.TenantId == AppConstant.LoggedInTenantId && x.VendorId != model.VendorId);
+                    if (IsVendorNameEXists)
+                    
+                        {
+                         responseVm.Message="Vendor Name"+ AppConstant.AlreadyExists;
+                        return (responseVm);
+                        }
+                    bool IsVendorCodeExists = Any(x => x.IsDelete == false &&
+                                       (x.VendorCode == model.VendorCode.Trim())
+                                       && x.TenantId == AppConstant.LoggedInTenantId && x.VendorId != model.VendorId);
+                    if (IsVendorCodeExists)
 
+                    {
+                        responseVm.Message = "Vendor Code" + AppConstant.AlreadyExists;
+                        return (responseVm);
+                    }
                     if (vendor != null)
                     {
                         vendor.VendorName = model.VendorName;
@@ -280,7 +306,7 @@ namespace ShutterManagement.Business.Services
             {
                 responseVm.Message = AppConstant.ExceptionError + ex.Message;
             }
-            return Task.FromResult(responseVm); 
+            return (responseVm); 
 
         }
 

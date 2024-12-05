@@ -68,33 +68,24 @@ namespace ShutterManagement.Controllers
             return responseVm;
         }
 
-        //[Authorize]
-        //[HttpGet("export/{model}")]
-        //public async Task<IActionResult> ExportCsv(string model)
-        //{
-        //    try
-        //    {
-        //        switch (model.ToLower())
-        //        {
-        //            case "rawmaterial":
-        //                var rawMaterials = await importandExportCSV.GetRawMaterialsForExport();  
-        //                var rawMaterialCsv = await importandExportCSV.ExportToCsv(rawMaterials);  
-        //                return File(rawMaterialCsv, "text/csv", "rawmaterials.csv");
-
-        //            case "contact":
-        //                var contacts = await importandExportCSV.GetContactsForExport(); 
-        //                var contactCsv = await importandExportCSV.ExportToCsv(contacts);  
-        //                return File(contactCsv, "text/csv", "contacts.csv");
-
-        //            default:
-        //                return BadRequest("Invalid model name.");
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return StatusCode(StatusCodes.Status500InternalServerError, $"Error exporting data: {ex.Message}");
-        //    }
-        //}
+        [Authorize]
+        [HttpGet("export")]
+        public async Task<IActionResult> ExportVendorsToCsvAsync()
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+            try
+            {
+                var filePath = Path.Combine(Directory.GetCurrentDirectory(), "vendors.csv");
+                await importandExportCSV.ExportContactsToCsvAsync(filePath);
+                var fileBytes = await System.IO.File.ReadAllBytesAsync(filePath);
+                responseVm.IsSuccess=true;
+                return File(fileBytes, "text/csv", "vendors.csv");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
 
 
     }

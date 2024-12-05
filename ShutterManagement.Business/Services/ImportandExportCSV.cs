@@ -171,8 +171,28 @@ namespace ShutterManagement.Business.Services
 
   
                 }
+
+        public async Task ExportContactsToCsvAsync(string filePath)
+        {
+     
+            var vendors = vendorService.GetAllQuerable().Where(x=> x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false && x.IsActive == true);
+            var csvBuilder = new StringBuilder();
+            csvBuilder.AppendLine("VendorId,VendorName,PhoneNumber,Email,City,State,StreetAddress,VendorCode");
+
+           
+            foreach (var vendor in vendors)
+            {
+                var line = $"{vendor.VendorId},{vendor.VendorName},{vendor.PhoneNumber},{vendor.Email},{vendor.City},{vendor.State},{vendor.StreetAddress},{vendor.VendorCode}";
+                csvBuilder.AppendLine(line);
             }
+
+           
+            await File.WriteAllTextAsync(filePath, csvBuilder.ToString());
+
+            Console.WriteLine("Export completed successfully.");
         }
+    }
+  }
 
 
 
