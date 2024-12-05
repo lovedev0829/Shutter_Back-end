@@ -12,12 +12,12 @@ using System.Threading.Tasks;
 
 namespace ShutterManagement.Business.Services
 {
-    public class ProductTypeService : BaseRepository<ShutterDbContext, MstProductType>, IMstProductType
+    public class ProductTypeService : BaseRepository<BtprojecShuttermanagementDevContext, MstProductType>, IMstProductType
     {
-        private readonly ShutterDbContext _context;
+        private readonly BtprojecShuttermanagementDevContext _context;
        
 
-        public ProductTypeService(ShutterDbContext context)
+        public ProductTypeService(BtprojecShuttermanagementDevContext context)
         {
             _context = context;
         }

@@ -23,7 +23,7 @@ using System.Security.AccessControl;
 
 namespace ShutterManagement.Services
 {
-    public class AuthService : BaseRepository<ShutterDbContext,TblUser >, IAuthService
+    public class AuthService : BaseRepository<BtprojecShuttermanagementDevContext,TblUser >, IAuthService
     {
         private readonly DataServices dataServices;
         private readonly IMapper mapper;

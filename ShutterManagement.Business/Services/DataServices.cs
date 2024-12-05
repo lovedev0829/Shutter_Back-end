@@ -24,8 +24,8 @@ namespace ShutterManagement.Business.Services
     public class DataServices
     {
         private Dictionary<string, dynamic> _repositories;
-        private readonly ShutterDbContext dbContext;
-        public DataServices(ShutterDbContext dbContext)
+        private readonly BtprojecShuttermanagementDevContext dbContext;
+        public DataServices(BtprojecShuttermanagementDevContext dbContext)
         {
             this.dbContext = dbContext;
         }

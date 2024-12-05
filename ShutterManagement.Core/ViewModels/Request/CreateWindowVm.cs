@@ -9,6 +9,7 @@ namespace ShutterManagement.Core.ViewModels.Request
 {
     public class CreateWindow
     {
+        public Guid? ContactId { get; set; }
         public Guid? AddressId { get; set; }
         public string? Label { get; set; }
         public decimal? Width { get; set; }
@@ -18,11 +19,12 @@ namespace ShutterManagement.Core.ViewModels.Request
         public string? Notes { get; set; }
         public decimal Quantity { get; set; }
         public Guid? JobId { get; set; }
-        public List<WindowProductVm> WindowProducts { get; set; }
+        public List<WindowProductVm> WindowProducts { get; set; } = new List<WindowProductVm>();
     }
     public class WindowProductVm
     {
         public Guid? WindowId { get; set; }
+        public Guid? WindowProductId { get; set; }
         public Guid? ProductId { get; set; }
         public Guid? ProductTypeId { get; set; }
         public Guid? OptionTypeId { get; set; }

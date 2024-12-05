@@ -13,7 +13,7 @@ using ShutterManagement.Business.Interfaces;
 
 namespace ShutterManagement.Business.Services
 {
-    public class JobTypeService : BaseRepository<ShutterDbContext, MstJobType>, IJobTypeService
+    public class JobTypeService : BaseRepository<BtprojecShuttermanagementDevContext, MstJobType>, IJobTypeService
     {
         public async Task<IResponseVm<List<JobTypeList>>> GetAll(Pagination filter)
         {

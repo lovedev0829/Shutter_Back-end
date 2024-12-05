@@ -21,7 +21,7 @@ var builder = WebApplication.CreateBuilder(args);
 IConfiguration configuration= builder.Configuration;
 builder.Configuration.AddConstants();
 
-builder.Services.AddDbContext<ShutterDbContext>(options =>
+builder.Services.AddDbContext<BtprojecShuttermanagementDevContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
     sqlOptions => sqlOptions.CommandTimeout(60)));
 

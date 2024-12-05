@@ -15,10 +15,10 @@ namespace ShutterManagement.Business.Services
 {
     public class ModuleService : IModulePermission
     {
-        private readonly ShutterDbContext _context;
+        private readonly BtprojecShuttermanagementDevContext _context;
         private readonly ClaimsProperty claimsProperty;
 
-        public ModuleService(ShutterDbContext context,ClaimsProperty claimsProperty)
+        public ModuleService(BtprojecShuttermanagementDevContext context,ClaimsProperty claimsProperty)
         {
             _context = context;
             this.claimsProperty = claimsProperty;

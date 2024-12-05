@@ -15,14 +15,14 @@ using System.Threading.Tasks;
 
 namespace ShutterManagement.Business.Services
 {
-    public class OptionService : BaseRepository<ShutterDbContext, TblOption>, IOption
+    public class OptionService : BaseRepository<BtprojecShuttermanagementDevContext, TblOption>, IOption
     {
-        private readonly ShutterDbContext _context;
+        private readonly BtprojecShuttermanagementDevContext _context;
         private readonly IOptionsTypeService optionsTypeService;
         private readonly ClaimsProperty claimsProperty;
         private readonly ITenantService tenantService;
 
-        public OptionService(ShutterDbContext context, IOptionsTypeService optionsTypeService,
+        public OptionService(BtprojecShuttermanagementDevContext context, IOptionsTypeService optionsTypeService,
             ClaimsProperty claimsProperty, ITenantService tenantService)
         {
             _context = context;

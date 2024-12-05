@@ -13,23 +13,23 @@ using System.Threading.Tasks;
 
 namespace ShutterManagement.Business.Services
 {
-    public class WindowService : BaseRepository<ShutterDbContext, TblWindow>, IWindowService
+    public class WindowService : BaseRepository<BtprojecShuttermanagementDevContext, TblWindow>, IWindowService
     {
         private readonly ITenantService tenantService;
         private readonly IWindowProductService windowProductService;
-        public WindowService(ITenantService tenantService,IWindowProductService windowProductService)
+        public WindowService(ITenantService tenantService, IWindowProductService windowProductService)
         {
-            this.tenantService= tenantService;
-            this.windowProductService= windowProductService;
+            this.tenantService = tenantService;
+            this.windowProductService = windowProductService;
         }
-        
-        
+
+
         public async Task<IResponseVm<string>> ActiveInActiveWindow(Guid WindowId)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false && x.IsActive == true);
 
                 if (IsTenant)
                 {
@@ -48,8 +48,7 @@ namespace ShutterManagement.Business.Services
                     .ToList();
                         foreach (var window in IsWindowInProduct)
                         {
-                            window.IsActive = false;
-                            window.IsDelete = true;
+                            window.IsActive = !window.IsActive;
                             window.ModifiedAt = DateTime.Now;
                             window.ModifiedBy = AppConstant.LoggedInUserID;
                             await windowProductService.Update(window);
@@ -70,7 +69,7 @@ namespace ShutterManagement.Business.Services
                 }
                 else
                 {
-                    responseVm.Message = AppConstant.AccessDenied;
+                    responseVm.Message = AppConstant.TenantNotFound;
                 }
             }
             catch (Exception ex)
@@ -82,16 +81,15 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        public async Task<IResponseVm<string>> Create_Window(List<CreateWindow> model)
+        public async Task<IResponseVm<string>> Create_Window(CreateWindow model)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
                 var isTenant = await tenantService.AnyAsync(x =>
                     x.TenantId == AppConstant.LoggedInTenantId &&
-                    x.ParentTenantId == null &&
-                    !x.IsDelete==false &&
-                    x.IsActive==true);
+                    !x.IsDelete == false &&
+                    x.IsActive == true);
 
                 if (!isTenant)
                 {
@@ -99,57 +97,54 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-                foreach (var item in model)
+
+                TblWindow window = new TblWindow
                 {
-                    
-                    TblWindow window = new TblWindow
+                    WindowId = Guid.NewGuid(),
+                    Notes = model.Notes,
+                    Label = model.Label,
+                    Width = model.Width,
+                    Quantity = model.Quantity,
+                    Height = model.Height,
+                    ArchHeight = model.ArchHeight,
+                    CreatedAt = DateTime.Now,
+                    CreatedBy = AppConstant.LoggedInUserID,
+                    IsActive = true,
+                    IsDelete = false,
+                    JobId = model.JobId,
+                    TenantId = AppConstant.LoggedInTenantId
+                };
+
+                var res = await Add(window);
+
+                foreach (var items in model.WindowProducts)
+                {
+                    var isWindowProductExists = await windowProductService.AnyAsync(x =>
+                        x.WindowProductId == items.ProductId &&
+                        x.ProductTypeId == items.ProductTypeId &&
+                        x.WindowId == window.WindowId &&
+                        x.IsDelete == false &&
+                        x.TenantId == AppConstant.LoggedInTenantId);
+
+                    if (!isWindowProductExists)
                     {
-                        WindowId = Guid.NewGuid(),
-                        Notes = item.Notes,
-                        Label = item.Label,
-                        Width = 0,
-                        Quantity = item.Quantity,
-                        Height = 0,
-                        ArchHeight = 0,
-                        CreatedAt = DateTime.Now,
-                        CreatedBy = AppConstant.LoggedInUserID,
-                        IsActive = true,
-                        IsDelete = false,
-                        JobId=item.JobId,
-                        TenantId = AppConstant.LoggedInTenantId
-                    };
-
-                    await Add(window);
-
-                    foreach (var items in item.WindowProducts)
-                    {
-                        var isWindowProductExists = await windowProductService.AnyAsync(x =>
-                            x.WindowProductId == items.ProductId &&
-                            x.ProductTypeId == items.ProductTypeId &&
-                            x.WindowId == window.WindowId && 
-                            !x.IsDelete==false &&
-                            x.TenantId == AppConstant.LoggedInTenantId);
-
-                        if (!isWindowProductExists)
+                        TblWindowProduct windowProduct = new TblWindowProduct
                         {
-                            TblWindowProduct windowProduct = new TblWindowProduct
-                            {
-                                WindowProductId = Guid.NewGuid(),
-                                WindowId = window.WindowId, 
-                                ProductId = items.ProductId,
-                                OptionTypeId = items.OptionTypeId,
-                                ProductTypeId = items.ProductTypeId,
-                                BuildWidth=items.BuildWidth,
-                                BuildHeight=items.BuildHeight,
-                                CreatedAt = DateTime.Now,
-                                CreatedBy = AppConstant.LoggedInUserID,
-                                IsActive = true,
-                                IsDelete = false,
-                                TenantId = AppConstant.LoggedInTenantId
-                            };
+                            WindowProductId = Guid.NewGuid(),
+                            WindowId = window.WindowId,
+                            ProductId = items.ProductId,
+                            OptionTypeId = items.OptionTypeId,
+                            ProductTypeId = items.ProductTypeId,
+                            BuildWidth = items.BuildWidth,
+                            BuildHeight = items.BuildHeight,
+                            CreatedAt = DateTime.Now,
+                            CreatedBy = AppConstant.LoggedInUserID,
+                            IsActive = true,
+                            IsDelete = false,
+                            TenantId = AppConstant.LoggedInTenantId
+                        };
 
-                            await windowProductService.Add(windowProduct);
-                        }
+                        await windowProductService.Add(windowProduct);
                     }
                 }
 
@@ -171,7 +166,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false && x.IsActive == true);
 
                 if (IsTenant)
                 {
@@ -196,14 +191,13 @@ namespace ShutterManagement.Business.Services
                             await windowProductService.Update(window);
                         }
 
-
                         IsWindowExists.IsActive = false;
                         IsWindowExists.IsDelete = true;
                         IsWindowExists.UpdatedAt = DateTime.Now;
                         IsWindowExists.ModifiedBy = AppConstant.LoggedInUserID;
                         await Update(IsWindowExists);
                         responseVm.IsSuccess = true;
-                        responseVm.Message = AppConstant.UpdateSuccessMsg;
+                        responseVm.Message = AppConstant.DeleteSuccessMsg;
                     }
                     else
                     {
@@ -212,7 +206,7 @@ namespace ShutterManagement.Business.Services
                 }
                 else
                 {
-                    responseVm.Message = AppConstant.AccessDenied;
+                    responseVm.Message = AppConstant.TenantNotFound;
                 }
             }
             catch (Exception ex)
@@ -232,7 +226,6 @@ namespace ShutterManagement.Business.Services
             {
                 var isTenantValid = await tenantService.AnyAsync(x =>
                     x.TenantId == AppConstant.LoggedInTenantId &&
-                    x.ParentTenantId == null &&
                     x.IsDelete == false &&
                     x.IsActive == true);
 
@@ -275,7 +268,10 @@ namespace ShutterManagement.Business.Services
                             (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
                             (string.IsNullOrEmpty(filter.SearchValue) ? true :
                                 (x.WindowId.ToString() == filter.SearchValue) ||
+                                (x.AddressId.ToString() == filter.SearchValue) ||
                                 (x.Label ?? "").ToLower().Contains(filter.SearchValue) ||
+                                (x.ArchHeight.ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
+                                (x.WindowProducts.Select(x=>x.ProductName).ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
                                 (x.Notes ?? "").ToLower().Contains(filter.SearchValue) ||
                                 (x.Width.ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
                                 (x.Height.ToString() ?? "").ToLower().Contains(filter.SearchValue))
@@ -290,7 +286,7 @@ namespace ShutterManagement.Business.Services
                     if (TakenRecords != null && TakenRecords.Count > 0)
                     {
                         responseVm.Data = TakenRecords;
-                        responseVm.Message = AppConstant.UpdateSuccessMsg;
+                        responseVm.Message = AppConstant.FetchSuccessMsg;
                         responseVm.TotalRecords = FilterRecords.Count;
                     }
                     else
@@ -300,7 +296,7 @@ namespace ShutterManagement.Business.Services
                 }
                 else
                 {
-                    responseVm.Message = AppConstant.AccessDenied;
+                    responseVm.Message = AppConstant.TenantNotFound;
                 }
             }
             catch (Exception ex)
@@ -311,84 +307,91 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        public async Task<IResponseVm<string>> Update_Window(List<UpdateWindow> models)
+        public async Task<IResponseVm<string>> Update_Window(UpdateWindow model)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
                 var isTenantValid = await tenantService.AnyAsync(x =>
                     x.TenantId == AppConstant.LoggedInTenantId &&
-                    x.ParentTenantId == null &&
                     x.IsDelete == false &&
-                    x.IsActive == true  );
+                    x.IsActive == true);
 
-
-                
                 if (!isTenantValid)
                 {
-                    responseVm.Message = AppConstant.AccessDenied;
+                    responseVm.Message = AppConstant.TenantNotFound;
                     return responseVm;
                 }
 
-                foreach (var model in models)
+
+                var existingWindow = GetAllQuerable()
+                    .FirstOrDefault(c =>
+                        c.WindowId == model.WindowId &&
+                        c.TenantId == AppConstant.LoggedInTenantId &&
+                        c.IsDelete == false);
+
+                if (existingWindow == null)
                 {
-                  
-                    var existingWindow = GetAllQuerable()
-                        .FirstOrDefault(c =>
-                            c.WindowId == model.WindowId &&
-                            c.TenantId == AppConstant.LoggedInTenantId &&
-                            c.IsDelete == false);
+                    responseVm.Message = "Window " + AppConstant.NoDataFound;
+                    return responseVm;
+                }
 
-                    if (existingWindow == null)
+                existingWindow.Label = model.Label;
+                existingWindow.Height = model.Height;
+                existingWindow.Photo = model.Photo;
+                existingWindow.Quantity = model.Quantity;
+                existingWindow.Width = model.Width;
+                existingWindow.Notes = model.Notes;
+                existingWindow.ArchHeight = model.ArchHeight;
+                existingWindow.JobId = model.JobId;
+                existingWindow.UpdatedAt = DateTime.Now;
+                existingWindow.ModifiedBy = AppConstant.LoggedInUserID;
+
+                await Update(existingWindow);
+
+
+                var existingProducts = windowProductService.GetAllQuerable()
+                    .Where(x => x.WindowId == model.WindowId && x.IsDelete == false)
+                    .ToList();
+
+                var InsertRecords = model.WindowProducts.Where(a1 => !existingProducts.Any(a2 => model.WindowId == a2.WindowId && a1.ProductId == a2.ProductId && a1.ProductTypeId == a2.ProductTypeId && a1.OptionTypeId == a2.OptionTypeId
+                && a1.BuildWidth == a2.BuildWidth && a1.BuildHeight == a2.BuildHeight)).ToList();
+                var DeleteRecords = existingProducts.Where(a1 => !model.WindowProducts.Any(a2 => model.WindowId == a2.WindowId && a1.ProductId == a2.ProductId && a1.ProductTypeId == a2.ProductTypeId && a1.OptionTypeId == a2.OptionTypeId
+                && a1.BuildWidth == a2.BuildWidth && a1.BuildHeight == a2.BuildHeight)).ToList();
+
+                foreach (var product in DeleteRecords)
+                {
+                    var data = windowProductService.GetAllQuerable().Where(x => x.WindowProductId == product.WindowProductId
+                             && x.IsDelete == false).FirstOrDefault();
+                    if (data != null)
                     {
-                        responseVm.Message = AppConstant.AccessDenied;
-                        return responseVm;
+                        data.IsDelete = true;
+                        data.IsActive = false;
+                        data.ModifiedBy = AppConstant.LoggedInUserID;
+                        data.ModifiedAt = DateTime.Now;
+                        await windowProductService.Update(data);
                     }
+                }
 
-                
-                    existingWindow.Quantity = model.Quantity;
-                    existingWindow.Width = model.Width;
-                    existingWindow.Notes = model.Notes;
-                    existingWindow.ArchHeight = model.ArchHeight;
-                    existingWindow.JobId = model.JobId;
-                    existingWindow.UpdatedAt = DateTime.Now;
-                    existingWindow.ModifiedBy = AppConstant.LoggedInUserID;
-
-                    await Update(existingWindow);
-                    
-                    var existingProducts = windowProductService.GetAllQuerable()
-                        .Where(x => x.WindowId == model.WindowId && x.IsDelete == false)
-                        .ToList();
-
-                    foreach (var product in existingProducts)
+                foreach (var product in InsertRecords)
+                {
+                    var newProduct = new TblWindowProduct
                     {
-                        product.IsDelete = true;
-                        product.ModifiedBy = AppConstant.LoggedInUserID;
-                        product.ModifiedAt = DateTime.Now;
+                        WindowProductId = Guid.NewGuid(),
+                        WindowId = model.WindowId,
+                        ProductId = product.ProductId,
+                        OptionTypeId = product.OptionTypeId,
+                        ProductTypeId = product.ProductTypeId,
+                        CreatedAt = DateTime.Now,
+                        BuildHeight = product.BuildHeight,
+                        BuildWidth = product.BuildWidth,
+                        CreatedBy = AppConstant.LoggedInUserID,
+                        IsActive = true,
+                        IsDelete = false,
+                        TenantId = AppConstant.LoggedInTenantId
+                    };
 
-                        await windowProductService.Update(product);
-                    }
-
-                    foreach (var product in model.WindowProducts)
-                    {
-                        var newProduct = new TblWindowProduct
-                        {
-                            WindowProductId = Guid.NewGuid(),
-                            WindowId = model.WindowId,
-                            ProductId = product.ProductId,
-                            OptionTypeId = product.OptionTypeId,
-                            ProductTypeId = product.ProductTypeId,
-                            CreatedAt = DateTime.Now,
-                            BuildHeight=product.BuildHeight,
-                            BuildWidth=product.BuildWidth,
-                            CreatedBy = AppConstant.LoggedInUserID,
-                            IsActive = true,
-                            IsDelete = false,
-                            TenantId = AppConstant.LoggedInTenantId
-                        };
-
-                        await windowProductService.Add(newProduct);
-                    }
+                    await windowProductService.Add(newProduct);
                 }
 
                 responseVm.IsSuccess = true;
@@ -396,8 +399,7 @@ namespace ShutterManagement.Business.Services
             }
             catch (Exception ex)
             {
-                responseVm.IsSuccess = false;
-                responseVm.Message = AppConstant.AccessDenied;
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
             }
 
             return responseVm;

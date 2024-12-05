@@ -22,15 +22,14 @@ namespace ShutterManagement.Business.Services
 
     public class ImportandExportCSV
     {
-        private readonly ShutterDbContext dbContext;
+        private readonly BtprojecShuttermanagementDevContext dbContext;
         private readonly IVendorService vendorService;
         private readonly IMaterial material;
         private readonly IContactService contactService;
         private readonly ClaimsProperty claimsProperty;
         private readonly IMstProductType productType;
 
-        public ImportandExportCSV(ShutterDbContext context,IVendorService vendorService, IMaterial material, 
-            IContactService contactService, ClaimsProperty claimsProperty,IMstProductType productType)
+        public ImportandExportCSV(BtprojecShuttermanagementDevContext context,IVendorService vendorService, IMaterial material, IContactService contactService, ClaimsProperty claimsProperty)
         {
             dbContext = context;
             this.vendorService = vendorService;

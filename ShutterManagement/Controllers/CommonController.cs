@@ -58,6 +58,11 @@ namespace ShutterManagement.Controllers
             filter.SearchValue = "";
             filter.TenantId = "";
             filter.Status = 1;
+            filter.Vendor = "";
+            filter.JobStatus = "";
+            filter.ProductType = "";
+            filter.Region = "";
+            filter.Address = "";
             this.vendorService = vendorService;
             this.componentService = componentService;
             this.address= address;

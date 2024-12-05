@@ -13,13 +13,13 @@ using ShutterManagement.Core;
 
 namespace ShutterManagement.Business.Services
 {
-    public class TaxService : BaseRepository<ShutterDbContext, TblTaxRate>, ITaxRate
+    public class TaxService : BaseRepository<BtprojecShuttermanagementDevContext, TblTaxRate>, ITaxRate
     {
-        private readonly ShutterDbContext dbContext;
+        private readonly BtprojecShuttermanagementDevContext dbContext;
         private readonly ClaimsProperty claimsProperty;
         private readonly ITenantService tenantService;
 
-        public TaxService(ShutterDbContext dbContext,ClaimsProperty claimsProperty,ITenantService tenantService)
+        public TaxService(BtprojecShuttermanagementDevContext dbContext,ClaimsProperty claimsProperty,ITenantService tenantService)
         {
             this.dbContext = dbContext;
             this.claimsProperty = claimsProperty;

@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace ShutterManagement.Business.Services
 {
-    public class TaxExemptionService : BaseRepository<ShutterDbContext, TblTaxExemption>, ITaxExemption
+    public class TaxExemptionService : BaseRepository<BtprojecShuttermanagementDevContext, TblTaxExemption>, ITaxExemption
     {
        
     }
