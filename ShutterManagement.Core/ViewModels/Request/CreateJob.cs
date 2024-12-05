@@ -30,16 +30,16 @@ namespace ShutterManagement.Core.ViewModels.Request
         [Required]
         public Guid? AssignedPersonnel { get; set; }
 
-        //[DefaultValue(Dat)]
-        //[Required]
+        [DefaultValue("")]
+        [Required]
         public DateTime? ScheduledDate { get; set; }
 
-        [DefaultValue("")]
-        [Required]
-        public Guid? JobStatus { get; set; }
+        //[DefaultValue("")]
+        //[Required]
+        //public string? JobStatusName { get; set; }
 
         [DefaultValue("")]
-        [Required]
+      
         public string? Notes { get; set; }
         public string? AttachmentsAny { get; set; }
 

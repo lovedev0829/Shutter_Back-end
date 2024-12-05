@@ -47,5 +47,10 @@ namespace ShutterManagement.Core.ViewModels.Request
         [RegularExpression(@"^\d{5,6}$", ErrorMessage = AppConstant.ZipCodeError)]
         [DefaultValue("")]
         public string? ZipCode { get; set; }
+
+        [Required]
+        [DefaultValue("")]
+        [MaxLength(100)]
+        public string? VednorCode { get; set; }
     }
 }

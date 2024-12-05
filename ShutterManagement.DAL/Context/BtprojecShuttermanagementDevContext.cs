@@ -871,6 +871,9 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.Property(e => e.FirstName)
                 .HasMaxLength(100)
                 .IsUnicode(false);
+            entity.Property(e => e.ForgetPassword)
+                .HasMaxLength(200)
+                .IsUnicode(false);
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
             entity.Property(e => e.LastName)
@@ -945,6 +948,7 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
+            entity.Property(e => e.VendorCode).HasMaxLength(100);
             entity.Property(e => e.VendorName).HasMaxLength(255);
             entity.Property(e => e.ZipCode).HasMaxLength(200);
 

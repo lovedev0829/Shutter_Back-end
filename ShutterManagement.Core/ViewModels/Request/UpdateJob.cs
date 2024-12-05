@@ -14,6 +14,11 @@ namespace ShutterManagement.Core.ViewModels.Request
         [Required]
         public Guid? JobId { get; set; }
 
+        [DefaultValue("")]
+        [Required]
+        public Guid? JobStatus { get; set; }
+
+
 
     }
 }

@@ -22,6 +22,10 @@ namespace ShutterManagement.Core.ViewModels.Request
         [DefaultValue("")]
         public string? Vendor { get; set; }
         [DefaultValue("")]
-        public string? ProductType { get; set; } 
+        public string? ProductType { get; set; }
+        [DefaultValue("")]
+        public string? JobStatusName { get; set; }
+        [DefaultValue("")]
+        public string? Address { get; set; } 
     }
 }

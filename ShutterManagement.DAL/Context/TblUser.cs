@@ -41,6 +41,8 @@ public partial class TblUser
 
     public Guid? JobTitleId { get; set; }
 
+    public string? ForgetPassword { get; set; }
+
     public virtual MstJobTitle? JobTitle { get; set; }
 
     public virtual ICollection<TblUserRole> TblUserRoles { get; set; } = new List<TblUserRole>();

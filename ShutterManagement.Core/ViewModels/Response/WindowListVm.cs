@@ -31,4 +31,4 @@ namespace ShutterManagement.Core.ViewModels.Response
         }
 
     }
-}
+
