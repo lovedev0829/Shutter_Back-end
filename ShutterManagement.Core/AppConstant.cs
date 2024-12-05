@@ -29,6 +29,9 @@ namespace ShutterManagement.Core
         public static string ComponentNotExists { get; set; } = "Component Does not exist.";
         public static string MaterialAlreadyExists { get; set; } = "Material is already exists.";
 
+        public static string UIBaseURL { get; set; } = "";
+        public static string ForgotPasswordSuccess { get; set; } = "Link has been sent on your register email.";
+
         public static string InsertSuccessMsg { get; set; } = "Data Added Successfully";
         public static string UpdateSuccessMsg { get; set; } = "Data Updated Successfully";
         public static string UploadSuccessMsg { get; set; } = "File Upload Successfully";

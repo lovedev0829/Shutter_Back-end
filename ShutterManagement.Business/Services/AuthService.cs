@@ -320,8 +320,130 @@ namespace ShutterManagement.Services
             }
             return responseVm;
         }
+        public async Task<IResponseVm<string>> ForgetPassword(ForgetPassword forgetPassword)
+        {
+            IResponseVm<string> result = new ResponseVm<string>();
+            try
+            {
+                var res = (await GetAll()).Where(x => x.IsActive == true && x.IsDelete == false && x.Email == forgetPassword.Email).FirstOrDefault();
+                if (res != null)
+                {
+                    var VerifyCode = tenantService.GetAllQuerable().Where(x => x.Code == forgetPassword.Code && x.IsActive == true && x.IsDelete == false).FirstOrDefault();
+                    if (VerifyCode != null)
+                    {
+                        var IsRelateToTenant = await tenantService.AnyAsync(x => x.IsDelete == false && x.IsActive == true && (x.TenantId == VerifyCode.TenantId || x.ParentTenantId == VerifyCode.TenantId) && x.TenantId == res.TenantId);
+                        if (IsRelateToTenant)
+                        {
+                            var Token = GenerateTokenForgotPassword(res.Email ?? "", res.Id);
+                            if (!string.IsNullOrEmpty(Token))
+                            {
+                                string resetLinks = $"{AppConstant.UIBaseURL}/ForgetPassword?token={Token}";
+                                res.Token = Token;
+                                res.ModifiedAt = DateTime.Now;
+                                await Update(res);
+                                result.IsSuccess = true;
+                                result.Message = AppConstant.ForgotPasswordSuccess;
+                                return result;
+                            }
+                        }
 
-       
+                    }
+                }
+                result.Message = AppConstant.NoDataFound;
+            }
+            catch (Exception ex)
+            {
+                result.Message = AppConstant.ExceptionError + ex.Message;
+            }
+            return result;
+        }
+
+        private string GenerateTokenForgotPassword(string Email, Guid UserId)
+        {
+            DateTime PasswordExpiry = DateTime.Now.AddMinutes(Convert.ToInt32(AppConstant.JwtExpiryTime));
+            var securitykey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(AppConstant.JWTSecretKey));
+            var credentials = new SigningCredentials(securitykey, SecurityAlgorithms.HmacSha256);
+            var claims = new List<Claim>
+     {
+          new Claim("UserId",UserId.ToString()),
+          new Claim("EmailId",Email.ToString()),
+          new Claim("ExpiredOn",PasswordExpiry.ToString())
+     };
+            var token = new JwtSecurityToken(AppConstant.JwtIssuer, AppConstant.JwtAudience, claims,
+                         expires: PasswordExpiry, signingCredentials: credentials);
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        private string DecodeJwt(string Token, Guid UserId, string Email)
+        {
+            string res = "";
+            var handler = new JwtSecurityTokenHandler();
+            var token = handler.ReadJwtToken(Token);
+            var claims = token.Claims.Select(claim => (claim.Type, claim.Value)).ToList();
+            if (claims.Any(x => x.Type == "ExpiredOn" && Convert.ToDateTime(x.Value) < DateTime.Now))
+            {
+                res = "Token Expired.";
+                return res;
+            }
+            if (claims.Any(x => x.Type == "UserId" && Guid.Parse(x.Value) != UserId))
+            {
+                res = "Invalid User.";
+                return res;
+            }
+            if (claims.Any(x => x.Type == "EmailId" && x.Value != Email))
+            {
+                res = "Invalid User Email.";
+                return res;
+            }
+            return res;
+        }
+
+        public async Task<IResponseVm<string>> VerifyForgetPassword(VerifyPassword verifyPassword)
+        {
+            IResponseVm<string> result = new ResponseVm<string>();
+
+            try
+            {
+                var tokenValidationResult = verifyPassword.Token;
+                if (!string.IsNullOrEmpty(tokenValidationResult))
+                {
+                    var IsUserTokenExists = (await GetAll())
+                        .Where(x => x.IsDelete == false && x.IsActive == true && x.Token == verifyPassword.Token)
+                        .FirstOrDefault();
+                    if (IsUserTokenExists == null)
+                    {
+                        result.Message = "Invalid Link.";
+                        return result;
+                    }
+                    var res = DecodeJwt(verifyPassword.Token ?? "", IsUserTokenExists.Id, IsUserTokenExists.Email ?? "");
+                    if (string.IsNullOrEmpty(res))
+                    {
+                        IsUserTokenExists.Token = null;
+                        IsUserTokenExists.ModifiedAt = DateTime.Now;
+                        IsUserTokenExists.Pwd = AesEncryptionHelper.Encrypt(verifyPassword.Password);
+                        await Update(IsUserTokenExists);
+                        result.IsSuccess = true;
+                        result.Message = AppConstant.PasswordChangeMessage;
+                    }
+                    else
+                    {
+                        result.Message = res;
+                    }
+                }
+                else
+                {
+                    result.Message = "Invalid or malformed token.";
+                }
+            }
+            catch (Exception ex)
+            {
+                result.Message = AppConstant.ExceptionError + ex.Message;
+            }
+            return result;
+        }
+
+
     }
 }
 

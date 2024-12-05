@@ -129,6 +129,8 @@ builder.Services.AddScoped<IJobStatusService, JobStatusService>();
 builder.Services.AddScoped<ITaxRate, TaxService>();
 builder.Services.AddScoped<ImportandExportCSV>();
 builder.Services.AddScoped<IRegion,RegionServices>();
+builder.Services.AddScoped<IMstContactType,MstContactTypeService>();
+
 
 
 var app = builder.Build();

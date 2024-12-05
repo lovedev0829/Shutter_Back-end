@@ -13,6 +13,7 @@ namespace ShutterManagement.Services
         Task<IResponseVm<PasswordChangeVm>> ResetPassWord(PasswordChangeVm passwordChangeVm);
         Task<IResponseVm<string>> ProfileUpdate(ProfileUpdateVm vm);
         Task<IResponseVm<UserResponse>> ProfileGetById();
-
+        Task<IResponseVm<string>> ForgetPassword(ForgetPassword forgetPassword);
+        Task<IResponseVm<string>> VerifyForgetPassword(VerifyPassword verifyPassword);
     }
 }
