@@ -19,13 +19,13 @@ namespace ShutterManagement.Business.Services
 {
 
 
-    public class AddressService : BaseRepository<ShutterDbContext, TblAddress>, IAddress
+    public class AddressService : BaseRepository<BtprojecShuttermanagementDevContext, TblAddress>, IAddress
     {
-        private readonly ShutterDbContext _context;
+        private readonly BtprojecShuttermanagementDevContext _context;
         private readonly ClaimsProperty claimsProperty;
         private readonly IContactService contactService;
 
-        public AddressService(ShutterDbContext context, ClaimsProperty claimsProperty, IContactService contactService)
+        public AddressService(BtprojecShuttermanagementDevContext context, ClaimsProperty claimsProperty, IContactService contactService)
         {
             _context = context;
             this.claimsProperty = claimsProperty;

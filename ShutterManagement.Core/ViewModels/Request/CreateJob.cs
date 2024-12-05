@@ -36,7 +36,7 @@ namespace ShutterManagement.Core.ViewModels.Request
 
         //[DefaultValue("")]
         //[Required]
-        //public string? JobStatusName { get; set; }
+        //public string? JobStatus { get; set; }
 
         [DefaultValue("")]
       

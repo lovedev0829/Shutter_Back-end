@@ -9,14 +9,14 @@ using ShutterManagement.Services;
 
 namespace ShutterManagement.Business.Services
 {
-    public class JobService : BaseRepository<ShutterDbContext, TblJob>, IJobService
+    public class JobService : BaseRepository<BtprojecShuttermanagementDevContext, TblJob>, IJobService
     {
-        private readonly ShutterDbContext _context;
+        private readonly BtprojecShuttermanagementDevContext _context;
         private readonly ClaimsProperty claimsProperty;
         private readonly IAddress address;
         private readonly ITenantService tenantService;
 
-        public JobService(ShutterDbContext context, ClaimsProperty claimsProperty, IAddress address,
+        public JobService(BtprojecShuttermanagementDevContext context, ClaimsProperty claimsProperty, IAddress address,
             ITenantService tenantService)
         {
             _context = context;
@@ -24,7 +24,7 @@ namespace ShutterManagement.Business.Services
             this.address = address;
             this.tenantService = tenantService;
         }
-        public async Task<IResponseVm<string>> ActiveInactive(string Id)
+        public async Task<IResponseVm<string>> ActiveInactive(string JobId)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
@@ -36,7 +36,7 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.TenantNotFound;
                     return responseVm;
                 }
-                var IsJobExist = GetAllQuerable().Where(x => x.JobId.ToString() == Id &&
+                var IsJobExist = GetAllQuerable().Where(x => x.JobId.ToString() == JobId &&
                   x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
                 if (IsJobExist != null)
                 {
@@ -82,11 +82,11 @@ namespace ShutterManagement.Business.Services
                     {
                         AddressId = model.AddressId,
                         ContactId = model.ContactId,
-                        JobName = model.JobName,
+                        JobName = model.JobName?.Trim(),
                         JobType = model.JobType,
                         AssignedPersonnel = model.AssignedPersonnel,
                         ScheduledDate = model.ScheduledDate,
-                        JobStatus = jobStatus.JobStatusId,
+                        JobStatus = jobStatus?.JobStatusId,
                         Notes = model.Notes,
                         AttachmentAny = model.AttachmentsAny,
                         JobUniqueId = generateUnique,
@@ -102,10 +102,8 @@ namespace ShutterManagement.Business.Services
                 }
                 else
                 {
-                    responseVm.Message = AppConstant.NoDataFound;
+                    responseVm.Message = "Address " + AppConstant.NoDataFound;
                 }
-
-
             }
             catch (Exception ex)
             {
@@ -115,7 +113,7 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        public async Task<IResponseVm<string>> Delete(string Id)
+        public async Task<IResponseVm<string>> Delete(string JobId)
         {
 
             IResponseVm<string> responseVm = new ResponseVm<string>();
@@ -128,17 +126,17 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.TenantNotFound;
                     return responseVm;
                 }
-                var IsJobExist = GetAllQuerable().Where(x => x.JobId.ToString() == Id &&
+                var IsJobExist = GetAllQuerable().Where(x => x.JobId.ToString() == JobId &&
                    x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
                 if (IsJobExist != null)
                 {
-                    IsJobExist.IsActive = !IsJobExist.IsActive;
+                    IsJobExist.IsActive = false;
                     IsJobExist.IsDelete = true;
                     IsJobExist.UpdatedAt = DateTime.Now;
                     IsJobExist.ModifiedBy = AppConstant.LoggedInUserID;
                     var res = await Update(IsJobExist);
                     responseVm.IsSuccess = true;
-                    responseVm.Message = AppConstant.UpdateSuccessMsg;
+                    responseVm.Message = AppConstant.DeleteSuccessMsg;
                 }
 
                 else
@@ -165,7 +163,7 @@ namespace ShutterManagement.Business.Services
                 if (IsTenant)
                 {
 
-                    var JobList = (from t2 in _context.TblJobs
+                    var JobList = (from t2 in _context.TblJobs.OrderByDescending(x => x.CreatedAt)
                                    join t1 in _context.TblAddresses on t2.AddressId equals t1.AddressId
                                    join t3 in _context.MstJobTypes on t2.JobType equals t3.Id
                                    join t4 in _context.TblUsers on t2.AssignedPersonnel equals t4.Id
@@ -178,13 +176,13 @@ namespace ShutterManagement.Business.Services
                                        JobName = t2.JobName,
                                        ContactId = t2.ContactId,
                                        AddressId = t2.AddressId,
-                                       JobType = t2.JobType,
+                                       JobType = t3.Id,
                                        JobTypeName = t3.JobTypeName,
-                                       AssignedPersonnel = t2.AssignedPersonnel,
+                                       AssignedPersonnel = t4.Id,
                                        AssignedPersonnelName = t4.FirstName + " " + t4.LastName,
                                        ScheduledDate = t2.ScheduledDate,
-                                       JobStatus = t2.JobStatus,
-                                       JobStatusName = t5.JobStatusName,        
+                                       JobStatus = t5.JobStatusId,
+                                       JobStatusName = t5.JobStatusName,
                                        Notes = t2.Notes,
                                        AttachmentsAny = t2.AttachmentAny,
                                        Label = t1.Label,
@@ -193,23 +191,22 @@ namespace ShutterManagement.Business.Services
                                        State = t1.State,
                                        ZipCode = t1.ZipCode
                                    }).ToList();
-                    filter.SearchValue = filter.SearchValue.Trim().ToLower();
+                    filter.SearchValue = filter.SearchValue?.Trim().ToLower();
                     var FilterRecords = JobList
                                     .Where(x =>
                                     (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
-                                      (string.IsNullOrEmpty(filter.JobStatusName) ? true : (filter.JobStatusName == x.JobStatus.ToString())) &&
+                                      (string.IsNullOrEmpty(filter.JobStatus) ? true : (filter.JobStatus == x.JobStatus.ToString())) &&
                                       (string.IsNullOrEmpty(filter.Address) ? true : (filter.Address == x.AddressId.ToString())) &&
                                       (string.IsNullOrEmpty(filter.SearchValue) ? true :
                                         (x.JobId.ToString() == filter.SearchValue) ||
                                         (x.ContactId.ToString() == filter.SearchValue) ||
-                                        (x.JobStatus.ToString() == filter.SearchValue) ||                                     
+                                        (x.JobStatus.ToString() == filter.SearchValue) ||
                                         (x.AddressId.ToString() == filter.SearchValue)
                                         || (x.JobName ?? "").ToLower().Contains(filter.SearchValue)
                                         || (x.JobType.ToString() ?? "").ToLower().Contains(filter.SearchValue)
                                         || (x.JobTypeName ?? "").ToLower().Contains(filter.SearchValue)
                                         || (x.AssignedPersonnelName ?? "").ToLower().Contains(filter.SearchValue)
                                         || (x.JobStatus.ToString() ?? "").ToLower().Contains(filter.SearchValue)
-                                        || (x.JobName ?? "").ToLower().Contains(filter.SearchValue)
                                         || (x.AssignedPersonnel.ToString() ?? "").ToLower().Contains(filter.SearchValue)
                                         || (x.Notes.ToString() ?? "").ToLower().Contains(filter.SearchValue)
                                         || (x.Label ?? "").ToLower().Contains(filter.SearchValue)
@@ -224,30 +221,10 @@ namespace ShutterManagement.Business.Services
                         .Take(filter.RecordPerPage)
                         .ToList();
 
-                    responseVm.Data = TakenRecords.Select(x => new GetAllJobsdetails
-                    {
-                        IsActive = x.IsActive,
-                        JobId = x.JobId,
-                        JobName = x.JobName,
-                        ContactId = x.ContactId,
-                        AddressId = x.AddressId,
-                        JobType = x.JobType,
-                        AssignedPersonnel = x.AssignedPersonnel,
-                        ScheduledDate = x.ScheduledDate,
-                        JobStatus = x.JobStatus,
-                        Notes = x.Notes,
-                        AttachmentsAny = x.AttachmentsAny,
-                        Label = x.Label,
-                        StreetAddress = x.StreetAddress,
-                        City = x.City,
-                        State = x.State,
-                        ZipCode = x.ZipCode
-                    }).ToList();
-                    responseVm.TotalRecords = FilterRecords.Count;
                     responseVm.Data = TakenRecords;
+                    responseVm.TotalRecords = FilterRecords.Count;
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.FetchSuccessMsg;
-                    responseVm.TotalRecords = FilterRecords.Count;
                 }
                 else
                 {
@@ -276,21 +253,21 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.TenantNotFound;
                     return responseVm;
                 }
-                var IsAddressExist = (await GetAll()).Where(x => x.JobId == model.JobId && x.AddressId == model.AddressId && x.ContactId == model.ContactId
+                var IsJobExist = (await GetAll()).Where(x => x.JobId == model.JobId && x.AddressId == model.AddressId && x.ContactId == model.ContactId
                 && x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false).FirstOrDefault();
-                if (IsAddressExist != null)
+                if (IsJobExist != null)
                 {
-                    IsAddressExist.AddressId = model.AddressId;
-                    IsAddressExist.JobName = model.JobName;
-                    IsAddressExist.JobType = model.JobType;
-                    IsAddressExist.AssignedPersonnel = model.AssignedPersonnel;
-                    IsAddressExist.ScheduledDate = model.ScheduledDate;
-                    IsAddressExist.JobStatus = model.JobStatus;
-                    IsAddressExist.Notes = model.Notes;
-                    IsAddressExist.AttachmentAny = model.AttachmentsAny;
-                    IsAddressExist.UpdatedAt = DateTime.Now;
-                    IsAddressExist.ModifiedBy = AppConstant.LoggedInUserID;
-                    var res = await Update(IsAddressExist);
+
+                    IsJobExist.JobName = model.JobName?.Trim();
+                    IsJobExist.JobType = model.JobType;
+                    IsJobExist.AssignedPersonnel = model.AssignedPersonnel;
+                    IsJobExist.ScheduledDate = model.ScheduledDate;
+                    IsJobExist.JobStatus = model.JobStatus;
+                    IsJobExist.Notes = model.Notes;
+                    IsJobExist.AttachmentAny = model.AttachmentsAny;
+                    IsJobExist.UpdatedAt = DateTime.Now;
+                    IsJobExist.ModifiedBy = AppConstant.LoggedInUserID;
+                    var res = await Update(IsJobExist);
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.UpdateSuccessMsg;
                 }

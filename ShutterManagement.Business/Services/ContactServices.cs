@@ -19,15 +19,15 @@ using ShutterManagement.Core.ViewModels.Response;
 
 namespace ShutterManagement.Business.Services
 {
-    public class ContactServices : BaseRepository<ShutterDbContext, TblContact>, IContactService
+    public class ContactServices : BaseRepository<BtprojecShuttermanagementDevContext, TblContact>, IContactService
     {
-        private readonly ShutterDbContext _context;
+        private readonly BtprojecShuttermanagementDevContext _context;
         private readonly IContactBillingService billingService;
         private readonly ITenantService tenantService;
         private readonly ITaxExemption taxExemptionService;
         private readonly ClaimsProperty claimsProperty;
 
-        public ContactServices(ShutterDbContext context, IContactBillingService billingService,
+        public ContactServices(BtprojecShuttermanagementDevContext context, IContactBillingService billingService,
             ITenantService tenantService, ITaxExemption taxExemptionService, ClaimsProperty claimsProperty)
         {
             _context = context;

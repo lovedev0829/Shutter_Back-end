@@ -17,7 +17,7 @@ namespace ShutterManagement.Controllers
       
         private readonly ImportandExportCSV importandExportCSV;
 
-        public ImportandExportController(ShutterDbContext context,ImportandExportCSV importandExportCSV)
+        public ImportandExportController(BtprojecShuttermanagementDevContext context,ImportandExportCSV importandExportCSV)
         {
            
             this.importandExportCSV = importandExportCSV;

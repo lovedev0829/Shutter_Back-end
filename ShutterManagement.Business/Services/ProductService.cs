@@ -15,7 +15,7 @@ using static Azure.Core.HttpHeader;
 
 namespace ShutterManagement.Business.Services
 {
-    public class ProductService : BaseRepository<ShutterDbContext, TblProduct>, IProductService
+    public class ProductService : BaseRepository<BtprojecShuttermanagementDevContext, TblProduct>, IProductService
     {
         private readonly ITenantService tenantService;
         private readonly IProductComponentService productComponentService;

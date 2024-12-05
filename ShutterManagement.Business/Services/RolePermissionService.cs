@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace ShutterManagement.Business.Services
 {
-    public class RolePermissionService : BaseRepository<ShutterDbContext,TblRolesPermission> , IRolePermissionService
+    public class RolePermissionService : BaseRepository<BtprojecShuttermanagementDevContext,TblRolesPermission> , IRolePermissionService
     {
     }
 }

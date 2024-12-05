@@ -28,7 +28,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost("Create")]
         [Authorize]
-        public async Task<IActionResult> CreateWindow([FromBody] List<CreateWindow> model)
+        public async Task<IActionResult> CreateWindow([FromBody] CreateWindow model)
         {
 
             var res = await windowservice.Create_Window(model);
@@ -37,7 +37,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost("Update")]
         [Authorize]
-        public async Task<IActionResult> UpdateWindow([FromBody] List<UpdateWindow> model)
+        public async Task<IActionResult> UpdateWindow([FromBody] UpdateWindow model)
         {
 
             var res = await windowservice.Update_Window(model);

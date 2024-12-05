@@ -17,9 +17,9 @@ using static Azure.Core.HttpHeader;
 
 namespace ShutterManagement.Business.Services
 {
-    public class ComponentService : BaseRepository<ShutterDbContext, TblComponent>, IComponentService
+    public class ComponentService : BaseRepository<BtprojecShuttermanagementDevContext, TblComponent>, IComponentService
     {
-        private readonly ShutterDbContext _dbContext;
+        private readonly BtprojecShuttermanagementDevContext _dbContext;
         private readonly ClaimsProperty claimsProperty;
         private readonly ITenantService tenantService;
         private readonly IComponentMaterial _componentMaterial;
@@ -27,7 +27,7 @@ namespace ShutterManagement.Business.Services
         private readonly IMaterial material;
         private readonly IMstProductType mstProductType;
 
-        public ComponentService(ShutterDbContext dbContext, ClaimsProperty claimsProperty, ITenantService tenantService,
+        public ComponentService(BtprojecShuttermanagementDevContext dbContext, ClaimsProperty claimsProperty, ITenantService tenantService,
             IComponentMaterial componentMaterial, IProductComponentService productService, IMaterial material, IMstProductType mstProductType)
         {
             _dbContext = dbContext;

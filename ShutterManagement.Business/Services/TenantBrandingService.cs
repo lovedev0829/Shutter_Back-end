@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace ShutterManagement.Business.Services
 {
-    public class TenantBrandingService : BaseRepository<ShutterDbContext,TblTenantBrandingInfo> , ITenantBrandingService
+    public class TenantBrandingService : BaseRepository<BtprojecShuttermanagementDevContext,TblTenantBrandingInfo> , ITenantBrandingService
     {
     }
 }

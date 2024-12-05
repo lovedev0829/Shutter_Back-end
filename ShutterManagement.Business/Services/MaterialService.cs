@@ -15,15 +15,15 @@ using static Azure.Core.HttpHeader;
 
 namespace ShutterManagement.Business.Services
 {
-    public class MaterialService : BaseRepository<ShutterDbContext, TblRawMaterial>, IMaterial
+    public class MaterialService : BaseRepository<BtprojecShuttermanagementDevContext, TblRawMaterial>, IMaterial
     {
-        private readonly ShutterDbContext _context;
+        private readonly BtprojecShuttermanagementDevContext _context;
         private readonly IVendorService vendorService;
         private readonly ClaimsProperty claimsProperty;
         private readonly ITenantService tenantService;
         private readonly IComponentMaterial componentMaterial;
 
-        public MaterialService(ShutterDbContext context, IVendorService vendorService,
+        public MaterialService(BtprojecShuttermanagementDevContext context, IVendorService vendorService,
             ClaimsProperty claimsProperty, ITenantService tenantService,IComponentMaterial componentMaterial)
         {
             _context = context;
