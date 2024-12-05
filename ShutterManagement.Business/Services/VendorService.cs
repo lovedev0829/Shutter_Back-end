@@ -88,21 +88,25 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = "Vendor Phone " + AppConstant.AlreadyExists;
                     return responseVm;
                 }
+
+                bool IsVendorCodeExists = await AnyAsync(x => x.IsDelete == false && (x.VendorCode == model.VednorCode)
+                && x.TenantId == AppConstant.LoggedInTenantId);
                 TblVendor vendor = new TblVendor
-                    {
-                        VendorName = model.VendorName,
-                        Email= model.Email,
-                        PhoneNumber= model.PhoneNumber,
-                        State= model.State,
-                        City= model.City,
-                        ZipCode= model.ZipCode,
-                        StreetAddress= model.StreetAddress,
-                        IsActive = true,
-                        IsDelete = false,
-                        CreatedAt = DateTime.Now,
-                        CreatedBy = AppConstant.LoggedInUserID,
-                        TenantId = AppConstant.LoggedInTenantId
-                    };
+                {
+                    VendorName = model.VendorName,
+                    Email = model.Email,
+                    PhoneNumber = model.PhoneNumber,
+                    State = model.State,
+                    City = model.City,
+                    ZipCode = model.ZipCode,
+                    StreetAddress = model.StreetAddress,
+                    VendorCode = model.VednorCode,
+                    IsActive = true,
+                    IsDelete = false,
+                    CreatedAt = DateTime.Now,
+                    CreatedBy = AppConstant.LoggedInUserID,
+                    TenantId = AppConstant.LoggedInTenantId
+                };
 
                     var res = await Add(vendor);
                     if (res.VendorId != Guid.Empty)

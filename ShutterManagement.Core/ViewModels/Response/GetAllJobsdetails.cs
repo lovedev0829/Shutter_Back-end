@@ -17,13 +17,16 @@ namespace ShutterManagement.Core.ViewModels.Response
 
         public string? JobName { get; set; }
         public Guid? JobType { get; set; }
+        public string? JobTypeName { get; set; }
 
         public Guid? AssignedPersonnel { get; set; }
+        public string? AssignedPersonnelName { get; set; }
 
         public DateTime? ScheduledDate { get; set; }
 
    
         public Guid? JobStatus { get; set; }
+        public string? JobStatusName { get; set; }
 
         public string? Notes { get; set; }
         public string? AttachmentsAny { get; set; }

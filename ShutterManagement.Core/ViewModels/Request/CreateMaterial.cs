@@ -38,6 +38,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         [DefaultValue("")]
         [Required]
       
+
         public Guid? VendorId { get; set; }
 
         public string SKU { get; set; }

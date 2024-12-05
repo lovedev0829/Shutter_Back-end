@@ -9,8 +9,6 @@ public partial class MstContactType
 
     public string? MstContactName { get; set; }
 
-    public Guid? ContactId { get; set; }
-
     public bool? IsActive { get; set; }
 
     public bool? IsDeleted { get; set; }
