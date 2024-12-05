@@ -27,14 +27,17 @@ namespace ShutterManagement.Business.Services
         private readonly IMaterial material;
         private readonly IContactService contactService;
         private readonly ClaimsProperty claimsProperty;
+        private readonly IMstProductType productType;
 
-        public ImportandExportCSV(ShutterDbContext context,IVendorService vendorService, IMaterial material, IContactService contactService, ClaimsProperty claimsProperty)
+        public ImportandExportCSV(ShutterDbContext context,IVendorService vendorService, IMaterial material, 
+            IContactService contactService, ClaimsProperty claimsProperty,IMstProductType productType)
         {
             dbContext = context;
             this.vendorService = vendorService;
             this.material = material;
             this.contactService = contactService;
             this.claimsProperty = claimsProperty;
+            this.productType = productType;
         }
 
         public async Task<IResponseVm<string>> ImportCsvToDatabase(Stream csvStream)
@@ -58,6 +61,7 @@ namespace ShutterManagement.Business.Services
                                 responseVm.Message = "VendorCode is required"; 
                             }
                             var vendorId = vendorService.GetAllQuerable().Where(v => v.VendorCode == record.VendorCode && v.IsDelete == false).FirstOrDefault();
+                            var productTypeId = productType.GetAllQuerable().Where(p => p.ProductName == record.ProductType && p.IsDelete == false).FirstOrDefault();
                             if (vendorId == null)
                             {
                                 responseVm.Message = AppConstant.NoDataFound;
@@ -74,7 +78,7 @@ namespace ShutterManagement.Business.Services
                                 IsCutSheet = record.IsCutSheet,
                                 VendorId = vendorId.VendorId,
                                 Notes = record.Notes,
-                                ProductType = record.ProductType,
+                                ProductType = productTypeId.ProductId.ToString(),
 
                             };
 
