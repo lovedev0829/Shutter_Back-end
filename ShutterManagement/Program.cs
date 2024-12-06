@@ -130,8 +130,8 @@ builder.Services.AddScoped<ITaxRate, TaxService>();
 builder.Services.AddScoped<ImportandExportCSV>();
 builder.Services.AddScoped<IRegion,RegionServices>();
 builder.Services.AddScoped<IMstContactType,MstContactTypeService>();
-
 builder.Services.AddScoped<IWindowService,WindowService>();
+builder.Services.AddScoped<IWindowProductService,WindowProduct>();
 
 
 var app = builder.Build();
