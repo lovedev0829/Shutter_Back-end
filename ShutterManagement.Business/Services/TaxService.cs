@@ -221,6 +221,7 @@ namespace ShutterManagement.Business.Services
             
                 if (IsTaxExist != null)
                 {
+                    IsTaxExist.Region = model.Region;
                     IsTaxExist.Rate = model.Rate;
                     IsTaxExist.EffectiveDate = model.EffectiveDate;
                     IsTaxExist.ExpiryDate = model.ExpiryDate;
