@@ -240,6 +240,7 @@ namespace ShutterManagement.Business.Services
                                           Label = w.Label,
                                           Width = w.Width,
                                           Height = w.Height,
+                                          Quantity = w.Quantity,
                                           ArchHeight = w.ArchHeight,
                                           Photo = w.Photo,
                                           Notes = w.Notes,
@@ -253,12 +254,22 @@ namespace ShutterManagement.Business.Services
                     {
                         item.WindowProducts = (from wp in dbContext.TblWindowProducts.OrderByDescending(x => x.CreatedAt)
                                                join p in dbContext.TblProducts on wp.ProductId equals p.ProductId
+                                               join wpt in dbContext.MstProductTypes on wp.ProductId equals wpt.ProductId
+                                               join w in dbContext.TblWindows on wp.WindowId equals w.WindowId
                                                where wp.WindowId == item.WindowId && wp.IsDelete == false
                                                select new ShutterManagement.Core.ViewModels.Response.WindowProductVm
                                                {
                                                    ProductId = p.ProductId,
                                                    ProductName = p.ProductName,
-                                                   IsActive = wp.IsActive
+                                                   IsActive = wp.IsActive,
+                                                   ProductTypeId=wpt.ProductId,
+                                                   ProductTypeName=wpt.ProductName,
+                                                   BuildHeight=wp.BuildHeight,
+                                                   BuildWidth=wp.BuildWidth,
+                                                   Width=w.Width,
+                                                   Height=w.Height,
+                                                   Quantity=w.Quantity
+
                                                }).ToList();
                     }
 
@@ -269,9 +280,11 @@ namespace ShutterManagement.Business.Services
                             (string.IsNullOrEmpty(filter.SearchValue) ? true :
                                 (x.WindowId.ToString() == filter.SearchValue) ||
                                 (x.AddressId.ToString() == filter.SearchValue) ||
-                                (x.Label ?? "").ToLower().Contains(filter.SearchValue) ||
+                                (x.AddressId.ToString() == filter.SearchValue) ||
+                                (x.Label ?? "").ToLower().Contains(filter.SearchValue) || 
                                 (x.ArchHeight.ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
                                 (x.WindowProducts.Select(x=>x.ProductName).ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
+                                (x.WindowProducts.Select(x=>x.ProductTypeName).ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
                                 (x.Notes ?? "").ToLower().Contains(filter.SearchValue) ||
                                 (x.Width.ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
                                 (x.Height.ToString() ?? "").ToLower().Contains(filter.SearchValue))

@@ -59,5 +59,20 @@ namespace ShutterManagement.Controllers
             var profileGetById = await _authService.ProfileGetById();
             return Ok(profileGetById);
         }
+        [HttpPost]
+        [Route("ForgetPassword")]
+        public async Task<IActionResult> ForgetPassword(ForgetPassword forgetPassword)
+        {
+            var ForgetPassword = await _authService.ForgetPassword(forgetPassword);
+            return Ok(ForgetPassword);
+        }
+
+        [HttpPost]
+        [Route("VerifyForgetPassword")]
+        public async Task<IActionResult> VerifyForgetPassword(VerifyPassword model)
+        {
+            var ForgetPassword = await _authService.VerifyForgetPassword(model);
+            return Ok(ForgetPassword);
+        }
     }
 }

@@ -12,6 +12,7 @@ using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.Services;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 using System.ComponentModel;
+using ShutterManagement.DAL.Context;
 
 namespace ShutterManagement.Controllers
 {
@@ -39,6 +40,7 @@ namespace ShutterManagement.Controllers
         private readonly IUnitofMeasurementService unitofMeasurementService;
         private readonly IRoleService roleService;
         private readonly IRegion region;
+        private readonly IMstContactType contactType;
 
         public CommonController(IMasterCreate masterCreate, FileUploadHelper fileUpload, ClaimsProperty claimsProperty,
             IJobTitleService jobTitleService,IMaterial material,IVendorService vendorService 
@@ -46,7 +48,7 @@ namespace ShutterManagement.Controllers
             IJobTypeService jobTypeService,
             IComponentService componentService,IMstProductType mstProductType,
             IAddress address,IOption option,IProductService productService,
-            IUnitofMeasurementService unitofMeasurementService,IRoleService roleService,IRegion region)
+            IUnitofMeasurementService unitofMeasurementService,IRoleService roleService,IRegion region,IMstContactType contactType)
         {
             this.masterCreate = masterCreate;
             this.fileUpload = fileUpload;
@@ -76,6 +78,7 @@ namespace ShutterManagement.Controllers
             this.unitofMeasurementService = unitofMeasurementService;
             this.roleService = roleService;
             this.region = region;
+            this.contactType = contactType;
         }
 
 
@@ -393,5 +396,15 @@ namespace ShutterManagement.Controllers
             var settingGetById = await masterCreate.UpdateSetting(model);
             return Ok(settingGetById);
         }
+        [HttpPost]
+        [Authorize]
+        [Route("GetAllMstContactType")]
+        public async Task<IActionResult> GetAllMstContactType()
+        {
+            var mstcontactType = await contactType.GetAll_MstContactType(filter);
+            return Ok(mstcontactType);
+        }
+
+
     }
 }
