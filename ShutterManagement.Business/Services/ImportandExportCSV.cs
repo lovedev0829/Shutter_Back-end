@@ -16,6 +16,7 @@ using ShutterManagement.Core.ViewModels;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 using Microsoft.AspNetCore.Mvc;
 using ShutterManagement.Core.SPModel.SP_Responses;
+using static Microsoft.AspNetCore.Hosting.Internal.HostingApplication;
 
 namespace ShutterManagement.Business.Services
 {
@@ -27,15 +28,19 @@ namespace ShutterManagement.Business.Services
         private readonly IMaterial material;
         private readonly IContactService contactService;
         private readonly ClaimsProperty claimsProperty;
+        private readonly IUnitofMeasurementService unitofMeasurement;
         private readonly IMstProductType productType;
 
-        public ImportandExportCSV(BtprojecShuttermanagementDevContext context,IVendorService vendorService, IMaterial material, IContactService contactService, ClaimsProperty claimsProperty)
+        public ImportandExportCSV(BtprojecShuttermanagementDevContext context,IVendorService vendorService, 
+            IMaterial material, IContactService contactService, ClaimsProperty claimsProperty,
+            IUnitofMeasurementService unitofMeasurement)
         {
             dbContext = context;
             this.vendorService = vendorService;
             this.material = material;
             this.contactService = contactService;
             this.claimsProperty = claimsProperty;
+            this.unitofMeasurement = unitofMeasurement;
             this.productType = productType;
         }
 
@@ -47,59 +52,84 @@ namespace ShutterManagement.Business.Services
                 using (var reader = new StreamReader(csvStream))
                 using (var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture)))
                 {
-
                     var records = csv.GetRecords<ImportMaterial>().ToList();
 
                     if (records.Count > 0)
                     {
-
                         foreach (var record in records)
                         {
                             if (record.VendorCode == null)
                             {
-                                responseVm.Message = "VendorCode is required"; 
+                                responseVm.Message = "VendorCode is required";
+                                return responseVm; 
                             }
-                            var vendorId = vendorService.GetAllQuerable().Where(v => v.VendorCode == record.VendorCode && v.IsDelete == false).FirstOrDefault();
-                            var productTypeId = productType.GetAllQuerable().Where(p => p.ProductName == record.ProductType && p.IsDelete == false).FirstOrDefault();
+
+                            var vendorId = vendorService.GetAllQuerable()
+                                .Where(v => v.VendorCode == record.VendorCode && v.IsDelete == false)
+                                .FirstOrDefault();
+
                             if (vendorId == null)
                             {
                                 responseVm.Message = AppConstant.NoDataFound;
+                                return responseVm; 
                             }
-                            var materialModel = new CreateMaterial
-                            {
 
-                                SKU = record.SKU?.Trim(),
-                                MaterialName = record.MaterialName?.Trim(),
-                                UnitCost = record.UnitCost,
-                                UnitOfMeasurement = record.UnitOfMeasurement?.Trim(),
-                                StockQuantity = record.StockQuantity,
-                                ReorderLevel = record.ReorderLevel,
-                                IsCutSheet = record.IsCutSheet,
-                                VendorId = vendorId.VendorId,
-                                Notes = record.Notes,
-                                ProductType = productTypeId.ProductId.ToString(),
+                                var productTypeId = dbContext.MstProductTypes
+                                    .Where(p => p.ProductName == record.ProductType && p.IsDelete == false)
+                                    .FirstOrDefault();
 
-                            };
+                                if (productTypeId == null)
+                                {
+                                    responseVm.Message = "ProductType is required.";
+                                    return responseVm;
+                                }
 
+                               
+                                var unitOfMeasurement = unitofMeasurement.GetAllQuerable()
+                                    .Where(u => u.UnitofMeasurementName == record.UnitOfMeasurement.Trim() && u.IsDelete == false)
+                                    .FirstOrDefault();
 
-                            var createMaterialResponse = await material.Create_Material(materialModel);
+                                if (unitOfMeasurement == null)
+                                {
+                                    responseVm.Message = "UnitOfMeasurement is required.";
+                                    return responseVm;
+                                }
 
-                            if (!createMaterialResponse.IsSuccess)
-                            {
+                                var materialModel = new CreateMaterial
+                                {
+                                    SKU = record.SKU?.Trim(),
+                                    MaterialName = record.MaterialName?.Trim(),
+                                    UnitCost = record.UnitCost,
+                                    UnitOfMeasurement = unitOfMeasurement.UnitofMeasurementId.ToString(),
+                                    StockQuantity = record.StockQuantity,
+                                    ReorderLevel = record.ReorderLevel,
+                                    IsCutSheet = record.IsCutSheet,
+                                    VendorId = vendorId.VendorId,
+                                    Notes = record.Notes,
+                                    ProductType = productTypeId.ProductId.ToString(),
+                                };
 
-                                Console.WriteLine($"Error importing record with SKU: {record.SKU}. Error: {createMaterialResponse.Message}");
+                                var createMaterialResponse = await material.Create_Material(materialModel);
+
+                                if (!createMaterialResponse.IsSuccess)
+                                {
+                                    Console.WriteLine($"Error importing record with SKU: {record.SKU}. Error: {createMaterialResponse.Message}");
+                                }
+
                             }
+                            
                         }
                     }
-                }
+                
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 responseVm.Message = AppConstant.ExceptionError + ex.Message;
             }
             return responseVm;
         }
-       
+
+
 
         public async Task<IResponseVm<string>> ImportCsvForContact(Stream csvStream)
         {
@@ -158,8 +188,7 @@ namespace ShutterManagement.Business.Services
                             
                         }
                     }
-                    responseVm.IsSuccess = true;
-                    responseVm.Message = AppConstant.InsertSuccessMsg;
+                  
 
                 }
             }
