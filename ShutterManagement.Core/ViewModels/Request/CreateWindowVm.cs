@@ -24,7 +24,6 @@ namespace ShutterManagement.Core.ViewModels.Request
     public class WindowProductVm
     {
         public Guid? WindowId { get; set; }
-        public Guid? WindowProductId { get; set; }
         public Guid? ProductId { get; set; }
         public Guid? ProductTypeId { get; set; }
         public Guid[]? OptionTypeId { get; set; }

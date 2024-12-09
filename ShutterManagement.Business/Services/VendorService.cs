@@ -276,7 +276,7 @@ namespace ShutterManagement.Business.Services
                          responseVm.Message="Vendor Name"+ AppConstant.AlreadyExists;
                         return (responseVm);
                         }
-                    bool IsVendorCodeExists = Any(x => x.IsDelete == false &&
+                    bool IsVendorCodeExists =  Any(x => x.IsDelete == false &&
                                        (x.VendorCode == model.VendorCode.Trim())
                                        && x.TenantId == AppConstant.LoggedInTenantId && x.VendorId != model.VendorId);
                     if (IsVendorCodeExists)
