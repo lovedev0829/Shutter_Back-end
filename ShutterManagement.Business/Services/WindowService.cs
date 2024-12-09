@@ -88,7 +88,7 @@ namespace ShutterManagement.Business.Services
             {
                 var isTenant = await tenantService.AnyAsync(x =>
                     x.TenantId == AppConstant.LoggedInTenantId &&
-                    !x.IsDelete == false &&
+                    x.IsDelete == false &&
                     x.IsActive == true);
 
                 if (!isTenant)
@@ -119,32 +119,35 @@ namespace ShutterManagement.Business.Services
 
                 foreach (var items in model.WindowProducts)
                 {
-                    var isWindowProductExists = await windowProductService.AnyAsync(x =>
+                    foreach (var optionTypeId in items.OptionTypeId) 
+                    {
+                        var isWindowProductExists = await windowProductService.AnyAsync(x =>
                         x.WindowProductId == items.ProductId &&
                         x.ProductTypeId == items.ProductTypeId &&
                         x.WindowId == window.WindowId &&
                         x.IsDelete == false &&
                         x.TenantId == AppConstant.LoggedInTenantId);
 
-                    if (!isWindowProductExists)
-                    {
-                        TblWindowProduct windowProduct = new TblWindowProduct
+                        if (!isWindowProductExists)
                         {
-                            WindowProductId = Guid.NewGuid(),
-                            WindowId = window.WindowId,
-                            ProductId = items.ProductId,
-                            OptionTypeId = items.OptionTypeId,
-                            ProductTypeId = items.ProductTypeId,
-                            BuildWidth = items.BuildWidth,
-                            BuildHeight = items.BuildHeight,
-                            CreatedAt = DateTime.Now,
-                            CreatedBy = AppConstant.LoggedInUserID,
-                            IsActive = true,
-                            IsDelete = false,
-                            TenantId = AppConstant.LoggedInTenantId
-                        };
+                            TblWindowProduct windowProduct = new TblWindowProduct
+                            {
+                                WindowProductId = Guid.NewGuid(),
+                                WindowId = window.WindowId,
+                                ProductId = items.ProductId,
+                                OptionTypeId = optionTypeId,
+                                ProductTypeId = items.ProductTypeId,
+                                BuildWidth = items.BuildWidth,
+                                BuildHeight = items.BuildHeight,
+                                CreatedAt = DateTime.Now,
+                                CreatedBy = AppConstant.LoggedInUserID,
+                                IsActive = true,
+                                IsDelete = false,
+                                TenantId = AppConstant.LoggedInTenantId
+                            };
 
-                        await windowProductService.Add(windowProduct);
+                            await windowProductService.Add(windowProduct);
+                        }
                     }
                 }
 

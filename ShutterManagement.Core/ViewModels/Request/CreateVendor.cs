@@ -48,9 +48,9 @@ namespace ShutterManagement.Core.ViewModels.Request
         [DefaultValue("")]
         public string? ZipCode { get; set; }
 
-        [Required]
-        [DefaultValue("")]
-        [MaxLength(100)]
+        //[Required]
+        //[DefaultValue("")]
+        //[MaxLength(100)]
         public string? VendorCode { get; set; }
     }
 }
