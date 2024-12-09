@@ -17,10 +17,13 @@ namespace ShutterManagement.Business.Services
     {
         private readonly ITenantService tenantService;
         private readonly IWindowProductService windowProductService;
-        public WindowService(ITenantService tenantService, IWindowProductService windowProductService)
+        private readonly IWindowOptionService windowOptionService;
+
+        public WindowService(ITenantService tenantService, IWindowProductService windowProductService,IWindowOptionService windowOptionService)
         {
             this.tenantService = tenantService;
             this.windowProductService = windowProductService;
+            this.windowOptionService = windowOptionService;
         }
 
 
@@ -88,7 +91,7 @@ namespace ShutterManagement.Business.Services
             {
                 var isTenant = await tenantService.AnyAsync(x =>
                     x.TenantId == AppConstant.LoggedInTenantId &&
-                    !x.IsDelete == false &&
+                    x.IsDelete == false &&
                     x.IsActive == true);
 
                 if (!isTenant)
@@ -96,7 +99,6 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.AccessDenied;
                     return responseVm;
                 }
-
 
                 TblWindow window = new TblWindow
                 {
@@ -128,23 +130,40 @@ namespace ShutterManagement.Business.Services
 
                     if (!isWindowProductExists)
                     {
-                        TblWindowProduct windowProduct = new TblWindowProduct
+                        foreach (var optionTypeId in items.OptionTypeId ?? Array.Empty<Guid>())
                         {
-                            WindowProductId = Guid.NewGuid(),
-                            WindowId = window.WindowId,
-                            ProductId = items.ProductId,
-                            OptionTypeId = items.OptionTypeId,
-                            ProductTypeId = items.ProductTypeId,
-                            BuildWidth = items.BuildWidth,
-                            BuildHeight = items.BuildHeight,
-                            CreatedAt = DateTime.Now,
-                            CreatedBy = AppConstant.LoggedInUserID,
-                            IsActive = true,
-                            IsDelete = false,
-                            TenantId = AppConstant.LoggedInTenantId
-                        };
+                            TblWindowProduct windowProduct = new TblWindowProduct
+                            {
+                                WindowProductId = Guid.NewGuid(),
+                                WindowId = window.WindowId,
+                                ProductId = items.ProductId,
+                                ProductTypeId = items.ProductTypeId,
+                                BuildWidth = items.BuildWidth,
+                                BuildHeight = items.BuildHeight,
+                                CreatedAt = DateTime.Now,
+                                CreatedBy = AppConstant.LoggedInUserID,
+                                IsActive = true,
+                                IsDelete = false,
+                                TenantId = AppConstant.LoggedInTenantId
+                            };
 
-                        await windowProductService.Add(windowProduct);
+                            await windowProductService.Add(windowProduct);
+
+                            WindowOption windowOption = new WindowOption
+                            {
+                                WindowoptionId = Guid.NewGuid(),
+                                OptionId = optionTypeId, 
+                                WindowProductId = windowProduct.WindowProductId,
+                                WindowId = window.WindowId,
+                                IsActive = true,
+                                IsDelete = false,
+                                CreatedBy = AppConstant.LoggedInUserID,
+                                TenantId = AppConstant.LoggedInTenantId,
+                                AdditionalCost = items.AdditionalCost 
+                            };
+
+                            await windowOptionService.Add(windowOption); 
+                        }
                     }
                 }
 
@@ -158,6 +177,7 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
+
 
 
         public async Task<IResponseVm<string>> DeleteWindow(Guid WindowId)
@@ -367,10 +387,9 @@ namespace ShutterManagement.Business.Services
                     .Where(x => x.WindowId == model.WindowId && x.IsDelete == false)
                     .ToList();
 
-                var InsertRecords = model.WindowProducts.Where(a1 => !existingProducts.Any(a2 => model.WindowId == a2.WindowId && a1.ProductId == a2.ProductId && a1.ProductTypeId == a2.ProductTypeId && a1.OptionTypeId == a2.OptionTypeId
+                var InsertRecords = model.WindowProducts.Where(a1 => !existingProducts.Any(a2 => model.WindowId == a2.WindowId && a1.ProductId == a2.ProductId && a1.ProductTypeId == a2.ProductTypeId 
                 && a1.BuildWidth == a2.BuildWidth && a1.BuildHeight == a2.BuildHeight)).ToList();
-                var DeleteRecords = existingProducts.Where(a1 => !model.WindowProducts.Any(a2 => model.WindowId == a2.WindowId && a1.ProductId == a2.ProductId && a1.ProductTypeId == a2.ProductTypeId && a1.OptionTypeId == a2.OptionTypeId
-                && a1.BuildWidth == a2.BuildWidth && a1.BuildHeight == a2.BuildHeight)).ToList();
+                var DeleteRecords = existingProducts.Where(a1 => !model.WindowProducts.Any(a2 => model.WindowId == a2.WindowId && a1.ProductId == a2.ProductId && a1.ProductTypeId == a2.ProductTypeId)).ToList();
 
                 foreach (var product in DeleteRecords)
                 {
@@ -393,7 +412,6 @@ namespace ShutterManagement.Business.Services
                         WindowProductId = Guid.NewGuid(),
                         WindowId = model.WindowId,
                         ProductId = product.ProductId,
-                        OptionTypeId = product.OptionTypeId,
                         ProductTypeId = product.ProductTypeId,
                         CreatedAt = DateTime.Now,
                         BuildHeight = product.BuildHeight,

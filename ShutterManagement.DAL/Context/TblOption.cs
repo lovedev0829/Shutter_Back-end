@@ -34,4 +34,6 @@ public partial class TblOption
     public virtual ICollection<TblOptionsType> TblOptionsTypes { get; set; } = new List<TblOptionsType>();
 
     public virtual TblTenant? Tenant { get; set; }
+
+    public virtual ICollection<WindowOption> WindowOptions { get; set; } = new List<WindowOption>();
 }

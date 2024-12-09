@@ -45,6 +45,8 @@ public partial class TblRawMaterial
 
     public virtual ICollection<TblComponentMaterial> TblComponentMaterials { get; set; } = new List<TblComponentMaterial>();
 
+    public virtual ICollection<TblVendorOrderItem> TblVendorOrderItems { get; set; } = new List<TblVendorOrderItem>();
+
     public virtual TblTenant? Tenant { get; set; }
 
     public virtual TblVendor? Vendor { get; set; }

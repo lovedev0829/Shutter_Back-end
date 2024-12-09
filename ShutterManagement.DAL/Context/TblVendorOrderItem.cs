@@ -29,5 +29,9 @@ public partial class TblVendorOrderItem
 
     public bool? IsDelete { get; set; }
 
+    public Guid? MaterialId { get; set; }
+
+    public virtual TblRawMaterial? Material { get; set; }
+
     public virtual TblVendorOrder? VendorOrder { get; set; }
 }

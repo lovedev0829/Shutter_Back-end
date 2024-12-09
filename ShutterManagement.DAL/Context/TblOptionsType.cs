@@ -28,6 +28,4 @@ public partial class TblOptionsType
     public bool? IsDefault { get; set; }
 
     public virtual TblOption? Option { get; set; }
-
-    public virtual ICollection<TblWindowProduct> TblWindowProducts { get; set; } = new List<TblWindowProduct>();
 }

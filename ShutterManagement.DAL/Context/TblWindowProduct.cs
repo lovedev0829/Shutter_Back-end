@@ -13,8 +13,6 @@ public partial class TblWindowProduct
 
     public Guid? ProductTypeId { get; set; }
 
-    public Guid? OptionTypeId { get; set; }
-
     public bool? IsActive { get; set; }
 
     public bool? IsDelete { get; set; }
@@ -33,8 +31,6 @@ public partial class TblWindowProduct
 
     public decimal? BuildHeight { get; set; }
 
-    public virtual TblOptionsType? OptionType { get; set; }
-
     public virtual TblProduct? Product { get; set; }
 
     public virtual MstProductType? ProductType { get; set; }
@@ -42,4 +38,6 @@ public partial class TblWindowProduct
     public virtual TblTenant? Tenant { get; set; }
 
     public virtual TblWindow? Window { get; set; }
+
+    public virtual ICollection<WindowOption> WindowOptions { get; set; } = new List<WindowOption>();
 }

@@ -46,4 +46,6 @@ public partial class TblWindow
     public virtual ICollection<TblWindowProduct> TblWindowProducts { get; set; } = new List<TblWindowProduct>();
 
     public virtual TblTenant? Tenant { get; set; }
+
+    public virtual ICollection<WindowOption> WindowOptions { get; set; } = new List<WindowOption>();
 }
