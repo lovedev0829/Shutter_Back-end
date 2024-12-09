@@ -121,9 +121,7 @@ namespace ShutterManagement.Business.Services
 
                 foreach (var items in model.WindowProducts)
                 {
-                    foreach (var optionTypeId in items.OptionTypeId) 
-                    {
-                        var isWindowProductExists = await windowProductService.AnyAsync(x =>
+                    var isWindowProductExists = await windowProductService.AnyAsync(x =>
                         x.WindowProductId == items.ProductId &&
                         x.ProductTypeId == items.ProductTypeId &&
                         x.WindowId == window.WindowId &&
@@ -179,6 +177,7 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
+
 
 
 
