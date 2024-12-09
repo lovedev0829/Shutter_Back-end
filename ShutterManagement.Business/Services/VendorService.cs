@@ -1,5 +1,6 @@
 ﻿using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core;
+using ShutterManagement.Core.Common;
 using ShutterManagement.Core.ViewModels;
 using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.Core.ViewModels.Response;
@@ -63,6 +64,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
+                var generateUnique = GenerateUniqueId.GenerateUniqueIds(ModuleName.Vendor, AppConstant.LoggedInCompanyCode);
                 bool IsVendorNameExist = await AnyAsync(x => x.IsDelete == false &&
                                         x.VendorName == model.VendorName.Trim() && x.TenantId == AppConstant.LoggedInTenantId);
 
@@ -89,13 +91,13 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-                bool IsVendorCodeExists = await AnyAsync(x => x.IsDelete == false && (x.VendorCode == model.VendorCode.Trim())
-                && x.TenantId == AppConstant.LoggedInTenantId);
-                if (IsVendorCodeExists)
-                {
-                    responseVm.Message = "Vendor Code " + AppConstant.AlreadyExists;
-                    return responseVm;
-                }
+                //bool isvendorcodeexists = await anyasync(x => x.isdelete == false && (x.vendorcode == model.vendorcode.trim())
+                //&& x.tenantid == appconstant.loggedintenantid);
+                //if (isvendorcodeexists)
+                //{
+                //    responsevm.message = "vendor code " + appconstant.alreadyexists;
+                //    return responsevm;
+                //}
 
                 TblVendor vendor = new TblVendor
                 {
@@ -106,7 +108,7 @@ namespace ShutterManagement.Business.Services
                     City = model.City.Trim(),
                     ZipCode = model.ZipCode.Trim(),
                     StreetAddress = model.StreetAddress.Trim(),
-                    VendorCode = model.VendorCode.Trim(),
+                    VendorCode = generateUnique,
                     IsActive = true,
                     IsDelete = false,
                     CreatedAt = DateTime.Now,
