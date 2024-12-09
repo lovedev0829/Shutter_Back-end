@@ -1009,6 +1009,9 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
             entity.Property(e => e.ItemDescription).HasMaxLength(255);
+            entity.Property(e => e.ModifiedBy)
+                .HasMaxLength(255)
+                .IsUnicode(false);
             entity.Property(e => e.Status)
                 .HasMaxLength(50)
                 .IsUnicode(false);
@@ -1098,6 +1101,8 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
 
             entity.Property(e => e.WindowoptionId).ValueGeneratedNever();
             entity.Property(e => e.AdditionalCost).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.ModifiedAt).HasColumnType("datetime");
 
             entity.HasOne(d => d.Option).WithMany(p => p.WindowOptions)
                 .HasForeignKey(d => d.OptionId)

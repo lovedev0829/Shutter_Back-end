@@ -31,11 +31,13 @@ namespace ShutterManagement.Core.ViewModels.Response
         public bool? IsActive { get; set; }
         public Guid ProductTypeId { get; set; }
         public string ProductTypeName { get; set; }
+        public string OptionName { get; set; }
         public decimal? BuildWidth { get; set; }
         public decimal? BuildHeight { get; set; }
         public decimal? Width { get; set; }
         public decimal? Height { get; set; }
         public decimal? ArchHeight { get; set; }
+        public Guid? Option { get; set; }
 
     }
 

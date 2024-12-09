@@ -25,6 +25,10 @@ public partial class WindowOption
 
     public Guid? TenantId { get; set; }
 
+    public DateTime? ModifiedAt { get; set; }
+
+    public DateTime? CreatedAt { get; set; }
+
     public virtual TblOption? Option { get; set; }
 
     public virtual TblTenant? Tenant { get; set; }
