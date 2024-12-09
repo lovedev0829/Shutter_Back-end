@@ -130,6 +130,8 @@ builder.Services.AddScoped<ITaxRate, TaxService>();
 builder.Services.AddScoped<ImportandExportCSV>();
 builder.Services.AddScoped<IRegion,RegionServices>();
 builder.Services.AddScoped<IMstContactType,MstContactTypeService>();
+builder.Services.AddScoped<IVendorOrderService, VendorOrderService>();
+builder.Services.AddScoped<IVendorItemService, VendorOrderItemService>();
 
 
 

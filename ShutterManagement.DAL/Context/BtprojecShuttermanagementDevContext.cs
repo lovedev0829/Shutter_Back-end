@@ -95,6 +95,8 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
 
     public virtual DbSet<TblWindowProduct> TblWindowProducts { get; set; }
 
+    public virtual DbSet<WindowOption> WindowOptions { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
         => optionsBuilder.UseSqlServer("Server=103.93.16.117;Database=btprojec_shuttermanagement_dev;user id=btprojec_admin;password=Bwy0w65ixN*bsE9wy;Integrated Security=false;TrustServerCertificate=true;");
@@ -871,9 +873,7 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.Property(e => e.FirstName)
                 .HasMaxLength(100)
                 .IsUnicode(false);
-            entity.Property(e => e.ForgetPassword)
-                .HasMaxLength(200)
-                .IsUnicode(false);
+            entity.Property(e => e.ForgetPassword).IsUnicode(false);
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
             entity.Property(e => e.LastName)
@@ -987,6 +987,10 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
                 .HasForeignKey(d => d.JobId)
                 .HasConstraintName("FK__TblVendor__JobId__72910220");
 
+            entity.HasOne(d => d.Tenent).WithMany(p => p.TblVendorOrders)
+                .HasForeignKey(d => d.TenentId)
+                .HasConstraintName("FK__TblVendor__Tenen__041093DD");
+
             entity.HasOne(d => d.Vendor).WithMany(p => p.TblVendorOrders)
                 .HasForeignKey(d => d.VendorId)
                 .HasConstraintName("FK__TblVendor__Vendo__73852659");
@@ -1005,6 +1009,9 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
             entity.Property(e => e.ItemDescription).HasMaxLength(255);
+            entity.Property(e => e.ModifiedBy)
+                .HasMaxLength(255)
+                .IsUnicode(false);
             entity.Property(e => e.Status)
                 .HasMaxLength(50)
                 .IsUnicode(false);
@@ -1013,6 +1020,10 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
+
+            entity.HasOne(d => d.Material).WithMany(p => p.TblVendorOrderItems)
+                .HasForeignKey(d => d.MaterialId)
+                .HasConstraintName("FK__TblVendor__Mater__0504B816");
 
             entity.HasOne(d => d.VendorOrder).WithMany(p => p.TblVendorOrderItems)
                 .HasForeignKey(d => d.VendorOrderId)
@@ -1065,10 +1076,6 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
             entity.Property(e => e.ModifiedAt).HasColumnType("datetime");
 
-            entity.HasOne(d => d.OptionType).WithMany(p => p.TblWindowProducts)
-                .HasForeignKey(d => d.OptionTypeId)
-                .HasConstraintName("FK__tblWindow__Optio__4F9CCB9E");
-
             entity.HasOne(d => d.Product).WithMany(p => p.TblWindowProducts)
                 .HasForeignKey(d => d.ProductId)
                 .HasConstraintName("FK__tblWindow__Produ__4DB4832C");
@@ -1084,6 +1091,32 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.HasOne(d => d.Window).WithMany(p => p.TblWindowProducts)
                 .HasForeignKey(d => d.WindowId)
                 .HasConstraintName("FK__tblWindow__Windo__4CC05EF3");
+        });
+
+        modelBuilder.Entity<WindowOption>(entity =>
+        {
+            entity.HasKey(e => e.WindowoptionId).HasName("PK__WindowOp__F9F31DB279AABAC9");
+
+            entity.ToTable("WindowOption", "dbo");
+
+            entity.Property(e => e.WindowoptionId).ValueGeneratedNever();
+            entity.Property(e => e.AdditionalCost).HasColumnType("decimal(10, 2)");
+
+            entity.HasOne(d => d.Option).WithMany(p => p.WindowOptions)
+                .HasForeignKey(d => d.OptionId)
+                .HasConstraintName("FK__WindowOpt__Optio__190BB0C3");
+
+            entity.HasOne(d => d.Tenant).WithMany(p => p.WindowOptions)
+                .HasForeignKey(d => d.TenantId)
+                .HasConstraintName("FK__WindowOpt__Tenan__1BE81D6E");
+
+            entity.HasOne(d => d.Window).WithMany(p => p.WindowOptions)
+                .HasForeignKey(d => d.WindowId)
+                .HasConstraintName("FK__WindowOpt__Windo__1AF3F935");
+
+            entity.HasOne(d => d.WindowProduct).WithMany(p => p.WindowOptions)
+                .HasForeignKey(d => d.WindowProductId)
+                .HasConstraintName("FK__WindowOpt__Windo__19FFD4FC");
         });
 
         OnModelCreatingPartial(modelBuilder);
