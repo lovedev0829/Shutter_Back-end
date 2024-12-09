@@ -22,7 +22,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("Create")]
-        [Authorize]
+        [Authorize(Roles ="TaxAdd")]
         public async Task<IActionResult> Create([FromBody] CreateTax model)
         {
             var result = await _taxrate.CreateTax(model);
@@ -31,7 +31,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("Update")]
-        [Authorize]
+        [Authorize(Roles ="TaxEdit")]
         public async Task<IActionResult> Update([FromBody] UpdateTax model)
         {
             var result = await _taxrate.UpdateTax(model);
@@ -40,7 +40,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("Delete")]
-        [Authorize]
+        [Authorize(Roles = "TaxDelete")]
         public async Task<IActionResult> Delete(Guid Id)
         {
             var result = await _taxrate.DeleteTax(Id);
@@ -49,7 +49,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("ActiveInActive")]
-        [Authorize]
+        [Authorize(Roles = "TaxEdit")]
         public async Task<IActionResult> ActiveInactive(Guid Id)
         {
             var result = await _taxrate.ActiveInActiveTax(Id);
@@ -58,7 +58,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("GetAll")]
-        [Authorize]
+        [Authorize(Roles = "TaxView")]
         public async Task<IActionResult> GetAllAddresses(Pagination filter)
         {
             var result = await _taxrate.GetAll_Tax(filter);

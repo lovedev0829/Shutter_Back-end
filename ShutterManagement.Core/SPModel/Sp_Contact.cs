@@ -50,6 +50,6 @@ namespace ShutterManagement.Core.SPModel
         public bool IsBillingAddressSameAsAddress { get; set; } = false;
         public BillingAddressVm? BillingAddressVm { get; set; }
         public bool IsTaxExemption { get; set; } = false;
-        public TaxExemption? TaxExemptionVm { get; set; }
+        public TaxExemption? TaxExemptionVm { get; set; } = new TaxExemption();
     }
 }

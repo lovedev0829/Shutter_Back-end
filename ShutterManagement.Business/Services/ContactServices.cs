@@ -161,11 +161,13 @@ namespace ShutterManagement.Business.Services
                         return responseVm;
                     }
 
-
-                    if (model.TaxExemptionVm.ExpiryDate < model.TaxExemptionVm.EffectiveDate)
+                    if (model.TaxExemptionVm != null)
                     {
-                        responseVm.Message = "ExpiryDate must be greater than EffectiveDate.";
-                        return responseVm;
+                        if (model.TaxExemptionVm.ExpiryDate < model.TaxExemptionVm.EffectiveDate)
+                        {
+                            responseVm.Message = "ExpiryDate must be greater than EffectiveDate.";
+                            return responseVm;
+                        }
                     }
                     if (contact != null)
                     {

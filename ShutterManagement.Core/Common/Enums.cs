@@ -26,6 +26,7 @@ namespace ShutterManagement.Core.Common
         Job,
         Estimation,
         Order,
-        Invoice
+        Invoice,
+        Vendor
     }
 }

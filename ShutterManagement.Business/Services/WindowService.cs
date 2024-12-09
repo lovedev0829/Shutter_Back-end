@@ -121,7 +121,9 @@ namespace ShutterManagement.Business.Services
 
                 foreach (var items in model.WindowProducts)
                 {
-                    var isWindowProductExists = await windowProductService.AnyAsync(x =>
+                    foreach (var optionTypeId in items.OptionTypeId) 
+                    {
+                        var isWindowProductExists = await windowProductService.AnyAsync(x =>
                         x.WindowProductId == items.ProductId &&
                         x.ProductTypeId == items.ProductTypeId &&
                         x.WindowId == window.WindowId &&
