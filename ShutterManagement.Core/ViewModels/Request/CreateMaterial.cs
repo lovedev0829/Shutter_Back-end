@@ -34,6 +34,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         [Required]
         public decimal? ReorderLevel { get; set; }
         [Required]
+        [DefaultValue("")]
         public string? ProductType { get; set; }
         [DefaultValue("")]
         [Required]
@@ -41,10 +42,14 @@ namespace ShutterManagement.Core.ViewModels.Request
 
         public Guid? VendorId { get; set; }
 
+        [DefaultValue("")]
+        [RegularExpression(@"^[A-Za-z0-9_-]+", ErrorMessage = AppConstant.SKUError)]
+        [Required]
         public string SKU { get; set; }
 
         public bool IsCutSheet { get; set; } = false;
 
+        [DefaultValue("")]
         [MaxLength(1000)]
         public string? Notes { get; set; }
     }

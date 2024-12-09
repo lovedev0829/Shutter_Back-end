@@ -185,7 +185,14 @@ namespace ShutterManagement.Controllers
         }
 
 
-
+        [HttpGet]
+        [Route("Dashboard")]
+        public IActionResult Dashboard()
+        {
+            var res = new ResponseVm<string>();
+            res.IsSuccess = true;
+            return Ok(res);
+        }
 
         [HttpPost]
         [Route("SendEmail")]
@@ -193,6 +200,7 @@ namespace ShutterManagement.Controllers
         {
             emailHelper.SendMail(sendEmail);
         }
+
         //[HttpPost]
         //[Route("MasterCreate")]
         //public IActionResult MasterCreate(CreatePayloadVm model)

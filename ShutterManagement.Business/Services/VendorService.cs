@@ -276,15 +276,15 @@ namespace ShutterManagement.Business.Services
                          responseVm.Message="Vendor Name"+ AppConstant.AlreadyExists;
                         return (responseVm);
                         }
-                    bool IsVendorCodeExists =  Any(x => x.IsDelete == false &&
-                                       (x.VendorCode == model.VendorCode.Trim())
-                                       && x.TenantId == AppConstant.LoggedInTenantId && x.VendorId != model.VendorId);
-                    if (IsVendorCodeExists)
+                    //bool IsVendorCodeExists = Any(x => x.IsDelete == false &&
+                    //                   (x.VendorCode == model.VendorCode.Trim())
+                    //                   && x.TenantId == AppConstant.LoggedInTenantId && x.VendorId != model.VendorId);
+                    //if (IsVendorCodeExists)
 
-                    {
-                        responseVm.Message = "Vendor Code" + AppConstant.AlreadyExists;
-                        return (responseVm);
-                    }
+                    //{
+                    //    responseVm.Message = "Vendor Code" + AppConstant.AlreadyExists;
+                    //    return (responseVm);
+                    //}
                     if (vendor != null)
                     {
                         vendor.VendorName = model.VendorName;
