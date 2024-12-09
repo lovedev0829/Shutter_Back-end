@@ -68,5 +68,6 @@ namespace ShutterManagement.Core
         public const string ZipCodeError = " Invalid Zip Code Format";
 
         public const string NumericError = "Only Numerical values are allowed.";
+        public const string SKUError = "Invlaid SKU format.";
     }
 }

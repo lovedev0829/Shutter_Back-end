@@ -149,7 +149,7 @@ if (app.Environment.IsDevelopment())
     string virtualPath = configuration.GetSection("FileVirtualPathLocal").Value.ToString();
     AppConstant.FileUploadPath = path;
     AppConstant.FileVirtualPath = virtualPath;
-    app.UseFileServer(new FileServerOptions
+   app.UseFileServer(new FileServerOptions
     {
         FileProvider = new PhysicalFileProvider(path),
         RequestPath = new PathString("/File"),
