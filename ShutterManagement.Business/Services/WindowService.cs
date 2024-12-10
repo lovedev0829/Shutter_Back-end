@@ -45,32 +45,40 @@ namespace ShutterManagement.Business.Services
                     if (IsWindowExists != null)
                     {
                         var IsWindowInProduct = windowProductService
-                    .GetAllQuerable().Where(x => x.WindowId == WindowId &&
+                         .GetAllQuerable().Where(x => x.WindowId == WindowId &&
                                          x.IsDelete == false &&
                                          x.TenantId == AppConstant.LoggedInTenantId)
-                    .ToList();
-                        var IsWindowOption = windowOptionService
-                .GetAllQuerable().Where(x => x.WindowId == WindowId &&
-                                     x.IsDelete == false &&
-                                     x.TenantId == AppConstant.LoggedInTenantId)
-                .ToList();
-                        foreach (var window in IsWindowInProduct)
+                         .ToList();
+                        if (IsWindowInProduct != null && IsWindowInProduct.Count > 0)
                         {
-                            window.IsActive = !window.IsActive;
-                            window.ModifiedAt = DateTime.Now;
-                            window.ModifiedBy = AppConstant.LoggedInUserID;
-                            await windowProductService.Update(window);
+                           
+                            var IsWindowOption = windowOptionService
+                            .GetAllQuerable().Where(x => x.WindowId == WindowId &&
+                                         x.IsDelete == false &&
+                                         x.TenantId == AppConstant.LoggedInTenantId)
+                            .ToList();
+                            if (IsWindowOption != null && IsWindowOption.Count > 0)
+                            {
+                                //Window options status change
+                                foreach (var option in IsWindowOption)
+                                {
+                                    option.IsActive = !option.IsActive;
+                                    option.ModifiedAt = DateTime.Now;
+                                    option.ModifiedBy = AppConstant.LoggedInUserID;
+                                    await windowOptionService.Update(option);
+                                }
+                            }
+                            //Window product status change
+                            foreach (var product in IsWindowInProduct)
+                            {
+                                product.IsActive = !product.IsActive;
+                                product.ModifiedAt = DateTime.Now;
+                                product.ModifiedBy = AppConstant.LoggedInUserID;
+                                await windowProductService.Update(product);
+                            }
                         }
-                        foreach (var option in IsWindowInProduct)
-                        {
-                            option.IsActive = !option.IsActive;
-                            option.ModifiedAt = DateTime.Now;
-                            option.ModifiedBy = AppConstant.LoggedInUserID;
-                            await windowProductService.Update(option);
-                        }
 
-
-
+                        //Window status change
                         IsWindowExists.IsActive = !IsWindowExists.IsActive;
                         IsWindowExists.UpdatedAt = DateTime.Now;
                         IsWindowExists.ModifiedBy = AppConstant.LoggedInUserID;
@@ -109,7 +117,7 @@ namespace ShutterManagement.Business.Services
 
                 if (!isTenant)
                 {
-                    responseVm.Message = AppConstant.AccessDenied;
+                    responseVm.Message = AppConstant.TenantNotFound;
                     return responseVm;
                 }
 
@@ -213,38 +221,49 @@ namespace ShutterManagement.Business.Services
                     if (IsWindowExists != null)
                     {
                         var IsWindowInProduct = windowProductService
-                    .GetAllQuerable().Where(x => x.WindowId == WindowId &&
+                         .GetAllQuerable().Where(x => x.WindowId == WindowId &&
                                          x.IsDelete == false &&
                                          x.TenantId == AppConstant.LoggedInTenantId)
-                    .ToList();
-                        var IswindowInOption = windowOptionService
+                         .ToList();
+                        if (IsWindowInProduct != null && IsWindowInProduct.Count > 0)
+                        {
+
+                            var IsWindowOption = windowOptionService
                             .GetAllQuerable().Where(x => x.WindowId == WindowId &&
-                            x.IsDelete == false &&
-                            x.TenantId == AppConstant.LoggedInTenantId
-                            ).ToList();
-                        foreach (var window in IsWindowInProduct)
-                        {
-                            window.IsActive = false;
-                            window.IsDelete = true;
-                            window.ModifiedAt = DateTime.Now;
-                            window.ModifiedBy = AppConstant.LoggedInUserID;
-                            await windowProductService.Update(window);
+                                         x.IsDelete == false &&
+                                         x.TenantId == AppConstant.LoggedInTenantId)
+                            .ToList();
+                            if (IsWindowOption != null && IsWindowOption.Count > 0)
+                            {
+                                //Window options status change
+                                foreach (var option in IsWindowOption)
+                                {
+                                    option.IsActive = false;
+                                    option.IsDelete = true;
+                                    option.ModifiedAt = DateTime.Now;
+                                    option.ModifiedBy = AppConstant.LoggedInUserID;
+                                    await windowOptionService.Update(option);
+                                }
+                            }
+                            //Window product status change
+                            foreach (var product in IsWindowInProduct)
+                            {
+                                product.IsActive = false;
+                                product.IsDelete = true;
+                                product.ModifiedAt = DateTime.Now;
+                                product.ModifiedBy = AppConstant.LoggedInUserID;
+                                await windowProductService.Update(product);
+                            }
                         }
-                        foreach (var option in IswindowInOption)
-                        {
-                            option.IsDelete = true;
-                            option.IsActive = false;
-                            option.ModifiedAt = DateTime.Now;
-                            option.ModifiedBy = AppConstant.LoggedInUserID;
-                        }
-                        
+
+                        //Window status change
                         IsWindowExists.IsActive = false;
                         IsWindowExists.IsDelete = true;
                         IsWindowExists.UpdatedAt = DateTime.Now;
                         IsWindowExists.ModifiedBy = AppConstant.LoggedInUserID;
                         await Update(IsWindowExists);
                         responseVm.IsSuccess = true;
-                        responseVm.Message = AppConstant.DeleteSuccessMsg;
+                        responseVm.Message = AppConstant.UpdateSuccessMsg;
                     }
                     else
                     {
@@ -265,9 +284,9 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        public async Task<IResponseVm<List<WindowListVm>>> GetAll_Window(Pagination filter)
+        public async Task<IResponseVm<List<WindowsList>>> GetAll_Window(Pagination filter)
         {
-            IResponseVm<List<WindowListVm>> responseVm = new ResponseVm<List<WindowListVm>>();
+            IResponseVm<List<WindowsList>> responseVm = new ResponseVm<List<WindowsList>>();
 
             try
             {
@@ -278,54 +297,31 @@ namespace ShutterManagement.Business.Services
 
                 if (isTenantValid)
                 {
-                    var windowList = (from w in dbContext.TblWindows.OrderByDescending(x => x.CreatedAt)
-                                      where w.IsDelete == false && w.TenantId == AppConstant.LoggedInTenantId
-                                      select new WindowListVm
-                                      {
-                                          WindowId = w.WindowId,
-                                          AddressId = w.AddressId,
-                                          Label = w.Label,
-                                          Width = w.Width,
-                                          Height = w.Height,
-                                          Quantity = w.Quantity,
-                                          ArchHeight = w.ArchHeight,
-                                          Photo = w.Photo,
-                                          Notes = w.Notes,
-                                          IsActive = w.IsActive,
-                                          TenantId = w.TenantId,
-                                          CreatedAt = w.CreatedAt,
-                                          UpdatedAt = w.UpdatedAt
-                                      }).ToList();
 
-                    foreach (var item in windowList)
-                    {
-                        item.WindowProducts = (from wp in dbContext.TblWindowProducts.OrderByDescending(x => x.CreatedAt)
-                                               join p in dbContext.TblProducts on wp.ProductId equals p.ProductId
-                                               join wpt in dbContext.MstProductTypes on wp.ProductId equals wpt.ProductId
-                                               join w in dbContext.TblWindows on wp.WindowId equals w.WindowId
-                                               join wo in dbContext.WindowOptions on wp.WindowId equals wo.WindowoptionId
-                                               join o in dbContext.TblOptions on wo.OptionId equals o.OptionId
-                                               where wp.WindowId == item.WindowId && wp.IsDelete == false
-                                               select new ShutterManagement.Core.ViewModels.Response.WindowProductVm
-                                               {
-                                                   ProductId = p.ProductId,
-                                                   ProductName = p.ProductName,
-                                                   IsActive = wp.IsActive,
-
-                                                   ProductTypeId=wpt.ProductId,
-                                                   ProductTypeName=wpt.ProductName,
-                                                   BuildHeight=wp.BuildHeight,
-                                                   Option=wo.WindowoptionId,
-                                                   OptionName=o.OptionName,
-                                                   Width=w.Width,
-                                                   Height=w.Height,
-                                                   Quantity=w.Quantity
-
-                                               }).ToList();
-                    }
+                   var WindowsData = (from w in dbContext.TblWindows.OrderBy(x=>x.Label)
+                                     join wp in dbContext.TblWindowProducts on w.WindowId equals wp.WindowId
+                                     where w.IsDelete == false && w.TenantId == AppConstant.LoggedInTenantId
+                                     select new WindowsList
+                                     {
+                                         WindowId = w.WindowId,
+                                         Label = w.Label,
+                                         Quantity = w.Quantity,
+                                         ArchHeight = w.ArchHeight,
+                                         Height = w.Height,
+                                         Width = w.Width,
+                                         Notes = w.Notes,
+                                         Photo = w.Photo,
+                                         ProductId = (Guid)wp.ProductId,
+                                         BuildHeight = wp.BuildHeight,
+                                         BuildWidth = wp.BuildWidth,
+                                         ProductName = wp.Product.ProductName,
+                                         ProductTypeId = (Guid)wp.ProductTypeId,
+                                         ProductTypeName = wp.ProductType.ProductName,
+                                         IsActive = w.IsActive
+                                     }).ToList();
 
                     filter.SearchValue = filter.SearchValue?.Trim().ToLower();
-                    var FilterRecords = windowList
+                    var FilterRecords = WindowsData
                         .Where(x =>
                             (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
                             (string.IsNullOrEmpty(filter.SearchValue) ? true :
@@ -334,8 +330,8 @@ namespace ShutterManagement.Business.Services
                                 (x.AddressId.ToString() == filter.SearchValue) ||
                                 (x.Label ?? "").ToLower().Contains(filter.SearchValue) || 
                                 (x.ArchHeight.ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
-                                (x.WindowProducts.Select(x=>x.ProductName).ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
-                                (x.WindowProducts.Select(x=>x.ProductTypeName).ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
+                                (x.ProductName?.ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
+                                (x.ProductTypeName?.ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
                                 (x.Notes ?? "").ToLower().Contains(filter.SearchValue) ||
                                 (x.Width.ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
                                 (x.Height.ToString() ?? "").ToLower().Contains(filter.SearchValue))
@@ -427,7 +423,9 @@ namespace ShutterManagement.Business.Services
                 var deleteProducts = existingProducts.Where(a1 =>
                     !model.WindowProducts.Any(a2 =>
                         a1.ProductId == a2.ProductId &&
-                        a1.ProductTypeId == a2.ProductTypeId))
+                        a1.ProductTypeId == a2.ProductTypeId &&
+                        a1.BuildWidth == a2.BuildWidth &&
+                        a1.BuildHeight == a2.BuildHeight))
                     .ToList();
 
                 foreach (var product in deleteProducts)
@@ -447,7 +445,7 @@ namespace ShutterManagement.Business.Services
                         option.IsDelete = true;
                         option.IsActive = false;
                         option.ModifiedBy = AppConstant.LoggedInUserID;
-                       option.ModifiedAt = DateTime.Now;
+                        option.ModifiedAt = DateTime.Now;
                         await windowOptionService.Update(option);
                     }
                 }
