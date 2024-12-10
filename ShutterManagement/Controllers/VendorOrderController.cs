@@ -36,7 +36,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost("Delete")]
         [Authorize]
-        public async Task<IActionResult> Delete(string VendorOrderId)
+        public async Task<IActionResult> Delete(Guid VendorOrderId)
         {
             var result = await vendorOrderService.Delete_VendorOrder(VendorOrderId);
             return Ok(result);

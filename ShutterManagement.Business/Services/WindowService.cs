@@ -133,7 +133,6 @@ namespace ShutterManagement.Business.Services
                             WindowProductId = Guid.NewGuid(),
                             WindowId = window.WindowId,
                             ProductId = items.ProductId,
-                            OptionTypeId = items.OptionTypeId,
                             ProductTypeId = items.ProductTypeId,
                             BuildWidth = items.BuildWidth,
                             BuildHeight = items.BuildHeight,
@@ -367,9 +366,9 @@ namespace ShutterManagement.Business.Services
                     .Where(x => x.WindowId == model.WindowId && x.IsDelete == false)
                     .ToList();
 
-                var InsertRecords = model.WindowProducts.Where(a1 => !existingProducts.Any(a2 => model.WindowId == a2.WindowId && a1.ProductId == a2.ProductId && a1.ProductTypeId == a2.ProductTypeId && a1.OptionTypeId == a2.OptionTypeId
+                var InsertRecords = model.WindowProducts.Where(a1 => !existingProducts.Any(a2 => model.WindowId == a2.WindowId && a1.ProductId == a2.ProductId && a1.ProductTypeId == a2.ProductTypeId 
                 && a1.BuildWidth == a2.BuildWidth && a1.BuildHeight == a2.BuildHeight)).ToList();
-                var DeleteRecords = existingProducts.Where(a1 => !model.WindowProducts.Any(a2 => model.WindowId == a2.WindowId && a1.ProductId == a2.ProductId && a1.ProductTypeId == a2.ProductTypeId && a1.OptionTypeId == a2.OptionTypeId
+                var DeleteRecords = existingProducts.Where(a1 => !model.WindowProducts.Any(a2 => model.WindowId == a2.WindowId && a1.ProductId == a2.ProductId && a1.ProductTypeId == a2.ProductTypeId 
                 && a1.BuildWidth == a2.BuildWidth && a1.BuildHeight == a2.BuildHeight)).ToList();
 
                 foreach (var product in DeleteRecords)
@@ -393,7 +392,6 @@ namespace ShutterManagement.Business.Services
                         WindowProductId = Guid.NewGuid(),
                         WindowId = model.WindowId,
                         ProductId = product.ProductId,
-                        OptionTypeId = product.OptionTypeId,
                         ProductTypeId = product.ProductTypeId,
                         CreatedAt = DateTime.Now,
                         BuildHeight = product.BuildHeight,
