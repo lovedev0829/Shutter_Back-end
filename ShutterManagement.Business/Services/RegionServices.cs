@@ -46,6 +46,8 @@ namespace ShutterManagement.Business.Services
             }
             return responseVm;
         }
+
+       
     }
 }
 

@@ -1101,6 +1101,8 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
 
             entity.Property(e => e.WindowoptionId).ValueGeneratedNever();
             entity.Property(e => e.AdditionalCost).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.ModifiedAt).HasColumnType("datetime");
 
             entity.HasOne(d => d.Option).WithMany(p => p.WindowOptions)
                 .HasForeignKey(d => d.OptionId)

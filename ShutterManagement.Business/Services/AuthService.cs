@@ -337,11 +337,12 @@ namespace ShutterManagement.Services
                             var Token = GenerateTokenForgotPassword(res.Email ?? "", res.Id);
                             if (!string.IsNullOrEmpty(Token))
                             {
-                                string resetLinks = $"{AppConstant.UIBaseURL}/ForgetPassword?token={Token}";
+                                string resetLinks = $"{AppConstant.UIBaseURL}/reset-password/{forgetPassword.Code}/{Token}";
                                 res.Token = Token;
                                 res.ModifiedAt = DateTime.Now;
                                 await Update(res);
                                 result.IsSuccess = true;
+                                result.Data = resetLinks;
                                 result.Message = AppConstant.ForgotPasswordSuccess;
                                 return result;
                             }

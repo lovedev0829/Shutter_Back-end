@@ -130,8 +130,11 @@ builder.Services.AddScoped<ITaxRate, TaxService>();
 builder.Services.AddScoped<ImportandExportCSV>();
 builder.Services.AddScoped<IRegion,RegionServices>();
 builder.Services.AddScoped<IMstContactType,MstContactTypeService>();
-builder.Services.AddScoped<IVendorOrderService, VendorOrderService>();
-builder.Services.AddScoped<IVendorItemService, VendorOrderItemService>();
+builder.Services.AddScoped<IWindowService,WindowService>();
+builder.Services.AddScoped<IWindowProductService,WindowProduct>();
+builder.Services.AddScoped<IWindowOptionService, WindowOptionService>();
+
+
 
 
 
@@ -146,7 +149,7 @@ if (app.Environment.IsDevelopment())
     string virtualPath = configuration.GetSection("FileVirtualPathLocal").Value.ToString();
     AppConstant.FileUploadPath = path;
     AppConstant.FileVirtualPath = virtualPath;
-    app.UseFileServer(new FileServerOptions
+   app.UseFileServer(new FileServerOptions
     {
         FileProvider = new PhysicalFileProvider(path),
         RequestPath = new PathString("/File"),

@@ -174,6 +174,7 @@ namespace ShutterManagement.Business.Services
                                    join t3 in _context.MstJobTypes on t2.JobType equals t3.Id
                                    join t4 in _context.TblUsers on t2.AssignedPersonnel equals t4.Id
                                    join t5 in _context.MstJobStatuses on t2.JobStatus equals t5.JobStatusId
+                                   join t6 in _context.TblContacts on t2.ContactId equals t6.ContactId
                                    where t2.TenantId == AppConstant.LoggedInTenantId && t2.IsDelete == false
                                    select new GetAllJobsdetails
                                    {
@@ -181,6 +182,7 @@ namespace ShutterManagement.Business.Services
                                        JobId = t2.JobId,
                                        JobName = t2.JobName,
                                        ContactId = t2.ContactId,
+                                       ContactName = t6.Name,
                                        AddressId = t2.AddressId,
                                        JobType = t3.Id,
                                        JobTypeName = t3.JobTypeName,
@@ -210,6 +212,7 @@ namespace ShutterManagement.Business.Services
                                         (x.JobStatus.ToString() == filter.SearchValue) ||
                                         (x.AddressId.ToString() == filter.SearchValue)
                                         || (x.JobName ?? "").ToLower().Contains(filter.SearchValue)
+                                        || (x.ContactName ?? "").ToLower().Contains(filter.SearchValue)
                                         || (x.JobType.ToString() ?? "").ToLower().Contains(filter.SearchValue)
                                         || (x.JobTypeName ?? "").ToLower().Contains(filter.SearchValue)
                                         || (x.AssignedPersonnelName ?? "").ToLower().Contains(filter.SearchValue)

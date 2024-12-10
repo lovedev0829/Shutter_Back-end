@@ -10,26 +10,26 @@ namespace ShutterManagement.Core.ViewModels.Request
     public class Pagination
     {
         [DefaultValue("")]
-        public string? TenantId { get; set; }
+        public string? TenantId { get; set; } = "";
         [DefaultValue("")]
-        public string? SearchValue { get; set; }
+        public string? SearchValue { get; set; } = "";
         [DefaultValue(1)]
-        public int PageNo { get; set; }
+        public int PageNo { get; set; } = 1;
         [DefaultValue(10)]
-        public int RecordPerPage { get; set; }
+        public int RecordPerPage { get; set; } = 10;
         [DefaultValue(2)]
-        public int Status { get; set; }
+        public int Status { get; set; } = 2;
         [DefaultValue("")]
-        public string? Vendor { get; set; }
+        public string? Vendor { get; set; } = "";
         [DefaultValue("")]
-        public string? ProductType { get; set; }
+        public string? ProductType { get; set; } = "";
         [DefaultValue("")]
-        public string? JobStatus { get; set; }
-       
-        [DefaultValue("")]
-        public string? Address { get; set; }
+        public string? JobStatus { get; set; } = "";
 
         [DefaultValue("")]
-        public string? Region { get; set; } 
+        public string? Address { get; set; } = "";
+
+        [DefaultValue("")]
+        public string? Region { get; set; } = "";
     }
 }

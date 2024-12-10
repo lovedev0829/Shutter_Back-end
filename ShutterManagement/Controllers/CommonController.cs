@@ -185,7 +185,14 @@ namespace ShutterManagement.Controllers
         }
 
 
-
+        [HttpGet]
+        [Route("Dashboard")]
+        public IActionResult Dashboard()
+        {
+            var res = new ResponseVm<string>();
+            res.IsSuccess = true;
+            return Ok(res);
+        }
 
         [HttpPost]
         [Route("SendEmail")]
@@ -193,6 +200,7 @@ namespace ShutterManagement.Controllers
         {
             emailHelper.SendMail(sendEmail);
         }
+
         //[HttpPost]
         //[Route("MasterCreate")]
         //public IActionResult MasterCreate(CreatePayloadVm model)
@@ -346,19 +354,19 @@ namespace ShutterManagement.Controllers
         //}
         [HttpGet]
         [Route("GetAllOption")]
-        public async Task<IActionResult> GetAllOption()
+        public async Task<IActionResult> GetAllOption(string ProductTypeId)
         {
             var res = await option.GetAll_Option(filter);
-            res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
+            res.Data = res.Data?.Where(x => x.IsActive == true && x.ProductTypeId == Guid.Parse(ProductTypeId)).ToList();
             return Ok(res);
         }
 
         [HttpGet]
         [Route("GetAllProduct")]
-        public async Task<IActionResult> GetAllProduct()
+        public async Task<IActionResult> GetAllProduct(string ProductTypeId)
         {
             var res =await productService.GetAll_Product(filter);
-            res.Data=res.Data?.Where(x=>x.IsActive == true).ToList();    
+            res.Data=res.Data?.Where(x=>x.IsActive == true && x.ProductType == ProductTypeId).ToList();    
             return Ok(res);
         }
 
