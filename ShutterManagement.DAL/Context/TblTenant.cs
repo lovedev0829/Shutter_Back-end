@@ -61,6 +61,8 @@ public partial class TblTenant
 
     public virtual ICollection<TblTaxRate> TblTaxRates { get; set; } = new List<TblTaxRate>();
 
+    public virtual ICollection<TblTemplate> TblTemplates { get; set; } = new List<TblTemplate>();
+
     public virtual ICollection<TblUser> TblUsers { get; set; } = new List<TblUser>();
 
     public virtual ICollection<TblVendorOrder> TblVendorOrders { get; set; } = new List<TblVendorOrder>();
