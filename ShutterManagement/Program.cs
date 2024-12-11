@@ -136,6 +136,10 @@ builder.Services.AddScoped<IWindowOptionService, WindowOptionService>();
 builder.Services.AddScoped<ITemplatesService, TemplateService>();
 builder.Services.AddScoped<IMstPlaceholderService, MstPlaceholderService>();
 
+builder.Services.AddScoped<IVendorOrderService, VendorOrderService>();
+builder.Services.AddScoped<IVendorItemService, VendorOrderItemService>();
+
+
 
 
 
