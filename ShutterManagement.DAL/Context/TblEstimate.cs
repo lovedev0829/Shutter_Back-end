@@ -9,6 +9,7 @@ public partial class TblEstimate
 
     public Guid? JobId { get; set; }
 
+    public string? EstimateName { get; set; }
     public string? EstimateNumber { get; set; }
 
     public decimal? TotalPrice { get; set; }
