@@ -175,7 +175,7 @@ namespace ShutterManagement.Business.Services
                                 WindowOption windowOption = new WindowOption
                                 {
                                     WindowoptionId = Guid.NewGuid(),
-                                    OptionId = optionId,
+                                    OptionTypeId = optionId,
                                     WindowProductId = windowProduct.WindowProductId,
                                     WindowId = window.WindowId,
                                     IsActive = true,
@@ -474,7 +474,7 @@ namespace ShutterManagement.Business.Services
                         var newOption = new WindowOption
                         {
                             WindowoptionId = Guid.NewGuid(),
-                            OptionId = optionId,
+                            OptionTypeId = optionId,
                             WindowProductId = newProduct.WindowProductId,
                             WindowId = model.WindowId,
                             IsActive = true,

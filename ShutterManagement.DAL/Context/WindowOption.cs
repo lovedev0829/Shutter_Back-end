@@ -7,8 +7,6 @@ public partial class WindowOption
 {
     public Guid WindowoptionId { get; set; }
 
-    public Guid? OptionId { get; set; }
-
     public Guid? WindowProductId { get; set; }
 
     public Guid? WindowId { get; set; }
@@ -29,7 +27,9 @@ public partial class WindowOption
 
     public DateTime? CreatedAt { get; set; }
 
-    public virtual TblOption? Option { get; set; }
+    public Guid? OptionTypeId { get; set; }
+
+    public virtual TblOptionsType? OptionType { get; set; }
 
     public virtual TblTenant? Tenant { get; set; }
 

@@ -47,8 +47,6 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
 
     public virtual DbSet<TblContactRole> TblContactRoles { get; set; }
 
-    public virtual DbSet<TblEstimate> TblEstimates { get; set; }
-
     public virtual DbSet<TblInvoice> TblInvoices { get; set; }
 
     public virtual DbSet<TblJob> TblJobs { get; set; }
@@ -399,37 +397,6 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.HasOne(d => d.Contact).WithMany(p => p.TblContactRoles)
                 .HasForeignKey(d => d.ContactId)
                 .HasConstraintName("FK__TblContac__Conta__5E8A0973");
-        });
-
-        modelBuilder.Entity<TblEstimate>(entity =>
-        {
-            entity.HasKey(e => e.EstimateId).HasName("PK__TblEstim__ABEBF4B5AEEFB2E9");
-
-            entity.ToTable("TblEstimate", "dbo");
-
-            entity.HasIndex(e => e.EstimateNumber, "UQ__TblEstim__0B3C039013833176").IsUnique();
-
-            entity.Property(e => e.EstimateId).HasDefaultValueSql("(newid())");
-            entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
-            entity.Property(e => e.DiscountAmount).HasColumnType("decimal(10, 2)");
-            entity.Property(e => e.EstimateNumber).HasMaxLength(50);
-            entity.Property(e => e.GrandTotal).HasColumnType("decimal(10, 2)");
-            entity.Property(e => e.IsActive).HasDefaultValue(true);
-            entity.Property(e => e.IsDelete).HasDefaultValue(false);
-            entity.Property(e => e.Status)
-                .HasMaxLength(50)
-                .IsUnicode(false);
-            entity.Property(e => e.TaxAmount).HasColumnType("decimal(10, 2)");
-            entity.Property(e => e.TotalPrice).HasColumnType("decimal(10, 2)");
-            entity.Property(e => e.UpdatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
-
-            entity.HasOne(d => d.Job).WithMany(p => p.TblEstimates)
-                .HasForeignKey(d => d.JobId)
-                .HasConstraintName("FK__TblEstima__JobId__5F7E2DAC");
         });
 
         modelBuilder.Entity<TblInvoice>(entity =>
@@ -1149,9 +1116,9 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
             entity.Property(e => e.ModifiedAt).HasColumnType("datetime");
 
-            entity.HasOne(d => d.Option).WithMany(p => p.WindowOptions)
-                .HasForeignKey(d => d.OptionId)
-                .HasConstraintName("FK__WindowOpt__Optio__190BB0C3");
+            entity.HasOne(d => d.OptionType).WithMany(p => p.WindowOptions)
+                .HasForeignKey(d => d.OptionTypeId)
+                .HasConstraintName("FK__WindowOpt__Optio__636EBA21");
 
             entity.HasOne(d => d.Tenant).WithMany(p => p.WindowOptions)
                 .HasForeignKey(d => d.TenantId)
