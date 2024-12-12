@@ -129,6 +129,7 @@ namespace ShutterManagement.Business.Services
                 TblWindow window = new TblWindow
                 {
                     WindowId = Guid.NewGuid(),
+                     AddressId = model.AddressId,
                     Notes = model.Notes,
                     Label = model.Label,
                     Width = model.Width,
@@ -305,10 +306,13 @@ namespace ShutterManagement.Business.Services
 
                    var WindowsData = (from w in dbContext.TblWindows.OrderBy(x=>x.Label)
                                      join wp in dbContext.TblWindowProducts on w.WindowId equals wp.WindowId
+                                     join wop in dbContext.WindowOptions on w.WindowId equals wop.WindowId
+                                     join op in dbContext.TblOptionsTypes on wop.OptionTypeId equals op.OptionTypeId
                                      where w.IsDelete == false && w.TenantId == AppConstant.LoggedInTenantId
                                      select new WindowsList
                                      {
                                          WindowId = w.WindowId,
+                                         AddressId = w.AddressId,
                                          Label = w.Label,
                                          Quantity = w.Quantity,
                                          ArchHeight = w.ArchHeight,
@@ -322,6 +326,8 @@ namespace ShutterManagement.Business.Services
                                          ProductName = wp.Product.ProductName,
                                          ProductTypeId = (Guid)wp.ProductTypeId,
                                          ProductTypeName = wp.ProductType.ProductName,
+                                         OptionTypeId = wop.OptionTypeId.ToString(),
+                                         OptionName = op.OptionType,
                                          IsActive = w.IsActive
                                      }).ToList();
 
@@ -339,6 +345,8 @@ namespace ShutterManagement.Business.Services
                                 (x.ProductTypeName?.ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
                                 (x.Notes ?? "").ToLower().Contains(filter.SearchValue) ||
                                 (x.Width.ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
+                                (x.OptionName ?? "").ToLower().Contains(filter.SearchValue) ||
+                                (x.OptionTypeId.ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
                                 (x.Height.ToString() ?? "").ToLower().Contains(filter.SearchValue))
                         ).ToList();
 
