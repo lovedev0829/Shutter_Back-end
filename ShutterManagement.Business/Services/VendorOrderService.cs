@@ -352,7 +352,9 @@ namespace ShutterManagement.Business.Services
                         (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
                         (string.IsNullOrEmpty(filter.SearchValue) ? true :
                             (x.VendorId.ToString() == filter.SearchValue) ||
-                            (x.OrderNumber?.ToLower().Contains(filter.SearchValue.ToLower()) ?? false) ||
+                            (x.JobId.ToString() == filter.SearchValue) ||
+                            (x.OrderNumber ?? "").Contains(filter.SearchValue.Trim()) ||
+                            (x.OrderDate.ToString() ?? "").Contains(filter.SearchValue.Trim()) ||
                             (x.VendorOrderItems.Any(item => item.MaterialId.ToString().Contains(filter.SearchValue))))
                     )
                     .ToList();

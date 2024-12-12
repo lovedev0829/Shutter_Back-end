@@ -65,7 +65,7 @@ namespace ShutterManagement.Services
                 //    return result;
                 //}
 
-                bool IsEmailExists = await AnyAsync(x => x.IsDelete == false && x.TenantId==AppConstant.LoggedInTenantId &&
+                bool IsEmailExists = await AnyAsync(x => x.IsDelete == false && 
                   (x.Email == UserDetails.Email)
                   //&& AllTenantSubTenants.Contains(x.TenantId.ToString())
                   );
@@ -170,7 +170,7 @@ namespace ShutterManagement.Services
                   //      return result;
                   //  }
 
-                    bool IsEmailExists = await AnyAsync(x => x.IsDelete == false && x.TenantId==AppConstant.LoggedInTenantId &&
+                    bool IsEmailExists = await AnyAsync(x => x.IsDelete == false &&
                       (x.Email == UserDetails.Email) && x.Id != Guid.Parse(UserDetails.UserId)
                       //&& AllTenantSubTenants.Contains(x.TenantId.ToString())
                       );
