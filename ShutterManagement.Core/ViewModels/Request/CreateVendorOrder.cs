@@ -15,9 +15,11 @@ namespace ShutterManagement.Core.ViewModels.Request
 
     public class CreateVendorOrder
     {
+        [DefaultValue("")]
         [Required]
         public Guid? VendorId { get; set; }
 
+        [DefaultValue("")]
         [Required]
         public Guid? JobId { get; set; }
 
@@ -25,12 +27,15 @@ namespace ShutterManagement.Core.ViewModels.Request
         [DefaultValue("")]
         public string? OrderNumber { get; set; }
 
+        [DefaultValue("")]
         [Required]
         public DateTime? OrderDate { get; set; }
 
+        [DefaultValue("")]
         [Required]
         public DateTime? ExpectedDeliveryDate { get; set; }
 
+        [DefaultValue("")]
         [Required]
         public DateTime? ActualDeliveryDate { get; set; }
 
@@ -57,12 +62,12 @@ namespace ShutterManagement.Core.ViewModels.Request
 
         [Required]
         [Range(0.01, double.MaxValue, ErrorMessage = "UnitPrice must be greater than zero.")]
-        public decimal UnitPrice { get; set; }
+        public decimal? UnitPrice { get; set; }
 
         [Required(ErrorMessage = "TotalPrice is required.")]
         [Range(0.01, double.MaxValue, ErrorMessage = "TotalPrice must be greater than zero.")]
         //public decimal TotalPrice { get; set; }
-        public decimal TotalPrice => Quantity * UnitPrice;
+        public decimal? TotalPrice => Quantity * UnitPrice;
     }
 
 }
