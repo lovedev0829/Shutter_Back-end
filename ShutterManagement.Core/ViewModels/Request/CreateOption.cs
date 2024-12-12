@@ -25,8 +25,8 @@ namespace ShutterManagement.Core.ViewModels.Request
         [RegularExpression(@"^[a-zA-Z0-9!@#$%^&*()_+={}\[\]:;""'<>,.?/\|`~ \s-]*$", ErrorMessage = AppConstant.AlphabaticalError)]
         public string? OptionType { get; set; }
 
-        [DefaultValue("")]
-        [Required]
+        //[DefaultValue("")]
+        //[Required]
         public decimal? AdditionalCost { get; set; }
 
         public bool? IsDefault { get; set; }

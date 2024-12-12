@@ -10,6 +10,8 @@ namespace ShutterManagement.Core.ViewModels.Request
 {
     public class VerifyPassword
     {
+        [DefaultValue("")]
+        [Required]
         public string? Token { get; set; }
 
         [DefaultValue("")]
