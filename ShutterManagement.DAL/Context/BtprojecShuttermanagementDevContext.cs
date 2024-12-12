@@ -27,6 +27,8 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
 
     public virtual DbSet<MstModulePermission> MstModulePermissions { get; set; }
 
+    public virtual DbSet<MstPlaceholder> MstPlaceholders { get; set; }
+
     public virtual DbSet<MstProductType> MstProductTypes { get; set; }
 
     public virtual DbSet<MstRegion> MstRegions { get; set; }
@@ -76,6 +78,10 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
     public virtual DbSet<TblTaxExemption> TblTaxExemptions { get; set; }
 
     public virtual DbSet<TblTaxRate> TblTaxRates { get; set; }
+
+    public virtual DbSet<TblTemplate> TblTemplates { get; set; }
+
+    public virtual DbSet<TblTemplatePlaceholder> TblTemplatePlaceholders { get; set; }
 
     public virtual DbSet<TblTenant> TblTenants { get; set; }
 
@@ -181,6 +187,16 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.HasOne(d => d.Module).WithMany(p => p.MstModulePermissions)
                 .HasForeignKey(d => d.ModuleId)
                 .HasConstraintName("FK__MstModule__Modul__58D1301D");
+        });
+
+        modelBuilder.Entity<MstPlaceholder>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToTable("MstPlaceholder", "dbo");
+
+            entity.Property(e => e.Dbvalue).HasColumnName("DBValue");
+            entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
         });
 
         modelBuilder.Entity<MstProductType>(entity =>
@@ -810,6 +826,35 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.HasOne(d => d.Tenant).WithMany(p => p.TblTaxRates)
                 .HasForeignKey(d => d.TenantId)
                 .HasConstraintName("FK__TblTaxRat__Tenan__5EDF0F2E");
+        });
+
+        modelBuilder.Entity<TblTemplate>(entity =>
+        {
+            entity.HasKey(e => e.TemplateId).HasName("PK__TblTempl__F87ADD27F9BFA496");
+
+            entity.ToTable("TblTemplate", "dbo");
+
+            entity.Property(e => e.TemplateId).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.TemplateName)
+                .HasMaxLength(200)
+                .IsUnicode(false);
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+
+            entity.HasOne(d => d.Tenant).WithMany(p => p.TblTemplates)
+                .HasForeignKey(d => d.TenantId)
+                .HasConstraintName("FK__TblTempla__Tenan__31D75E8D");
+        });
+
+        modelBuilder.Entity<TblTemplatePlaceholder>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__TblTempl__3214EC07B9CC024F");
+
+            entity.ToTable("TblTemplatePlaceholder", "dbo");
+
+            entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
         });
 
         modelBuilder.Entity<TblTenant>(entity =>

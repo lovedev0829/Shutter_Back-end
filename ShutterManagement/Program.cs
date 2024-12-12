@@ -133,6 +133,9 @@ builder.Services.AddScoped<IMstContactType,MstContactTypeService>();
 builder.Services.AddScoped<IWindowService,WindowService>();
 builder.Services.AddScoped<IWindowProductService,WindowProduct>();
 builder.Services.AddScoped<IWindowOptionService, WindowOptionService>();
+builder.Services.AddScoped<ITemplatesService, TemplateService>();
+builder.Services.AddScoped<IMstPlaceholderService, MstPlaceholderService>();
+
 builder.Services.AddScoped<IVendorOrderService, VendorOrderService>();
 builder.Services.AddScoped<IVendorItemService, VendorOrderItemService>();
 
