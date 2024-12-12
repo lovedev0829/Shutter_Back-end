@@ -23,6 +23,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? ProductName { get; set; }
         public Guid ProductTypeId { get; set; }
         public string? ProductTypeName { get; set; }
+        public string? OptionTypeId { get; set; }
         public string? OptionName { get; set; }
         public decimal? BuildWidth { get; set; }
         public decimal? BuildHeight { get; set; }
