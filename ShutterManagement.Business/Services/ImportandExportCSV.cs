@@ -47,12 +47,15 @@ namespace ShutterManagement.Business.Services
         public async Task<IResponseVm<string>> ImportCsvToDatabase(Stream csvStream)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
+            int successfulImports = 0;
+            int totalRecords = 0;
             try
             {
                 using (var reader = new StreamReader(csvStream))
                 using (var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture)))
                 {
                     var records = csv.GetRecords<ImportMaterial>().ToList();
+                    totalRecords = records.Count;
 
                     if (records.Count > 0)
                     {
@@ -110,10 +113,31 @@ namespace ShutterManagement.Business.Services
                                 };
 
                                 var createMaterialResponse = await material.Create_Material(materialModel);
+                            if (createMaterialResponse.IsSuccess)
+                            {
+                                successfulImports++;
 
-                                if (!createMaterialResponse.IsSuccess)
+                            }
+                            else
+                            {
+
+                                responseVm.Message = $"Error for {createMaterialResponse.Message}";
+
+                            }
+                            if (successfulImports == totalRecords)
+                            {
+                                responseVm.IsSuccess = true;
+                                responseVm.Message = AppConstant.UploadSuccessMsg;
+                            }
+                            else
+                            {
+                                responseVm.IsSuccess = false;
+                                responseVm.Message = "Failed to import some contacts";
+                            }
+
+                            if (!createMaterialResponse.IsSuccess)
                                 {
-                                    Console.WriteLine($"Error importing record with SKU: {record.SKU}. Error: {createMaterialResponse.Message}");
+                                    responseVm.Message=$"Error importing record.";
                                 }
 
                             }
@@ -134,6 +158,8 @@ namespace ShutterManagement.Business.Services
         public async Task<IResponseVm<string>> ImportCsvForContact(Stream csvStream)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
+            int successfulImports = 0;
+            int totalRecords = 0;
             try
             {
                 using (var reader = new StreamReader(csvStream))
@@ -141,6 +167,7 @@ namespace ShutterManagement.Business.Services
                 {
 
                     var records = csv.GetRecords<ImportContact>().ToList();
+                    totalRecords = records.Count;
 
 
 
@@ -180,15 +207,36 @@ namespace ShutterManagement.Business.Services
                             contactModel.TaxExemptionVm.ExpiryDate = record.TaxExemptionVm?.ExpiryDate;
                         }
                         var createContactResponse = await contactService.Create_Contact(contactModel);
+                        if (createContactResponse.IsSuccess)
+                        {
+                            successfulImports++;
+                            
+                        }
+                        else
+                        {
+
+                            responseVm.Message = $"Error for {record.Name}: {createContactResponse.Message}";
+
+                        }
+                        if (successfulImports == totalRecords)
+                        {
+                            responseVm.IsSuccess = true;
+                            responseVm.Message = AppConstant.UploadSuccessMsg; 
+                        }
+                        else
+                        {
+                            responseVm.IsSuccess = false;
+                            responseVm.Message = "Failed to import some contacts";
+                        }
 
                         if (!createContactResponse.IsSuccess)
                         {
 
                             responseVm.Message = $"Error: {createContactResponse.Message}";
-                            
+
                         }
                     }
-                  
+
 
                 }
             }
@@ -197,12 +245,8 @@ namespace ShutterManagement.Business.Services
             {
                 responseVm.Message = AppConstant.ExceptionError + ex.Message;
             }
-
-
             return responseVm;
-
-  
-                }
+        }
 
         public async Task ExportContactsToCsvAsync(string filePath)
         {

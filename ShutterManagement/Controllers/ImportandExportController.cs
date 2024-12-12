@@ -54,11 +54,12 @@ namespace ShutterManagement.Controllers
                             break;
 
                         default:
-                            responseVm.Message = "Not Imported";
+                            responseVm.Message = "Please Select Material and Contact";
                             return responseVm;
                     }
                   
                 }
+              
                
             }
             catch (Exception ex)
