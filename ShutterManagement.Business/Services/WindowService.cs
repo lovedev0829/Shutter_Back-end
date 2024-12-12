@@ -120,6 +120,11 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.TenantNotFound;
                     return responseVm;
                 }
+                var IsLabelExists = AnyAsync(x => x.Label == model.Label.Trim() && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
+                if (IsLabelExists != null)
+                {
+                    responseVm.Message = "Label" + AppConstant.AlreadyExists;
+                }
 
                 TblWindow window = new TblWindow
                 {
@@ -382,7 +387,11 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.TenantNotFound;
                     return responseVm;
                 }
-
+                var IsjobNameExists = AnyAsync(x => x.Label == model.Label.Trim() && x.WindowId!=model.WindowId && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
+                if (IsjobNameExists != null)
+                {
+                    responseVm.Message = "JobName" + AppConstant.AlreadyExists;
+                }
                 var existingWindow = GetAllQuerable()
                     .FirstOrDefault(c =>
                         c.WindowId == model.WindowId &&
