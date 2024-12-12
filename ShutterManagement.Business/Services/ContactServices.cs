@@ -52,7 +52,7 @@ namespace ShutterManagement.Business.Services
                         && c.IsDelete == false).ToList();
                     if (IsContactExists.Count > 0)
                     {
-                        responseVm.Message = "Email or Phone " + AppConstant.AlreadyExists;
+                        responseVm.Message = $"Email {model.Email} or Phone {model.PhoneNumber} " + AppConstant.AlreadyExists;
                         return responseVm;
                     }
                     if (!model.IsBillingAddressSameAsAddress && model.BillingAddressVm == null)

@@ -44,9 +44,10 @@ namespace ShutterManagement.Business.Services
             this.productType = productType;
         }
 
-        public async Task<IResponseVm<string>> ImportCsvToDatabase(Stream csvStream)
+        public async Task<IResponseVm<List<string>>> ImportCsvToDatabase(Stream csvStream)
         {
-            IResponseVm<string> responseVm = new ResponseVm<string>();
+            IResponseVm<List<string>> responseVm = new ResponseVm<List<string>>();
+            List<string> validationErrors = new List<string>();
             int successfulImports = 0;
             int totalRecords = 0;
             try
@@ -56,6 +57,7 @@ namespace ShutterManagement.Business.Services
                 {
                     var records = csv.GetRecords<ImportMaterial>().ToList();
                     totalRecords = records.Count;
+                    int rowNumber = 1;
 
                     if (records.Count > 0)
                     {
@@ -113,37 +115,31 @@ namespace ShutterManagement.Business.Services
                                 };
 
                                 var createMaterialResponse = await material.Create_Material(materialModel);
-                            if (createMaterialResponse.IsSuccess)
-                            {
-                                successfulImports++;
-
-                            }
-                            else
-                            {
-
-                                responseVm.Message = $"Error for {createMaterialResponse.Message}";
-
-                            }
-                            if (successfulImports == totalRecords)
-                            {
-                                responseVm.IsSuccess = true;
-                                responseVm.Message = AppConstant.UploadSuccessMsg;
-                            }
-                            else
-                            {
-                                responseVm.IsSuccess = false;
-                                responseVm.Message = "Failed to import some contacts";
-                            }
-
                             if (!createMaterialResponse.IsSuccess)
-                                {
-                                    responseVm.Message=$"Error importing record.";
-                                }
-
+                            {
+                                validationErrors.Add($"Error in row {rowNumber}: {createMaterialResponse.Message}");
                             }
+
+                            rowNumber++;
                             
+                            }
+                        if (validationErrors.Any())
+                        {
+                            responseVm.IsSuccess = false;
+                            responseVm.Message = "Errors occurred during the import.";
+                            responseVm.Data = validationErrors;
+                            responseVm.TotalRecords = successfulImports;
+
                         }
+                        else
+                        {
+                            responseVm.IsSuccess = true;
+                            responseVm.Message = AppConstant.UploadSuccessMsg;
+                            responseVm.TotalRecords = successfulImports;
+                        }
+
                     }
+                }
                 
             }
             catch (Exception ex)
@@ -155,9 +151,10 @@ namespace ShutterManagement.Business.Services
 
 
 
-        public async Task<IResponseVm<string>> ImportCsvForContact(Stream csvStream)
+        public async Task<IResponseVm<List<string>>> ImportCsvForContact(Stream csvStream)
         {
-            IResponseVm<string> responseVm = new ResponseVm<string>();
+            IResponseVm<List<string>> responseVm = new ResponseVm<List<string>>();
+            List<string> validationErrors = new List<string>();
             int successfulImports = 0;
             int totalRecords = 0;
             try
@@ -168,9 +165,7 @@ namespace ShutterManagement.Business.Services
 
                     var records = csv.GetRecords<ImportContact>().ToList();
                     totalRecords = records.Count;
-
-
-
+                    int rowNumber = 1;
                     foreach (var record in records)
                     {
 
@@ -207,37 +202,30 @@ namespace ShutterManagement.Business.Services
                             contactModel.TaxExemptionVm.ExpiryDate = record.TaxExemptionVm?.ExpiryDate;
                         }
                         var createContactResponse = await contactService.Create_Contact(contactModel);
-                        if (createContactResponse.IsSuccess)
-                        {
-                            successfulImports++;
-                            
-                        }
-                        else
-                        {
-
-                            responseVm.Message = $"Error for {record.Name}: {createContactResponse.Message}";
-
-                        }
-                        if (successfulImports == totalRecords)
-                        {
-                            responseVm.IsSuccess = true;
-                            responseVm.Message = AppConstant.UploadSuccessMsg; 
-                        }
-                        else
-                        {
-                            responseVm.IsSuccess = false;
-                            responseVm.Message = "Failed to import some contacts";
-                        }
-
                         if (!createContactResponse.IsSuccess)
                         {
-
-                            responseVm.Message = $"Error: {createContactResponse.Message}";
-
+                            validationErrors.Add($"Error in row {rowNumber}: {createContactResponse.Message}");
                         }
+
+                        rowNumber++;  
+                        
+                      
                     }
+                    // string validationErrorString = string.Join(Environment.NewLine, validationErrors);
+                    if (validationErrors.Any())
+                    {
+                        responseVm.IsSuccess = false;
+                        responseVm.Message = "Errors occurred during the import.";
+                        responseVm.Data = validationErrors;
+                        responseVm.TotalRecords = successfulImports;
 
-
+                    }
+                    else
+                    {
+                        responseVm.IsSuccess = true;
+                        responseVm.Message = AppConstant.UploadSuccessMsg;
+                        responseVm.TotalRecords = successfulImports;
+                    }
                 }
             }
 
