@@ -20,8 +20,8 @@ namespace ShutterManagement.Business.Services
         private readonly IWindowProductService windowProductService;
         private readonly IWindowOptionService windowOptionService;
 
-        public WindowService(ITenantService tenantService, 
-            IWindowProductService windowProductService,IWindowOptionService windowOptionService)
+        public WindowService(ITenantService tenantService,
+            IWindowProductService windowProductService, IWindowOptionService windowOptionService)
         {
             this.tenantService = tenantService;
             this.windowProductService = windowProductService;
@@ -52,7 +52,7 @@ namespace ShutterManagement.Business.Services
                          .ToList();
                         if (IsWindowInProduct != null && IsWindowInProduct.Count > 0)
                         {
-                           
+
                             var IsWindowOption = windowOptionService
                             .GetAllQuerable().Where(x => x.WindowId == WindowId &&
                                          x.IsDelete == false &&
@@ -121,22 +121,24 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.TenantNotFound;
                     return responseVm;
                 }
-                var IsLabelExists = AnyAsync(x => x.Label == model.Label.Trim() && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
-                if (IsLabelExists != null)
+                var IsLabelExists = await AnyAsync(x => x.Label == model.Label.Trim() && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
+                if (IsLabelExists)
                 {
                     responseVm.Message = "Label" + AppConstant.AlreadyExists;
+                    return responseVm;
                 }
 
                 TblWindow window = new TblWindow
                 {
                     WindowId = Guid.NewGuid(),
-                     AddressId = model.AddressId,
+                    AddressId = model.AddressId,
                     Notes = model.Notes,
                     Label = model.Label,
                     Width = model.Width,
                     Quantity = model.Quantity,
                     Height = model.Height,
                     ArchHeight = model.ArchHeight,
+                    Photo = model.Photo,
                     CreatedAt = DateTime.Now,
                     CreatedBy = AppConstant.LoggedInUserID,
                     IsActive = true,
@@ -270,7 +272,7 @@ namespace ShutterManagement.Business.Services
                         IsWindowExists.ModifiedBy = AppConstant.LoggedInUserID;
                         await Update(IsWindowExists);
                         responseVm.IsSuccess = true;
-                        responseVm.Message = AppConstant.UpdateSuccessMsg;
+                        responseVm.Message = AppConstant.DeleteSuccessMsg;
                     }
                     else
                     {
@@ -297,7 +299,7 @@ namespace ShutterManagement.Business.Services
 
             try
             {
-               
+
                 var isTenantValid = await tenantService.AnyAsync(x =>
                     x.TenantId == AppConstant.LoggedInTenantId &&
                     x.IsDelete == false &&
@@ -313,7 +315,7 @@ namespace ShutterManagement.Business.Services
                                        group new { w, wp, wop, op } by w.WindowId into g
                                        select new WindowsList
                                        {
-                                          
+
                                            WindowId = g.Key,
                                            AddressId = g.First().w.AddressId,
                                            JobId = g.First().w.JobId,
@@ -324,29 +326,31 @@ namespace ShutterManagement.Business.Services
                                            Width = g.First().w.Width,
                                            Notes = g.First().w.Notes,
                                            Photo = g.First().w.Photo,
-                                           ProductId = g.First().wp.ProductId.GetValueOrDefault(),
-                                           BuildHeight = g.First().wp.BuildHeight.GetValueOrDefault(),
-                                           BuildWidth = g.First().wp.BuildWidth.GetValueOrDefault(),
-                                           ProductName = g.First().wp.Product.ProductName,
-                                           ProductTypeId = g.First().wp.ProductTypeId.GetValueOrDefault(),
-                                           ProductTypeName = g.First().wp.ProductType.ProductName,
+                                           TenantId = g.First().w.TenantId,
                                            IsActive = g.First().w.IsActive,
-                                          
+
                                            ProductDetails = g.GroupBy(x => x.wp.WindowProductId).Select(p => new ProductList
                                            {
+
                                                WindowProductId = p.Key,
+                                               ProductTypeId = p.First().wp.ProductTypeId.GetValueOrDefault(),
+                                               ProductTypeName = g.First().wp.ProductType.ProductName,
                                                ProductId = p.First().wp.ProductId.GetValueOrDefault(),
                                                ProductName = p.First().wp.Product.ProductName,
+                                               BuildHeight = p.First().wp.BuildHeight,
+                                               BuildWidth = p.First().wp.BuildWidth,
                                                WindowOptions = p.Select(x => new WindowOptions
                                                {
                                                    WindowProductId = x.wp.WindowProductId,
                                                    OptionTypeId = x.wop.OptionTypeId.ToString(),
-                                                   OptionName = x.op.OptionType
+                                                   OptionName = x.op.OptionType,
+                                                   AdditionalCost = x.op.AdditionalCost.GetValueOrDefault(),
+
                                                }).ToList()
                                            }).ToList()
                                        }).ToList();
 
-                 
+
                     filter.SearchValue = filter.SearchValue?.Trim().ToLower();
                     var FilterRecords = WindowsData
                         .Where(x =>
@@ -356,8 +360,6 @@ namespace ShutterManagement.Business.Services
                                 (x.WindowId.ToString() == filter.SearchValue) ||
                                 (x.JobId?.ToString() ?? "").Contains(filter.SearchValue) ||
                                 (x.Label ?? "").ToLower().Contains(filter.SearchValue) ||
-                                (x.ProductName?.ToLower().Contains(filter.SearchValue) ?? false) ||
-                                (x.ProductTypeName?.ToLower().Contains(filter.SearchValue) ?? false) ||
                                 (x.Notes?.ToLower().Contains(filter.SearchValue) ?? false) ||
                                 (x.Width.ToString() ?? "").Contains(filter.SearchValue) ||
                                 (x.Height.ToString() ?? "").Contains(filter.SearchValue) ||
@@ -365,10 +367,13 @@ namespace ShutterManagement.Business.Services
                                 x.ProductDetails.Any(p =>
                 p.ProductId.ToString() == filter.SearchValue || 
                 (p.ProductName?.ToLower().Contains(filter.SearchValue) ?? false) || 
+                (p.ProductTypeName?.ToLower().Contains(filter.SearchValue) ?? false) || 
+                (p.ProductTypeId.ToString()?.ToLower().Contains(filter.SearchValue) ?? false) || 
+                (p.ProductId.ToString()?.ToLower().Contains(filter.SearchValue) ?? false) || 
                 p.WindowProductId.ToString() == filter.SearchValue || 
                 p.WindowOptions.Any(o =>
-                    (o.OptionTypeId?.ToLower().Contains(filter.SearchValue) ?? false) || 
-                    (o.OptionName?.ToLower().Contains(filter.SearchValue) ?? false) 
+                    (o.OptionTypeId?.ToLower().Contains(filter.SearchValue) ?? false) ||
+                    (o.OptionName?.ToLower().Contains(filter.SearchValue) ?? false)
                 )
             )
         )
@@ -378,13 +383,13 @@ namespace ShutterManagement.Business.Services
                         .Take(filter.RecordPerPage)
                         .ToList();
 
-               
+
                     responseVm.IsSuccess = true;
                     if (TakenRecords != null)
                     {
                         responseVm.Data = TakenRecords;
                         responseVm.Message = AppConstant.FetchSuccessMsg;
-                        responseVm.TotalRecords = FilterRecords.Count(); 
+                        responseVm.TotalRecords = FilterRecords.Count();
                     }
                     else
                     {
@@ -404,8 +409,6 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-
-
         public async Task<IResponseVm<string>> Update_Window(UpdateWindow model)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
@@ -421,7 +424,7 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.TenantNotFound;
                     return responseVm;
                 }
-                var IsjobNameExists = AnyAsync(x => x.Label == model.Label.Trim() && x.WindowId!=model.WindowId && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
+                var IsjobNameExists = AnyAsync(x => x.Label == model.Label.Trim() && x.WindowId != model.WindowId && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
                 if (IsjobNameExists != null)
                 {
                     responseVm.Message = "JobName" + AppConstant.AlreadyExists;
@@ -531,7 +534,7 @@ namespace ShutterManagement.Business.Services
                     }
                 }
 
-                
+
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.UpdateSuccessMsg;
             }

@@ -43,6 +43,8 @@ public partial class TblWindow
 
     public virtual TblJob? Job { get; set; }
 
+    public virtual ICollection<TblEstimateWindow> TblEstimateWindows { get; set; } = new List<TblEstimateWindow>();
+
     public virtual ICollection<TblWindowProduct> TblWindowProducts { get; set; } = new List<TblWindowProduct>();
 
     public virtual TblTenant? Tenant { get; set; }

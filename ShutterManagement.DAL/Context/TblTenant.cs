@@ -35,8 +35,6 @@ public partial class TblTenant
 
     public virtual TblTenantBrandingInfo? BrandingInfoNavigation { get; set; }
 
-    public virtual ICollection<TblEstimateWindowProductComponentMaterial> EstimateWindowProductComponentMaterials { get; set; } = new List<TblEstimateWindowProductComponentMaterial>();
-
     public virtual ICollection<TblTenant> InverseParentTenant { get; set; } = new List<TblTenant>();
 
     public virtual TblTenant? ParentTenant { get; set; }
@@ -48,6 +46,8 @@ public partial class TblTenant
     public virtual ICollection<TblComponent> TblComponents { get; set; } = new List<TblComponent>();
 
     public virtual ICollection<TblContact> TblContacts { get; set; } = new List<TblContact>();
+
+    public virtual ICollection<TblEstimateWindowProductComponentMaterial> TblEstimateWindowProductComponentMaterials { get; set; } = new List<TblEstimateWindowProductComponentMaterial>();
 
     public virtual ICollection<TblEstimateWindowProductComponent> TblEstimateWindowProductComponents { get; set; } = new List<TblEstimateWindowProductComponent>();
 

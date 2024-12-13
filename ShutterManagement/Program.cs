@@ -139,6 +139,10 @@ builder.Services.AddScoped<IMstPlaceholderService, MstPlaceholderService>();
 builder.Services.AddScoped<IVendorOrderService, VendorOrderService>();
 builder.Services.AddScoped<IVendorItemService, VendorOrderItemService>();
 builder.Services.AddScoped<IEstimateService, EstimateService>();
+builder.Services.AddScoped<IEstimateWindowService, EstimateWindowService>();
+builder.Services.AddScoped<IEstimateWindowProductService, EstimateWindowProductService>();
+builder.Services.AddScoped<IEstimateWindowProductComponentService, EstimateWindowProductComponentService>();
+builder.Services.AddScoped<IEstimateWindowProductComponentMaterialService, EstimateWindowProductComponentMaterialService>();
 
 
 

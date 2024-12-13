@@ -17,11 +17,25 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? TermsCondition { get; set; }
         public string? Notes { get; set; }
         public string? DiscountCoupon { get; set; }
+        public string? Status { get; set; }
         public decimal? SubTotal { get; set; }
         public decimal? Tax { get; set; }
         public decimal? Discount { get; set; }
         public decimal? GrandTotal { get; set; }
         public bool? IsActive { get; set; }
         public DateTime? CreatedDate { get; set; }
+    }
+
+    public class EstimateProductList
+    {
+        public Guid WindowProductId { get; set; }
+        public string Label { get; set; }
+        public Guid ProductType { get; set; }
+        public Guid ProductTypeName { get; set; }
+        public Guid Width { get; set; }
+        public Guid Height { get; set; }
+        public Guid ArchTop { get; set; }
+        public string[] Options { get; set; }
+        public string[] price { get; set; }
     }
 }
