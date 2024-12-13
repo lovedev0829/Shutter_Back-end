@@ -8,6 +8,7 @@ public partial class TblEstimateWindow
     public Guid EstWindowId { get; set; }
 
     public Guid EstimateId { get; set; }
+    public Guid WindowId { get; set; }
 
     public Guid? AddressId { get; set; }
 
