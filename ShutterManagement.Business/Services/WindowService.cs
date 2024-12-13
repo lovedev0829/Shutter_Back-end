@@ -20,7 +20,8 @@ namespace ShutterManagement.Business.Services
         private readonly IWindowProductService windowProductService;
         private readonly IWindowOptionService windowOptionService;
 
-        public WindowService(ITenantService tenantService, IWindowProductService windowProductService,IWindowOptionService windowOptionService)
+        public WindowService(ITenantService tenantService, 
+            IWindowProductService windowProductService,IWindowOptionService windowOptionService)
         {
             this.tenantService = tenantService;
             this.windowProductService = windowProductService;
@@ -296,6 +297,7 @@ namespace ShutterManagement.Business.Services
 
             try
             {
+               
                 var isTenantValid = await tenantService.AnyAsync(x =>
                     x.TenantId == AppConstant.LoggedInTenantId &&
                     x.IsDelete == false &&
@@ -303,64 +305,83 @@ namespace ShutterManagement.Business.Services
 
                 if (isTenantValid)
                 {
+                    var WindowsData = (from w in dbContext.TblWindows.OrderBy(x => x.Label)
+                                       join wp in dbContext.TblWindowProducts on w.WindowId equals wp.WindowId
+                                       join wop in dbContext.WindowOptions on wp.WindowProductId equals wop.WindowProductId
+                                       join op in dbContext.TblOptionsTypes on wop.OptionTypeId equals op.OptionTypeId
+                                       where w.IsDelete == false && w.TenantId == AppConstant.LoggedInTenantId
+                                       group new { w, wp, wop, op } by w.WindowId into g
+                                       select new WindowsList
+                                       {
+                                           WindowId = g.Key,
+                                           AddressId = g.First().w.AddressId,
+                                           Label = g.First().w.Label,
+                                           Quantity = g.First().w.Quantity,
+                                           ArchHeight = g.First().w.ArchHeight,
+                                           Height = g.First().w.Height,
+                                           Width = g.First().w.Width,
+                                           Notes = g.First().w.Notes,
+                                           Photo = g.First().w.Photo,
+                                           ProductId = g.First().wp.ProductId.GetValueOrDefault(),
+                                           BuildHeight = g.First().wp.BuildHeight.GetValueOrDefault(),
+                                           BuildWidth = g.First().wp.BuildWidth.GetValueOrDefault(),
+                                           ProductName = g.First().wp.Product.ProductName,
+                                           ProductTypeId = g.First().wp.ProductTypeId.GetValueOrDefault(),
+                                           ProductTypeName = g.First().wp.ProductType.ProductName,
+                                           IsActive = g.First().w.IsActive,
+                                          
+                                           ProductDetails = g.GroupBy(x => x.wp.WindowProductId).Select(p => new ProductList
+                                           {
+                                               WindowProductId = p.Key,
+                                               ProductId = p.First().wp.ProductId.GetValueOrDefault(),
+                                               ProductName = p.First().wp.Product.ProductName,
+                                               WindowOptions = p.Select(x => new WindowOptions
+                                               {
+                                                   WindowProductId = x.wp.WindowProductId,
+                                                   OptionTypeId = x.wop.OptionTypeId.ToString(),
+                                                   OptionName = x.op.OptionType
+                                               }).ToList()
+                                           }).ToList()
+                                       }).ToList();
 
-                   var WindowsData = (from w in dbContext.TblWindows.OrderBy(x=>x.Label)
-                                     join wp in dbContext.TblWindowProducts on w.WindowId equals wp.WindowId
-                                     join wop in dbContext.WindowOptions on w.WindowId equals wop.WindowId
-                                     join op in dbContext.TblOptionsTypes on wop.OptionTypeId equals op.OptionTypeId
-                                     where w.IsDelete == false && w.TenantId == AppConstant.LoggedInTenantId
-                                     select new WindowsList
-                                     {
-                                         WindowId = w.WindowId,
-                                         AddressId = w.AddressId,
-                                         Label = w.Label,
-                                         Quantity = w.Quantity,
-                                         ArchHeight = w.ArchHeight,
-                                         Height = w.Height,
-                                         Width = w.Width,
-                                         Notes = w.Notes,
-                                         Photo = w.Photo,
-                                         ProductId = (Guid)wp.ProductId,
-                                         BuildHeight = wp.BuildHeight,
-                                         BuildWidth = wp.BuildWidth,
-                                         ProductName = wp.Product.ProductName,
-                                         ProductTypeId = (Guid)wp.ProductTypeId,
-                                         ProductTypeName = wp.ProductType.ProductName,
-                                         OptionTypeId = wop.OptionTypeId.ToString(),
-                                         OptionName = op.OptionType,
-                                         IsActive = w.IsActive
-                                     }).ToList();
-
+                 
                     filter.SearchValue = filter.SearchValue?.Trim().ToLower();
                     var FilterRecords = WindowsData
                         .Where(x =>
                             (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
                             (string.IsNullOrEmpty(filter.SearchValue) ? true :
                                 (x.WindowId.ToString() == filter.SearchValue) ||
-                                (x.AddressId.ToString() == filter.SearchValue) ||
-                                (x.AddressId.ToString() == filter.SearchValue) ||
-                                (x.Label ?? "").ToLower().Contains(filter.SearchValue) || 
-                                (x.ArchHeight.ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
-                                (x.ProductName?.ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
-                                (x.ProductTypeName?.ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
-                                (x.Notes ?? "").ToLower().Contains(filter.SearchValue) ||
-                                (x.Width.ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
-                                (x.OptionName ?? "").ToLower().Contains(filter.SearchValue) ||
-                                (x.OptionTypeId.ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
-                                (x.Height.ToString() ?? "").ToLower().Contains(filter.SearchValue))
-                        ).ToList();
+                                (x.AddressId?.ToString() ?? "").Contains(filter.SearchValue) ||
+                                (x.Label ?? "").ToLower().Contains(filter.SearchValue) ||
+                                (x.ProductName?.ToLower().Contains(filter.SearchValue) ?? false) ||
+                                (x.ProductTypeName?.ToLower().Contains(filter.SearchValue) ?? false) ||
+                                (x.Notes?.ToLower().Contains(filter.SearchValue) ?? false) ||
+                                (x.Width.ToString() ?? "").Contains(filter.SearchValue) ||
+                                (x.Height.ToString() ?? "").Contains(filter.SearchValue) ||
 
+                                x.ProductDetails.Any(p =>
+                p.ProductId.ToString() == filter.SearchValue || 
+                (p.ProductName?.ToLower().Contains(filter.SearchValue) ?? false) || 
+                p.WindowProductId.ToString() == filter.SearchValue || 
+                p.WindowOptions.Any(o =>
+                    (o.OptionTypeId?.ToLower().Contains(filter.SearchValue) ?? false) || 
+                    (o.OptionName?.ToLower().Contains(filter.SearchValue) ?? false) 
+                )
+            )
+        )
+    ).ToList();
                     var TakenRecords = FilterRecords
                         .Skip((filter.PageNo - 1) * filter.RecordPerPage)
                         .Take(filter.RecordPerPage)
                         .ToList();
 
+               
                     responseVm.IsSuccess = true;
-                    if (TakenRecords != null && TakenRecords.Count > 0)
+                    if (TakenRecords != null)
                     {
                         responseVm.Data = TakenRecords;
                         responseVm.Message = AppConstant.FetchSuccessMsg;
-                        responseVm.TotalRecords = FilterRecords.Count;
+                        responseVm.TotalRecords = FilterRecords.Count(); 
                     }
                     else
                     {
@@ -379,6 +400,8 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
+
+
 
         public async Task<IResponseVm<string>> Update_Window(UpdateWindow model)
         {

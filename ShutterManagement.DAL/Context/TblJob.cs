@@ -47,6 +47,8 @@ public partial class TblJob
 
     public virtual MstJobStatus? JobStatusNavigation { get; set; }
 
+    public virtual ICollection<TblEstimate> TblEstimates { get; set; } = new List<TblEstimate>();
+
     public virtual ICollection<TblInvoice> TblInvoices { get; set; } = new List<TblInvoice>();
 
     public virtual ICollection<TblJobComponent> TblJobComponents { get; set; } = new List<TblJobComponent>();

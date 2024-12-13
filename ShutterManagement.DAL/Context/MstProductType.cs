@@ -21,6 +21,8 @@ public partial class MstProductType
 
     public DateTime? CreatedAt { get; set; }
 
+    public virtual ICollection<TblEstimateWindowProductComponentMaterial> EstimateWindowProductComponentMaterials { get; set; } = new List<TblEstimateWindowProductComponentMaterial>();
+
     public virtual ICollection<TblOption> TblOptions { get; set; } = new List<TblOption>();
 
     public virtual ICollection<TblRawMaterial> TblRawMaterials { get; set; } = new List<TblRawMaterial>();

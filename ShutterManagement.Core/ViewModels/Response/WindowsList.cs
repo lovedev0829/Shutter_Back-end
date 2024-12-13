@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ShutterManagement.Core.ViewModels.Response
 {
@@ -23,9 +20,26 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? ProductName { get; set; }
         public Guid ProductTypeId { get; set; }
         public string? ProductTypeName { get; set; }
-        public string? OptionTypeId { get; set; }
-        public string? OptionName { get; set; }
         public decimal? BuildWidth { get; set; }
         public decimal? BuildHeight { get; set; }
+
+
+        public List<ProductList>? ProductDetails { get; set; }
+    }
+
+    public class ProductList
+    {
+        public Guid WindowProductId { get; set; }
+        public Guid ProductId { get; set; }
+        public string? ProductName { get; set; }
+        public List<WindowOptions>? WindowOptions { get; set; }
+    }
+
+    public class WindowOptions
+    {
+        public Guid WindowProductId { get; set; }
+        public string OptionTypeId { get; set; }
+        public string OptionName { get; set; }
+    
     }
 }

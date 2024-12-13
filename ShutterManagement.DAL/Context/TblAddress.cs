@@ -45,6 +45,8 @@ public partial class TblAddress
 
     public virtual TblContact? Contact { get; set; }
 
+    public virtual ICollection<TblEstimateWindow> TblEstimateWindows { get; set; } = new List<TblEstimateWindow>();
+
     public virtual ICollection<TblJob> TblJobs { get; set; } = new List<TblJob>();
 
     public virtual ICollection<TblMeasurement> TblMeasurements { get; set; } = new List<TblMeasurement>();
