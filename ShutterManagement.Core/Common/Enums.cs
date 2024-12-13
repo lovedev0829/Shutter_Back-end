@@ -35,7 +35,7 @@ namespace ShutterManagement.Core.Common
     {
         [EnumMember(Value = "New")]
         New,
-        [EnumMember(Value = "PendingForApproval")]
+        [EnumMember(Value = "Pending For Approval")]
         PendingForApproval,
         [EnumMember(Value = "Approved")]
         Approved,

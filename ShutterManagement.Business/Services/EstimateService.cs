@@ -22,6 +22,8 @@ namespace ShutterManagement.Business.Services
         private readonly BtprojecShuttermanagementDevContext _context;
         private readonly IProductComponentService productComponentService;
         private readonly IComponentService componentService;
+        private readonly IJobService jobService;
+        private readonly IContactService contactService;
         private readonly IComponentMaterial componentMaterialService;
         private readonly IMaterial materialService;
         private readonly IWindowService windowService;
@@ -33,10 +35,13 @@ namespace ShutterManagement.Business.Services
         private readonly IProductService productService;
         private readonly ITenantService tenantService;
         private readonly ClaimsProperty claimsProperty;
+        private readonly EmailHelper emailHelper;
 
         public EstimateService(BtprojecShuttermanagementDevContext context, 
             IProductComponentService productComponentService,
             IComponentService componentService,
+            IJobService jobService,
+            IContactService contactService,
             IComponentMaterial componentMaterialService,
             IMaterial materialService,
             IWindowService windowService,
@@ -46,11 +51,15 @@ namespace ShutterManagement.Business.Services
             IEstimateWindowProductComponentService estimateWindowProductComponentService,
             IEstimateWindowProductComponentMaterialService estimateWindowProductComponentMaterialService,
             IProductService productService,
-            ITenantService tenantService,ClaimsProperty claimsProperty)
+            ITenantService tenantService,ClaimsProperty claimsProperty,
+            EmailHelper emailHelper
+            )
         {
             _context = context;
             this.productComponentService = productComponentService;
             this.componentService = componentService;
+            this.jobService = jobService;
+            this.contactService = contactService;
             this.componentMaterialService = componentMaterialService;
             this.materialService = materialService;
             this.windowService = windowService;
@@ -62,6 +71,7 @@ namespace ShutterManagement.Business.Services
             this.productService = productService;
             this.tenantService = tenantService;
             this.claimsProperty = claimsProperty;
+            this.emailHelper = emailHelper;
         }
 
         public async Task<IResponseVm<string>> Create_Estimate(CreateEstimate model)
@@ -218,8 +228,7 @@ namespace ShutterManagement.Business.Services
 
                                         TblEstimateWindowProductComponentMaterial tblEstimateWindowProductComponentMaterial = new TblEstimateWindowProductComponentMaterial
                                         {
-                                            EstimateWindowProductComponentMaterialId = Guid.NewGuid()
-
+                                            EstimateWindowProductComponentMaterialId = Guid.NewGuid(),
                                             IsDelete = false,
                                             IsActive = true,
                                             CreatedAt = DateTime.Now,
@@ -410,6 +419,8 @@ namespace ShutterManagement.Business.Services
                     {
                         EstimateId = Estimate.EstimateId,
                         CreatedDate = Estimate.CreatedAt,
+                        JobId = Estimate.JobId,
+                        Status = Estimate.Status,
                         IsActive = Estimate.IsActive,
                         Discount = Estimate.DiscountAmount,
                         EstimateName = Estimate.EstimateName,
@@ -419,7 +430,8 @@ namespace ShutterManagement.Business.Services
                         Tax = Estimate.TaxAmount,
                         TermsCondition = Estimate.TermsCondition,
                     };
-
+                    var Productlist = estimateWindowProductService.GetAllQuerable().Where(x => x.EstimateId == e.EstimateId
+                    && x.IsDelete == false).ToList();
                     EstimateList.Add(e);
                 }
                 filter.SearchValue = filter.SearchValue?.Trim().ToLower();
@@ -429,6 +441,7 @@ namespace ShutterManagement.Business.Services
                                     (filter.SearchValue != "" ?
                                     ((x.Notes ?? "").Contains(filter.SearchValue)
                                     || (x.JobId.ToString() ?? "").Contains(filter.SearchValue)
+                                    || (x.Status ?? "").Contains(filter.SearchValue)
                                     || (x.EstimateId.ToString()).Contains(filter.SearchValue)
                                     || (x.EstimateCode ?? "").Contains(filter.SearchValue)
                                     || (x.EstimateName ?? "").Contains(filter.SearchValue)
@@ -444,7 +457,7 @@ namespace ShutterManagement.Business.Services
                 if (TakenRecords != null && TakenRecords.Count > 0)
                 {
                     responseVm.Data = TakenRecords.ToList();
-                    responseVm.Message = AppConstant.UpdateSuccessMsg;
+                    responseVm.Message = AppConstant.FetchSuccessMsg;
                     responseVm.TotalRecords = FilterRecords.Count;
                 }
                 else
@@ -454,6 +467,47 @@ namespace ShutterManagement.Business.Services
 
             }
             catch (Exception ex)
+            {
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+            }
+            return responseVm;
+        }
+
+        public async Task<IResponseVm<string>> SendForApproval(Guid EstimateId)
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+            try
+            {
+                var IsEstimateExists = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId && x.EstimateId == EstimateId).OrderByDescending(x => x.CreatedAt).FirstOrDefault();
+                if (IsEstimateExists == null)
+                {
+                    responseVm.Message = "Estimate " + AppConstant.NoDataFound;
+                    return responseVm;
+                }
+                IsEstimateExists.Status = EstimationValue.GetEnumValue(Estimation.PendingForApproval);
+                IsEstimateExists.UpdatedAt = DateTime.Now;
+                IsEstimateExists.ModifiedBy = AppConstant.LoggedInUserID;
+                await Update(IsEstimateExists);
+
+                var jobData = jobService.GetAllQuerable().Where(x => x.JobId == IsEstimateExists.JobId && x.IsDelete == false).FirstOrDefault();
+                if(jobData != null)
+                {
+                    var contactData = contactService.GetAllQuerable().Where(x => x.ContactId == jobData.ContactId && x.IsDelete == false).FirstOrDefault();
+                    if(contactData != null)
+                    {
+                        var contactEmail = contactData.Email;
+                        SendEmail sendEmail = new SendEmail
+                        {
+                            FromEmail = contactEmail,
+                        };
+                        //emailHelper.SendMail(sendEmail);
+                    }
+                }
+
+                responseVm.IsSuccess = true;
+                responseVm.Message = AppConstant.UpdateSuccessMsg;
+            }
+            catch(Exception ex)
             {
                 responseVm.Message = AppConstant.ExceptionError + ex.Message;
             }

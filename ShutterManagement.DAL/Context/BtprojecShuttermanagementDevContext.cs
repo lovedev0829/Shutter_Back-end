@@ -556,17 +556,18 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
 
         modelBuilder.Entity<TblEstimateWindowProductComponentMaterial>(entity =>
         {
-            entity.HasKey(e => e.RawMaterialId).HasName("PK__Estimate__D99FAE118E9D36A6");
+            entity.HasKey(e => e.EstimateWindowProductComponentMaterialId).HasName("PK__TblEstim__13E8FE878C48B58A");
 
             entity.ToTable("TblEstimateWindowProductComponentMaterial", "dbo");
 
-            entity.Property(e => e.RawMaterialId).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.EstimateWindowProductComponentMaterialId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
             entity.Property(e => e.MaterialName).HasMaxLength(255);
+            entity.Property(e => e.RawMaterialId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.ReorderLevel).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.Sku)
                 .HasMaxLength(50)

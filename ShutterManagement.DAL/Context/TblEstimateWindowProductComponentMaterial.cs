@@ -5,11 +5,9 @@ namespace ShutterManagement.DAL.Context;
 
 public partial class TblEstimateWindowProductComponentMaterial
 {
-    public Guid EstimateWindowProductComponentMaterialId { get; set; }
-
     public Guid EstimateId { get; set; }
 
-    public Guid RawMaterialId { get; set; }
+    public Guid? RawMaterialId { get; set; }
 
     public string? MaterialName { get; set; }
 
@@ -44,6 +42,8 @@ public partial class TblEstimateWindowProductComponentMaterial
     public bool? IsCutSheet { get; set; }
 
     public Guid? ProductType { get; set; }
+
+    public Guid EstimateWindowProductComponentMaterialId { get; set; }
 
     public virtual TblEstimate Estimate { get; set; } = null!;
 
