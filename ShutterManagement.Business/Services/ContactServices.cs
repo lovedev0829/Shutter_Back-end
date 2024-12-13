@@ -37,6 +37,48 @@ namespace ShutterManagement.Business.Services
             this.claimsProperty = claimsProperty;
         }
 
+        public async Task<IResponseVm<string>> GetContactByEmailOrPhone(string email, string phone)
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+            try
+            {
+                var IsTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
+
+                if (IsTenantExists)
+                {
+                    var IsEmailExists = GetAllQuerable()
+                        .Any(c => c.Email == email && c.TenantId == AppConstant.LoggedInTenantId && c.IsDelete == false);
+
+                    var IsPhoneExists = GetAllQuerable()
+                        .Any(c => c.PhoneNumber == phone && c.TenantId == AppConstant.LoggedInTenantId && c.IsDelete == false);
+
+                    if (IsEmailExists && IsPhoneExists)
+                    {
+                        responseVm.Message = $"Email {email} and Phone {phone} {AppConstant.AlreadyExists}";
+                    }
+                    else if (IsEmailExists)
+                    {
+                        responseVm.Message = $"Email {email} {AppConstant.AlreadyExists}";
+                    }
+                    else if (IsPhoneExists)
+                    {
+                        responseVm.Message = $"Phone {phone} {AppConstant.AlreadyExists}";
+                    }
+                }
+                else
+                {
+                    responseVm.Message = AppConstant.TenantNotFound;
+                }
+            }
+            catch (Exception ex)
+            {
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+            }
+            return responseVm;
+        }
+
+
+
         public async Task<IResponseVm<string>> Create_Contact(Sp_Contact model)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();

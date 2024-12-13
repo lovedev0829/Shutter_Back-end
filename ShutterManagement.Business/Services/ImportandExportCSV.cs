@@ -155,6 +155,7 @@ namespace ShutterManagement.Business.Services
         {
             IResponseVm<List<string>> responseVm = new ResponseVm<List<string>>();
             List<string> validationErrors = new List<string>();
+            List<Sp_Contact> validContacts = new List<Sp_Contact>();
             int successfulImports = 0;
             int totalRecords = 0;
             try
@@ -166,6 +167,7 @@ namespace ShutterManagement.Business.Services
                     var records = csv.GetRecords<ImportContact>().ToList();
                     totalRecords = records.Count;
                     int rowNumber = 1;
+                    bool hasValidationError = false;
                     foreach (var record in records)
                     {
 
@@ -201,29 +203,59 @@ namespace ShutterManagement.Business.Services
                             contactModel.TaxExemptionVm.EffectiveDate = record.TaxExemptionVm.EffectiveDate;
                             contactModel.TaxExemptionVm.ExpiryDate = record.TaxExemptionVm?.ExpiryDate;
                         }
-                        var createContactResponse = await contactService.Create_Contact(contactModel);
-                        if (!createContactResponse.IsSuccess)
+
+                        var existingContact = await contactService.GetContactByEmailOrPhone(contactModel.Email, contactModel.PhoneNumber);
+                        if (existingContact.Message != null)
                         {
-                            validationErrors.Add($"Error in row {rowNumber}: {createContactResponse.Message}");
+                            validationErrors.Add($"Error in row {rowNumber}: {existingContact.Message}");
+                            hasValidationError = true; 
+                        }
+                        else
+                        {
+                            validContacts.Add(contactModel);
                         }
 
                         rowNumber++;  
-                        
-                      
+                       
                     }
-                    if (validationErrors.Any())
+                    if (hasValidationError)
                     {
                         responseVm.IsSuccess = false;
-                        responseVm.Message = "Errors occurred during the import.";
+                        responseVm.Message = "Validation errors occurred during the import.";
                         responseVm.Data = validationErrors;
-                        responseVm.TotalRecords = successfulImports;
-
+                        responseVm.TotalRecords = validContacts.Count; 
                     }
                     else
                     {
-                        responseVm.IsSuccess = true;
-                        responseVm.Message = AppConstant.UploadSuccessMsg;
-                        responseVm.TotalRecords = successfulImports;
+
+                        int successfulInserts = 0;
+                        foreach (var contactToInsert in validContacts)
+                        {
+                            var createContactResponse = await contactService.Create_Contact(contactToInsert);
+
+                            if (createContactResponse.IsSuccess)
+                            {
+                                successfulInserts++;
+                            }
+                            else
+                            {
+                                validationErrors.Add($"Error with contact: {createContactResponse.Message}");
+                            }
+                        }
+
+                        if (validationErrors.Any())
+                        {
+                            responseVm.IsSuccess = false;
+                            responseVm.Message = "Some contacts failed to be inserted.";
+                            responseVm.Data = validationErrors; 
+                            responseVm.TotalRecords = successfulInserts; 
+                        }
+                        else
+                        {
+                            responseVm.IsSuccess = true;
+                            responseVm.Message = AppConstant.UploadSuccessMsg; 
+                            responseVm.TotalRecords = successfulInserts;
+                        }
                     }
                 }
             }
