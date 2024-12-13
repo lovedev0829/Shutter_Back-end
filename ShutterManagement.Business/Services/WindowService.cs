@@ -125,6 +125,7 @@ namespace ShutterManagement.Business.Services
                 if (IsLabelExists != null)
                 {
                     responseVm.Message = "Label" + AppConstant.AlreadyExists;
+                    return responseVm;
                 }
 
                 TblWindow window = new TblWindow
@@ -324,19 +325,19 @@ namespace ShutterManagement.Business.Services
                                            Width = g.First().w.Width,
                                            Notes = g.First().w.Notes,
                                            Photo = g.First().w.Photo,
-                                           ProductId = g.First().wp.ProductId.GetValueOrDefault(),
-                                           BuildHeight = g.First().wp.BuildHeight.GetValueOrDefault(),
-                                           BuildWidth = g.First().wp.BuildWidth.GetValueOrDefault(),
-                                           ProductName = g.First().wp.Product.ProductName,
-                                           ProductTypeId = g.First().wp.ProductTypeId.GetValueOrDefault(),
-                                           ProductTypeName = g.First().wp.ProductType.ProductName,
+                                           TenantId = g.First().w.TenantId,
                                            IsActive = g.First().w.IsActive,
                                           
                                            ProductDetails = g.GroupBy(x => x.wp.WindowProductId).Select(p => new ProductList
                                            {
+
                                                WindowProductId = p.Key,
+                                               ProductTypeId = p.First().wp.ProductTypeId.GetValueOrDefault(),
+                                               ProductTypeName = g.First().wp.ProductType.ProductName,
                                                ProductId = p.First().wp.ProductId.GetValueOrDefault(),
                                                ProductName = p.First().wp.Product.ProductName,
+                                               BuildHeight = p.First().wp.BuildHeight,
+                                               BuildWidth = p.First().wp.BuildWidth,
                                                WindowOptions = p.Select(x => new WindowOptions
                                                {
                                                    WindowProductId = x.wp.WindowProductId,
@@ -356,8 +357,6 @@ namespace ShutterManagement.Business.Services
                                 (x.WindowId.ToString() == filter.SearchValue) ||
                                 (x.JobId?.ToString() ?? "").Contains(filter.SearchValue) ||
                                 (x.Label ?? "").ToLower().Contains(filter.SearchValue) ||
-                                (x.ProductName?.ToLower().Contains(filter.SearchValue) ?? false) ||
-                                (x.ProductTypeName?.ToLower().Contains(filter.SearchValue) ?? false) ||
                                 (x.Notes?.ToLower().Contains(filter.SearchValue) ?? false) ||
                                 (x.Width.ToString() ?? "").Contains(filter.SearchValue) ||
                                 (x.Height.ToString() ?? "").Contains(filter.SearchValue) ||
@@ -365,6 +364,9 @@ namespace ShutterManagement.Business.Services
                                 x.ProductDetails.Any(p =>
                 p.ProductId.ToString() == filter.SearchValue || 
                 (p.ProductName?.ToLower().Contains(filter.SearchValue) ?? false) || 
+                (p.ProductTypeName?.ToLower().Contains(filter.SearchValue) ?? false) || 
+                (p.ProductTypeId.ToString()?.ToLower().Contains(filter.SearchValue) ?? false) || 
+                (p.ProductId.ToString()?.ToLower().Contains(filter.SearchValue) ?? false) || 
                 p.WindowProductId.ToString() == filter.SearchValue || 
                 p.WindowOptions.Any(o =>
                     (o.OptionTypeId?.ToLower().Contains(filter.SearchValue) ?? false) || 
