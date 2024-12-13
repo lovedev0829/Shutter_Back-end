@@ -34,6 +34,12 @@ namespace ShutterManagement.Controllers
                 responseVm.Message = "No file uploaded.";
                 return responseVm;
             }
+            var fileExtension = Path.GetExtension(file.FileName).ToLower();
+            if (fileExtension != ".csv" && fileExtension != ".xlsx" && fileExtension != ".xls")
+            {
+                responseVm.Message = AppConstant.InvalidExcelFile;
+                return responseVm;
+            }
             try
             {
                 using (var stream = file.OpenReadStream())

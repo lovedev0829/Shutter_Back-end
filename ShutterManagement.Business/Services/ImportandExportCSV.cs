@@ -115,12 +115,12 @@ namespace ShutterManagement.Business.Services
                                 };
 
                                 var createMaterialResponse = await material.Create_Material(materialModel);
-                            if (!createMaterialResponse.IsSuccess)
-                            {
+                                if (!createMaterialResponse.IsSuccess)
+                                {
                                 validationErrors.Add($"Error in row {rowNumber}: {createMaterialResponse.Message}");
-                            }
+                                }
 
-                            rowNumber++;
+                                rowNumber++;
                             
                             }
                         if (validationErrors.Any())
@@ -211,7 +211,6 @@ namespace ShutterManagement.Business.Services
                         
                       
                     }
-                    // string validationErrorString = string.Join(Environment.NewLine, validationErrors);
                     if (validationErrors.Any())
                     {
                         responseVm.IsSuccess = false;
