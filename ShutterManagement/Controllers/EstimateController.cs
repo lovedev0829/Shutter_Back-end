@@ -29,7 +29,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost("Create")]
         [Authorize(Roles = "EstimateAdd")]
-        public async Task<IActionResult> CreateEstimate([FromBody] Sp_Estimate model)
+        public async Task<IActionResult> CreateEstimate([FromBody] CreateEstimate model)
         {
 
             var res = await _EstimateService.Create_Estimate(model);
@@ -38,7 +38,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost("Update")]
         [Authorize(Roles = "EstimateEdit")]
-        public async Task<IActionResult> UpdateEstimate([FromBody] UpdateEstimate model)
+        public async Task<IActionResult> UpdateEstimate([FromBody] UpdatetEstimate model)
         {
 
             var res = await _EstimateService.Update_Estimate(model);
@@ -54,8 +54,8 @@ namespace ShutterManagement.Controllers
             return Ok(res);
         }
 
-        //[HttpPost("Delete")]
-        //[Authorize(Roles = "EstimateDelete")]
+        [HttpPost("Delete")]
+        [Authorize(Roles = "EstimateDelete")]
         public async Task<IActionResult> DeleteEstimate(string EstimateId)
         {
             Guid guid = Guid.Parse(EstimateId);
