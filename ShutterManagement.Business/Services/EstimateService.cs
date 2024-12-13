@@ -20,8 +20,10 @@ namespace ShutterManagement.Business.Services
     public class EstimateService : BaseRepository<BtprojecShuttermanagementDevContext, TblEstimate>, IEstimateService
     {
         private readonly BtprojecShuttermanagementDevContext _context;
+        private readonly IProductComponentService productComponentService;
         private readonly IComponentService componentService;
         private readonly IComponentMaterial componentMaterialService;
+        private readonly IMaterial materialService;
         private readonly IWindowService windowService;
         private readonly IWindowProductService windowProductService;
         private readonly IEstimateWindowService estimateWindowService;
@@ -33,8 +35,10 @@ namespace ShutterManagement.Business.Services
         private readonly ClaimsProperty claimsProperty;
 
         public EstimateService(BtprojecShuttermanagementDevContext context, 
+            IProductComponentService productComponentService,
             IComponentService componentService,
             IComponentMaterial componentMaterialService,
+            IMaterial materialService,
             IWindowService windowService,
             IWindowProductService windowProductService,
             IEstimateWindowService estimateWindowService,
@@ -45,8 +49,10 @@ namespace ShutterManagement.Business.Services
             ITenantService tenantService,ClaimsProperty claimsProperty)
         {
             _context = context;
+            this.productComponentService = productComponentService;
             this.componentService = componentService;
             this.componentMaterialService = componentMaterialService;
+            this.materialService = materialService;
             this.windowService = windowService;
             this.windowProductService = windowProductService;
             this.estimateWindowService = estimateWindowService;
@@ -161,8 +167,80 @@ namespace ShutterManagement.Business.Services
                                 };
                                 await estimateWindowProductService.Add(tblEstimateWindowProduct);
 
-                                //var componentData = componentService.GetAllQuerable().Where(x=>x.)
+                                var productComponentData = productComponentService.GetAllQuerable().Where(x => x.ProductId == productData.ProductId && x.IsDelete == false).ToList();
+                                if(productComponentData == null || productComponentData.Count == 0)
+                                {
+                                    responseVm.Message = "No Components " + AppConstant.NoDataFound;
+                                    return responseVm;
+                                }
+                                foreach (var component in productComponentData)
+                                {
+                                    var componentData = componentService.GetAllQuerable().Where(x => x.ComponentId == component.ComponentId && x.IsDelete == false).FirstOrDefault();
+                                    if (componentData == null)
+                                    {
+                                        responseVm.Message = "Components " + AppConstant.NoDataFound;
+                                        return responseVm;
+                                    }
 
+                                    TblEstimateWindowProductComponent tblEstimateWindowProductComponent = new TblEstimateWindowProductComponent
+                                    {
+                                        EstimateWindowProductComponentId = Guid.NewGuid(),
+                                        ComponentId = componentData.ComponentId,
+                                        EstimateId = CreateEstimate.EstimateId,
+                                        ComponentName = componentData.ComponentName,
+                                        IsDelete = false,
+                                        IsActive = true,
+                                        CreatedAt = DateTime.Now,
+                                        CreatedBy = AppConstant.LoggedInUserID,
+                                        MarkupPercentage = componentData.MarkupPercentage,
+                                        Notes = componentData.Notes,
+                                        ProductType = componentData.ProductType,
+                                        PricingExpression = componentData.PricingExpression,
+                                        TenantId = AppConstant.LoggedInTenantId,
+                                    };
+                                    await estimateWindowProductComponentService.Add(tblEstimateWindowProductComponent);
+
+                                    var componentMaterialData = componentMaterialService.GetAllQuerable().Where(x => x.ComponentId == componentData.ComponentId && x.IsDelete == false).ToList();
+                                    if (componentMaterialData == null || componentMaterialData.Count == 0)
+                                    {
+                                        responseVm.Message = "No material " + AppConstant.NoDataFound;
+                                        return responseVm;
+                                    }
+
+                                    foreach(var material in componentMaterialData)
+                                    {
+                                        var materialData = materialService.GetAllQuerable().Where(x => x.RawMaterialId == material.RawMaterialId && x.IsDelete == false).FirstOrDefault();
+                                        if (materialData == null)
+                                        {
+                                            responseVm.Message = "Material " + AppConstant.NoDataFound;
+                                            return responseVm;
+                                        }
+
+                                        TblEstimateWindowProductComponentMaterial tblEstimateWindowProductComponentMaterial = new TblEstimateWindowProductComponentMaterial
+                                        {
+                                            EstimateWindowProductComponentMaterialId = Guid.NewGuid()
+
+                                            IsDelete = false,
+                                            IsActive = true,
+                                            CreatedAt = DateTime.Now,
+                                            CreatedBy = AppConstant.LoggedInUserID,
+                                            TenantId = AppConstant.LoggedInTenantId,
+                                            EstimateId = CreateEstimate.EstimateId,
+                                            IsCutSheet = materialData.IsCutSheet,
+                                            MaterialName = materialData.MaterialName,
+                                            Notes = materialData.Notes,
+                                            ProductType = materialData.ProductType,
+                                            ReorderLevel = materialData.ReorderLevel,
+                                            Sku = materialData.Sku,
+                                            StockQuantity = materialData.StockQuantity,
+                                            UnitCost = materialData.UnitCost,
+                                            UnitOfMeasurement = materialData.UnitOfMeasurement,
+                                            VendorId = materialData.VendorId,
+                                            RawMaterialId = materialData.RawMaterialId,
+                                        };
+                                        await estimateWindowProductComponentMaterialService.Add(tblEstimateWindowProductComponentMaterial);
+                                    }
+                                }
                             }
                         }
                         responseVm.IsSuccess = true;
