@@ -409,8 +409,6 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-
-
         public async Task<IResponseVm<string>> Update_Window(UpdateWindow model)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
