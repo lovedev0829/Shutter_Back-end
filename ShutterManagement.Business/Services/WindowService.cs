@@ -138,6 +138,7 @@ namespace ShutterManagement.Business.Services
                     Quantity = model.Quantity,
                     Height = model.Height,
                     ArchHeight = model.ArchHeight,
+                    Photo = model.Photo,
                     CreatedAt = DateTime.Now,
                     CreatedBy = AppConstant.LoggedInUserID,
                     IsActive = true,
