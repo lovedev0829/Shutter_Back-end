@@ -21,16 +21,29 @@ namespace ShutterManagement.Business.Services
     {
         private readonly BtprojecShuttermanagementDevContext _context;
         private readonly IWindowProductService windowProductService;
+        private readonly IEstimateWindowService estimateWindowService;
+        private readonly IEstimateWindowProductService estimateWindowProductService;
+        private readonly IEstimateWindowProductComponentService estimateWindowProductComponentService;
+        private readonly IEstimateWindowProductComponentMaterialService estimateWindowProductComponentMaterialService;
         private readonly IProductService productService;
         private readonly ITenantService tenantService;
         private readonly ClaimsProperty claimsProperty;
 
-        public EstimateService(BtprojecShuttermanagementDevContext context, IWindowProductService windowProductService,
+        public EstimateService(BtprojecShuttermanagementDevContext context, 
+            IWindowProductService windowProductService,
+            IEstimateWindowService estimateWindowService,
+            IEstimateWindowProductService estimateWindowProductService,
+            IEstimateWindowProductComponentService estimateWindowProductComponentService,
+            IEstimateWindowProductComponentMaterialService estimateWindowProductComponentMaterialService,
             IProductService productService,
             ITenantService tenantService,ClaimsProperty claimsProperty)
         {
             _context = context;
             this.windowProductService = windowProductService;
+            this.estimateWindowService = estimateWindowService;
+            this.estimateWindowProductService = estimateWindowProductService;
+            this.estimateWindowProductComponentService = estimateWindowProductComponentService;
+            this.estimateWindowProductComponentMaterialService = estimateWindowProductComponentMaterialService;
             this.productService = productService;
             this.tenantService = tenantService;
             this.claimsProperty = claimsProperty;
@@ -74,17 +87,27 @@ namespace ShutterManagement.Business.Services
                     var res = await Add(CreateEstimate);
                     if (res.EstimateId != Guid.Empty)
                     {
-                        //foreach (var product in model.WindowProductId)
-                        //{
-                        //    filter.SearchValue = product.ToString();
-                        //    var WindowProductData = windowProductService.GetAllQuerable().Where(x => x.WindowProductId == product && x.IsDelete == false).FirstOrDefault();
-                        //    if (WindowProductData != null)
-                        //    {
-                        //        var productData = productService.GetAllQuerable().Where(x => x.ProductId == WindowProductData.ProductId && x.IsDelete == false).FirstOrDefault();
+                        foreach (var product in model.WindowProductId)
+                        {
+                            var WindowProductData = windowProductService.GetAllQuerable().Where(x => x.WindowProductId == product && x.IsDelete == false).FirstOrDefault();
+                            if (WindowProductData != null)
+                            {
+                                TblEstimateWindow tblEstimateWindow = new TblEstimateWindow
+                                {
+                                    EstWindowId = Guid.NewGuid(),
+                                    EstimateId = CreateEstimate.EstimateId,
+                                    IsActive = true,
+                                    IsDelete = false,
+                                    CreatedAt = DateTime.Now,
+                                    CreatedBy = AppConstant.LoggedInUserID,
+                                    TenantId = AppConstant.LoggedInTenantId,
+                                    
+                                };
+                                var productData = productService.GetAllQuerable().Where(x => x.ProductId == WindowProductData.ProductId && x.IsDelete == false).FirstOrDefault();
 
 
-                        //    }
-                        //}
+                            }
+                        }
                         responseVm.IsSuccess = true;
                         responseVm.Message = AppConstant.InsertSuccessMsg;
                     }
@@ -270,6 +293,7 @@ namespace ShutterManagement.Business.Services
                                     (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
                                     (filter.SearchValue != "" ?
                                     ((x.Notes ?? "").Contains(filter.SearchValue)
+                                    || (x.JobId.ToString() ?? "").Contains(filter.SearchValue)
                                     || (x.EstimateId.ToString()).Contains(filter.SearchValue)
                                     || (x.EstimateCode ?? "").Contains(filter.SearchValue)
                                     || (x.EstimateName ?? "").Contains(filter.SearchValue)
