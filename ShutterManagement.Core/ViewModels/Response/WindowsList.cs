@@ -45,6 +45,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public Guid WindowProductId { get; set; }
         public string OptionTypeId { get; set; }
         public string OptionName { get; set; }
+        public decimal AdditionalCost { get; set; }
     
     }
 }

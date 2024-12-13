@@ -342,7 +342,9 @@ namespace ShutterManagement.Business.Services
                                                {
                                                    WindowProductId = x.wp.WindowProductId,
                                                    OptionTypeId = x.wop.OptionTypeId.ToString(),
-                                                   OptionName = x.op.OptionType
+                                                   OptionName = x.op.OptionType,
+                                                   AdditionalCost = x.op.AdditionalCost.GetValueOrDefault(),
+
                                                }).ToList()
                                            }).ToList()
                                        }).ToList();
