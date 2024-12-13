@@ -272,7 +272,7 @@ namespace ShutterManagement.Business.Services
                         IsWindowExists.ModifiedBy = AppConstant.LoggedInUserID;
                         await Update(IsWindowExists);
                         responseVm.IsSuccess = true;
-                        responseVm.Message = AppConstant.UpdateSuccessMsg;
+                        responseVm.Message = AppConstant.DeleteSuccessMsg;
                     }
                     else
                     {
