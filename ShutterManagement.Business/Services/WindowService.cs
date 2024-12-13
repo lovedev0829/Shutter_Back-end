@@ -313,8 +313,10 @@ namespace ShutterManagement.Business.Services
                                        group new { w, wp, wop, op } by w.WindowId into g
                                        select new WindowsList
                                        {
+                                          
                                            WindowId = g.Key,
                                            AddressId = g.First().w.AddressId,
+                                           JobId = g.First().w.JobId,
                                            Label = g.First().w.Label,
                                            Quantity = g.First().w.Quantity,
                                            ArchHeight = g.First().w.ArchHeight,
@@ -351,7 +353,8 @@ namespace ShutterManagement.Business.Services
                             (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
                             (string.IsNullOrEmpty(filter.SearchValue) ? true :
                                 (x.WindowId.ToString() == filter.SearchValue) ||
-                                (x.AddressId?.ToString() ?? "").Contains(filter.SearchValue) ||
+                                (x.WindowId.ToString() == filter.SearchValue) ||
+                                (x.JobId?.ToString() ?? "").Contains(filter.SearchValue) ||
                                 (x.Label ?? "").ToLower().Contains(filter.SearchValue) ||
                                 (x.ProductName?.ToLower().Contains(filter.SearchValue) ?? false) ||
                                 (x.ProductTypeName?.ToLower().Contains(filter.SearchValue) ?? false) ||
