@@ -18,5 +18,6 @@ namespace ShutterManagement.Business.Interfaces
         Task<IResponseVm<string>> ActiveInActiveEstimate(Guid EstimateId);
         Task<IResponseVm<string>> DeleteEstimate(Guid EstimateId);
         Task<IResponseVm<List<EstimateList>>> GetAll_Estimate(Pagination filter);
+        Task<IResponseVm<string>> SendForApproval(Guid EstimateId);
     }
 }
