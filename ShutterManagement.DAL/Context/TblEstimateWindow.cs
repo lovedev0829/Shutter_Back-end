@@ -40,9 +40,13 @@ public partial class TblEstimateWindow
 
     public decimal? Quantity { get; set; }
 
+    public Guid? WindowId { get; set; }
+
     public virtual TblAddress? Address { get; set; }
 
     public virtual TblEstimate Estimate { get; set; } = null!;
 
     public virtual TblTenant? Tenant { get; set; }
+
+    public virtual TblWindow? Window { get; set; }
 }

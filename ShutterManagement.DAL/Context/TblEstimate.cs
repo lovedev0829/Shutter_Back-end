@@ -41,9 +41,9 @@ public partial class TblEstimate
 
     public string? TermsCondition { get; set; }
 
-    public virtual ICollection<TblEstimateWindowProductComponentMaterial> EstimateWindowProductComponentMaterials { get; set; } = new List<TblEstimateWindowProductComponentMaterial>();
-
     public virtual TblJob? Job { get; set; }
+
+    public virtual ICollection<TblEstimateWindowProductComponentMaterial> TblEstimateWindowProductComponentMaterials { get; set; } = new List<TblEstimateWindowProductComponentMaterial>();
 
     public virtual ICollection<TblEstimateWindowProductComponent> TblEstimateWindowProductComponents { get; set; } = new List<TblEstimateWindowProductComponent>();
 

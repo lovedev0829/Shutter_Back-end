@@ -15,8 +15,6 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
     {
     }
 
-    public virtual DbSet<TblEstimateWindowProductComponentMaterial> EstimateWindowProductComponentMaterials { get; set; }
-
     public virtual DbSet<MstContactType> MstContactTypes { get; set; }
 
     public virtual DbSet<MstJobStatus> MstJobStatuses { get; set; }
@@ -56,6 +54,8 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
     public virtual DbSet<TblEstimateWindowProduct> TblEstimateWindowProducts { get; set; }
 
     public virtual DbSet<TblEstimateWindowProductComponent> TblEstimateWindowProductComponents { get; set; }
+
+    public virtual DbSet<TblEstimateWindowProductComponentMaterial> TblEstimateWindowProductComponentMaterials { get; set; }
 
     public virtual DbSet<TblInvoice> TblInvoices { get; set; }
 
@@ -118,46 +118,6 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("btprojec_admin");
-
-        modelBuilder.Entity<TblEstimateWindowProductComponentMaterial>(entity =>
-        {
-            entity.HasKey(e => e.RawMaterialId).HasName("PK__Estimate__D99FAE118E9D36A6");
-
-            entity.ToTable("EstimateWindowProductComponentMaterial", "dbo");
-
-            entity.Property(e => e.RawMaterialId).HasDefaultValueSql("(newid())");
-            entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
-            entity.Property(e => e.IsActive).HasDefaultValue(true);
-            entity.Property(e => e.IsDelete).HasDefaultValue(false);
-            entity.Property(e => e.MaterialName).HasMaxLength(255);
-            entity.Property(e => e.ReorderLevel).HasColumnType("decimal(10, 2)");
-            entity.Property(e => e.Sku)
-                .HasMaxLength(50)
-                .HasColumnName("SKU");
-            entity.Property(e => e.StockQuantity).HasColumnType("decimal(10, 2)");
-            entity.Property(e => e.UnitCost).HasColumnType("decimal(10, 2)");
-            entity.Property(e => e.UnitOfMeasurement)
-                .HasMaxLength(50)
-                .IsUnicode(false);
-            entity.Property(e => e.UpdatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
-
-            entity.HasOne(d => d.Estimate).WithMany(p => p.EstimateWindowProductComponentMaterials)
-                .HasForeignKey(d => d.EstimateId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__EstimateW__Estim__1BB31344");
-
-            entity.HasOne(d => d.ProductTypeNavigation).WithMany(p => p.EstimateWindowProductComponentMaterials)
-                .HasForeignKey(d => d.ProductType)
-                .HasConstraintName("FK__EstimateW__Produ__19CACAD2");
-
-            entity.HasOne(d => d.Tenant).WithMany(p => p.EstimateWindowProductComponentMaterials)
-                .HasForeignKey(d => d.TenantId)
-                .HasConstraintName("FK__EstimateW__Tenan__1ABEEF0B");
-        });
 
         modelBuilder.Entity<MstContactType>(entity =>
         {
@@ -520,6 +480,10 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.HasOne(d => d.Tenant).WithMany(p => p.TblEstimateWindows)
                 .HasForeignKey(d => d.TenantId)
                 .HasConstraintName("FK__TblEstima__Tenan__0B7CAB7B");
+
+            entity.HasOne(d => d.Window).WithMany(p => p.TblEstimateWindows)
+                .HasForeignKey(d => d.WindowId)
+                .HasConstraintName("FK__TblEstima__Windo__1CA7377D");
         });
 
         modelBuilder.Entity<TblEstimateWindowProduct>(entity =>
@@ -588,6 +552,46 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.HasOne(d => d.Tenant).WithMany(p => p.TblEstimateWindowProductComponents)
                 .HasForeignKey(d => d.TenantId)
                 .HasConstraintName("FK__TblEstima__Tenan__04CFADEC");
+        });
+
+        modelBuilder.Entity<TblEstimateWindowProductComponentMaterial>(entity =>
+        {
+            entity.HasKey(e => e.RawMaterialId).HasName("PK__Estimate__D99FAE118E9D36A6");
+
+            entity.ToTable("TblEstimateWindowProductComponentMaterial", "dbo");
+
+            entity.Property(e => e.RawMaterialId).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
+            entity.Property(e => e.IsDelete).HasDefaultValue(false);
+            entity.Property(e => e.MaterialName).HasMaxLength(255);
+            entity.Property(e => e.ReorderLevel).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.Sku)
+                .HasMaxLength(50)
+                .HasColumnName("SKU");
+            entity.Property(e => e.StockQuantity).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.UnitCost).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.UnitOfMeasurement)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+
+            entity.HasOne(d => d.Estimate).WithMany(p => p.TblEstimateWindowProductComponentMaterials)
+                .HasForeignKey(d => d.EstimateId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__EstimateW__Estim__1BB31344");
+
+            entity.HasOne(d => d.ProductTypeNavigation).WithMany(p => p.TblEstimateWindowProductComponentMaterials)
+                .HasForeignKey(d => d.ProductType)
+                .HasConstraintName("FK__EstimateW__Produ__19CACAD2");
+
+            entity.HasOne(d => d.Tenant).WithMany(p => p.TblEstimateWindowProductComponentMaterials)
+                .HasForeignKey(d => d.TenantId)
+                .HasConstraintName("FK__EstimateW__Tenan__1ABEEF0B");
         });
 
         modelBuilder.Entity<TblInvoice>(entity =>
