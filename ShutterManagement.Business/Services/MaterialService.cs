@@ -85,7 +85,7 @@ namespace ShutterManagement.Business.Services
                 var IsSKUExist = _context.TblRawMaterials.Any(x => x.VendorId == model.VendorId && x.Sku == model.SKU.Trim() && x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false);
                 if (IsSKUExist)
                 {
-                    responseVm.Message = "SKU " + AppConstant.AlreadyExists;
+                    responseVm.Message = $"SKU {model.SKU}" + AppConstant.AlreadyExists;
                     return responseVm;
                 }
                

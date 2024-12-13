@@ -25,13 +25,19 @@ namespace ShutterManagement.Controllers
 
         [Authorize]
         [HttpPost("import/{model}")]
-        public async Task<IResponseVm<string>> ImportCsv(string model, IFormFile file)
+        public async Task<IResponseVm<List<string>>> ImportCsv(string model, IFormFile file)
         {
-            IResponseVm<string> responseVm = new ResponseVm<string>();
+            IResponseVm<List<string>> responseVm = new ResponseVm<List<string>>();
             
             if (file == null || file.Length == 0)
             {
                 responseVm.Message = "No file uploaded.";
+                return responseVm;
+            }
+            var fileExtension = Path.GetExtension(file.FileName).ToLower();
+            if (fileExtension != ".csv" && fileExtension != ".xlsx" && fileExtension != ".xls")
+            {
+                responseVm.Message = AppConstant.InvalidExcelFile;
                 return responseVm;
             }
             try
@@ -43,14 +49,12 @@ namespace ShutterManagement.Controllers
                     {
                         case "material":
                             var materialresponse = await importandExportCSV.ImportCsvToDatabase(stream);
-                            responseVm.IsSuccess = materialresponse.IsSuccess;
-                            responseVm.Message = materialresponse.Message;
-                            break;
+                            responseVm = materialresponse;
+                            break;        
 
                         case "contact":
                             var contactresponse = await importandExportCSV.ImportCsvForContact(stream);
-                            responseVm.IsSuccess = contactresponse.IsSuccess;
-                            responseVm.Message = contactresponse.Message;
+                            responseVm = contactresponse;
                             break;
 
                         default:
