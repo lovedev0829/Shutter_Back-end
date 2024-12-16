@@ -19,5 +19,7 @@ namespace ShutterManagement.Business.Interfaces
         Task<IResponseVm<string>> ActiveInactive(string Id);
 
         Task<IResponseVm<List<GetAllJobsdetails>>> GetAll(Pagination filter);
+
+        Task<IResponseVm<List<GetAllJobsdetails>>> GetAllJobsTenant_SubTenant(Pagination filter);
     }
 }
