@@ -24,18 +24,22 @@ namespace ShutterManagement.Core.ViewModels.Response
         public decimal? GrandTotal { get; set; }
         public bool? IsActive { get; set; }
         public DateTime? CreatedDate { get; set; }
+
+        public List<EstimateProductList> EstimateProductLists { get; set; }
     }
 
     public class EstimateProductList
     {
-        public Guid WindowProductId { get; set; }
-        public string Label { get; set; }
-        public Guid ProductType { get; set; }
-        public Guid ProductTypeName { get; set; }
-        public Guid Width { get; set; }
-        public Guid Height { get; set; }
-        public Guid ArchTop { get; set; }
-        public string[] Options { get; set; }
-        public string[] price { get; set; }
+        public Guid EstimateWindowProductId { get; set; }
+        public string? Label { get; set; }
+        public string? ProductType { get; set; }
+        public string? ProductTypeName { get; set; }
+        public decimal? Width { get; set; }
+        public decimal? Height { get; set; }
+
+        
+        //public decimal? ArchTop { get; set; }
+        //public string[] Options { get; set; }
+        //public string[] price { get; set; }
     }
 }

@@ -63,5 +63,7 @@ namespace ShutterManagement.Controllers
             var result = await jobService.GetAll(filter);
             return Ok(result);
         }
+
+
     }
 }

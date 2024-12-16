@@ -13,6 +13,7 @@ using ShutterManagement.Services;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 using System.ComponentModel;
 using ShutterManagement.DAL.Context;
+using ShutterManagement.Business.Services;
 
 namespace ShutterManagement.Controllers
 {
@@ -41,6 +42,7 @@ namespace ShutterManagement.Controllers
         private readonly IRoleService roleService;
         private readonly IRegion region;
         private readonly IMstContactType contactType;
+        private readonly IJobService jobService;
 
         public CommonController(IMasterCreate masterCreate, FileUploadHelper fileUpload, ClaimsProperty claimsProperty,
             IJobTitleService jobTitleService,IMaterial material,IVendorService vendorService 
@@ -48,7 +50,8 @@ namespace ShutterManagement.Controllers
             IJobTypeService jobTypeService,
             IComponentService componentService,IMstProductType mstProductType,
             IAddress address,IOption option,IProductService productService,
-            IUnitofMeasurementService unitofMeasurementService,IRoleService roleService,IRegion region,IMstContactType contactType)
+            IUnitofMeasurementService unitofMeasurementService,IRoleService roleService,IRegion region,
+            IMstContactType contactType ,IJobService jobService)
         {
             this.masterCreate = masterCreate;
             this.fileUpload = fileUpload;
@@ -79,6 +82,7 @@ namespace ShutterManagement.Controllers
             this.roleService = roleService;
             this.region = region;
             this.contactType = contactType;
+            this.jobService = jobService;
         }
 
 
@@ -199,6 +203,15 @@ namespace ShutterManagement.Controllers
         public void SendMail(SendEmail sendEmail)
         {
             emailHelper.SendMail(sendEmail);
+        }
+
+        [HttpPost]
+        [Route("GetAllJobs")]
+        //[Authorize(Roles = "JobView")]
+        public async Task<IActionResult> GetAll()
+        {
+            var result = await jobService.GetAllJobsTenant_SubTenant(filter);
+            return Ok(result);
         }
 
         //[HttpPost]

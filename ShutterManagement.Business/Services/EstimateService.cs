@@ -35,6 +35,7 @@ namespace ShutterManagement.Business.Services
         private readonly IProductService productService;
         private readonly ITenantService tenantService;
         private readonly ClaimsProperty claimsProperty;
+        private readonly IMstProductType productType;
         private readonly EmailHelper emailHelper;
 
         public EstimateService(BtprojecShuttermanagementDevContext context, 
@@ -52,6 +53,7 @@ namespace ShutterManagement.Business.Services
             IEstimateWindowProductComponentMaterialService estimateWindowProductComponentMaterialService,
             IProductService productService,
             ITenantService tenantService,ClaimsProperty claimsProperty,
+            IMstProductType productType,
             EmailHelper emailHelper
             )
         {
@@ -71,6 +73,7 @@ namespace ShutterManagement.Business.Services
             this.productService = productService;
             this.tenantService = tenantService;
             this.claimsProperty = claimsProperty;
+            this.productType = productType;
             this.emailHelper = emailHelper;
         }
 
@@ -394,6 +397,7 @@ namespace ShutterManagement.Business.Services
             {
                 var Estimates = new List<TblEstimate>();
                 List<EstimateList> EstimateList = new List<EstimateList>();
+
                 if (filter.TenantId != "")
                 {
                     var IsRealtedTenant = tenantService.GetAllQuerable().Where(x => x.TenantId.ToString() == filter.TenantId && x.ParentTenantId == AppConstant.LoggedInTenantId && x.IsDelete == false).FirstOrDefault();
@@ -412,7 +416,6 @@ namespace ShutterManagement.Business.Services
                     Estimates = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId).OrderByDescending(x => x.CreatedAt).ToList();
                 }
 
-
                 foreach (var Estimate in Estimates)
                 {
                     EstimateList e = new EstimateList
@@ -430,28 +433,64 @@ namespace ShutterManagement.Business.Services
                         Tax = Estimate.TaxAmount,
                         TermsCondition = Estimate.TermsCondition,
                     };
-                    var Productlist = estimateWindowProductService.GetAllQuerable().Where(x => x.EstimateId == e.EstimateId
-                    && x.IsDelete == false).ToList();
+
+                    var productList = estimateWindowProductService.GetAllQuerable()
+                        .Where(x => x.EstimateId == Estimate.EstimateId && x.IsDelete == false)
+                        .Select(x => new
+                        {
+                            x.EstimateWindowProductId,
+                            x.ProductId,
+                            x.ProductName,
+                            x.ProductType,
+                            x.Width,
+                            x.Height,
+                            x.Color,
+                            x.Notes,
+                            x.WindowId,
+                        }).ToList();
+                    e.WindowProductId = productList.Select(p => p.ProductId).ToArray();
+                    e.EstimateProductLists = productList.Select(p => new EstimateProductList
+                    {
+                        EstimateWindowProductId = p.EstimateWindowProductId,
+                        Label = windowService.GetAllQuerable()
+                                .Where(w => w.WindowId == p.WindowId && w.IsDelete == false)
+                                .Select(pt => pt.Label)
+                                .FirstOrDefault(),
+                        ProductType = p.ProductType,
+                        ProductTypeName = productType.GetAllQuerable()
+                       .Where(pt => pt.ProductId.ToString() == p.ProductType && pt.IsDelete == false)
+                       .Select(pt => pt.ProductName)
+                       .FirstOrDefault (),
+                        Width = p.Width,
+                        Height = p.Height,
+                        //Color = p.Color,
+                        //Notes = p.Notes
+                    }).ToList();
+
                     EstimateList.Add(e);
                 }
+
                 filter.SearchValue = filter.SearchValue?.Trim().ToLower();
                 var FilterRecords = EstimateList
-                                    .Where(x =>
-                                    (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
-                                    (filter.SearchValue != "" ?
-                                    ((x.Notes ?? "").Contains(filter.SearchValue)
-                                    || (x.JobId.ToString() ?? "").Contains(filter.SearchValue)
-                                    || (x.Status ?? "").Contains(filter.SearchValue)
-                                    || (x.EstimateId.ToString()).Contains(filter.SearchValue)
-                                    || (x.EstimateCode ?? "").Contains(filter.SearchValue)
-                                    || (x.EstimateName ?? "").Contains(filter.SearchValue)
-                                    || (x.Notes ?? "").Contains(filter.SearchValue)
-                                    || (x.TermsCondition ?? "").Contains(filter.SearchValue)
-                                    || (x.DiscountCoupon ?? "").Contains(filter.SearchValue)
-                                    || (x.GrandTotal.ToString() ?? "").Contains(filter.SearchValue)
-                                    ) : true)).ToList();
+                    .Where(x =>
+                        (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
+                        (filter.SearchValue != "" ?
+                        ((x.Notes ?? "").Contains(filter.SearchValue)
+                        || (x.JobId.ToString() ?? "").Contains(filter.SearchValue)
+                        || (x.Status ?? "").Contains(filter.SearchValue)
+                        || (x.EstimateId.ToString()).Contains(filter.SearchValue)
+                        || (x.EstimateCode ?? "").Contains(filter.SearchValue)
+                        || (x.EstimateName ?? "").Contains(filter.SearchValue)
+                        || (x.Notes ?? "").Contains(filter.SearchValue)
+                        || (x.TermsCondition ?? "").Contains(filter.SearchValue)
+                        || (x.DiscountCoupon ?? "").Contains(filter.SearchValue)
+                        || (x.GrandTotal.ToString() ?? "").Contains(filter.SearchValue)
+                        ) : true)).ToList();
+
                 var TakenRecords = FilterRecords
-                                    .Skip((filter.PageNo - 1) * filter.RecordPerPage).Take(filter.RecordPerPage).ToList();
+                    .Skip((filter.PageNo - 1) * filter.RecordPerPage)
+                    .Take(filter.RecordPerPage).ToList();
+
                 responseVm.IsSuccess = true;
 
                 if (TakenRecords != null && TakenRecords.Count > 0)
@@ -464,7 +503,6 @@ namespace ShutterManagement.Business.Services
                 {
                     responseVm.Message = AppConstant.NoDataFound;
                 }
-
             }
             catch (Exception ex)
             {
@@ -478,6 +516,8 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
+                
+                
                 var IsEstimateExists = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId && x.EstimateId == EstimateId).OrderByDescending(x => x.CreatedAt).FirstOrDefault();
                 if (IsEstimateExists == null)
                 {
