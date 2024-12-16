@@ -14,6 +14,7 @@ namespace ShutterManagement.Business.Interfaces
      public interface IMaterial : IGenericRepository<TblRawMaterial>
     {
         Task<IResponseVm<string>> Create_Material(CreateMaterial model);
+        Task<IResponseVm<string>> Validate_MaterialExcell(ImportMaterial model);
         Task<IResponseVm<string>> Update_Material(UpdateMaterial model);
         Task<IResponseVm<List<GetAllMaterialVm>>> GetAll_Material(Pagination filter);
         Task<IResponseVm<string>> ActiveInActive(Guid Id);

@@ -48,6 +48,7 @@ namespace ShutterManagement.Business.Services
         {
             IResponseVm<List<string>> responseVm = new ResponseVm<List<string>>();
             List<string> validationErrors = new List<string>();
+            List<CreateMaterial> validMaterials = new List<CreateMaterial>();
             int successfulImports = 0;
             int totalRecords = 0;
             try
@@ -61,12 +62,13 @@ namespace ShutterManagement.Business.Services
 
                     if (records.Count > 0)
                     {
+                        bool hasValidationError = false;
                         foreach (var record in records)
                         {
                             if (record.VendorCode == null)
                             {
                                 responseVm.Message = "VendorCode is required";
-                                return responseVm; 
+                                return responseVm;
                             }
 
                             var vendorId = vendorService.GetAllQuerable()
@@ -76,71 +78,99 @@ namespace ShutterManagement.Business.Services
                             if (vendorId == null)
                             {
                                 responseVm.Message = AppConstant.NoDataFound;
-                                return responseVm; 
+                                return responseVm;
                             }
 
-                                var productTypeId = dbContext.MstProductTypes
-                                    .Where(p => p.ProductName == record.ProductType && p.IsDelete == false)
-                                    .FirstOrDefault();
+                            var productTypeId = dbContext.MstProductTypes
+                                .Where(p => p.ProductName == record.ProductType && p.IsDelete == false)
+                                .FirstOrDefault();
 
-                                if (productTypeId == null)
-                                {
-                                    responseVm.Message = "ProductType is required.";
-                                    return responseVm;
-                                }
-
-                               
-                                var unitOfMeasurement = unitofMeasurement.GetAllQuerable()
-                                    .Where(u => u.UnitofMeasurementName == record.UnitOfMeasurement.Trim() && u.IsDelete == false)
-                                    .FirstOrDefault();
-
-                                if (unitOfMeasurement == null)
-                                {
-                                    responseVm.Message = "UnitOfMeasurement is required.";
-                                    return responseVm;
-                                }
-
-                                var materialModel = new CreateMaterial
-                                {
-                                    SKU = record.SKU?.Trim(),
-                                    MaterialName = record.MaterialName?.Trim(),
-                                    UnitCost = record.UnitCost,
-                                    UnitOfMeasurement = unitOfMeasurement.UnitofMeasurementId.ToString(),
-                                    StockQuantity = record.StockQuantity,
-                                    ReorderLevel = record.ReorderLevel,
-                                    IsCutSheet = record.IsCutSheet,
-                                    VendorId = vendorId.VendorId,
-                                    Notes = record.Notes,
-                                    ProductType = productTypeId.ProductId.ToString(),
-                                };
-
-                                var createMaterialResponse = await material.Create_Material(materialModel);
-                                if (!createMaterialResponse.IsSuccess)
-                                {
-                                validationErrors.Add($"Error in row {rowNumber}: {createMaterialResponse.Message}");
-                                }
-
-                                rowNumber++;
-                            
+                            if (productTypeId == null)
+                            {
+                                responseVm.Message = "ProductType is required.";
+                                return responseVm;
                             }
-                        if (validationErrors.Any())
+
+
+                            var unitOfMeasurement = unitofMeasurement.GetAllQuerable()
+                                .Where(u => u.UnitofMeasurementName == record.UnitOfMeasurement.Trim() && u.IsDelete == false)
+                                .FirstOrDefault();
+
+                            if (unitOfMeasurement == null)
+                            {
+                                responseVm.Message = "UnitOfMeasurement is required.";
+                                return responseVm;
+                            }
+
+                            var materialModel = new CreateMaterial
+                            {
+                                SKU = record.SKU?.Trim(),
+                                MaterialName = record.MaterialName?.Trim(),
+                                UnitCost = record.UnitCost,
+                                UnitOfMeasurement = record.UnitOfMeasurement,
+                                StockQuantity = record.StockQuantity,
+                                ReorderLevel = record.ReorderLevel,
+                                IsCutSheet = record.IsCutSheet,
+                                VendorId = vendorId.VendorId,
+                                Notes = record.Notes,
+                                ProductType = productTypeId.ProductId.ToString(),
+                            };
+
+                            var existingMaterialdata = await material.Validate_MaterialExcell(record);
+                            if (existingMaterialdata.Message != null)
+                            {
+                                validationErrors.Add($"Error in row {rowNumber}: {existingMaterialdata.Message}");
+                                hasValidationError = true;
+                            }
+                            else
+                            {
+                                validMaterials.Add(materialModel);
+                            }
+
+                            rowNumber++;
+                        }
+                        if (hasValidationError)
                         {
                             responseVm.IsSuccess = false;
-                            responseVm.Message = "Errors occurred during the import.";
+                            responseVm.Message = "Validation errors occurred during the import.";
                             responseVm.Data = validationErrors;
-                            responseVm.TotalRecords = successfulImports;
-
+                            responseVm.TotalRecords = validMaterials.Count;
                         }
                         else
                         {
-                            responseVm.IsSuccess = true;
-                            responseVm.Message = AppConstant.UploadSuccessMsg;
-                            responseVm.TotalRecords = successfulImports;
-                        }
 
+                            int successfulInserts = 0;
+                            foreach (var validMaterial in validMaterials)
+                            {
+                                var createMaterialResponse = await material.Create_Material(validMaterial);
+
+                                if (createMaterialResponse.IsSuccess)
+                                {
+                                    successfulInserts++;
+                                }
+                                else
+                                {
+                                    validationErrors.Add($"Error with materials: {createMaterialResponse.Message}");
+                                }
+                            }
+
+                            if (validationErrors.Any())
+                            {
+                                responseVm.IsSuccess = false;
+                                responseVm.Message = "Some Materials failed to be inserted.";
+                                responseVm.Data = validationErrors;
+                                responseVm.TotalRecords = successfulInserts;
+                            }
+                            else
+                            {
+                                responseVm.IsSuccess = true;
+                                responseVm.Message = AppConstant.UploadSuccessMsg;
+                                responseVm.TotalRecords = successfulInserts;
+                            }
+                        }
                     }
+
                 }
-                
             }
             catch (Exception ex)
             {
