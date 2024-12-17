@@ -90,7 +90,6 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
-
 builder.Services.AddScoped<DataServices>();
 builder.Services.AddScoped<EmailHelper>();
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
@@ -135,7 +134,6 @@ builder.Services.AddScoped<IWindowProductService,WindowProduct>();
 builder.Services.AddScoped<IWindowOptionService, WindowOptionService>();
 builder.Services.AddScoped<ITemplatesService, TemplateService>();
 builder.Services.AddScoped<IMstPlaceholderService, MstPlaceholderService>();
-
 builder.Services.AddScoped<IVendorOrderService, VendorOrderService>();
 builder.Services.AddScoped<IVendorItemService, VendorOrderItemService>();
 builder.Services.AddScoped<IEstimateService, EstimateService>();
@@ -143,6 +141,7 @@ builder.Services.AddScoped<IEstimateWindowService, EstimateWindowService>();
 builder.Services.AddScoped<IEstimateWindowProductService, EstimateWindowProductService>();
 builder.Services.AddScoped<IEstimateWindowProductComponentService, EstimateWindowProductComponentService>();
 builder.Services.AddScoped<IEstimateWindowProductComponentMaterialService, EstimateWindowProductComponentMaterialService>();
+builder.Services.AddScoped<IExpressionService, ExpressionService>();
 
 
 

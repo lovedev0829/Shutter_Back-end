@@ -20,6 +20,6 @@ namespace ShutterManagement.Business.Interfaces
 
         Task<IResponseVm<List<GetAllJobsdetails>>> GetAll(Pagination filter);
 
-        Task<IResponseVm<List<GetAllJobsdetails>>> GetAllJobsTenant_SubTenant(Pagination filter);
+        Task<IResponseVm<List<GetAllJobsSubtenant_tenant>>> GetAllJobsTenant_SubTenant(Pagination filter);
     }
 }

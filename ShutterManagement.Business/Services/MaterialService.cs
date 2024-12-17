@@ -1,4 +1,5 @@
-﻿using ShutterManagement.Business.Interfaces;
+﻿using Azure;
+using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core;
 using ShutterManagement.Core.ViewModels;
 using ShutterManagement.Core.ViewModels.Request;
@@ -7,6 +8,7 @@ using ShutterManagement.DAL.Context;
 using ShutterManagement.Services;
 using System;
 using System.Collections.Generic;
+using System.Data.Entity;
 using System.Diagnostics.Metrics;
 using System.Linq;
 using System.Text;
@@ -22,15 +24,17 @@ namespace ShutterManagement.Business.Services
         private readonly ClaimsProperty claimsProperty;
         private readonly ITenantService tenantService;
         private readonly IComponentMaterial componentMaterial;
+        private readonly IUnitofMeasurementService unitofMeasurementService;
 
         public MaterialService(BtprojecShuttermanagementDevContext context, IVendorService vendorService,
-            ClaimsProperty claimsProperty, ITenantService tenantService,IComponentMaterial componentMaterial)
+            ClaimsProperty claimsProperty, ITenantService tenantService,IComponentMaterial componentMaterial,IUnitofMeasurementService unitofMeasurementService)
         {
             _context = context;
             this.vendorService = vendorService;
             this.claimsProperty = claimsProperty;
             this.tenantService = tenantService;
             this.componentMaterial = componentMaterial;
+            this.unitofMeasurementService = unitofMeasurementService;
         }
 
         public async Task<IResponseVm<string>> ActiveInActive(Guid Id)
@@ -72,6 +76,52 @@ namespace ShutterManagement.Business.Services
                 responseVm.Message = AppConstant.ExceptionError + ex.Message;
             }
 
+            return responseVm;
+        }
+        public async Task<IResponseVm<string>> Validate_MaterialExcell(ImportMaterial model)
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+            try
+            {
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsActive == true && x.IsDelete == false);
+               
+                if(IsTenant)
+                {
+                    var VendorExit = vendorService.GetAllQuerable().Where(v => v.VendorCode == model.VendorCode && v.IsDelete == false)
+                                   .FirstOrDefault();
+                    var IsSKUExist = _context.TblRawMaterials.Any(x => x.VendorId == VendorExit.VendorId && x.Sku == model.SKU.Trim() && x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false);
+                    var GetAllVendorList = vendorService.GetAllQuerable()
+                    .Where(x => x.IsActive == true && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId).ToList();
+                    var GetAllUnitOfMeasureList = unitofMeasurementService.GetAllQuerable()
+                    .Where(x => x.IsActive == true && x.IsDelete == false).ToList();
+                    var CheckExistingVendorbyCode = GetAllVendorList.Any(x => x.VendorCode == model.VendorCode);
+                    var CheckExistingUnitOfMeasurebyCode = GetAllUnitOfMeasureList.Any(x => x.UnitofMeasurementName == model.UnitOfMeasurement);
+                    if (IsSKUExist)
+                    {
+                        responseVm.Message = $"SKU {model.SKU}" + AppConstant.AlreadyExists;
+                        return responseVm;
+                    }
+                    if (!CheckExistingVendorbyCode || !CheckExistingUnitOfMeasurebyCode)
+                    {
+                        responseVm.Message = $"Vendor Code {model.VendorCode} " +
+                            $"or Unit of Measurement {model.UnitOfMeasurement} is Not Valid";
+                    }
+                    
+                   
+                }
+                else
+                {
+                    responseVm.Message = AppConstant.TenantNotFound;
+                    return responseVm;
+                }
+                
+
+            }
+            catch(Exception ex) 
+            {
+
+            }
+            
             return responseVm;
         }
 
@@ -349,5 +399,7 @@ namespace ShutterManagement.Business.Services
             }
             return (responseVm);
         }
+
+       
     }
 }
