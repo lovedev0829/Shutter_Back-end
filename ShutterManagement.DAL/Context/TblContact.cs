@@ -47,6 +47,8 @@ public partial class TblContact
 
     public virtual ICollection<TblContactRole> TblContactRoles { get; set; } = new List<TblContactRole>();
 
+    public virtual ICollection<TblDiscount> TblDiscounts { get; set; } = new List<TblDiscount>();
+
     public virtual ICollection<TblJob> TblJobs { get; set; } = new List<TblJob>();
 
     public virtual ICollection<TblTaxExemption> TblTaxExemptions { get; set; } = new List<TblTaxExemption>();

@@ -47,6 +47,8 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
 
     public virtual DbSet<TblContactRole> TblContactRoles { get; set; }
 
+    public virtual DbSet<TblDiscount> TblDiscounts { get; set; }
+
     public virtual DbSet<TblEstimate> TblEstimates { get; set; }
 
     public virtual DbSet<TblEstimateWindow> TblEstimateWindows { get; set; }
@@ -409,6 +411,26 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.HasOne(d => d.Contact).WithMany(p => p.TblContactRoles)
                 .HasForeignKey(d => d.ContactId)
                 .HasConstraintName("FK__TblContac__Conta__5E8A0973");
+        });
+
+        modelBuilder.Entity<TblDiscount>(entity =>
+        {
+            entity.HasKey(e => e.DiscountId).HasName("PK__TblDisco__E43F6D96ED6254AF");
+
+            entity.ToTable("TblDiscount", "dbo");
+
+            entity.Property(e => e.DiscountId).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.CouponCode).HasMaxLength(20);
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.ExpiryDate).HasColumnType("datetime");
+            entity.Property(e => e.FixedAmount).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.PercentageDiscount).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.StartDate).HasColumnType("datetime");
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+
+            entity.HasOne(d => d.Customer).WithMany(p => p.TblDiscounts)
+                .HasForeignKey(d => d.CustomerId)
+                .HasConstraintName("FK_Customer");
         });
 
         modelBuilder.Entity<TblEstimate>(entity =>

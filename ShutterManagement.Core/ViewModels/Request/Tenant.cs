@@ -27,7 +27,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         [DefaultValue("")]
         public string? LastName { get; set; }
         [Required]
-        [MaxLength(20)]
+        [StringLength(10, MinimumLength = 3)]
         [DefaultValue("")]
         public string? Code { get; set; }
         [Required]
