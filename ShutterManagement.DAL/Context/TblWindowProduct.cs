@@ -35,6 +35,8 @@ public partial class TblWindowProduct
 
     public virtual MstProductType? ProductType { get; set; }
 
+    public virtual ICollection<TblEstimateWindowProduct> TblEstimateWindowProducts { get; set; } = new List<TblEstimateWindowProduct>();
+
     public virtual TblTenant? Tenant { get; set; }
 
     public virtual TblWindow? Window { get; set; }

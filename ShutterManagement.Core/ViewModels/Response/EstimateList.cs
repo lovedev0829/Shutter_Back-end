@@ -25,7 +25,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public bool? IsActive { get; set; }
         public DateTime? CreatedDate { get; set; }
 
-        public List<EstimateProductList> EstimateProductLists { get; set; }
+        public List<EstimateProductList> EstimateProductList { get; set; } = new List<EstimateProductList>();
     }
 
     public class EstimateProductList
@@ -36,10 +36,16 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? ProductTypeName { get; set; }
         public decimal? Width { get; set; }
         public decimal? Height { get; set; }
+        public decimal? ArchHeight { get; set; }
+        public string? ProductName { get; set; }
+        public Guid? WindowProductId { get; set; }
 
-        
         //public decimal? ArchTop { get; set; }
-        //public string[] Options { get; set; }
+        public List<OptionList> Options { get; set; } = new List<OptionList>();
         //public string[] price { get; set; }
+    }
+    public class OptionList
+    {
+        public string? OptionName { get; set; }
     }
 }

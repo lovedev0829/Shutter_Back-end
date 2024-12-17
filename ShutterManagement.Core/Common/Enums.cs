@@ -24,10 +24,15 @@ namespace ShutterManagement.Core.Common
 
     public enum ModuleName
     {
+        [EnumMember(Value = "JOB")]
         Job,
+        [EnumMember(Value = "EST")]
         Estimation,
+        [EnumMember(Value = "ORD")]
         Order,
+        [EnumMember(Value = "INV")]
         Invoice,
+        [EnumMember(Value = "VEN")]
         Vendor
     }
 
@@ -41,7 +46,7 @@ namespace ShutterManagement.Core.Common
         Approved,
     }
 
-    public static class EstimationValue
+    public static class EnumValue
     {
         public static string GetEnumValue<T>(T enumValue) where T : Enum
         {

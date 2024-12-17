@@ -49,7 +49,11 @@ public partial class TblEstimateWindowProduct
 
     public Guid? TenantId { get; set; }
 
+    public Guid? WindowProductId { get; set; }
+
     public virtual TblEstimate Estimate { get; set; } = null!;
 
     public virtual TblTenant? Tenant { get; set; }
+
+    public virtual TblWindowProduct? WindowProduct { get; set; }
 }
