@@ -1,4 +1,5 @@
-﻿using ShutterManagement.Business.Interfaces;
+﻿using System.Linq;
+using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core;
 using ShutterManagement.Core.Common;
 using ShutterManagement.Core.ViewModels;
@@ -6,6 +7,8 @@ using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.Core.ViewModels.Response;
 using ShutterManagement.DAL.Context;
 using ShutterManagement.Services;
+using Microsoft.EntityFrameworkCore;
+using static ShutterManagement.Core.ViewModels.Response.GetAllJobsSubtenant_tenant;
 
 namespace ShutterManagement.Business.Services
 {
@@ -304,75 +307,85 @@ namespace ShutterManagement.Business.Services
         }
 
 
-        public async Task<IResponseVm<List<GetAllJobsdetails>>> GetAllJobsTenant_SubTenant(Pagination filter)
+        public async Task<IResponseVm<List<GetAllJobsSubtenant_tenant>>> GetAllJobsTenant_SubTenant(Pagination filter)
         {
-
-            IResponseVm<List<GetAllJobsdetails>> responseVm = new ResponseVm<List<GetAllJobsdetails>>();
+            IResponseVm<List<GetAllJobsSubtenant_tenant>> responseVm = new ResponseVm<List<GetAllJobsSubtenant_tenant>>();
             try
             {
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId.ToString() == AppConstant.LoggedInParentTenantId && x.IsDelete == false && x.IsActive == true);
-                //var subTenantlist 
+               
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false && x.IsActive == true);
+
+                var subTenantlist = (await tenantService.GetAll())
+                  .Where(x => x.ParentTenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false)
+                  .Select(pt => pt.TenantId)
+                  .ToList(); 
+
                 if (IsTenant)
                 {
-                    var JobList = (from t2 in _context.TblJobs.OrderByDescending(x => x.CreatedAt)
-                                   join t1 in _context.TblAddresses on t2.AddressId equals t1.AddressId
-                                   join t3 in _context.MstJobTypes on t2.JobType equals t3.Id
-                                   join t4 in _context.TblUsers on t2.AssignedPersonnel equals t4.Id
-                                   join t5 in _context.MstJobStatuses on t2.JobStatus equals t5.JobStatusId
-                                   join t6 in _context.TblContacts on t2.ContactId equals t6.ContactId
-                                   join t7 in _context.TblTenants on t2.TenantId equals t7.TenantId  
-                                   where (t2.TenantId == AppConstant.LoggedInTenantId || t2.TenantId == t7.ParentTenantId)  
-                                         && t2.IsDelete == false
-                                   select new GetAllJobsdetails
-                                   {
-                                       IsActive = t2.IsActive,
-                                       JobId = t2.JobId,
-                                       JobName = t2.JobName,
-                                       ContactId = t2.ContactId,
-                                       ContactName = t6.Name,
-                                       AddressId = t2.AddressId,
-                                       JobType = t3.Id,
-                                       JobTypeName = t3.JobTypeName,
-                                       AssignedPersonnel = t4.Id,
-                                       AssignedPersonnelName = t4.FirstName + " " + t4.LastName,
-                                       ScheduledDate = t2.ScheduledDate,
-                                       JobStatus = t5.JobStatusId,
-                                       JobStatusName = t5.JobStatusName,
-                                       Notes = t2.Notes,
-                                       AttachmentsAny = t2.AttachmentAny,
-                                       Label = t1.Label,
-                                       StreetAddress = t1.StreetAddress,
-                                       City = t1.City,
-                                       State = t1.State,
-                                       ZipCode = t1.ZipCode,
-                                       JobUniqueCode = t2.JobUniqueId,
-                                   }).ToList();
+                    var JobList = await (from t2 in _context.TblJobs.OrderByDescending(x => x.CreatedAt)
+                                         join t1 in _context.TblAddresses on t2.AddressId equals t1.AddressId
+                                         join t3 in _context.MstJobTypes on t2.JobType equals t3.Id
+                                         join t4 in _context.TblUsers on t2.AssignedPersonnel equals t4.Id
+                                         join p1 in _context.TblUsers on t2.CreatedBy equals p1.Id
+                                         join p2 in _context.TblTenants on t2.TenantId equals p2.TenantId
+                                         join t5 in _context.MstJobStatuses on t2.JobStatus equals t5.JobStatusId
+                                         join t6 in _context.TblContacts on t2.ContactId equals t6.ContactId
+                                         where t2.TenantId == AppConstant.LoggedInTenantId || subTenantlist.Contains((Guid)t2.TenantId)
+                                         select new GetAllJobsSubtenant_tenant
+                                         {
+                                             IsActive = t2.IsActive,
+                                             JobId = t2.JobId,
+                                             JobName = t2.JobName,
+                                             ContactId = t2.ContactId,
+                                             ContactName = t6.Name,
+                                             AddressId = t2.AddressId,
+                                             JobType = t3.Id,
+                                             JobTypeName = t3.JobTypeName,
+                                             AssignedPersonnel = t4.Id,
+                                             AssignedPersonnelName = t4.FirstName + " " + t4.LastName,
+                                             ScheduledDate = t2.ScheduledDate,
+                                             JobStatus = t5.JobStatusId,
+                                             JobStatusName = t5.JobStatusName,
+                                             Notes = t2.Notes,
+                                             AttachmentsAny = t2.AttachmentAny,
+                                             Label = t1.Label,
+                                             StreetAddress = t1.StreetAddress,
+                                             City = t1.City,
+                                             State = t1.State,
+                                             ZipCode = t1.ZipCode,
+                                             JobUniqueCode = t2.JobUniqueId,
+                                             CreatedBy = t2.CreatedBy.ToString(),
+                                             CreatedbyUsername = p1.FirstName + " " + p1.LastName,
+                                             SubtenantName = p2.FirstName + " " + p2.LastName
+                                         }).ToListAsync();
 
+                   
                     filter.SearchValue = filter.SearchValue?.Trim().ToLower();
+
                     var FilterRecords = JobList
-                                    .Where(x =>
-                                    (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
-                                      (string.IsNullOrEmpty(filter.JobStatus) ? true : (filter.JobStatus == x.JobStatus.ToString())) &&
-                                      (string.IsNullOrEmpty(filter.Address) ? true : (filter.Address == x.AddressId.ToString())) &&
-                                      (string.IsNullOrEmpty(filter.SearchValue) ? true :
-                                        (x.JobId.ToString() == filter.SearchValue) ||
-                                        (x.ContactId.ToString() == filter.SearchValue) ||
-                                        (x.JobStatus.ToString() == filter.SearchValue) ||
-                                        (x.AddressId.ToString() == filter.SearchValue)
-                                        || (x.JobName ?? "").ToLower().Contains(filter.SearchValue)
-                                        || (x.ContactName ?? "").ToLower().Contains(filter.SearchValue)
-                                        || (x.JobType.ToString() ?? "").ToLower().Contains(filter.SearchValue)
-                                        || (x.JobTypeName ?? "").ToLower().Contains(filter.SearchValue)
-                                        || (x.AssignedPersonnelName ?? "").ToLower().Contains(filter.SearchValue)
-                                        || (x.JobStatus.ToString() ?? "").ToLower().Contains(filter.SearchValue)
-                                        || (x.AssignedPersonnel.ToString() ?? "").ToLower().Contains(filter.SearchValue)
-                                        || (x.Notes.ToString() ?? "").ToLower().Contains(filter.SearchValue)
-                                        || (x.Label ?? "").ToLower().Contains(filter.SearchValue)
-                                        || (x.StreetAddress ?? "").ToLower().Contains(filter.SearchValue)
-                                        || (x.State ?? "").ToLower().Contains(filter.SearchValue)
-                                        || (x.ZipCode ?? "").ToLower().Contains(filter.SearchValue)
-                                        || (x.City ?? "").ToLower().Contains(filter.SearchValue)))
-                                    .ToList();
+                        .Where(x =>
+                            (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
+                            (string.IsNullOrEmpty(filter.JobStatus) ? true : (filter.JobStatus == x.JobStatus.ToString())) &&
+                            (string.IsNullOrEmpty(filter.Address) ? true : (filter.Address == x.AddressId.ToString())) &&
+                            (string.IsNullOrEmpty(filter.SearchValue) ? true :
+                                (x.JobId.ToString() == filter.SearchValue) ||
+                                (x.ContactId.ToString() == filter.SearchValue) ||
+                                (x.JobStatus.ToString() == filter.SearchValue) ||
+                                (x.AddressId.ToString() == filter.SearchValue)
+                                || (x.JobName ?? "").ToLower().Contains(filter.SearchValue)
+                                || (x.ContactName ?? "").ToLower().Contains(filter.SearchValue)
+                                || (x.JobType.ToString() ?? "").ToLower().Contains(filter.SearchValue)
+                                || (x.JobTypeName ?? "").ToLower().Contains(filter.SearchValue)
+                                || (x.AssignedPersonnelName ?? "").ToLower().Contains(filter.SearchValue)
+                                || (x.JobStatus.ToString() ?? "").ToLower().Contains(filter.SearchValue)
+                                || (x.AssignedPersonnel.ToString() ?? "").ToLower().Contains(filter.SearchValue)
+                                || (x.Notes.ToString() ?? "").ToLower().Contains(filter.SearchValue)
+                                || (x.Label ?? "").ToLower().Contains(filter.SearchValue)
+                                || (x.StreetAddress ?? "").ToLower().Contains(filter.SearchValue)
+                                || (x.State ?? "").ToLower().Contains(filter.SearchValue)
+                                || (x.ZipCode ?? "").ToLower().Contains(filter.SearchValue)
+                                || (x.City ?? "").ToLower().Contains(filter.SearchValue)))
+                        .ToList();
 
                     var TakenRecords = FilterRecords
                         .Skip((filter.PageNo - 1) * filter.RecordPerPage)
@@ -380,7 +393,7 @@ namespace ShutterManagement.Business.Services
                         .ToList();
 
                     responseVm.Data = TakenRecords;
-                    responseVm.TotalRecords = FilterRecords.Count;
+                    responseVm.TotalRecords = FilterRecords.Count();
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.FetchSuccessMsg;
                 }
@@ -396,7 +409,9 @@ namespace ShutterManagement.Business.Services
             }
 
             return responseVm;
-
         }
+
+
+
     }
 }

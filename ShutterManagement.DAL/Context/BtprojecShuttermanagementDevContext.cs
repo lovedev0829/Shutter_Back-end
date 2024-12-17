@@ -57,6 +57,8 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
 
     public virtual DbSet<TblEstimateWindowProductComponentMaterial> TblEstimateWindowProductComponentMaterials { get; set; }
 
+    public virtual DbSet<TblExpression> TblExpressions { get; set; }
+
     public virtual DbSet<TblInvoice> TblInvoices { get; set; }
 
     public virtual DbSet<TblJob> TblJobs { get; set; }
@@ -522,6 +524,10 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.HasOne(d => d.Tenant).WithMany(p => p.TblEstimateWindowProducts)
                 .HasForeignKey(d => d.TenantId)
                 .HasConstraintName("FK__TblEstima__Tenan__0E591826");
+
+            entity.HasOne(d => d.WindowProduct).WithMany(p => p.TblEstimateWindowProducts)
+                .HasForeignKey(d => d.WindowProductId)
+                .HasConstraintName("FK__TblEstima__Windo__3296789C");
         });
 
         modelBuilder.Entity<TblEstimateWindowProductComponent>(entity =>
@@ -593,6 +599,18 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.HasOne(d => d.Tenant).WithMany(p => p.TblEstimateWindowProductComponentMaterials)
                 .HasForeignKey(d => d.TenantId)
                 .HasConstraintName("FK__EstimateW__Tenan__1ABEEF0B");
+        });
+
+        modelBuilder.Entity<TblExpression>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__TblExpre__3214EC071EF09971");
+
+            entity.ToTable("TblExpression");
+
+            entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.ExpressionName).HasMaxLength(100);
+            entity.Property(e => e.UpdateAt).HasColumnType("datetime");
         });
 
         modelBuilder.Entity<TblInvoice>(entity =>

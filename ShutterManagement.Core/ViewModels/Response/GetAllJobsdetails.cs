@@ -39,6 +39,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? State { get; set; }
         public string? ZipCode { get; set; }
         public string? JobUniqueCode { get; set; }
+        
       
     }
 }
