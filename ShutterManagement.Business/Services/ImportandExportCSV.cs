@@ -17,6 +17,9 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 using Microsoft.AspNetCore.Mvc;
 using ShutterManagement.Core.SPModel.SP_Responses;
 using static Microsoft.AspNetCore.Hosting.Internal.HostingApplication;
+using Azure;
+using ShutterManagement.Core.ViewModels.Response;
+using System.Data.Entity;
 
 namespace ShutterManagement.Business.Services
 {
@@ -30,11 +33,13 @@ namespace ShutterManagement.Business.Services
         private readonly ClaimsProperty claimsProperty;
         private readonly IUnitofMeasurementService unitofMeasurement;
         private readonly ITenantService tenantService;
+        private readonly ITaxExemption taxExemptionService;
+        private readonly IContactBillingService billingService;
         private readonly IMstProductType productType;
 
         public ImportandExportCSV(BtprojecShuttermanagementDevContext context,IVendorService vendorService, 
             IMaterial material, IContactService contactService, ClaimsProperty claimsProperty,
-            IUnitofMeasurementService unitofMeasurement,ITenantService tenantService)
+            IUnitofMeasurementService unitofMeasurement,ITenantService tenantService ,ITaxExemption taxExemptionService, IContactBillingService billingService ,BtprojecShuttermanagementDevContext btprojecShuttermanagementDevContext)
         {
             dbContext = context;
             this.vendorService = vendorService;
@@ -43,6 +48,9 @@ namespace ShutterManagement.Business.Services
             this.claimsProperty = claimsProperty;
             this.unitofMeasurement = unitofMeasurement;
             this.tenantService = tenantService;
+            this.taxExemptionService = taxExemptionService;
+            this.billingService = billingService;
+
             this.productType = productType;
         }
 
@@ -317,27 +325,165 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        public async Task ExportContactsToCsvAsync(string filePath)
+        public async Task<IResponseVm<dynamic>> ExportContactsToCsvAsync(string filePath)
         {
-     
-            var vendors = vendorService.GetAllQuerable().Where(x=> x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false && x.IsActive == true);
-            var csvBuilder = new StringBuilder();
-            csvBuilder.AppendLine("VendorId,VendorName,PhoneNumber,Email,City,State,StreetAddress,VendorCode");
-
-           
-            foreach (var vendor in vendors)
+            IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
+            try
             {
-                var line = $"{vendor.VendorId},{vendor.VendorName},{vendor.PhoneNumber},{vendor.Email},{vendor.City},{vendor.State},{vendor.StreetAddress},{vendor.VendorCode}";
-                csvBuilder.AppendLine(line);
+                var IsTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
+                if (IsTenantExists)
+                {
+                    var Contacts = new List<TblContact>();
+                    List<ContactsList> ContactList = new List<ContactsList>();
+
+                    Contacts = (await contactService.GetAll()).Where(x => x.IsDelete == false && x.IsArchive == false && x.TenantId == AppConstant.LoggedInTenantId).OrderByDescending(x => x.CreatedAt).ToList();
+
+                    foreach (var contact in Contacts)
+                    {
+                        ContactsList contacts = new ContactsList
+                        {
+                            ContactId = contact.ContactId,
+                            ContactType = contact.ContactType ?? "",
+                            Email = contact.Email,
+                            PhoneNumber = contact.PhoneNumber,
+                            Name = contact.Name,
+                            Website = contact.Website,
+                            Notes = contact.Notes,
+                            Referral = contact.Referral,
+                            IsTaxExemption = contact.IsTaxExemption ?? false,
+                            IsBillingAddressSameAsAddress = contact.IsBillingAddressSameAsAddress,
+                            IsActive = contact.IsActive
+                        };
+
+                        contacts.billingAddressVm = billingService.GetAllQuerable()
+                            .Where(x => x.ContactId == contact.ContactId
+                            && x.IsDelete == false).Select(x => new BillingAddressVm
+                            {
+                                City = x.City,
+                                Email = x.Email,
+                                FullName = x.FullName,
+                                PhoneNumber = x.PhoneNumber,
+                                State = x.State,
+                                StreetAddress = x.StreetAddress,
+                                ZipCode = x.ZipCode,
+                            }).FirstOrDefault();
+                        contacts.taxExemptionVm = taxExemptionService.GetAllQuerable()
+                            .Where(x => x.ContactId == contact.ContactId
+                            && x.IsDelete == false).Select(x => new TaxExemption
+                            {
+                                EffectiveDate = x.EffectiveDate,
+                                ExemptionCertificate = x.ExemptionCertificate,
+                                ExpiryDate = x.ExpiryDate
+                            }).FirstOrDefault();
+                        ContactList.Add(contacts);
+                    }
+                    var csvBuilder = new StringBuilder();
+                    csvBuilder.AppendLine("ContactType,Name,PhoneNumber,Email,Website,Notes,Referral,FullName,PhoneNumber,Email,City,State,ZipCode,StreetAddress,ExemptionCertificate,EffectiveDate,ExpiryDate");
+
+
+                    foreach (var contact in ContactList)
+                    {
+                        var billingAddress = contact.billingAddressVm ?? new BillingAddressVm();
+
+
+                        var line = $"{contact.ContactType},{contact.Name},{contact.PhoneNumber},{contact.Email},{contact.Website},{contact.Notes},{contact.Referral}," +
+                                   $"{billingAddress.FullName},{billingAddress.PhoneNumber},{billingAddress.Email},{billingAddress.City},{billingAddress.State}," +
+                                   $"{billingAddress.ZipCode},{billingAddress.StreetAddress},{contact.taxExemptionVm?.ExemptionCertificate},{contact.taxExemptionVm?.EffectiveDate},{contact.taxExemptionVm?.ExpiryDate}";
+
+                        csvBuilder.AppendLine(line);
+                    }
+
+                    try
+                    {
+                        await File.WriteAllTextAsync(filePath, csvBuilder.ToString());
+                        responseVm.IsSuccess = true;
+                        responseVm.Message = AppConstant.ExportSuccessMsg; 
+                    }
+                    catch (Exception ex)
+                    {
+                        responseVm.IsSuccess = false;
+                        responseVm.Message = AppConstant.ExceptionError + ex.Message; 
+                    }
+
+                    return responseVm;
+                }
             }
-
-           
-            await File.WriteAllTextAsync(filePath, csvBuilder.ToString());
-
-            Console.WriteLine("Export completed successfully.");
+            catch (Exception ex)
+            {
+                responseVm.IsSuccess = false;
+                responseVm.Message = AppConstant.ExceptionError + ex.Message; 
+                return responseVm;
+            }
+            return responseVm;
         }
+
+
+        public async Task<IResponseVm<dynamic>> ExportMaterialsToCsvAsync(string filePath)
+        {
+            IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
+
+            try
+            {
+                var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
+                if (!isTenantExists)
+                {
+                    responseVm.Message = AppConstant.TenantNotFound;
+                    return responseVm;
+                }
+
+                var materialList = (from t2 in dbContext.TblRawMaterials.OrderByDescending(x => x.CreatedAt)
+                                    join t1 in dbContext.TblVendors on t2.VendorId equals t1.VendorId
+                                    join t3 in dbContext.MstProductTypes on t2.ProductType equals t3.ProductId
+                                    where t2.TenantId == AppConstant.LoggedInTenantId && t2.IsDelete == false
+                                    select new ExportMaterialsCsv
+                                    {
+                                        IsActive = t2.IsActive,
+                                        MaterialId = t2.RawMaterialId,
+                                        MaterialName = t2.MaterialName,
+                                        Notes = t2.Notes,
+                                        ReorderLevel = t2.ReorderLevel,
+                                        SKU = t2.Sku,
+                                        StockQuantity = t2.StockQuantity,
+                                        UnitCost = t2.UnitCost,
+                                        ProductTypeName = t3.ProductName, 
+                                        UnitOfMeasurement = t2.UnitOfMeasurement,
+                                        VendorId = t2.VendorId,
+                                        VendorName = t1.VendorName,
+                                        VendorCode = t1.VendorCode, 
+                                        IsCutSheet = t2.IsCutSheet,
+                                    }).ToList();
+                var csvBuilder = new StringBuilder();
+                csvBuilder.AppendLine("MaterialName,UnitCost,UnitOfMeasurement,StockQuantity,ReorderLevel,VendorCode,Notes,ProductType,SKU,IsCutSheet");
+
+                foreach (var material in materialList)
+                {
+                    var line = $"{material.MaterialName},{material.UnitCost},{material.UnitOfMeasurement},{material.StockQuantity}," +
+                               $"{material.ReorderLevel},{material.VendorCode},{material.Notes},{material.ProductTypeName},{material.SKU},{material.IsCutSheet}";
+
+                    csvBuilder.AppendLine(line);
+                }
+
+                try
+                {
+                    await File.WriteAllTextAsync(filePath, csvBuilder.ToString());
+                    responseVm.Message = AppConstant.ExportSuccessMsg;
+                }
+                catch (Exception ex)
+                {
+                    responseVm.Message = AppConstant.ExceptionError + ex.Message;
+                }
+
+                return responseVm;
+            }
+            catch (Exception ex)
+            {
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+                return responseVm;
+            }
+        }
+
     }
-  }
+}
 
 
 

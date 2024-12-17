@@ -25,6 +25,7 @@ namespace ShutterManagement.Controllers
 
         [Authorize]
         [HttpPost("import/{model}")]
+        [Authorize(Roles = "ContactAdd,MaterialAdd")]
         public async Task<IResponseVm<List<string>>> ImportCsv(string model, IFormFile file)
         {
             IResponseVm<List<string>> responseVm = new ResponseVm<List<string>>();
@@ -74,17 +75,47 @@ namespace ShutterManagement.Controllers
         }
 
         [Authorize]
-        [HttpGet("export")]
-        public async Task<IActionResult> ExportVendorsToCsvAsync()
+        [HttpGet("ExportContacts")]
+        [Authorize(Roles = "ContactView")]
+        public async Task<IActionResult> ExportContactsToCsvAsync()
+        {
+            try
+            {
+                var filePath = Path.Combine(Directory.GetCurrentDirectory(), "Contacts.csv");
+                var result = await importandExportCSV.ExportContactsToCsvAsync(filePath);
+                if (result.IsSuccess)
+                {
+                    var fileBytes = await System.IO.File.ReadAllBytesAsync(filePath);
+                    return File(fileBytes, "text/csv", "Contacts.csv");
+
+                }
+                else
+                {
+                    return BadRequest(result.Message);
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+
+        [Authorize]
+        [HttpGet("ExportMaterials")]
+        [Authorize(Roles = "MaterialView")]
+        public async Task<IActionResult> ExportmaterialsToCsvAsync()
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var filePath = Path.Combine(Directory.GetCurrentDirectory(), "vendors.csv");
-                await importandExportCSV.ExportContactsToCsvAsync(filePath);
+                var filePath = Path.Combine(Directory.GetCurrentDirectory(), "Materials.csv");
+                var result = await importandExportCSV.ExportMaterialsToCsvAsync(filePath);
                 var fileBytes = await System.IO.File.ReadAllBytesAsync(filePath);
-                responseVm.IsSuccess=true;
-                return File(fileBytes, "text/csv", "vendors.csv");
+                responseVm.IsSuccess = true;
+                return File(fileBytes, "text/csv", "Materials.csv");
+
+
             }
             catch (Exception ex)
             {
