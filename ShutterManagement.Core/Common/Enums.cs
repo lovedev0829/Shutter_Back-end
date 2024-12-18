@@ -22,6 +22,19 @@ namespace ShutterManagement.Core.Common
         Document
     }
 
+    public enum AppliedFor
+    {
+        All,
+        Customers
+    }
+
+    public enum DiscountType
+    {
+        Percentage,
+        Fixed
+    }
+
+
     public enum ModuleName
     {
         [EnumMember(Value = "JOB")]

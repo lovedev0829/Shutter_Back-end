@@ -1,5 +1,7 @@
-﻿using ShutterManagement.Core.ViewModels;
+﻿using ShutterManagement.Core.Common;
+using ShutterManagement.Core.ViewModels;
 using ShutterManagement.Core.ViewModels.Request;
+using ShutterManagement.Core.ViewModels.Response;
 using ShutterManagement.DAL.Context;
 using ShutterManagement.Interfaces;
 using System;
@@ -12,9 +14,10 @@ namespace ShutterManagement.Business.Interfaces
 {
     public interface IDiscountService : IGenericRepository<TblDiscount>
     {
-        Task<IResponseVm<string>> CreateDiscountAsync(CreateDiscount createDiscount);
-        Task<IResponseVm<string>> UpdateAsync(UpdateDiscount updateDiscount);
-        Task<IResponseVm<string>> DeleteAsync(Guid discountId); 
-        Task<IResponseVm<string>> ActiveInActive(Guid discountId); 
+        Task<IResponseVm<string>> CreateDiscountCoupon(CreateDiscount createDiscount);
+        Task<IResponseVm<string>> UpdateDiscountCoupon(UpdateDiscount updateDiscount);
+        Task<IResponseVm<string>> DeleteDiscountCoupon(Guid discountId); 
+        Task<IResponseVm<string>> ActiveInActive(Guid discountId);
+        Task<IResponseVm<List<DiscoountVm>>> GetAll_Coupons(Pagination filter);
     }
 }
