@@ -76,10 +76,10 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
                 var generateUnique = GenerateUniqueId.GenerateUniqueIds(ModuleName.Job, AppConstant.LoggedInCompanyCode);
-                bool IsAddressExist = await address.AnyAsync(x => x.AddressId == model.AddressId && x.ContactId == model.ContactId
+                bool IsAddressExist = await address.AnyAsync(x => x.AddressId == model.AddressId && x.ContactId == model.ContactId.Trim()
                 && x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false);
 
-                bool IsjobNameExists = await AnyAsync(x => x.JobName == model.JobName.Trim() && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
+                bool IsjobNameExists = await AnyAsync(x => x.JobName == model.JobName.Trim() && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId && x.ContactId == model.ContactId););
                 if (IsjobNameExists)
                 {
                     responseVm.Message = "JobName" + AppConstant.AlreadyExists;
@@ -97,8 +97,8 @@ namespace ShutterManagement.Business.Services
                         AssignedPersonnel = model.AssignedPersonnel,
                         ScheduledDate = model.ScheduledDate,
                         JobStatus = jobStatus?.JobStatusId,
-                        Notes = model.Notes,
-                        AttachmentAny = model.AttachmentsAny,
+                        Notes = model.Notes.Trim(),
+                        AttachmentAny = model.AttachmentsAny.Trim(),
                         JobUniqueId = generateUnique,
                         TenantId = AppConstant.LoggedInTenantId,
                         IsActive = true,
@@ -271,10 +271,10 @@ namespace ShutterManagement.Business.Services
                 x.ContactId == model.ContactId && x.JobUniqueId == model.JobUniqueCode.Trim() 
                 && x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false).FirstOrDefault();
                 bool IsjobNameExists = await AnyAsync(x =>x.JobId !=model.JobId && x.JobName.Trim() == model.JobName.Trim() && 
-                x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
+                x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId && x.ContactId == model.ContactId);
                 if (IsjobNameExists)
                 {
-                    responseVm.Message = "JobName" + AppConstant.AlreadyExists;
+                    responseVm.Message = "Job Name " + AppConstant.AlreadyExists;
                     return responseVm;
                 }
                 if (IsJobExist != null)
@@ -285,8 +285,8 @@ namespace ShutterManagement.Business.Services
                     IsJobExist.AssignedPersonnel = model.AssignedPersonnel;
                     IsJobExist.ScheduledDate = model.ScheduledDate;
                     IsJobExist.JobStatus = model.JobStatus;
-                    IsJobExist.Notes = model.Notes;
-                    IsJobExist.AttachmentAny = model.AttachmentsAny;
+                    IsJobExist.Notes = model.Notes.Trim();
+                    IsJobExist.AttachmentAny = model.AttachmentsAny.Trim();
                     IsJobExist.UpdatedAt = DateTime.Now;
                     IsJobExist.ModifiedBy = AppConstant.LoggedInUserID;
                     var res = await Update(IsJobExist);
