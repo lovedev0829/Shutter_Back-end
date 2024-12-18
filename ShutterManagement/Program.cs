@@ -141,7 +141,8 @@ builder.Services.AddScoped<IEstimateWindowService, EstimateWindowService>();
 builder.Services.AddScoped<IEstimateWindowProductService, EstimateWindowProductService>();
 builder.Services.AddScoped<IEstimateWindowProductComponentService, EstimateWindowProductComponentService>();
 builder.Services.AddScoped<IEstimateWindowProductComponentMaterialService, EstimateWindowProductComponentMaterialService>();
-//builder.Services.AddScoped<IExpressionService, ExpressionService>();
+builder.Services.AddScoped<IExpressionService, ExpressionService>();
+builder.Services.AddScoped<IDiscountService, DiscountService>();
 
 
 
