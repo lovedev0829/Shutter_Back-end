@@ -1,5 +1,7 @@
-﻿using ShutterManagement.Business.Interfaces;
+﻿using Microsoft.Extensions.Logging;
+using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core;
+using ShutterManagement.Core.Common;
 using ShutterManagement.Core.ViewModels;
 using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.Core.ViewModels.Response;
@@ -7,6 +9,7 @@ using ShutterManagement.DAL.Context;
 using ShutterManagement.Services;
 using System;
 using System.Collections.Generic;
+using System.Data.Entity;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -20,7 +23,7 @@ namespace ShutterManagement.Business.Services
         private readonly IWindowProductService windowProductService;
         private readonly IWindowOptionService windowOptionService;
 
-        public WindowService(ITenantService tenantService,
+        public WindowService(ITenantService tenantService, 
             IWindowProductService windowProductService, IWindowOptionService windowOptionService)
         {
             this.tenantService = tenantService;
@@ -31,100 +34,115 @@ namespace ShutterManagement.Business.Services
         public async Task<IResponseVm<string>> ActiveInActiveWindow(Guid WindowId)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
+            FileLogger.Log("ActiveInActiveWindow process started.");
+
             try
             {
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false && x.IsActive == true);
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && !(bool)x.IsDelete  && (bool)x.IsActive);
 
                 if (IsTenant)
                 {
+                    FileLogger.Log($"Tenant validation passed for TenantId: {AppConstant.LoggedInTenantId}");
+
                     var IsWindowExists = GetAllQuerable()
-                        .Where(c => c.WindowId == WindowId
-                                    && c.TenantId == AppConstant.LoggedInTenantId
-                                    && c.IsDelete == false)
-                        .FirstOrDefault();
+                        .FirstOrDefault(c => c.WindowId == WindowId && c.TenantId == AppConstant.LoggedInTenantId && !(bool)c.IsDelete);
 
                     if (IsWindowExists != null)
                     {
-                        var IsWindowInProduct = windowProductService
-                         .GetAllQuerable().Where(x => x.WindowId == WindowId &&
-                                         x.IsDelete == false &&
-                                         x.TenantId == AppConstant.LoggedInTenantId)
-                         .ToList();
-                        if (IsWindowInProduct != null && IsWindowInProduct.Count > 0)
-                        {
+                        FileLogger.Log($"Window found with ID: {WindowId}");
 
-                            var IsWindowOption = windowOptionService
-                            .GetAllQuerable().Where(x => x.WindowId == WindowId &&
-                                         x.IsDelete == false &&
-                                         x.TenantId == AppConstant.LoggedInTenantId)
+                        var IsWindowInProduct = windowProductService
+                            .GetAllQuerable()
+                            .Where(x => x.WindowId == WindowId && !(bool)x.IsDelete  && x.TenantId == AppConstant.LoggedInTenantId)
                             .ToList();
-                            if (IsWindowOption != null && IsWindowOption.Count > 0)
+
+                        if (IsWindowInProduct?.Count > 0)
+                        {
+                            var IsWindowOption = windowOptionService
+                                .GetAllQuerable()
+                                .Where(x => x.WindowId == WindowId && !(bool)x.IsDelete  && x.TenantId == AppConstant.LoggedInTenantId)
+                                .ToList();
+
+                            // Update window options status
+                            if (IsWindowOption?.Count > 0)
                             {
-                                //Window options status change
                                 foreach (var option in IsWindowOption)
                                 {
                                     option.IsActive = !option.IsActive;
                                     option.ModifiedAt = DateTime.Now;
                                     option.ModifiedBy = AppConstant.LoggedInUserID;
                                     await windowOptionService.Update(option);
+                                    FileLogger.Log($"Updated WindowOption ID: {option.WindowoptionId}, New Status: {option.IsActive}");
                                 }
                             }
-                            //Window product status change
+
+                            // Update window products status
                             foreach (var product in IsWindowInProduct)
                             {
                                 product.IsActive = !product.IsActive;
                                 product.ModifiedAt = DateTime.Now;
                                 product.ModifiedBy = AppConstant.LoggedInUserID;
                                 await windowProductService.Update(product);
+                                FileLogger.Log($"Updated WindowProduct ID: {product.WindowProductId}, New Status: {product.IsActive}");
                             }
                         }
 
-                        //Window status change
+                        // Update window status
                         IsWindowExists.IsActive = !IsWindowExists.IsActive;
                         IsWindowExists.UpdatedAt = DateTime.Now;
                         IsWindowExists.ModifiedBy = AppConstant.LoggedInUserID;
                         await Update(IsWindowExists);
+
                         responseVm.IsSuccess = true;
                         responseVm.Message = AppConstant.UpdateSuccessMsg;
+                        FileLogger.Log($"Window status updated successfully. Window ID: {WindowId}, New Status: {IsWindowExists.IsActive}");
                     }
                     else
                     {
                         responseVm.Message = AppConstant.NoDataFound;
+                        FileLogger.Log($"Window not found with ID: {WindowId}");
                     }
                 }
                 else
                 {
                     responseVm.Message = AppConstant.TenantNotFound;
+                    FileLogger.Log($"Tenant validation failed for TenantId: {AppConstant.LoggedInTenantId}");
                 }
             }
             catch (Exception ex)
             {
                 responseVm.IsSuccess = false;
                 responseVm.Message = $"{AppConstant.ExceptionError} {ex.Message}";
+                FileLogger.Log("Exception occurred in ActiveInActiveWindow process.", ex);
             }
 
+            FileLogger.Log("ActiveInActiveWindow process ended.");
             return responseVm;
         }
 
         public async Task<IResponseVm<string>> Create_Window(CreateWindow model)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
+            FileLogger.Log("Create_Window process started.");
+
             try
             {
                 var isTenant = await tenantService.AnyAsync(x =>
-                    x.TenantId == AppConstant.LoggedInTenantId &&
-                    x.IsDelete == false &&
-                    x.IsActive == true);
+                    x.TenantId == AppConstant.LoggedInTenantId && !(bool)x.IsDelete  && (bool)x.IsActive);
 
                 if (!isTenant)
                 {
                     responseVm.Message = AppConstant.TenantNotFound;
+                    FileLogger.Log("Tenant validation failed in Create_Window.");
                     return responseVm;
                 }
-                var IsLabelExists = await AnyAsync(x => x.Label == model.Label.Trim() && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
+
+                var IsLabelExists = await AnyAsync(x => x.Label == model.Label.Trim() && !(bool)x.IsDelete  && x.TenantId == AppConstant.LoggedInTenantId);
+
                 if (IsLabelExists)
                 {
                     responseVm.Message = "Label" + AppConstant.AlreadyExists;
+                    FileLogger.Log($"Label already exists: {model.Label}");
                     return responseVm;
                 }
 
@@ -133,7 +151,7 @@ namespace ShutterManagement.Business.Services
                     WindowId = Guid.NewGuid(),
                     AddressId = model.AddressId,
                     Notes = model.Notes,
-                    Label = model.Label,
+                    Label = model.Label.Trim(),
                     Width = model.Width,
                     Quantity = model.Quantity,
                     Height = model.Height,
@@ -147,7 +165,8 @@ namespace ShutterManagement.Business.Services
                     TenantId = AppConstant.LoggedInTenantId
                 };
 
-                var res = await Add(window);
+                await Add(window);
+                FileLogger.Log($"New window created with ID: {window.WindowId}");
 
                 foreach (var items in model.WindowProducts)
                 {
@@ -155,7 +174,7 @@ namespace ShutterManagement.Business.Services
                         x.WindowProductId == items.ProductId &&
                         x.ProductTypeId == items.ProductTypeId &&
                         x.WindowId == window.WindowId &&
-                        x.IsDelete == false &&
+                        !(bool)x.IsDelete  &&
                         x.TenantId == AppConstant.LoggedInTenantId);
 
                     if (!isWindowProductExists)
@@ -176,6 +195,7 @@ namespace ShutterManagement.Business.Services
                         };
 
                         await windowProductService.Add(windowProduct);
+                        FileLogger.Log($"New window product added with ID: {windowProduct.WindowProductId}");
 
                         if (items.OptionTypeId != null)
                         {
@@ -195,7 +215,7 @@ namespace ShutterManagement.Business.Services
                                 };
 
                                 await windowOptionService.Add(windowOption);
-
+                                FileLogger.Log($"New window option added with ID: {windowOption.WindowoptionId}");
                             }
                         }
                     }
@@ -203,22 +223,73 @@ namespace ShutterManagement.Business.Services
 
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.InsertSuccessMsg;
+                FileLogger.Log($"Create_Window process completed successfully for Window ID: {window.WindowId}");
             }
             catch (Exception ex)
             {
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+                FileLogger.Log("Exception occurred in Create_Window process.", ex);
+            }
+
+            FileLogger.Log("Create_Window process ended.");
+            return responseVm;
+        }
+
+        public async Task<IResponseVm<List<WindowsList>>> GetAll_Window(Pagination filter)
+        {
+            IResponseVm<List<WindowsList>> responseVm = new ResponseVm<List<WindowsList>>();
+
+            try
+            {
+                FileLogger.Log("Fetching all windows started.");
+
+                // Tenant validation
+                if (!await IsTenantValid())
+                {
+                    FileLogger.Log("Tenant validation failed.");
+                    responseVm.Message = AppConstant.TenantNotFound;
+                    return responseVm;
+                }
+                FileLogger.Log("Tenant validated successfully.");
+
+                // Fetch data
+                var windowsData = FetchWindowsData();
+                FileLogger.Log($"Fetched total {windowsData.Count} windows before applying filters.");
+
+                // Apply filters
+                var filteredWindows = ApplyFilters(windowsData, filter);
+                FileLogger.Log($"Total {filteredWindows.Count} windows after applying search and status filters.");
+
+                // Paginate results
+                var paginatedRecords = Paginate.Pagination(filteredWindows, filter);
+                FileLogger.Log($"Total {paginatedRecords.Count} windows after pagination. PageNo: {filter.PageNo}, RecordsPerPage: {filter.RecordPerPage}");
+
+                // Prepare response
+                responseVm.IsSuccess = true;
+                responseVm.Data = paginatedRecords;
+                responseVm.TotalRecords = filteredWindows.Count;
+                responseVm.Message = paginatedRecords.Any() ? AppConstant.FetchSuccessMsg : AppConstant.NoDataFound;
+
+                FileLogger.Log("Fetching windows operation completed successfully.");
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Log($"Exception occurred while fetching windows. Error: {ex}");
                 responseVm.Message = AppConstant.ExceptionError + ex.Message;
             }
 
             return responseVm;
         }
 
+
         public async Task<IResponseVm<string>> DeleteWindow(Guid WindowId)
         {
-
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false && x.IsActive == true);
+                FileLogger.Log($"Delete window process started for WindowId: {WindowId}.");
+
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false && (bool)x.IsActive == true);
 
                 if (IsTenant)
                 {
@@ -229,22 +300,29 @@ namespace ShutterManagement.Business.Services
                         .FirstOrDefault();
                     if (IsWindowExists != null)
                     {
+                        FileLogger.Log($"Window found with WindowId: {WindowId}.");
+
                         var IsWindowInProduct = windowProductService
-                         .GetAllQuerable().Where(x => x.WindowId == WindowId &&
-                                         x.IsDelete == false &&
-                                         x.TenantId == AppConstant.LoggedInTenantId)
-                         .ToList();
+                            .GetAllQuerable().Where(x => x.WindowId == WindowId &&
+                                            x.IsDelete == false &&
+                                            x.TenantId == AppConstant.LoggedInTenantId)
+                            .ToList();
+
                         if (IsWindowInProduct != null && IsWindowInProduct.Count > 0)
                         {
+                            FileLogger.Log($"Found {IsWindowInProduct.Count} products for this window.");
 
                             var IsWindowOption = windowOptionService
-                            .GetAllQuerable().Where(x => x.WindowId == WindowId &&
-                                         x.IsDelete == false &&
-                                         x.TenantId == AppConstant.LoggedInTenantId)
-                            .ToList();
+                                .GetAllQuerable().Where(x => x.WindowId == WindowId &&
+                                             x.IsDelete == false &&
+                                             x.TenantId == AppConstant.LoggedInTenantId)
+                                .ToList();
+
                             if (IsWindowOption != null && IsWindowOption.Count > 0)
                             {
-                                //Window options status change
+                                FileLogger.Log($"Found {IsWindowOption.Count} options for this window.");
+
+                                // Window options status change
                                 foreach (var option in IsWindowOption)
                                 {
                                     option.IsActive = false;
@@ -254,7 +332,8 @@ namespace ShutterManagement.Business.Services
                                     await windowOptionService.Update(option);
                                 }
                             }
-                            //Window product status change
+
+                            // Window product status change
                             foreach (var product in IsWindowInProduct)
                             {
                                 product.IsActive = false;
@@ -265,12 +344,15 @@ namespace ShutterManagement.Business.Services
                             }
                         }
 
-                        //Window status change
+                        // Window status change
                         IsWindowExists.IsActive = false;
                         IsWindowExists.IsDelete = true;
                         IsWindowExists.UpdatedAt = DateTime.Now;
                         IsWindowExists.ModifiedBy = AppConstant.LoggedInUserID;
                         await Update(IsWindowExists);
+
+                        FileLogger.Log($"Window {WindowId} marked for deletion.");
+
                         responseVm.IsSuccess = true;
                         responseVm.Message = AppConstant.DeleteSuccessMsg;
                     }
@@ -286,124 +368,9 @@ namespace ShutterManagement.Business.Services
             }
             catch (Exception ex)
             {
+                FileLogger.Log($"Exception during delete window process for WindowId: {WindowId}. Error: {ex.Message}");
                 responseVm.IsSuccess = false;
                 responseVm.Message = $"{AppConstant.ExceptionError} {ex.Message}";
-            }
-
-            return responseVm;
-        }
-
-        public async Task<IResponseVm<List<WindowsList>>> GetAll_Window(Pagination filter)
-        {
-            IResponseVm<List<WindowsList>> responseVm = new ResponseVm<List<WindowsList>>();
-
-            try
-            {
-
-                var isTenantValid = await tenantService.AnyAsync(x =>
-                    x.TenantId == AppConstant.LoggedInTenantId &&
-                    x.IsDelete == false &&
-                    x.IsActive == true);
-
-                if (isTenantValid)
-                {
-                    var WindowsData = (from w in dbContext.TblWindows.OrderBy(x => x.Label)
-                                       join wp in dbContext.TblWindowProducts on w.WindowId equals wp.WindowId
-                                       join wop in dbContext.WindowOptions on wp.WindowProductId equals wop.WindowProductId
-                                       join op in dbContext.TblOptionsTypes on wop.OptionTypeId equals op.OptionTypeId
-                                       where w.IsDelete == false && w.TenantId == AppConstant.LoggedInTenantId
-                                       group new { w, wp, wop, op } by w.WindowId into g
-                                       select new WindowsList
-                                       {
-
-                                           WindowId = g.Key,
-                                           AddressId = g.First().w.AddressId,
-                                           JobId = g.First().w.JobId,
-                                           Label = g.First().w.Label,
-                                           Quantity = g.First().w.Quantity,
-                                           ArchHeight = g.First().w.ArchHeight,
-                                           Height = g.First().w.Height,
-                                           Width = g.First().w.Width,
-                                           Notes = g.First().w.Notes,
-                                           Photo = g.First().w.Photo,
-                                           TenantId = g.First().w.TenantId,
-                                           IsActive = g.First().w.IsActive,
-
-                                           ProductDetails = g.GroupBy(x => x.wp.WindowProductId).Select(p => new ProductList
-                                           {
-
-                                               WindowProductId = p.Key,
-                                               ProductTypeId = p.First().wp.ProductTypeId.GetValueOrDefault(),
-                                               ProductTypeName = g.First().wp.ProductType.ProductName,
-                                               ProductId = p.First().wp.ProductId.GetValueOrDefault(),
-                                               ProductName = p.First().wp.Product.ProductName,
-                                               BuildHeight = p.First().wp.BuildHeight,
-                                               BuildWidth = p.First().wp.BuildWidth,
-                                               WindowOptions = p.Select(x => new WindowOptions
-                                               {
-                                                   WindowProductId = x.wp.WindowProductId,
-                                                   OptionTypeId = x.wop.OptionTypeId.ToString(),
-                                                   OptionName = x.op.OptionType,
-                                                   AdditionalCost = x.op.AdditionalCost.GetValueOrDefault(),
-
-                                               }).ToList()
-                                           }).ToList()
-                                       }).ToList();
-
-
-                    filter.SearchValue = filter.SearchValue?.Trim().ToLower();
-                    var FilterRecords = WindowsData
-                        .Where(x =>
-                            (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
-                            (string.IsNullOrEmpty(filter.SearchValue) ? true :
-                                (x.WindowId.ToString() == filter.SearchValue) ||
-                                (x.WindowId.ToString() == filter.SearchValue) ||
-                                (x.JobId?.ToString() ?? "").Contains(filter.SearchValue) ||
-                                (x.Label ?? "").ToLower().Contains(filter.SearchValue) ||
-                                (x.Notes?.ToLower().Contains(filter.SearchValue) ?? false) ||
-                                (x.Width.ToString() ?? "").Contains(filter.SearchValue) ||
-                                (x.Height.ToString() ?? "").Contains(filter.SearchValue) ||
-
-                                x.ProductDetails.Any(p =>
-                p.ProductId.ToString() == filter.SearchValue || 
-                (p.ProductName?.ToLower().Contains(filter.SearchValue) ?? false) || 
-                (p.ProductTypeName?.ToLower().Contains(filter.SearchValue) ?? false) || 
-                (p.ProductTypeId.ToString()?.ToLower().Contains(filter.SearchValue) ?? false) || 
-                (p.ProductId.ToString()?.ToLower().Contains(filter.SearchValue) ?? false) || 
-                p.WindowProductId.ToString() == filter.SearchValue || 
-                p.WindowOptions.Any(o =>
-                    (o.OptionTypeId?.ToLower().Contains(filter.SearchValue) ?? false) ||
-                    (o.OptionName?.ToLower().Contains(filter.SearchValue) ?? false)
-                )
-            )
-        )
-    ).ToList();
-                    var TakenRecords = FilterRecords
-                        .Skip((filter.PageNo - 1) * filter.RecordPerPage)
-                        .Take(filter.RecordPerPage)
-                        .ToList();
-
-
-                    responseVm.IsSuccess = true;
-                    if (TakenRecords != null)
-                    {
-                        responseVm.Data = TakenRecords;
-                        responseVm.Message = AppConstant.FetchSuccessMsg;
-                        responseVm.TotalRecords = FilterRecords.Count();
-                    }
-                    else
-                    {
-                        responseVm.Message = AppConstant.NoDataFound;
-                    }
-                }
-                else
-                {
-                    responseVm.Message = AppConstant.TenantNotFound;
-                }
-            }
-            catch (Exception ex)
-            {
-                responseVm.Message = AppConstant.ExceptionError + ex.Message;
             }
 
             return responseVm;
@@ -412,138 +379,299 @@ namespace ShutterManagement.Business.Services
         public async Task<IResponseVm<string>> Update_Window(UpdateWindow model)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
+
             try
             {
-                var isTenantValid = await tenantService.AnyAsync(x =>
-                    x.TenantId == AppConstant.LoggedInTenantId &&
-                    x.IsDelete == false &&
-                    x.IsActive == true);
+                FileLogger.Log("Window update process started.");
 
-                if (!isTenantValid)
+                // Trim and validate input
+                model.Label = model.Label?.Trim();
+
+                // Step 1: Validate Tenant
+                if (!await IsTenantValid())
                 {
                     responseVm.Message = AppConstant.TenantNotFound;
                     return responseVm;
                 }
-                var IsjobNameExists = AnyAsync(x => x.Label == model.Label.Trim() && x.WindowId != model.WindowId && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
-                if (IsjobNameExists != null)
-                {
-                    responseVm.Message = "JobName" + AppConstant.AlreadyExists;
-                }
-                var existingWindow = GetAllQuerable()
-                    .FirstOrDefault(c =>
-                        c.WindowId == model.WindowId &&
-                        c.TenantId == AppConstant.LoggedInTenantId &&
-                        c.IsDelete == false);
 
-                if (existingWindow == null)
+                // Step 2: Check for duplicate Job Name
+                if (await IsJobNameExists(model))
                 {
-                    responseVm.Message = "Window " + AppConstant.NoDataFound;
+                    responseVm.Message = $"JobName {AppConstant.AlreadyExists}";
                     return responseVm;
                 }
 
-                existingWindow.Label = model.Label;
-                existingWindow.Height = model.Height;
-                existingWindow.Photo = model.Photo;
-                existingWindow.Quantity = model.Quantity;
-                existingWindow.Width = model.Width;
-                existingWindow.Notes = model.Notes;
-                existingWindow.ArchHeight = model.ArchHeight;
-                existingWindow.JobId = model.JobId;
-                existingWindow.UpdatedAt = DateTime.Now;
-                existingWindow.ModifiedBy = AppConstant.LoggedInUserID;
+                // Step 3: Fetch existing window
+                var existingWindow = await GetExistingWindow(model.WindowId);
+                if (existingWindow == null)
+                {
+                    responseVm.Message = $"Window {AppConstant.NoDataFound}";
+                    return responseVm;
+                }
 
+                // Step 4: Update Window
+                UpdateWindowData(existingWindow, model);
                 await Update(existingWindow);
 
-                var existingProducts = windowProductService.GetAllQuerable()
-                    .Where(x => x.WindowId == model.WindowId && x.IsDelete == false)
-                    .ToList();
-
-                var insertProducts = model.WindowProducts.Where(a1 =>
-                    !existingProducts.Any(a2 =>
-                        a1.ProductId == a2.ProductId &&
-                        a1.ProductTypeId == a2.ProductTypeId &&
-                        a1.BuildWidth == a2.BuildWidth &&
-                        a1.BuildHeight == a2.BuildHeight))
-                    .ToList();
-
-                var deleteProducts = existingProducts.Where(a1 =>
-                    !model.WindowProducts.Any(a2 =>
-                        a1.ProductId == a2.ProductId &&
-                        a1.ProductTypeId == a2.ProductTypeId &&
-                        a1.BuildWidth == a2.BuildWidth &&
-                        a1.BuildHeight == a2.BuildHeight))
-                    .ToList();
-
-                foreach (var product in deleteProducts)
-                {
-                    product.IsDelete = true;
-                    product.IsActive = false;
-                    product.ModifiedBy = AppConstant.LoggedInUserID;
-                    product.ModifiedAt = DateTime.Now;
-                    await windowProductService.Update(product);
-
-                    var existingOptions = windowOptionService.GetAllQuerable()
-                        .Where(x => x.WindowProductId == product.WindowProductId && x.IsDelete == false)
-                        .ToList();
-
-                    foreach (var option in existingOptions)
-                    {
-                        option.IsDelete = true;
-                        option.IsActive = false;
-                        option.ModifiedBy = AppConstant.LoggedInUserID;
-                        option.ModifiedAt = DateTime.Now;
-                        await windowOptionService.Update(option);
-                    }
-                }
-
-                foreach (var product in insertProducts)
-                {
-                    var newProduct = new TblWindowProduct
-                    {
-                        WindowProductId = Guid.NewGuid(),
-                        WindowId = model.WindowId,
-                        ProductId = product.ProductId,
-                        ProductTypeId = product.ProductTypeId,
-                        CreatedAt = DateTime.Now,
-                        BuildHeight = product.BuildHeight,
-                        BuildWidth = product.BuildWidth,
-                        CreatedBy = AppConstant.LoggedInUserID,
-                        IsActive = true,
-                        IsDelete = false,
-                        TenantId = AppConstant.LoggedInTenantId
-                    };
-
-                    await windowProductService.Add(newProduct);
-
-                    foreach (var optionId in product.OptionTypeId ?? new List<Guid>())
-                    {
-                        var newOption = new WindowOption
-                        {
-                            WindowoptionId = Guid.NewGuid(),
-                            OptionTypeId = optionId,
-                            WindowProductId = newProduct.WindowProductId,
-                            WindowId = model.WindowId,
-                            IsActive = true,
-                            IsDelete = false,
-                            CreatedBy = AppConstant.LoggedInUserID,
-                            TenantId = AppConstant.LoggedInTenantId,
-                            AdditionalCost = product.AdditionalCost
-                        };
-
-                        await windowOptionService.Add(newOption);
-                    }
-                }
-
+                // Step 5: Update Window Products
+                await UpdateWindowProducts(model);
 
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.UpdateSuccessMsg;
+                FileLogger.Log("Window update process completed successfully.");
             }
             catch (Exception ex)
             {
-                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+                FileLogger.Log("Exception in window update process: ", ex);
+                responseVm.Message = $"{AppConstant.ExceptionError} {ex.Message}";
             }
 
             return responseVm;
         }
+
+
+        #region private methods
+        // Helper methods
+
+        private List<WindowsList> FetchWindowsData()
+        {
+            return dbContext.TblWindows
+                .Where(w => w.IsDelete == false && w.TenantId == AppConstant.LoggedInTenantId)
+                .OrderBy(w => w.Label)
+                .GroupJoin(dbContext.TblWindowProducts,
+                    w => w.WindowId,
+                    wp => wp.WindowId,
+                    (w, windowProducts) => new { w, windowProducts })
+                .SelectMany(
+                    x => x.windowProducts.Where(x=>x.IsDelete == false).DefaultIfEmpty(),
+                    (x, wp) => new { x.w, wp })
+                .GroupJoin(dbContext.WindowOptions,
+                    x => x.wp.WindowProductId,
+                    wop => wop.WindowProductId,
+                    (x, windowOptions) => new { x.w, x.wp, windowOptions })
+                .SelectMany(
+                    x => x.windowOptions.Where(x=>x.IsDelete == false).DefaultIfEmpty(),
+                    (x, wop) => new { x.w, x.wp, wop })
+                .Join(dbContext.TblOptionsTypes,
+                    x => x.wop.OptionTypeId,
+                    op => op.OptionTypeId,
+                    (x, op) => new { x.w, x.wp, x.wop, op })
+                .GroupBy(x => x.w.WindowId)
+                .Select(g => new WindowsList
+                {
+                    WindowId = g.Key,
+                    AddressId = g.FirstOrDefault().w.AddressId,
+                    JobId = g.FirstOrDefault().w.JobId,
+                    Label = g.FirstOrDefault().w.Label,
+                    Quantity = g.FirstOrDefault().w.Quantity,
+                    ArchHeight = g.FirstOrDefault().w.ArchHeight,
+                    Height = g.FirstOrDefault().w.Height,
+                    Width = g.FirstOrDefault().w.Width,
+                    Notes = g.FirstOrDefault().w.Notes,
+                    Photo = g.FirstOrDefault().w.Photo,
+                    TenantId = g.FirstOrDefault().w.TenantId,
+                    IsActive = g.FirstOrDefault().w.IsActive,
+                    ProductDetails = g.GroupBy(x => x.wp.WindowProductId)
+                        .Select(p => new ProductList
+                        {
+                            WindowProductId = p.Key,
+                            ProductTypeId = p.FirstOrDefault().wp.ProductTypeId,
+                            ProductTypeName = p.FirstOrDefault().wp.ProductType.ProductName ?? "",
+                            ProductId = (Guid)p.FirstOrDefault().wp.ProductId,
+                            ProductName = p.FirstOrDefault().wp.Product.ProductName ?? "",
+                            BuildHeight = p.FirstOrDefault().wp.BuildHeight,
+                            BuildWidth = p.FirstOrDefault().wp.BuildWidth,
+                            WindowOptions = p.Select(o => new WindowOptions
+                            {
+                                WindowProductId = o.wp.WindowProductId,
+                                OptionTypeId = o.wop.OptionTypeId.ToString(),
+                                OptionName = o.op.OptionType,
+                                AdditionalCost = o.op.AdditionalCost.GetValueOrDefault(),
+                            }).ToList()
+                        }).ToList()
+                }).ToList();
+        }
+
+        private List<WindowsList> ApplyFilters(List<WindowsList> windowsData, Pagination filter)
+        {
+            filter.SearchValue = filter.SearchValue?.Trim().ToLower();
+            bool isStatusFilterActive = filter.Status == 1;
+            bool isStatusFilterInactive = filter.Status == 0;
+
+            return windowsData.Where(x =>
+                // Status filter
+                (isStatusFilterInactive ? !(bool)x.IsActive : (isStatusFilterActive ? (bool)x.IsActive : true)) &&
+                // Search filter
+                (string.IsNullOrEmpty(filter.SearchValue) ||
+                 IsWindowMatched(x, filter.SearchValue) ||
+                 x.ProductDetails.Any(p => IsProductMatched(p, filter.SearchValue))
+                )
+            ).ToList();
+        }
+
+        private async Task<bool> IsTenantValid()
+        {
+            FileLogger.Log("Validating Tenant...");
+            return await tenantService.AnyAsync(x =>
+                x.TenantId == AppConstant.LoggedInTenantId &&
+                !(bool)x.IsDelete &&
+                (bool)x.IsActive);
+        }
+
+        private async Task<bool> IsJobNameExists(UpdateWindow model)
+        {
+            FileLogger.Log("Checking for duplicate Job Name...");
+            return await AnyAsync(x =>
+                x.Label == model.Label &&
+                x.WindowId != model.WindowId &&
+                !(bool)x.IsDelete &&
+                x.TenantId == AppConstant.LoggedInTenantId);
+        }
+
+        private async Task<TblWindow> GetExistingWindow(Guid windowId)
+        {
+            FileLogger.Log("Fetching existing window...");
+            return (await GetAll())
+                .FirstOrDefault(c =>
+                    c.WindowId == windowId &&
+                    c.TenantId == AppConstant.LoggedInTenantId &&
+                    !(bool)c.IsDelete);
+        }
+
+        private void UpdateWindowData(TblWindow existingWindow, UpdateWindow model)
+        {
+            FileLogger.Log("Updating window data...");
+            existingWindow.Label = model.Label;
+            existingWindow.Height = model.Height;
+            existingWindow.Photo = model.Photo;
+            existingWindow.Quantity = model.Quantity;
+            existingWindow.Width = model.Width;
+            existingWindow.Notes = model.Notes;
+            existingWindow.ArchHeight = model.ArchHeight;
+            existingWindow.JobId = model.JobId;
+            existingWindow.UpdatedAt = DateTime.Now;
+            existingWindow.ModifiedBy = AppConstant.LoggedInUserID;
+        }
+
+        private async Task UpdateWindowProducts(UpdateWindow model)
+        {
+            FileLogger.Log("Updating window products...");
+
+            // Fetch existing products
+            var existingProducts = windowProductService.GetAllQuerable()
+                .Where(x => x.WindowId == model.WindowId && !(bool)x.IsDelete)
+                .ToList();
+
+            // Determine products to insert and delete
+            var productsToInsert = model.WindowProducts;
+              
+
+            var productsToDelete = existingProducts
+                .Where(e => e.WindowId == model.WindowId && e.IsDelete == false)
+                .ToList();
+
+            // Delete products and their options
+            foreach (var product in productsToDelete)
+            {
+                await DeleteProductWithOptions(product);
+            }
+
+            // Insert new products
+            foreach (var product in productsToInsert)
+            {
+                await InsertProductWithOptions(model.WindowId, product);
+            }
+
+            FileLogger.Log("Window products updated successfully.");
+        }
+
+        private async Task DeleteProductWithOptions(TblWindowProduct product)
+        {
+            FileLogger.Log($"Deleting product: {product.WindowProductId}");
+
+            product.IsDelete = true;
+            product.IsActive = false;
+            product.ModifiedBy = AppConstant.LoggedInUserID;
+            product.ModifiedAt = DateTime.Now;
+            await windowProductService.Update(product);
+
+            var existingOptions = windowOptionService.GetAllQuerable()
+                .Where(x => x.WindowProductId == product.WindowProductId && !(bool)x.IsDelete)
+                .ToList();
+
+            foreach (var option in existingOptions)
+            {
+                option.IsDelete = true;
+                option.IsActive = false;
+                option.ModifiedBy = AppConstant.LoggedInUserID;
+                option.ModifiedAt = DateTime.Now;
+                await windowOptionService.Update(option);
+            }
+        }
+
+        private async Task InsertProductWithOptions(Guid windowId, Core.ViewModels.Request.WindowProductVm product)
+        {
+            FileLogger.Log("Inserting new product...");
+
+            var newProduct = new TblWindowProduct
+            {
+                WindowProductId = Guid.NewGuid(),
+                WindowId = windowId,
+                ProductId = product.ProductId,
+                ProductTypeId = product.ProductTypeId,
+                BuildHeight = product.BuildHeight,
+                BuildWidth = product.BuildWidth,
+                CreatedAt = DateTime.Now,
+                CreatedBy = AppConstant.LoggedInUserID,
+                IsActive = true,
+                IsDelete = false,
+                TenantId = AppConstant.LoggedInTenantId
+            };
+
+            await windowProductService.Add(newProduct);
+
+            foreach (var optionId in product.OptionTypeId ?? new List<Guid>())
+            {
+                var newOption = new WindowOption
+                {
+                    WindowoptionId = Guid.NewGuid(),
+                    OptionTypeId = optionId,
+                    WindowProductId = newProduct.WindowProductId,
+                    WindowId = windowId,
+                    CreatedBy = AppConstant.LoggedInUserID,
+                    TenantId = AppConstant.LoggedInTenantId,
+                    IsActive = true,
+                    IsDelete = false,
+                    AdditionalCost = product.AdditionalCost
+                };
+
+                await windowOptionService.Add(newOption);
+            }
+        }
+
+        bool IsWindowMatched(WindowsList window, string searchValue)
+        {
+            return window.WindowId.ToString() == searchValue ||
+                   (window.JobId?.ToString() ?? "").Contains(searchValue) ||
+                   (window.Label?.ToLower().Contains(searchValue) ?? false) ||
+                   (window.Notes?.ToLower().Contains(searchValue) ?? false) ||
+                   (window.Width.ToString() ?? "").Contains(searchValue) ||
+                   (window.Height.ToString() ?? "").Contains(searchValue);
+        }
+
+        bool IsProductMatched(ProductList product, string searchValue)
+        {
+            return product.ProductId.ToString() == searchValue ||
+                   (product.ProductName?.ToLower().Contains(searchValue) ?? false) ||
+                   (product.ProductTypeName?.ToLower().Contains(searchValue) ?? false) ||
+                   (product.ProductTypeId.ToString() ?? "").Contains(searchValue) ||
+                   product.WindowProductId.ToString() == searchValue ||
+                   product.WindowOptions.Any(o =>
+                       (o.OptionTypeId?.ToLower().Contains(searchValue) ?? false) ||
+                       (o.OptionName?.ToLower().Contains(searchValue) ?? false)
+                   );
+        }
+
+        #endregion
     }
 }

@@ -18,7 +18,7 @@ namespace ShutterManagement.Services
         }
         public async virtual Task<List<T>> GetAll()
         {
-            List<T> query = await dbContext.Set<T>().ToListAsync();
+            List<T> query = await dbContext.Set<T>().AsNoTracking().ToListAsync();
             return query;
         }
         public async virtual Task<T> GetById(Guid Id)
@@ -27,29 +27,29 @@ namespace ShutterManagement.Services
         }
         public async Task<List<T>> GetAll(System.Linq.Expressions.Expression<Func<T, bool>> predicate)
         {
-            List<T> query = await dbContext.Set<T>().Where(predicate).ToListAsync();
+            List<T> query = await dbContext.Set<T>().AsNoTracking().Where(predicate).ToListAsync();
             return query;
         }
         public async Task<T> FirstOrDefaultAsync(System.Linq.Expressions.Expression<Func<T, bool>> predicate)
         {
-            var res = await dbContext.Set<T>().FirstOrDefaultAsync(predicate);
+            var res = await dbContext.Set<T>().AsNoTracking().FirstOrDefaultAsync(predicate);
             return res;
         }
         public T FirstOrDefault(System.Linq.Expressions.Expression<Func<T, bool>> predicate)
         {
-            var res = dbContext.Set<T>().FirstOrDefault(predicate);
+            var res = dbContext.Set<T>().AsNoTracking().FirstOrDefault(predicate);
             return res;
         }
 
         public async Task<bool> AnyAsync(System.Linq.Expressions.Expression<Func<T, bool>> predicate)
         {
-            var res = await dbContext.Set<T>().AnyAsync(predicate);
+            var res = await dbContext.Set<T>().AsNoTracking().AnyAsync(predicate);
             return res;
         }
 
         public bool Any(System.Linq.Expressions.Expression<Func<T, bool>> predicate)
         {
-            var res = dbContext.Set<T>().Any(predicate);
+            var res = dbContext.Set<T>().AsNoTracking().Any(predicate);
             return res;
         }
 
