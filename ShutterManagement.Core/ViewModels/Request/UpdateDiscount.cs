@@ -17,13 +17,15 @@ namespace ShutterManagement.Core.ViewModels.Request
         public Guid? DiscountId { get; set; }
         [Required]
         public string? CouponCode { get; set; }
+
+        [Required(ErrorMessage = "Discount type is required.")]
         public DiscountType discountType { get; set; }
 
-        [Range(1, 100, ErrorMessage = "Percentage discount must be between 1 and 100.")]
-        [DefaultValue("")]
+        //[Range(1, 100, ErrorMessage = "Percentage discount must be between 1 and 100.")]
+        //[DefaultValue("")]
         public decimal? PercentageDiscount { get; set; }
-        [DefaultValue("")]
-        [Range(0.01, double.MaxValue, ErrorMessage = "Fixed amount must be greater than 0.")]
+        //[DefaultValue("")]
+        //[Range(0.01, double.MaxValue, ErrorMessage = "Fixed amount must be greater than 0.")]
         public decimal? FixedAmount { get; set; }
         [DefaultValue("")]
 
