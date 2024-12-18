@@ -1,8 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core;
+using ShutterManagement.Core.Common;
 using ShutterManagement.Core.ViewModels;
 using ShutterManagement.Core.ViewModels.Request;
+using ShutterManagement.Core.ViewModels.Response;
 using ShutterManagement.DAL.Context;
 using ShutterManagement.Services;
 using System;
@@ -45,40 +47,48 @@ namespace ShutterManagement.Business.Services
             return $"{tenantCodePrefix}-{randomCode}";
         }
 
-
-        public async Task<IResponseVm<string>> CreateDiscountAsync(CreateDiscount createDiscount)
+        public async Task<IResponseVm<string>> CreateDiscountCoupon(CreateDiscount createDiscount)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
+                var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive==true);
 
-                if (!IsTenantExists)
+                if (!isTenantExists)
                 {
                     responseVm.Message = AppConstant.TenantNotFound;
                     responseVm.IsSuccess = false;
                     return responseVm;
                 }
-                if (createDiscount.PercentageDiscount <= 0 || createDiscount.PercentageDiscount > 100)
+
+                if (createDiscount.discountType == DiscountType.Percentage)
                 {
-                    responseVm.Message = "Percentage must be between 1 and 100.";
-                    responseVm.IsSuccess = false;
-                    return responseVm;
+                    if (createDiscount.PercentageDiscount == null || createDiscount.PercentageDiscount <= 0 || createDiscount.PercentageDiscount > 100)
+                    {
+                        responseVm.Message = "Percentage discount must be between 1 and 100.";
+                        responseVm.IsSuccess = false;
+                        return responseVm;
+                    }
                 }
-                if (createDiscount.FixedAmount <= 0)
+                else if (createDiscount.discountType == DiscountType.Fixed)
                 {
-                    responseVm.Message = "Fixed amount must be greater than 0.";
+                    if (createDiscount.FixedAmount == null || createDiscount.FixedAmount <= 0)
+                    {
+                        responseVm.Message = "Fixed amount must be greater than 0.";
+                        responseVm.IsSuccess = false;
+                        return responseVm;
+                    }
+                }
+                else
+                {
+                    responseVm.Message = "Invalid discount type.";
                     responseVm.IsSuccess = false;
                     return responseVm;
                 }
 
                 var couponCode = GenerateCouponCode();
-                //var IscouponCodeExit = await AnyAsync(x => x.IsActive == true
-                //    && x.IsDelete == false && x.CouponCode == couponCode);
-                //{
 
-                //}
-                if (createDiscount.Type == 1 || createDiscount.Type==2 && createDiscount.CustomerId != null && createDiscount.CustomerId.Length > 0)
+                if (createDiscount.AppliedFor == AppliedFor.Customers && createDiscount.CustomerId != null && createDiscount.CustomerId.Length > 0)
                 {
                     foreach (var customerId in createDiscount.CustomerId)
                     {
@@ -87,8 +97,8 @@ namespace ShutterManagement.Business.Services
                             DiscountId = Guid.NewGuid(),
                             CouponCode = couponCode.Trim(),
                             CustomerId = customerId,
-                            PercentageDiscount = createDiscount.PercentageDiscount.Value,
-                            FixedAmount = createDiscount.FixedAmount.Value,
+                            PercentageDiscount = createDiscount.discountType == DiscountType.Percentage ? createDiscount.PercentageDiscount.Value : (decimal?)null,
+                            FixedAmount = createDiscount.discountType == DiscountType.Fixed ? createDiscount.FixedAmount.Value : (decimal?)null,
                             ExpiryDate = createDiscount.ExpiryDate,
                             StartDate = createDiscount.StartDate,
                             CreatedAt = DateTime.Now,
@@ -104,10 +114,28 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.InsertSuccessMsg;
                     responseVm.IsSuccess = true;
                 }
-                else
+                else if (createDiscount.AppliedFor == AppliedFor.All)
                 {
-                    responseVm.Message = "No customers provided or invalid type.";
-                    responseVm.IsSuccess = false;
+                    var discount = new TblDiscount
+                    {
+                        DiscountId = Guid.NewGuid(),
+                        CouponCode = couponCode.Trim(),
+                        CustomerId = null,
+                        PercentageDiscount = createDiscount.discountType == DiscountType.Percentage ? createDiscount.PercentageDiscount.Value : (decimal?)null,
+                        FixedAmount = createDiscount.discountType == DiscountType.Fixed ? createDiscount.FixedAmount.Value : (decimal?)null,
+                        ExpiryDate = createDiscount.ExpiryDate,
+                        StartDate = createDiscount.StartDate,
+                        CreatedAt = DateTime.Now,
+                        Createdby = AppConstant.LoggedInUserID,
+                        TenantId = AppConstant.LoggedInTenantId,
+                        IsActive = true,
+                        IsDelete = false
+                    };
+
+                    await Add(discount);
+
+                    responseVm.Message = AppConstant.InsertSuccessMsg;
+                    responseVm.IsSuccess = true;
                 }
             }
             catch (Exception ex)
@@ -119,8 +147,7 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-
-        public async Task<IResponseVm<string>> UpdateAsync(UpdateDiscount updateDiscount)
+        public async Task<IResponseVm<string>> UpdateDiscountCoupon(UpdateDiscount updateDiscount)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
@@ -147,10 +174,13 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-                var existingDiscount =  FirstOrDefault(x => x.DiscountId == updateDiscount.DiscountId && x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false);
+                var existingDiscount = GetAllQuerable()
+                    .FirstOrDefault(x => x.DiscountId == updateDiscount.DiscountId
+                                         && x.TenantId == AppConstant.LoggedInTenantId
+                                         && x.IsDelete==false);
                 if (existingDiscount == null)
                 {
-                    responseVm.Message = "Record not found.";
+                    responseVm.Message = AppConstant.NoDataFound;
                     responseVm.IsSuccess = false;
                     return responseVm;
                 }
@@ -162,17 +192,28 @@ namespace ShutterManagement.Business.Services
                 existingDiscount.UpdatedAt = DateTime.Now;
                 existingDiscount.ModifiedBy = AppConstant.LoggedInUserID;
 
-                var existingCustomerDiscounts = GetAllQuerable().Where(x => x.DiscountId == updateDiscount.DiscountId).ToList();
-                
-
-                if (updateDiscount.CustomerId != null && updateDiscount.CustomerId.Length > 0)
+                if (updateDiscount.AppliedFor == AppliedFor.Customers && updateDiscount.CustomerId != null && updateDiscount.CustomerId.Length > 0)
                 {
+                    var existingCustomerDiscounts = GetAllQuerable()
+                        .Where(x => x.DiscountId == updateDiscount.DiscountId)
+                        .ToList();
+
+                    foreach (var discount in existingCustomerDiscounts)
+                    {
+                        discount.IsDelete = true;
+                    }
+
                     foreach (var customerId in updateDiscount.CustomerId)
                     {
                         var discountCustomer = new TblDiscount
                         {
                             DiscountId = existingDiscount.DiscountId,
-                            CustomerId = customerId
+                            CustomerId = customerId,
+                            TenantId = AppConstant.LoggedInTenantId,
+                            CreatedAt = DateTime.Now,
+                            Createdby = AppConstant.LoggedInUserID,
+                            IsActive = true,
+                            IsDelete = false
                         };
 
                         await Add(discountCustomer);
@@ -191,8 +232,7 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-
-        public async Task<IResponseVm<string>> DeleteAsync(Guid discountId)
+        public async Task<IResponseVm<string>> DeleteDiscountCoupon(Guid discountId)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
@@ -205,7 +245,7 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-                var discount =  FirstOrDefault(x => x.DiscountId == discountId && x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false);
+                var discount =  GetAllQuerable().Where(x => x.DiscountId == discountId && x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false).FirstOrDefault();
                 if (discount == null)
                 {
                     responseVm.Message = "Discount not found or already deleted.";
@@ -271,9 +311,7 @@ namespace ShutterManagement.Business.Services
                     await Update(relatedCustomer);
                 }
 
-               
-
-                responseVm.Message = AppConstant.DeleteSuccessMsg;
+                responseVm.Message = AppConstant.UpdateSuccessMsg;
                 responseVm.IsSuccess = true;
             }
             catch (Exception ex)
@@ -283,6 +321,82 @@ namespace ShutterManagement.Business.Services
             }
 
             return responseVm;
+        }
+
+        public async Task<IResponseVm<List<DiscoountVm>>> GetAll_Coupons(Pagination filter)
+        {
+            IResponseVm<List<DiscoountVm>> responseVm = new ResponseVm<List<DiscoountVm>>();
+            try
+            {
+                var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
+
+                if (isTenantExists)
+                {
+                    //var allCouponlList = (await GetAll())
+                    //    .Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId)
+                    //    .OrderByDescending(x => x.CreatedAt)
+                    //    .ToList();
+
+                    var allCouponlList = from t2 in _context.TblDiscounts.OrderByDescending(x => x.CreatedAt)
+                              join t1 in _context.TblContacts on t2.CustomerId equals t1.ContactId
+                              select new DiscoountVm
+                              {
+                                  CouponCode = t2.CouponCode,
+                                  CustomerName=t1.Name,
+                                  PercentageDiscount = t2.PercentageDiscount,
+                                  FixedAmount = t2.FixedAmount,
+                                  ExpiryDate = t2.ExpiryDate,
+                                  StartDate = t2.StartDate,
+                                  IsActive = t2.IsActive
+                              };
+
+                    var filteredRecords = allCouponlList
+                        .Where(x =>
+                            (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
+                            (string.IsNullOrEmpty(filter.SearchValue) ||
+                                (x.CustomerName.ToString() == filter.SearchValue) ||
+                                (x.CouponCode ?? "").Contains(filter.SearchValue.Trim())||
+                                (x.PercentageDiscount.ToString() ?? "").Contains(filter.SearchValue.Trim()) ||
+                                (x.FixedAmount.ToString() ?? "").Contains(filter.SearchValue.Trim()) ||
+                                (x.ExpiryDate.ToString() ?? "").Contains(filter.SearchValue.Trim()) ||
+                                (x.StartDate.ToString() ?? "").Contains(filter.SearchValue.Trim())
+                            )
+                        )
+                        .ToList();
+
+                    var paginatedRecords = filteredRecords
+                        .Skip((filter.PageNo - 1) * filter.RecordPerPage)
+                        .Take(filter.RecordPerPage)
+                        .ToList();
+
+                    responseVm.IsSuccess = true;
+                    responseVm.Data = paginatedRecords.Select(x => new DiscoountVm
+                    {
+                        CouponCode = x.CouponCode,
+                        CustomerName = x.CustomerName,
+                        PercentageDiscount = x.PercentageDiscount,
+                        FixedAmount = x.FixedAmount,
+                        ExpiryDate = x.ExpiryDate,
+                        StartDate = x.StartDate,
+                        IsActive = x.IsActive
+                    }).ToList();
+
+                    responseVm.TotalRecords = filteredRecords.Count;
+                    responseVm.Message = AppConstant.FetchSuccessMsg;
+                }
+                else
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = AppConstant.AccessDenied;
+                }
+            }
+            catch (Exception ex)
+            {
+                responseVm.IsSuccess = false;
+                responseVm.Message = $"Error: {ex.Message}";
+            }
+
+            return await Task.FromResult(responseVm);
         }
 
        
