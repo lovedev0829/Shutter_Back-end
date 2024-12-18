@@ -8,6 +8,7 @@ using ShutterManagement.Core.ViewModels.Request;
 
 namespace ShutterManagement.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class DiscountController : ControllerBase
