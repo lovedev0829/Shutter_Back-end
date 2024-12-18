@@ -20,7 +20,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         public decimal? Width { get; set; }
         public decimal? Height { get; set; }
         public decimal? ArchHeight { get; set; }
-        public string? Photo { get; set; }
+        public string[]? Photo { get; set; } = [];
         public string? Notes { get; set; }
         [Required]
         public decimal Quantity { get; set; }

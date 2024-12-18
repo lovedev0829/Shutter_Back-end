@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Azure;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
@@ -7,6 +8,7 @@ using ShutterManagement.Business.Services;
 using ShutterManagement.Core;
 using ShutterManagement.Core.ViewModels;
 using ShutterManagement.DAL.Context;
+using System.IO;
 
 namespace ShutterManagement.Controllers
 {
@@ -77,52 +79,47 @@ namespace ShutterManagement.Controllers
         [Authorize]
         [HttpGet("ExportContacts")]
         [Authorize(Roles = "ContactView")]
-        public async Task<IActionResult> ExportContactsToCsvAsync()
+        public async Task<IActionResult> ExportToCsv(string Type)
         {
             try
             {
-                var filePath = Path.Combine(Directory.GetCurrentDirectory(), "Contacts.csv");
-                var result = await importandExportCSV.ExportContactsToCsvAsync(filePath);
-                if (result.IsSuccess)
+                switch (Type.ToLower())
                 {
-                    var fileBytes = await System.IO.File.ReadAllBytesAsync(filePath);
-                    return File(fileBytes, "text/csv", "Contacts.csv");
+                    case "contact":
+                        var filePath = Path.Combine(Directory.GetCurrentDirectory(), "Contacts.csv");
+                        var result = await importandExportCSV.ExportContactsToCsvAsync(filePath);
+                        if (result.IsSuccess)
+                        {
+                            var fileBytes = await System.IO.File.ReadAllBytesAsync(filePath);
+                            return File(fileBytes, "text/csv", "Contacts.csv");
 
+                        }
+                        break;
+                    case "material":
+                        var filePath2 = Path.Combine(Directory.GetCurrentDirectory(), "Materials.csv");
+                        var result2 = await importandExportCSV.ExportMaterialsToCsvAsync(filePath2);
+                        if (result2.IsSuccess)
+                        {
+                            var fileBytes2 = await System.IO.File.ReadAllBytesAsync(filePath2);
+                            return File(fileBytes2, "text/csv", "Materials.csv");
+                        }
+                        break;
+                    case "jobs":
+                        var filePath3 = Path.Combine(Directory.GetCurrentDirectory(), "Jobs.csv");
+                        var result3 = await importandExportCSV.ExportJobsToCsv(filePath3);
+                        var fileBytes3 = await System.IO.File.ReadAllBytesAsync(filePath3);
+                        return File(fileBytes3, "text/csv", "Jobs.csv");
+
+                    default:
+                        return StatusCode(200, "Please Select valid Type");
                 }
-                else
-                {
-                    return BadRequest(result.Message);
-                }
+                
             }
             catch (Exception ex)
             {
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
+            return Ok();
         }
-
-
-        [Authorize]
-        [HttpGet("ExportMaterials")]
-        [Authorize(Roles = "MaterialView")]
-        public async Task<IActionResult> ExportmaterialsToCsvAsync()
-        {
-            IResponseVm<string> responseVm = new ResponseVm<string>();
-            try
-            {
-                var filePath = Path.Combine(Directory.GetCurrentDirectory(), "Materials.csv");
-                var result = await importandExportCSV.ExportMaterialsToCsvAsync(filePath);
-                var fileBytes = await System.IO.File.ReadAllBytesAsync(filePath);
-                responseVm.IsSuccess = true;
-                return File(fileBytes, "text/csv", "Materials.csv");
-
-
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
-        }
-
-
     }
 }

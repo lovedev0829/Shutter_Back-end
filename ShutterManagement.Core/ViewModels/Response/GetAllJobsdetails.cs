@@ -30,9 +30,8 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? JobStatusName { get; set; }
 
         public string? Notes { get; set; }
-        public string? AttachmentsAny { get; set; }
+        public string[]? AttachmentsAny { get; set; } = new string[] {};
         public bool? IsActive { get; set; }
-
         public string? Label { get; set; }
         public string? StreetAddress { get; set; }
         public string? City { get; set; }

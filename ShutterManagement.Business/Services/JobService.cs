@@ -88,6 +88,7 @@ namespace ShutterManagement.Business.Services
                 if (IsAddressExist)
                 {
                     var jobStatus = _context.MstJobStatuses.Where(s => s.JobStatusName == "Pending" && s.IsActive == true).FirstOrDefault();
+                    string arrayString = string.Join(", ", model.AttachmentsAny);
                     TblJob job = new TblJob
                     {
                         AddressId = model.AddressId,
@@ -98,7 +99,7 @@ namespace ShutterManagement.Business.Services
                         ScheduledDate = model.ScheduledDate,
                         JobStatus = jobStatus?.JobStatusId,
                         Notes = model.Notes.Trim(),
-                        AttachmentAny = model.AttachmentsAny.Trim(),
+                        AttachmentAny = arrayString,
                         JobUniqueId = generateUnique,
                         TenantId = AppConstant.LoggedInTenantId,
                         IsActive = true,
@@ -196,7 +197,7 @@ namespace ShutterManagement.Business.Services
                                        JobStatus = t5.JobStatusId,
                                        JobStatusName = t5.JobStatusName,
                                        Notes = t2.Notes,
-                                       AttachmentsAny = t2.AttachmentAny,
+                                       AttachmentsAny = t2.AttachmentAny.Split(",", StringSplitOptions.RemoveEmptyEntries).ToArray(),
                                        Label = t1.Label,
                                        StreetAddress = t1.StreetAddress,
                                        City = t1.City,
@@ -279,14 +280,14 @@ namespace ShutterManagement.Business.Services
                 }
                 if (IsJobExist != null)
                 {
-
+                    string arrayString = string.Join(", ", model.AttachmentsAny);
                     IsJobExist.JobName = model.JobName?.Trim();
                     IsJobExist.JobType = model.JobType;
                     IsJobExist.AssignedPersonnel = model.AssignedPersonnel;
                     IsJobExist.ScheduledDate = model.ScheduledDate;
                     IsJobExist.JobStatus = model.JobStatus;
                     IsJobExist.Notes = model.Notes.Trim();
-                    IsJobExist.AttachmentAny = model.AttachmentsAny.Trim();
+                    IsJobExist.AttachmentAny = arrayString;
                     IsJobExist.UpdatedAt = DateTime.Now;
                     IsJobExist.ModifiedBy = AppConstant.LoggedInUserID;
                     var res = await Update(IsJobExist);

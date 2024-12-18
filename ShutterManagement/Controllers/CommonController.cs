@@ -91,14 +91,18 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> Upload(List<IFormFile> files) 
         {
             IResponseVm<List<string>> result = new ResponseVm<List<string>>();
+            List<string> uploads = new List<string>();
             foreach (var file in files)
             {
                 var res = await fileUpload.UploadFile(file, AppConstant.LoggedInTenantId.ToString() ?? "");
                 if (res.IsSuccess)
                 {
-                    result.Data.Add(res.Data);
+                    result.IsSuccess = res.IsSuccess;
+                    result.Message = res.Message;
+                    uploads.Add(res.Data);
                 }
             }
+            result.Data = uploads;
             return Ok(result);
         }
 

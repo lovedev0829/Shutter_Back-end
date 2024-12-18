@@ -235,7 +235,7 @@ namespace ShutterManagement.Business.Services
                 responseVm.Message = $"Error: {ex.Message}";
             }
 
-            return await Task.FromResult(responseVm);
+            return responseVm;
         }
         public   async Task<IResponseVm<string>> Update_Vendor(UpdateVendor model)
         {

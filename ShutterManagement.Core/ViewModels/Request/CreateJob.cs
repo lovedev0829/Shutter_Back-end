@@ -41,7 +41,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         [DefaultValue("")]
       
         public string? Notes { get; set; }
-        public string? AttachmentsAny { get; set; }
+        public string[]? AttachmentsAny { get; set; } = [];
 
     }
 }

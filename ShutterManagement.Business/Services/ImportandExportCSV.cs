@@ -467,10 +467,12 @@ namespace ShutterManagement.Business.Services
                 {
                     await File.WriteAllTextAsync(filePath, csvBuilder.ToString());
                     responseVm.Message = AppConstant.ExportSuccessMsg;
+                    responseVm.IsSuccess = true;
                 }
                 catch (Exception ex)
                 {
                     responseVm.Message = AppConstant.ExceptionError + ex.Message;
+                    responseVm.IsSuccess = false;
                 }
 
                 return responseVm;
@@ -482,6 +484,70 @@ namespace ShutterManagement.Business.Services
             }
         }
 
+        public async Task<IResponseVm<dynamic>> ExportJobsToCsv(string filePath)
+        {
+            IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
+
+            try
+            {
+                var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
+                if (!isTenantExists)
+                {
+                    responseVm.Message = AppConstant.TenantNotFound;
+                    return responseVm;
+                }
+                var subTenantlist = (await tenantService.GetAll())
+                  .Where(x => x.ParentTenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false)
+                  .Select(pt => pt.TenantId)
+                  .ToList();
+
+                var JobList =  (from t2 in dbContext.TblJobs.OrderByDescending(x => x.CreatedAt)
+                                     join t1 in dbContext.TblAddresses on t2.AddressId equals t1.AddressId
+                                     join t3 in dbContext.MstJobTypes on t2.JobType equals t3.Id
+                                     join t4 in dbContext.TblUsers on t2.AssignedPersonnel equals t4.Id
+                                     join p1 in dbContext.TblUsers on t2.CreatedBy equals p1.Id
+                                     join p2 in dbContext.TblTenants on t2.TenantId equals p2.TenantId
+                                     join t5 in dbContext.MstJobStatuses on t2.JobStatus equals t5.JobStatusId
+                                     join t6 in dbContext.TblContacts on t2.ContactId equals t6.ContactId
+                                     where t2.TenantId == AppConstant.LoggedInTenantId || subTenantlist.Contains((Guid)t2.TenantId)
+                                     select new ExportJobsVm
+                                     {
+                                         ContactName = t6.Name,
+                                         ContactEmail = t6.Email,
+                                         ContactPhone = t6.PhoneNumber,
+                                         SubtenantName = p2.FirstName + " " + p2.LastName,
+                                         CreatedbyUsername = p1.FirstName + " " + p1.LastName,
+                                         JobName = t2.JobName,
+                                         JobStatusName = t5.JobStatusName,
+                                         StreetAddress = t1.StreetAddress,
+                                         City = t1.City,
+                                         State = t1.State,
+                                         ZipCode = t1.ZipCode
+                                     }).ToList();
+
+                var csvBuilder = new StringBuilder();
+                csvBuilder.AppendLine("ContactName,ContactEmail,ContactPhone,Partner/Tenant,CreatedBy,JobName,Status,Address,City,State,ZipCode");
+
+                foreach (var job in JobList)
+                {
+                    var line = $"{job.ContactName},{job.ContactEmail},{job.ContactPhone}," +
+                               $"{job.SubtenantName},{job.CreatedbyUsername},{job.JobName}," +
+                               $"{job.JobStatusName},{job.StreetAddress},{job.City}," +
+                               $"{job.State},{job.ZipCode}";
+
+                    csvBuilder.AppendLine(line);
+                }
+
+                await File.WriteAllTextAsync(filePath, csvBuilder.ToString());
+                responseVm.Message = AppConstant.ExportSuccessMsg;
+            }
+            catch (Exception ex)
+            {
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+            }
+
+            return responseVm;
+        }
     }
 }
 

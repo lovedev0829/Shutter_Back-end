@@ -14,16 +14,17 @@ namespace ShutterManagement.Core.ViewModels.Request
 
     public class CreateDiscount
     {
-        [Required(ErrorMessage = "Discount type is required.")]
+       [Required(ErrorMessage = "AppliedFor type is required.")]
         public AppliedFor AppliedFor { get; set; }
+        [Required(ErrorMessage = "Discount type is required.")]
         public DiscountType discountType { get; set; }
         public Guid[] CustomerId { get; set; } = Array.Empty<Guid>();
 
-        [Range(1, 100, ErrorMessage = "Percentage discount must be between 1 and 100.")]
-        [DefaultValue("")]
+        //[Range(0, 100, ErrorMessage = "Percentage discount must be between 1 and 100.")]
+        //[DefaultValue(0)]
         public decimal? PercentageDiscount { get; set; }
-        [DefaultValue("")]
-        [Range(0.01, double.MaxValue, ErrorMessage = "Fixed amount must be greater than 0.")]
+        //[DefaultValue(0)]
+        //[Range(0.01, double.MaxValue, ErrorMessage = "Fixed amount must be greater than 0.")]
         public decimal? FixedAmount { get; set; }
         [DefaultValue("")]
 

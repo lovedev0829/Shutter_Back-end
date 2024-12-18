@@ -13,7 +13,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public decimal? Height { get; set; }
         public decimal? Quantity { get; set; }
         public decimal? ArchHeight { get; set; }
-        public string? Photo { get; set; }
+        public string[]? Photo { get; set; } = new string[] {};
         public string? Notes { get; set; }
         public bool? IsActive { get; set; }
         public Guid? TenantId { get; set; }

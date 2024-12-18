@@ -24,14 +24,15 @@ namespace ShutterManagement.Core.Common
 
     public enum AppliedFor
     {
-        All,
-        Customers
+        All=0,
+        Customers=1
+        
     }
 
     public enum DiscountType
     {
-        Percentage,
-        Fixed
+        Percentage=0,
+        Fixed=1
     }
 
 
