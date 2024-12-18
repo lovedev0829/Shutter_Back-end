@@ -467,10 +467,12 @@ namespace ShutterManagement.Business.Services
                 {
                     await File.WriteAllTextAsync(filePath, csvBuilder.ToString());
                     responseVm.Message = AppConstant.ExportSuccessMsg;
+                    responseVm.IsSuccess = true;
                 }
                 catch (Exception ex)
                 {
                     responseVm.Message = AppConstant.ExceptionError + ex.Message;
+                    responseVm.IsSuccess = false;
                 }
 
                 return responseVm;

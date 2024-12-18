@@ -104,7 +104,7 @@ namespace ShutterManagement.Controllers
                             return File(fileBytes2, "text/csv", "Materials.csv");
                         }
                         break;
-                    case "Jobs":
+                    case "jobs":
                         var filePath3 = Path.Combine(Directory.GetCurrentDirectory(), "Jobs.csv");
                         var result3 = await importandExportCSV.ExportJobsToCsv(filePath3);
                         var fileBytes3 = await System.IO.File.ReadAllBytesAsync(filePath3);
