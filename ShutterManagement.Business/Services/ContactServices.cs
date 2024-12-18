@@ -16,6 +16,7 @@ using System.Reflection.Emit;
 using ShutterManagement.Core.SPModel.SP_Responses;
 using Microsoft.IdentityModel.Tokens;
 using ShutterManagement.Core.ViewModels.Response;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace ShutterManagement.Business.Services
 {
@@ -150,10 +151,11 @@ namespace ShutterManagement.Business.Services
                         }
                         if (!model.IsTaxExemption)
                         {
+                            string arrayString = string.Join(", ", model.TaxExemptionVm?.ExemptionCertificate);
                             TblTaxExemption taxExemption1 = new TblTaxExemption
                             {
                                 ContactId = res.ContactId,
-                                ExemptionCertificate = model.TaxExemptionVm?.ExemptionCertificate,
+                                ExemptionCertificate = arrayString,
                                 EffectiveDate = model.TaxExemptionVm?.EffectiveDate,
                                 ExpiryDate = model.TaxExemptionVm?.ExpiryDate,
                                 CreatedAt = DateTime.Now,
@@ -267,9 +269,11 @@ namespace ShutterManagement.Business.Services
                         {
                             var contactTaxExemption = taxExemptionService.GetAllQuerable()
                                 .Where(x => x.ContactId == contact.ContactId && x.IsDelete == false).FirstOrDefault();
+                            string arrayString = string.Join(", ", model.TaxExemptionVm?.ExemptionCertificate);
+
                             if (contactTaxExemption != null)
                             {
-                                contactTaxExemption.ExemptionCertificate = model.TaxExemptionVm?.ExemptionCertificate;
+                                contactTaxExemption.ExemptionCertificate =arrayString;
                                 contactTaxExemption.EffectiveDate = model.TaxExemptionVm?.EffectiveDate;
                                 contactTaxExemption.ExpiryDate = model.TaxExemptionVm?.ExpiryDate;
                                 contactTaxExemption.UpdatedAt = DateTime.Now;
@@ -282,7 +286,7 @@ namespace ShutterManagement.Business.Services
                                 TblTaxExemption taxExemption1 = new TblTaxExemption
                                 {
                                     ContactId = contact.ContactId,
-                                    ExemptionCertificate = model.TaxExemptionVm?.ExemptionCertificate,
+                                    ExemptionCertificate = arrayString,
                                     EffectiveDate = model.TaxExemptionVm?.EffectiveDate,
                                     ExpiryDate = model.TaxExemptionVm?.ExpiryDate,
                                     CreatedAt = DateTime.Now,
@@ -533,7 +537,7 @@ namespace ShutterManagement.Business.Services
                         && x.IsDelete == false).Select(x => new TaxExemption
                         {
                             EffectiveDate = x.EffectiveDate,
-                            ExemptionCertificate = x.ExemptionCertificate,
+                            ExemptionCertificate = x.ExemptionCertificate.Split(new[] { "," }, StringSplitOptions.None).ToArray(),
                             ExpiryDate = x.ExpiryDate
                         }).FirstOrDefault();
                     ContactList.Add(contacts);

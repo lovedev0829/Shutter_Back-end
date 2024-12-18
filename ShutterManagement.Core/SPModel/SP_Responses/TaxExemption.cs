@@ -10,7 +10,7 @@ namespace ShutterManagement.Core.SPModel.SP_Responses
     public class TaxExemption
     {
         [DefaultValue("")]
-        public string? ExemptionCertificate { get; set; } = string.Empty;
+        public string[]? ExemptionCertificate { get; set; } = { };
 
         public DateTime? EffectiveDate { get; set; }
 
