@@ -372,7 +372,7 @@ namespace ShutterManagement.Business.Services
                             && x.IsDelete == false).Select(x => new TaxExemption
                             {
                                 EffectiveDate = x.EffectiveDate,
-                                ExemptionCertificate = x.ExemptionCertificate,
+                                ExemptionCertificate = x.ExemptionCertificate.Split(new[] {","},StringSplitOptions.None),
                                 ExpiryDate = x.ExpiryDate
                             }).FirstOrDefault();
                         ContactList.Add(contacts);

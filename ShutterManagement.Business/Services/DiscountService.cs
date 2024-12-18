@@ -18,13 +18,11 @@ namespace ShutterManagement.Business.Services
 {
     public class DiscountService : BaseRepository<BtprojecShuttermanagementDevContext, TblDiscount>, IDiscountService
     {
-        private readonly BtprojecShuttermanagementDevContext _context;
         private readonly ITenantService tenantService;
         private readonly ClaimsProperty claimsProperty;
 
-        public DiscountService(BtprojecShuttermanagementDevContext context,ITenantService tenantService, ITaxExemption taxExemptionService, ClaimsProperty claimsProperty )
+        public DiscountService(ITenantService tenantService, ITaxExemption taxExemptionService, ClaimsProperty claimsProperty )
         {
-            _context = context;
             this.tenantService = tenantService;
             this.claimsProperty = claimsProperty;
         }
@@ -302,7 +300,7 @@ namespace ShutterManagement.Business.Services
                 discount.UpdatedAt = DateTime.Now;
                 discount.ModifiedBy = AppConstant.LoggedInUserID;
 
-                var relatedCustomers = dbContext.TblDiscounts.Where(x => x.DiscountId == discountId).ToList();
+                var relatedCustomers = GetAllQuerable().Where(x => x.DiscountId == discountId).ToList();
                 foreach (var relatedCustomer in relatedCustomers)
                 {
                     relatedCustomer.IsActive = false;
@@ -337,8 +335,8 @@ namespace ShutterManagement.Business.Services
                     //    .OrderByDescending(x => x.CreatedAt)
                     //    .ToList();
 
-                    var allCouponlList = from t2 in _context.TblDiscounts.OrderByDescending(x => x.CreatedAt)
-                              join t1 in _context.TblContacts on t2.CustomerId equals t1.ContactId
+                    var allCouponlList = from t2 in dbContext.TblDiscounts.OrderByDescending(x => x.CreatedAt)
+                              join t1 in dbContext.TblContacts on t2.CustomerId equals t1.ContactId
                               select new DiscoountVm
                               {
                                   CouponCode = t2.CouponCode,
