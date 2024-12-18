@@ -27,9 +27,9 @@ public partial class TblEstimate
 
     public DateTime? UpdatedAt { get; set; }
 
-    public bool IsActive { get; set; }
+    public bool? IsActive { get; set; }
 
-    public bool IsDelete { get; set; }
+    public bool? IsDelete { get; set; }
 
     public Guid? ModifiedBy { get; set; }
 

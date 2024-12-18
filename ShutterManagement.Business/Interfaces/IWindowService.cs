@@ -16,7 +16,6 @@ namespace ShutterManagement.Business.Interfaces
         Task<IResponseVm<string>> Create_Window(CreateWindow model);
         Task<IResponseVm<string>> Update_Window(UpdateWindow  model);
         Task<IResponseVm<List<WindowsList>>> GetAll_Window(Pagination filter);
-        // Task<IResponseVm<AddressResponse>> GetById_Address(Guid AddressId);
         Task<IResponseVm<string>> ActiveInActiveWindow(Guid WindowId);
         Task<IResponseVm<string>> DeleteWindow(Guid WindowId);
     }
