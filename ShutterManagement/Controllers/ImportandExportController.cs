@@ -124,5 +124,27 @@ namespace ShutterManagement.Controllers
         }
 
 
+        [Authorize]
+        [HttpGet("ExportJobs")]
+        public async Task<IActionResult> ExportJobsToCsvc()
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+            try
+            {
+                var filePath = Path.Combine(Directory.GetCurrentDirectory(), "Jobs.csv");
+                var result = await importandExportCSV.ExportJobsToCsv(filePath);
+                var fileBytes = await System.IO.File.ReadAllBytesAsync(filePath);
+                responseVm.IsSuccess = true;
+                return File(fileBytes, "text/csv", "Jobs.csv");
+
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+
+
     }
 }
