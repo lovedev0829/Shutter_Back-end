@@ -197,7 +197,7 @@ namespace ShutterManagement.Business.Services
                                        JobStatus = t5.JobStatusId,
                                        JobStatusName = t5.JobStatusName,
                                        Notes = t2.Notes,
-                                       AttachmentsAny = t2.AttachmentAny.Split(new[] { "," }, StringSplitOptions.None).ToArray(),
+                                       AttachmentsAny = t2.AttachmentAny.Split(",", StringSplitOptions.RemoveEmptyEntries).ToArray(),
                                        Label = t1.Label,
                                        StreetAddress = t1.StreetAddress,
                                        City = t1.City,

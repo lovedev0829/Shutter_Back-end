@@ -468,7 +468,7 @@ namespace ShutterManagement.Business.Services
                     Height = g.FirstOrDefault().w.Height,
                     Width = g.FirstOrDefault().w.Width,
                     Notes = g.FirstOrDefault().w.Notes,
-                    Photo = g.FirstOrDefault().w.Photo.Split(new[] { "," }, StringSplitOptions.None).ToArray(),
+                    Photo = g.FirstOrDefault().w.Photo.Split( "," , StringSplitOptions.RemoveEmptyEntries).ToArray(),
                     TenantId = g.FirstOrDefault().w.TenantId,
                     IsActive = g.FirstOrDefault().w.IsActive,
                     ProductDetails = g.GroupBy(x => x.wp.WindowProductId)
