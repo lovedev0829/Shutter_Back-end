@@ -211,9 +211,9 @@ namespace ShutterManagement.Controllers
         [HttpPost]
         [Route("GetAllJobs")]
         //[Authorize(Roles = "JobView")]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll(Pagination filter1)
         {
-            var result = await jobService.GetAllJobsTenant_SubTenant(filter);
+            var result = await jobService.GetAllJobsTenant_SubTenant(filter1);
             return Ok(result);
         }
 

@@ -79,10 +79,11 @@ namespace ShutterManagement.Business.Services
                 bool IsAddressExist = await address.AnyAsync(x => x.AddressId == model.AddressId && x.ContactId == model.ContactId
                 && x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false);
 
-                var IsjobNameExists = AnyAsync(x => x.JobName == model.JobName.Trim() && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
-                if (IsjobNameExists != null)
+                bool IsjobNameExists = await AnyAsync(x => x.JobName == model.JobName.Trim() && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
+                if (IsjobNameExists)
                 {
                     responseVm.Message = "JobName" + AppConstant.AlreadyExists;
+                    return responseVm;
                 }
                 if (IsAddressExist)
                 {
@@ -269,7 +270,7 @@ namespace ShutterManagement.Business.Services
                 var IsJobExist = (await GetAll()).Where(x => x.JobId == model.JobId && x.AddressId == model.AddressId &&
                 x.ContactId == model.ContactId && x.JobUniqueId == model.JobUniqueCode.Trim() 
                 && x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false).FirstOrDefault();
-                bool IsjobNameExists = await AnyAsync(x =>x.JobId !=model.JobId && x.JobName.Trim() == model.JobName && 
+                bool IsjobNameExists = await AnyAsync(x =>x.JobId !=model.JobId && x.JobName.Trim() == model.JobName.Trim() && 
                 x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
                 if (IsjobNameExists)
                 {
@@ -338,6 +339,8 @@ namespace ShutterManagement.Business.Services
                                              JobName = t2.JobName,
                                              ContactId = t2.ContactId,
                                              ContactName = t6.Name,
+                                             ContactEmail = t6.Email,
+                                             ContactPhone = t6.PhoneNumber,
                                              AddressId = t2.AddressId,
                                              JobType = t3.Id,
                                              JobTypeName = t3.JobTypeName,
@@ -356,7 +359,8 @@ namespace ShutterManagement.Business.Services
                                              JobUniqueCode = t2.JobUniqueId,
                                              CreatedBy = t2.CreatedBy.ToString(),
                                              CreatedbyUsername = p1.FirstName + " " + p1.LastName,
-                                             SubtenantName = p2.FirstName + " " + p2.LastName
+                                             SubtenantName = p2.FirstName + " " + p2.LastName,
+                                             TenantId = t2.TenantId.ToString()
                                          }).ToListAsync();
 
                    
@@ -367,6 +371,7 @@ namespace ShutterManagement.Business.Services
                             (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
                             (string.IsNullOrEmpty(filter.JobStatus) ? true : (filter.JobStatus == x.JobStatus.ToString())) &&
                             (string.IsNullOrEmpty(filter.Address) ? true : (filter.Address == x.AddressId.ToString())) &&
+                            (string.IsNullOrEmpty(filter.TenantId) ? true : (filter.TenantId == x.TenantId.ToString())) &&
                             (string.IsNullOrEmpty(filter.SearchValue) ? true :
                                 (x.JobId.ToString() == filter.SearchValue) ||
                                 (x.ContactId.ToString() == filter.SearchValue) ||
@@ -387,10 +392,7 @@ namespace ShutterManagement.Business.Services
                                 || (x.City ?? "").ToLower().Contains(filter.SearchValue)))
                         .ToList();
 
-                    var TakenRecords = FilterRecords
-                        .Skip((filter.PageNo - 1) * filter.RecordPerPage)
-                        .Take(filter.RecordPerPage)
-                        .ToList();
+                    var TakenRecords = Paginate.Pagination(FilterRecords, filter);
 
                     responseVm.Data = TakenRecords;
                     responseVm.TotalRecords = FilterRecords.Count();
