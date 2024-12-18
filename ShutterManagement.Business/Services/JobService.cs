@@ -360,7 +360,7 @@ namespace ShutterManagement.Business.Services
                                              CreatedBy = t2.CreatedBy.ToString(),
                                              CreatedbyUsername = p1.FirstName + " " + p1.LastName,
                                              SubtenantName = p2.FirstName + " " + p2.LastName,
-                                             TenantId = t2.TenantId.ToString()
+                                             TenantId = t2.TenantId
                                          }).ToListAsync();
 
                    
@@ -371,7 +371,7 @@ namespace ShutterManagement.Business.Services
                             (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
                             (string.IsNullOrEmpty(filter.JobStatus) ? true : (filter.JobStatus == x.JobStatus.ToString())) &&
                             (string.IsNullOrEmpty(filter.Address) ? true : (filter.Address == x.AddressId.ToString())) &&
-                            (string.IsNullOrEmpty(filter.TenantId) ? true : (filter.TenantId == x.TenantId.ToString())) &&
+                            (string.IsNullOrEmpty(filter.TenantId) ? true : (Guid.Parse(filter.TenantId) == x.TenantId)) &&
                             (string.IsNullOrEmpty(filter.SearchValue) ? true :
                                 (x.JobId.ToString() == filter.SearchValue) ||
                                 (x.ContactId.ToString() == filter.SearchValue) ||
