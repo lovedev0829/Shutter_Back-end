@@ -145,7 +145,7 @@ namespace ShutterManagement.Business.Services
                     FileLogger.Log($"Label already exists: {model.Label}");
                     return responseVm;
                 }
-
+                string arrayString = string.Join(", ", model.Photo);
                 TblWindow window = new TblWindow
                 {
                     WindowId = Guid.NewGuid(),
@@ -156,7 +156,7 @@ namespace ShutterManagement.Business.Services
                     Quantity = model.Quantity,
                     Height = model.Height,
                     ArchHeight = model.ArchHeight,
-                    Photo = model.Photo,
+                    Photo = arrayString,
                     CreatedAt = DateTime.Now,
                     CreatedBy = AppConstant.LoggedInUserID,
                     IsActive = true,
@@ -468,7 +468,7 @@ namespace ShutterManagement.Business.Services
                     Height = g.FirstOrDefault().w.Height,
                     Width = g.FirstOrDefault().w.Width,
                     Notes = g.FirstOrDefault().w.Notes,
-                    Photo = g.FirstOrDefault().w.Photo,
+                    Photo = g.FirstOrDefault().w.Photo.Split(new[] { "," }, StringSplitOptions.None).ToArray(),
                     TenantId = g.FirstOrDefault().w.TenantId,
                     IsActive = g.FirstOrDefault().w.IsActive,
                     ProductDetails = g.GroupBy(x => x.wp.WindowProductId)
@@ -540,10 +540,11 @@ namespace ShutterManagement.Business.Services
 
         private void UpdateWindowData(TblWindow existingWindow, UpdateWindow model)
         {
+            string arrayString = string.Join(", ", model.Photo);
             FileLogger.Log("Updating window data...");
             existingWindow.Label = model.Label;
             existingWindow.Height = model.Height;
-            existingWindow.Photo = model.Photo;
+            existingWindow.Photo = arrayString;
             existingWindow.Quantity = model.Quantity;
             existingWindow.Width = model.Width;
             existingWindow.Notes = model.Notes;
