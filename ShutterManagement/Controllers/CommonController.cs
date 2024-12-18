@@ -88,13 +88,16 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("FileUpload")]
-        public async Task<IActionResult> Upload(List<IFormFile> files, FileType fileType) 
+        public async Task<IActionResult> Upload(List<IFormFile> files) 
         {
-            List<IResponseVm<string>> result = new List<IResponseVm<string>>();
+            IResponseVm<List<string>> result = new ResponseVm<List<string>>();
             foreach (var file in files)
             {
-                var res = await fileUpload.UploadFile(file, fileType, AppConstant.LoggedInTenantId.ToString() ?? "");
-                result.Add(res);
+                var res = await fileUpload.UploadFile(file, AppConstant.LoggedInTenantId.ToString() ?? "");
+                if (res.IsSuccess)
+                {
+                    result.Data.Add(res.Data);
+                }
             }
             return Ok(result);
         }

@@ -23,7 +23,7 @@ namespace ShutterManagement.Core.Common
             this.configuration = configuration;
         }
 
-        public async Task<IResponseVm<string>> UploadFile(IFormFile file, FileType fileType, string tenantId)
+        public async Task<IResponseVm<string>> UploadFile(IFormFile file, string tenantId)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
@@ -35,23 +35,12 @@ namespace ShutterManagement.Core.Common
                 }
                 var fileext = Path.GetExtension(file.FileName).ToLower();
 
-                if (fileType == FileType.Image)
+
+                string[] ExAllow = [".jpg", ".png", ".jpeg", ".doc", ".docx", ".pdf"];
+                if (!ExAllow.Contains(fileext))
                 {
-                    string[] ImageExAllow = [".jpg", ".png", ".jpeg"];
-                    if (!ImageExAllow.Contains(fileext))
-                    {
-                        responseVm.Message = "Images accpect only Extensions: " + ImageExAllow.ToString();
-                        return responseVm;
-                    }
-                }
-                if (fileType == FileType.Document)
-                {
-                    string[] DocExAllow = [".doc", ".docx"];
-                    if (!DocExAllow.Contains(fileext))
-                    {
-                        responseVm.Message = "Document accpect only Extensions: " + DocExAllow.ToString();
-                        return responseVm;
-                    }
+                    responseVm.Message = "accpect only Extensions: " + ExAllow.ToString();
+                    return responseVm;
                 }
                 var rootPath = Path.Combine(AppConstant.FileUploadPath, tenantId);
 
