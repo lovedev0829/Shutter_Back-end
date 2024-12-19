@@ -9,10 +9,12 @@ namespace ShutterManagement.Core.ViewModels.Response
 {
     public class DiscoountVm
     {
-
+        public Guid? DiscountId { get; set; }
+        public Guid? CustomerId { get; set; }
         public string? CouponCode { get; set; }
 
-       // public Guid? CustomerId { get; set; }
+        public string? Applyfor { get; set; }
+        public string? DiscountType { get; set; }
         public string? CustomerName { get; set; }
 
         public decimal? PercentageDiscount { get; set; }

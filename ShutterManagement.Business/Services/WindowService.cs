@@ -123,7 +123,7 @@ namespace ShutterManagement.Business.Services
         public async Task<IResponseVm<string>> Create_Window(CreateWindow model)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
-            FileLogger.Log("Create_Window process started.");
+            FileLogger.Log("Create Window process started.");
 
             try
             {
@@ -197,7 +197,7 @@ namespace ShutterManagement.Business.Services
                         await windowProductService.Add(windowProduct);
                         FileLogger.Log($"New window product added with ID: {windowProduct.WindowProductId}");
 
-                        if (items.OptionTypeId != null)
+                        if (items.OptionTypeId != null && items.OptionTypeId.Count > 0)
                         {
                             foreach (var optionId in items.OptionTypeId)
                             {
@@ -630,23 +630,25 @@ namespace ShutterManagement.Business.Services
             };
 
             await windowProductService.Add(newProduct);
-
-            foreach (var optionId in product.OptionTypeId ?? new List<Guid>())
+            if (product.OptionTypeId != null && product.OptionTypeId.Count > 0)
             {
-                var newOption = new WindowOption
+                foreach (var optionId in product.OptionTypeId)
                 {
-                    WindowoptionId = Guid.NewGuid(),
-                    OptionTypeId = optionId,
-                    WindowProductId = newProduct.WindowProductId,
-                    WindowId = windowId,
-                    CreatedBy = AppConstant.LoggedInUserID,
-                    TenantId = AppConstant.LoggedInTenantId,
-                    IsActive = true,
-                    IsDelete = false,
-                    AdditionalCost = product.AdditionalCost
-                };
+                    var newOption = new WindowOption
+                    {
+                        WindowoptionId = Guid.NewGuid(),
+                        OptionTypeId = optionId,
+                        WindowProductId = newProduct.WindowProductId,
+                        WindowId = windowId,
+                        CreatedBy = AppConstant.LoggedInUserID,
+                        TenantId = AppConstant.LoggedInTenantId,
+                        IsActive = true,
+                        IsDelete = false,
+                        AdditionalCost = product.AdditionalCost
+                    };
 
-                await windowOptionService.Add(newOption);
+                    await windowOptionService.Add(newOption);
+                }
             }
         }
 

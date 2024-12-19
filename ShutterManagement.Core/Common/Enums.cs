@@ -24,15 +24,19 @@ namespace ShutterManagement.Core.Common
 
     public enum AppliedFor
     {
-        All=0,
-        Customers=1
+        [EnumMember(Value = "All")]
+        All,
+        [EnumMember(Value = "Customers")]
+        Customers
         
     }
 
     public enum DiscountType
     {
-        Percentage=0,
-        Fixed=1
+        [EnumMember(Value = "Percentage")]
+        Percentage,
+        [EnumMember(Value = "Fixed")]
+        Fixed
     }
 
 

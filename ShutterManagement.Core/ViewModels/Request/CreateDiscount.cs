@@ -20,11 +20,9 @@ namespace ShutterManagement.Core.ViewModels.Request
         public DiscountType discountType { get; set; }
         public Guid[] CustomerId { get; set; } = Array.Empty<Guid>();
 
-        //[Range(0, 100, ErrorMessage = "Percentage discount must be between 1 and 100.")]
-        //[DefaultValue(0)]
+        [DefaultValue(null)]
         public decimal? PercentageDiscount { get; set; }
-        //[DefaultValue(0)]
-        //[Range(0.01, double.MaxValue, ErrorMessage = "Fixed amount must be greater than 0.")]
+        [DefaultValue(null)]
         public decimal? FixedAmount { get; set; }
         [DefaultValue("")]
 
