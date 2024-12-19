@@ -1,4 +1,5 @@
-﻿using ShutterManagement.DAL.Context;
+﻿using ShutterManagement.Core.Common;
+using ShutterManagement.DAL.Context;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,9 +13,10 @@ namespace ShutterManagement.Core.ViewModels.Response
         public Guid? DiscountId { get; set; }
         public Guid? CustomerId { get; set; }
         public string? CouponCode { get; set; }
-
-        public string? Applyfor { get; set; }
-        public string? DiscountType { get; set; }
+        public int? ApplyFor { get; set; }
+        public int? DiscountType { get; set; }
+        public string? ApplyforName { get; set; }
+        public string? DiscountTypeName { get; set; }
         public string? CustomerName { get; set; }
 
         public decimal? PercentageDiscount { get; set; }
@@ -28,5 +30,4 @@ namespace ShutterManagement.Core.ViewModels.Response
         public DateTime? StartDate { get; set; }
 
     }
-    
 }

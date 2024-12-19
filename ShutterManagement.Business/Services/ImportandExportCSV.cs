@@ -417,8 +417,6 @@ namespace ShutterManagement.Business.Services
         //    return responseVm;
         //}
 
-
-
         public async Task<IResponseVm<dynamic>> ExportContactsToCsvAsync(Pagination filter, string filePath)
         {
             IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();

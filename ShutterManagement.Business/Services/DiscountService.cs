@@ -217,8 +217,10 @@ namespace ShutterManagement.Business.Services
                 {
                     DiscountId = x.DiscountId,
                     CustomerId = x.CustomerId,
-                    Applyfor = x.ApplyFor,
-                    DiscountType = x.DiscountType,
+                    ApplyforName = x.ApplyFor,
+                    ApplyFor = x.ApplyFor == EnumValue.GetEnumValue(AppliedFor.All) ? 0 : 1,
+                    DiscountType = x.DiscountType == EnumValue.GetEnumValue(DiscountType.Percentage) ? 0 : 1,
+                    DiscountTypeName = x.DiscountType,
                     CouponCode = x.CouponCode,
                     PercentageDiscount = x.PercentageDiscount,
                     FixedAmount = x.FixedAmount,
