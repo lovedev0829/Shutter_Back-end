@@ -90,6 +90,8 @@ namespace ShutterManagement.Business.Services
                         var discount = new TblDiscount
                         {
                             DiscountId = Guid.NewGuid(),
+                            ApplyFor= EnumValue.GetEnumValue(AppliedFor.Customers),
+                            DiscountType= EnumValue.GetEnumValue(createDiscount.discountType),
                             CouponCode = couponCode.Trim(),
                             CustomerId = customerId,
                             PercentageDiscount = createDiscount.discountType == DiscountType.Percentage ? createDiscount.PercentageDiscount : null,
@@ -115,6 +117,8 @@ namespace ShutterManagement.Business.Services
                     {
                         DiscountId = Guid.NewGuid(),
                         CouponCode = couponCode.Trim(),
+                        ApplyFor = EnumValue.GetEnumValue(AppliedFor.All),
+                        DiscountType = EnumValue.GetEnumValue(createDiscount.discountType),
                         PercentageDiscount = createDiscount.discountType == DiscountType.Percentage ? createDiscount.PercentageDiscount : null,
                         FixedAmount = createDiscount.discountType == DiscountType.Fixed ? createDiscount.FixedAmount : null,
                         ExpiryDate = createDiscount.ExpiryDate,
@@ -134,7 +138,7 @@ namespace ShutterManagement.Business.Services
             }
             catch (Exception ex)
             {
-                responseVm.Message = $"An error occurred: {ex.Message}";
+                responseVm.Message = $"An error occurred:{AppConstant.ExceptionError}";
                 responseVm.IsSuccess = false;
             }
 
@@ -179,6 +183,7 @@ namespace ShutterManagement.Business.Services
                 }
 
                 existingDiscount.CouponCode = updateDiscount.CouponCode;
+                existingDiscount.DiscountType = EnumValue.GetEnumValue(updateDiscount.discountType);
                 existingDiscount.PercentageDiscount = updateDiscount.discountType == DiscountType.Percentage ? updateDiscount.PercentageDiscount : null;
                 existingDiscount.FixedAmount = updateDiscount.discountType == DiscountType.Fixed ? updateDiscount.FixedAmount : null;
                 existingDiscount.ExpiryDate = updateDiscount.ExpiryDate;
@@ -296,6 +301,10 @@ namespace ShutterManagement.Business.Services
                               join t1 in dbContext.TblContacts on t2.CustomerId equals t1.ContactId
                               select new DiscoountVm
                               {
+                                  DiscountId=t2.DiscountId,
+                                  CustomerId = t2.DiscountId,
+                                  Applyfor =t2.ApplyFor,
+                                  DiscountType=t2.DiscountType,
                                   CouponCode = t2.CouponCode,
                                   CustomerName=t1.Name,
                                   PercentageDiscount = t2.PercentageDiscount,
@@ -327,6 +336,10 @@ namespace ShutterManagement.Business.Services
                     responseVm.IsSuccess = true;
                     responseVm.Data = paginatedRecords.Select(x => new DiscoountVm
                     {
+                        DiscountId = x.DiscountId,
+                        CustomerId =x.CustomerId,
+                        Applyfor=x.Applyfor,
+                        DiscountType=x.DiscountType,
                         CouponCode = x.CouponCode,
                         CustomerName = x.CustomerName,
                         PercentageDiscount = x.PercentageDiscount,

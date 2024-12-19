@@ -420,8 +420,14 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.ToTable("TblDiscount", "dbo");
 
             entity.Property(e => e.DiscountId).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.ApplyFor)
+                .HasMaxLength(50)
+                .IsUnicode(false);
             entity.Property(e => e.CouponCode).HasMaxLength(20);
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.DiscountType)
+                .HasMaxLength(50)
+                .IsUnicode(false);
             entity.Property(e => e.ExpiryDate).HasColumnType("datetime");
             entity.Property(e => e.FixedAmount).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.PercentageDiscount).HasColumnType("decimal(10, 2)");
@@ -674,7 +680,6 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.ToTable("TblJob", "dbo");
 
             entity.Property(e => e.JobId).HasDefaultValueSql("(newid())");
-            entity.Property(e => e.AttachmentAny).HasMaxLength(250);
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
@@ -994,7 +999,6 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.EffectiveDate).HasColumnType("datetime");
-            entity.Property(e => e.ExemptionCertificate).HasMaxLength(255);
             entity.Property(e => e.ExpiryDate).HasColumnType("datetime");
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsDelete).HasDefaultValue(false);

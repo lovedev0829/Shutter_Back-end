@@ -33,5 +33,9 @@ public partial class TblDiscount
 
     public DateTime? StartDate { get; set; }
 
+    public string? ApplyFor { get; set; }
+
+    public string? DiscountType { get; set; }
+
     public virtual TblContact? Customer { get; set; }
 }
