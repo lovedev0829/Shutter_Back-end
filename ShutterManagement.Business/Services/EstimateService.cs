@@ -948,7 +948,7 @@ namespace ShutterManagement.Business.Services
                 {
                     EstimationStatus.Status = EnumValue.GetEnumValue(NewEstimationStatus);
                     await Update(EstimationStatus);
-
+                    responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.UpdateSuccessMsg;
                     responseVm.Data = EnumValue.GetEnumValue(NewEstimationStatus);
 
@@ -1029,10 +1029,16 @@ namespace ShutterManagement.Business.Services
                     Tax = estimate.TaxAmount,
                     TermsCondition = estimate.TermsCondition,
                 };
-                e.CreatedBy = dbContext.TblUsers
+                var Userdetails = dbContext.TblUsers
                   .Where(x => x.Id == estimate.CreatedBy && x.IsDelete == false)
-                  .Select(x => x.FirstName)
                   .FirstOrDefault();
+                e.CreatedBy = Userdetails.FirstName + " " + Userdetails.LastName;
+                var Tenant = dbContext.TblTenants.Where(e => e.TenantId == estimate.TenantId && e.IsDelete == false).FirstOrDefault();
+                e.primarycolor = dbContext.TblTenantBrandingInfos
+                 .Where(tb => tb.Id == Tenant.BrandingInfo)
+                    .Select(tb => tb.PrimaryColor)
+                    .FirstOrDefault();
+
 
                 // Fetch and add related products and options
                 AddEstimateProducts(estimate, e);
