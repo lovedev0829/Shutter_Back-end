@@ -8,7 +8,7 @@ namespace ShutterManagement.Core.Common
 {
     public class FileLogger
     {
-        private static readonly string logFilePath = "logs.txt";
+        private static readonly string logFilePath = "Files/logs.txt";
 
         public static void Log(string message, params object?[] objects)
         {

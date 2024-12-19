@@ -45,328 +45,355 @@ namespace ShutterManagement.Business.Services
         public async Task<IResponseVm<string>> CreateDiscountCoupon(CreateDiscount createDiscount)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
+            FileLogger.Log($"Start: Creating Discount Coupon for TenantID: {AppConstant.LoggedInTenantId}");
+
             try
             {
-                var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive==true);
+                if (!await ValidateTenantAsync())
+                    return SetFailureResponse(responseVm, AppConstant.TenantNotFound);
 
-                if (!isTenantExists)
-                {
-                    responseVm.Message = AppConstant.TenantNotFound;
-                    responseVm.IsSuccess = false;
-                    return responseVm;
-                }
-
-                if (createDiscount.discountType == DiscountType.Percentage)
-                {
-                    if (createDiscount.PercentageDiscount == null || createDiscount.PercentageDiscount <= 0 || createDiscount.PercentageDiscount > 100)
-                    {
-                        responseVm.Message = "Percentage discount must be between 1 and 100.";
-                        responseVm.IsSuccess = false;
-                        return responseVm;
-                    }
-                }
-                else if (createDiscount.discountType == DiscountType.Fixed)
-                {
-                    if (createDiscount.FixedAmount == null || createDiscount.FixedAmount <= 0)
-                    {
-                        responseVm.Message = "Fixed amount must be greater than 0.";
-                        responseVm.IsSuccess = false;
-                        return responseVm;
-                    }
-                }
-                else
-                {
-                    responseVm.Message = "Invalid discount type.";
-                    responseVm.IsSuccess = false;
-                    return responseVm;
-                }
+                if (!ValidateDiscountType(createDiscount, out string validationMessage))
+                    return SetFailureResponse(responseVm, validationMessage);
 
                 var couponCode = GenerateCouponCode();
+                var discountRecords = BuildDiscountRecords(createDiscount, couponCode);
 
-                if (createDiscount.AppliedFor == AppliedFor.Customers && createDiscount.CustomerId != null && createDiscount.CustomerId.Length > 0)
+                foreach (var discount in discountRecords)
                 {
-                    foreach (var customerId in createDiscount.CustomerId)
-                    {
-                        var discount = new TblDiscount
-                        {
-                            DiscountId = Guid.NewGuid(),
-                            ApplyFor= EnumValue.GetEnumValue(AppliedFor.Customers),
-                            DiscountType= EnumValue.GetEnumValue(createDiscount.discountType),
-                            CouponCode = couponCode.Trim(),
-                            CustomerId = customerId,
-                            PercentageDiscount = createDiscount.discountType == DiscountType.Percentage ? createDiscount.PercentageDiscount : null,
-                            FixedAmount = createDiscount.discountType == DiscountType.Fixed ? createDiscount.FixedAmount : null,
-                            ExpiryDate = createDiscount.ExpiryDate,
-                            StartDate = createDiscount.StartDate,
-                            CreatedAt = DateTime.Now,
-                            Createdby = AppConstant.LoggedInUserID,
-                            TenantId = AppConstant.LoggedInTenantId,
-                            IsActive = true,
-                            IsDelete = false
-                        };
-
-                        await Add(discount);
-                    }
-
-                    responseVm.Message = AppConstant.InsertSuccessMsg;
-                    responseVm.IsSuccess = true;
-                }
-                else if (createDiscount.AppliedFor == AppliedFor.All)
-                {
-                    var discount = new TblDiscount
-                    {
-                        DiscountId = Guid.NewGuid(),
-                        CouponCode = couponCode.Trim(),
-                        ApplyFor = EnumValue.GetEnumValue(AppliedFor.All),
-                        DiscountType = EnumValue.GetEnumValue(createDiscount.discountType),
-                        PercentageDiscount = createDiscount.discountType == DiscountType.Percentage ? createDiscount.PercentageDiscount : null,
-                        FixedAmount = createDiscount.discountType == DiscountType.Fixed ? createDiscount.FixedAmount : null,
-                        ExpiryDate = createDiscount.ExpiryDate,
-                        StartDate = createDiscount.StartDate,
-                        CreatedAt = DateTime.Now,
-                        Createdby = AppConstant.LoggedInUserID,
-                        TenantId = AppConstant.LoggedInTenantId,
-                        IsActive = true,
-                        IsDelete = false
-                    };
-
                     await Add(discount);
-
-                    responseVm.Message = AppConstant.InsertSuccessMsg;
-                    responseVm.IsSuccess = true;
                 }
+
+                FileLogger.Log($"Success: Discount Coupon created successfully.");
+                return SetSuccessResponse(responseVm, AppConstant.InsertSuccessMsg);
             }
             catch (Exception ex)
             {
-                responseVm.Message = $"An error occurred:{AppConstant.ExceptionError}";
-                responseVm.IsSuccess = false;
+                FileLogger.Log($"Error: Exception in CreateDiscountCoupon - {ex.Message}");
+                return SetFailureResponse(responseVm, $"An error occurred: {AppConstant.ExceptionError}");
             }
-
-            return responseVm;
         }
 
         public async Task<IResponseVm<string>> UpdateDiscountCoupon(UpdateDiscount updateDiscount)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
+            FileLogger.Log($"Start: Updating Discount Coupon ID: {updateDiscount.DiscountId}");
+
             try
             {
-                var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
-                if (!isTenantExists)
-                {
-                    responseVm.Message = AppConstant.TenantNotFound;
-                    responseVm.IsSuccess = false;
-                    return responseVm;
-                }
+                if (!await ValidateTenantAsync())
+                    return SetFailureResponse(responseVm, AppConstant.TenantNotFound);
 
-                if (updateDiscount.PercentageDiscount <= 0 || updateDiscount.PercentageDiscount > 100)
-                {
-                    responseVm.Message = "Percentage must be between 1 and 100.";
-                    responseVm.IsSuccess = false;
-                    return responseVm;
-                }
+                if (!ValidateUpdateDiscount(updateDiscount, out string validationMessage))
+                    return SetFailureResponse(responseVm, validationMessage);
 
-                if (updateDiscount.FixedAmount <= 0)
-                {
-                    responseVm.Message = "Fixed amount must be greater than 0.";
-                    responseVm.IsSuccess = false;
-                    return responseVm;
-                }
-
-                var existingDiscount = GetAllQuerable()
-                    .FirstOrDefault(x => x.DiscountId == updateDiscount.DiscountId
-                                         && x.TenantId == AppConstant.LoggedInTenantId
-                                         && x.IsDelete==false);
+                var existingDiscount = await FindExistingDiscountAsync((Guid)updateDiscount.DiscountId);
                 if (existingDiscount == null)
-                {
-                    responseVm.Message = AppConstant.NoDataFound;
-                    return responseVm;
-                }
+                    return SetFailureResponse(responseVm, AppConstant.NoDataFound);
 
-                existingDiscount.CouponCode = updateDiscount.CouponCode;
-                existingDiscount.DiscountType = EnumValue.GetEnumValue(updateDiscount.discountType);
-                existingDiscount.PercentageDiscount = updateDiscount.discountType == DiscountType.Percentage ? updateDiscount.PercentageDiscount : null;
-                existingDiscount.FixedAmount = updateDiscount.discountType == DiscountType.Fixed ? updateDiscount.FixedAmount : null;
-                existingDiscount.ExpiryDate = updateDiscount.ExpiryDate;
-                existingDiscount.StartDate = updateDiscount.StartDate;
-                existingDiscount.UpdatedAt = DateTime.Now;
-                existingDiscount.ModifiedBy = AppConstant.LoggedInUserID;
+                UpdateDiscountRecord(existingDiscount, updateDiscount);
 
                 await Update(existingDiscount);
 
-                responseVm.Message = AppConstant.UpdateSuccessMsg;
-                responseVm.IsSuccess = true;
+                FileLogger.Log($"Success: Discount Coupon ID: {updateDiscount.DiscountId} updated successfully.");
+                return SetSuccessResponse(responseVm, AppConstant.UpdateSuccessMsg);
             }
             catch (Exception ex)
             {
-                responseVm.Message = $"An error occurred: {ex.Message}";
-                responseVm.IsSuccess = false;
+                FileLogger.Log($"Error: Exception in UpdateDiscountCoupon - {ex.Message}");
+                return SetFailureResponse(responseVm, $"An error occurred: {ex.Message}");
             }
-
-            return responseVm;
         }
 
         public async Task<IResponseVm<string>> DeleteDiscountCoupon(Guid discountId)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
+            FileLogger.Log($"Start: Deleting Discount Coupon ID: {discountId}");
+
             try
             {
-                var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
-                if (!isTenantExists)
-                {
-                    responseVm.Message = AppConstant.TenantNotFound;
-                    responseVm.IsSuccess = false;
-                    return responseVm;
-                }
+                if (!await ValidateTenantAsync())
+                    return SetFailureResponse(responseVm, AppConstant.TenantNotFound);
 
-                var discount =  GetAllQuerable().Where(x => x.DiscountId == discountId && x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false).FirstOrDefault();
+                var discount = await FindExistingDiscountAsync(discountId);
                 if (discount == null)
-                {
-                    responseVm.Message = AppConstant.NoDataFound;
-                    responseVm.IsSuccess = false;
-                    return responseVm;
-                }
+                    return SetFailureResponse(responseVm, AppConstant.NoDataFound);
 
-                discount.IsDelete = true;
-                discount.IsActive = false;
-                discount.UpdatedAt = DateTime.Now;
-                discount.ModifiedBy = AppConstant.LoggedInUserID;
-
+                MarkAsDeleted(discount);
                 await Update(discount);
 
-                responseVm.Message = AppConstant.DeleteSuccessMsg;
-                responseVm.IsSuccess = true;
+                FileLogger.Log($"Success: Discount Coupon ID: {discountId} marked as deleted.");
+                return SetSuccessResponse(responseVm, AppConstant.DeleteSuccessMsg);
             }
             catch (Exception ex)
             {
-                responseVm.Message = $"An error occurred: {ex.Message}";
+                FileLogger.Log($"Error: Exception in DeleteDiscountCoupon - {ex.Message}");
+                return SetFailureResponse(responseVm, $"An error occurred: {ex.Message}");
             }
-
-            return responseVm;
         }
 
         public async Task<IResponseVm<string>> ActiveInActive(Guid discountId)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
+            FileLogger.Log($"Start: Toggling Active/Inactive status for Discount with ID: {discountId}");
+
             try
             {
-                var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
-                if (!isTenantExists)
-                {
-                    responseVm.Message = AppConstant.TenantNotFound;
-                    responseVm.IsSuccess = false;
-                    return responseVm;
-                }
+                if (!await ValidateTenantAsync())
+                    return SetFailureResponse(responseVm, AppConstant.TenantNotFound);
 
-                var discount = FirstOrDefault(x => x.DiscountId == discountId && x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false);
+                var discount = await GetActiveDiscountAsync(discountId);
                 if (discount == null)
-                {
-                    responseVm.Message = AppConstant.NoDataFound;
-                    responseVm.IsSuccess = false;
-                    return responseVm;
-                }
+                    return SetFailureResponse(responseVm, AppConstant.NoDataFound);
 
-                discount.IsActive = false;
-                discount.UpdatedAt = DateTime.Now;
-                discount.ModifiedBy = AppConstant.LoggedInUserID;
+                ToggleActiveStatus(discount);
+                await Update(discount);
 
-               await Update(discount);
-
-                responseVm.Message = AppConstant.UpdateSuccessMsg;
-                responseVm.IsSuccess = true;
+                FileLogger.Log($"Success: Discount ID: {discountId} status toggled to {(discount.IsActive ?? false ? "Active" : "Inactive")}.");
+                return SetSuccessResponse(responseVm, AppConstant.UpdateSuccessMsg);
             }
             catch (Exception ex)
             {
-                responseVm.Message = $"An error occurred: {ex.Message}";
-                responseVm.IsSuccess = false;
+                FileLogger.Log($"Error: Exception in ActiveInActive - {ex.Message}");
+                return SetFailureResponse(responseVm, $"An error occurred: {ex.Message}");
             }
-
-            return responseVm;
         }
 
         public async Task<IResponseVm<List<DiscoountVm>>> GetAll_Coupons(Pagination filter)
         {
             IResponseVm<List<DiscoountVm>> responseVm = new ResponseVm<List<DiscoountVm>>();
+            FileLogger.Log("Start: Fetching all coupons.");
+
             try
             {
-                var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
+                if (!await ValidateTenantAsync())
+                    return SetFailureResponse(responseVm, AppConstant.AccessDenied);
 
-                if (isTenantExists)
-                {
-                    //var allCouponlList = (await GetAll())
-                    //    .Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId)
-                    //    .OrderByDescending(x => x.CreatedAt)
-                    //    .ToList();
+                var couponList = await GetFilteredCouponsAsync(filter);
 
-                    var allCouponlList = from t2 in dbContext.TblDiscounts.OrderByDescending(x => x.CreatedAt)
-                              join t1 in dbContext.TblContacts on t2.CustomerId equals t1.ContactId
-                              select new DiscoountVm
-                              {
-                                  DiscountId=t2.DiscountId,
-                                  CustomerId = t2.DiscountId,
-                                  Applyfor =t2.ApplyFor,
-                                  DiscountType=t2.DiscountType,
-                                  CouponCode = t2.CouponCode,
-                                  CustomerName=t1.Name,
-                                  PercentageDiscount = t2.PercentageDiscount,
-                                  FixedAmount = t2.FixedAmount,
-                                  ExpiryDate = t2.ExpiryDate,
-                                  StartDate = t2.StartDate,
-                                  IsActive = t2.IsActive
-                              };
+                responseVm.IsSuccess = true;
+                responseVm.Data = couponList;
+                responseVm.TotalRecords = couponList.Count;
+                responseVm.Message = AppConstant.FetchSuccessMsg;
 
-                    var filteredRecords = allCouponlList
-                        .Where(x =>
-                            (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
-                            (string.IsNullOrEmpty(filter.SearchValue) ||
-                                (x.CustomerName.ToString() == filter.SearchValue) ||
-                                (x.CouponCode ?? "").Contains(filter.SearchValue.Trim())||
-                                (x.PercentageDiscount.ToString() ?? "").Contains(filter.SearchValue.Trim()) ||
-                                (x.FixedAmount.ToString() ?? "").Contains(filter.SearchValue.Trim()) ||
-                                (x.ExpiryDate.ToString() ?? "").Contains(filter.SearchValue.Trim()) ||
-                                (x.StartDate.ToString() ?? "").Contains(filter.SearchValue.Trim())
-                            )
-                        )
-                        .ToList();
-
-                    var paginatedRecords = filteredRecords
-                        .Skip((filter.PageNo - 1) * filter.RecordPerPage)
-                        .Take(filter.RecordPerPage)
-                        .ToList();
-
-                    responseVm.IsSuccess = true;
-                    responseVm.Data = paginatedRecords.Select(x => new DiscoountVm
-                    {
-                        DiscountId = x.DiscountId,
-                        CustomerId =x.CustomerId,
-                        Applyfor=x.Applyfor,
-                        DiscountType=x.DiscountType,
-                        CouponCode = x.CouponCode,
-                        CustomerName = x.CustomerName,
-                        PercentageDiscount = x.PercentageDiscount,
-                        FixedAmount = x.FixedAmount,
-                        ExpiryDate = x.ExpiryDate,
-                        StartDate = x.StartDate,
-                        IsActive = x.IsActive
-                    }).ToList();
-
-                    responseVm.TotalRecords = filteredRecords.Count;
-                    responseVm.Message = AppConstant.FetchSuccessMsg;
-                }
-                else
-                {
-                    responseVm.IsSuccess = false;
-                    responseVm.Message = AppConstant.AccessDenied;
-                }
+                FileLogger.Log("Success: Coupons fetched successfully.");
             }
             catch (Exception ex)
             {
-                responseVm.IsSuccess = false;
-                responseVm.Message = $"Error: {ex.Message}";
+                FileLogger.Log($"Error: Exception in GetAll_Coupons - {ex.Message}");
+                return SetFailureResponse(responseVm, $"Error: {ex.Message}");
             }
 
             return responseVm;
         }
 
-       
+        #region Helper Methods
+
+        private async Task<bool> ValidateTenantAsync()
+        {
+            return await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
+        }
+
+        private async Task<TblDiscount> GetActiveDiscountAsync(Guid discountId)
+        {
+            return await Task.FromResult(FirstOrDefault(x =>
+                x.DiscountId == discountId &&
+                x.TenantId == AppConstant.LoggedInTenantId &&
+                x.IsDelete == false));
+        }
+
+        private void ToggleActiveStatus(TblDiscount discount)
+        {
+            discount.IsActive = !discount.IsActive;
+            discount.UpdatedAt = DateTime.Now;
+            discount.ModifiedBy = AppConstant.LoggedInUserID;
+        }
+
+        private async Task<List<DiscoountVm>> GetFilteredCouponsAsync(Pagination filter)
+        {
+            var query = from t2 in dbContext.TblDiscounts.OrderByDescending(x => x.CreatedAt)
+                        join t1 in dbContext.TblContacts on t2.CustomerId equals t1.ContactId
+                        where t2.IsDelete == false && t2.TenantId == AppConstant.LoggedInTenantId
+                        select new DiscoountVm
+                        {
+                            DiscountId = t2.DiscountId,
+                            CustomerId = t2.DiscountId,
+                            Applyfor = t2.ApplyFor,
+                            DiscountType = t2.DiscountType,
+                            CouponCode = t2.CouponCode,
+                            CustomerName = t1.Name,
+                            PercentageDiscount = t2.PercentageDiscount,
+                            FixedAmount = t2.FixedAmount,
+                            ExpiryDate = t2.ExpiryDate,
+                            StartDate = t2.StartDate,
+                            IsActive = t2.IsActive
+                        };
+
+            var filteredRecords = query.Where(x =>
+                (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
+                (string.IsNullOrEmpty(filter.SearchValue) ||
+                    (x.CustomerName ?? "").Contains(filter.SearchValue.Trim()) ||
+                    (x.CouponCode ?? "").Contains(filter.SearchValue.Trim()) ||
+                    (x.PercentageDiscount.ToString() ?? "").Contains(filter.SearchValue.Trim()) ||
+                    (x.FixedAmount.ToString() ?? "").Contains(filter.SearchValue.Trim()) ||
+                    (x.ExpiryDate.ToString() ?? "").Contains(filter.SearchValue.Trim()) ||
+                    (x.StartDate.ToString() ?? "").Contains(filter.SearchValue.Trim()))
+            );
+
+            return await Task.FromResult(filteredRecords
+                .Skip((filter.PageNo - 1) * filter.RecordPerPage)
+                .Take(filter.RecordPerPage)
+                .ToList());
+        }
+
+        private IResponseVm<T> SetFailureResponse<T>(IResponseVm<T> responseVm, string message)
+        {
+            responseVm.IsSuccess = false;
+            responseVm.Message = message;
+            FileLogger.Log($"Failure: {message}");
+            return responseVm;
+        }
+
+        private IResponseVm<T> SetSuccessResponse<T>(IResponseVm<T> responseVm, string message)
+        {
+            responseVm.IsSuccess = true;
+            responseVm.Message = message;
+            FileLogger.Log($"Success: {message}");
+            return responseVm;
+        }
+
+
+
+        private bool ValidateDiscountType(CreateDiscount discount, out string message)
+        {
+            if (discount.discountType == DiscountType.Percentage)
+            {
+                if (discount.PercentageDiscount is null or <= 0 or > 100)
+                {
+                    message = "Percentage discount must be between 1 and 100.";
+                    return false;
+                }
+            }
+            else if (discount.discountType == DiscountType.Fixed)
+            {
+                if (discount.FixedAmount is null or <= 0)
+                {
+                    message = "Fixed amount must be greater than 0.";
+                    return false;
+                }
+            }
+            else
+            {
+                message = "Invalid discount type.";
+                return false;
+            }
+
+            message = string.Empty;
+            return true;
+        }
+
+        private bool ValidateUpdateDiscount(UpdateDiscount discount, out string message)
+        {
+            if (discount.PercentageDiscount <= 0 || discount.PercentageDiscount > 100)
+            {
+                message = "Percentage must be between 1 and 100.";
+                return false;
+            }
+            if (discount.FixedAmount <= 0)
+            {
+                message = "Fixed amount must be greater than 0.";
+                return false;
+            }
+
+            message = string.Empty;
+            return true;
+        }
+
+        private IEnumerable<TblDiscount> BuildDiscountRecords(CreateDiscount createDiscount, string couponCode)
+        {
+            var discountList = new List<TblDiscount>();
+
+            if (createDiscount.AppliedFor == AppliedFor.Customers && createDiscount.CustomerId?.Length > 0)
+            {
+                foreach (var customerId in createDiscount.CustomerId)
+                {
+                    discountList.Add(BuildSingleDiscount(createDiscount, couponCode, customerId));
+                }
+            }
+            else if (createDiscount.AppliedFor == AppliedFor.All)
+            {
+                discountList.Add(BuildSingleDiscount(createDiscount, couponCode));
+            }
+
+            return discountList;
+        }
+
+        private TblDiscount BuildSingleDiscount(CreateDiscount createDiscount, string couponCode, Guid? customerId = null)
+        {
+            return new TblDiscount
+            {
+                DiscountId = Guid.NewGuid(),
+                CouponCode = couponCode.Trim(),
+                ApplyFor = EnumValue.GetEnumValue(createDiscount.AppliedFor),
+                DiscountType = EnumValue.GetEnumValue(createDiscount.discountType),
+                CustomerId = customerId,
+                PercentageDiscount = createDiscount.discountType == DiscountType.Percentage ? createDiscount.PercentageDiscount : null,
+                FixedAmount = createDiscount.discountType == DiscountType.Fixed ? createDiscount.FixedAmount : null,
+                ExpiryDate = createDiscount.ExpiryDate,
+                StartDate = createDiscount.StartDate,
+                CreatedAt = DateTime.Now,
+                Createdby = AppConstant.LoggedInUserID,
+                TenantId = AppConstant.LoggedInTenantId,
+                IsActive = true,
+                IsDelete = false
+            };
+        }
+
+        private async Task<TblDiscount> FindExistingDiscountAsync(Guid discountId)
+        {
+            return (await GetAll()).FirstOrDefault(x => x.DiscountId == discountId &&
+                                                                              x.TenantId == AppConstant.LoggedInTenantId &&
+                                                                              !(bool)x.IsDelete);
+        }
+
+        private void UpdateDiscountRecord(TblDiscount existing, UpdateDiscount updated)
+        {
+            existing.CouponCode = updated.CouponCode;
+            existing.DiscountType = EnumValue.GetEnumValue(updated.discountType);
+            existing.PercentageDiscount = updated.discountType == DiscountType.Percentage ? updated.PercentageDiscount : null;
+            existing.FixedAmount = updated.discountType == DiscountType.Fixed ? updated.FixedAmount : null;
+            existing.ExpiryDate = updated.ExpiryDate;
+            existing.StartDate = updated.StartDate;
+            existing.UpdatedAt = DateTime.Now;
+            existing.ModifiedBy = AppConstant.LoggedInUserID;
+        }
+
+        private void MarkAsDeleted(TblDiscount discount)
+        {
+            discount.IsDelete = true;
+            discount.IsActive = false;
+            discount.UpdatedAt = DateTime.Now;
+            discount.ModifiedBy = AppConstant.LoggedInUserID;
+        }
+
+        private IResponseVm<string> SetFailureResponse(IResponseVm<string> responseVm, string message)
+        {
+            responseVm.IsSuccess = false;
+            responseVm.Message = message;
+            FileLogger.Log($"Failure: {message}");
+            return responseVm;
+        }
+
+        private IResponseVm<string> SetSuccessResponse(IResponseVm<string> responseVm, string message)
+        {
+            responseVm.IsSuccess = true;
+            responseVm.Message = message;
+            FileLogger.Log($"Success: {message}");
+            return responseVm;
+        }
+
+        #endregion
+
+
+
     }
 }
