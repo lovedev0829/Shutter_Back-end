@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using ShutterManagement.Business.Interfaces;
+using ShutterManagement.Core.Common;
 using ShutterManagement.Core.SPModel;
 using ShutterManagement.Core.ViewModels.Request;
 
@@ -74,7 +75,7 @@ namespace ShutterManagement.Controllers
 
 
         [HttpPost("ViewEstimate")]
-        [Authorize(Roles = "EstimateView")]
+        //[Authorize(Roles = "EstimateView")]
         [AllowAnonymous]
         public async Task<IActionResult> ViewEstimate(Guid EstimationId)
         {
@@ -82,5 +83,15 @@ namespace ShutterManagement.Controllers
             return Ok(res);
 
         }
+
+        [HttpPost("EstimateApproved")]
+        [AllowAnonymous]
+        public async Task<IActionResult> EstimateApproved(Guid EstimationId, Estimation Status)
+        {
+            var res = await _EstimateService.ChangeStatus(EstimationId,Status);
+            return Ok(res);
+
+        }
+
     }
 }

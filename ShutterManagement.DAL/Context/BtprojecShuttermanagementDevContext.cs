@@ -51,6 +51,8 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
 
     public virtual DbSet<TblEstimate> TblEstimates { get; set; }
 
+    public virtual DbSet<TblEstimateApproved> TblEstimateApproveds { get; set; }
+
     public virtual DbSet<TblEstimateWindow> TblEstimateWindows { get; set; }
 
     public virtual DbSet<TblEstimateWindowProduct> TblEstimateWindowProducts { get; set; }
@@ -420,8 +422,14 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.ToTable("TblDiscount", "dbo");
 
             entity.Property(e => e.DiscountId).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.ApplyFor)
+                .HasMaxLength(50)
+                .IsUnicode(false);
             entity.Property(e => e.CouponCode).HasMaxLength(20);
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.DiscountType)
+                .HasMaxLength(50)
+                .IsUnicode(false);
             entity.Property(e => e.ExpiryDate).HasColumnType("datetime");
             entity.Property(e => e.FixedAmount).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.PercentageDiscount).HasColumnType("decimal(10, 2)");
@@ -446,6 +454,7 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.DiscountAmount).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.DiscountCoupon).HasMaxLength(200);
             entity.Property(e => e.EstimateCode).HasMaxLength(50);
             entity.Property(e => e.EstimateName).HasMaxLength(200);
             entity.Property(e => e.GrandTotal).HasColumnType("decimal(10, 2)");
@@ -469,6 +478,20 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.HasOne(d => d.Tenant).WithMany(p => p.TblEstimates)
                 .HasForeignKey(d => d.TenantId)
                 .HasConstraintName("FK__TblEstima__Tenan__08A03ED0");
+        });
+
+        modelBuilder.Entity<TblEstimateApproved>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__TblEstim__3214EC074DAE958A");
+
+            entity.ToTable("TblEstimateApproved", "dbo");
+
+            entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.CurrentDatetime).HasColumnType("datetime");
+            entity.Property(e => e.Ipaddress)
+                .HasMaxLength(20)
+                .HasColumnName("IPaddress");
+            entity.Property(e => e.Status).HasMaxLength(50);
         });
 
         modelBuilder.Entity<TblEstimateWindow>(entity =>
@@ -674,7 +697,6 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.ToTable("TblJob", "dbo");
 
             entity.Property(e => e.JobId).HasDefaultValueSql("(newid())");
-            entity.Property(e => e.AttachmentAny).HasMaxLength(250);
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
@@ -994,7 +1016,6 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.EffectiveDate).HasColumnType("datetime");
-            entity.Property(e => e.ExemptionCertificate).HasMaxLength(255);
             entity.Property(e => e.ExpiryDate).HasColumnType("datetime");
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsDelete).HasDefaultValue(false);

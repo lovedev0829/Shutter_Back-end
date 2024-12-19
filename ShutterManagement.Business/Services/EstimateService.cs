@@ -16,6 +16,8 @@ using ShutterManagement.Core.Common;
 using static Azure.Core.HttpHeader;
 using Azure;
 using System.Data.Entity;
+using Microsoft.AspNetCore.Http;
+using Newtonsoft.Json.Linq;
 
 namespace ShutterManagement.Business.Services
 {
@@ -42,6 +44,7 @@ namespace ShutterManagement.Business.Services
         private readonly IMstProductType productType;
         private readonly EmailHelper emailHelper;
         private string Message = "";
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
         public EstimateService(BtprojecShuttermanagementDevContext context,
             IProductComponentService productComponentService,
@@ -61,7 +64,8 @@ namespace ShutterManagement.Business.Services
             IProductService productService,
             ITenantService tenantService, ClaimsProperty claimsProperty,
             IMstProductType productType,
-            EmailHelper emailHelper
+            EmailHelper emailHelper,
+            IHttpContextAccessor _httpContextAccessor
             )
         {
             _context = context;
@@ -84,6 +88,7 @@ namespace ShutterManagement.Business.Services
             this.claimsProperty = claimsProperty;
             this.productType = productType;
             this.emailHelper = emailHelper;
+             this._httpContextAccessor = _httpContextAccessor;
         }
 
         //public async Task<IResponseVm<string>> Create_Estimate(CreateEstimate model)
@@ -831,6 +836,7 @@ namespace ShutterManagement.Business.Services
                 estimate.EstimateName = model.EstimateName;
                 estimate.Notes = model.Notes;
                 estimate.DiscountAmount = model.Discount;
+                estimate.DiscountCoupon = model.DiscountCoupon;
                 estimate.GrandTotal = model.GrandTotal;
                 estimate.JobId = model.JobId;
                 estimate.TaxAmount = model.Tax;
@@ -918,7 +924,54 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
+        public async Task<IResponseVm<string>> ChangeStatus(Guid EstimationId, Estimation NewEstimationStatus)
+        {
+            // Initial log indicating that the method is processing the request
+            FileLogger.Log($"Processing status change for EstimationId: {EstimationId}...");
 
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+
+            try
+            {
+                // Retrieve the EstimationStatus
+                var EstimationStatus = GetEstimationStatusById(EstimationId);
+
+                if (EstimationStatus == null)
+                {
+                    responseVm.Message = "Estimation not found.";
+                    FileLogger.Log($"Estimation with ID {EstimationId} not found.");
+                    return responseVm;
+                }
+
+                // Check the current status of the Estimation and handle accordingly
+                if (CanChangeStatus((Estimation)Enum.Parse(typeof(Estimation), EstimationStatus.Status), NewEstimationStatus))
+                {
+                    EstimationStatus.Status = EnumValue.GetEnumValue(NewEstimationStatus);
+                    await Update(EstimationStatus);
+
+                    responseVm.Message = AppConstant.UpdateSuccessMsg;
+                    responseVm.Data = EnumValue.GetEnumValue(NewEstimationStatus);
+
+                    // Log and record the status change in history
+                    await EstimationChangeHistory(EstimationId, NewEstimationStatus);
+                    FileLogger.Log($"Estimation status changed successfully to {NewEstimationStatus} for EstimationId: {EstimationId}");
+                }
+                else
+                {
+                    responseVm.Message = $"You can't change status from {EstimationStatus.Status} to {NewEstimationStatus}.";
+                    responseVm.Data = EstimationStatus.Status;
+                    FileLogger.Log($"Status change from {EstimationStatus.Status} to {NewEstimationStatus} is not allowed.");
+                }
+            }
+            catch (Exception ex)
+            {
+                // Catch any errors and log them
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+                FileLogger.Log($"Error processing status change for EstimationId: {EstimationId}. Error: {ex.Message}");
+            }
+
+            return responseVm;
+        }
 
         #region private methods
 
@@ -967,6 +1020,7 @@ namespace ShutterManagement.Business.Services
                     Status = estimate.Status,
                     IsActive = estimate.IsActive,
                     Discount = estimate.DiscountAmount,
+                    DiscountCoupon = estimate.DiscountCoupon,
                     EstimateName = estimate.EstimateName,
                     EstimateCode = estimate.EstimateCode,
                     SubTotal = estimate.TotalPrice,
@@ -1170,6 +1224,7 @@ namespace ShutterManagement.Business.Services
                 EstimateCode = GenerateUniqueId.GenerateUniqueIds(ModuleName.Estimation, AppConstant.LoggedInCompanyCode),
                 Notes = model.Notes,
                 DiscountAmount = model.Discount,
+                DiscountCoupon = model.DiscountCoupon,
                 GrandTotal = model.GrandTotal,
                 JobId = model.JobId,
                 TaxAmount = model.Tax,
@@ -1386,8 +1441,66 @@ namespace ShutterManagement.Business.Services
             await estimateWindowProductComponentMaterialService.Add(tblEstimateWindowProductComponentMaterial);
         }
 
+      
 
-       
+        private bool CanChangeStatus(Estimation currentStatus, Estimation newStatus)
+        {
+            // Add logic to check if the status change is valid based on the current and new status
+            switch (currentStatus)
+            {
+                case Estimation.New:
+                case Estimation.Rejected:
+                    return newStatus == Estimation.PendingForApproval;
+                case Estimation.PendingForApproval:
+                    return newStatus == Estimation.Rejected || newStatus == Estimation.Approved;
+                case Estimation.Approved:
+                    return false; // No changes allowed from 'Approved' status
+                default:
+                    return false; // Default case for unsupported statuses
+            }
+        }
+
+        private async Task<IResponseVm<string>> EstimationChangeHistory(Guid EstimationId, Estimation Status)
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+            try
+            {
+                TblEstimateApproved approved = new TblEstimateApproved
+                {
+                    EstimationId = EstimationId,
+                    CurrentDatetime = DateTime.Now,
+                    Ipaddress = GetClientIpAddress(),
+                    Status = EnumValue.GetEnumValue(Status),
+                };
+
+                await dbContext.TblEstimateApproveds.AddAsync(approved);
+                await dbContext.SaveChangesAsync();
+
+                FileLogger.Log($"Estimation change history added for EstimationId: {EstimationId}, Status: {Status}");
+            }
+            catch (Exception ex)
+            {
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+                FileLogger.Log($"Error adding change history for EstimationId: {EstimationId}. Error: {ex.Message}");
+            }
+            return responseVm;
+        }
+
+        public string GetClientIpAddress()
+        {
+            var ipAddress = _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString();
+            return ipAddress;
+        }
+
+        private TblEstimate GetEstimationStatusById(Guid EstimationId)
+        {
+            // Fetch the Estimation status based on the EstimationId, ensuring we check IsDelete and IsActive flags
+            return GetAllQuerable()
+                    .Where(es => es.EstimateId == EstimationId && es.IsDelete == false && es.IsActive == true)
+                    .FirstOrDefault();
+        }
+
+
         #endregion
     }
 }
