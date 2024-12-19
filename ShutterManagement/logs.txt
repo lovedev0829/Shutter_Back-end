@@ -224,3 +224,17 @@
 2024-12-17 17:43:23 : Checking if estimate with name HomesdCollages already exists...
 2024-12-17 17:43:37 : Estimate HomesdCollages updated successfully.
 2024-12-17 17:43:55 : Deactivating old records for Estimate ID: 083aa5b8-b36d-47c2-84ba-0a82aa61445a
+2024-12-18 17:28:41 : Fetching all windows started.
+2024-12-18 17:28:46 : Validating Tenant...
+2024-12-18 17:28:49 : Tenant validated successfully.
+2024-12-18 17:28:50 : Fetched total 2 windows before applying filters.
+2024-12-18 17:28:50 : Total 0 windows after applying search and status filters.
+2024-12-18 17:28:50 : Total 0 windows after pagination. PageNo: 1, RecordsPerPage: 10
+2024-12-18 17:28:50 : Fetching windows operation completed successfully.
+2024-12-18 17:29:05 : Fetching all windows started.
+2024-12-18 17:29:05 : Validating Tenant...
+2024-12-18 17:29:05 : Tenant validated successfully.
+2024-12-18 17:29:05 : Fetched total 2 windows before applying filters.
+2024-12-18 17:29:05 : Total 2 windows after applying search and status filters.
+2024-12-18 17:29:05 : Total 2 windows after pagination. PageNo: 1, RecordsPerPage: 10
+2024-12-18 17:29:05 : Fetching windows operation completed successfully.

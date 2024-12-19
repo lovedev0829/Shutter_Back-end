@@ -9,6 +9,7 @@ namespace ShutterManagement.Core.ViewModels.Response
 {
     public class EstimateList
     {
+
         public Guid EstimateId { get; set; }
         public Guid? JobId { get; set; }
         public string? EstimateName { get; set; }
@@ -24,8 +25,22 @@ namespace ShutterManagement.Core.ViewModels.Response
         public decimal? GrandTotal { get; set; }
         public bool? IsActive { get; set; }
         public DateTime? CreatedDate { get; set; }
+        public string? CreatedBy { get; set; }
 
+        public JobDetails jobDetails { get; set; } = new JobDetails();
         public List<EstimateProductList> EstimateProductList { get; set; } = new List<EstimateProductList>();
+    }
+
+    public class  JobDetails
+    {
+        public string? JobName { get; set; }
+        public string? JobType { get; set; }
+        public string? Address { get; set; }
+        public string? AddressLabel { get; set; }
+        public string? AssignedPersonnel { get; set; }
+        public string? JobNotes { get; set; }
+        public DateTime? ScheduleTime { get; set; }
+
     }
 
     public class EstimateWindowList

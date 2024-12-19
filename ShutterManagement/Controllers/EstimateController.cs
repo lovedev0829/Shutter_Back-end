@@ -72,5 +72,15 @@ namespace ShutterManagement.Controllers
             return Ok(res);
         }
 
+
+        [HttpPost("ViewEstimate")]
+        [Authorize(Roles = "EstimateView")]
+        [AllowAnonymous]
+        public async Task<IActionResult> ViewEstimate(Guid EstimationId)
+        {
+            var res = await _EstimateService.ViewEachEstimation(EstimationId);
+            return Ok(res);
+
+        }
     }
 }

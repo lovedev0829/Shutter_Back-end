@@ -683,7 +683,8 @@ namespace ShutterManagement.Business.Services
             {
 
 
-                var IsEstimateExists = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId && x.EstimateId == EstimateId).OrderByDescending(x => x.CreatedAt).FirstOrDefault();
+                var IsEstimateExists = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId && x.EstimateId == EstimateId).
+                    OrderByDescending(x => x.CreatedAt).FirstOrDefault();
                 if (IsEstimateExists == null)
                 {
                     responseVm.Message = "Estimate " + AppConstant.NoDataFound;
@@ -866,6 +867,59 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
+
+        public async Task<IResponseVm<List<EstimateList>>> ViewEachEstimation(Guid EstimateId)
+        {
+            IResponseVm<List<EstimateList>> responseVm = new ResponseVm<List<EstimateList>>();
+            try
+            {
+                if (EstimateId == Guid.Empty)
+                {
+                    responseVm.Message = "Invalid Estimate ID.";
+                    return responseVm;
+                }
+
+                var estimate =  GetAllQuerable()
+                                       .Where(e => e.EstimateId == EstimateId && e.IsDelete == false)
+                                       .FirstOrDefault();
+
+                if (estimate == null)
+                {
+                    responseVm.Message = "Estimate not Found.";
+                    return responseVm;
+                }
+
+                AppConstant.LoggedInTenantId = estimate.TenantId;
+
+                Pagination filterValue = new Pagination
+                {
+                    SearchValue = EstimateId.ToString()
+                };
+
+                var estimateListFiltered = await GetAll_Estimate(filterValue);
+
+                if (estimateListFiltered != null && estimateListFiltered.TotalRecords > 0 && estimateListFiltered.Data.Any())
+                {
+                    responseVm.Data = estimateListFiltered.Data;
+                    responseVm.IsSuccess = true;
+                    responseVm.TotalRecords = responseVm.TotalRecords;
+                }
+                else
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = "No estimates found after filtering.";
+                }
+            }
+            catch (Exception ex)
+            {
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+            }
+
+            return responseVm;
+        }
+
+
+
         #region private methods
 
 
@@ -902,6 +956,7 @@ namespace ShutterManagement.Business.Services
         {
             var estimateList = new List<EstimateList>();
 
+
             foreach (var estimate in estimates)
             {
                 var e = new EstimateList
@@ -920,10 +975,13 @@ namespace ShutterManagement.Business.Services
                     Tax = estimate.TaxAmount,
                     TermsCondition = estimate.TermsCondition,
                 };
+                e.CreatedBy = dbContext.TblUsers
+                  .Where(x => x.Id == estimate.CreatedBy && x.IsDelete == false)
+                  .Select(x => x.FirstName)
+                  .FirstOrDefault();
 
                 // Fetch and add related products and options
                 AddEstimateProducts(estimate, e);
-
                 estimateList.Add(e);
             }
 
@@ -944,6 +1002,29 @@ namespace ShutterManagement.Business.Services
                 ).ToList();
 
             return filteredRecords;
+        }
+
+        private void AddJobDetails(EstimateList e)
+        {
+    
+            var jobdetails1 = (from j1 in dbContext.TblJobs
+                               join j2 in dbContext.TblEstimates on j1.JobId equals j2.JobId
+                               join j3 in dbContext.TblAddresses on j1.AddressId equals j3.AddressId
+                               join j4 in dbContext.MstJobTypes on j1.JobType equals j4.Id
+                               join j5 in dbContext.TblUsers on j1.AssignedPersonnel equals j5.Id
+                               where j1.IsDelete == false
+                               select new JobDetails
+                               {
+                                   JobName = j1.JobName,
+                                   JobNotes = j1.Notes,
+                                   JobType = j4.JobTypeName,
+                                   AssignedPersonnel = j5.FirstName + " " + j5.LastName,
+                                   Address = j3.StreetAddress + " " + j3.City + " " + j3.State + " " + j3.ZipCode,
+                                   AddressLabel = j3.Label,
+                                   ScheduleTime = j1.ScheduledDate
+                               }).FirstOrDefault(); 
+
+            e.jobDetails = jobdetails1;
         }
 
 
@@ -1007,6 +1088,7 @@ namespace ShutterManagement.Business.Services
                 };
                 e.EstimateProductList.Add(estimateProduct);
             }
+            AddJobDetails(e);
         }
         private async Task<bool> ValidateTenantExists()
         {
@@ -1304,6 +1386,8 @@ namespace ShutterManagement.Business.Services
             await estimateWindowProductComponentMaterialService.Add(tblEstimateWindowProductComponentMaterial);
         }
 
+
+       
         #endregion
     }
 }
