@@ -19,11 +19,13 @@ namespace ShutterManagement.Business.Services
     public class DiscountService : BaseRepository<BtprojecShuttermanagementDevContext, TblDiscount>, IDiscountService
     {
         private readonly ITenantService tenantService;
+        private readonly IContactService contactService;
         private readonly ClaimsProperty claimsProperty;
 
-        public DiscountService(ITenantService tenantService, ITaxExemption taxExemptionService, ClaimsProperty claimsProperty )
+        public DiscountService(ITenantService tenantService,IContactService contactService,  ClaimsProperty claimsProperty )
         {
             this.tenantService = tenantService;
+            this.contactService = contactService;
             this.claimsProperty = claimsProperty;
         }
 
@@ -150,7 +152,7 @@ namespace ShutterManagement.Business.Services
 
                 FileLogger.Log($"Success: Discount ID: {discountId} status toggled to {(discount.IsActive ?? false ? "Active" : "Inactive")}.");
                 return SetSuccessResponse(responseVm, AppConstant.UpdateSuccessMsg);
-            }
+            }     
             catch (Exception ex)
             {
                 FileLogger.Log($"Error: Exception in ActiveInActive - {ex.Message}");
@@ -210,27 +212,31 @@ namespace ShutterManagement.Business.Services
 
         private async Task<List<DiscoountVm>> GetFilteredCouponsAsync(Pagination filter)
         {
-            var query = from t2 in dbContext.TblDiscounts.OrderByDescending(x => x.CreatedAt)
-                        join t1 in dbContext.TblContacts on t2.CustomerId equals t1.ContactId
-                        where t2.IsDelete == false && t2.TenantId == AppConstant.LoggedInTenantId
-                        select new DiscoountVm
-                        {
-                            DiscountId = t2.DiscountId,
-                            CustomerId = t2.DiscountId,
-                            Applyfor = t2.ApplyFor,
-                            DiscountType = t2.DiscountType,
-                            CouponCode = t2.CouponCode,
-                            CustomerName = t1.Name,
-                            PercentageDiscount = t2.PercentageDiscount,
-                            FixedAmount = t2.FixedAmount,
-                            ExpiryDate = t2.ExpiryDate,
-                            StartDate = t2.StartDate,
-                            IsActive = t2.IsActive
-                        };
+            var DiscountList = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId).OrderByDescending(x=> x.CreatedAt).Select(
+                x => new DiscoountVm
+                {
+                    DiscountId = x.DiscountId,
+                    CustomerId = x.CustomerId,
+                    Applyfor = x.ApplyFor,
+                    DiscountType = x.DiscountType,
+                    CouponCode = x.CouponCode,
+                    PercentageDiscount = x.PercentageDiscount,
+                    FixedAmount = x.FixedAmount,
+                    ExpiryDate = x.ExpiryDate,
+                    StartDate = x.StartDate,
+                    IsActive = x.IsActive,
+                }
+            ).ToList();
+            foreach(var item in DiscountList)
+            {
+                var customerData = contactService.GetAllQuerable().Where(x => x.ContactId == item.CustomerId && x.IsDelete == false).Select(x => x.Name).FirstOrDefault();
+                item.CustomerName = customerData;
+            }
 
-            var filteredRecords = query.Where(x =>
+
+            var filteredRecords = DiscountList.Where(x =>
                 (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
-                (string.IsNullOrEmpty(filter.SearchValue) ||
+                (string.IsNullOrEmpty(filter.SearchValue) || 
                     (x.CustomerName ?? "").Contains(filter.SearchValue.Trim()) ||
                     (x.CouponCode ?? "").Contains(filter.SearchValue.Trim()) ||
                     (x.PercentageDiscount.ToString() ?? "").Contains(filter.SearchValue.Trim()) ||
@@ -239,10 +245,9 @@ namespace ShutterManagement.Business.Services
                     (x.StartDate.ToString() ?? "").Contains(filter.SearchValue.Trim()))
             );
 
-            return await Task.FromResult(filteredRecords
-                .Skip((filter.PageNo - 1) * filter.RecordPerPage)
-                .Take(filter.RecordPerPage)
-                .ToList());
+            var pagination = Paginate.Pagination(filteredRecords, filter);
+
+            return pagination;
         }
 
         private IResponseVm<T> SetFailureResponse<T>(IResponseVm<T> responseVm, string message)
