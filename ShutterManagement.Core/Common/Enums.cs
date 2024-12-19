@@ -58,10 +58,12 @@ namespace ShutterManagement.Core.Common
     {
         [EnumMember(Value = "New")]
         New,
-        [EnumMember(Value = "Pending For Approval")]
+        [EnumMember(Value = "PendingForApproval")]
         PendingForApproval,
         [EnumMember(Value = "Approved")]
         Approved,
+        [EnumMember(Value = "Rejected")]
+        Rejected,
     }
 
     public static class EnumValue

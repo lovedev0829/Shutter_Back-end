@@ -51,6 +51,8 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
 
     public virtual DbSet<TblEstimate> TblEstimates { get; set; }
 
+    public virtual DbSet<TblEstimateApproved> TblEstimateApproveds { get; set; }
+
     public virtual DbSet<TblEstimateWindow> TblEstimateWindows { get; set; }
 
     public virtual DbSet<TblEstimateWindowProduct> TblEstimateWindowProducts { get; set; }
@@ -452,6 +454,7 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.DiscountAmount).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.DiscountCoupon).HasMaxLength(200);
             entity.Property(e => e.EstimateCode).HasMaxLength(50);
             entity.Property(e => e.EstimateName).HasMaxLength(200);
             entity.Property(e => e.GrandTotal).HasColumnType("decimal(10, 2)");
@@ -475,6 +478,20 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.HasOne(d => d.Tenant).WithMany(p => p.TblEstimates)
                 .HasForeignKey(d => d.TenantId)
                 .HasConstraintName("FK__TblEstima__Tenan__08A03ED0");
+        });
+
+        modelBuilder.Entity<TblEstimateApproved>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__TblEstim__3214EC074DAE958A");
+
+            entity.ToTable("TblEstimateApproved", "dbo");
+
+            entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.CurrentDatetime).HasColumnType("datetime");
+            entity.Property(e => e.Ipaddress)
+                .HasMaxLength(20)
+                .HasColumnName("IPaddress");
+            entity.Property(e => e.Status).HasMaxLength(50);
         });
 
         modelBuilder.Entity<TblEstimateWindow>(entity =>

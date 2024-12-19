@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using ShutterManagement.Core.ViewModels.Response;
+using ShutterManagement.Core.Common;
 
 namespace ShutterManagement.Business.Interfaces
 {
@@ -20,5 +21,6 @@ namespace ShutterManagement.Business.Interfaces
         Task<IResponseVm<List<EstimateList>>> GetAll_Estimate(Pagination filter);
         Task<IResponseVm<string>> SendForApproval(Guid EstimateId);
         Task<IResponseVm<List<EstimateList>>> ViewEachEstimation(Guid EstimateId);
+        Task<IResponseVm<string>> ChangeStatus(Guid EstimationId, Estimation NewEstimationStatus);
     }
 }
