@@ -21,21 +21,21 @@ namespace ShutterManagement.Controllers
             this.discountService = discountService;
         }
         [HttpPost("Create")]
-        [Authorize(Roles = "DiscoountAdd")]
+        [Authorize(Roles = "DiscountAdd")]
         public async Task<IActionResult> CreateDiscoount([FromBody]  CreateDiscount model)
         {
             var res = await discountService.CreateDiscountCoupon(model);
             return Ok(res);
         }
         [HttpPost("Update")]
-        [Authorize(Roles = "DiscoountEdit")]
+        [Authorize(Roles = "DiscountEdit")]
         public async Task<IActionResult> UpdateDiscount(UpdateDiscount model)
         {
             var res = await discountService.UpdateDiscountCoupon(model);
             return Ok(res);
         }
         [HttpPost("Delete")]
-        [Authorize(Roles = "DiscoountDelete")]
+        [Authorize(Roles = "DiscountDelete")]
         public async Task<IActionResult> DeleteDiscount(Guid Discountid)
         {
             var res = await discountService.DeleteDiscountCoupon(Discountid);
@@ -43,7 +43,7 @@ namespace ShutterManagement.Controllers
         }
 
         [HttpPost("ActiveInActive")]
-        [Authorize(Roles = "DiscoountEdit")]
+        [Authorize(Roles = "DiscountEdit")]
         public async Task<IActionResult> ActiveInActive(Guid Discountid)
         {
             var res = await discountService.ActiveInActive(Discountid);
@@ -52,7 +52,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("GetAll")]
-        [Authorize(Roles = "DiscoountView")]
+        [Authorize(Roles = "DiscountView")]
         public async Task<IActionResult> GetAll(Pagination filter)
         {
             var res = await discountService.GetAll_Coupons(filter);
