@@ -7,6 +7,7 @@ using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Business.Services;
 using ShutterManagement.Core;
 using ShutterManagement.Core.ViewModels;
+using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.DAL.Context;
 using System.IO;
 
@@ -77,9 +78,9 @@ namespace ShutterManagement.Controllers
         }
 
         [Authorize]
-        [HttpGet("ExportContacts")]
+        [HttpPost("ExportContacts")]
         [Authorize(Roles = "ContactView")]
-        public async Task<IActionResult> ExportToCsv(string Type)
+        public async Task<IActionResult> ExportToCsv(Pagination filter,string Type)
         {
             try
             {
@@ -87,7 +88,7 @@ namespace ShutterManagement.Controllers
                 {
                     case "contact":
                         var filePath = Path.Combine(Directory.GetCurrentDirectory(), "Contacts.csv");
-                        var result = await importandExportCSV.ExportContactsToCsvAsync(filePath);
+                        var result = await importandExportCSV.ExportContactsToCsvAsync(filter,filePath);
                         if (result.IsSuccess)
                         {
                             var fileBytes = await System.IO.File.ReadAllBytesAsync(filePath);
@@ -109,7 +110,6 @@ namespace ShutterManagement.Controllers
                         var result3 = await importandExportCSV.ExportJobsToCsv(filePath3);
                         var fileBytes3 = await System.IO.File.ReadAllBytesAsync(filePath3);
                         return File(fileBytes3, "text/csv", "Jobs.csv");
-
                     default:
                         return StatusCode(200, "Please Select valid Type");
                 }
@@ -121,5 +121,6 @@ namespace ShutterManagement.Controllers
             }
             return Ok();
         }
+
     }
 }

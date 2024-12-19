@@ -325,39 +325,159 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        public async Task<IResponseVm<dynamic>> ExportContactsToCsvAsync(string filePath)
+        //public async Task<IResponseVm<dynamic>> ExportContactsToCsvAsync(string filePath)
+        //{
+        //    IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
+        //    try
+        //    {
+        //        var IsTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
+        //        if (IsTenantExists)
+        //        {
+        //            var Contacts = new List<TblContact>();
+        //            List<ContactsList> ContactList = new List<ContactsList>();
+
+        //            Contacts = (await contactService.GetAll()).Where(x => x.IsDelete == false && x.IsArchive == false && x.TenantId == AppConstant.LoggedInTenantId).OrderByDescending(x => x.CreatedAt).ToList();
+
+        //            foreach (var contact in Contacts)
+        //            {
+        //                ContactsList contacts = new ContactsList
+        //                {
+        //                    ContactId = contact.ContactId,
+        //                    ContactType = contact.ContactType ?? "",
+        //                    Email = contact.Email,
+        //                    PhoneNumber = contact.PhoneNumber,
+        //                    Name = contact.Name,
+        //                    Website = contact.Website,
+        //                    Notes = contact.Notes,
+        //                    Referral = contact.Referral,
+        //                    IsTaxExemption = contact.IsTaxExemption ?? false,
+        //                    IsBillingAddressSameAsAddress = contact.IsBillingAddressSameAsAddress,
+        //                    IsActive = contact.IsActive
+        //                };
+
+        //                contacts.billingAddressVm = billingService.GetAllQuerable()
+        //                    .Where(x => x.ContactId == contact.ContactId
+        //                    && x.IsDelete == false).Select(x => new BillingAddressVm
+        //                    {
+        //                        City = x.City,
+        //                        Email = x.Email,
+        //                        FullName = x.FullName,
+        //                        PhoneNumber = x.PhoneNumber,
+        //                        State = x.State,
+        //                        StreetAddress = x.StreetAddress,
+        //                        ZipCode = x.ZipCode,
+        //                    }).FirstOrDefault();
+        //                contacts.taxExemptionVm = taxExemptionService.GetAllQuerable()
+        //                    .Where(x => x.ContactId == contact.ContactId
+        //                    && x.IsDelete == false).Select(x => new TaxExemption
+        //                    {
+        //                        EffectiveDate = x.EffectiveDate,
+        //                        ExemptionCertificate = x.ExemptionCertificate.Split(new[] {","},StringSplitOptions.None),
+        //                        ExpiryDate = x.ExpiryDate
+        //                    }).FirstOrDefault();
+        //                ContactList.Add(contacts);
+        //            }
+        //            var csvBuilder = new StringBuilder();
+        //            csvBuilder.AppendLine("ContactType,Name,PhoneNumber,Email,Website,Notes,Referral,FullName,PhoneNumber,Email,City,State,ZipCode,StreetAddress,ExemptionCertificate,EffectiveDate,ExpiryDate");
+
+
+        //            foreach (var contact in ContactList)
+        //            {
+        //                var billingAddress = contact.billingAddressVm ?? new BillingAddressVm();
+
+
+        //                var line = $"{contact.ContactType},{contact.Name},{contact.PhoneNumber},{contact.Email},{contact.Website},{contact.Notes},{contact.Referral}," +
+        //                           $"{billingAddress.FullName},{billingAddress.PhoneNumber},{billingAddress.Email},{billingAddress.City},{billingAddress.State}," +
+        //                           $"{billingAddress.ZipCode},{billingAddress.StreetAddress},{contact.taxExemptionVm?.ExemptionCertificate},{contact.taxExemptionVm?.EffectiveDate},{contact.taxExemptionVm?.ExpiryDate}";
+
+        //                csvBuilder.AppendLine(line);
+        //            }
+
+        //            try
+        //            {
+        //                await File.WriteAllTextAsync(filePath, csvBuilder.ToString());
+        //                responseVm.IsSuccess = true;
+        //                responseVm.Message = AppConstant.ExportSuccessMsg; 
+        //            }
+        //            catch (Exception ex)
+        //            {
+        //                responseVm.IsSuccess = false;
+        //                responseVm.Message = AppConstant.ExceptionError + ex.Message; 
+        //            }
+
+        //            return responseVm;
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        responseVm.IsSuccess = false;
+        //        responseVm.Message = AppConstant.ExceptionError + ex.Message; 
+        //        return responseVm;
+        //    }
+        //    return responseVm;
+        //}
+
+
+
+        public async Task<IResponseVm<dynamic>> ExportContactsToCsvAsync(Pagination filter, string filePath)
         {
             IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
             try
             {
-                var IsTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
-                if (IsTenantExists)
+                var isTenantExists = await tenantService.AnyAsync(x =>
+                    x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
+
+                if (!isTenantExists)
                 {
-                    var Contacts = new List<TblContact>();
-                    List<ContactsList> ContactList = new List<ContactsList>();
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = AppConstant.AccessDenied;
+                    return responseVm;
+                }
 
-                    Contacts = (await contactService.GetAll()).Where(x => x.IsDelete == false && x.IsArchive == false && x.TenantId == AppConstant.LoggedInTenantId).OrderByDescending(x => x.CreatedAt).ToList();
+                var contactsQuery = dbContext.TblContacts
+                    .Where(x => x.IsDelete==false  && x.TenantId == AppConstant.LoggedInTenantId);
 
-                    foreach (var contact in Contacts)
+                if (!string.IsNullOrEmpty(filter.SearchValue))
+                {
+                    contactsQuery = contactsQuery.Where(x =>
+                        x.ContactType.Contains(filter.SearchValue) ||
+                        x.Name.Contains(filter.SearchValue) ||
+                        x.Email.Contains(filter.SearchValue) ||
+                        x.PhoneNumber.Contains(filter.SearchValue));
+                }
+
+                if (filter.Status == 0)
+                {
+                    contactsQuery = contactsQuery.Where(x => x.IsActive==false);
+                }
+                else if (filter.Status == 1)
+                {
+                    contactsQuery = contactsQuery.Where(x => x.IsActive==true);
+                }
+
+                var paginatedContacts = contactsQuery
+                    .OrderByDescending(x => x.CreatedAt)
+                    .ToList();
+
+                List<ContactsList> contactList = new List<ContactsList>();
+                foreach (var contact in paginatedContacts)
+                {
+                    var contactItem = new ContactsList
                     {
-                        ContactsList contacts = new ContactsList
-                        {
-                            ContactId = contact.ContactId,
-                            ContactType = contact.ContactType ?? "",
-                            Email = contact.Email,
-                            PhoneNumber = contact.PhoneNumber,
-                            Name = contact.Name,
-                            Website = contact.Website,
-                            Notes = contact.Notes,
-                            Referral = contact.Referral,
-                            IsTaxExemption = contact.IsTaxExemption ?? false,
-                            IsBillingAddressSameAsAddress = contact.IsBillingAddressSameAsAddress,
-                            IsActive = contact.IsActive
-                        };
-
-                        contacts.billingAddressVm = billingService.GetAllQuerable()
-                            .Where(x => x.ContactId == contact.ContactId
-                            && x.IsDelete == false).Select(x => new BillingAddressVm
+                        ContactId = contact.ContactId,
+                        ContactType = contact.ContactType ?? "",
+                        Email = contact.Email,
+                        PhoneNumber = contact.PhoneNumber,
+                        Name = contact.Name,
+                        Website = contact.Website,
+                        Notes = contact.Notes,
+                        Referral = contact.Referral,
+                        IsTaxExemption = contact.IsTaxExemption ?? false,
+                        IsBillingAddressSameAsAddress = contact.IsBillingAddressSameAsAddress,
+                        IsActive = contact.IsActive,
+                        billingAddressVm = billingService.GetAllQuerable()
+                            .Where(x => x.ContactId == contact.ContactId && !x.IsDelete)
+                            .Select(x => new BillingAddressVm
                             {
                                 City = x.City,
                                 Email = x.Email,
@@ -366,56 +486,51 @@ namespace ShutterManagement.Business.Services
                                 State = x.State,
                                 StreetAddress = x.StreetAddress,
                                 ZipCode = x.ZipCode,
-                            }).FirstOrDefault();
-                        contacts.taxExemptionVm = taxExemptionService.GetAllQuerable()
-                            .Where(x => x.ContactId == contact.ContactId
-                            && x.IsDelete == false).Select(x => new TaxExemption
+                            }).FirstOrDefault(),
+                        taxExemptionVm = taxExemptionService.GetAllQuerable()
+                            .Where(x => x.ContactId == contact.ContactId && x.IsDelete==false)
+                            .Select(x => new TaxExemption
                             {
                                 EffectiveDate = x.EffectiveDate,
-                                ExemptionCertificate = x.ExemptionCertificate.Split(new[] {","},StringSplitOptions.None),
+                                ExemptionCertificate = string.IsNullOrEmpty(x.ExemptionCertificate)? null: x.ExemptionCertificate.Split(new[] { ',' }, StringSplitOptions.None),
                                 ExpiryDate = x.ExpiryDate
-                            }).FirstOrDefault();
-                        ContactList.Add(contacts);
-                    }
-                    var csvBuilder = new StringBuilder();
-                    csvBuilder.AppendLine("ContactType,Name,PhoneNumber,Email,Website,Notes,Referral,FullName,PhoneNumber,Email,City,State,ZipCode,StreetAddress,ExemptionCertificate,EffectiveDate,ExpiryDate");
+                            }).FirstOrDefault()
+                    };
 
-
-                    foreach (var contact in ContactList)
-                    {
-                        var billingAddress = contact.billingAddressVm ?? new BillingAddressVm();
-
-
-                        var line = $"{contact.ContactType},{contact.Name},{contact.PhoneNumber},{contact.Email},{contact.Website},{contact.Notes},{contact.Referral}," +
-                                   $"{billingAddress.FullName},{billingAddress.PhoneNumber},{billingAddress.Email},{billingAddress.City},{billingAddress.State}," +
-                                   $"{billingAddress.ZipCode},{billingAddress.StreetAddress},{contact.taxExemptionVm?.ExemptionCertificate},{contact.taxExemptionVm?.EffectiveDate},{contact.taxExemptionVm?.ExpiryDate}";
-
-                        csvBuilder.AppendLine(line);
-                    }
-
-                    try
-                    {
-                        await File.WriteAllTextAsync(filePath, csvBuilder.ToString());
-                        responseVm.IsSuccess = true;
-                        responseVm.Message = AppConstant.ExportSuccessMsg; 
-                    }
-                    catch (Exception ex)
-                    {
-                        responseVm.IsSuccess = false;
-                        responseVm.Message = AppConstant.ExceptionError + ex.Message; 
-                    }
-
-                    return responseVm;
+                    contactList.Add(contactItem);
                 }
+
+                var csvBuilder = new StringBuilder();
+                csvBuilder.AppendLine("ContactType,Name,PhoneNumber,Email,Website,Notes,Referral,FullName,PhoneNumber,Email,City,State,ZipCode,StreetAddress,ExemptionCertificate,EffectiveDate,ExpiryDate");
+
+                foreach (var contact in contactList)
+                {
+                    var billingAddress = contact.billingAddressVm ?? new BillingAddressVm();
+                    var exemptionCertificates = contact.taxExemptionVm?.ExemptionCertificate != null
+                        ? string.Join(";", contact.taxExemptionVm.ExemptionCertificate)
+                        : "";
+
+                    var line = $"{contact.ContactType},{contact.Name},{contact.PhoneNumber},{contact.Email},{contact.Website},{contact.Notes},{contact.Referral}," +
+                                               $"{billingAddress.FullName},{billingAddress.PhoneNumber},{billingAddress.Email},{billingAddress.City},{billingAddress.State}," +
+                                              $"{billingAddress.ZipCode},{billingAddress.StreetAddress},{contact.taxExemptionVm?.ExemptionCertificate},{contact.taxExemptionVm?.EffectiveDate},{contact.taxExemptionVm?.ExpiryDate}";
+
+                    csvBuilder.AppendLine(line);
+                }
+
+                await File.WriteAllTextAsync(filePath, csvBuilder.ToString());
+                responseVm.IsSuccess = true;
+                responseVm.Message = AppConstant.ExportSuccessMsg;
             }
             catch (Exception ex)
             {
                 responseVm.IsSuccess = false;
-                responseVm.Message = AppConstant.ExceptionError + ex.Message; 
-                return responseVm;
+                responseVm.Message = $"{AppConstant.ExceptionError} {ex.Message}";
             }
+
             return responseVm;
         }
+
+
 
 
         public async Task<IResponseVm<dynamic>> ExportMaterialsToCsvAsync(string filePath)

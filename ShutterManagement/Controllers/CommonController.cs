@@ -41,6 +41,7 @@ namespace ShutterManagement.Controllers
         private readonly IUnitofMeasurementService unitofMeasurementService;
         private readonly IRoleService roleService;
         private readonly IRegion region;
+        private readonly IContactService contactService;
         private readonly IMstContactType contactType;
         private readonly IJobService jobService;
 
@@ -50,7 +51,7 @@ namespace ShutterManagement.Controllers
             IJobTypeService jobTypeService,
             IComponentService componentService,IMstProductType mstProductType,
             IAddress address,IOption option,IProductService productService,
-            IUnitofMeasurementService unitofMeasurementService,IRoleService roleService,IRegion region,
+            IUnitofMeasurementService unitofMeasurementService,IRoleService roleService,IRegion region,IContactService contactService,
             IMstContactType contactType ,IJobService jobService)
         {
             this.masterCreate = masterCreate;
@@ -81,6 +82,7 @@ namespace ShutterManagement.Controllers
             this.unitofMeasurementService = unitofMeasurementService;
             this.roleService = roleService;
             this.region = region;
+            this.contactService = contactService;
             this.contactType = contactType;
             this.jobService = jobService;
         }
@@ -219,6 +221,16 @@ namespace ShutterManagement.Controllers
         {
             var result = await jobService.GetAllJobsTenant_SubTenant(filter1);
             return Ok(result);
+        }
+
+
+        [HttpGet]
+        [Route("GetAllContacts")]
+        public async Task<IActionResult> GetAllContact()
+        {
+            var res = await contactService.GetAll_Contact(filter);
+            res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
+            return Ok(res);
         }
 
         //[HttpPost]
