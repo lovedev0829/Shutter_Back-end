@@ -36,6 +36,7 @@ namespace ShutterManagement.Controllers
         private readonly IUserService userService;
         private readonly IJobStatusService jobStatusService;
         private readonly IJobTypeService jobTypeService;
+        private readonly IDiscountService discountService;
         private readonly IOption option;
         private readonly IProductService productService;
         private readonly IUnitofMeasurementService unitofMeasurementService;
@@ -45,14 +46,15 @@ namespace ShutterManagement.Controllers
         private readonly IMstContactType contactType;
         private readonly IJobService jobService;
 
-        public CommonController(IMasterCreate masterCreate, FileUploadHelper fileUpload, ClaimsProperty claimsProperty,
-            IJobTitleService jobTitleService,IMaterial material,IVendorService vendorService 
-            ,EmailHelper emailHelper,IUserService userService, IJobStatusService jobStatusService,
-            IJobTypeService jobTypeService,
-            IComponentService componentService,IMstProductType mstProductType,
-            IAddress address,IOption option,IProductService productService,
-            IUnitofMeasurementService unitofMeasurementService,IRoleService roleService,IRegion region,IContactService contactService,
-            IMstContactType contactType ,IJobService jobService)
+        public CommonController(IMasterCreate masterCreate, 
+            FileUploadHelper fileUpload, ClaimsProperty claimsProperty,
+            IJobTitleService jobTitleService, IMaterial material, IVendorService vendorService
+            , EmailHelper emailHelper, IUserService userService, IJobStatusService jobStatusService,
+            IJobTypeService jobTypeService, IDiscountService discountService,
+            IComponentService componentService, IMstProductType mstProductType,
+            IAddress address, IOption option, IProductService productService,
+            IUnitofMeasurementService unitofMeasurementService, IRoleService roleService, IRegion region, IContactService contactService,
+            IMstContactType contactType, IJobService jobService)
         {
             this.masterCreate = masterCreate;
             this.fileUpload = fileUpload;
@@ -71,11 +73,12 @@ namespace ShutterManagement.Controllers
             filter.Address = "";
             this.vendorService = vendorService;
             this.componentService = componentService;
-            this.address= address;
+            this.address = address;
             this.emailHelper = emailHelper;
             this.userService = userService;
             this.jobStatusService = jobStatusService;
             this.jobTypeService = jobTypeService;
+            this.discountService = discountService;
             this.mstProductType = mstProductType;
             this.option = option;
             this.productService = productService;
@@ -90,7 +93,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("FileUpload")]
-        public async Task<IActionResult> Upload(List<IFormFile> files) 
+        public async Task<IActionResult> Upload(List<IFormFile> files)
         {
             IResponseVm<List<string>> result = new ResponseVm<List<string>>();
             List<string> uploads = new List<string>();
@@ -108,7 +111,6 @@ namespace ShutterManagement.Controllers
             return Ok(result);
         }
 
-
         [HttpGet]
         [Route("GetAllJobTitle")]
         public async Task<IActionResult> GetAllJobTitle()
@@ -117,6 +119,17 @@ namespace ShutterManagement.Controllers
             res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
             return Ok(res);
         }
+
+        [HttpGet]
+        [Route("GetAllDiscountCoupon")]
+        public async Task<IActionResult> GetAllDiscountCoupon(Guid ContactId)
+        {
+            filter.SearchValue = ContactId.ToString();
+            var res = await discountService.GetAll_Coupons(filter);
+            res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
+            return Ok(res);
+        }
+
         [HttpGet]
         [Route("GetAllAssignedPerson")]
         public async Task<IActionResult> GetAllAssignedPerson()
@@ -160,6 +173,7 @@ namespace ShutterManagement.Controllers
             res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
             return Ok(res);
         }
+
         [HttpGet]
         [Route("GetAllComponent")]
         public async Task<IActionResult> GetAllComponent(string ProductType)
@@ -186,13 +200,13 @@ namespace ShutterManagement.Controllers
             var res = await mstProductType.GetAll_ProductType();
             res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
             return Ok(res);
-        } 
-        
+        }
+
         [HttpGet]
         [Route("GetAllRegion")]
         public async Task<IActionResult> GetAllRegion()
         {
-            var res = await region.GetAll(filter);         
+            var res = await region.GetAll(filter);
             res.Data = res.Data.Where(x => x.IsActive == true).ToList();
             return Ok(res);
         }
@@ -397,8 +411,8 @@ namespace ShutterManagement.Controllers
         [Route("GetAllProduct")]
         public async Task<IActionResult> GetAllProduct(string ProductTypeId)
         {
-            var res =await productService.GetAll_Product(filter);
-            res.Data=res.Data?.Where(x=>x.IsActive == true && x.ProductType == ProductTypeId).ToList();    
+            var res = await productService.GetAll_Product(filter);
+            res.Data = res.Data?.Where(x => x.IsActive == true && x.ProductType == ProductTypeId).ToList();
             return Ok(res);
         }
 
