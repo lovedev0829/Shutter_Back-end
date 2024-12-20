@@ -80,46 +80,48 @@ namespace ShutterManagement.Controllers
         [Authorize]
         [HttpPost("ExportContacts")]
         [Authorize(Roles = "ContactView")]
-        public async Task<IActionResult> ExportToCsv(Pagination filter,string Type)
+        public async Task<IResponseVm<string>> ExportToCsv(Pagination filter, string Type)
         {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
                 switch (Type.ToLower())
                 {
                     case "contact":
                         var filePath = Path.Combine(Directory.GetCurrentDirectory(), "Contacts.csv");
-                        var result = await importandExportCSV.ExportContactsToCsvAsync(filter,filePath);
-                        if (result.IsSuccess)
+                        var result = await importandExportCSV.ExportContactsToCsvAsync(filter, filePath);
+                        if(result != null)
                         {
-                            var fileBytes = await System.IO.File.ReadAllBytesAsync(filePath);
-                            return File(fileBytes, "text/csv", "Contacts.csv");
-
+                            return result;
                         }
                         break;
                     case "material":
                         var filePath2 = Path.Combine(Directory.GetCurrentDirectory(), "Materials.csv");
-                        var result2 = await importandExportCSV.ExportMaterialsToCsvAsync(filePath2);
-                        if (result2.IsSuccess)
+                        var result2 = await importandExportCSV.ExportMaterialsToCsvAsync(filter,filePath2);
+                        if(result2 != null)
                         {
-                            var fileBytes2 = await System.IO.File.ReadAllBytesAsync(filePath2);
-                            return File(fileBytes2, "text/csv", "Materials.csv");
+                            return result2;
                         }
                         break;
                     case "jobs":
                         var filePath3 = Path.Combine(Directory.GetCurrentDirectory(), "Jobs.csv");
-                        var result3 = await importandExportCSV.ExportJobsToCsv(filePath3);
-                        var fileBytes3 = await System.IO.File.ReadAllBytesAsync(filePath3);
-                        return File(fileBytes3, "text/csv", "Jobs.csv");
+                        var result3 = await importandExportCSV.ExportJobsToCsv(filter,filePath3);
+                        if (result3 != null)
+                        {
+                            return result3;
+                        }
+                        break;
                     default:
-                        return StatusCode(200, "Please Select valid Type");
+                        responseVm.Message = "Please Select valid Type";
+                        return responseVm;
                 }
-                
+
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                return responseVm;
             }
-            return Ok();
+            return responseVm;
         }
 
     }

@@ -42,6 +42,7 @@ namespace ShutterManagement.Controllers
         private readonly IRoleService roleService;
         private readonly IRegion region;
         private readonly IContactService contactService;
+        private readonly IDiscountService discountService;
         private readonly IMstContactType contactType;
         private readonly IJobService jobService;
 
@@ -51,8 +52,8 @@ namespace ShutterManagement.Controllers
             IJobTypeService jobTypeService,
             IComponentService componentService,IMstProductType mstProductType,
             IAddress address,IOption option,IProductService productService,
-            IUnitofMeasurementService unitofMeasurementService,IRoleService roleService,IRegion region,IContactService contactService,
-            IMstContactType contactType ,IJobService jobService)
+            IUnitofMeasurementService unitofMeasurementService,IRoleService roleService,IRegion region,IContactService contactService,IDiscountService discountService
+,            IMstContactType contactType ,IJobService jobService)
         {
             this.masterCreate = masterCreate;
             this.fileUpload = fileUpload;
@@ -83,6 +84,7 @@ namespace ShutterManagement.Controllers
             this.roleService = roleService;
             this.region = region;
             this.contactService = contactService;
+            this.discountService = discountService;
             this.contactType = contactType;
             this.jobService = jobService;
         }
@@ -230,6 +232,18 @@ namespace ShutterManagement.Controllers
         {
             var res = await contactService.GetAll_Contact(filter);
             res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
+            return Ok(res);
+        }
+
+
+        [HttpGet]
+        [Route("GetAllDiscount")]
+        public async Task<IActionResult> GetAllDiscount()
+        {
+            var res = await discountService.GetAll_Coupons(filter);
+            res.Data = res.Data?
+        .Where(x => x.IsActive==true && x.ExpiryDate.HasValue && x.ExpiryDate.Value >= DateTime.Now)
+        .ToList();
             return Ok(res);
         }
 
