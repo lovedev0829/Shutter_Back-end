@@ -77,6 +77,16 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
 
     public virtual DbSet<TblOptionsType> TblOptionsTypes { get; set; }
 
+    public virtual DbSet<TblOrder> TblOrders { get; set; }
+
+    public virtual DbSet<TblOrderWindow> TblOrderWindows { get; set; }
+
+    public virtual DbSet<TblOrderWindowProduct> TblOrderWindowProducts { get; set; }
+
+    public virtual DbSet<TblOrderWindowProductComponent> TblOrderWindowProductComponents { get; set; }
+
+    public virtual DbSet<TblOrderWindowProductComponentMaterial> TblOrderWindowProductComponentMaterials { get; set; }
+
     public virtual DbSet<TblPayment> TblPayments { get; set; }
 
     public virtual DbSet<TblProduct> TblProducts { get; set; }
@@ -846,6 +856,110 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.HasOne(d => d.Option).WithMany(p => p.TblOptionsTypes)
                 .HasForeignKey(d => d.OptionId)
                 .HasConstraintName("FK__TblOption__Optio__1C1D2798");
+        });
+
+        modelBuilder.Entity<TblOrder>(entity =>
+        {
+            entity.HasKey(e => e.OrderId).HasName("PK__TblOrder__C3905BCFDFE5CDF2");
+
+            entity.ToTable("TblOrder", "dbo");
+
+            entity.Property(e => e.OrderId).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.DiscountAmount).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.DiscountCoupon).HasMaxLength(200);
+            entity.Property(e => e.EstimateCode).HasMaxLength(50);
+            entity.Property(e => e.EstimateName).HasMaxLength(200);
+            entity.Property(e => e.GrandTotal).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.Notes).HasMaxLength(2000);
+            entity.Property(e => e.Status)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.TaxAmount).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.TermsCondition).HasMaxLength(2000);
+            entity.Property(e => e.TotalPrice).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+            entity.Property(e => e.Version).HasMaxLength(3);
+        });
+
+        modelBuilder.Entity<TblOrderWindow>(entity =>
+        {
+            entity.HasKey(e => e.OrderId).HasName("PK__TblOrder__C3905BCFDF2FE0BC");
+
+            entity.ToTable("TblOrderWindow", "dbo");
+
+            entity.Property(e => e.OrderId).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.ArchHeight).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.Height).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.Label).HasMaxLength(100);
+            entity.Property(e => e.Quantity).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+            entity.Property(e => e.Version).HasMaxLength(3);
+            entity.Property(e => e.Width).HasColumnType("decimal(10, 2)");
+        });
+
+        modelBuilder.Entity<TblOrderWindowProduct>(entity =>
+        {
+            entity.HasKey(e => e.OrderId).HasName("PK__TblOrder__C3905BCFC583A4EC");
+
+            entity.ToTable("TblOrderWindowProduct", "dbo");
+
+            entity.Property(e => e.OrderId).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.AdditionalWidth).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.ArchHeight).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.Area).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.Color).HasMaxLength(100);
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.Height).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.Length).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.Markup).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.ProductName).HasMaxLength(255);
+            entity.Property(e => e.ProductType)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+            entity.Property(e => e.Version).HasMaxLength(3);
+            entity.Property(e => e.Width).HasColumnType("decimal(10, 2)");
+        });
+
+        modelBuilder.Entity<TblOrderWindowProductComponent>(entity =>
+        {
+            entity.HasKey(e => e.OrderId).HasName("PK__TblOrder__C3905BCFCFA6605C");
+
+            entity.ToTable("TblOrderWindowProductComponent", "dbo");
+
+            entity.Property(e => e.OrderId).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.ComponentName).HasMaxLength(255);
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.MarkupPercentage).HasColumnType("decimal(5, 2)");
+            entity.Property(e => e.ProductType)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+            entity.Property(e => e.Version).HasMaxLength(3);
+        });
+
+        modelBuilder.Entity<TblOrderWindowProductComponentMaterial>(entity =>
+        {
+            entity.HasKey(e => e.OrderId).HasName("PK__TblOrder__C3905BCFBF5215B3");
+
+            entity.ToTable("TblOrderWindowProductComponentMaterial", "dbo");
+
+            entity.Property(e => e.OrderId).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.MaterialName).HasMaxLength(255);
+            entity.Property(e => e.ReorderLevel).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.Sku)
+                .HasMaxLength(50)
+                .HasColumnName("SKU");
+            entity.Property(e => e.StockQuantity).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.UnitCost).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.UnitOfMeasurement)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+            entity.Property(e => e.Version).HasMaxLength(3);
         });
 
         modelBuilder.Entity<TblPayment>(entity =>

@@ -443,8 +443,6 @@ namespace ShutterManagement.Services
             }
             return result;
         }
-
-
     }
 }
 
