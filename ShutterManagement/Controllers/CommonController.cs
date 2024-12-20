@@ -236,16 +236,7 @@ namespace ShutterManagement.Controllers
         }
 
 
-        [HttpGet]
-        [Route("GetAllDiscount")]
-        public async Task<IActionResult> GetAllDiscount()
-        {
-            var res = await discountService.GetAll_Coupons(filter);
-            res.Data = res.Data?
-        .Where(x => x.IsActive==true && x.ExpiryDate.HasValue && x.ExpiryDate.Value >= DateTime.Now)
-        .ToList();
-            return Ok(res);
-        }
+        
 
         //[HttpPost]
         //[Route("MasterCreate")]
@@ -457,6 +448,18 @@ namespace ShutterManagement.Controllers
         {
             var mstcontactType = await contactType.GetAll_MstContactType(filter);
             return Ok(mstcontactType);
+        }
+
+
+        [HttpGet]
+        [Route("GetAllDiscount")]
+        public async Task<IActionResult> GetAllDiscount(Guid? CustomerId)
+        {
+            var res = await discountService.GetAll_Coupons(filter);
+            res.Data = res.Data?
+        .Where(x => x.IsActive == true && x.CustomerId==CustomerId  && x.ExpiryDate.HasValue && x.ExpiryDate.Value >= DateTime.Now)
+        .ToList();
+            return Ok(res);
         }
 
 

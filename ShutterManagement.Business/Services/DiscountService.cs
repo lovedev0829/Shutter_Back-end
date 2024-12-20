@@ -268,8 +268,6 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-
-
         private bool ValidateDiscountType(CreateDiscount discount, out string message)
         {
             if (discount.discountType == DiscountType.Percentage)
@@ -374,7 +372,7 @@ namespace ShutterManagement.Business.Services
                                                                               x.TenantId == AppConstant.LoggedInTenantId &&
                                                                               !(bool)x.IsDelete);
         }
-
+         
         private void UpdateDiscountRecord(TblDiscount existing, UpdateDiscount updated)
         {
             existing.CouponCode = updated.CouponCode?.ToUpper();

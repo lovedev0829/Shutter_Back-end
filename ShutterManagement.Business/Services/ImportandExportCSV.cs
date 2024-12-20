@@ -20,6 +20,7 @@ using static Microsoft.AspNetCore.Hosting.Internal.HostingApplication;
 using Azure;
 using ShutterManagement.Core.ViewModels.Response;
 using System.Data.Entity;
+using System.Diagnostics.Metrics;
 
 namespace ShutterManagement.Business.Services
 {
@@ -416,7 +417,7 @@ namespace ShutterManagement.Business.Services
         //    return responseVm;
         //}
 
-        public async Task<IResponseVm<string>> ExportContactsToCsvAsync(Pagination filter, string filePath)
+        public async Task<IResponseVm<string>> ExportContactsToCsvAsync(Pagination filter, string filePath) 
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
@@ -434,15 +435,19 @@ namespace ShutterManagement.Business.Services
                 var contactsQuery = dbContext.TblContacts
                     .Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
 
-                if (!string.IsNullOrEmpty(filter.SearchValue) || filter.TenantId!=null)
-                {
-                    contactsQuery = contactsQuery.Where(x =>
-                        x.ContactType.Contains(filter.SearchValue) ||
-                        x.Name.Contains(filter.SearchValue) ||
-                        x.Email.Contains(filter.SearchValue) ||
-                        x.TenantId.ToString().Contains(filter.TenantId)||
-                        x.PhoneNumber.Contains(filter.SearchValue));
-                }
+                filter.SearchValue = filter.SearchValue.Trim().ToLower();
+                var FilterRecords = contactsQuery
+                                    .Where(x =>
+                                    (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
+                                    (filter.SearchValue != "" ?
+                                    ((x.Notes ?? "").Contains(filter.SearchValue)
+                                    || (x.ContactId.ToString()).Contains(filter.SearchValue)
+                                    || (x.TenantId.ToString()).Contains(filter.TenantId)
+                                    || (x.Email ?? "").Contains(filter.SearchValue)
+                                    || (x.Website ?? "").Contains(filter.SearchValue)
+                                    || (x.PhoneNumber ?? "").Contains(filter.SearchValue)
+                                    || (x.Name ?? "").Contains(filter.SearchValue)
+                                    ) : true)).ToList();
 
                 if (filter.Status == 0)
                 {
@@ -547,15 +552,27 @@ namespace ShutterManagement.Business.Services
                 }
 
                 var materialQuery = dbContext.TblRawMaterials
-                    .Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete==false);
+                    .Where(x => x.IsDelete==false);
 
-                if (!string.IsNullOrEmpty(filter.SearchValue))
-                {
-                    materialQuery = materialQuery.Where(x =>
-                        x.MaterialName.Contains(filter.SearchValue) ||
-                        x.Sku.Contains(filter.SearchValue) ||
-                        x.Notes.Contains(filter.SearchValue));
-                }
+
+                filter.SearchValue = filter.SearchValue?.Trim().ToLower();
+                var FilterRecords = materialQuery
+                                .Where(x =>
+                                (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
+                                (string.IsNullOrEmpty(filter.Vendor) ? true : (filter.Vendor == x.VendorId.ToString())) &&
+                                (string.IsNullOrEmpty(filter.ProductType) ? true : (filter.ProductType == x.ProductType.ToString())) &&
+                                 (string.IsNullOrEmpty(filter.SearchValue) ? true :
+                                    (x.RawMaterialId.ToString() == filter.SearchValue)
+                                    || (x.ProductType.ToString() == filter.SearchValue)
+                                    || (x.MaterialName ?? "").ToLower().Contains(filter.SearchValue)
+                                    || (x.UnitCost.ToString() ?? "").ToLower().Contains(filter.SearchValue)
+                                    || (x.ReorderLevel.ToString() ?? "").ToLower().Contains(filter.SearchValue)
+                                    || (x.StockQuantity.ToString() ?? "").ToLower().Contains(filter.SearchValue)
+                                    || (x.Notes.ToString() ?? "").ToLower().Contains(filter.SearchValue)
+                                    || (x.UnitOfMeasurement ?? "").ToLower().Contains(filter.SearchValue)))
+                                .ToList();
+
+
 
                 if (filter.Status == 0)
                 {
@@ -569,7 +586,6 @@ namespace ShutterManagement.Business.Services
                 var materialList = (from t2 in materialQuery
                                     join t1 in dbContext.TblVendors on t2.VendorId equals t1.VendorId
                                     join t3 in dbContext.MstProductTypes on t2.ProductType equals t3.ProductId
-                                    where t2.TenantId == AppConstant.LoggedInTenantId && t2.IsDelete == false
                                     select new ExportMaterialsCsv
                                     {
                                         IsActive = t2.IsActive,
@@ -637,11 +653,27 @@ namespace ShutterManagement.Business.Services
                 var jobsQuery = dbContext.TblJobs
                     .Where(x => x.TenantId == AppConstant.LoggedInTenantId || subTenantlist.Contains((Guid)x.TenantId));
 
-                if (!string.IsNullOrEmpty(filter.SearchValue))
-                {
-                    jobsQuery = jobsQuery.Where(x =>
-                        x.JobName.Contains(filter.SearchValue));
-                }
+
+                filter.SearchValue = (filter.SearchValue?.Trim() ?? "").ToLower();
+
+                var FilterRecords = jobsQuery
+                        .Where(x =>
+                            (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
+                            (string.IsNullOrEmpty(filter.JobStatus) ? true : (filter.JobStatus == x.JobStatus.ToString())) &&
+                            (string.IsNullOrEmpty(filter.Address) ? true : (filter.Address == x.AddressId.ToString())) &&
+                            (string.IsNullOrEmpty(filter.TenantId) ? true : (Guid.Parse(filter.TenantId) == x.TenantId)) &&
+                            (string.IsNullOrEmpty(filter.SearchValue) ? true :
+                                (x.JobId.ToString() == filter.SearchValue) ||
+                                (x.ContactId.ToString() == filter.SearchValue) ||
+                                (x.JobStatus.ToString() == filter.SearchValue) ||
+                                (x.AddressId.ToString() == filter.SearchValue)
+                                || (x.JobName ?? "").ToLower().Contains(filter.SearchValue)
+                                || (x.JobType.ToString() ?? "").ToLower().Contains(filter.SearchValue)
+                                || (x.JobStatus.ToString() ?? "").ToLower().Contains(filter.SearchValue)
+                                || (x.AssignedPersonnel.ToString() ?? "").ToLower().Contains(filter.SearchValue)
+                                || (x.Notes.ToString() ?? "").ToLower().Contains(filter.SearchValue)))
+                        .ToList();
+                
 
                 if (filter.Status == 0)
                 {
@@ -660,7 +692,6 @@ namespace ShutterManagement.Business.Services
                                join p2 in dbContext.TblTenants on t2.TenantId equals p2.TenantId
                                join t5 in dbContext.MstJobStatuses on t2.JobStatus equals t5.JobStatusId
                                join t6 in dbContext.TblContacts on t2.ContactId equals t6.ContactId
-                               where t2.TenantId == AppConstant.LoggedInTenantId && t2.IsDelete == false
                                select new ExportJobsVm
                                {
                                    ContactName = t6.Name,

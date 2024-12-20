@@ -78,7 +78,7 @@ namespace ShutterManagement.Controllers
         }
 
         [Authorize]
-        [HttpPost("ExportContacts")]
+        [HttpPost("ExportAll")]
         [Authorize(Roles = "ContactView")]
         public async Task<IResponseVm<string>> ExportToCsv(Pagination filter, string Type)
         {
