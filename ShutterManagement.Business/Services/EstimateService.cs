@@ -943,8 +943,16 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
+                // Safely parse the current status to Estimation enum
+                if (!Enum.TryParse(EstimationStatus.Status, out Estimation currentStatus))
+                {
+                    responseVm.Message = "Invalid status found in the system.";
+                    FileLogger.Log($"Estimation with ID {EstimationId} has an invalid status.");
+                    return responseVm;
+                }
+
                 // Check the current status of the Estimation and handle accordingly
-                if (CanChangeStatus((Estimation)Enum.Parse(typeof(Estimation), EstimationStatus.Status), NewEstimationStatus))
+                if (CanChangeStatus(currentStatus, NewEstimationStatus))
                 {
                     EstimationStatus.Status = EnumValue.GetEnumValue(NewEstimationStatus);
                     await Update(EstimationStatus);
@@ -958,9 +966,9 @@ namespace ShutterManagement.Business.Services
                 }
                 else
                 {
-                    responseVm.Message = $"You can't change status from {EstimationStatus.Status} to {NewEstimationStatus}.";
-                    responseVm.Data = EstimationStatus.Status;
-                    FileLogger.Log($"Status change from {EstimationStatus.Status} to {NewEstimationStatus} is not allowed.");
+                    responseVm.Message = $"You can't change status from {currentStatus} to {NewEstimationStatus}.";
+                    responseVm.Data = currentStatus.ToString();
+                    FileLogger.Log($"Status change from {currentStatus} to {NewEstimationStatus} is not allowed.");
                 }
             }
             catch (Exception ex)
@@ -972,7 +980,6 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
-
         #region private methods
 
 
@@ -1447,24 +1454,30 @@ namespace ShutterManagement.Business.Services
             await estimateWindowProductComponentMaterialService.Add(tblEstimateWindowProductComponentMaterial);
         }
 
-      
 
-        private bool CanChangeStatus(Estimation currentStatus, Estimation newStatus)
+
+        public bool CanChangeStatus(Estimation currentStatus, Estimation newStatus)
         {
-            // Add logic to check if the status change is valid based on the current and new status
-            switch (currentStatus)
+            if (currentStatus == Estimation.New)
             {
-                case Estimation.New:
-                case Estimation.Rejected:
-                    return newStatus == Estimation.PendingForApproval;
-                case Estimation.PendingForApproval:
-                    return newStatus == Estimation.Rejected || newStatus == Estimation.Approved;
-                case Estimation.Approved:
-                    return false; // No changes allowed from 'Approved' status
-                default:
-                    return false; // Default case for unsupported statuses
+                return newStatus == Estimation.PendingForApproval || newStatus == Estimation.Approved || newStatus == Estimation.Rejected;
             }
+            else if (currentStatus == Estimation.PendingForApproval)
+            {
+                return newStatus == Estimation.Approved || newStatus == Estimation.Rejected;
+            }
+            else if (currentStatus == Estimation.Approved)
+            {
+                return false;
+            }
+            else if (currentStatus == Estimation.Rejected)
+            {
+                return newStatus == Estimation.New;
+            }
+
+            return false;
         }
+
 
         private async Task<IResponseVm<string>> EstimationChangeHistory(Guid EstimationId, Estimation Status)
         {
