@@ -10,6 +10,7 @@ using ShutterManagement.Core.ViewModels;
 using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.DAL.Context;
 using System.IO;
+using System.Reflection;
 
 namespace ShutterManagement.Controllers
 {
@@ -80,8 +81,10 @@ namespace ShutterManagement.Controllers
         [Authorize]
         [HttpPost("ExportAll")]
         [Authorize(Roles = "ContactView")]
+
         public async Task<IResponseVm<string>> ExportToCsv(Pagination filter, string Type)
         {
+
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
