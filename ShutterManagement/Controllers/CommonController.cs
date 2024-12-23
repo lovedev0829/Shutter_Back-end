@@ -43,7 +43,6 @@ namespace ShutterManagement.Controllers
         private readonly IRoleService roleService;
         private readonly IRegion region;
         private readonly IContactService contactService;
-        private readonly IDiscountService discountService;
         private readonly IMstContactType contactType;
         private readonly IJobService jobService;
 
@@ -87,7 +86,6 @@ namespace ShutterManagement.Controllers
             this.roleService = roleService;
             this.region = region;
             this.contactService = contactService;
-            this.discountService = discountService;
             this.contactType = contactType;
             this.jobService = jobService;
         }

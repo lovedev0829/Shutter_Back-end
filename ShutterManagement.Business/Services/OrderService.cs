@@ -105,6 +105,72 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
+
+        public async Task<IResponseVm<string>> Update_Order(UpdateOrder model)
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+            FileLogger.Log("Start: Update Order...");
+
+            try
+            {
+                var isTenantExists = await ValidateTenantExists();
+                if (!isTenantExists)
+                {
+                    responseVm.Message = AppConstant.TenantNotFound;
+                    return responseVm;
+                }
+                var existingOrder = await ValidateOrderExists((Guid)model.EstimationId, (Guid)model.JobId);
+
+                if (existingOrder == null)
+                {
+                    await CreateOrderRecord(model);
+                    return responseVm;
+                }
+                var isOrderExist = (await GetAll())
+                .Where(c => c.EstimateId == model.EstimationId && c.TenantId == AppConstant.LoggedInTenantId && c.IsDelete == false && c.JobId == model.JobId)
+                .FirstOrDefault();
+
+                string newVersion = IncrementVersion(isOrderExist.Version);
+                TblOrder updatedOrder = new TblOrder
+                {
+                    OrderId = Guid.NewGuid(),
+                    Version = newVersion,
+                    EstimateId = (Guid)model.EstimationId,
+                    EstimateName = model.EstimateName,
+                    EstimateCode = model.EstimateCode,
+                    Notes = model.Notes,
+                    DiscountAmount = model.Discount,
+                    DiscountCoupon = model.DiscountCoupon,
+                    GrandTotal = model.GrandTotal,
+                    JobId = model.JobId,
+                    TaxAmount = model.Tax,
+                    TermsCondition = model.TermsCondition,
+                    CreatedBy = AppConstant.LoggedInUserID,
+                    CreatedAt = DateTime.Now,
+                    TenantId = AppConstant.LoggedInTenantId,
+                    IsActive = true,
+                    IsDelete = false,
+                    TotalPrice = model.SubTotal,
+                    Status = EnumValue.GetEnumValue(Estimation.New),
+                };
+
+                var res = await Add(updatedOrder);
+                await ProcessWindowProducts(model.WindowProductId.ToList(), (Guid)model.EstimationId, updatedOrder.OrderId, newVersion);
+                responseVm.IsSuccess = true;
+                responseVm.Message = "Order updated successfully with new version.";
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Log($"Error occurred: {ex.Message}");
+                responseVm.Message = "Error updating order: " + ex.Message;
+            }
+
+            return responseVm;
+        }
+
+
+
+        #region Helper Methods
         private UpdateOrder MapCreateOrderToUpdateOrder(CreateOrder model)
         {
             var updateOrder = new UpdateOrder
@@ -330,67 +396,6 @@ namespace ShutterManagement.Business.Services
             await orderWindowProductComponentService.Add(tblOrderWindowProductComponent);
         }
        
-        public async Task<IResponseVm<string>> Update_Order(UpdateOrder model)
-        {
-            IResponseVm<string> responseVm = new ResponseVm<string>();
-            FileLogger.Log("Start: Update Order...");
-
-            try
-            {
-                var isTenantExists = await ValidateTenantExists();
-                if (!isTenantExists)
-                {
-                    responseVm.Message = AppConstant.TenantNotFound;
-                    return responseVm; 
-                }
-                var existingOrder = await ValidateOrderExists((Guid)model.EstimationId, (Guid)model.JobId);
-
-                if (existingOrder == null)
-                {
-                    CreateOrderRecord(model);
-                    return responseVm;
-                }
-                var isOrderExist = (await GetAll())
-                .Where(c => c.EstimateId == model.EstimationId && c.TenantId == AppConstant.LoggedInTenantId && c.IsDelete == false && c.JobId == model.JobId)
-                .FirstOrDefault();
-
-                string newVersion = IncrementVersion(isOrderExist.Version);
-                TblOrder updatedOrder = new TblOrder
-                {
-                    OrderId = Guid.NewGuid(),
-                    Version = newVersion,
-                    EstimateId = (Guid)model.EstimationId,
-                    EstimateName = model.EstimateName,
-                    EstimateCode = model.EstimateCode,
-                    Notes = model.Notes,
-                    DiscountAmount = model.Discount,
-                    DiscountCoupon = model.DiscountCoupon,
-                    GrandTotal = model.GrandTotal,
-                    JobId = model.JobId,
-                    TaxAmount = model.Tax,
-                    TermsCondition = model.TermsCondition,
-                    CreatedBy = AppConstant.LoggedInUserID,
-                    CreatedAt = DateTime.Now,
-                    TenantId = AppConstant.LoggedInTenantId,
-                    IsActive = true,
-                    IsDelete = false,
-                    TotalPrice = model.SubTotal,
-                    Status = EnumValue.GetEnumValue(Estimation.New),
-                };
-
-                var res = await Add(updatedOrder);
-                await ProcessWindowProducts(model.WindowProductId.ToList(), (Guid)model.EstimationId, updatedOrder.OrderId, newVersion);
-                responseVm.IsSuccess = true;
-                responseVm.Message = "Order updated successfully with new version.";
-            }
-            catch (Exception ex)
-            {
-                FileLogger.Log($"Error occurred: {ex.Message}");
-                responseVm.Message = "Error updating order: " + ex.Message;
-            }
-
-            return responseVm;
-        }
 
         private string IncrementVersion(string currentVersion)
         {
@@ -457,5 +462,7 @@ namespace ShutterManagement.Business.Services
             }
             return false;
         }
+
+        #endregion
     }
 }
