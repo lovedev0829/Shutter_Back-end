@@ -91,6 +91,8 @@ namespace ShutterManagement.Business.Services
                 var existingDiscount = await FindExistingDiscountAsync((Guid)updateDiscount.DiscountId);
                 if (existingDiscount == null)
                     return SetFailureResponse(responseVm, AppConstant.NoDataFound);
+                var existingCoupon = dbContext.TblDiscounts
+                .FirstOrDefault(t => t.CouponCode == updateDiscount.CouponCode);
 
                 UpdateDiscountRecord(existingDiscount, updateDiscount);
 
