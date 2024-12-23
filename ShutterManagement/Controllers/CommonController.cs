@@ -43,6 +43,7 @@ namespace ShutterManagement.Controllers
         private readonly IRoleService roleService;
         private readonly IRegion region;
         private readonly IContactService contactService;
+        private readonly IDiscountService discountService;
         private readonly IMstContactType contactType;
         private readonly IJobService jobService;
 
@@ -86,6 +87,7 @@ namespace ShutterManagement.Controllers
             this.roleService = roleService;
             this.region = region;
             this.contactService = contactService;
+            this.discountService = discountService;
             this.contactType = contactType;
             this.jobService = jobService;
         }
@@ -246,6 +248,9 @@ namespace ShutterManagement.Controllers
             res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
             return Ok(res);
         }
+
+
+        
 
         //[HttpPost]
         //[Route("MasterCreate")]
@@ -457,6 +462,18 @@ namespace ShutterManagement.Controllers
         {
             var mstcontactType = await contactType.GetAll_MstContactType(filter);
             return Ok(mstcontactType);
+        }
+
+
+        [HttpGet]
+        [Route("GetAllDiscount")]
+        public async Task<IActionResult> GetAllDiscount(Guid? CustomerId)
+        {
+            var res = await discountService.GetAll_Coupons(filter);
+            res.Data = res.Data?
+        .Where(x => x.IsActive == true && x.CustomerId==CustomerId  && x.ExpiryDate.HasValue && x.ExpiryDate.Value >= DateTime.Now)
+        .ToList();
+            return Ok(res);
         }
 
 

@@ -269,8 +269,6 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-
-
         private bool ValidateDiscountType(CreateDiscount discount, out string message)
         {
             if (discount.discountType == DiscountType.Percentage)
@@ -301,14 +299,27 @@ namespace ShutterManagement.Business.Services
 
         private bool ValidateUpdateDiscount(UpdateDiscount discount, out string message)
         {
-            if (discount.PercentageDiscount <= 0 || discount.PercentageDiscount > 100)
+            if ( discount.PercentageDiscount > 100)
             {
-                message = "Percentage must be between 1 and 100.";
+                message = "Percentage must be between 0 to 100.";
                 return false;
             }
             if (discount.FixedAmount <= 0)
             {
                 message = "Fixed amount must be greater than 0.";
+                return false;
+            }
+            if (discount.StartDate.HasValue && discount.ExpiryDate.HasValue)
+            {
+                if (discount.StartDate >= discount.ExpiryDate)
+                {
+                    message = "Start date must be earlier than expiry date.";
+                    return false;
+                }
+            }
+            else
+            {
+                message = "Both start date and expiry date are required.";
                 return false;
             }
 
@@ -340,7 +351,7 @@ namespace ShutterManagement.Business.Services
             return new TblDiscount
             {
                 DiscountId = Guid.NewGuid(),
-                CouponCode = couponCode.Trim(),
+                CouponCode = couponCode.Trim().ToUpper(),
                 ApplyFor = EnumValue.GetEnumValue(createDiscount.AppliedFor),
                 DiscountType = EnumValue.GetEnumValue(createDiscount.discountType),
                 CustomerId = customerId,
@@ -362,10 +373,10 @@ namespace ShutterManagement.Business.Services
                                                                               x.TenantId == AppConstant.LoggedInTenantId &&
                                                                               !(bool)x.IsDelete);
         }
-
+         
         private void UpdateDiscountRecord(TblDiscount existing, UpdateDiscount updated)
         {
-            existing.CouponCode = updated.CouponCode;
+            existing.CouponCode = updated.CouponCode?.ToUpper();
             existing.DiscountType = EnumValue.GetEnumValue(updated.discountType);
             existing.PercentageDiscount = updated.discountType == DiscountType.Percentage ? updated.PercentageDiscount : null;
             existing.FixedAmount = updated.discountType == DiscountType.Fixed ? updated.FixedAmount : null;

@@ -20,6 +20,7 @@ using static Microsoft.AspNetCore.Hosting.Internal.HostingApplication;
 using Azure;
 using ShutterManagement.Core.ViewModels.Response;
 using System.Data.Entity;
+using System.Diagnostics.Metrics;
 
 namespace ShutterManagement.Business.Services
 {
@@ -198,7 +199,6 @@ namespace ShutterManagement.Business.Services
             }
             return responseVm;
         }
-
 
         public async Task<IResponseVm<List<string>>> ImportCsvForContact(Stream csvStream)
         {
@@ -417,9 +417,9 @@ namespace ShutterManagement.Business.Services
         //    return responseVm;
         //}
 
-        public async Task<IResponseVm<dynamic>> ExportContactsToCsvAsync(Pagination filter, string filePath)
+        public async Task<IResponseVm<string>> ExportContactsToCsvAsync(Pagination filter, string filePath) 
         {
-            IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
+            IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
                 var isTenantExists = await tenantService.AnyAsync(x =>
@@ -433,24 +433,29 @@ namespace ShutterManagement.Business.Services
                 }
 
                 var contactsQuery = dbContext.TblContacts
-                    .Where(x => x.IsDelete==false  && x.TenantId == AppConstant.LoggedInTenantId);
+                    .Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
 
-                if (!string.IsNullOrEmpty(filter.SearchValue))
-                {
-                    contactsQuery = contactsQuery.Where(x =>
-                        x.ContactType.Contains(filter.SearchValue) ||
-                        x.Name.Contains(filter.SearchValue) ||
-                        x.Email.Contains(filter.SearchValue) ||
-                        x.PhoneNumber.Contains(filter.SearchValue));
-                }
+                filter.SearchValue = filter.SearchValue.Trim().ToLower();
+                var FilterRecords = contactsQuery
+                                    .Where(x =>
+                                    (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
+                                    (filter.SearchValue != "" ?
+                                    ((x.Notes ?? "").Contains(filter.SearchValue)
+                                    || (x.ContactId.ToString()).Contains(filter.SearchValue)
+                                    || (x.TenantId.ToString()).Contains(filter.TenantId)
+                                    || (x.Email ?? "").Contains(filter.SearchValue)
+                                    || (x.Website ?? "").Contains(filter.SearchValue)
+                                    || (x.PhoneNumber ?? "").Contains(filter.SearchValue)
+                                    || (x.Name ?? "").Contains(filter.SearchValue)
+                                    ) : true)).ToList();
 
                 if (filter.Status == 0)
                 {
-                    contactsQuery = contactsQuery.Where(x => x.IsActive==false);
+                    contactsQuery = contactsQuery.Where(x => x.IsActive == false);
                 }
                 else if (filter.Status == 1)
                 {
-                    contactsQuery = contactsQuery.Where(x => x.IsActive==true);
+                    contactsQuery = contactsQuery.Where(x => x.IsActive == true);
                 }
 
                 var paginatedContacts = contactsQuery
@@ -486,11 +491,11 @@ namespace ShutterManagement.Business.Services
                                 ZipCode = x.ZipCode,
                             }).FirstOrDefault(),
                         taxExemptionVm = taxExemptionService.GetAllQuerable()
-                            .Where(x => x.ContactId == contact.ContactId && x.IsDelete==false)
+                            .Where(x => x.ContactId == contact.ContactId && x.IsDelete == false)
                             .Select(x => new TaxExemption
                             {
                                 EffectiveDate = x.EffectiveDate,
-                                ExemptionCertificate = string.IsNullOrEmpty(x.ExemptionCertificate)? null: x.ExemptionCertificate.Split(new[] { ',' }, StringSplitOptions.None),
+                                ExemptionCertificate = string.IsNullOrEmpty(x.ExemptionCertificate) ? null : x.ExemptionCertificate.Split(new[] { ',' }, StringSplitOptions.None),
                                 ExpiryDate = x.ExpiryDate
                             }).FirstOrDefault()
                     };
@@ -499,7 +504,7 @@ namespace ShutterManagement.Business.Services
                 }
 
                 var csvBuilder = new StringBuilder();
-                csvBuilder.AppendLine("ContactType,Name,PhoneNumber,Email,Website,Notes,Referral,FullName,PhoneNumber,Email,City,State,ZipCode,StreetAddress,ExemptionCertificate,EffectiveDate,ExpiryDate");
+                csvBuilder.AppendLine("ContactType,Name,PhoneNumber,Email,Website,Notes,Referral,FullName,PhoneNumber,Email,City,State,ZipCode,StreetAddress,EffectiveDate,ExpiryDate");
 
                 foreach (var contact in contactList)
                 {
@@ -509,15 +514,19 @@ namespace ShutterManagement.Business.Services
                         : "";
 
                     var line = $"{contact.ContactType},{contact.Name},{contact.PhoneNumber},{contact.Email},{contact.Website},{contact.Notes},{contact.Referral}," +
-                                               $"{billingAddress.FullName},{billingAddress.PhoneNumber},{billingAddress.Email},{billingAddress.City},{billingAddress.State}," +
-                                              $"{billingAddress.ZipCode},{billingAddress.StreetAddress},{contact.taxExemptionVm?.ExemptionCertificate},{contact.taxExemptionVm?.EffectiveDate},{contact.taxExemptionVm?.ExpiryDate}";
+                                                $"{billingAddress.FullName},{billingAddress.PhoneNumber},{billingAddress.Email},{billingAddress.City},{billingAddress.State}," +
+                                               $"{billingAddress.ZipCode},{billingAddress.StreetAddress},{contact.taxExemptionVm?.EffectiveDate},{contact.taxExemptionVm?.ExpiryDate}";
 
                     csvBuilder.AppendLine(line);
                 }
 
-                await File.WriteAllTextAsync(filePath, csvBuilder.ToString());
+                var fileBytes = Encoding.UTF8.GetBytes(csvBuilder.ToString());
+                var base64Csv = Convert.ToBase64String(fileBytes);
+
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.ExportSuccessMsg;
+                responseVm.Data = base64Csv;  
+
             }
             catch (Exception ex)
             {
@@ -528,26 +537,55 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-
-
-
-        public async Task<IResponseVm<dynamic>> ExportMaterialsToCsvAsync(string filePath)
+        public async Task<IResponseVm<string>> ExportMaterialsToCsvAsync(Pagination filter, string filePath)
         {
-            IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
+            IResponseVm<string> responseVm = new ResponseVm<string>();
 
             try
             {
                 var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
                 if (!isTenantExists)
                 {
+                    responseVm.IsSuccess = false;
                     responseVm.Message = AppConstant.TenantNotFound;
                     return responseVm;
                 }
 
-                var materialList = (from t2 in dbContext.TblRawMaterials.OrderByDescending(x => x.CreatedAt)
+                var materialQuery = dbContext.TblRawMaterials
+                    .Where(x => x.IsDelete==false);
+
+
+                filter.SearchValue = filter.SearchValue?.Trim().ToLower();
+                var FilterRecords = materialQuery
+                                .Where(x =>
+                                (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
+                                (string.IsNullOrEmpty(filter.Vendor) ? true : (filter.Vendor == x.VendorId.ToString())) &&
+                                (string.IsNullOrEmpty(filter.ProductType) ? true : (filter.ProductType == x.ProductType.ToString())) &&
+                                 (string.IsNullOrEmpty(filter.SearchValue) ? true :
+                                    (x.RawMaterialId.ToString() == filter.SearchValue)
+                                    || (x.ProductType.ToString() == filter.SearchValue)
+                                    || (x.MaterialName ?? "").ToLower().Contains(filter.SearchValue)
+                                    || (x.UnitCost.ToString() ?? "").ToLower().Contains(filter.SearchValue)
+                                    || (x.ReorderLevel.ToString() ?? "").ToLower().Contains(filter.SearchValue)
+                                    || (x.StockQuantity.ToString() ?? "").ToLower().Contains(filter.SearchValue)
+                                    || (x.Notes.ToString() ?? "").ToLower().Contains(filter.SearchValue)
+                                    || (x.UnitOfMeasurement ?? "").ToLower().Contains(filter.SearchValue)))
+                                .ToList();
+
+
+
+                if (filter.Status == 0)
+                {
+                    materialQuery = materialQuery.Where(x => x.IsActive==true);
+                }
+                else if (filter.Status == 1)
+                {
+                    materialQuery = materialQuery.Where(x => x.IsActive == false);
+                }
+
+                var materialList = (from t2 in materialQuery
                                     join t1 in dbContext.TblVendors on t2.VendorId equals t1.VendorId
                                     join t3 in dbContext.MstProductTypes on t2.ProductType equals t3.ProductId
-                                    where t2.TenantId == AppConstant.LoggedInTenantId && t2.IsDelete == false
                                     select new ExportMaterialsCsv
                                     {
                                         IsActive = t2.IsActive,
@@ -558,13 +596,14 @@ namespace ShutterManagement.Business.Services
                                         SKU = t2.Sku,
                                         StockQuantity = t2.StockQuantity,
                                         UnitCost = t2.UnitCost,
-                                        ProductTypeName = t3.ProductName, 
+                                        ProductTypeName = t3.ProductName,
                                         UnitOfMeasurement = t2.UnitOfMeasurement,
                                         VendorId = t2.VendorId,
                                         VendorName = t1.VendorName,
-                                        VendorCode = t1.VendorCode, 
+                                        VendorCode = t1.VendorCode,
                                         IsCutSheet = t2.IsCutSheet,
                                     }).ToList();
+
                 var csvBuilder = new StringBuilder();
                 csvBuilder.AppendLine("MaterialName,UnitCost,UnitOfMeasurement,StockQuantity,ReorderLevel,VendorCode,Notes,ProductType,SKU,IsCutSheet");
 
@@ -576,72 +615,102 @@ namespace ShutterManagement.Business.Services
                     csvBuilder.AppendLine(line);
                 }
 
-                try
-                {
-                    await File.WriteAllTextAsync(filePath, csvBuilder.ToString());
-                    responseVm.Message = AppConstant.ExportSuccessMsg;
-                    responseVm.IsSuccess = true;
-                }
-                catch (Exception ex)
-                {
-                    responseVm.Message = AppConstant.ExceptionError + ex.Message;
-                    responseVm.IsSuccess = false;
-                }
+                var fileBytes = Encoding.UTF8.GetBytes(csvBuilder.ToString());
+                var base64Csv = Convert.ToBase64String(fileBytes);
 
-                return responseVm;
+                responseVm.IsSuccess = true;
+                responseVm.Message = AppConstant.ExportSuccessMsg;
+                responseVm.Data = base64Csv;
             }
             catch (Exception ex)
             {
-                responseVm.Message = AppConstant.ExceptionError + ex.Message;
-                return responseVm;
+                responseVm.IsSuccess = false;
+                responseVm.Message = $"{AppConstant.ExceptionError} {ex.Message}";
             }
+
+            return responseVm;
         }
 
-        public async Task<IResponseVm<dynamic>> ExportJobsToCsv(string filePath)
+        public async Task<IResponseVm<string>> ExportJobsToCsv(Pagination filter, string filePath)
         {
-            IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
+            IResponseVm<string> responseVm = new ResponseVm<string>();
 
             try
             {
                 var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
                 if (!isTenantExists)
                 {
+                    responseVm.IsSuccess = false;
                     responseVm.Message = AppConstant.TenantNotFound;
                     return responseVm;
                 }
-                var subTenantlist = (await tenantService.GetAll())
-                  .Where(x => x.ParentTenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false)
-                  .Select(pt => pt.TenantId)
-                  .ToList();
 
-                var JobList =  (from t2 in dbContext.TblJobs.OrderByDescending(x => x.CreatedAt)
-                                     join t1 in dbContext.TblAddresses on t2.AddressId equals t1.AddressId
-                                     join t3 in dbContext.MstJobTypes on t2.JobType equals t3.Id
-                                     join t4 in dbContext.TblUsers on t2.AssignedPersonnel equals t4.Id
-                                     join p1 in dbContext.TblUsers on t2.CreatedBy equals p1.Id
-                                     join p2 in dbContext.TblTenants on t2.TenantId equals p2.TenantId
-                                     join t5 in dbContext.MstJobStatuses on t2.JobStatus equals t5.JobStatusId
-                                     join t6 in dbContext.TblContacts on t2.ContactId equals t6.ContactId
-                                     where t2.TenantId == AppConstant.LoggedInTenantId || subTenantlist.Contains((Guid)t2.TenantId)
-                                     select new ExportJobsVm
-                                     {
-                                         ContactName = t6.Name,
-                                         ContactEmail = t6.Email,
-                                         ContactPhone = t6.PhoneNumber,
-                                         SubtenantName = p2.FirstName + " " + p2.LastName,
-                                         CreatedbyUsername = p1.FirstName + " " + p1.LastName,
-                                         JobName = t2.JobName,
-                                         JobStatusName = t5.JobStatusName,
-                                         StreetAddress = t1.StreetAddress,
-                                         City = t1.City,
-                                         State = t1.State,
-                                         ZipCode = t1.ZipCode
-                                     }).ToList();
+                var subTenantlist = (await tenantService.GetAll())
+                    .Where(x => x.ParentTenantId == AppConstant.LoggedInTenantId && x.IsActive==true && x.IsDelete==false)
+                    .Select(pt => pt.TenantId)
+                    .ToList();
+
+                var jobsQuery = dbContext.TblJobs
+                    .Where(x => x.TenantId == AppConstant.LoggedInTenantId || subTenantlist.Contains((Guid)x.TenantId));
+
+
+                filter.SearchValue = (filter.SearchValue?.Trim() ?? "").ToLower();
+
+                var FilterRecords = jobsQuery
+                        .Where(x =>
+                            (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
+                            (string.IsNullOrEmpty(filter.JobStatus) ? true : (filter.JobStatus == x.JobStatus.ToString())) &&
+                            (string.IsNullOrEmpty(filter.Address) ? true : (filter.Address == x.AddressId.ToString())) &&
+                            (string.IsNullOrEmpty(filter.TenantId) ? true : (Guid.Parse(filter.TenantId) == x.TenantId)) &&
+                            (string.IsNullOrEmpty(filter.SearchValue) ? true :
+                                (x.JobId.ToString() == filter.SearchValue) ||
+                                (x.ContactId.ToString() == filter.SearchValue) ||
+                                (x.JobStatus.ToString() == filter.SearchValue) ||
+                                (x.AddressId.ToString() == filter.SearchValue)
+                                || (x.JobName ?? "").ToLower().Contains(filter.SearchValue)
+                                || (x.JobType.ToString() ?? "").ToLower().Contains(filter.SearchValue)
+                                || (x.JobStatus.ToString() ?? "").ToLower().Contains(filter.SearchValue)
+                                || (x.AssignedPersonnel.ToString() ?? "").ToLower().Contains(filter.SearchValue)
+                                || (x.Notes.ToString() ?? "").ToLower().Contains(filter.SearchValue)))
+                        .ToList();
+                
+
+                if (filter.Status == 0)
+                {
+                    jobsQuery = jobsQuery.Where(x => x.IsActive==false);
+                }
+                else if (filter.Status == 1)
+                {
+                    jobsQuery = jobsQuery.Where(x => x.IsActive==true);
+                }
+
+                var jobList = (from t2 in jobsQuery
+                               join t1 in dbContext.TblAddresses on t2.AddressId equals t1.AddressId
+                               join t3 in dbContext.MstJobTypes on t2.JobType equals t3.Id
+                               join t4 in dbContext.TblUsers on t2.AssignedPersonnel equals t4.Id
+                               join p1 in dbContext.TblUsers on t2.CreatedBy equals p1.Id
+                               join p2 in dbContext.TblTenants on t2.TenantId equals p2.TenantId
+                               join t5 in dbContext.MstJobStatuses on t2.JobStatus equals t5.JobStatusId
+                               join t6 in dbContext.TblContacts on t2.ContactId equals t6.ContactId
+                               select new ExportJobsVm
+                               {
+                                   ContactName = t6.Name,
+                                   ContactEmail = t6.Email,
+                                   ContactPhone = t6.PhoneNumber,
+                                   SubtenantName = p2.FirstName + " " + p2.LastName,
+                                   CreatedbyUsername = p1.FirstName + " " + p1.LastName,
+                                   JobName = t2.JobName,
+                                   JobStatusName = t5.JobStatusName,
+                                   StreetAddress = t1.StreetAddress,
+                                   City = t1.City,
+                                   State = t1.State,
+                                   ZipCode = t1.ZipCode
+                               }).ToList();
 
                 var csvBuilder = new StringBuilder();
                 csvBuilder.AppendLine("ContactName,ContactEmail,ContactPhone,Partner/Tenant,CreatedBy,JobName,Status,Address,City,State,ZipCode");
 
-                foreach (var job in JobList)
+                foreach (var job in jobList)
                 {
                     var line = $"{job.ContactName},{job.ContactEmail},{job.ContactPhone}," +
                                $"{job.SubtenantName},{job.CreatedbyUsername},{job.JobName}," +
@@ -651,16 +720,22 @@ namespace ShutterManagement.Business.Services
                     csvBuilder.AppendLine(line);
                 }
 
-                await File.WriteAllTextAsync(filePath, csvBuilder.ToString());
+                var fileBytes = Encoding.UTF8.GetBytes(csvBuilder.ToString());
+                var base64Csv = Convert.ToBase64String(fileBytes);
+
+                responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.ExportSuccessMsg;
+                responseVm.Data = base64Csv;
             }
             catch (Exception ex)
             {
-                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+                responseVm.IsSuccess = false;
+                responseVm.Message = $"{AppConstant.ExceptionError} {ex.Message}";
             }
 
             return responseVm;
         }
+
     }
 }
 
