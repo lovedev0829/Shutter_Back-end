@@ -417,55 +417,99 @@ namespace ShutterManagement.Business.Services
         //    return responseVm;
         //}
 
-        public async Task<IResponseVm<string>> ExportContactsToCsvAsync(Pagination filter, string filePath) 
+        public async Task<IResponseVm<string>> ExportContactsToCsvAsync(Pagination filter, string filePath)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
+
             try
             {
-                var isTenantExists = await tenantService.AnyAsync(x =>
-                    x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
+                var Contacts = new List<TblContact>();
+                List<ContactsList> ContactList = new List<ContactsList>();
 
-                if (!isTenantExists)
+                if (filter.TenantId != "")
                 {
-                    responseVm.IsSuccess = false;
-                    responseVm.Message = AppConstant.AccessDenied;
-                    return responseVm;
+                    var IsRealtedTenant = tenantService.GetAllQuerable().Where(x => x.TenantId.ToString() == filter.TenantId && x.ParentTenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
+                    if (IsRealtedTenant == null)
+                    {
+                        responseVm.Message = AppConstant.NoDataFound;
+                        return responseVm;
+                    }
+                    else
+                    {
+                        Contacts = (await contactService.GetAll()).Where(x => x.IsDelete == false && x.IsArchive == false && x.TenantId.ToString() == filter.TenantId).OrderByDescending(x => x.CreatedAt).ToList();
+                    }
                 }
-
-                var contactsQuery = dbContext.TblContacts
-                    .Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
-
-                filter.SearchValue = filter.SearchValue.Trim().ToLower();
-                var FilterRecords = contactsQuery
-                                    .Where(x =>
-                                    (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
-                                    (filter.SearchValue != "" ?
-                                    ((x.Notes ?? "").Contains(filter.SearchValue)
-                                    || (x.ContactId.ToString()).Contains(filter.SearchValue)
-                                    || (x.TenantId.ToString()).Contains(filter.TenantId)
-                                    || (x.Email ?? "").Contains(filter.SearchValue)
-                                    || (x.Website ?? "").Contains(filter.SearchValue)
-                                    || (x.PhoneNumber ?? "").Contains(filter.SearchValue)
-                                    || (x.Name ?? "").Contains(filter.SearchValue)
-                                    ) : true)).ToList();
+                else
+                {
+                    Contacts = (await contactService.GetAll()).Where(x => x.IsDelete == false && x.IsArchive == false && x.TenantId == AppConstant.LoggedInTenantId).OrderByDescending(x => x.CreatedAt).ToList();
+                }
 
                 if (filter.Status == 0)
                 {
-                    contactsQuery = contactsQuery.Where(x => x.IsActive == false);
+                    Contacts = Contacts.Where(x => x.IsActive==false).ToList();
                 }
                 else if (filter.Status == 1)
                 {
-                    contactsQuery = contactsQuery.Where(x => x.IsActive == true);
+                    Contacts = Contacts.Where(x => x.IsActive == true).ToList();
                 }
 
-                var paginatedContacts = contactsQuery
-                    .OrderByDescending(x => x.CreatedAt)
-                    .ToList();
-
-                List<ContactsList> contactList = new List<ContactsList>();
-                foreach (var contact in paginatedContacts)
+                if (!string.IsNullOrEmpty(filter.SearchValue))
                 {
-                    var contactItem = new ContactsList
+                    var searchValue = filter.SearchValue.Trim().ToLower();
+                    Contacts = Contacts.Where(x =>
+                        (x.Notes ?? "").ToLower().Contains(searchValue) ||
+                        x.ContactId.ToString().ToLower().Contains(searchValue) ||
+                        (x.Email ?? "").ToLower().Contains(searchValue) ||
+                        (x.Website ?? "").ToLower().Contains(searchValue) ||
+                        (x.PhoneNumber ?? "").ToLower().Contains(searchValue) ||
+                        (x.Name ?? "").ToLower().Contains(searchValue)).ToList();
+                }
+
+                var contactsList = Contacts
+                    .OrderByDescending(x => x.CreatedAt)
+                    .Select(contact => new
+                    {
+                        contact.ContactId,
+                        contact.ContactType,
+                        contact.Email,
+                        contact.PhoneNumber,
+                        contact.Name,
+                        contact.Website,
+                        contact.Notes,
+                        contact.Referral,
+                        contact.IsTaxExemption,
+                        contact.IsBillingAddressSameAsAddress,
+                        contact.IsActive
+                    }).ToList();
+
+                var detailedContactList = new List<ContactsList>();
+                foreach (var contact in contactsList)
+                {
+                    var billingAddress = billingService.GetAllQuerable()
+                        .Where(x => x.ContactId == contact.ContactId && !x.IsDelete)
+                        .Select(x => new BillingAddressVm
+                        {
+                            City = x.City,
+                            Email = x.Email,
+                            FullName = x.FullName,
+                            PhoneNumber = x.PhoneNumber,
+                            State = x.State,
+                            StreetAddress = x.StreetAddress,
+                            ZipCode = x.ZipCode,
+                        }).FirstOrDefault();
+
+                    var taxExemption = taxExemptionService.GetAllQuerable()
+                        .Where(x => x.ContactId == contact.ContactId && x.IsDelete==false)
+                        .Select(x => new TaxExemption
+                        {
+                            EffectiveDate = x.EffectiveDate,
+                            ExemptionCertificate = string.IsNullOrEmpty(x.ExemptionCertificate)
+                                ? null
+                                : x.ExemptionCertificate.Split(new[] { ',' }, StringSplitOptions.None),
+                            ExpiryDate = x.ExpiryDate
+                        }).FirstOrDefault();
+
+                    detailedContactList.Add(new ContactsList
                     {
                         ContactId = contact.ContactId,
                         ContactType = contact.ContactType ?? "",
@@ -478,35 +522,15 @@ namespace ShutterManagement.Business.Services
                         IsTaxExemption = contact.IsTaxExemption ?? false,
                         IsBillingAddressSameAsAddress = contact.IsBillingAddressSameAsAddress,
                         IsActive = contact.IsActive,
-                        billingAddressVm = billingService.GetAllQuerable()
-                            .Where(x => x.ContactId == contact.ContactId && !x.IsDelete)
-                            .Select(x => new BillingAddressVm
-                            {
-                                City = x.City,
-                                Email = x.Email,
-                                FullName = x.FullName,
-                                PhoneNumber = x.PhoneNumber,
-                                State = x.State,
-                                StreetAddress = x.StreetAddress,
-                                ZipCode = x.ZipCode,
-                            }).FirstOrDefault(),
-                        taxExemptionVm = taxExemptionService.GetAllQuerable()
-                            .Where(x => x.ContactId == contact.ContactId && x.IsDelete == false)
-                            .Select(x => new TaxExemption
-                            {
-                                EffectiveDate = x.EffectiveDate,
-                                ExemptionCertificate = string.IsNullOrEmpty(x.ExemptionCertificate) ? null : x.ExemptionCertificate.Split(new[] { ',' }, StringSplitOptions.None),
-                                ExpiryDate = x.ExpiryDate
-                            }).FirstOrDefault()
-                    };
-
-                    contactList.Add(contactItem);
+                        billingAddressVm = billingAddress,
+                        taxExemptionVm = taxExemption
+                    });
                 }
 
                 var csvBuilder = new StringBuilder();
                 csvBuilder.AppendLine("ContactType,Name,PhoneNumber,Email,Website,Notes,Referral,FullName,PhoneNumber,Email,City,State,ZipCode,StreetAddress,EffectiveDate,ExpiryDate");
 
-                foreach (var contact in contactList)
+                foreach (var contact in detailedContactList)
                 {
                     var billingAddress = contact.billingAddressVm ?? new BillingAddressVm();
                     var exemptionCertificates = contact.taxExemptionVm?.ExemptionCertificate != null
@@ -514,8 +538,8 @@ namespace ShutterManagement.Business.Services
                         : "";
 
                     var line = $"{contact.ContactType},{contact.Name},{contact.PhoneNumber},{contact.Email},{contact.Website},{contact.Notes},{contact.Referral}," +
-                                                $"{billingAddress.FullName},{billingAddress.PhoneNumber},{billingAddress.Email},{billingAddress.City},{billingAddress.State}," +
-                                               $"{billingAddress.ZipCode},{billingAddress.StreetAddress},{contact.taxExemptionVm?.EffectiveDate},{contact.taxExemptionVm?.ExpiryDate}";
+                               $"{billingAddress.FullName},{billingAddress.PhoneNumber},{billingAddress.Email},{billingAddress.City},{billingAddress.State}," +
+                               $"{billingAddress.ZipCode},{billingAddress.StreetAddress},{contact.taxExemptionVm?.EffectiveDate},{contact.taxExemptionVm?.ExpiryDate}";
 
                     csvBuilder.AppendLine(line);
                 }
@@ -525,8 +549,7 @@ namespace ShutterManagement.Business.Services
 
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.ExportSuccessMsg;
-                responseVm.Data = base64Csv;  
-
+                responseVm.Data = base64Csv;
             }
             catch (Exception ex)
             {
@@ -552,35 +575,39 @@ namespace ShutterManagement.Business.Services
                 }
 
                 var materialQuery = dbContext.TblRawMaterials
-                    .Where(x => x.IsDelete==false);
-
-
-                filter.SearchValue = filter.SearchValue?.Trim().ToLower();
-                var FilterRecords = materialQuery
-                                .Where(x =>
-                                (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
-                                (string.IsNullOrEmpty(filter.Vendor) ? true : (filter.Vendor == x.VendorId.ToString())) &&
-                                (string.IsNullOrEmpty(filter.ProductType) ? true : (filter.ProductType == x.ProductType.ToString())) &&
-                                 (string.IsNullOrEmpty(filter.SearchValue) ? true :
-                                    (x.RawMaterialId.ToString() == filter.SearchValue)
-                                    || (x.ProductType.ToString() == filter.SearchValue)
-                                    || (x.MaterialName ?? "").ToLower().Contains(filter.SearchValue)
-                                    || (x.UnitCost.ToString() ?? "").ToLower().Contains(filter.SearchValue)
-                                    || (x.ReorderLevel.ToString() ?? "").ToLower().Contains(filter.SearchValue)
-                                    || (x.StockQuantity.ToString() ?? "").ToLower().Contains(filter.SearchValue)
-                                    || (x.Notes.ToString() ?? "").ToLower().Contains(filter.SearchValue)
-                                    || (x.UnitOfMeasurement ?? "").ToLower().Contains(filter.SearchValue)))
-                                .ToList();
-
-
+                    .Where(x => x.IsDelete==false && x.TenantId==AppConstant.LoggedInTenantId);
 
                 if (filter.Status == 0)
                 {
-                    materialQuery = materialQuery.Where(x => x.IsActive==true);
+                    materialQuery = materialQuery.Where(x => x.IsActive==false);
                 }
                 else if (filter.Status == 1)
                 {
-                    materialQuery = materialQuery.Where(x => x.IsActive == false);
+                    materialQuery = materialQuery.Where(x => x.IsActive == true);
+                }
+
+                if (!string.IsNullOrEmpty(filter.Vendor))
+                {
+                    materialQuery = materialQuery.Where(x => x.VendorId.ToString() == filter.Vendor);
+                }
+
+                if (!string.IsNullOrEmpty(filter.ProductType))
+                {
+                    materialQuery = materialQuery.Where(x => x.ProductType.ToString() == filter.ProductType);
+                }
+
+                if (!string.IsNullOrEmpty(filter.SearchValue))
+                {
+                    var searchValue = filter.SearchValue.Trim().ToLower();
+                    materialQuery = materialQuery.Where(x =>
+                        x.RawMaterialId.ToString() == searchValue ||
+                        x.ProductType.ToString() == searchValue ||
+                        (x.MaterialName ?? "").ToLower().Contains(searchValue) ||
+                        (x.UnitCost.ToString() ?? "").ToLower().Contains(searchValue) ||
+                        (x.ReorderLevel.ToString() ?? "").ToLower().Contains(searchValue) ||
+                        (x.StockQuantity.ToString() ?? "").ToLower().Contains(searchValue) ||
+                        (x.Notes ?? "").ToLower().Contains(searchValue) ||
+                        (x.UnitOfMeasurement ?? "").ToLower().Contains(searchValue));
                 }
 
                 var materialList = (from t2 in materialQuery
@@ -637,7 +664,7 @@ namespace ShutterManagement.Business.Services
 
             try
             {
-                var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
+                var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive==true);
                 if (!isTenantExists)
                 {
                     responseVm.IsSuccess = false;
@@ -653,28 +680,6 @@ namespace ShutterManagement.Business.Services
                 var jobsQuery = dbContext.TblJobs
                     .Where(x => x.TenantId == AppConstant.LoggedInTenantId || subTenantlist.Contains((Guid)x.TenantId));
 
-
-                filter.SearchValue = (filter.SearchValue?.Trim() ?? "").ToLower();
-
-                var FilterRecords = jobsQuery
-                        .Where(x =>
-                            (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
-                            (string.IsNullOrEmpty(filter.JobStatus) ? true : (filter.JobStatus == x.JobStatus.ToString())) &&
-                            (string.IsNullOrEmpty(filter.Address) ? true : (filter.Address == x.AddressId.ToString())) &&
-                            (string.IsNullOrEmpty(filter.TenantId) ? true : (Guid.Parse(filter.TenantId) == x.TenantId)) &&
-                            (string.IsNullOrEmpty(filter.SearchValue) ? true :
-                                (x.JobId.ToString() == filter.SearchValue) ||
-                                (x.ContactId.ToString() == filter.SearchValue) ||
-                                (x.JobStatus.ToString() == filter.SearchValue) ||
-                                (x.AddressId.ToString() == filter.SearchValue)
-                                || (x.JobName ?? "").ToLower().Contains(filter.SearchValue)
-                                || (x.JobType.ToString() ?? "").ToLower().Contains(filter.SearchValue)
-                                || (x.JobStatus.ToString() ?? "").ToLower().Contains(filter.SearchValue)
-                                || (x.AssignedPersonnel.ToString() ?? "").ToLower().Contains(filter.SearchValue)
-                                || (x.Notes.ToString() ?? "").ToLower().Contains(filter.SearchValue)))
-                        .ToList();
-                
-
                 if (filter.Status == 0)
                 {
                     jobsQuery = jobsQuery.Where(x => x.IsActive==false);
@@ -682,6 +687,36 @@ namespace ShutterManagement.Business.Services
                 else if (filter.Status == 1)
                 {
                     jobsQuery = jobsQuery.Where(x => x.IsActive==true);
+                }
+
+                if (!string.IsNullOrEmpty(filter.JobStatus))
+                {
+                    jobsQuery = jobsQuery.Where(x => x.JobStatus.ToString() == filter.JobStatus);
+                }
+
+                if (!string.IsNullOrEmpty(filter.Address))
+                {
+                    jobsQuery = jobsQuery.Where(x => x.AddressId.ToString() == filter.Address);
+                }
+
+                if (!string.IsNullOrEmpty(filter.TenantId))
+                {
+                    Guid tenantId = Guid.Parse(filter.TenantId);
+                    jobsQuery = jobsQuery.Where(x => x.TenantId == tenantId);
+                }
+
+                if (!string.IsNullOrEmpty(filter.SearchValue))
+                {
+                    string searchValue = filter.SearchValue.Trim().ToLower();
+                    jobsQuery = jobsQuery.Where(x =>
+                        x.JobId.ToString() == searchValue ||
+                        x.ContactId.ToString() == searchValue ||
+                        x.JobStatus.ToString() == searchValue ||
+                        x.AddressId.ToString() == searchValue ||
+                        (x.JobName ?? "").ToLower().Contains(searchValue) ||
+                        (x.JobType.ToString() ?? "").ToLower().Contains(searchValue) ||
+                        (x.AssignedPersonnel.ToString() ?? "").ToLower().Contains(searchValue) ||
+                        (x.Notes ?? "").ToLower().Contains(searchValue));
                 }
 
                 var jobList = (from t2 in jobsQuery
@@ -735,6 +770,7 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
+
 
     }
 }
