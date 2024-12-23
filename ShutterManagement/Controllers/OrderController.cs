@@ -9,11 +9,11 @@ namespace ShutterManagement.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class OrderServiceController : ControllerBase
+    public class OrderController : ControllerBase
     {
         private readonly IOrderService orderService;
 
-        public OrderServiceController(IOrderService orderService)
+        public OrderController(IOrderService orderService)
         {
             this.orderService = orderService;
         }
@@ -28,21 +28,21 @@ namespace ShutterManagement.Controllers
         //}
 
         [HttpPost("Create")]
-        [Authorize(Roles = "OrderAdd")]
-        public async Task<IActionResult> Create([FromBody] CreateOrder model)
+       // [Authorize(Roles = "OrderAdd")]
+        public async Task<IActionResult> Create(Guid EstimateId)
         {
 
-            var res = await orderService.Create_Order(model);
+            var res = await orderService.Create_Order_From_Estimate(EstimateId);
             return Ok(res);
         }
 
-        [HttpPost("Update")]
-        [Authorize(Roles = "OrderEdit")]
-        public async Task<IActionResult> Update([FromBody] UpdateOrder model)
-        {
+        //[HttpPost("Update")]
+        //[Authorize(Roles = "OrderEdit")]
+        //public async Task<IActionResult> Update([FromBody] UpdateOrder model)
+        //{
 
-            var res = await orderService.Update_Order(model);
-            return Ok(res);
-        }
+        //    var res = await orderService.Update_Order(model);
+        //    return Ok(res);
+        //}
     }
 }

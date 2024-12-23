@@ -12,8 +12,8 @@ namespace ShutterManagement.Business.Interfaces
 {
     public interface IOrderService
     {
-        Task<IResponseVm<string>> Create_Order(CreateOrder model);
-        Task<IResponseVm<string>> Update_Order(UpdateOrder model);
+        Task<IResponseVm<string>> Create_Order_From_Estimate(Guid EstimateId);
+        //Task<IResponseVm<string>> Update_Order(UpdateOrder model);
         //Task<IResponseVm<string>> ActiveInActiveOrder(Guid EstimateId);
         //Task<IResponseVm<string>> DeleteOrder(Guid EstimateId);
         //Task<IResponseVm<List<EstimateList>>> GetAll_Order(Pagination filter);

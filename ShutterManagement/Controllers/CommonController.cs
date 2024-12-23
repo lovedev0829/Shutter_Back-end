@@ -45,6 +45,7 @@ namespace ShutterManagement.Controllers
         private readonly IContactService contactService;
         private readonly IMstContactType contactType;
         private readonly IJobService jobService;
+        private readonly IExpressionService expression;
 
         public CommonController(IMasterCreate masterCreate, 
             FileUploadHelper fileUpload, ClaimsProperty claimsProperty,
@@ -54,7 +55,7 @@ namespace ShutterManagement.Controllers
             IComponentService componentService, IMstProductType mstProductType,
             IAddress address, IOption option, IProductService productService,
             IUnitofMeasurementService unitofMeasurementService, IRoleService roleService, IRegion region, IContactService contactService,
-            IMstContactType contactType, IJobService jobService)
+            IMstContactType contactType, IJobService jobService,IExpressionService expression)
         {
             this.masterCreate = masterCreate;
             this.fileUpload = fileUpload;
@@ -88,6 +89,7 @@ namespace ShutterManagement.Controllers
             this.contactService = contactService;
             this.contactType = contactType;
             this.jobService = jobService;
+            this.expression = expression;
         }
 
 
@@ -437,6 +439,15 @@ namespace ShutterManagement.Controllers
             return Ok(res);
         }
 
+        [HttpGet]
+        [Route("GetAllExpression")]
+        public async Task<IActionResult> GetAllExpression()
+        {
+            var res = await expression.Get_AllExpression(filter);
+            res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
+            return Ok(res);
+        }
+
         [HttpPost]
         [Route("SettingById")]
         [Authorize]
@@ -467,10 +478,13 @@ namespace ShutterManagement.Controllers
         [Route("GetAllDiscount")]
         public async Task<IActionResult> GetAllDiscount(Guid? CustomerId)
         {
+            filter.CustomerId = CustomerId.ToString();
             var res = await discountService.GetAll_Coupons(filter);
-            res.Data = res.Data?
-        .Where(x => x.IsActive == true && x.CustomerId==CustomerId  && x.ExpiryDate.HasValue && x.ExpiryDate.Value >= DateTime.Now)
+            DateTime current = Convert.ToDateTime(DateTime.Now.ToShortDateString());
+            var d = res.Data
+        .Where(x => x.IsActive == true && x.StartDate <= current && x.ExpiryDate >= current)
         .ToList();
+            res.Data = d;
             return Ok(res);
         }
 
