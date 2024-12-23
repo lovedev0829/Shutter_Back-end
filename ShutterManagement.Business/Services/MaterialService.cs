@@ -95,19 +95,16 @@ namespace ShutterManagement.Business.Services
                     var GetAllUnitOfMeasureList = unitofMeasurementService.GetAllQuerable()
                     .Where(x => x.IsActive == true && x.IsDelete == false).ToList();
                     var CheckExistingVendorbyCode = GetAllVendorList.Any(x => x.VendorCode == model.VendorCode);
-                    var CheckExistingUnitOfMeasurebyCode = GetAllUnitOfMeasureList.Any(x => x.UnitofMeasurementName == model.UnitOfMeasurement);
                     if (IsSKUExist)
                     {
                         responseVm.Message = $"SKU {model.SKU}" + AppConstant.AlreadyExists;
                         return responseVm;
                     }
-                    if (!CheckExistingVendorbyCode || !CheckExistingUnitOfMeasurebyCode)
+                    if(VendorExit==null)
                     {
-                        responseVm.Message = $"Vendor Code {model.VendorCode} " +
-                            $"or Unit of Measurement {model.UnitOfMeasurement} is Not Valid";
+                        responseVm.Message = $"Vendor {model.VendorCode} Not Valid " ;
+                        return responseVm;
                     }
-                    
-                   
                 }
                 else
                 {

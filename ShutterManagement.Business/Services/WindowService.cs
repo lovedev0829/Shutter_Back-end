@@ -145,7 +145,7 @@ namespace ShutterManagement.Business.Services
                     FileLogger.Log($"Label already exists: {model.Label}");
                     return responseVm;
                 }
-                string arrayString = string.Join(", ", model.Photo);
+                string arrayString = string.Join(", ", model.Photo).Trim();
                 TblWindow window = new TblWindow
                 {
                     WindowId = Guid.NewGuid(),

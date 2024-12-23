@@ -62,143 +62,160 @@ namespace ShutterManagement.Business.Services
             List<CreateMaterial> validMaterials = new List<CreateMaterial>();
             int successfulImports = 0;
             int totalRecords = 0;
-            var IsTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
-            if (IsTenantExists)
-            {
 
-                try
-                {
-                    using (var reader = new StreamReader(csvStream))
-                    using (var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture)))
-                    {
-                        var records = csv.GetRecords<ImportMaterial>().ToList();
-                        totalRecords = records.Count;
-                        int rowNumber = 1;
-
-                        if (records.Count > 0)
-                        {
-                            bool hasValidationError = false;
-                            foreach (var record in records)
-                            {
-                                if (record.VendorCode == null)
-                                {
-                                    responseVm.Message = "VendorCode is required";
-                                    return responseVm;
-                                }
-
-                                var vendorId = vendorService.GetAllQuerable()
-                                    .Where(v => v.VendorCode == record.VendorCode && v.IsDelete == false)
-                                    .FirstOrDefault();
-
-                                if (vendorId == null)
-                                {
-                                    responseVm.Message = AppConstant.NoDataFound;
-                                    return responseVm;
-                                }
-
-                                var productTypeId = dbContext.MstProductTypes
-                                    .Where(p => p.ProductName == record.ProductType && p.IsDelete == false)
-                                    .FirstOrDefault();
-
-                                if (productTypeId == null)
-                                {
-                                    responseVm.Message = "ProductType is required.";
-                                    return responseVm;
-                                }
-
-
-                                var unitOfMeasurement = unitofMeasurement.GetAllQuerable()
-                                    .Where(u => u.UnitofMeasurementName == record.UnitOfMeasurement.Trim() && u.IsDelete == false)
-                                    .FirstOrDefault();
-
-                                if (unitOfMeasurement == null)
-                                {
-                                    responseVm.Message = "UnitOfMeasurement is required.";
-                                    return responseVm;
-                                }
-
-                                var materialModel = new CreateMaterial
-                                {
-                                    SKU = record.SKU?.Trim(),
-                                    MaterialName = record.MaterialName?.Trim(),
-                                    UnitCost = record.UnitCost,
-                                    UnitOfMeasurement = record.UnitOfMeasurement,
-                                    StockQuantity = record.StockQuantity,
-                                    ReorderLevel = record.ReorderLevel,
-                                    IsCutSheet = record.IsCutSheet,
-                                    VendorId = vendorId.VendorId,
-                                    Notes = record.Notes,
-                                    ProductType = productTypeId.ProductId.ToString(),
-                                };
-
-                                var existingMaterialdata = await material.Validate_MaterialExcell(record);
-                                if (existingMaterialdata.Message != null)
-                                {
-                                    validationErrors.Add($"Error in row {rowNumber}: {existingMaterialdata.Message}");
-                                    hasValidationError = true;
-                                }
-                                else
-                                {
-                                    validMaterials.Add(materialModel);
-                                }
-
-                                rowNumber++;
-                            }
-                            if (hasValidationError)
-                            {
-                                responseVm.IsSuccess = false;
-                                responseVm.Message = "Validation errors occurred during the import.";
-                                responseVm.Data = validationErrors;
-                                responseVm.TotalRecords = validMaterials.Count;
-                            }
-                            else
-                            {
-
-                                int successfulInserts = 0;
-                                foreach (var validMaterial in validMaterials)
-                                {
-                                    var createMaterialResponse = await material.Create_Material(validMaterial);
-
-                                    if (createMaterialResponse.IsSuccess)
-                                    {
-                                        successfulInserts++;
-                                    }
-                                    else
-                                    {
-                                        validationErrors.Add($"Error with materials: {createMaterialResponse.Message}");
-                                    }
-                                }
-
-                                if (validationErrors.Any())
-                                {
-                                    responseVm.IsSuccess = false;
-                                    responseVm.Message = "Some Materials failed to be inserted.";
-                                    responseVm.Data = validationErrors;
-                                    responseVm.TotalRecords = successfulInserts;
-                                }
-                                else
-                                {
-                                    responseVm.IsSuccess = true;
-                                    responseVm.Message = AppConstant.UploadSuccessMsg;
-                                    responseVm.TotalRecords = successfulInserts;
-                                }
-                            }
-                        }
-
-                    }
-                }
-                catch (Exception ex)
-                {
-                    responseVm.Message = AppConstant.ExceptionError + ex.Message;
-                }
-            }
-            else
+            var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive==true);
+            if (!isTenantExists)
             {
                 responseVm.Message = AppConstant.TenantNotFound;
                 return responseVm;
             }
+
+            try
+            {
+                using (var reader = new StreamReader(csvStream))
+                using (var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture)))
+                {
+                    var records = csv.GetRecords<ImportMaterial>().ToList();
+                    totalRecords = records.Count;
+                    if (totalRecords == 0)
+                    {
+                        responseVm.Message = "No records found in the CSV.";
+                        return responseVm;
+                    }
+
+                    int rowNumber = 1;
+                    bool hasValidationError = false;
+
+                    foreach (var record in records)
+                    {
+                        if (string.IsNullOrEmpty(record.VendorCode))
+                        {
+                            validationErrors.Add($"Error in row {rowNumber}: VendorCode is required.");
+                            hasValidationError = true;
+                            continue;
+                        }
+
+                        var vendor =  vendorService.GetAllQuerable()
+                            .Where(v => v.VendorCode == record.VendorCode && v.IsDelete==false)
+                            .FirstOrDefault();
+
+                        if (vendor == null)
+                        {
+                            validationErrors.Add($"Error in row {rowNumber}: Vendor  Code Required");
+                            hasValidationError = true;
+                            continue;
+                        }
+
+                        var productType = dbContext.MstProductTypes
+                            .Where(p => p.ProductName == record.ProductType && p.IsDelete == false)
+                            .FirstOrDefault();
+
+                        if (productType == null)
+                        {
+                            validationErrors.Add($"Error in row {rowNumber}: ProductType '{record.ProductType}' is required.");
+                            hasValidationError = true;
+                            continue;
+                        }
+
+                        var unitOfMeasurement =  unitofMeasurement.GetAllQuerable()
+                            .Where(u => u.IsDelete == false)
+                            .ToList();
+
+                        bool unitFound = false;
+
+                        foreach (var unitOfMeasurementExist in unitOfMeasurement)
+                        {
+                            if (unitOfMeasurementExist.UnitofMeasurementName == record.UnitOfMeasurement?.Trim())
+                            {
+                                unitFound = true;
+                                break;
+                            }
+                        }
+
+                        if (!unitFound)
+                        {
+                            validationErrors.Add($"Error in row {rowNumber}: UnitOfMeasurement '{record.UnitOfMeasurement}' is Not Valid.");
+                            hasValidationError = true;
+                            continue;
+
+                        }
+
+                        var materialModel = new CreateMaterial
+                        {
+                            SKU = record.SKU?.Trim(),
+                            MaterialName = record.MaterialName?.Trim(),
+                            UnitCost = record.UnitCost,
+                            UnitOfMeasurement = record.UnitOfMeasurement,
+                            StockQuantity = record.StockQuantity,
+                            ReorderLevel = record.ReorderLevel,
+                            IsCutSheet = record.IsCutSheet,
+                            VendorId = vendor.VendorId,
+                            Notes = record.Notes,
+                            ProductType = productType.ProductId.ToString(),
+                        };
+
+                        var existingMaterialdata = await material.Validate_MaterialExcell(record);
+                        if (existingMaterialdata.Message != null)
+                        {
+                            validationErrors.Add($"Error in row {rowNumber}: {existingMaterialdata.Message}");
+                            hasValidationError = true;
+                        }
+                        else
+                        {
+                            validMaterials.Add(materialModel);
+                        }
+
+                        rowNumber++;
+                    }
+
+                    if (hasValidationError)
+                    {
+                        responseVm.IsSuccess = false;
+                        responseVm.Message = "Validation errors occurred during the import.";
+                        responseVm.Data = validationErrors;
+                        responseVm.TotalRecords = validMaterials.Count;
+                    }
+                    else
+                    {
+                        int successfulInserts = 0;
+
+                        foreach (var validMaterial in validMaterials)
+                        {
+                            var createMaterialResponse = await material.Create_Material(validMaterial);
+                            if (createMaterialResponse.IsSuccess)
+                            {
+                                successfulInserts++;
+                            }
+                            else
+                            {
+                                validationErrors.Add($"Error inserting material: {createMaterialResponse.Message}");
+                            }
+                        }
+
+                        if (validationErrors.Any())
+                        {
+                            responseVm.IsSuccess = false;
+                            responseVm.Message = "Some materials failed to be inserted.";
+                            responseVm.Data = validationErrors;
+                            responseVm.TotalRecords = successfulInserts;
+                        }
+                        else
+                        {
+                            responseVm.IsSuccess = true;
+                            responseVm.Message = AppConstant.UploadSuccessMsg;
+                            responseVm.TotalRecords = successfulInserts;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                responseVm.Message = $"{AppConstant.ExceptionError} {ex.Message}";
+            }
+
             return responseVm;
         }
+
 
         public async Task<IResponseVm<List<string>>> ImportCsvForContact(Stream csvStream)
         {
@@ -207,123 +224,151 @@ namespace ShutterManagement.Business.Services
             List<Sp_Contact> validContacts = new List<Sp_Contact>();
             int successfulImports = 0;
             int totalRecords = 0;
+
             try
             {
-                var IsTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
-                if (IsTenantExists)
-                {
-                    using (var reader = new StreamReader(csvStream))
-                    using (var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture)))
-                    {
-
-                        var records = csv.GetRecords<ImportContact>().ToList();
-                        totalRecords = records.Count;
-                        int rowNumber = 1;
-                        bool hasValidationError = false;
-                        foreach (var record in records)
-                        {
-
-                            var contactModel = new Sp_Contact
-                            {
-                                ContactType = record.ContactType?.Trim(),
-                                Name = record.Name?.Trim(),
-                                PhoneNumber = record.PhoneNumber.Trim(),
-                                Email = record.Email?.Trim(),
-                                Website = record.Website.Trim(),
-                                Notes = record.Notes,
-                                Referral = record.Referral.Trim(),
-                                IsBillingAddressSameAsAddress = false,
-                            };
-
-
-                            if (record.BillingAddressVm != null)
-                            {
-                                contactModel.BillingAddressVm ??= new BillingAddressVm();
-                                contactModel.BillingAddressVm.FullName = record.BillingAddressVm.FullName?.Trim();
-                                contactModel.BillingAddressVm.PhoneNumber = record.BillingAddressVm.PhoneNumber?.Trim();
-                                contactModel.BillingAddressVm.Email = record.BillingAddressVm.Email.Trim();
-                                contactModel.BillingAddressVm.StreetAddress = record.BillingAddressVm.StreetAddress.Trim();
-                                contactModel.BillingAddressVm.ZipCode = record.BillingAddressVm.ZipCode.Trim();
-                                contactModel.BillingAddressVm.City = record.BillingAddressVm.City.Trim();
-                                contactModel.BillingAddressVm.State = record.BillingAddressVm.State.Trim();
-                            }
-
-                            if (record.TaxExemptionVm != null)
-                            {
-                                contactModel.TaxExemptionVm ??= new TaxExemption();
-                                contactModel.TaxExemptionVm.ExemptionCertificate = record.TaxExemptionVm.ExemptionCertificate;
-                                contactModel.TaxExemptionVm.EffectiveDate = record.TaxExemptionVm.EffectiveDate;
-                                contactModel.TaxExemptionVm.ExpiryDate = record.TaxExemptionVm?.ExpiryDate;
-                            }
-
-                            var existingContact = await contactService.GetContactByEmailOrPhone(contactModel.Email, contactModel.PhoneNumber);
-                            if (existingContact.Message != null)
-                            {
-                                validationErrors.Add($"Error in row {rowNumber}: {existingContact.Message}");
-                                hasValidationError = true;
-                            }
-                            else
-                            {
-                                validContacts.Add(contactModel);
-                            }
-
-                            rowNumber++;
-
-                        }
-                        if (hasValidationError)
-                        {
-                            responseVm.IsSuccess = false;
-                            responseVm.Message = "Validation errors occurred during the import.";
-                            responseVm.Data = validationErrors;
-                            responseVm.TotalRecords = validContacts.Count;
-                        }
-                        else
-                        {
-
-                            int successfulInserts = 0;
-                            foreach (var contactToInsert in validContacts)
-                            {
-                                var createContactResponse = await contactService.Create_Contact(contactToInsert);
-
-                                if (createContactResponse.IsSuccess)
-                                {
-                                    successfulInserts++;
-                                }
-                                else
-                                {
-                                    validationErrors.Add($"Error with contact: {createContactResponse.Message}");
-                                }
-                            }
-
-                            if (validationErrors.Any())
-                            {
-                                responseVm.IsSuccess = false;
-                                responseVm.Message = "Some contacts failed to be inserted.";
-                                responseVm.Data = validationErrors;
-                                responseVm.TotalRecords = successfulInserts;
-                            }
-                            else
-                            {
-                                responseVm.IsSuccess = true;
-                                responseVm.Message = AppConstant.UploadSuccessMsg;
-                                responseVm.TotalRecords = successfulInserts;
-                            }
-                        }
-                    }
-                }
-                else
+                var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive==true);
+                if (!isTenantExists)
                 {
                     responseVm.Message = AppConstant.TenantNotFound;
                     return responseVm;
                 }
-            }
 
+                using (var reader = new StreamReader(csvStream))
+                using (var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture)))
+                {
+                    var records = csv.GetRecords<ImportContact>().ToList();
+                    totalRecords = records.Count;
+                    int rowNumber = 1;
+                    bool hasValidationError = false;
+
+                    foreach (var record in records)
+                    {
+                        var contactModel = MapToSpContact(record);
+
+                        var validationError = await ValidateContactAsync(contactModel, rowNumber);
+                        if (validationError != null)
+                        {
+                            validationErrors.Add(validationError);
+                            hasValidationError = true;
+                        }
+                        else
+                        {
+                            validContacts.Add(contactModel);
+                        }
+
+                        rowNumber++;
+                    }
+
+                    if (hasValidationError)
+                    {
+                        responseVm.IsSuccess = false;
+                        responseVm.Message = "Validation errors occurred during the import.";
+                        responseVm.Data = validationErrors;
+                        responseVm.TotalRecords = validContacts.Count;
+                    }
+                    else
+                    {
+                        successfulImports = await InsertValidContacts(validContacts, validationErrors);
+
+                        if (validationErrors.Any())
+                        {
+                            responseVm.IsSuccess = false;
+                            responseVm.Message = "Some contacts failed to be inserted.";
+                            responseVm.Data = validationErrors;
+                            responseVm.TotalRecords = successfulImports;
+                        }
+                        else
+                        {
+                            responseVm.IsSuccess = true;
+                            responseVm.Message = AppConstant.UploadSuccessMsg;
+                            responseVm.TotalRecords = successfulImports;
+                        }
+                    }
+                }
+            }
             catch (Exception ex)
             {
-                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+                responseVm.IsSuccess = false;
+                responseVm.Message = $"{AppConstant.ExceptionError} {ex.Message}";
             }
+
             return responseVm;
         }
+
+        private Sp_Contact MapToSpContact(ImportContact record)
+        {
+            var contactModel = new Sp_Contact
+            {
+                ContactType = record.ContactType?.Trim(),
+                Name = record.Name?.Trim(),
+                PhoneNumber = record.PhoneNumber.Trim(),
+                Email = record.Email?.Trim(),
+                Website = record.Website.Trim(),
+                Notes = record.Notes,
+                Referral = record.Referral.Trim(),
+                IsBillingAddressSameAsAddress = false,
+            };
+
+            if (record.BillingAddressVm != null)
+            {
+                contactModel.BillingAddressVm = new BillingAddressVm
+                {
+                    FullName = record.BillingAddressVm.FullName?.Trim(),
+                    PhoneNumber = record.BillingAddressVm.PhoneNumber?.Trim(),
+                    Email = record.BillingAddressVm.Email?.Trim(),
+                    StreetAddress = record.BillingAddressVm.StreetAddress?.Trim(),
+                    ZipCode = record.BillingAddressVm.ZipCode?.Trim(),
+                    City = record.BillingAddressVm.City?.Trim(),
+                    State = record.BillingAddressVm.State?.Trim()
+                };
+            }
+
+            if (record.TaxExemptionVm != null)
+            {
+                contactModel.TaxExemptionVm = new TaxExemption
+                {
+                    ExemptionCertificate = record.TaxExemptionVm.ExemptionCertificate,
+                    EffectiveDate = record.TaxExemptionVm.EffectiveDate,
+                    ExpiryDate = record.TaxExemptionVm?.ExpiryDate
+                };
+            }
+
+            return contactModel;
+        }
+
+        private async Task<string> ValidateContactAsync(Sp_Contact contactModel, int rowNumber)
+        {
+            var existingContact = await contactService.GetContactByEmailOrPhone(contactModel.Email, contactModel.PhoneNumber);
+            if (existingContact.Message != null)
+            {
+                return $"Error in row {rowNumber}: {existingContact.Message}";
+            }
+            return null;
+        }
+
+        private async Task<int> InsertValidContacts(List<Sp_Contact> validContacts, List<string> validationErrors)
+        {
+            int successfulImports = 0;
+
+            foreach (var contactToInsert in validContacts)
+            {
+                var createContactResponse = await contactService.Create_Contact(contactToInsert);
+
+                if (createContactResponse.IsSuccess)
+                {
+                    successfulImports++;
+                }
+                else
+                {
+                    validationErrors.Add($"Error with contact: {createContactResponse.Message}");
+                }
+            }
+
+            return successfulImports;
+        }
+
+
 
         //public async Task<IResponseVm<dynamic>> ExportContactsToCsvAsync(string filePath)
         //{
