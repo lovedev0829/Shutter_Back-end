@@ -248,7 +248,6 @@ namespace ShutterManagement.Business.Services
             return responseVm;
 
         }
-
         public async Task<IResponseVm<List<GetAllMaterialVm>>> GetAll_Material(Pagination filter)
         {
             IResponseVm<List<GetAllMaterialVm>> responseVm = new ResponseVm<List<GetAllMaterialVm>>();
@@ -332,8 +331,6 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
-
-
         public async Task<IResponseVm<string>> Update_Material(UpdateMaterial model)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();

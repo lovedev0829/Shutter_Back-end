@@ -91,6 +91,8 @@ namespace ShutterManagement.Business.Services
                 var existingDiscount = await FindExistingDiscountAsync((Guid)updateDiscount.DiscountId);
                 if (existingDiscount == null)
                     return SetFailureResponse(responseVm, AppConstant.NoDataFound);
+                var existingCoupon = dbContext.TblDiscounts
+                .FirstOrDefault(t => t.CouponCode == updateDiscount.CouponCode);
 
                 UpdateDiscountRecord(existingDiscount, updateDiscount);
 
@@ -237,6 +239,9 @@ namespace ShutterManagement.Business.Services
 
 
             var filteredRecords = DiscountList.Where(x =>
+                (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
+                (filter.StartDate != null ?  x.StartDate >= filter.StartDate : true) &&
+                (filter.ExpiryDate != null ?  x.ExpiryDate >= filter.ExpiryDate : true) &&
                 (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
                 (string.IsNullOrEmpty(filter.SearchValue) || 
                     (x.CustomerId.ToString() ?? "").Contains(filter.SearchValue.Trim()) ||
