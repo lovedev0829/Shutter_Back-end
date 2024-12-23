@@ -467,10 +467,13 @@ namespace ShutterManagement.Controllers
         [Route("GetAllDiscount")]
         public async Task<IActionResult> GetAllDiscount(Guid? CustomerId)
         {
+            filter.CustomerId = CustomerId.ToString();
             var res = await discountService.GetAll_Coupons(filter);
-            res.Data = res.Data?
-        .Where(x => x.IsActive == true && x.CustomerId==CustomerId  && x.ExpiryDate.HasValue && x.ExpiryDate.Value >= DateTime.Now)
+            DateTime current = Convert.ToDateTime(DateTime.Now.ToShortDateString());
+            var d = res.Data
+        .Where(x => x.IsActive == true && x.StartDate <= current && x.ExpiryDate >= current)
         .ToList();
+            res.Data = d;
             return Ok(res);
         }
 

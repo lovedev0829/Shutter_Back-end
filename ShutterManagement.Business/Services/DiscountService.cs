@@ -170,11 +170,51 @@ namespace ShutterManagement.Business.Services
                 if (!await ValidateTenantAsync())
                     return SetFailureResponse(responseVm, AppConstant.AccessDenied);
 
-                var couponList = await GetFilteredCouponsAsync(filter);
+                var DiscountList = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId).OrderByDescending(x => x.CreatedAt).Select(
+                x => new DiscoountVm
+                {
+                    DiscountId = x.DiscountId,
+                    CustomerId = x.CustomerId,
+                    ApplyforName = x.ApplyFor,
+                    AppliedFor = x.ApplyFor == EnumValue.GetEnumValue(AppliedFor.All) ? 0 : 1,
+                    DiscountType = x.DiscountType == EnumValue.GetEnumValue(DiscountType.Percentage) ? 0 : 1,
+                    DiscountTypeName = x.DiscountType,
+                    CouponCode = x.CouponCode,
+                    PercentageDiscount = x.PercentageDiscount,
+                    FixedAmount = x.FixedAmount,
+                    ExpiryDate = x.ExpiryDate,
+                    StartDate = x.StartDate,
+                    IsActive = x.IsActive,
+                }
+            ).ToList();
+                foreach (var item in DiscountList)
+                {
+                    var customerData = contactService.GetAllQuerable().Where(x => x.ContactId == item.CustomerId && x.IsDelete == false).Select(x => x.Name).FirstOrDefault();
+                    item.CustomerName = customerData;
+                }
+
+
+                var filteredRecords = DiscountList.Where(x =>
+                    (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
+                    (filter.StartDate != null ? x.StartDate >= filter.StartDate : true) &&
+                    (filter.ExpiryDate != null ? x.ExpiryDate <= filter.ExpiryDate : true) &&
+                    (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
+                    (string.IsNullOrEmpty(filter.CustomerId) ? true : x.CustomerId.ToString() == filter.CustomerId || x.CustomerId == null) &&
+                    (string.IsNullOrEmpty(filter.SearchValue) ? true :
+                        (x.CustomerName ?? "").Contains(filter.SearchValue.Trim()) ||
+                        (x.CouponCode ?? "").Contains(filter.SearchValue.Trim()) ||
+                        (x.PercentageDiscount.ToString() ?? "").Contains(filter.SearchValue.Trim()) ||
+                        (x.FixedAmount.ToString() ?? "").Contains(filter.SearchValue.Trim()) ||
+                        (x.ExpiryDate.ToString() ?? "").Contains(filter.SearchValue.Trim()) ||
+                        (x.StartDate.ToString() ?? "").Contains(filter.SearchValue.Trim()))
+                );
+
+                var pagination = Paginate.Pagination(filteredRecords, filter);
+
 
                 responseVm.IsSuccess = true;
-                responseVm.Data = couponList;
-                responseVm.TotalRecords = couponList.Count;
+                responseVm.Data = pagination;
+                responseVm.TotalRecords = DiscountList.Count;
                 responseVm.Message = AppConstant.FetchSuccessMsg;
 
                 FileLogger.Log("Success: Coupons fetched successfully.");
@@ -208,52 +248,6 @@ namespace ShutterManagement.Business.Services
             discount.IsActive = !discount.IsActive;
             discount.UpdatedAt = DateTime.Now;
             discount.ModifiedBy = AppConstant.LoggedInUserID;
-        }
-
-        private async Task<List<DiscoountVm>> GetFilteredCouponsAsync(Pagination filter)
-        {
-            var DiscountList = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId).OrderByDescending(x=> x.CreatedAt).Select(
-                x => new DiscoountVm
-                {
-                    DiscountId = x.DiscountId,
-                    CustomerId = x.CustomerId,
-                    ApplyforName = x.ApplyFor,
-                    AppliedFor = x.ApplyFor == EnumValue.GetEnumValue(AppliedFor.All) ? 0 : 1,
-                    DiscountType = x.DiscountType == EnumValue.GetEnumValue(DiscountType.Percentage) ? 0 : 1,
-                    DiscountTypeName = x.DiscountType,
-                    CouponCode = x.CouponCode,
-                    PercentageDiscount = x.PercentageDiscount,
-                    FixedAmount = x.FixedAmount,
-                    ExpiryDate = x.ExpiryDate,
-                    StartDate = x.StartDate,
-                    IsActive = x.IsActive,
-                }
-            ).ToList();
-            foreach(var item in DiscountList)
-            {
-                var customerData = contactService.GetAllQuerable().Where(x => x.ContactId == item.CustomerId && x.IsDelete == false).Select(x => x.Name).FirstOrDefault();
-                item.CustomerName = customerData;
-            }
-
-
-            var filteredRecords = DiscountList.Where(x =>
-                (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
-                (filter.StartDate != null ?  x.StartDate >= filter.StartDate : true) &&
-                (filter.ExpiryDate != null ?  x.ExpiryDate >= filter.ExpiryDate : true) &&
-                (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
-                (string.IsNullOrEmpty(filter.SearchValue) || 
-                    (x.CustomerId.ToString() ?? "").Contains(filter.SearchValue.Trim()) ||
-                    (x.CustomerName ?? "").Contains(filter.SearchValue.Trim()) ||
-                    (x.CouponCode ?? "").Contains(filter.SearchValue.Trim()) ||
-                    (x.PercentageDiscount.ToString() ?? "").Contains(filter.SearchValue.Trim()) ||
-                    (x.FixedAmount.ToString() ?? "").Contains(filter.SearchValue.Trim()) ||
-                    (x.ExpiryDate.ToString() ?? "").Contains(filter.SearchValue.Trim()) ||
-                    (x.StartDate.ToString() ?? "").Contains(filter.SearchValue.Trim()))
-            );
-
-            var pagination = Paginate.Pagination(filteredRecords, filter);
-
-            return pagination;
         }
 
         private IResponseVm<T> SetFailureResponse<T>(IResponseVm<T> responseVm, string message)
