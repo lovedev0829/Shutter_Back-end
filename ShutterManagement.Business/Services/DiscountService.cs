@@ -239,6 +239,7 @@ namespace ShutterManagement.Business.Services
             var filteredRecords = DiscountList.Where(x =>
                 (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
                 (string.IsNullOrEmpty(filter.SearchValue) || 
+                    (x.CustomerId.ToString() ?? "").Contains(filter.SearchValue.Trim()) ||
                     (x.CustomerName ?? "").Contains(filter.SearchValue.Trim()) ||
                     (x.CouponCode ?? "").Contains(filter.SearchValue.Trim()) ||
                     (x.PercentageDiscount.ToString() ?? "").Contains(filter.SearchValue.Trim()) ||

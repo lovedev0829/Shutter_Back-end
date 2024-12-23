@@ -25,6 +25,9 @@ namespace ShutterManagement.Core.ViewModels.Request
         [Required]
         public decimal? MarkupPercentage { get; set; }
 
+        [Required]
+        public Guid? ExpressionId { get; set; }
+
         [DefaultValue("")]
         [Required]
         [MaxLength(500)]
