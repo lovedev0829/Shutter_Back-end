@@ -18,12 +18,14 @@ using Azure;
 using System.Data.Entity;
 using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json.Linq;
+using System.Text.RegularExpressions;
 
 namespace ShutterManagement.Business.Services
 {
     public class EstimateService : BaseRepository<BtprojecShuttermanagementDevContext, TblEstimate>, IEstimateService
     {
         private readonly BtprojecShuttermanagementDevContext _context;
+        private readonly IExpressionService expressionService;
         private readonly IProductComponentService productComponentService;
         private readonly IComponentService componentService;
         private readonly IJobService jobService;
@@ -45,8 +47,10 @@ namespace ShutterManagement.Business.Services
         private readonly EmailHelper emailHelper;
         private string Message = "";
         private readonly IHttpContextAccessor _httpContextAccessor;
+        List<Guid> expressionList = new List<Guid>();
 
         public EstimateService(BtprojecShuttermanagementDevContext context,
+            IExpressionService expressionService,
             IProductComponentService productComponentService,
             IComponentService componentService,
             IJobService jobService,
@@ -69,6 +73,7 @@ namespace ShutterManagement.Business.Services
             )
         {
             _context = context;
+            this.expressionService = expressionService;
             this.productComponentService = productComponentService;
             this.componentService = componentService;
             this.jobService = jobService;
@@ -1248,6 +1253,20 @@ namespace ShutterManagement.Business.Services
             return res;
         }
 
+        private async Task CalculatePrice()
+        {
+            List<string> expressionsPlaceholder = new List<string>();
+            if (expressionList != null && expressionList.Count > 0)
+            {
+                var expression = (await expressionService.GetAll()).Where(x => x.IsActive == true && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId &&
+                expressionList.Contains(x.Id)).ToList();
+                if(expression != null && expression.Count > 0)
+                {
+                    string pattern = @"{{[a-zA-Z]+}}";
+                    var matches = Regex.Matches(string.Join(",",expression.Select(x=>x.ExpressionFormulae).ToArray()), pattern);
+                }
+            }
+        }
         private async Task ProcessWindowProducts(List<Guid> windowProductIds, Guid estimateId)
         {
             FileLogger.Log("Processing window products...");
@@ -1320,8 +1339,8 @@ namespace ShutterManagement.Business.Services
             {
                 WindowId = (Guid)windowProductData.WindowId,
                 ProductName = productData.ProductName,
-                Height = productData.Height,
-                Width = productData.Width,
+                Height = windowProductData.BuildHeight,
+                Width = windowProductData.BuildWidth,
                 AdditionalWidth = productData.AdditionalWidth,
                 Notes = productData.Notes,
                 IsDelete = false,
@@ -1353,7 +1372,6 @@ namespace ShutterManagement.Business.Services
                 Message = "No Components " + AppConstant.NoDataFound;
                 return; // Return early if no components found
             }
-
             foreach (var component in productComponentData)
             {
                 var componentData = (await componentService.GetAll()).Where(x => x.ComponentId == component.ComponentId && x.IsDelete == false).FirstOrDefault();
@@ -1362,7 +1380,7 @@ namespace ShutterManagement.Business.Services
                     Message = "Components " + AppConstant.NoDataFound;
                     return; // Return early if component data not found
                 }
-
+                expressionList.Add(Guid.Parse(componentData.PricingExpression ?? ""));
                 await AddComponentToEstimateWindow(componentData, estimateId);
                 await AddComponentMaterialsToEstimate(componentData.ComponentId, estimateId);
                 if (!string.IsNullOrEmpty(Message))
