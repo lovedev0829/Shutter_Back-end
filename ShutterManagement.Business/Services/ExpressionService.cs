@@ -39,7 +39,7 @@ namespace ShutterManagement.Business.Services
                 var IsExpressionExist = GetAllQuerable().Where(e => e.Id == ExpressionId && e.TenantId == AppConstant.LoggedInTenantId && e.IsDelete == false).FirstOrDefault();
                 if (IsExpressionExist != null)
                 {
-                    IsExpressionExist.IsActive = !IsExpressionExist.IsDelete;
+                    IsExpressionExist.IsActive = !IsExpressionExist.IsActive;
                     IsExpressionExist.UpdateAt = DateTime.Now;
                     IsExpressionExist.ModifiedBy = AppConstant.LoggedInUserID;
                 }
@@ -66,7 +66,7 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
                 bool IsExpressionNameExists = await AnyAsync(e => e.ExpressionName == model.ExpressionName && e.IsDelete == false && e.TenantId == AppConstant.LoggedInTenantId);
-                if (!IsExpressionNameExists)
+                if (IsExpressionNameExists)
                 {
                     responseVm.Message = "Expression Name" + AppConstant.AlreadyExists;
                     return responseVm;
@@ -105,13 +105,13 @@ namespace ShutterManagement.Business.Services
                 }
                 var IsExpressionNameExist = await AnyAsync(e => e.ExpressionName == model.ExpressionName && e.Id != model.ExpressionId
                 && e.TenantId == AppConstant.LoggedInTenantId && e.IsDelete == false);
-                if (!IsExpressionNameExist)
+                if (IsExpressionNameExist)
                 {
                     responseVm.Message = "Expression Name" + AppConstant.AlreadyExists;
                     return responseVm;
                 }
                 var IsExpressionExist = GetAllQuerable().Where(e => e.Id == model.ExpressionId && e.TenantId == AppConstant.LoggedInTenantId && e.IsDelete == false).FirstOrDefault();
-                if (IsExpressionNameExist)
+                if (IsExpressionNameExist != null)
                 {
                     IsExpressionExist.ExpressionName = model.ExpressionName;    
                     IsExpressionExist.ExpressionFormulae = model.ExpressionFormulae;    

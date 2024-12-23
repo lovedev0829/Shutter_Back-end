@@ -45,6 +45,7 @@ namespace ShutterManagement.Controllers
         private readonly IContactService contactService;
         private readonly IMstContactType contactType;
         private readonly IJobService jobService;
+        private readonly IExpressionService expression;
 
         public CommonController(IMasterCreate masterCreate, 
             FileUploadHelper fileUpload, ClaimsProperty claimsProperty,
@@ -54,7 +55,7 @@ namespace ShutterManagement.Controllers
             IComponentService componentService, IMstProductType mstProductType,
             IAddress address, IOption option, IProductService productService,
             IUnitofMeasurementService unitofMeasurementService, IRoleService roleService, IRegion region, IContactService contactService,
-            IMstContactType contactType, IJobService jobService)
+            IMstContactType contactType, IJobService jobService,IExpressionService expression)
         {
             this.masterCreate = masterCreate;
             this.fileUpload = fileUpload;
@@ -88,6 +89,7 @@ namespace ShutterManagement.Controllers
             this.contactService = contactService;
             this.contactType = contactType;
             this.jobService = jobService;
+            this.expression = expression;
         }
 
 
@@ -433,6 +435,15 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> GetAllRoles()
         {
             var res = await roleService.GetAll(filter);
+            res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
+            return Ok(res);
+        }
+
+        [HttpGet]
+        [Route("GetAllExpression")]
+        public async Task<IActionResult> GetAllExpression()
+        {
+            var res = await expression.Get_AllExpression(filter);
             res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
             return Ok(res);
         }

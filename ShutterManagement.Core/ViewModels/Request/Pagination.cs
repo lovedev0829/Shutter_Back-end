@@ -17,9 +17,11 @@ namespace ShutterManagement.Core.ViewModels.Request
         public int PageNo { get; set; } = 1;
         [DefaultValue(10)]
         public int RecordPerPage { get; set; } = 10;
-        [DefaultValue("")]
+
+        [DefaultValue(null)]
         public DateTime? StartDate { get; set; } = null;
-        [DefaultValue("")]
+
+        [DefaultValue(null)]
         public DateTime? ExpiryDate { get; set; } = null;
         [DefaultValue(2)]
         public int Status { get; set; } = 2;
