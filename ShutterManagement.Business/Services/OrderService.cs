@@ -57,7 +57,7 @@ namespace ShutterManagement.Business.Services
         {
 
             IResponseVm<string> responseVm = new ResponseVm<string>();
-            FileLogger.Log("Start: Create Estimate...");
+            FileLogger.Log("Start: Create Order...");
 
             try
             {
@@ -90,7 +90,7 @@ namespace ShutterManagement.Business.Services
                     }
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.InsertSuccessMsg;
-                    FileLogger.Log("Estimate created and all related data added successfully.");
+                    FileLogger.Log("Order created and all related data added successfully.");
                 }
                 else
                 {
