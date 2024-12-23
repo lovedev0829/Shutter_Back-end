@@ -32,7 +32,7 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> Create(Guid EstimateId)
         {
 
-            var res = await orderService.Create_Order(EstimateId);
+            var res = await orderService.Create_Order_From_Estimate(EstimateId);
             return Ok(res);
         }
 

@@ -61,282 +61,318 @@ namespace ShutterManagement.Business.Services
         }
 
 
-        //public async Task<IResponseVm<string>> Create_Order(CreateOrder model)
-        //{
+        public async Task<IResponseVm<string>> Create_Order_From_Estimate(Guid EstimateId)
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+            FileLogger.Log("Start: Create Order from Estimate...");
 
-        //    IResponseVm<string> responseVm = new ResponseVm<string>();
-        //    FileLogger.Log("Start: Create Order...");
+            try
+            {
+                // Fetch the estimate using EstimateId
+                var estimate = estimateService.GetAllQuerable()
+                    .Where(e => e.EstimateId == EstimateId && e.IsDelete == false)
+                    .FirstOrDefault();
 
-        //    try
-        //    {
-        //        var isTenantExists = await ValidateTenantExists();
-        //        if (!isTenantExists)
-        //        {
-        //            responseVm.Message = AppConstant.TenantNotFound;
-        //            return responseVm;
-        //        }
-        //        var IsOrderExists = await ValidateOrderExists((Guid)model.EstimationId, (Guid)model.JobId);
-        //        if (IsOrderExists)
-        //        {
-        //            var updateOrder = MapCreateOrderToUpdateOrder(model);
-        //            await Update_Order(updateOrder);
-        //        }
+                if (estimate == null)
+                {
+                    responseVm.Message = "Estimate " + AppConstant.NoDataFound;
+                    return responseVm;
+                }
 
-        //        if (model.WindowProductId == null || model.WindowProductId.Length == 0)
-        //        {
-        //            responseVm.Message = "Atleast one window is required.";
-        //            return responseVm;
-        //        }
-        //        TblOrder createOrder = await CreateOrderRecord(model);
-        //        if (createOrder.OrderId != Guid.Empty)
-        //        {
-        //            await ProcessWindowProducts(model.WindowProductId.ToList(),createOrder.EstimateId, createOrder.OrderId,createOrder.Version);
-        //            if (!string.IsNullOrEmpty(Message))
-        //            {
-        //                responseVm.Message = Message;
-        //                return responseVm;
-        //            }
-        //            responseVm.IsSuccess = true;
-        //            responseVm.Message = AppConstant.InsertSuccessMsg;
-        //            FileLogger.Log("Order created and all related data added successfully.");
-        //        }
-        //        else
-        //        {
-        //            responseVm.Message = AppConstant.NoDataFound;
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        FileLogger.Log($"Error occurred: {ex.Message}");
-        //        responseVm.Message = AppConstant.ExceptionError + ex.Message;
-        //    }
+              
+                TblOrder newOrder = new TblOrder
+                {
+                    OrderId = Guid.NewGuid(), 
+                    EstimateId = estimate.EstimateId,  
+                    TenantId = estimate.TenantId,
+                    JobId = estimate.JobId,
+                    EstimateName = estimate.EstimateName,
+                    EstimateCode = estimate.EstimateCode,
+                    Notes = estimate.Notes,
+                    DiscountAmount = estimate.DiscountAmount,
+                    DiscountCoupon = estimate.DiscountCoupon,
+                    GrandTotal = estimate.GrandTotal,
+                    TaxAmount = estimate.TaxAmount,
+                    TotalPrice = estimate.TotalPrice,
+                    TermsCondition = estimate.TermsCondition,
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now,
+                    Version = "1",  
+                    IsActive = true,
+                    IsDelete = false,
+                    CreatedBy = AppConstant.LoggedInUserID,
+                    ModifiedBy = AppConstant.LoggedInUserID
+                };
 
-        //    return responseVm;
-        //}
-        //private UpdateOrder MapCreateOrderToUpdateOrder(CreateOrder model)
-        //{
-        //    var updateOrder = new UpdateOrder
-        //    {
-        //        EstimateName = model.EstimateName,
-        //        EstimateCode = model.EstimateCode,
-        //        Notes = model.Notes,
-        //        Discount = model.Discount,
-        //        DiscountCoupon = model.DiscountCoupon,
-        //        GrandTotal = model.GrandTotal,
-        //        Tax = model.Tax,
-        //        TermsCondition = model.TermsCondition,
-        //        SubTotal = model.SubTotal,
-        //        Status = model.Status,  
-        //    };
+                await Add(newOrder);
+                var windowProductIds = dbContext.TblEstimateWindowProducts
+           .Where(e => e.EstimateId == EstimateId)
+           .Select(e => e.WindowProductId)
+           .ToList();
 
-        //    return updateOrder;
-        //}
-        //private async Task ProcessWindowProducts(List<Guid> windowProductIds, Guid estimateId,Guid OrderId,string Version)
-        //{
-        //    FileLogger.Log("Processing window products...");
-        //    foreach (var product in windowProductIds)
-        //    {
-        //        var windowProductData = (await windowProductService.GetAll()).Where(x => x.WindowProductId == product && x.IsDelete == false).FirstOrDefault();
-        //        if (windowProductData == null)
-        //        {
-        //            Message = "Window Product " + AppConstant.NoDataFound;
-        //            return; // Return early if window product not found
-        //        }
+                // Convert List<Guid?> to List<Guid>
+                var windowProductIdsNonNullable = windowProductIds.Where(x => x.HasValue).Select(x => x.Value).ToList();
 
-        //        var windowData = (await windowService.GetAll()).Where(x => x.WindowId == windowProductData.WindowId && x.IsDelete == false).FirstOrDefault();
-        //        if (windowData == null)
-        //        {
-        //            Message = "Window " + AppConstant.NoDataFound;
-        //            return; // Return early if window not found
-        //        }
+                // Process the window products for the order
+                await ProcessWindowProducts(windowProductIdsNonNullable, newOrder.OrderId, estimate.EstimateId, newOrder.Version);
 
-        //        await AddWindowToOrder(windowData, windowProductData,OrderId, estimateId,Version);
-        //        await AddProductToOrder(windowProductData, estimateId, OrderId, Version);
-        //        if (!string.IsNullOrEmpty(Message))
-        //        {
-        //            return;
-        //        }
-        //        await AddComponentsToOrder((Guid)windowProductData.ProductId, estimateId,OrderId,Version);
-        //        if (!string.IsNullOrEmpty(Message))
-        //        {
-        //            return;
-        //        }
-        //    }
-        //}
+                if (!string.IsNullOrEmpty(Message))
+                {
+                    responseVm.Message = Message;
+                    return responseVm;
+                }
 
-        //private async Task AddWindowToOrder(TblWindow windowData, TblWindowProduct windowProductData, Guid OrderId ,Guid estimateId, string Version)
-        //{
-        //    FileLogger.Log($"Adding window data for window {windowData.WindowId} to estimate...");
-        //    TblOrderWindow tblOrderWindow = new TblOrderWindow
-        //    {
-        //        OrderId = OrderId,
-        //        Version = Version,
-        //        EstWindowId = Guid.NewGuid(),
-        //        EstimateId = estimateId,
-        //        WindowId = windowData.WindowId,
-        //        IsActive = true,
-        //        IsDelete = false,
-        //        CreatedAt = DateTime.Now,
-        //        CreatedBy = AppConstant.LoggedInUserID,
-        //        TenantId = AppConstant.LoggedInTenantId,
-        //        Label = windowData.Label,
-        //        AddressId = windowData.AddressId,
-        //        ArchHeight = windowData.ArchHeight,
-        //        Height = windowData.Height,
-        //        Width = windowData.Width,
-        //        Quantity = windowData.Quantity,
-        //        Notes = windowData.Notes,
-        //    };
+                responseVm.IsSuccess = true;
+                responseVm.Message = AppConstant.InsertSuccessMsg;
+                FileLogger.Log("Order created successfully from estimate.");
 
-        //    await orderWindowService.Add(tblOrderWindow);
-        //}
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Log($"Error occurred while creating order: {ex.Message}");
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+            }
 
-        //private async Task AddProductToOrder(TblWindowProduct windowProductData, Guid estimateId,Guid OrderId, string Version)
-        //{
-        //    FileLogger.Log($"Adding product data for product {windowProductData.ProductId} to estimate...");
-        //    var productData = (await productService.GetAll()).Where(x => x.ProductId == windowProductData.ProductId && x.IsDelete == false).FirstOrDefault();
-        //    if (productData == null)
-        //    {
-        //        Message = "Product " + AppConstant.NoDataFound;
-        //        return; // Return early if product data not found
-        //    }
+            return responseVm;
+        }
 
-        //    TblOrderWindowProduct tblOrderWindowProduct = new TblOrderWindowProduct
-        //    {
-        //        OrderId = OrderId,
-        //        Version = Version,
-        //        WindowId = (Guid)windowProductData.WindowId,
-        //        ProductName = productData.ProductName,
-        //        Height = productData.Height,
-        //        Width = productData.Width,
-        //        AdditionalWidth = productData.AdditionalWidth,
-        //        Notes = productData.Notes,
-        //        IsDelete = false,
-        //        IsActive = true,
-        //        CreatedAt = DateTime.Now,
-        //        CreatedBy = AppConstant.LoggedInUserID,
-        //        ArchHeight = productData.ArchHeight,
-        //        Area = productData.Area,
-        //        Color = productData.Color,
-        //        EstimateId = estimateId,
-        //        Length = productData.Length,
-        //        Markup = productData.Markup,
-        //        ProductType = productData.ProductType,
-        //        TenantId = AppConstant.LoggedInTenantId,
-        //        ProductId = productData.ProductId,
-        //        EstimateWindowProductId = Guid.NewGuid(),
-        //        WindowProductId = windowProductData.WindowProductId
-        //    };
+        private UpdateOrder MapCreateOrderToUpdateOrder(CreateOrder model)
+        {
+            var updateOrder = new UpdateOrder
+            {
+                EstimateName = model.EstimateName,
+                EstimateCode = model.EstimateCode,
+                Notes = model.Notes,
+                Discount = model.Discount,
+                DiscountCoupon = model.DiscountCoupon,
+                GrandTotal = model.GrandTotal,
+                Tax = model.Tax,
+                TermsCondition = model.TermsCondition,
+                SubTotal = model.SubTotal,
+                Status = model.Status,
+            };
 
-        //    await orderWindowProductService.Add(tblOrderWindowProduct);
-        //}
+            return updateOrder;
+        }
+        private async Task ProcessWindowProducts(List<Guid> windowProductIds, Guid estimateId,Guid OrderId,string Version)
+        {
+            FileLogger.Log("Processing window products...");
+            foreach (var product in windowProductIds)
+            {
+                var windowProductData = (await windowProductService.GetAll()).Where(x => x.WindowProductId == product && x.IsDelete == false).FirstOrDefault();
+                if (windowProductData == null)
+                {
+                    Message = "Window Product " + AppConstant.NoDataFound;
+                    return; // Return early if window product not found
+                }
 
-        //private async Task AddComponentsToOrder(Guid productId, Guid estimateId,Guid OrderId, string Version)
-        //{
-        //    FileLogger.Log($"Adding components for product {productId} to estimate...");
-        //    var productComponentData = (await productComponentService.GetAll()).Where(x => x.ProductId == productId && x.IsDelete == false).ToList();
-        //    if (productComponentData == null || productComponentData.Count == 0)
-        //    {
-        //        Message = "No Components " + AppConstant.NoDataFound;
-        //        return; // Return early if no components found
-        //    }
+                var windowData = (await windowService.GetAll()).Where(x => x.WindowId == windowProductData.WindowId && x.IsDelete == false).FirstOrDefault();
+                if (windowData == null)
+                {
+                    Message = "Window " + AppConstant.NoDataFound;
+                    return; // Return early if window not found
+                }
 
-        //    foreach (var component in productComponentData)
-        //    {
-        //        var componentData = (await componentService.GetAll()).Where(x => x.ComponentId == component.ComponentId && x.IsDelete == false).FirstOrDefault();
-        //        if (componentData == null)
-        //        {
-        //            Message = "Components " + AppConstant.NoDataFound;
-        //            return; // Return early if component data not found
-        //        }
+                await AddWindowToOrder(windowData, windowProductData, OrderId, estimateId, Version);
+                await AddProductToOrder(windowProductData, estimateId, OrderId, Version);
+                if (!string.IsNullOrEmpty(Message))
+                {
+                    return;
+                }
+                await AddComponentsToOrder((Guid)windowProductData.ProductId, estimateId, OrderId, Version);
+                if (!string.IsNullOrEmpty(Message))
+                {
+                    return;
+                }
+            }
+        }
 
-        //        await AddComponentToOrderWindow(componentData, estimateId,OrderId,Version);
-        //        await AddComponentMaterialsToOrder(componentData.ComponentId, estimateId, OrderId, Version   );
-        //        if (!string.IsNullOrEmpty(Message))
-        //        {
-        //            return;
-        //        }
-        //    }
-        //}
+        private async Task AddWindowToOrder(TblWindow windowData, TblWindowProduct windowProductData, Guid OrderId, Guid estimateId, string Version)
+        {
+            FileLogger.Log($"Adding window data for window {windowData.WindowId} to estimate...");
+            TblOrderWindow tblOrderWindow = new TblOrderWindow
+            {
+                OrderId = OrderId,
+                Version = Version,
+                EstWindowId = Guid.NewGuid(),
+                EstimateId = estimateId,
+                WindowId = windowData.WindowId,
+                IsActive = true,
+                IsDelete = false,
+                CreatedAt = DateTime.Now,
+                CreatedBy = AppConstant.LoggedInUserID,
+                TenantId = AppConstant.LoggedInTenantId,
+                Label = windowData.Label,
+                AddressId = windowData.AddressId,
+                ArchHeight = windowData.ArchHeight,
+                Height = windowData.Height,
+                Width = windowData.Width,
+                Quantity = windowData.Quantity,
+                Notes = windowData.Notes,
+            };
 
-        //private async Task AddComponentMaterialsToOrder(Guid componentId, Guid estimateId, Guid OrderId, string Version )
-        //{
-        //    FileLogger.Log($"Adding materials for component {componentId} to estimate...");
-        //    var componentMaterialData = (await componentMaterialService.GetAll()).Where(x => x.ComponentId == componentId && x.IsDelete == false).ToList();
-        //    if (componentMaterialData == null || componentMaterialData.Count == 0)
-        //    {
-        //        Message = "No material " + AppConstant.NoDataFound;
-        //        return; // Return early if no materials found
-        //    }
+            await orderWindowService.Add(tblOrderWindow);
+        }
 
-        //    foreach (var material in componentMaterialData)
-        //    {
-        //        var materialData = (await materialService.GetAll()).Where(x => x.RawMaterialId == material.RawMaterialId && x.IsDelete == false).FirstOrDefault();
-        //        if (materialData == null)
-        //        {
-        //            Message = "Material " + AppConstant.NoDataFound;
-        //            return; // Return early if material data not found
-        //        }
+        private async Task AddProductToOrder(TblWindowProduct windowProductData, Guid estimateId, Guid OrderId, string Version)
+        {
+            FileLogger.Log($"Adding product data for product {windowProductData.ProductId} to estimate...");
+            var productData = (await productService.GetAll()).Where(x => x.ProductId == windowProductData.ProductId && x.IsDelete == false).FirstOrDefault();
+            if (productData == null)
+            {
+                Message = "Product " + AppConstant.NoDataFound;
+                return; // Return early if product data not found
+            }
 
-        //        await AddMaterialToOrder(materialData, estimateId,OrderId,Version);
+            TblOrderWindowProduct tblOrderWindowProduct = new TblOrderWindowProduct
+            {
+                OrderId = OrderId,
+                Version = Version,
+                WindowId = (Guid)windowProductData.WindowId,
+                ProductName = productData.ProductName,
+                Height = productData.Height,
+                Width = productData.Width,
+                AdditionalWidth = productData.AdditionalWidth,
+                Notes = productData.Notes,
+                IsDelete = false,
+                IsActive = true,
+                CreatedAt = DateTime.Now,
+                CreatedBy = AppConstant.LoggedInUserID,
+                ArchHeight = productData.ArchHeight,
+                Area = productData.Area,
+                Color = productData.Color,
+                EstimateId = estimateId,
+                Length = productData.Length,
+                Markup = productData.Markup,
+                ProductType = productData.ProductType,
+                TenantId = AppConstant.LoggedInTenantId,
+                ProductId = productData.ProductId,
+                EstimateWindowProductId = Guid.NewGuid(),
+                WindowProductId = windowProductData.WindowProductId
+            };
 
-        //    }
-        //}
+            await orderWindowProductService.Add(tblOrderWindowProduct);
+        }
 
-        //private async Task AddMaterialToOrder(TblRawMaterial materialData, Guid estimateId,Guid OrderId , string Version)
-        //{
-        //    FileLogger.Log($"Adding material {materialData.MaterialName} to order...");
-        //    TblOrderWindowProductComponentMaterial tblEstimateWindowProductComponentMaterial = new TblOrderWindowProductComponentMaterial
-        //    {
-        //        OrderId = OrderId,
-        //        Version = Version,
-        //        EstimateWindowProductComponentMaterialId = Guid.NewGuid(),
-        //        IsDelete = false,
-        //        IsActive = true,
-        //        CreatedAt = DateTime.Now,
-        //        CreatedBy = AppConstant.LoggedInUserID,
-        //        TenantId = AppConstant.LoggedInTenantId,
-        //        EstimateId = estimateId,
-        //        IsCutSheet = materialData.IsCutSheet,
-        //        MaterialName = materialData.MaterialName,
-        //        Notes = materialData.Notes,
-        //        ProductType = materialData.ProductType,
-        //        ReorderLevel = materialData.ReorderLevel,
-        //        Sku = materialData.Sku,
-        //        StockQuantity = materialData.StockQuantity,
-        //        UnitCost = materialData.UnitCost,
-        //        UnitOfMeasurement = materialData.UnitOfMeasurement,
-        //        VendorId = materialData.VendorId,
-        //        RawMaterialId = materialData.RawMaterialId,
-        //    };
+        private async Task AddComponentsToOrder(Guid productId, Guid estimateId, Guid OrderId, string Version)
+        {
+            FileLogger.Log($"Adding components for product {productId} to estimate...");
+            var productComponentData = (await productComponentService.GetAll()).Where(x => x.ProductId == productId && x.IsDelete == false).ToList();
+            if (productComponentData == null || productComponentData.Count == 0)
+            {
+                Message = "No Components " + AppConstant.NoDataFound;
+                return; // Return early if no components found
+            }
 
-        //    await orderWindowProductComponentMaterialService.Add(tblEstimateWindowProductComponentMaterial);
-        //}
+            foreach (var component in productComponentData)
+            {
+                var componentData = (await componentService.GetAll()).Where(x => x.ComponentId == component.ComponentId && x.IsDelete == false).FirstOrDefault();
+                if (componentData == null)
+                {
+                    Message = "Components " + AppConstant.NoDataFound;
+                    return; // Return early if component data not found
+                }
 
-        //private async Task AddComponentToOrderWindow(TblComponent componentData, Guid estimateId,Guid OrderId,string Version)
-        //{
-        //    FileLogger.Log($"Adding component {componentData.ComponentName} to estimate...");
-        //    TblOrderWindowProductComponent tblOrderWindowProductComponent = new TblOrderWindowProductComponent
-        //    {
-        //        OrderId = OrderId,
-        //        Version = Version,
-        //        EstimateWindowProductComponentId = Guid.NewGuid(),
-        //        ComponentId = componentData.ComponentId,
-        //        EstimateId = estimateId,
-        //        ComponentName = componentData.ComponentName,
-        //        IsDelete = false,
-        //        IsActive = true,
-        //        CreatedAt = DateTime.Now,
-        //        CreatedBy = AppConstant.LoggedInUserID,
-        //        MarkupPercentage = componentData.MarkupPercentage,
-        //        Notes = componentData.Notes,
-        //        ProductType = componentData.ProductType,
-        //        PricingExpression = componentData.PricingExpression,
-        //        TenantId = AppConstant.LoggedInTenantId,
-        //    };
+                await AddComponentToOrderWindow(componentData, estimateId, OrderId, Version);
+                await AddComponentMaterialsToOrder(componentData.ComponentId, estimateId, OrderId, Version);
+                if (!string.IsNullOrEmpty(Message))
+                {
+                    return;
+                }
+            }
+        }
 
-        //    await orderWindowProductComponentService.Add(tblOrderWindowProductComponent);
-        //}
+        private async Task AddComponentMaterialsToOrder(Guid componentId, Guid estimateId, Guid OrderId, string Version)
+        {
+            FileLogger.Log($"Adding materials for component {componentId} to estimate...");
+
+            var componentMaterialData = (await componentMaterialService.GetAll())
+    .Where(x => x.ComponentId == componentId && x.IsDelete == false)
+    .AsQueryable() 
+    .AsNoTracking()
+    .ToList();
+
+
+            if (componentMaterialData == null || componentMaterialData.Count == 0)
+            {
+                Message = "No material " + AppConstant.NoDataFound;
+                return;
+            }
+
+            foreach (var material in componentMaterialData)
+            {
+                var materialData = (await materialService.GetAll())
+    .AsQueryable() 
+    .Where(x => x.RawMaterialId == material.RawMaterialId && x.IsDelete == false)
+    .AsNoTracking()
+    .FirstOrDefault();
+
+
+                if (materialData == null)
+                {
+                    Message = "Material " + AppConstant.NoDataFound;
+                    return;
+                }
+
+                await AddMaterialToOrder(materialData, estimateId, OrderId, Version);
+            }
+        }
+
+
+        private async Task AddMaterialToOrder(TblRawMaterial materialData, Guid estimateId, Guid OrderId, string Version)
+        {
+            FileLogger.Log($"Adding material {materialData.MaterialName} to order...");
+            TblOrderWindowProductComponentMaterial tblEstimateWindowProductComponentMaterial = new TblOrderWindowProductComponentMaterial
+            {
+                OrderId = OrderId,
+                Version = Version,
+                EstimateWindowProductComponentMaterialId = Guid.NewGuid(),
+                IsDelete = false,
+                IsActive = true,
+                CreatedAt = DateTime.Now,
+                CreatedBy = AppConstant.LoggedInUserID,
+                TenantId = AppConstant.LoggedInTenantId,
+                EstimateId = estimateId,
+                IsCutSheet = materialData.IsCutSheet,
+                MaterialName = materialData.MaterialName,
+                Notes = materialData.Notes,
+                ProductType = materialData.ProductType,
+                ReorderLevel = materialData.ReorderLevel,
+                Sku = materialData.Sku,
+                StockQuantity = materialData.StockQuantity,
+                UnitCost = materialData.UnitCost,
+                UnitOfMeasurement = materialData.UnitOfMeasurement,
+                VendorId = materialData.VendorId,
+                RawMaterialId = materialData.RawMaterialId,
+            };
+
+            await orderWindowProductComponentMaterialService.Add(tblEstimateWindowProductComponentMaterial);
+        }
+
+        private async Task AddComponentToOrderWindow(TblComponent componentData, Guid estimateId, Guid OrderId, string Version)
+        {
+            FileLogger.Log($"Adding component {componentData.ComponentName} to estimate...");
+            TblOrderWindowProductComponent tblOrderWindowProductComponent = new TblOrderWindowProductComponent
+            {
+                OrderId = OrderId,
+                Version = Version,
+                EstimateWindowProductComponentId = Guid.NewGuid(),
+                ComponentId = componentData.ComponentId,
+                EstimateId = estimateId,
+                ComponentName = componentData.ComponentName,
+                IsDelete = false,
+                IsActive = true,
+                CreatedAt = DateTime.Now,
+                CreatedBy = AppConstant.LoggedInUserID,
+                MarkupPercentage = componentData.MarkupPercentage,
+                Notes = componentData.Notes,
+                ProductType = componentData.ProductType,
+                PricingExpression = componentData.PricingExpression,
+                TenantId = AppConstant.LoggedInTenantId,
+            };
+
+            await orderWindowProductComponentService.Add(tblOrderWindowProductComponent);
+        }
 
         //public async Task<IResponseVm<string>> Update_Order(UpdateOrder model)
         //{
@@ -349,9 +385,9 @@ namespace ShutterManagement.Business.Services
         //        if (!isTenantExists)
         //        {
         //            responseVm.Message = AppConstant.TenantNotFound;
-        //            return responseVm; 
+        //            return responseVm;
         //        }
-        //        var existingOrder = await ValidateOrderExists((Guid)model.EstimationId, (Guid)model.JobId);
+        //        var existingOrder = await ValidateOrderExists((Guid)model.EstimationId);
 
         //        if (existingOrder == null)
         //        {
@@ -404,284 +440,284 @@ namespace ShutterManagement.Business.Services
         //{
         //    if (string.IsNullOrEmpty(currentVersion))
         //    {
-        //        return "v1"; 
+        //        return "v1";
         //    }
         //    int versionNumber = int.Parse(currentVersion.TrimStart('v'));
         //    versionNumber++;
         //    return "v" + versionNumber.ToString();
         //}
 
-        //private async Task<TblOrder> CreateOrderRecord(CreateOrder model)
+        //private async Task<TblOrder> CreateOrderRecord(EstimateDetails estimatedetails)
         //{
         //    FileLogger.Log("Creating new Order...");
-        //    TblOrder createEstimate = new TblOrder
+        //    TblOrder createOrder = new TblOrder
         //    {
         //        OrderId = Guid.NewGuid(),
         //        Version = "v1",
-        //        EstimateId = (Guid)model.EstimationId,
-        //        EstimateName = model.EstimateName,
-        //        EstimateCode = model.EstimateCode,
-        //        Notes = model.Notes,
-        //        DiscountAmount = model.Discount,
-        //        DiscountCoupon = model.DiscountCoupon,
-        //        GrandTotal = model.GrandTotal,
-        //        JobId = model.JobId,
-        //        TaxAmount = model.Tax,
-        //        TermsCondition = model.TermsCondition,
+        //        EstimateId = estimatedetails.EstimateId,
+        //        EstimateName = estimatedetails.EstimateName,
+        //        EstimateCode = estimatedetails.EstimateCode,
+        //        Notes = estimatedetails.Notes,
+        //        DiscountAmount = estimatedetails.DiscountAmount,
+        //        DiscountCoupon = estimatedetails.DiscountCoupon,
+        //        GrandTotal = estimatedetails.GrandTotal,
+        //        JobId = estimatedetails.JobId,
+        //        TaxAmount = estimatedetails.TaxAmount,
+        //        TermsCondition = estimatedetails.TermsCondition,
         //        CreatedBy = AppConstant.LoggedInUserID,
         //        CreatedAt = DateTime.Now,
         //        TenantId = AppConstant.LoggedInTenantId,
         //        IsActive = true,
         //        IsDelete = false,
-        //        TotalPrice = model.SubTotal,
+        //        TotalPrice = estimatedetails.TotalPrice,
         //        Status = EnumValue.GetEnumValue(Estimation.New),
         //    };
 
-        //    var res = await Add(createEstimate);
+        //    var res = await Add(createOrder); 
         //    return res;
         //}
 
-        //private async Task<bool> ValidateTenantExists()
+        private async Task<bool> ValidateTenantExists()
+        {
+            FileLogger.Log($"Checking if tenant with ID {AppConstant.LoggedInTenantId} exists...");
+            var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+            if (!isTenantExists)
+            {
+                FileLogger.Log("Tenant not found.");
+            }
+            return isTenantExists;
+        }
+
+        private async Task<bool> ValidateOrderExists(Guid estimateId)
+        {
+            FileLogger.Log($"Checking if Order with this estimation {estimateId} already exists...");
+            var isOrderExist = (await GetAll())
+                .Where(c => c.EstimateId == estimateId && c.TenantId == AppConstant.LoggedInTenantId && c.IsDelete == false)
+                .ToList();
+            if (isOrderExist.Count > 0)
+            {
+                FileLogger.Log($"Order with this estimation {estimateId} already exists.");
+                return true;
+            }
+            return false;
+        }
+
+
+        //public async Task<EstimateDetails> GetEstimateDetails(Guid EstimateId)
         //{
-        //    FileLogger.Log($"Checking if tenant with ID {AppConstant.LoggedInTenantId} exists...");
-        //    var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
-        //    if (!isTenantExists)
-        //    {
-        //        FileLogger.Log("Tenant not found.");
-        //    }
-        //    return isTenantExists;
+        //    var orderDetails = await (from t1 in context.TblEstimates
+        //                              join t2 in context.TblEstimateWindows on t1.EstimateId equals t2.EstimateId
+        //                              join t3 in context.TblEstimateWindowProducts on t1.EstimateId equals t3.EstimateId
+        //                              join t4 in context.TblEstimateWindowProductComponents on t1.EstimateId equals t4.EstimateId
+        //                              join t5 in context.TblEstimateWindowProductComponentMaterials on t1.EstimateId equals t5.EstimateId
+        //                              where t1.EstimateId == EstimateId && t1.TenantId == AppConstant.LoggedInTenantId && t1.IsDelete == false
+        //                              select new EstimateDetails
+        //                              {
+        //                                  EstimateId = t1.EstimateId,
+        //                                  JobId = t1.JobId,
+        //                                  EstimateName = t1.EstimateName,
+        //                                  EstimateCode = t1.EstimateCode,
+        //                                  TotalPrice = t1.TotalPrice,
+        //                                  DiscountAmount = t1.DiscountAmount,
+        //                                  TaxAmount = t1.TaxAmount,
+        //                                  GrandTotal = t1.GrandTotal,
+        //                                  Status = t1.Status,
+        //                                  TermsCondition = t1.TermsCondition,
+        //                                  Notes = t1.Notes,
+        //                                  DiscountCoupon = t1.DiscountCoupon,
+        //                                  EstWindowId = t2.EstWindowId,
+        //                                  AddressId = t2.AddressId,
+        //                                  Label = t2.Label,
+        //                                  Width = t2.Width,
+        //                                  Height = t2.Height,
+        //                                  ArchHeight = t2.ArchHeight,
+        //                                  Photo = t2.Photo,
+        //                                  OWNotes = t2.Notes,
+        //                                  WindowNotes = t2.Notes,
+        //                                  Quantity = t2.Quantity,
+        //                                  WindowId = t2.WindowId,
+        //                                  EstWindowProductId = t3.EstimateWindowProductId,
+        //                                  ProductId = t3.ProductId,
+        //                                  ProductName = t3.ProductName,
+        //                                  ProductType = t3.ProductType,
+        //                                  WPWidth = t3.Width,
+        //                                  WPHeight = t3.Height,
+        //                                  Length = t3.Length,
+        //                                  Area = t3.Area,
+        //                                  AdditionalWidth = t3.AdditionalWidth,
+        //                                  WPArchHeight = t3.ArchHeight,
+        //                                  Color = t3.Color,
+        //                                  WPNotes = t3.Notes,
+        //                                  Markup = t3.Markup,
+        //                                  WindowProductId = t3.WindowProductId,
+        //                                  EstWindowProductComponent = t4.EstimateWindowProductComponentId,
+        //                                  ComponentId = t4.ComponentId,
+        //                                  ComponentName = t4.ComponentName,
+        //                                  WCProductType = t4.ProductType,
+        //                                  MarkupPercentage = t4.MarkupPercentage,
+        //                                  PricingExpression = t4.PricingExpression,
+        //                                  WCNotes = t4.Notes,
+        //                                  EstWindowProductComponentMaterialId = t5.EstimateWindowProductComponentMaterialId,
+        //                                  RawMaterialId = t5.RawMaterialId,
+        //                                  MaterialName = t5.MaterialName,
+        //                                  UnitCost = t5.UnitCost,
+        //                                  UnitofMeasurement = t5.UnitOfMeasurement,
+        //                                  StockQuantity = t5.StockQuantity,
+        //                                  ReOrderlevel = t5.ReorderLevel,
+        //                                  VendorId = t5.VendorId,
+        //                                  WRNotes = t5.Notes,
+        //                                  SKU = t5.Sku,
+        //                                  IsCutSheet = t5.IsCutSheet,
+        //                                  WRProductType = t5.ProductType
+        //                              }).FirstOrDefaultAsync();
+
+        //    return orderDetails;
         //}
 
-        //private async Task<bool> ValidateOrderExists(Guid estimateId, Guid jobId)
+        //public async Task<IResponseVm<string>> Create_Order(Guid EstimateId)
         //{
-        //    FileLogger.Log($"Checking if Order with this estimation {estimateId} already exists...");
-        //    var isOrderExist = (await GetAll())
-        //        .Where(c => c.EstimateId == estimateId && c.TenantId == AppConstant.LoggedInTenantId && c.IsDelete == false && c.JobId == jobId)
-        //        .ToList();
-        //    if (isOrderExist.Count > 0)
+        //    IResponseVm<string> responseVm = new ResponseVm<string>();
+        //    try
         //    {
-        //        FileLogger.Log($"Order with this estimation {estimateId} already exists.");
-        //        return true;
+        //        var Estimatedetails = await GetEstimateDetails(EstimateId);
+
+        //        if (Estimatedetails != null)
+        //        {
+        //            TblOrder order = new TblOrder
+        //            {
+        //                OrderId = Guid.NewGuid(),
+        //                Version = "v1",
+        //                EstimateId = EstimateId,
+        //                JobId = Estimatedetails.JobId,
+        //                EstimateName = Estimatedetails.EstimateName,
+        //                EstimateCode = Estimatedetails.EstimateCode,
+        //                TotalPrice = Estimatedetails.TotalPrice,
+        //                DiscountAmount = Estimatedetails.DiscountAmount,
+        //                TaxAmount = Estimatedetails.TaxAmount,
+        //                GrandTotal = Estimatedetails.GrandTotal,
+        //                Status = Estimatedetails.Status,
+        //                CreatedAt = DateTime.Now,
+        //                IsActive = true,
+        //                IsDelete = false,
+        //                CreatedBy = AppConstant.LoggedInUserID,
+        //                TenantId = AppConstant.LoggedInTenantId,
+        //                Notes = Estimatedetails.Notes,
+        //                TermsCondition = Estimatedetails.TermsCondition,
+        //                DiscountCoupon = Estimatedetails.DiscountCoupon
+        //            };
+        //            var res = await Add(order);
+
+        //            TblOrderWindow orderWindow = new TblOrderWindow
+        //            {
+        //                OrderId = order.OrderId,
+        //                Version = order.Version,
+        //                EstWindowId = Estimatedetails.EstimateId,
+        //                EstimateId = Estimatedetails.EstimateId,
+        //                AddressId = Estimatedetails.AddressId,
+        //                Label = Estimatedetails.Label,
+        //                Width = Estimatedetails.Width,
+        //                Height = Estimatedetails.Height,
+        //                ArchHeight = Estimatedetails.ArchHeight,
+        //                Photo = Estimatedetails.Photo,
+        //                Notes = Estimatedetails.OWNotes,
+        //                CreatedAt = DateTime.Now,
+        //                CreatedBy = AppConstant.LoggedInUserID,
+        //                IsActive = true,
+        //                IsDelete = false,
+        //                TenantId = AppConstant.LoggedInTenantId,
+        //                Quantity = Estimatedetails.Quantity,
+        //                WindowId = Estimatedetails.WindowId
+        //            };
+
+        //            await orderWindowService.Add(orderWindow);
+
+        //            TblOrderWindowProduct orderWindowProduct = new TblOrderWindowProduct
+        //            {
+        //                OrderId = order.OrderId,
+        //                Version = order.Version,
+        //                EstimateWindowProductId = (Guid)Estimatedetails.EstWindowProductId,
+        //                EstimateId = Estimatedetails.EstimateId,
+        //                WindowId = (Guid)Estimatedetails.WindowId,
+        //                ProductId = (Guid)Estimatedetails.ProductId,
+        //                ProductName = Estimatedetails.ProductName,
+        //                ProductType = Estimatedetails.ProductType,
+        //                Width = Estimatedetails.WPWidth,
+        //                Height = Estimatedetails.WPHeight,
+        //                Length = Estimatedetails.Length,
+        //                Area = Estimatedetails.Area,
+        //                AdditionalWidth = Estimatedetails.AdditionalWidth,
+        //                ArchHeight = Estimatedetails.WPArchHeight,
+        //                Color = Estimatedetails.Color,
+        //                Notes = Estimatedetails.WPNotes,
+        //                Markup = Estimatedetails.Markup,
+        //                WindowProductId = Estimatedetails.WindowProductId,
+        //                CreatedAt = DateTime.Now,
+        //                CreatedBy = AppConstant.LoggedInUserID,
+        //                IsActive = true,
+        //                IsDelete = false,
+        //                TenantId = AppConstant.LoggedInTenantId
+        //            };
+
+        //            await orderWindowProductService.Add(orderWindowProduct);
+
+        //            TblOrderWindowProductComponent orderWindowProductComponent = new TblOrderWindowProductComponent
+        //            {
+        //                OrderId = order.OrderId,
+        //                Version = order.Version,
+        //                EstimateWindowProductComponentId = (Guid)Estimatedetails.EstWindowProductComponent,
+        //                EstimateId = Estimatedetails.EstimateId,
+        //                ComponentId = (Guid)Estimatedetails.ComponentId,
+        //                ComponentName = Estimatedetails.ComponentName,
+        //                ProductType = Estimatedetails.WCProductType,
+        //                MarkupPercentage = Estimatedetails.MarkupPercentage,
+        //                PricingExpression = Estimatedetails.PricingExpression,
+        //                Notes = Estimatedetails.WCNotes,
+        //                CreatedAt = DateTime.Now,
+        //                CreatedBy = AppConstant.LoggedInUserID,
+        //                IsActive = true,
+        //                IsDelete = false,
+        //                TenantId = AppConstant.LoggedInTenantId
+        //            };
+
+        //            await orderWindowProductComponentService.Add(orderWindowProductComponent);
+
+        //            TblOrderWindowProductComponentMaterial windowProductComponentMaterial = new TblOrderWindowProductComponentMaterial
+        //            {
+        //                OrderId = order.OrderId,
+        //                Version = order.Version,
+        //                EstimateWindowProductComponentMaterialId = (Guid)Estimatedetails.EstWindowProductComponentMaterialId,
+        //                EstimateId = Estimatedetails.EstimateId,
+        //                RawMaterialId = Estimatedetails.RawMaterialId,
+        //                MaterialName = Estimatedetails.MaterialName,
+        //                UnitCost = Estimatedetails.UnitCost,
+        //                UnitOfMeasurement = Estimatedetails.UnitofMeasurement,
+        //                StockQuantity = Estimatedetails.StockQuantity,
+        //                ReorderLevel = Estimatedetails.ReOrderlevel,
+        //                VendorId = Estimatedetails.VendorId,
+        //                Notes = Estimatedetails.WRNotes,
+        //                ProductType = Estimatedetails.WRProductType,
+        //                Sku = Estimatedetails.SKU,
+        //                IsCutSheet = Estimatedetails.IsCutSheet,
+        //                TenantId = AppConstant.LoggedInTenantId,
+        //                IsActive = true,
+        //                IsDelete = false,
+        //                CreatedAt = DateTime.Now,
+        //                CreatedBy = AppConstant.LoggedInUserID
+        //            };
+        //            await orderWindowProductComponentMaterialService.Add(windowProductComponentMaterial);
+
+        //            responseVm.IsSuccess = true;
+        //            responseVm.Message = AppConstant.InsertSuccessMsg;
+        //        }
+
         //    }
-        //    return false;
+        //    catch(Exception ex)
+        //    {
+        //        responseVm.Message = AppConstant.ExceptionError + ex.Message;
+        //    }
+        //    return responseVm;
+
         //}
-
-
-        public async Task<EstimateDetails> GetEstimateDetails(Guid EstimateId)
-        {
-            var orderDetails = await (from t1 in context.TblEstimates
-                                      join t2 in context.TblEstimateWindows on t1.EstimateId equals t2.EstimateId
-                                      join t3 in context.TblEstimateWindowProducts on t1.EstimateId equals t3.EstimateId
-                                      join t4 in context.TblEstimateWindowProductComponents on t1.EstimateId equals t4.EstimateId
-                                      join t5 in context.TblEstimateWindowProductComponentMaterials on t1.EstimateId equals t5.EstimateId
-                                      where t1.EstimateId == EstimateId && t1.TenantId == AppConstant.LoggedInTenantId && t1.IsDelete == false
-                                      select new EstimateDetails
-                                      {
-                                          EstimateId = t1.EstimateId,
-                                          JobId = t1.JobId,
-                                          EstimateName = t1.EstimateName,
-                                          EstimateCode = t1.EstimateCode,
-                                          TotalPrice = t1.TotalPrice,
-                                          DiscountAmount = t1.DiscountAmount,
-                                          TaxAmount = t1.TaxAmount,
-                                          GrandTotal = t1.GrandTotal,
-                                          Status = t1.Status,
-                                          TermsCondition = t1.TermsCondition,
-                                          Notes = t1.Notes,
-                                          DiscountCoupon = t1.DiscountCoupon,
-                                          EstWindowId = t2.EstWindowId,
-                                          AddressId = t2.AddressId,
-                                          Label = t2.Label,
-                                          Width = t2.Width,
-                                          Height = t2.Height,
-                                          ArchHeight = t2.ArchHeight,
-                                          Photo = t2.Photo,
-                                          OWNotes = t2.Notes,
-                                          WindowNotes = t2.Notes,
-                                          Quantity = t2.Quantity,
-                                          WindowId = t2.WindowId,
-                                          EstWindowProductId = t3.EstimateWindowProductId,
-                                          ProductId = t3.ProductId,
-                                          ProductName = t3.ProductName,
-                                          ProductType = t3.ProductType,
-                                          WPWidth = t3.Width,
-                                          WPHeight = t3.Height,
-                                          Length = t3.Length,
-                                          Area = t3.Area,
-                                          AdditionalWidth = t3.AdditionalWidth,
-                                          WPArchHeight = t3.ArchHeight,
-                                          Color = t3.Color,
-                                          WPNotes = t3.Notes,
-                                          Markup = t3.Markup,
-                                          WindowProductId = t3.WindowProductId,
-                                          EstWindowProductComponent = t4.EstimateWindowProductComponentId,
-                                          ComponentId = t4.ComponentId,
-                                          ComponentName = t4.ComponentName,
-                                          WCProductType = t4.ProductType,
-                                          MarkupPercentage = t4.MarkupPercentage,
-                                          PricingExpression = t4.PricingExpression,
-                                          WCNotes = t4.Notes,
-                                          EstWindowProductComponentMaterialId = t5.EstimateWindowProductComponentMaterialId,
-                                          RawMaterialId = t5.RawMaterialId,
-                                          MaterialName = t5.MaterialName,
-                                          UnitCost = t5.UnitCost,
-                                          UnitofMeasurement = t5.UnitOfMeasurement,
-                                          StockQuantity = t5.StockQuantity,
-                                          ReOrderlevel = t5.ReorderLevel,
-                                          VendorId = t5.VendorId,
-                                          WRNotes = t5.Notes,
-                                          SKU = t5.Sku,
-                                          IsCutSheet = t5.IsCutSheet,
-                                          WRProductType = t5.ProductType
-                                      }).FirstOrDefaultAsync();
-
-            return orderDetails;
-        }
-        
-        public async Task<IResponseVm<string>> Create_Order(Guid EstimateId)
-        {
-            IResponseVm<string> responseVm = new ResponseVm<string>();
-            try
-            {
-                var Estimatedetails = await GetEstimateDetails(EstimateId);
-
-                if (Estimatedetails != null)
-                {
-                    TblOrder order = new TblOrder
-                    {
-                        OrderId = Guid.NewGuid(),
-                        Version = "v1",
-                        EstimateId = EstimateId,
-                        JobId = Estimatedetails.JobId,
-                        EstimateName = Estimatedetails.EstimateName,
-                        EstimateCode = Estimatedetails.EstimateCode,
-                        TotalPrice = Estimatedetails.TotalPrice,
-                        DiscountAmount = Estimatedetails.DiscountAmount,
-                        TaxAmount = Estimatedetails.TaxAmount,
-                        GrandTotal = Estimatedetails.GrandTotal,
-                        Status = Estimatedetails.Status,
-                        CreatedAt = DateTime.Now,
-                        IsActive = true,
-                        IsDelete = false,
-                        CreatedBy = AppConstant.LoggedInUserID,
-                        TenantId = AppConstant.LoggedInTenantId,
-                        Notes = Estimatedetails.Notes,
-                        TermsCondition = Estimatedetails.TermsCondition,
-                        DiscountCoupon = Estimatedetails.DiscountCoupon
-                    };
-                    var res = await Add(order);
-
-                    TblOrderWindow orderWindow = new TblOrderWindow
-                    {
-                        OrderId = order.OrderId,
-                        Version = order.Version,
-                        EstWindowId = Estimatedetails.EstimateId,
-                        EstimateId = Estimatedetails.EstimateId,
-                        AddressId = Estimatedetails.AddressId,
-                        Label = Estimatedetails.Label,
-                        Width = Estimatedetails.Width,
-                        Height = Estimatedetails.Height,
-                        ArchHeight = Estimatedetails.ArchHeight,
-                        Photo = Estimatedetails.Photo,
-                        Notes = Estimatedetails.OWNotes,
-                        CreatedAt = DateTime.Now,
-                        CreatedBy = AppConstant.LoggedInUserID,
-                        IsActive = true,
-                        IsDelete = false,
-                        TenantId = AppConstant.LoggedInTenantId,
-                        Quantity = Estimatedetails.Quantity,
-                        WindowId = Estimatedetails.WindowId
-                    };
-
-                    await orderWindowService.Add(orderWindow);
-
-                    TblOrderWindowProduct orderWindowProduct = new TblOrderWindowProduct
-                    {
-                        OrderId = order.OrderId,
-                        Version = order.Version,
-                        EstimateWindowProductId = (Guid)Estimatedetails.EstWindowProductId,
-                        EstimateId = Estimatedetails.EstimateId,
-                        WindowId = (Guid)Estimatedetails.WindowId,
-                        ProductId = (Guid)Estimatedetails.ProductId,
-                        ProductName = Estimatedetails.ProductName,
-                        ProductType = Estimatedetails.ProductType,
-                        Width = Estimatedetails.WPWidth,
-                        Height = Estimatedetails.WPHeight,
-                        Length = Estimatedetails.Length,
-                        Area = Estimatedetails.Area,
-                        AdditionalWidth = Estimatedetails.AdditionalWidth,
-                        ArchHeight = Estimatedetails.WPArchHeight,
-                        Color = Estimatedetails.Color,
-                        Notes = Estimatedetails.WPNotes,
-                        Markup = Estimatedetails.Markup,
-                        WindowProductId = Estimatedetails.WindowProductId,
-                        CreatedAt = DateTime.Now,
-                        CreatedBy = AppConstant.LoggedInUserID,
-                        IsActive = true,
-                        IsDelete = false,
-                        TenantId = AppConstant.LoggedInTenantId
-                    };
-
-                    await orderWindowProductService.Add(orderWindowProduct);
-
-                    TblOrderWindowProductComponent orderWindowProductComponent = new TblOrderWindowProductComponent
-                    {
-                        OrderId = order.OrderId,
-                        Version = order.Version,
-                        EstimateWindowProductComponentId = (Guid)Estimatedetails.EstWindowProductComponent,
-                        EstimateId = Estimatedetails.EstimateId,
-                        ComponentId = (Guid)Estimatedetails.ComponentId,
-                        ComponentName = Estimatedetails.ComponentName,
-                        ProductType = Estimatedetails.WCProductType,
-                        MarkupPercentage = Estimatedetails.MarkupPercentage,
-                        PricingExpression = Estimatedetails.PricingExpression,
-                        Notes = Estimatedetails.WCNotes,
-                        CreatedAt = DateTime.Now,
-                        CreatedBy = AppConstant.LoggedInUserID,
-                        IsActive = true,
-                        IsDelete = false,
-                        TenantId = AppConstant.LoggedInTenantId
-                    };
-
-                    await orderWindowProductComponentService.Add(orderWindowProductComponent);
-
-                    TblOrderWindowProductComponentMaterial windowProductComponentMaterial = new TblOrderWindowProductComponentMaterial
-                    {
-                        OrderId = order.OrderId,
-                        Version = order.Version,
-                        EstimateWindowProductComponentMaterialId = (Guid)Estimatedetails.EstWindowProductComponentMaterialId,
-                        EstimateId = Estimatedetails.EstimateId,
-                        RawMaterialId = Estimatedetails.RawMaterialId,
-                        MaterialName = Estimatedetails.MaterialName,
-                        UnitCost = Estimatedetails.UnitCost,
-                        UnitOfMeasurement = Estimatedetails.UnitofMeasurement,
-                        StockQuantity = Estimatedetails.StockQuantity,
-                        ReorderLevel = Estimatedetails.ReOrderlevel,
-                        VendorId = Estimatedetails.VendorId,
-                        Notes = Estimatedetails.WRNotes,
-                        ProductType = Estimatedetails.WRProductType,
-                        Sku = Estimatedetails.SKU,
-                        IsCutSheet = Estimatedetails.IsCutSheet,
-                        TenantId = AppConstant.LoggedInTenantId,
-                        IsActive = true,
-                        IsDelete = false,
-                        CreatedAt = DateTime.Now,
-                        CreatedBy = AppConstant.LoggedInUserID
-                    };
-                    await orderWindowProductComponentMaterialService.Add(windowProductComponentMaterial);
-
-                    responseVm.IsSuccess = true;
-                    responseVm.Message = AppConstant.InsertSuccessMsg;
-                }
-
-            }
-            catch(Exception ex)
-            {
-                responseVm.Message = AppConstant.ExceptionError + ex.Message;
-            }
-            return responseVm;
-
-        }
 
     }
 }
