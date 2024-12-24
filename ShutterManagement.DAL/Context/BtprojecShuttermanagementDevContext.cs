@@ -686,6 +686,9 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
             entity.Property(e => e.IssueDate).HasColumnType("datetime");
+            entity.Property(e => e.Notes)
+                .HasMaxLength(255)
+                .IsUnicode(false);
             entity.Property(e => e.PaidAmount).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.Status)
                 .HasMaxLength(50)
@@ -872,6 +875,7 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.Property(e => e.EstimateName).HasMaxLength(200);
             entity.Property(e => e.GrandTotal).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.Notes).HasMaxLength(2000);
+            entity.Property(e => e.OrderName).HasMaxLength(100);
             entity.Property(e => e.Status)
                 .HasMaxLength(50)
                 .IsUnicode(false);
@@ -884,15 +888,16 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
 
         modelBuilder.Entity<TblOrderWindow>(entity =>
         {
-            entity.HasKey(e => e.OrderId).HasName("PK__TblOrder__C3905BCFDF2FE0BC");
+            entity.HasKey(e => e.Id).HasName("PK__TblOrder__3214EC0788683E67");
 
             entity.ToTable("TblOrderWindow", "dbo");
 
-            entity.Property(e => e.OrderId).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
             entity.Property(e => e.ArchHeight).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
             entity.Property(e => e.Height).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.Label).HasMaxLength(100);
+            entity.Property(e => e.OrderId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.Quantity).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
             entity.Property(e => e.Version).HasMaxLength(3);
@@ -901,11 +906,11 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
 
         modelBuilder.Entity<TblOrderWindowProduct>(entity =>
         {
-            entity.HasKey(e => e.OrderId).HasName("PK__TblOrder__C3905BCFC583A4EC");
+            entity.HasKey(e => e.Id).HasName("PK__TblOrder__3214EC07B1F4DD45");
 
             entity.ToTable("TblOrderWindowProduct", "dbo");
 
-            entity.Property(e => e.OrderId).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
             entity.Property(e => e.AdditionalWidth).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.ArchHeight).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.Area).HasColumnType("decimal(10, 2)");
@@ -914,6 +919,7 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.Property(e => e.Height).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.Length).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.Markup).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.OrderId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.ProductName).HasMaxLength(255);
             entity.Property(e => e.ProductType)
                 .HasMaxLength(50)
@@ -925,14 +931,15 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
 
         modelBuilder.Entity<TblOrderWindowProductComponent>(entity =>
         {
-            entity.HasKey(e => e.OrderId).HasName("PK__TblOrder__C3905BCFCFA6605C");
+            entity.HasKey(e => e.Id).HasName("PK__TblOrder__3214EC07A36606FD");
 
             entity.ToTable("TblOrderWindowProductComponent", "dbo");
 
-            entity.Property(e => e.OrderId).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
             entity.Property(e => e.ComponentName).HasMaxLength(255);
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
             entity.Property(e => e.MarkupPercentage).HasColumnType("decimal(5, 2)");
+            entity.Property(e => e.OrderId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.ProductType)
                 .HasMaxLength(50)
                 .IsUnicode(false);
@@ -942,13 +949,14 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
 
         modelBuilder.Entity<TblOrderWindowProductComponentMaterial>(entity =>
         {
-            entity.HasKey(e => e.OrderId).HasName("PK__TblOrder__C3905BCFBF5215B3");
+            entity.HasKey(e => e.Id).HasName("PK__TblOrder__3214EC07B02B36FA");
 
             entity.ToTable("TblOrderWindowProductComponentMaterial", "dbo");
 
-            entity.Property(e => e.OrderId).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
             entity.Property(e => e.MaterialName).HasMaxLength(255);
+            entity.Property(e => e.OrderId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.ReorderLevel).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.Sku)
                 .HasMaxLength(50)
@@ -979,6 +987,7 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.Property(e => e.PaymentMethod)
                 .HasMaxLength(50)
                 .IsUnicode(false);
+            entity.Property(e => e.TotalAmount).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.TransactionId).HasMaxLength(100);
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(getdate())")

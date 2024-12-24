@@ -27,5 +27,9 @@ public partial class TblPayment
 
     public bool? IsDelete { get; set; }
 
+    public decimal? TotalAmount { get; set; }
+
+    public Guid? ModifiedBy { get; set; }
+
     public virtual TblInvoice? Invoice { get; set; }
 }

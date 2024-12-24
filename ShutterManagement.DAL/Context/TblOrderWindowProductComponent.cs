@@ -38,4 +38,6 @@ public partial class TblOrderWindowProductComponent
     public bool? IsActive { get; set; }
 
     public bool? IsDelete { get; set; }
+
+    public Guid Id { get; set; }
 }

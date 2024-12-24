@@ -35,6 +35,8 @@ public partial class TblEstimateWindowProductComponent
 
     public bool? IsDelete { get; set; }
 
+    public Guid? ProductId { get; set; }
+
     public virtual TblEstimate Estimate { get; set; } = null!;
 
     public virtual TblTenant? Tenant { get; set; }

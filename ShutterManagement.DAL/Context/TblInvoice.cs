@@ -31,6 +31,14 @@ public partial class TblInvoice
 
     public bool? IsDelete { get; set; }
 
+    public string? Notes { get; set; }
+
+    public Guid? TenantId { get; set; }
+
+    public Guid? CreatedBy { get; set; }
+
+    public Guid? ModifiedBy { get; set; }
+
     public virtual TblJob? Job { get; set; }
 
     public virtual ICollection<TblPayment> TblPayments { get; set; } = new List<TblPayment>();

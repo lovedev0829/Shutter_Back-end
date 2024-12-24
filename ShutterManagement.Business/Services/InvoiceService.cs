@@ -1,0 +1,412 @@
+﻿using ShutterManagement.Business.Interfaces;
+using ShutterManagement.Core.SPModel;
+using ShutterManagement.Core;
+using ShutterManagement.Core.ViewModels;
+using ShutterManagement.Core.ViewModels.Request;
+using ShutterManagement.Core.ViewModels.Response;
+using ShutterManagement.DAL.Context;
+using ShutterManagement.Services;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace ShutterManagement.Business.Services
+{
+    public class InvoiceService : BaseRepository<BtprojecShuttermanagementDevContext, TblInvoice>, IInvoiceService
+    {
+        private readonly ITenantService tenantService;
+        private readonly IInvoicePaymentService invoicePaymentService;
+
+        public InvoiceService(ITenantService tenantService, IInvoicePaymentService invoicePaymentService)
+        {
+            this.tenantService = tenantService;
+            this.invoicePaymentService = invoicePaymentService;
+        }
+
+        public async Task<IResponseVm<string>> ActiveInActive(Guid InvoiceId)
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+
+            try
+            {
+                var isTenantValid = await tenantService.AnyAsync(x =>
+                    x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+
+                if (isTenantValid)
+                {
+                    var invoice = GetAllQuerable()
+                        .Where(c => c.InvoiceId == InvoiceId
+                                   && c.TenantId == AppConstant.LoggedInTenantId
+                                   && c.IsDelete == false)
+                        .FirstOrDefault();
+
+                    if (invoice != null)
+                    {
+                        invoice.IsActive = !invoice.IsActive;
+                        invoice.UpdatedAt = DateTime.Now;
+                        invoice.ModifiedBy = AppConstant.LoggedInUserID;
+
+                        var result = await Update(invoice);
+
+                        if (result != null)
+                        {
+                            var invoicePayments = invoicePaymentService.GetAllQuerable()
+                                .Where(x => x.InvoiceId == InvoiceId && x.IsDelete == false)
+                                .ToList();
+
+                            foreach (var payment in invoicePayments)
+                            {
+                                payment.UpdatedAt = DateTime.Now;
+                                payment.IsActive = invoice.IsActive;
+                                payment.ModifiedBy = AppConstant.LoggedInUserID;
+                                await invoicePaymentService.Update(payment);
+                            }
+
+                            responseVm.IsSuccess = true;
+                            responseVm.Message = AppConstant.UpdateSuccessMsg;
+                        }
+                        else
+                        {
+                            responseVm.IsSuccess = false;
+                            responseVm.Message = "Failed to update the invoice status.";
+                        }
+                    }
+                    else
+                    {
+                        responseVm.IsSuccess = false;
+                        responseVm.Message = AppConstant.NoDataFound;
+                    }
+                }
+                else
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = AppConstant.AccessDenied;
+                }
+            }
+            catch (Exception ex)
+            {
+                responseVm.IsSuccess = false;
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+            }
+
+            return responseVm;
+        }
+
+        public async Task<IResponseVm<string>> CreateInvoice(CreateInvoice model)
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+
+            try
+            {
+                var isTenantValid = await tenantService.AnyAsync(x =>
+                    x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+
+                if (!isTenantValid)
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = AppConstant.TenantNotFound;
+                    return responseVm;
+                }
+
+                TblInvoice tblInvoice = new TblInvoice
+                {
+                    InvoiceId = Guid.NewGuid(),
+                    JobId = model.JobId,
+                    InvoiceNumber = model.InvoiceNumber,
+                    IssueDate = model?.IssueDate,
+                    DueDate = model?.DueDate,
+                    Status = model?.Status,
+                    CreatedAt = DateTime.Now,
+                    TenantId=AppConstant.LoggedInTenantId,
+                    CreatedBy=AppConstant.LoggedInUserID,
+                    IsActive = true,
+                    IsDelete = false
+                };
+
+                var res = await Add(tblInvoice);
+                if (res == null || res.InvoiceId == Guid.Empty)
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = "Insert failed.";
+                    return responseVm;
+                }
+
+                foreach (var invoicePayment in model.InvoicePayment)
+                {
+                    if (invoicePayment.InvoiceAmount.HasValue && invoicePayment.TotalAmount.HasValue)
+                    {
+                        if (invoicePayment.InvoiceAmount.Value > invoicePayment.TotalAmount.Value)
+                        {
+                            responseVm.IsSuccess = false;
+                            responseVm.Message = "Invoice Amount cannot be greater than Total Amount.";
+                            return responseVm;
+                        }
+
+                        var tblInvoicePayment = new TblPayment
+                        {
+                            PaymentId = Guid.NewGuid(),
+                            InvoiceId = tblInvoice.InvoiceId,
+                            Notes = invoicePayment.Notes,
+                            Amount = invoicePayment.InvoiceAmount.Value,
+                            TotalAmount = invoicePayment.TotalAmount.Value,
+                            CreatedAt = DateTime.Now,
+                            IsActive = true,
+                            IsDelete = false
+                        };
+
+                        var paymentResult = await invoicePaymentService.Add(tblInvoicePayment);
+                        if (paymentResult == null || paymentResult.PaymentId == Guid.Empty)
+                        {
+                            responseVm.IsSuccess = false;
+                            responseVm.Message = "Insert Failed";
+                            return responseVm;
+                        }
+                    }
+                    else
+                    {
+                        responseVm.IsSuccess = false;
+                        responseVm.Message = "Invoice Payment values are invalid.";
+                        return responseVm;
+                    }
+                }
+
+                responseVm.IsSuccess = true;
+                responseVm.Message = AppConstant.InsertSuccessMsg;
+
+            }
+            catch (Exception ex)
+            {
+                responseVm.IsSuccess = false;
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+            }
+
+            return responseVm;
+        }
+
+        public async Task<IResponseVm<string>> DeleteInvoice(Guid InvoiceId)
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+
+            try
+            {
+                var isTenantValid = await tenantService.AnyAsync(x =>
+                    x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+
+                if (isTenantValid)
+                {
+                    var invoice = GetAllQuerable()
+                        .Where(c => c.InvoiceId == InvoiceId
+                                   && c.TenantId == AppConstant.LoggedInTenantId
+                                   && c.IsDelete == false)
+                        .FirstOrDefault();
+
+                    if (invoice != null)
+                    {
+                        invoice.IsDelete = !invoice.IsDelete;
+                        invoice.UpdatedAt = DateTime.Now;
+                        invoice.ModifiedBy = AppConstant.LoggedInUserID;
+
+                        var result = await Update(invoice);
+
+                        if (result != null)
+                        {
+                            var invoicePayments = invoicePaymentService.GetAllQuerable()
+                                .Where(x => x.InvoiceId == InvoiceId && x.IsDelete == false)
+                                .ToList();
+
+                            foreach (var payment in invoicePayments)
+                            {
+                                payment.UpdatedAt = DateTime.Now;
+                                payment.IsDelete = invoice.IsDelete;
+                                payment.ModifiedBy = AppConstant.LoggedInUserID;
+                                await invoicePaymentService.Update(payment);
+                            }
+
+                            responseVm.IsSuccess = true;
+                            responseVm.Message = AppConstant.UpdateSuccessMsg;
+                        }
+                        else
+                        {
+                            responseVm.IsSuccess = false;
+                            responseVm.Message = "Failed to update the invoice status.";
+                        }
+                    }
+                    else
+                    {
+                        responseVm.IsSuccess = false;
+                        responseVm.Message = AppConstant.NoDataFound;
+                    }
+                }
+                else
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = AppConstant.AccessDenied;
+                }
+            }
+            catch (Exception ex)
+            {
+                responseVm.IsSuccess = false;
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+            }
+
+            return responseVm;
+        }
+
+        public async Task<IResponseVm<List<InvoiceVM>>> GetAllInvoice(Pagination filter)
+        {
+            IResponseVm<List<InvoiceVM>> responseVm = new ResponseVm<List<InvoiceVM>>();
+
+            try
+            {
+                var isTenantValid = await tenantService.AnyAsync(x =>
+                    x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+
+                if (!isTenantValid)
+                {
+                    responseVm.Message = AppConstant.TenantNotFound;
+                    return responseVm;
+                }
+
+                var invoicesQuery = from i in dbContext.TblInvoices
+                                    where i.IsDelete == false
+                                    orderby i.CreatedAt descending
+                                    select new InvoiceVM
+                                    {
+                                        InvoiceId = i.InvoiceId,
+                                        InvoiceNumber = i.InvoiceNumber,
+                                        JobId = i.JobId,
+                                        IssueDate = i.IssueDate,
+                                        DueDate = i.DueDate,
+                                        Status = i.Status,
+                                        IsActive =i.IsActive,
+                                    };
+                filter.SearchValue = filter.SearchValue.Trim().ToLower();
+                var filteredInvoices = invoicesQuery
+                    .Where(x =>
+                        (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
+                        (string.IsNullOrEmpty(filter.SearchValue) ? true :
+                            (x.InvoiceNumber.Contains(filter.SearchValue.Trim())) ||
+                            (x.JobId.ToString() == filter.SearchValue.Trim()) ||
+                            (x.Status.Contains(filter.SearchValue.Trim()))))
+                    .ToList();
+
+                foreach (var invoice in filteredInvoices)
+                {
+                    invoice.InvoicePayments = dbContext.TblPayments
+                        .Where(p => p.InvoiceId == invoice.InvoiceId && p.IsDelete == false)
+                        .Select(p => new InvoicePaymentVM
+                        {
+                            InvoicePaymentId = p.PaymentId,
+                            InvoiceId = p.InvoiceId,
+                            InvoiceAmount = p.Amount,
+                            Notes = p.Notes,
+                            PaymentDate = p.CreatedAt,
+                            TotalAmount = p.TotalAmount
+                        })
+                        .OrderBy(p => p.PaymentDate) 
+                        .ToList();
+                }
+
+                var paginatedInvoices = filteredInvoices
+                    .Skip((filter.PageNo - 1) * filter.RecordPerPage)
+                    .Take(filter.RecordPerPage)
+                    .ToList();
+
+                responseVm.IsSuccess = true;
+                responseVm.Data = paginatedInvoices;
+                responseVm.TotalRecords = filteredInvoices.Count;
+                responseVm.Message = AppConstant.FetchSuccessMsg;
+            }
+            catch (Exception ex)
+            {
+                responseVm.IsSuccess = false;
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+            }
+
+            return responseVm;
+        }
+
+        public async Task<IResponseVm<string>> UpdateInvoice(UpdateInvoice updateInvoice)
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+
+            try
+            {
+                var isTenantValid = await tenantService.AnyAsync(x =>
+                    x.TenantId == AppConstant.LoggedInTenantId && x.IsActive==true && x.IsDelete==false);
+
+                if (!isTenantValid)
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = AppConstant.TenantNotFound;
+                    return responseVm;
+                }
+
+                var invoice = GetAllQuerable()
+                    .Where(c => c.InvoiceId == updateInvoice.InvoiceId
+                                && c.TenantId == AppConstant.LoggedInTenantId
+                                && c.IsDelete==false)
+                    .FirstOrDefault();
+
+                if (invoice == null)
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = AppConstant.NoDataFound;
+                    return responseVm;
+                }
+
+                invoice.InvoiceNumber = updateInvoice.InvoiceNumber?.Trim();
+                invoice.IssueDate = updateInvoice.IssueDate;
+                invoice.DueDate = updateInvoice.DueDate;
+                invoice.Status = updateInvoice.Status?.Trim();
+                invoice.UpdatedAt = DateTime.Now;
+                invoice.ModifiedBy = AppConstant.LoggedInUserID;
+
+                await Update(invoice);
+
+                var invoicePayments = invoicePaymentService.GetAllQuerable()
+                    .Where(x => x.InvoiceId == updateInvoice.InvoiceId && x.IsDelete == false)
+                    .ToList();
+
+                foreach (var payment in invoicePayments)
+                {
+                    payment.IsDelete = true;
+                    payment.IsActive = false;
+                    payment.UpdatedAt = DateTime.Now;
+                    payment.ModifiedBy = AppConstant.LoggedInUserID;
+                    await invoicePaymentService.Update(payment);
+                }
+
+                foreach (var newPayment in updateInvoice.InvoicePayment)
+                {
+                    var tblPayment = new TblPayment
+                    {
+                        PaymentId = Guid.NewGuid(),
+                        InvoiceId = updateInvoice.InvoiceId,
+                        Amount = newPayment.InvoiceAmount,
+                        TotalAmount = newPayment.TotalAmount,
+                        Notes = newPayment.Notes?.Trim(),
+                        CreatedAt = DateTime.Now,
+                        ModifiedBy = AppConstant.LoggedInUserID,
+                        IsActive = true,
+                        IsDelete = false
+                    };
+
+                    await invoicePaymentService.Add(tblPayment);
+                }
+
+                responseVm.IsSuccess = true;
+                responseVm.Message = AppConstant.UpdateSuccessMsg;
+            }
+            catch (Exception ex)
+            {
+                responseVm.IsSuccess = false;
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+            }
+
+            return responseVm;
+        }
+
+    }
+}
