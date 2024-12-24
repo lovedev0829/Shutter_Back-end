@@ -38,6 +38,16 @@ namespace ShutterManagement.Controllers
 
         }
 
+
+        [HttpPost("ViewHistory")]
+        [Authorize(Roles = "OrderView")]
+        public async Task<IActionResult> ViewHistory(Guid EstimationId)
+        {
+            var res = await orderService.ViewHistory(EstimationId);
+            return Ok(res);
+
+        }
+
         [HttpPost("Update")]
         [Authorize(Roles = "OrderEdit")]
         public async Task<IActionResult> Update([FromBody] UpdateOrder model)

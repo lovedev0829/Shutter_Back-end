@@ -92,10 +92,10 @@ namespace ShutterManagement.Business.Services
                 }
                 var OrderNumber =  GenerateUniqueId.GenerateUniqueIds(ModuleName.Order, AppConstant.LoggedInCompanyCode);
                 var version = GetAllQuerable()
-                  .Where(x => x.EstimateId == EstimateId && x.IsDelete == false)
-                  .Select(x => x.Version)
-                  .FirstOrDefault();
-
+                .Where(x => x.EstimateId == EstimateId && x.IsDelete == false && x.Status != EnumValue.GetEnumValue(Estimation.Approved))
+                .OrderByDescending(x => x.Status)  
+                .Select(x => x.Version)
+                .FirstOrDefault();
 
                 if (version != null)
                 {
@@ -142,7 +142,7 @@ namespace ShutterManagement.Business.Services
 
                 await Add(newOrder);
                 var windowProductIds = dbContext.TblEstimateWindowProducts
-           .Where(e => e.EstimateId == EstimateId)
+                 .Where(e => e.EstimateId == EstimateId)
            .Select(e => e.WindowProductId)
            .ToList();
 
@@ -634,8 +634,8 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.TenantNotFound;
                     return responseVm;
                 }
-                var isEstimationOrder = (await GetAll()).Where(c => c.EstimateId == model.EstimationId && c.TenantId == AppConstant.LoggedInTenantId
-              && c.IsDelete == false).ToList();
+                var isEstimationOrder = (await GetAll()).Where(c => c.EstimateId == model.EstimateId && c.TenantId == AppConstant.LoggedInTenantId
+              && c.IsDelete == false ).ToList();
                 if (isEstimationOrder != null)
                 {
                     var latestRecord = isEstimationOrder
@@ -667,7 +667,7 @@ namespace ShutterManagement.Business.Services
                         }
                         else
                         {
-                            await Create_Order_From_Estimate((Guid)model.EstimationId);
+                            await Create_Order_From_Estimate((Guid)model.EstimateId);
                             return responseVm;
                         }
                     }
@@ -675,7 +675,7 @@ namespace ShutterManagement.Business.Services
                 else
                 {
 
-                    await Create_Order_From_Estimate((Guid)model.EstimationId);
+                    await Create_Order_From_Estimate((Guid)model.EstimateId);
                     return responseVm;
                 }
                 
@@ -924,6 +924,77 @@ namespace ShutterManagement.Business.Services
             }
             return responseVm;
         }
+
+        public async Task<IResponseVm<dynamic>> ViewHistory(Guid EstimateId)
+        {
+            IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
+
+            try
+            {
+                Pagination pagination = new Pagination
+                {
+                    SearchValue = EstimateId.ToString() 
+                };
+
+                var allVersionsOrder = await GetAll_Order(pagination); 
+
+                if (allVersionsOrder != null)
+                {
+                    responseVm.IsSuccess = true;
+                    responseVm.Data = allVersionsOrder.Data; 
+                    responseVm.Message = "History fetched successfully.";
+                    responseVm.TotalRecords = allVersionsOrder.Data.Count;
+                }
+                else
+                {
+                    responseVm.Message = "No history found for the provided EstimateId.";
+                }
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Log($"Error fetching history for EstimateId: {EstimateId}. Error: {ex.Message}");
+                responseVm.Message = "An error occurred while fetching the history. Please try again later.";
+            }
+
+            return responseVm;
+        }
+
+        public async Task<IResponseVm<dynamic>> ViewOrder(Guid OrderId)
+        {
+            IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
+
+            try
+            {
+                Pagination pagination = new Pagination
+                {
+                    SearchValue = OrderId.ToString()
+                };
+
+                var allVersionsOrder = await GetAll_Order(pagination);
+
+                if (allVersionsOrder != null)
+                {
+                    responseVm.IsSuccess = true;
+                    responseVm.Data = allVersionsOrder.Data;
+                    responseVm.Message = "History fetched successfully.";
+                    responseVm.TotalRecords = allVersionsOrder.Data.Count;
+                }
+                else
+                {
+                    responseVm.Message = "No history found for the provided EstimateId.";
+                }
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Log($"Error fetching history for EstimateId: {OrderId}. Error: {ex.Message}");
+                responseVm.Message = "An error occurred while fetching the history. Please try again later.";
+            }
+
+            return responseVm;
+        }
+
+
+
     }
 }
 
