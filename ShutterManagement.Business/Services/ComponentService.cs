@@ -299,33 +299,26 @@ namespace ShutterManagement.Business.Services
 
                 if (isTenantValid)
                 {
-                    var componentList = (
-      from c in dbContext.TblComponents.OrderByDescending(x => x.CreatedAt)
-      join pt in dbContext.MstProductTypes on Guid.Parse(c.ProductType) equals pt.ProductId
-      where c.IsDelete == false && c.TenantId == AppConstant.LoggedInTenantId
-      select new ComponentListVm
-      {
-          ComponentId = c.ComponentId,
-          ComponentName = c.ComponentName,
-          IsActive = c.IsActive,
-          MarkupPercentage = c.MarkupPercentage,
-          Notes = c.Notes,
-          PricingExpression = c.PricingExpression,
-         
-          ExpressionFormulae = dbContext.TblExpressions
-              .Where(x => x.Id == Guid.Parse(c.PricingExpression) && x.IsDelete == false)
-              .Select(x => x.ExpressionFormulae)
-              .FirstOrDefault(),
-          ExpressionName = dbContext.TblExpressions
-              .Where(x => x.Id == Guid.Parse(c.PricingExpression) && x.IsDelete == false)
-              .Select(x => x.ExpressionName)
-              .FirstOrDefault(),
-          ProductType = pt.ProductId.ToString().ToLower(),
-          ProductTypeName = pt.ProductName,
-          TenantId = c.TenantId,
-      }).ToList();
-
-                    foreach (var item in componentList)
+       
+                    var componentList = (from c in dbContext.TblComponents.OrderByDescending(x=>x.CreatedAt)
+                                         join pt in dbContext.MstProductTypes on c.ProductType equals pt.ProductId.ToString()
+                                         join exp in dbContext.TblExpressions on c.PricingExpression equals exp.Id.ToString()
+                                         where c.IsDelete == false && c.TenantId == AppConstant.LoggedInTenantId
+                                         select new ComponentListVm
+                                         {
+                                             ComponentId = c.ComponentId,
+                                             ComponentName = c.ComponentName,
+                                             IsActive = c.IsActive,
+                                             MarkupPercentage = c.MarkupPercentage,
+                                             Notes = c.Notes,
+                                             PricingExpression = c.PricingExpression,
+                                             ExpressionName = exp.ExpressionName,
+                                             ExpressionFormulae = exp.ExpressionFormulae,
+                                             ProductType = pt.ProductId.ToString().ToLower(),
+                                             ProductTypeName = pt.ProductName,
+                                             TenantId = c.TenantId,
+                                         }).ToList();
+                    foreach(var item in componentList)
                     {
                         var ComponentMaterial = (from cm in dbContext.TblComponentMaterials.OrderByDescending(x => x.CreatedAt)
                                                  join m in dbContext.TblRawMaterials on cm.RawMaterialId equals m.RawMaterialId

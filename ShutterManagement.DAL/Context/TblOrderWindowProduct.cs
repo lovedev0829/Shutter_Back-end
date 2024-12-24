@@ -54,4 +54,6 @@ public partial class TblOrderWindowProduct
     public Guid? TenantId { get; set; }
 
     public Guid? WindowProductId { get; set; }
+
+    public Guid Id { get; set; }
 }

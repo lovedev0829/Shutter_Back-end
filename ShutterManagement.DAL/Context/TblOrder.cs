@@ -46,4 +46,6 @@ public partial class TblOrder
     public string? TermsCondition { get; set; }
 
     public string? DiscountCoupon { get; set; }
+
+    public string? OrderName { get; set; }
 }
