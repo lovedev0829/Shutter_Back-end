@@ -21,7 +21,7 @@ namespace ShutterManagement.Controllers
       
 
         [HttpPost("Create")]
-       // [Authorize(Roles = "OrderAdd")]
+        [Authorize(Roles = "OrderAdd")]
         public async Task<IActionResult> Create(Guid EstimateId)
         {
 
@@ -30,7 +30,7 @@ namespace ShutterManagement.Controllers
         }
 
         [HttpPost("GetAll")]
-       // [Authorize(Roles = "EstimateView")]
+        [Authorize(Roles = "OrderView")]
         public async Task<IActionResult> GetAllOrders(Pagination filter)
         {
             var res = await orderService.GetAll_Order(filter);
@@ -39,7 +39,7 @@ namespace ShutterManagement.Controllers
         }
 
         [HttpPost("Update")]
-        //[Authorize(Roles = "OrderEdit")]
+        [Authorize(Roles = "OrderEdit")]
         public async Task<IActionResult> Update([FromBody] UpdateOrder model)
         {
 
@@ -48,7 +48,7 @@ namespace ShutterManagement.Controllers
         }
 
         [HttpPost("ActiveInactive")]
-      //  [Authorize(Roles = "EstimateEdit")]
+        [Authorize(Roles = "OrderEdit")]
         public async Task<IActionResult> ActiveInActiveOrder(string OrderId)
         {
             Guid guid = Guid.Parse(OrderId);
@@ -57,7 +57,7 @@ namespace ShutterManagement.Controllers
         }
 
         [HttpPost("Delete")]
-       // [Authorize(Roles = "EstimateDelete")]
+        [Authorize(Roles = "OrderDelete")]
         public async Task<IActionResult> DeleteOrder(string OrderId)
         {
             Guid guid = Guid.Parse(OrderId);
@@ -67,7 +67,7 @@ namespace ShutterManagement.Controllers
         }
 
         [HttpPost("SendForApproval")]
-      //  [Authorize(Roles = "EstimateEdit")]
+        [Authorize(Roles = "OrderEdit")]
         public async Task<IActionResult> SendForApproval(Guid OrderId)
         {
             var res = await orderService.SendForApproval(OrderId);
