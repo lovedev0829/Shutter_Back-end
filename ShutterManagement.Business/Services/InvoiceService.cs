@@ -295,7 +295,8 @@ namespace ShutterManagement.Business.Services
                             InvoiceId = p.InvoiceId,
                             InvoiceAmount = p.Amount,
                             Notes = p.Notes,
-                            PaymentDate = p.CreatedAt
+                            PaymentDate = p.CreatedAt,
+                            IsActive=p.IsActive
                         })
                         .OrderBy(p => p.PaymentDate) 
                         .ToList();
