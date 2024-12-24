@@ -31,8 +31,6 @@ namespace ShutterManagement.Core.ViewModels.Response
 
         public DateTime? PaymentDate { get; set; }
 
-        public string? PaymentStatus { get; set; }
-
         public bool? IsActive { get; set; }
     }
 }
