@@ -64,7 +64,7 @@ namespace ShutterManagement.Business.Services
                         ComponentId = Guid.NewGuid(),
                         ComponentName = model.ComponentName.Trim(),
                         ProductType = model.ProductType,
-                        PricingExpression = model.ExpressionId.ToString(),
+                        PricingExpression = model.PricingExpression,
                         MarkupPercentage = model.MarkupPercentage,
                         Notes = model.Notes,
                         CreatedAt = DateTime.Now,
@@ -141,7 +141,7 @@ namespace ShutterManagement.Business.Services
                     {
                         IsComponentExists.ComponentName = model.ComponentName?.Trim();
                         IsComponentExists.ProductType = model.ProductType;
-                        IsComponentExists.PricingExpression = model.ExpressionId.ToString();
+                        IsComponentExists.PricingExpression = model.PricingExpression;
                         IsComponentExists.MarkupPercentage = model.MarkupPercentage;
                         IsComponentExists.Notes = model.Notes;
                         IsComponentExists.UpdatedAt = DateTime.Now;
