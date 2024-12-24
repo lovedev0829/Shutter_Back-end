@@ -19,6 +19,7 @@ using System.Data.Entity;
 using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json.Linq;
 using System.Text.RegularExpressions;
+using System.Linq.Expressions;
 
 namespace ShutterManagement.Business.Services
 {
@@ -129,7 +130,7 @@ namespace ShutterManagement.Business.Services
         //                TenantId = AppConstant.LoggedInTenantId,
         //                IsActive = true,
         //                IsDelete = false,
-        //                TotalPrice = model.SubTotal,
+        //                TotalPrice = model.TotalPrice,
         //                Status = EnumValue.GetEnumValue(Estimation.New),
         //            };
         //            var res = await Add(CreateEstimate);
@@ -332,7 +333,7 @@ namespace ShutterManagement.Business.Services
         //                Estimate.GrandTotal = model.GrandTotal;
         //                Estimate.JobId = model.JobId;
         //                Estimate.TaxAmount = model.Tax;
-        //                Estimate.TotalPrice = model.SubTotal;
+        //                Estimate.TotalPrice = model.TotalPrice;
         //                Estimate.TermsCondition = model.TermsCondition;
         //                Estimate.ModifiedBy = AppConstant.LoggedInUserID;
         //                Estimate.UpdatedAt = DateTime.Now;
@@ -771,6 +772,9 @@ namespace ShutterManagement.Business.Services
                         responseVm.Message = Message;
                         return responseVm;
                     }
+                    var TotalPrice = await CalculateEstimate(createEstimate.EstimateId);
+                    createEstimate.TotalPrice = TotalPrice;
+                    await Update(createEstimate);
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.InsertSuccessMsg;
                     FileLogger.Log("Estimate created and all related data added successfully.");
@@ -790,6 +794,44 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
+
+        private async Task<decimal> CalculateEstimate(Guid EstimateId)
+        {
+            decimal finalSubTotal = 0.00M;
+            var d = (from te in dbContext.TblEstimates
+                     join tew in dbContext.TblEstimateWindows on te.EstimateId equals tew.EstimateId
+                     join tewp in dbContext.TblEstimateWindowProducts on tew.WindowId equals tewp.WindowId
+                     join tewpc in dbContext.TblEstimateWindowProductComponents on tewp.ProductId equals tewpc.ProductId
+                     join mt in dbContext.TblExpressions on tewpc.PricingExpression equals mt.Id.ToString()
+                     join tewpcm in dbContext.TblEstimateWindowProductComponentMaterials on tewpc.ComponentId equals tewpcm.ComponentId
+                     where te.EstimateId == EstimateId && (bool)te.IsActive && (bool)tew.IsActive && (bool)tewp.IsActive
+                     && (bool)tewpc.IsActive && (bool)mt.IsActive && (bool)tewpcm.IsActive
+                     select new {te,tew,tewp,tewpc,mt,tewpcm}).ToList();
+            foreach(var item in d)
+            {
+                var exp = item.mt.ExpressionFormulae;
+                Dictionary<string,decimal> placeholders = new Dictionary<string, decimal>{ };
+                string pattern = @"{{[a-zA-Z]+}}";
+                var matches = Regex.Matches(exp ?? "", pattern);
+                if(matches != null && matches.Count() > 0)
+                {
+                    foreach(Match match in matches)
+                    {
+
+                        var val = GetProperty.GetColumnValue(item.tewp,match.Value);
+                        if (val == null)
+                        {
+                            //val = item.tewpc.ComponentName.Contains(match.Value) ? item.tewp
+                        }
+                        placeholders.Add(match.Value, Convert.ToDecimal(val));
+                        exp?.Replace(match.Value, Convert.ToDecimal(val).ToString());
+                    }
+                }
+                var res = GetProperty.EvaluateExpression(exp);
+                finalSubTotal += res;
+            }
+            return finalSubTotal;
+        }
 
         public async Task<IResponseVm<string>> Update_Estimate(UpdatetEstimate model)
         {
@@ -985,6 +1027,7 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
+       
         #region private methods
 
 
@@ -1162,6 +1205,7 @@ namespace ShutterManagement.Business.Services
             }
             AddJobDetails(e);
         }
+
         private async Task<bool> ValidateTenantExists()
         {
             FileLogger.Log($"Checking if tenant with ID {AppConstant.LoggedInTenantId} exists...");
@@ -1260,20 +1304,6 @@ namespace ShutterManagement.Business.Services
             return res;
         }
 
-        private async Task CalculatePrice()
-        {
-            List<string> expressionsPlaceholder = new List<string>();
-            if (expressionList != null && expressionList.Count > 0)
-            {
-                var expression = (await expressionService.GetAll()).Where(x => x.IsActive == true && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId &&
-                expressionList.Contains(x.Id)).ToList();
-                if(expression != null && expression.Count > 0)
-                {
-                    string pattern = @"{{[a-zA-Z]+}}";
-                    var matches = Regex.Matches(string.Join(",",expression.Select(x=>x.ExpressionFormulae).ToArray()), pattern);
-                }
-            }
-        }
         private async Task ProcessWindowProducts(List<Guid> windowProductIds, Guid estimateId)
         {
             FileLogger.Log("Processing window products...");
@@ -1387,8 +1417,8 @@ namespace ShutterManagement.Business.Services
                     Message = "Components " + AppConstant.NoDataFound;
                     return; // Return early if component data not found
                 }
-                expressionList.Add(Guid.Parse(componentData.PricingExpression ?? ""));
-                await AddComponentToEstimateWindow(componentData, estimateId);
+                //expressionList.Add(Guid.Parse(componentData.PricingExpression ?? ""));
+                await AddComponentToEstimateWindow(componentData, (Guid)component.ProductId, estimateId);
                 await AddComponentMaterialsToEstimate(componentData.ComponentId, estimateId);
                 if (!string.IsNullOrEmpty(Message))
                 {
@@ -1397,12 +1427,13 @@ namespace ShutterManagement.Business.Services
             }
         }
 
-        private async Task AddComponentToEstimateWindow(TblComponent componentData, Guid estimateId)
+        private async Task AddComponentToEstimateWindow(TblComponent componentData,Guid ProductId, Guid estimateId)
         {
             FileLogger.Log($"Adding component {componentData.ComponentName} to estimate...");
             TblEstimateWindowProductComponent tblEstimateWindowProductComponent = new TblEstimateWindowProductComponent
             {
                 EstimateWindowProductComponentId = Guid.NewGuid(),
+                ProductId = ProductId,
                 ComponentId = componentData.ComponentId,
                 EstimateId = estimateId,
                 ComponentName = componentData.ComponentName,
@@ -1439,17 +1470,18 @@ namespace ShutterManagement.Business.Services
                     return; // Return early if material data not found
                 }
 
-                await AddMaterialToEstimate(materialData, estimateId);
+                await AddMaterialToEstimate(materialData, (Guid)material.ComponentId, estimateId);
 
             }
         }
 
-        private async Task AddMaterialToEstimate(TblRawMaterial materialData, Guid estimateId)
+        private async Task AddMaterialToEstimate(TblRawMaterial materialData,Guid ComponentId, Guid estimateId)
         {
             FileLogger.Log($"Adding material {materialData.MaterialName} to estimate...");
             TblEstimateWindowProductComponentMaterial tblEstimateWindowProductComponentMaterial = new TblEstimateWindowProductComponentMaterial
             {
                 EstimateWindowProductComponentMaterialId = Guid.NewGuid(),
+                ComponentId = ComponentId,
                 IsDelete = false,
                 IsActive = true,
                 CreatedAt = DateTime.Now,
