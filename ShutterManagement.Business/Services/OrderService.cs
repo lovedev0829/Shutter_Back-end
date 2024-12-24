@@ -34,6 +34,9 @@ namespace ShutterManagement.Business.Services
         private readonly IOrderWindowProductComponentMaterialService orderWindowProductComponentMaterialService;
         private readonly IEstimateService estimateService;
         private readonly BtprojecShuttermanagementDevContext context;
+        private readonly IWindowOptionService windowOptionService;
+        private readonly IOptionsTypeService optionsTypeService;
+        private readonly IMstProductType productType;
         private string Message = "";
         public OrderService(ITenantService tenantService, IWindowProductService windowProductService,
              IWindowService windowService, IComponentMaterial componentMaterialService,
@@ -42,7 +45,8 @@ namespace ShutterManagement.Business.Services
              IProductComponentService productComponentService, IComponentService componentService,
              IOrderWindowProductComponentService orderWindowProductComponentService,
              IOrderWindowProductComponentMaterialService orderWindowProductComponentMaterialService,
-             IEstimateService estimateService,BtprojecShuttermanagementDevContext context)
+             IEstimateService estimateService,BtprojecShuttermanagementDevContext context,
+             IWindowOptionService windowOptionService,IOptionsTypeService optionsTypeService,IMstProductType productType )
         {
             this.tenantService = tenantService;
             this.windowProductService = windowProductService;
@@ -58,6 +62,9 @@ namespace ShutterManagement.Business.Services
             this.orderWindowProductComponentMaterialService = orderWindowProductComponentMaterialService;
             this.estimateService = estimateService;
             this.context = context;
+            this.windowOptionService = windowOptionService;
+            this.optionsTypeService = optionsTypeService;
+            this.productType = productType;
         }
 
 
@@ -78,8 +85,8 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = "Estimate " + AppConstant.NoDataFound;
                     return responseVm;
                 }
+                var OrderNumber =  GenerateUniqueId.GenerateUniqueIds(ModuleName.Order, AppConstant.LoggedInCompanyCode);
 
-              
                 TblOrder newOrder = new TblOrder
                 {
                     OrderId = Guid.NewGuid(), 
@@ -98,6 +105,7 @@ namespace ShutterManagement.Business.Services
                     CreatedAt = DateTime.Now,
                     UpdatedAt = DateTime.Now,
                     Version = "1",  
+                    OrderName = OrderNumber,
                     IsActive = true,
                     IsDelete = false,
                     CreatedBy = AppConstant.LoggedInUserID,
@@ -287,10 +295,10 @@ namespace ShutterManagement.Business.Services
             FileLogger.Log($"Adding materials for component {componentId} to estimate...");
 
             var componentMaterialData = (await componentMaterialService.GetAll())
-    .Where(x => x.ComponentId == componentId && x.IsDelete == false)
-    .AsQueryable() 
-    .AsNoTracking()
-    .ToList();
+             .Where(x => x.ComponentId == componentId && x.IsDelete == false)
+              .AsQueryable() 
+              .AsNoTracking()
+              .ToList();
 
 
             if (componentMaterialData == null || componentMaterialData.Count == 0)
@@ -301,11 +309,11 @@ namespace ShutterManagement.Business.Services
 
             foreach (var material in componentMaterialData)
             {
-                var materialData = (await materialService.GetAll())
-    .AsQueryable() 
-    .Where(x => x.RawMaterialId == material.RawMaterialId && x.IsDelete == false)
-    .AsNoTracking()
-    .FirstOrDefault();
+           var materialData = (await materialService.GetAll())
+            .AsQueryable() 
+            .Where(x => x.RawMaterialId == material.RawMaterialId && x.IsDelete == false)
+            .AsNoTracking()
+            .FirstOrDefault();
 
 
                 if (materialData == null)
@@ -374,6 +382,246 @@ namespace ShutterManagement.Business.Services
             await orderWindowProductComponentService.Add(tblOrderWindowProductComponent);
         }
 
+        public async Task<IResponseVm<List<OrderList>>> GetAll_Order(Pagination filter)
+        {
+            IResponseVm<List<OrderList>> responseVm = new ResponseVm<List<OrderList>>();
+            try
+            {
+                FileLogger.Log($"Start: Fetching estimates with filter parameters: TenantId = {filter.TenantId}, PageNo = {filter.PageNo}, RecordsPerPage = {filter.RecordPerPage}");
+
+                // Validate Tenant if provided, else use the logged-in tenant
+                var orders = await FetchOrders(filter);
+                if (orders == null)
+                {
+                    responseVm.Message = AppConstant.TenantNotFound;
+                    return responseVm;
+                }
+
+                // Log the number of estimates fetched
+                FileLogger.Log($"Fetched {orders.Count} estimates.");
+
+                // Get product types and filter records based on search and status
+                var filteredEstimates = ApplyFilters(orders, filter);
+
+                // Paginate the filtered results
+                var paginatedEstimates = Paginate.Pagination(filteredEstimates, filter);
+
+                // Prepare final response
+                responseVm.IsSuccess = true;
+                if (paginatedEstimates.Any())
+                {
+                    responseVm.Data = paginatedEstimates;
+                    responseVm.Message = AppConstant.FetchSuccessMsg;
+                    responseVm.TotalRecords = filteredEstimates.Count;
+                    FileLogger.Log($"Successfully fetched {paginatedEstimates.Count} estimates.");
+                }
+                else
+                {
+                    responseVm.Message = AppConstant.NoDataFound;
+                    FileLogger.Log("No data found after applying filters.");
+                }
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Log($"Error occurred while fetching estimates: {ex.Message}");
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+            }
+            return responseVm;
+        }
+
+        private async Task<List<TblOrder>> FetchOrders(Pagination filter)
+        {
+            if (string.IsNullOrEmpty(filter.TenantId))
+            {
+                // Log and fetch estimates for the logged-in tenant
+                FileLogger.Log("No TenantId provided, fetching for the logged-in tenant.");
+                return (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId)
+                                       .OrderByDescending(x => x.CreatedAt)
+                                       .ToList();
+            }
+
+            // Validate TenantId if provided
+            var isRelatedTenant = tenantService.GetAllQuerable()
+                .Where(x => x.TenantId.ToString() == filter.TenantId && x.ParentTenantId == AppConstant.LoggedInTenantId && x.IsDelete == false)
+                .FirstOrDefault();
+
+            if (isRelatedTenant == null)
+            {
+                FileLogger.Log($"Tenant with ID {filter.TenantId} is not related or not found.");
+                return null; // Return null to indicate tenant validation failure
+            }
+
+            // Fetch estimates for the provided tenant
+            FileLogger.Log($"Tenant with ID {filter.TenantId} validated successfully.");
+            return (await GetAll()).Where(x => x.IsDelete == false && x.TenantId.ToString() == filter.TenantId)
+                                   .OrderByDescending(x => x.CreatedAt)
+                                   .ToList();
+        }
+
+        private List<OrderList> ApplyFilters(List<TblOrder> orders, Pagination filter)
+        {
+            var orderlist = new List<OrderList>();
+
+            // Loop through the 'orders' list (not 'orderlist')
+            foreach (var order in orders)  // We are now iterating over TblOrder items
+            {
+                var e = new OrderList
+                {
+                    OrderId = order.OrderId,
+                    OrderNumber = order.OrderName,
+                    Version = order.Version,
+                    EstimateId = order.EstimateId,
+                    CreatedDate = order.CreatedAt,
+                    JobId = order.JobId,
+                    Status = order.Status,
+                    IsActive = order.IsActive,
+                    Discount = order.DiscountAmount,
+                    DiscountCoupon = order.DiscountCoupon,
+                    EstimateName = order.EstimateName,
+                    EstimateCode = order.EstimateCode,
+                   // SubTotal = order.SubTotal,
+                    GrandTotal = order.GrandTotal,
+                    Notes = order.Notes,
+                    Tax = order.TaxAmount,
+                    TermsCondition = order.TermsCondition,
+                };
+
+                // Fetch User details
+                var userdetails = dbContext.TblUsers
+                    .Where(x => x.Id == order.CreatedBy && x.IsDelete == false)
+                    .FirstOrDefault();
+                if (userdetails != null)
+                {
+                    e.CreatedBy = userdetails.FirstName + " " + userdetails.LastName;
+                }
+                else
+                {
+                    // Handle the case when userdetails is null
+                    e.CreatedBy = "User not found"; // You can set a default message or handle it in another way
+                }
+
+                // Fetch Tenant details
+                var Tenant = dbContext.TblTenants
+                    .Where(e => e.TenantId == order.TenantId && e.IsDelete == false)
+                    .FirstOrDefault();
+                e.primarycolor = dbContext.TblTenantBrandingInfos
+                    .Where(tb => tb.Id == Tenant.BrandingInfo)
+                    .Select(tb => tb.PrimaryColor)
+                    .FirstOrDefault();
+
+                // Fetch and add related products and options
+                AddEstimateProducts(order, e);  // Pass the individual TblOrder to the method
+                orderlist.Add(e);  // Add the populated OrderList view model to the list
+            }
+
+            // Filter records based on search value and status
+            var filteredRecords = orderlist
+                .Where(x =>
+                    (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
+                    (string.IsNullOrWhiteSpace(filter.SearchValue) ||
+                     ((x.Notes ?? "").Contains(filter.SearchValue)
+                      || (x.JobId.ToString() ?? "").Contains(filter.SearchValue)
+                      || (x.OrderNumber ?? "").Contains(filter.SearchValue)
+                      || (x.OrderId.ToString() ?? "").Contains(filter.SearchValue)
+                      || (x.Status ?? "").Contains(filter.SearchValue)
+                      || (x.EstimateId.ToString()).Contains(filter.SearchValue)
+                      || (x.EstimateCode ?? "").Contains(filter.SearchValue)
+                      || (x.EstimateName ?? "").Contains(filter.SearchValue)
+                      || (x.TermsCondition ?? "").Contains(filter.SearchValue)
+                      || (x.DiscountCoupon ?? "").Contains(filter.SearchValue)
+                      || (x.GrandTotal.ToString() ?? "").Contains(filter.SearchValue)))
+                ).ToList();
+
+            return filteredRecords;
+        }
+
+
+        private void AddEstimateProducts(TblOrder order, OrderList e)
+        {
+            var productList = orderWindowProductService.GetAllQuerable()
+                .Where(x => x.EstimateId == order.EstimateId && x.IsDelete == false)
+                .Select(x => new
+                {
+                    x.EstimateWindowProductId,
+                    x.ProductId,
+                    x.ProductName,
+                    x.ProductType,
+                    x.Width,
+                    x.Height,
+                    x.ArchHeight,
+                    x.Color,
+                    x.Notes,
+                    x.WindowId,
+                    x.WindowProductId
+                }).ToList();
+
+            e.WindowProductId = productList.Select(p => (Guid)p.WindowProductId).ToArray();
+            foreach (var p in productList)
+            {
+                var optionIds = windowOptionService.GetAllQuerable()
+                    .Where(x => x.IsDelete == false && x.WindowProductId == p.WindowProductId)
+                    .ToList();
+                var optionDetails = optionsTypeService.GetAllQuerable()
+                    .Where(x => x.IsDelete == false && optionIds.Select(y => y.OptionTypeId).Contains(x.OptionTypeId))
+                    .Select(x => new OptionLists { OptionName = x.OptionType })
+                    .ToList();
+                var WindowDetails = orderWindowService.GetAllQuerable()
+                    .Where(x => x.EstimateId == order.EstimateId && x.IsDelete == false)
+                    .ToList();
+                EstimateProductLists estimateProduct = new EstimateProductLists
+                {
+                    EstimateWindowProductId = p.EstimateWindowProductId,
+                    Label = windowService.GetAllQuerable()
+                        .Where(w => w.WindowId == p.WindowId && w.IsDelete == false)
+                        .Select(pt => pt.Label)
+                        .FirstOrDefault(),
+                    ProductType = p.ProductType,
+                    ProductTypeName = productType.GetAllQuerable()
+                        .Where(pt => pt.ProductId.ToString() == p.ProductType && pt.IsDelete == false)
+                        .Select(pt => pt.ProductName)
+                        .FirstOrDefault(),
+                    Width = p.Width,
+                    Height = p.Height,
+                    ArchHeight = p.ArchHeight,
+                    ProductName = p.ProductName,
+                    WindowProductId = p.WindowProductId,
+                    Options = optionDetails,
+                    EstimateWindowDetails = WindowDetails.Where(x => x.WindowId == p.WindowId).Select(x => new EstimateWindowLists
+                    {
+                        ArchHeight = x.ArchHeight,
+                        Height = x.Height,
+                        Width = x.Width
+                    }).FirstOrDefault()
+
+                };
+                e.EstimateProductList.Add(estimateProduct);
+            }
+            AddJobDetails(e);
+        }
+
+
+        private void AddJobDetails(OrderList e)
+        {
+
+            var jobdetails1 = (from j1 in dbContext.TblJobs
+                               join j2 in dbContext.TblEstimates on j1.JobId equals j2.JobId
+                               join j3 in dbContext.TblAddresses on j1.AddressId equals j3.AddressId
+                               join j4 in dbContext.MstJobTypes on j1.JobType equals j4.Id
+                               join j5 in dbContext.TblUsers on j1.AssignedPersonnel equals j5.Id
+                               where j1.IsDelete == false
+                               select new JobDetail
+                               {
+                                   JobName = j1.JobName,
+                                   JobNotes = j1.Notes,
+                                   JobType = j4.JobTypeName,
+                                   AssignedPersonnel = j5.FirstName + " " + j5.LastName,
+                                   Address = j3.StreetAddress + " " + j3.City + " " + j3.State + " " + j3.ZipCode,
+                                   AddressLabel = j3.Label,
+                                   ScheduleTime = j1.ScheduledDate
+                               }).FirstOrDefault();
+
+            e.jobDetails = jobdetails1;
+        }
         //public async Task<IResponseVm<string>> Update_Order(UpdateOrder model)
         //{
         //    IResponseVm<string> responseVm = new ResponseVm<string>();

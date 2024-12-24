@@ -36,6 +36,14 @@ namespace ShutterManagement.Controllers
             return Ok(res);
         }
 
+        [HttpPost("GetAll")]
+       // [Authorize(Roles = "EstimateView")]
+        public async Task<IActionResult> GetAllOrders(Pagination filter)
+        {
+            var res = await orderService.GetAll_Order(filter);
+            return Ok(res);
+
+        }
         //[HttpPost("Update")]
         //[Authorize(Roles = "OrderEdit")]
         //public async Task<IActionResult> Update([FromBody] UpdateOrder model)

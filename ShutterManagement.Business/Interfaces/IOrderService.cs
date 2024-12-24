@@ -16,7 +16,7 @@ namespace ShutterManagement.Business.Interfaces
         //Task<IResponseVm<string>> Update_Order(UpdateOrder model);
         //Task<IResponseVm<string>> ActiveInActiveOrder(Guid EstimateId);
         //Task<IResponseVm<string>> DeleteOrder(Guid EstimateId);
-        //Task<IResponseVm<List<EstimateList>>> GetAll_Order(Pagination filter);
+        Task<IResponseVm<List<OrderList>>> GetAll_Order(Pagination filter);
         //Task<IResponseVm<string>> SendForApproval(Guid EstimateId);
         //Task<IResponseVm<List<EstimateList>>> ViewEachOrder(Guid EstimateId);
         //Task<IResponseVm<string>> ChangeStatus(Guid EstimationId, Estimation NewEstimationStatus);

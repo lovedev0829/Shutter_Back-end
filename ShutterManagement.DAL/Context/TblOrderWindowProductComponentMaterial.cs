@@ -48,4 +48,6 @@ public partial class TblOrderWindowProductComponentMaterial
     public Guid? ProductType { get; set; }
 
     public Guid EstimateWindowProductComponentMaterialId { get; set; }
+
+    public Guid Id { get; set; }
 }
