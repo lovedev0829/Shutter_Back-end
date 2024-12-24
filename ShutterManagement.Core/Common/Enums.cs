@@ -64,6 +64,8 @@ namespace ShutterManagement.Core.Common
         Approved,
         [EnumMember(Value = "Rejected")]
         Rejected,
+        [EnumMember(Value = "GenerateOrder")]
+        GenerateOrder
     }
 
     public static class EnumValue

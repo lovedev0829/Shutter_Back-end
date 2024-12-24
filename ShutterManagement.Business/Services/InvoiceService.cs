@@ -281,9 +281,7 @@ namespace ShutterManagement.Business.Services
                         (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
                         (string.IsNullOrEmpty(filter.SearchValue) ? true :
                             (x.InvoiceNumber.Contains(filter.SearchValue.Trim())) ||
-                            (x.JobId.ToString() == filter.SearchValue.Trim()) ||
-                           ))
-                    .ToList();
+                            (x.JobId.ToString() == filter.SearchValue.Trim()))).ToList();
 
                 foreach (var invoice in filteredInvoices)
                 {

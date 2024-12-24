@@ -73,7 +73,7 @@ namespace ShutterManagement.Business.Services
         }
 
 
-        public async Task<IResponseVm<string>> Create_Order_From_Estimate(Guid EstimateId)
+        public async Task<IResponseVm<string>> Create_Order_From_Estimate(Guid EstimateId, bool fromEstimate = false)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
             FileLogger.Log("Start: Create Order from Estimate...");
@@ -90,14 +90,21 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = "Estimate " + AppConstant.NoDataFound;
                     return responseVm;
                 }
+
+               
                 var OrderNumber =  GenerateUniqueId.GenerateUniqueIds(ModuleName.Order, AppConstant.LoggedInCompanyCode);
                 var version = GetAllQuerable()
                 .Where(x => x.EstimateId == EstimateId && x.IsDelete == false && x.Status != EnumValue.GetEnumValue(Estimation.Approved))
                 .OrderByDescending(x => x.Status)  
                 .Select(x => x.Version)
                 .FirstOrDefault();
+                if (fromEstimate && version.Equals(EnumValue.GetEnumValue(Estimation.GenerateOrder)))
+                {
+                    responseVm.Message = "Order already generated";
+                    return responseVm;
+                }
 
-                if (version != null)
+                    if (version != null)
                 {
                     if (int.TryParse(version, out int versionNumber))
                     {
@@ -440,7 +447,7 @@ namespace ShutterManagement.Business.Services
                 // Log and fetch estimates for the logged-in tenant
                 FileLogger.Log("No TenantId provided, fetching for the logged-in tenant.");
                 return (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId)
-                                       .OrderByDescending(x => x.CreatedAt) && (x.status)
+                                       .OrderByDescending(x => x.CreatedAt) 
                                        .ToList();
             }
 
@@ -750,16 +757,16 @@ namespace ShutterManagement.Business.Services
             return isTenantExists;
         }
 
-        public async Task<IResponseVm<string>> ChangeStatus(Guid OrderId, Estimation NewEstimationStatus)
+        public async Task<IResponseVm<string>> ChangeStatus(Guid OrderId, Estimation NewOrderStatus)
         {
             FileLogger.Log($"Processing status change for EstimationId: {OrderId}...");
             IResponseVm<string> responseVm = new ResponseVm<string>();
 
             try
             {
-                var EstimationStatus = GetEstimationStatusById(OrderId);
+                var OrderStatus = GetOrderStatusById(OrderId);
 
-                if (EstimationStatus == null)
+                if (OrderStatus == null)
                 {
                     responseVm.Message = "Estimation not found.";
                     FileLogger.Log($"Estimation with ID {OrderId} not found.");
@@ -767,7 +774,7 @@ namespace ShutterManagement.Business.Services
                 }
 
                 // Safely parse the current status to Estimation enum
-                if (!Enum.TryParse(EstimationStatus.Status, out Estimation currentStatus))
+                if (!Enum.TryParse(OrderStatus.Status, out Estimation currentStatus))
                 {
                     responseVm.Message = "Invalid status found in the system.";
                     FileLogger.Log($"Estimation with ID {OrderId} has an invalid status.");
@@ -775,20 +782,20 @@ namespace ShutterManagement.Business.Services
                 }
 
                 // Check if status change is allowed
-                if (CanChangeStatus(currentStatus, NewEstimationStatus))
+                if (CanChangeStatus(currentStatus, NewOrderStatus))
                 {
-                    EstimationStatus.Status = EnumValue.GetEnumValue(NewEstimationStatus);
-                    await Update(EstimationStatus);
+                    OrderStatus.Status = EnumValue.GetEnumValue(NewOrderStatus);
+                    await Update(OrderStatus);
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.UpdateSuccessMsg;
-                    responseVm.Data = EnumValue.GetEnumValue(NewEstimationStatus);
+                    responseVm.Data = EnumValue.GetEnumValue(NewOrderStatus);
 
                 }
                 else
                 {
-                    responseVm.Message = $"You can't change status from {currentStatus} to {NewEstimationStatus}.";
+                    responseVm.Message = $"You can't change status from {currentStatus} to {NewOrderStatus}.";
                     responseVm.Data = currentStatus.ToString();
-                    FileLogger.Log($"Status change from {currentStatus} to {NewEstimationStatus} is not allowed.");
+                    FileLogger.Log($"Status change from {currentStatus} to {NewOrderStatus} is not allowed.");
                 }
             }
             catch (Exception ex)
@@ -800,7 +807,7 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        private TblOrder GetEstimationStatusById(Guid OrderId)
+        private TblOrder GetOrderStatusById(Guid OrderId)
         {
             return GetAllQuerable()
                     .Where(es => es.OrderId == OrderId && es.IsDelete == false && es.IsActive == true)
@@ -1015,11 +1022,15 @@ namespace ShutterManagement.Business.Services
 
             try
             {
+                var order = GetAllQuerable()
+                                    .Where(e => e.OrderId == OrderId && e.IsDelete == false)
+                                    .FirstOrDefault();
+                
+                AppConstant.LoggedInTenantId = order.TenantId;
                 Pagination pagination = new Pagination
                 {
                     SearchValue = OrderId.ToString()
                 };
-
                 var allVersionsOrder = await GetAll_Order(pagination);
 
                 if (allVersionsOrder != null)
