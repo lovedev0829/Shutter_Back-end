@@ -22,17 +22,10 @@ namespace ShutterManagement.Core.ViewModels.Request
         public string? InvoiceNumber { get; set; }
 
         [Required]
-       
         public DateTime? IssueDate { get; set; }
 
         [Required]
         public DateTime? DueDate { get; set; }
-
-        [Required]
-        [DefaultValue("")]
-        [StringLength(20, ErrorMessage = "Status cannot exceed 20 characters.")]
-
-        public string? Status { get; set; }
 
         [Required]
         [DefaultValue(0)]
