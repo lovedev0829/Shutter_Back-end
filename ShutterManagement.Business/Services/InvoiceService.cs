@@ -125,7 +125,6 @@ namespace ShutterManagement.Business.Services
                     InvoiceNumber = model.InvoiceNumber,
                     IssueDate = model?.IssueDate,
                     DueDate = model?.DueDate,
-                    Status = model?.Status,
                     TotalAmount=model.TotalAmount,
                     CreatedAt = DateTime.Now,
                     TenantId=AppConstant.LoggedInTenantId,
@@ -353,7 +352,6 @@ namespace ShutterManagement.Business.Services
                 invoice.InvoiceNumber = updateInvoice.InvoiceNumber?.Trim();
                 invoice.IssueDate = updateInvoice.IssueDate;
                 invoice.DueDate = updateInvoice.DueDate;
-                invoice.Status = updateInvoice.Status?.Trim();
                 invoice.TotalAmount=updateInvoice.TotalAmount;
                 invoice.UpdatedAt = DateTime.Now;
                 invoice.ModifiedBy = AppConstant.LoggedInUserID;
