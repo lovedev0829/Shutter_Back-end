@@ -272,7 +272,7 @@ namespace ShutterManagement.Business.Services
                                         IssueDate = i.IssueDate,
                                         TotalAmount=i.TotalAmount,
                                         DueDate = i.DueDate,
-                                        Status = i.Status,
+                                       // Status = i.Status,
                                         IsActive =i.IsActive,
                                     };
                 filter.SearchValue = filter.SearchValue.Trim().ToLower();
@@ -282,7 +282,7 @@ namespace ShutterManagement.Business.Services
                         (string.IsNullOrEmpty(filter.SearchValue) ? true :
                             (x.InvoiceNumber.Contains(filter.SearchValue.Trim())) ||
                             (x.JobId.ToString() == filter.SearchValue.Trim()) ||
-                            (x.Status.Contains(filter.SearchValue.Trim()))))
+                           ))
                     .ToList();
 
                 foreach (var invoice in filteredInvoices)

@@ -33,7 +33,7 @@ namespace ShutterManagement.Controllers
         [Authorize(Roles = "OrderView")]
         public async Task<IActionResult> GetAllOrders(Pagination filter)
         {
-            var res = await orderService.GetAll_Order(filter);
+            var res = await orderService.GetLatestVersionOrders(filter);
             return Ok(res);
 
         }

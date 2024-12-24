@@ -440,7 +440,7 @@ namespace ShutterManagement.Business.Services
                 // Log and fetch estimates for the logged-in tenant
                 FileLogger.Log("No TenantId provided, fetching for the logged-in tenant.");
                 return (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId)
-                                       .OrderByDescending(x => x.CreatedAt)
+                                       .OrderByDescending(x => x.CreatedAt) && (x.status)
                                        .ToList();
             }
 
@@ -596,7 +596,57 @@ namespace ShutterManagement.Business.Services
             AddJobDetails(e);
         }
 
+        public async Task<IResponseVm<List<OrderList>>> GetLatestVersionOrders(Pagination filter)
+        {
+            IResponseVm<List<OrderList>> responseVm = new ResponseVm<List<OrderList>>();
+            try
+            {
+                FileLogger.Log($"Start: Fetching latest version of orders with filter parameters: TenantId = {filter.TenantId}, PageNo = {filter.PageNo}, RecordsPerPage = {filter.RecordPerPage}");
 
+                var orders = await FetchOrders(filter);
+                if (orders == null)
+                {
+                    responseVm.Message = AppConstant.TenantNotFound;
+                    return responseVm;
+                }
+
+                FileLogger.Log($"Fetched {orders.Count} orders.");
+
+                // Group orders by EstimateId and get the latest version for each group
+                var latestVersionOrders = orders
+                    .GroupBy(o => o.EstimateId)  // Group by EstimateId to handle versions
+                    .Select(g => g.OrderByDescending(o => o.Version)  // Order by Version to get the latest
+                                .FirstOrDefault())  // Get the latest order in each group
+                    .ToList();
+
+                // Apply filters (like Status, SearchValue, etc.)
+                var filteredOrders = ApplyFilters(latestVersionOrders, filter);
+
+                // Apply pagination
+                var paginatedOrders = Paginate.Pagination(filteredOrders, filter);
+
+                responseVm.IsSuccess = true;
+                if (paginatedOrders.Any())
+                {
+                    responseVm.Data = paginatedOrders;
+                    responseVm.Message = AppConstant.FetchSuccessMsg;
+                    responseVm.TotalRecords = filteredOrders.Count;
+                    FileLogger.Log($"Successfully fetched {paginatedOrders.Count} orders.");
+                }
+                else
+                {
+                    responseVm.Message = AppConstant.NoDataFound;
+                    FileLogger.Log("No data found after applying filters.");
+                }
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Log($"Error occurred while fetching orders: {ex.Message}");
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+            }
+
+            return responseVm;
+        }
         private void AddJobDetails(OrderList e)
         {
 
