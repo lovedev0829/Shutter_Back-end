@@ -18,17 +18,10 @@ namespace ShutterManagement.Controllers
             this.orderService = orderService;
         }
 
-        //[HttpPost("GetAll")]
-        //[Authorize(Roles = "OrderView")]
-        //public async Task<IActionResult> GetAllEstimates(Pagination filter)
-        //{
-        //    var res = await orderService.GetAll_Estimate(filter);
-        //    return Ok(res);
-
-        //}
+      
 
         [HttpPost("Create")]
-       // [Authorize(Roles = "OrderAdd")]
+        [Authorize(Roles = "OrderAdd")]
         public async Task<IActionResult> Create(Guid EstimateId)
         {
 
@@ -36,13 +29,49 @@ namespace ShutterManagement.Controllers
             return Ok(res);
         }
 
-        //[HttpPost("Update")]
-        //[Authorize(Roles = "OrderEdit")]
-        //public async Task<IActionResult> Update([FromBody] UpdateOrder model)
-        //{
+        [HttpPost("GetAll")]
+        [Authorize(Roles = "OrderView")]
+        public async Task<IActionResult> GetAllOrders(Pagination filter)
+        {
+            var res = await orderService.GetAll_Order(filter);
+            return Ok(res);
 
-        //    var res = await orderService.Update_Order(model);
-        //    return Ok(res);
-        //}
+        }
+
+        [HttpPost("Update")]
+        [Authorize(Roles = "OrderEdit")]
+        public async Task<IActionResult> Update([FromBody] UpdateOrder model)
+        {
+
+            var res = await orderService.Update_Order(model);
+            return Ok(res);
+        }
+
+        [HttpPost("ActiveInactive")]
+        [Authorize(Roles = "OrderEdit")]
+        public async Task<IActionResult> ActiveInActiveOrder(string OrderId)
+        {
+            Guid guid = Guid.Parse(OrderId);
+            var res = await orderService.ActiveInActiveOrder(guid);
+            return Ok(res);
+        }
+
+        [HttpPost("Delete")]
+        [Authorize(Roles = "OrderDelete")]
+        public async Task<IActionResult> DeleteOrder(string OrderId)
+        {
+            Guid guid = Guid.Parse(OrderId);
+            var res = await orderService.DeleteOrder(guid);
+
+            return Ok(res);
+        }
+
+        [HttpPost("SendForApproval")]
+        [Authorize(Roles = "OrderEdit")]
+        public async Task<IActionResult> SendForApproval(Guid OrderId)
+        {
+            var res = await orderService.SendForApproval(OrderId);
+            return Ok(res);
+        }
     }
 }

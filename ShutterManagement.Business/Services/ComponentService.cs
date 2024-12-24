@@ -64,7 +64,7 @@ namespace ShutterManagement.Business.Services
                         ComponentId = Guid.NewGuid(),
                         ComponentName = model.ComponentName.Trim(),
                         ProductType = model.ProductType,
-                        PricingExpression = model.ExpressionId.ToString(),
+                        PricingExpression = model.PricingExpression,
                         MarkupPercentage = model.MarkupPercentage,
                         Notes = model.Notes,
                         CreatedAt = DateTime.Now,
@@ -141,7 +141,7 @@ namespace ShutterManagement.Business.Services
                     {
                         IsComponentExists.ComponentName = model.ComponentName?.Trim();
                         IsComponentExists.ProductType = model.ProductType;
-                        IsComponentExists.PricingExpression = model.ExpressionId.ToString();
+                        IsComponentExists.PricingExpression = model.PricingExpression;
                         IsComponentExists.MarkupPercentage = model.MarkupPercentage;
                         IsComponentExists.Notes = model.Notes;
                         IsComponentExists.UpdatedAt = DateTime.Now;
@@ -299,8 +299,10 @@ namespace ShutterManagement.Business.Services
 
                 if (isTenantValid)
                 {
+       
                     var componentList = (from c in dbContext.TblComponents.OrderByDescending(x=>x.CreatedAt)
                                          join pt in dbContext.MstProductTypes on c.ProductType equals pt.ProductId.ToString()
+                                         join exp in dbContext.TblExpressions on c.PricingExpression equals exp.Id.ToString()
                                          where c.IsDelete == false && c.TenantId == AppConstant.LoggedInTenantId
                                          select new ComponentListVm
                                          {
@@ -310,6 +312,8 @@ namespace ShutterManagement.Business.Services
                                              MarkupPercentage = c.MarkupPercentage,
                                              Notes = c.Notes,
                                              PricingExpression = c.PricingExpression,
+                                             ExpressionName = exp.ExpressionName,
+                                             ExpressionFormulae = exp.ExpressionFormulae,
                                              ProductType = pt.ProductId.ToString().ToLower(),
                                              ProductTypeName = pt.ProductName,
                                              TenantId = c.TenantId,
