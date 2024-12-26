@@ -15,6 +15,8 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
     {
     }
 
+    public virtual DbSet<MstComponentPrice> MstComponentPrices { get; set; }
+
     public virtual DbSet<MstContactType> MstContactTypes { get; set; }
 
     public virtual DbSet<MstJobStatus> MstJobStatuses { get; set; }
@@ -134,6 +136,21 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("btprojec_admin");
+
+        modelBuilder.Entity<MstComponentPrice>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__MstCompo__3214EC070EAF3683");
+
+            entity.ToTable("MstComponentPrice", "dbo");
+
+            entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.ComponentName).HasMaxLength(200);
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
+            entity.Property(e => e.IsDelete).HasDefaultValue(false);
+            entity.Property(e => e.PriceNonRated).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.PriceRated).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.ProductType).HasMaxLength(100);
+        });
 
         modelBuilder.Entity<MstContactType>(entity =>
         {

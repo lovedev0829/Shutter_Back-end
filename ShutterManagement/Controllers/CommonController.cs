@@ -37,6 +37,7 @@ namespace ShutterManagement.Controllers
         private readonly IJobStatusService jobStatusService;
         private readonly IJobTypeService jobTypeService;
         private readonly IDiscountService discountService;
+        private readonly IComponentPriceService componentPriceService;
         private readonly IOption option;
         private readonly IProductService productService;
         private readonly IUnitofMeasurementService unitofMeasurementService;
@@ -52,6 +53,7 @@ namespace ShutterManagement.Controllers
             IJobTitleService jobTitleService, IMaterial material, IVendorService vendorService
             , EmailHelper emailHelper, IUserService userService, IJobStatusService jobStatusService,
             IJobTypeService jobTypeService, IDiscountService discountService,
+            IComponentPriceService componentPriceService,
             IComponentService componentService, IMstProductType mstProductType,
             IAddress address, IOption option, IProductService productService,
             IUnitofMeasurementService unitofMeasurementService, IRoleService roleService, IRegion region, IContactService contactService,
@@ -80,6 +82,7 @@ namespace ShutterManagement.Controllers
             this.jobStatusService = jobStatusService;
             this.jobTypeService = jobTypeService;
             this.discountService = discountService;
+            this.componentPriceService = componentPriceService;
             this.mstProductType = mstProductType;
             this.option = option;
             this.productService = productService;
@@ -250,7 +253,14 @@ namespace ShutterManagement.Controllers
         }
 
 
-        
+        //[HttpGet]
+        //[Route("GetAllExpressionChip")]
+        //public async Task<IActionResult> GetAllExpressionChip(string Product)
+        //{
+        //    var res = (await componentPriceService.GetAllQuerable().Where(x=>x.ProductType == Product && x.IsActive == true).ToList();
+        //    res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
+        //    return Ok(res);
+        //}
 
         //[HttpPost]
         //[Route("MasterCreate")]
