@@ -285,7 +285,7 @@ namespace ShutterManagement.Business.Services
 
                 foreach (var invoice in filteredInvoices)
                 {
-                    invoice.InvoicePayments = dbContext.TblPayments
+                    invoice.InvoicePayment = dbContext.TblPayments
                         .Where(p => p.InvoiceId == invoice.InvoiceId && p.IsDelete == false)
                         .Select(p => new InvoicePaymentVM
                         {

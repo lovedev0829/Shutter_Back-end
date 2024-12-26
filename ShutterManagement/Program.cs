@@ -150,6 +150,7 @@ builder.Services.AddScoped<IOrderWindowProductComponentService, OrderWindowProdu
 builder.Services.AddScoped<IOrderWindowProductComponentMaterialService, OrderWindowProductComponentMaterialService>();
 builder.Services.AddScoped<IInvoiceService, InvoiceService>();
 builder.Services.AddScoped<IInvoicePaymentService, InvoicePaymentService>();
+builder.Services.AddScoped<IComponentPriceService, ComponentPriceService>();
 
 
 

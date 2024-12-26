@@ -95,16 +95,16 @@ namespace ShutterManagement.Business.Services
                 var OrderNumber =  GenerateUniqueId.GenerateUniqueIds(ModuleName.Order, AppConstant.LoggedInCompanyCode);
                 var version = GetAllQuerable()
                 .Where(x => x.EstimateId == EstimateId && x.IsDelete == false && x.Status != EnumValue.GetEnumValue(Estimation.Approved))
-                .OrderByDescending(x => x.Status)  
+                .OrderByDescending(x => x.Version)  
                 .Select(x => x.Version)
                 .FirstOrDefault();
-                if (fromEstimate && version.Equals(EnumValue.GetEnumValue(Estimation.GenerateOrder)))
+                if (fromEstimate && estimate.Status.Equals(EnumValue.GetEnumValue(Estimation.GenerateOrder)))
                 {
                     responseVm.Message = "Order already generated";
                     return responseVm;
                 }
 
-                    if (version != null)
+                if (version != null)
                 {
                     if (int.TryParse(version, out int versionNumber))
                     {
@@ -113,7 +113,7 @@ namespace ShutterManagement.Business.Services
                     }
                     else
                     {
-                        version1 = "1"; 
+                        version1 = "1";
                     }
                 }
                 else
@@ -213,9 +213,10 @@ namespace ShutterManagement.Business.Services
 
         private async Task AddWindowToOrder(TblWindow windowData, TblWindowProduct windowProductData, Guid OrderId, Guid estimateId, string Version)
         {
-            FileLogger.Log($"Adding window data for window {windowData.WindowId} to estimate...");
+            FileLogger.Log($"Adding window data for window {windowData.WindowId} to order...");
             TblOrderWindow tblOrderWindow = new TblOrderWindow
-            {
+            { 
+                Id = Guid.NewGuid(),
                 OrderId = OrderId,
                 Version = Version,
                 EstWindowId = Guid.NewGuid(),
@@ -240,7 +241,7 @@ namespace ShutterManagement.Business.Services
 
         private async Task AddProductToOrder(TblWindowProduct windowProductData, Guid estimateId, Guid OrderId, string Version)
         {
-            FileLogger.Log($"Adding product data for product {windowProductData.ProductId} to estimate...");
+            FileLogger.Log($"Adding product data for product {windowProductData.ProductId} to order...");
             var productData = (await productService.GetAll()).Where(x => x.ProductId == windowProductData.ProductId && x.IsDelete == false).FirstOrDefault();
             if (productData == null)
             {
@@ -489,7 +490,7 @@ namespace ShutterManagement.Business.Services
                     DiscountCoupon = order.DiscountCoupon,
                     EstimateName = order.EstimateName,
                     EstimateCode = order.EstimateCode,
-                  //  SubTotal = order.S,
+                    SubTotal = order.TotalPrice,
                     GrandTotal = order.GrandTotal,
                     Notes = order.Notes,
                     Tax = order.TaxAmount,

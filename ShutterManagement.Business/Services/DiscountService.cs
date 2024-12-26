@@ -91,7 +91,7 @@ namespace ShutterManagement.Business.Services
                 var existingDiscount = await FindExistingDiscountAsync((Guid)updateDiscount.DiscountId);
                 if (existingDiscount == null)
                     return SetFailureResponse(responseVm, AppConstant.NoDataFound);
-                var existingCoupon = dbContext.TblDiscounts
+                var existingCoupon = GetAllQuerable()
                 .FirstOrDefault(t => t.CouponCode == updateDiscount.CouponCode);
 
                 UpdateDiscountRecord(existingDiscount, updateDiscount);
@@ -368,9 +368,9 @@ namespace ShutterManagement.Business.Services
 
         private async Task<TblDiscount> FindExistingDiscountAsync(Guid discountId)
         {
-            return (await GetAll()).FirstOrDefault(x => x.DiscountId == discountId &&
+            return (await GetAll()).Where(x => x.DiscountId == discountId &&
                                                                               x.TenantId == AppConstant.LoggedInTenantId &&
-                                                                              !(bool)x.IsDelete);
+                                                                              !(bool)x.IsDelete).FirstOrDefault();
         }
          
         private void UpdateDiscountRecord(TblDiscount existing, UpdateDiscount updated)
