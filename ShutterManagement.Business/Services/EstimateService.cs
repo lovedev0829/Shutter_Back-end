@@ -772,9 +772,9 @@ namespace ShutterManagement.Business.Services
                         responseVm.Message = Message;
                         return responseVm;
                     }
-                    var TotalPrice = await CalculateEstimate(createEstimate.EstimateId);
-                    createEstimate.TotalPrice = TotalPrice;
-                    await Update(createEstimate);
+                    //var TotalPrice = await CalculateEstimate(createEstimate.EstimateId);
+                    //createEstimate.TotalPrice = TotalPrice;
+                    //await Update(createEstimate);
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.InsertSuccessMsg;
                     FileLogger.Log("Estimate created and all related data added successfully.");
