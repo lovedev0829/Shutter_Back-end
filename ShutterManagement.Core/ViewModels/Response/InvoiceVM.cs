@@ -16,7 +16,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? Status { get; set; }
         public bool? IsActive { get; set; }
 
-        public List<InvoicePaymentVM> InvoicePayments { get; set; } = new List<InvoicePaymentVM>();
+        public List<InvoicePaymentVM> InvoicePayment { get; set; } = new List<InvoicePaymentVM>();
     }
 
     public class InvoicePaymentVM

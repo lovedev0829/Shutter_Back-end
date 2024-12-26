@@ -9,8 +9,6 @@ public partial class TblOrderWindow
 
     public string Version { get; set; } = null!;
 
-    public Guid EstWindowId { get; set; }
-
     public Guid EstimateId { get; set; }
 
     public Guid? AddressId { get; set; }
@@ -45,5 +43,5 @@ public partial class TblOrderWindow
 
     public Guid? WindowId { get; set; }
 
-    public Guid Id { get; set; }
+    public Guid OrderWindowId { get; set; }
 }

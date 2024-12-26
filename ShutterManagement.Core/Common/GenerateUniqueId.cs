@@ -17,7 +17,7 @@ namespace ShutterManagement.Core.Common
             var GenerateUniqueName = "";
             if (Tenantcode != null)
             {
-               GenerateUniqueName = $"{Tenantcode.ToUpper()}-{EnumValue.GetEnumValue(moduleName)}-{DateTime.Now:yyyyMMddHHmmss}";
+               GenerateUniqueName = $"{EnumValue.GetEnumValue(moduleName)}-{Tenantcode.ToUpper()}{DateTime.Now:yyyyMMddHHmmss}";
             }
             return GenerateUniqueName;
         }

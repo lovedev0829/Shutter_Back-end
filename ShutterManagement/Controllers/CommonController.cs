@@ -237,7 +237,6 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("GetAllJobs")]
-        //[Authorize(Roles = "JobView")]
         public async Task<IActionResult> GetAll(Pagination filter1)
         {
             var result = await jobService.GetAllJobsTenant_SubTenant(filter1);
@@ -255,14 +254,13 @@ namespace ShutterManagement.Controllers
         }
 
 
-        //[HttpGet]
-        //[Route("GetAllExpressionChip")]
-        //public async Task<IActionResult> GetAllExpressionChip(string Product)
-        //{
-        //    var res = (await componentPriceService.GetAllQuerable().Where(x=>x.ProductType == Product && x.IsActive == true).ToList();
-        //    res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
-        //    return Ok(res);
-        //}
+        [HttpGet]
+        [Route("GetAllExpressionChip")]
+        public async Task<IActionResult> GetAllExpressionChip(string Product)
+        {
+            var res = await componentPriceService.GetAllComponentsChip(Product);
+            return Ok(res);
+        }
 
         //[HttpPost]
         //[Route("MasterCreate")]

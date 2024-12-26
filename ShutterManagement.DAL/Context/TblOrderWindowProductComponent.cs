@@ -9,8 +9,6 @@ public partial class TblOrderWindowProductComponent
 
     public string Version { get; set; } = null!;
 
-    public Guid EstimateWindowProductComponentId { get; set; }
-
     public Guid EstimateId { get; set; }
 
     public Guid ComponentId { get; set; }
@@ -39,5 +37,5 @@ public partial class TblOrderWindowProductComponent
 
     public bool? IsDelete { get; set; }
 
-    public Guid Id { get; set; }
+    public Guid OrderWindowProductComponentId { get; set; }
 }

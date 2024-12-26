@@ -47,9 +47,9 @@ namespace ShutterManagement.Business.Services
              IProductComponentService productComponentService, IComponentService componentService,
              IOrderWindowProductComponentService orderWindowProductComponentService,
              IOrderWindowProductComponentMaterialService orderWindowProductComponentMaterialService,
-             IEstimateService estimateService,BtprojecShuttermanagementDevContext context,
-             IWindowOptionService windowOptionService,IOptionsTypeService optionsTypeService,IMstProductType productType,
-             IJobService jobService,IContactService contactService)
+             IEstimateService estimateService, BtprojecShuttermanagementDevContext context,
+             IWindowOptionService windowOptionService, IOptionsTypeService optionsTypeService, IMstProductType productType,
+             IJobService jobService, IContactService contactService)
         {
             this.tenantService = tenantService;
             this.windowProductService = windowProductService;
@@ -91,20 +91,24 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-               
-                var OrderNumber =  GenerateUniqueId.GenerateUniqueIds(ModuleName.Order, AppConstant.LoggedInCompanyCode);
+
+                var OrderNumber = GenerateUniqueId.GenerateUniqueIds(ModuleName.Order, AppConstant.LoggedInCompanyCode);
                 var version = GetAllQuerable()
-                .Where(x => x.EstimateId == EstimateId && x.IsDelete == false && x.Status != EnumValue.GetEnumValue(Estimation.Approved))
-                .OrderByDescending(x => x.Status)  
+                .Where(x => x.EstimateId == EstimateId && x.IsDelete == false)
+                .OrderByDescending(x => x.Version)
                 .Select(x => x.Version)
                 .FirstOrDefault();
-                if (fromEstimate && version.Equals(EnumValue.GetEnumValue(Estimation.GenerateOrder)))
+                if (fromEstimate && estimate.Status.Equals(EnumValue.GetEnumValue(Estimation.GenerateOrder)))
                 {
                     responseVm.Message = "Order already generated";
                     return responseVm;
                 }
-
-                    if (version != null)
+                if (estimate.Status.Equals(EnumValue.GetEnumValue(Estimation.Approved)))
+                {
+                    estimate.Status = EnumValue.GetEnumValue(Estimation.GenerateOrder);
+                    await estimateService.Update(estimate);
+                }
+                if (version != null)
                 {
                     if (int.TryParse(version, out int versionNumber))
                     {
@@ -113,18 +117,18 @@ namespace ShutterManagement.Business.Services
                     }
                     else
                     {
-                        version1 = "1"; 
+                        version1 = "1";
                     }
                 }
                 else
                 {
                     status1 = EnumValue.GetEnumValue(Estimation.Approved);
-                    version1 = "1"; 
+                    version1 = "1";
                 }
                 TblOrder newOrder = new TblOrder
                 {
-                    OrderId = Guid.NewGuid(), 
-                    EstimateId = estimate.EstimateId,  
+                    OrderId = Guid.NewGuid(),
+                    EstimateId = estimate.EstimateId,
                     TenantId = estimate.TenantId,
                     JobId = estimate.JobId,
                     EstimateName = estimate.EstimateName,
@@ -139,7 +143,7 @@ namespace ShutterManagement.Business.Services
                     Status = status1,
                     CreatedAt = DateTime.Now,
                     UpdatedAt = DateTime.Now,
-                    Version = version1,  
+                    Version = version1,
                     OrderName = OrderNumber,
                     IsActive = true,
                     IsDelete = false,
@@ -175,227 +179,6 @@ namespace ShutterManagement.Business.Services
             }
 
             return responseVm;
-        }
-
-       
-        private async Task ProcessWindowProducts(List<Guid> windowProductIds, Guid estimateId,Guid OrderId,string Version)
-        {
-            FileLogger.Log("Processing window products...");
-            foreach (var product in windowProductIds)
-            {
-                var windowProductData = (await windowProductService.GetAll()).Where(x => x.WindowProductId == product && x.IsDelete == false).FirstOrDefault();
-                if (windowProductData == null)
-                {
-                    Message = "Window Product " + AppConstant.NoDataFound;
-                    return;
-                }
-
-                var windowData = (await windowService.GetAll()).Where(x => x.WindowId == windowProductData.WindowId && x.IsDelete == false).FirstOrDefault();
-                if (windowData == null)
-                {
-                    Message = "Window " + AppConstant.NoDataFound;
-                    return; 
-                }
-
-                await AddWindowToOrder(windowData, windowProductData, OrderId, estimateId, Version);
-                await AddProductToOrder(windowProductData, estimateId, OrderId, Version);
-                if (!string.IsNullOrEmpty(Message))
-                {
-                    return;
-                }
-                await AddComponentsToOrder((Guid)windowProductData.ProductId, estimateId, OrderId, Version);
-                if (!string.IsNullOrEmpty(Message))
-                {
-                    return;
-                }
-            }
-        }
-
-        private async Task AddWindowToOrder(TblWindow windowData, TblWindowProduct windowProductData, Guid OrderId, Guid estimateId, string Version)
-        {
-            FileLogger.Log($"Adding window data for window {windowData.WindowId} to estimate...");
-            TblOrderWindow tblOrderWindow = new TblOrderWindow
-            {
-                OrderId = OrderId,
-                Version = Version,
-                EstWindowId = Guid.NewGuid(),
-                EstimateId = estimateId,
-                WindowId = windowData.WindowId,
-                IsActive = true,
-                IsDelete = false,
-                CreatedAt = DateTime.Now,
-                CreatedBy = AppConstant.LoggedInUserID,
-                TenantId = AppConstant.LoggedInTenantId,
-                Label = windowData.Label,
-                AddressId = windowData.AddressId,
-                ArchHeight = windowData.ArchHeight,
-                Height = windowData.Height,
-                Width = windowData.Width,
-                Quantity = windowData.Quantity,
-                Notes = windowData.Notes,
-            };
-
-            await orderWindowService.Add(tblOrderWindow);
-        }
-
-        private async Task AddProductToOrder(TblWindowProduct windowProductData, Guid estimateId, Guid OrderId, string Version)
-        {
-            FileLogger.Log($"Adding product data for product {windowProductData.ProductId} to estimate...");
-            var productData = (await productService.GetAll()).Where(x => x.ProductId == windowProductData.ProductId && x.IsDelete == false).FirstOrDefault();
-            if (productData == null)
-            {
-                Message = "Product " + AppConstant.NoDataFound;
-                return;
-            }
-
-            TblOrderWindowProduct tblOrderWindowProduct = new TblOrderWindowProduct
-            {
-                OrderId = OrderId,
-                Version = Version,
-                WindowId = (Guid)windowProductData.WindowId,
-                ProductName = productData.ProductName,
-                Height = productData.Height,
-                Width = productData.Width,
-                AdditionalWidth = productData.AdditionalWidth,
-                Notes = productData.Notes,
-                IsDelete = false,
-                IsActive = true,
-                CreatedAt = DateTime.Now,
-                CreatedBy = AppConstant.LoggedInUserID,
-                ArchHeight = productData.ArchHeight,
-                Area = productData.Area,
-                Color = productData.Color,
-                EstimateId = estimateId,
-                Length = productData.Length,
-                Markup = productData.Markup,
-                ProductType = productData.ProductType,
-                TenantId = AppConstant.LoggedInTenantId,
-                ProductId = productData.ProductId,
-                EstimateWindowProductId = Guid.NewGuid(),
-                WindowProductId = windowProductData.WindowProductId
-            };
-
-            await orderWindowProductService.Add(tblOrderWindowProduct);
-        }
-
-        private async Task AddComponentsToOrder(Guid productId, Guid estimateId, Guid OrderId, string Version)
-        {
-            FileLogger.Log($"Adding components for product {productId} to estimate...");
-            var productComponentData = (await productComponentService.GetAll()).Where(x => x.ProductId == productId && x.IsDelete == false).ToList();
-            if (productComponentData == null || productComponentData.Count == 0)
-            {
-                Message = "No Components " + AppConstant.NoDataFound;
-                return; 
-            }
-
-            foreach (var component in productComponentData)
-            {
-                var componentData = (await componentService.GetAll()).Where(x => x.ComponentId == component.ComponentId && x.IsDelete == false).FirstOrDefault();
-                if (componentData == null)
-                {
-                    Message = "Components " + AppConstant.NoDataFound;
-                    return; 
-                }
-
-                await AddComponentToOrderWindow(componentData, estimateId, OrderId, Version);
-                await AddComponentMaterialsToOrder(componentData.ComponentId, estimateId, OrderId, Version);
-                if (!string.IsNullOrEmpty(Message))
-                {
-                    return;
-                }
-            }
-        }
-
-        private async Task AddComponentMaterialsToOrder(Guid componentId, Guid estimateId, Guid OrderId, string Version)
-        {
-            FileLogger.Log($"Adding materials for component {componentId} to estimate...");
-
-            var componentMaterialData = (await componentMaterialService.GetAll())
-             .Where(x => x.ComponentId == componentId && x.IsDelete == false)
-              .AsQueryable() 
-              .AsNoTracking()
-              .ToList();
-
-
-            if (componentMaterialData == null || componentMaterialData.Count == 0)
-            {
-                Message = "No material " + AppConstant.NoDataFound;
-                return;
-            }
-
-            foreach (var material in componentMaterialData)
-            {
-           var materialData = (await materialService.GetAll())
-            .AsQueryable() 
-            .Where(x => x.RawMaterialId == material.RawMaterialId && x.IsDelete == false)
-            .AsNoTracking()
-            .FirstOrDefault();
-
-
-                if (materialData == null)
-                {
-                    Message = "Material " + AppConstant.NoDataFound;
-                    return;
-                }
-
-                await AddMaterialToOrder(materialData, estimateId, OrderId, Version);
-            }
-        }
-
-
-        private async Task AddMaterialToOrder(TblRawMaterial materialData, Guid estimateId, Guid OrderId, string Version)
-        {
-            FileLogger.Log($"Adding material {materialData.MaterialName} to order...");
-            TblOrderWindowProductComponentMaterial tblEstimateWindowProductComponentMaterial = new TblOrderWindowProductComponentMaterial
-            {
-                OrderId = OrderId,
-                Version = Version,
-                EstimateWindowProductComponentMaterialId = Guid.NewGuid(),
-                IsDelete = false,
-                IsActive = true,
-                CreatedAt = DateTime.Now,
-                CreatedBy = AppConstant.LoggedInUserID,
-                TenantId = AppConstant.LoggedInTenantId,
-                EstimateId = estimateId,
-                IsCutSheet = materialData.IsCutSheet,
-                MaterialName = materialData.MaterialName,
-                Notes = materialData.Notes,
-                ProductType = materialData.ProductType,
-                ReorderLevel = materialData.ReorderLevel,
-                Sku = materialData.Sku,
-                StockQuantity = materialData.StockQuantity,
-                UnitCost = materialData.UnitCost,
-                UnitOfMeasurement = materialData.UnitOfMeasurement,
-                VendorId = materialData.VendorId,
-                RawMaterialId = materialData.RawMaterialId,
-            };
-
-            await orderWindowProductComponentMaterialService.Add(tblEstimateWindowProductComponentMaterial);
-        }
-
-        private async Task AddComponentToOrderWindow(TblComponent componentData, Guid estimateId, Guid OrderId, string Version)
-        {
-            FileLogger.Log($"Adding component {componentData.ComponentName} to estimate...");
-            TblOrderWindowProductComponent tblOrderWindowProductComponent = new TblOrderWindowProductComponent
-            {
-                OrderId = OrderId,
-                Version = Version,
-                EstimateWindowProductComponentId = Guid.NewGuid(),
-                ComponentId = componentData.ComponentId,
-                EstimateId = estimateId,
-                ComponentName = componentData.ComponentName,
-                IsDelete = false,
-                IsActive = true,
-                CreatedAt = DateTime.Now,
-                CreatedBy = AppConstant.LoggedInUserID,
-                MarkupPercentage = componentData.MarkupPercentage,
-                Notes = componentData.Notes,
-                ProductType = componentData.ProductType,
-                PricingExpression = componentData.PricingExpression,
-                TenantId = AppConstant.LoggedInTenantId,
-            };
-
-            await orderWindowProductComponentService.Add(tblOrderWindowProductComponent);
         }
 
         public async Task<IResponseVm<List<OrderList>>> GetAll_Order(Pagination filter)
@@ -438,169 +221,6 @@ namespace ShutterManagement.Business.Services
                 responseVm.Message = AppConstant.ExceptionError + ex.Message;
             }
             return responseVm;
-        }
-
-        private async Task<List<TblOrder>> FetchOrders(Pagination filter)
-        {
-            if (string.IsNullOrEmpty(filter.TenantId))
-            {
-                // Log and fetch estimates for the logged-in tenant
-                FileLogger.Log("No TenantId provided, fetching for the logged-in tenant.");
-                return (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId)
-                                       .OrderByDescending(x => x.CreatedAt) 
-                                       .ToList();
-            }
-
-            // Validate TenantId if provided
-            var isRelatedTenant = tenantService.GetAllQuerable()
-                .Where(x => x.TenantId.ToString() == filter.TenantId && x.ParentTenantId == AppConstant.LoggedInTenantId && x.IsDelete == false)
-                .FirstOrDefault();
-
-            if (isRelatedTenant == null)
-            {
-                FileLogger.Log($"Tenant with ID {filter.TenantId} is not related or not found.");
-                return null; // Return null to indicate tenant validation failure
-            }
-
-            // Fetch estimates for the provided tenant
-            FileLogger.Log($"Tenant with ID {filter.TenantId} validated successfully.");
-            return (await GetAll()).Where(x => x.IsDelete == false && x.TenantId.ToString() == filter.TenantId)
-                                   .OrderByDescending(x => x.CreatedAt)
-                                   .ToList();
-        }
-
-        private List<OrderList> ApplyFilters(List<TblOrder> orders, Pagination filter)
-        {
-            var orderlist = new List<OrderList>();
-
-            foreach (var order in orders)  
-            {
-                var e = new OrderList
-                {
-                    OrderId = order.OrderId,
-                    OrderNumber = order.OrderName,
-                    Version = order.Version,
-                    EstimateId = order.EstimateId,
-                    CreatedDate = order.CreatedAt,
-                    JobId = order.JobId,
-                    Status = order.Status,
-                    IsActive = order.IsActive,
-                    Discount = order.DiscountAmount,
-                    DiscountCoupon = order.DiscountCoupon,
-                    EstimateName = order.EstimateName,
-                    EstimateCode = order.EstimateCode,
-                    SubTotal = order.TotalPrice,
-                    GrandTotal = order.GrandTotal,
-                    Notes = order.Notes,
-                    Tax = order.TaxAmount,
-                    TermsCondition = order.TermsCondition,
-                };
-
-                var userdetails = dbContext.TblUsers
-                    .Where(x => x.Id == order.CreatedBy && x.IsDelete == false)
-                    .FirstOrDefault();
-                if (userdetails != null)
-                {
-                    e.CreatedBy = userdetails.FirstName + " " + userdetails.LastName;
-                }
-                else
-                {
-                    e.CreatedBy = "User not found"; 
-                }
-
-                var Tenant = dbContext.TblTenants
-                    .Where(e => e.TenantId == order.TenantId && e.IsDelete == false)
-                    .FirstOrDefault();
-                e.primarycolor = dbContext.TblTenantBrandingInfos
-                    .Where(tb => tb.Id == Tenant.BrandingInfo)
-                    .Select(tb => tb.PrimaryColor)
-                    .FirstOrDefault();
-                AddEstimateProducts(order, e);  
-                orderlist.Add(e);  
-            }
-
-            var filteredRecords = orderlist
-                .Where(x =>
-                    (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
-                    (string.IsNullOrWhiteSpace(filter.SearchValue) ||
-                     ((x.Notes ?? "").Contains(filter.SearchValue)
-                      || (x.JobId.ToString() ?? "").Contains(filter.SearchValue)
-                      || (x.OrderNumber ?? "").Contains(filter.SearchValue)
-                      || (x.OrderId.ToString() ?? "").Contains(filter.SearchValue)
-                      || (x.Status ?? "").Contains(filter.SearchValue)
-                      || (x.EstimateId.ToString()).Contains(filter.SearchValue)
-                      || (x.EstimateCode ?? "").Contains(filter.SearchValue)
-                      || (x.EstimateName ?? "").Contains(filter.SearchValue)
-                      || (x.TermsCondition ?? "").Contains(filter.SearchValue)
-                      || (x.DiscountCoupon ?? "").Contains(filter.SearchValue)
-                      || (x.GrandTotal.ToString() ?? "").Contains(filter.SearchValue)))
-                ).ToList();
-
-            return filteredRecords;
-        }
-
-
-        private void AddEstimateProducts(TblOrder order, OrderList e)
-        {
-            var productList = orderWindowProductService.GetAllQuerable()
-                .Where(x => x.EstimateId == order.EstimateId && x.IsDelete == false)
-                .Select(x => new
-                {
-                    x.EstimateWindowProductId,
-                    x.ProductId,
-                    x.ProductName,
-                    x.ProductType,
-                    x.Width,
-                    x.Height,
-                    x.ArchHeight,
-                    x.Color,
-                    x.Notes,
-                    x.WindowId,
-                    x.WindowProductId
-                }).ToList();
-
-            e.WindowProductId = productList.Select(p => (Guid)p.WindowProductId).ToArray();
-            foreach (var p in productList)
-            {
-                var optionIds = windowOptionService.GetAllQuerable()
-                    .Where(x => x.IsDelete == false && x.WindowProductId == p.WindowProductId)
-                    .ToList();
-                var optionDetails = optionsTypeService.GetAllQuerable()
-                    .Where(x => x.IsDelete == false && optionIds.Select(y => y.OptionTypeId).Contains(x.OptionTypeId))
-                    .Select(x => new OptionLists { OptionName = x.OptionType })
-                    .ToList();
-                var WindowDetails = orderWindowService.GetAllQuerable()
-                    .Where(x => x.EstimateId == order.EstimateId && x.IsDelete == false)
-                    .ToList();
-                EstimateProductLists estimateProduct = new EstimateProductLists
-                {
-                    EstimateWindowProductId = p.EstimateWindowProductId,
-                    Label = windowService.GetAllQuerable()
-                        .Where(w => w.WindowId == p.WindowId && w.IsDelete == false)
-                        .Select(pt => pt.Label)
-                        .FirstOrDefault(),
-                    ProductType = p.ProductType,
-                    ProductTypeName = productType.GetAllQuerable()
-                        .Where(pt => pt.ProductId.ToString() == p.ProductType && pt.IsDelete == false)
-                        .Select(pt => pt.ProductName)
-                        .FirstOrDefault(),
-                    Width = p.Width,
-                    Height = p.Height,
-                    ArchHeight = p.ArchHeight,
-                    ProductName = p.ProductName,
-                    WindowProductId = p.WindowProductId,
-                    Options = optionDetails,
-                    EstimateWindowDetails = WindowDetails.Where(x => x.WindowId == p.WindowId).Select(x => new EstimateWindowLists
-                    {
-                        ArchHeight = x.ArchHeight,
-                        Height = x.Height,
-                        Width = x.Width
-                    }).FirstOrDefault()
-
-                };
-                e.EstimateProductList.Add(estimateProduct);
-            }
-            AddJobDetails(e);
         }
 
         public async Task<IResponseVm<List<OrderList>>> GetLatestVersionOrders(Pagination filter)
@@ -654,30 +274,7 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
-        private void AddJobDetails(OrderList e)
-        {
-
-            var jobdetails1 = (from j1 in dbContext.TblJobs
-                               join j2 in dbContext.TblEstimates on j1.JobId equals j2.JobId
-                               join j3 in dbContext.TblAddresses on j1.AddressId equals j3.AddressId
-                               join j4 in dbContext.MstJobTypes on j1.JobType equals j4.Id
-                               join j5 in dbContext.TblUsers on j1.AssignedPersonnel equals j5.Id
-                               where j1.IsDelete == false
-                               select new JobDetail
-                               {
-                                   JobName = j1.JobName,
-                                   JobNotes = j1.Notes,
-                                   JobType = j4.JobTypeName,
-                                   AssignedPersonnel = j5.FirstName + " " + j5.LastName,
-                                   Address = j3.StreetAddress + " " + j3.City + " " + j3.State + " " + j3.ZipCode,
-                                   AddressLabel = j3.Label,
-                                   ScheduleTime = j1.ScheduledDate
-                               }).FirstOrDefault();
-
-            e.jobDetails = jobdetails1;
-        }
-
-
+      
         public async Task<IResponseVm<string>> Update_Order(UpdateOrder model)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
@@ -692,7 +289,7 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
                 var isEstimationOrder = (await GetAll()).Where(c => c.EstimateId == model.EstimateId && c.TenantId == AppConstant.LoggedInTenantId
-              && c.IsDelete == false ).ToList();
+              && c.IsDelete == false).ToList();
                 if (isEstimationOrder != null)
                 {
                     var latestRecord = isEstimationOrder
@@ -700,11 +297,11 @@ namespace ShutterManagement.Business.Services
                             int.TryParse(c.Version, out int versionNumber) ? versionNumber : 0)
                       .FirstOrDefault();
                     var latestId = latestRecord?.OrderId;
-                    if(latestId == model.OrderId)
+                    if (latestId == model.OrderId)
                     {
                         var orderExist = GetAllQuerable().Where(x => x.OrderId == model.OrderId && x.TenantId == AppConstant.LoggedInTenantId &&
                         x.IsDelete == false && x.Status != EnumValue.GetEnumValue(Estimation.Approved)).FirstOrDefault();
-                        if(orderExist != null)
+                        if (orderExist != null)
                         {
 
                             orderExist.Notes = model.Notes;
@@ -735,7 +332,7 @@ namespace ShutterManagement.Business.Services
                     await Create_Order_From_Estimate((Guid)model.EstimateId);
                     return responseVm;
                 }
-                
+
             }
             catch (Exception ex)
             {
@@ -744,17 +341,6 @@ namespace ShutterManagement.Business.Services
             }
 
             return responseVm;
-        }
-
-        private async Task<bool> ValidateTenantExists()
-        {
-            FileLogger.Log($"Checking if tenant with ID {AppConstant.LoggedInTenantId} exists...");
-            var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
-            if (!isTenantExists)
-            {
-                FileLogger.Log("Tenant not found.");
-            }
-            return isTenantExists;
         }
 
         public async Task<IResponseVm<string>> ChangeStatus(Guid OrderId, Estimation NewOrderStatus)
@@ -807,13 +393,6 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        private TblOrder GetOrderStatusById(Guid OrderId)
-        {
-            return GetAllQuerable()
-                    .Where(es => es.OrderId == OrderId && es.IsDelete == false && es.IsActive == true)
-                    .FirstOrDefault();
-        }
-
         public bool CanChangeStatus(Estimation currentStatus, Estimation newStatus)
         {
             if (currentStatus == Estimation.New)
@@ -835,8 +414,6 @@ namespace ShutterManagement.Business.Services
 
             return false;
         }
-
-      
 
         public async Task<IResponseVm<string>> ActiveInActiveOrder(Guid OrderId)
         {
@@ -930,7 +507,6 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-
         public async Task<IResponseVm<string>> SendForApproval(Guid OrderId)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
@@ -938,7 +514,7 @@ namespace ShutterManagement.Business.Services
             {
 
 
-                var IsOrderExists = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId && 
+                var IsOrderExists = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId &&
                 x.OrderId == OrderId && x.Status != EnumValue.GetEnumValue(Estimation.Approved)).
                     OrderByDescending(x => x.CreatedAt).FirstOrDefault();
                 if (IsOrderExists == null)
@@ -946,7 +522,7 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = "Estimate " + AppConstant.NoDataFound;
                     return responseVm;
                 }
-                if(IsOrderExists.Status == EnumValue.GetEnumValue(Estimation.Approved))
+                if (IsOrderExists.Status == EnumValue.GetEnumValue(Estimation.Approved))
                 {
                     Create_Order_From_Estimate(IsOrderExists.EstimateId);
                     return responseVm;
@@ -990,15 +566,15 @@ namespace ShutterManagement.Business.Services
             {
                 Pagination pagination = new Pagination
                 {
-                    SearchValue = EstimateId.ToString() 
+                    SearchValue = EstimateId.ToString()
                 };
 
-                var allVersionsOrder = await GetAll_Order(pagination); 
+                var allVersionsOrder = await GetAll_Order(pagination);
 
                 if (allVersionsOrder != null)
                 {
                     responseVm.IsSuccess = true;
-                    responseVm.Data = allVersionsOrder.Data; 
+                    responseVm.Data = allVersionsOrder.Data;
                     responseVm.Message = "History fetched successfully.";
                     responseVm.TotalRecords = allVersionsOrder.Data.Count;
                 }
@@ -1025,7 +601,7 @@ namespace ShutterManagement.Business.Services
                 var order = GetAllQuerable()
                                     .Where(e => e.OrderId == OrderId && e.IsDelete == false)
                                     .FirstOrDefault();
-                
+
                 AppConstant.LoggedInTenantId = order.TenantId;
                 Pagination pagination = new Pagination
                 {
@@ -1054,7 +630,429 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
+        #region Helper methods
+        private async Task<bool> ValidateTenantExists()
+        {
+            FileLogger.Log($"Checking if tenant with ID {AppConstant.LoggedInTenantId} exists...");
+            var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+            if (!isTenantExists)
+            {
+                FileLogger.Log("Tenant not found.");
+            }
+            return isTenantExists;
+        }
 
+        private TblOrder GetOrderStatusById(Guid OrderId)
+        {
+            return GetAllQuerable()
+                    .Where(es => es.OrderId == OrderId && es.IsDelete == false && es.IsActive == true)
+                    .FirstOrDefault();
+        }
+        private async Task<List<TblOrder>> FetchOrders(Pagination filter)
+        {
+            if (string.IsNullOrEmpty(filter.TenantId))
+            {
+                // Log and fetch estimates for the logged-in tenant
+                FileLogger.Log("No TenantId provided, fetching for the logged-in tenant.");
+                return (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId)
+                                       .OrderByDescending(x => x.CreatedAt)
+                                       .ToList();
+            }
+
+            // Validate TenantId if provided
+            var isRelatedTenant = tenantService.GetAllQuerable()
+                .Where(x => x.TenantId.ToString() == filter.TenantId && x.ParentTenantId == AppConstant.LoggedInTenantId && x.IsDelete == false)
+                .FirstOrDefault();
+
+            if (isRelatedTenant == null)
+            {
+                FileLogger.Log($"Tenant with ID {filter.TenantId} is not related or not found.");
+                return null; // Return null to indicate tenant validation failure
+            }
+
+            // Fetch estimates for the provided tenant
+            FileLogger.Log($"Tenant with ID {filter.TenantId} validated successfully.");
+            return (await GetAll()).Where(x => x.IsDelete == false && x.TenantId.ToString() == filter.TenantId)
+                                   .OrderByDescending(x => x.CreatedAt)
+                                   .ToList();
+        }
+
+        private List<OrderList> ApplyFilters(List<TblOrder> orders, Pagination filter)
+        {
+            var orderlist = new List<OrderList>();
+
+            foreach (var order in orders)
+            {
+                var e = new OrderList
+                {
+                    OrderId = order.OrderId,
+                    OrderNumber = order.OrderName,
+                    Version = order.Version,
+                    EstimateId = order.EstimateId,
+                    CreatedDate = order.CreatedAt,
+                    JobId = order.JobId,
+                    Status = order.Status,
+                    IsActive = order.IsActive,
+                    Discount = order.DiscountAmount,
+                    DiscountCoupon = order.DiscountCoupon,
+                    EstimateName = order.EstimateName,
+                    EstimateCode = order.EstimateCode,
+                    SubTotal = order.TotalPrice,
+                    GrandTotal = order.GrandTotal,
+                    Notes = order.Notes,
+                    Tax = order.TaxAmount,
+                    TermsCondition = order.TermsCondition,
+                };
+
+                var userdetails = dbContext.TblUsers
+                    .Where(x => x.Id == order.CreatedBy && x.IsDelete == false)
+                    .FirstOrDefault();
+                if (userdetails != null)
+                {
+                    e.CreatedBy = userdetails.FirstName + " " + userdetails.LastName;
+                }
+                else
+                {
+                    e.CreatedBy = "User not found";
+                }
+
+                var Tenant = dbContext.TblTenants
+                    .Where(e => e.TenantId == order.TenantId && e.IsDelete == false)
+                    .FirstOrDefault();
+                e.primarycolor = dbContext.TblTenantBrandingInfos
+                    .Where(tb => tb.Id == Tenant.BrandingInfo)
+                    .Select(tb => tb.PrimaryColor)
+                    .FirstOrDefault();
+                AddEstimateProducts(order, e);
+                orderlist.Add(e);
+            }
+
+            var filteredRecords = orderlist
+                .Where(x =>
+                    (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
+                    (string.IsNullOrWhiteSpace(filter.SearchValue) ||
+                     ((x.Notes ?? "").Contains(filter.SearchValue)
+                      || (x.JobId.ToString() ?? "").Contains(filter.SearchValue)
+                      || (x.OrderNumber ?? "").Contains(filter.SearchValue)
+                      || (x.OrderId.ToString() ?? "").Contains(filter.SearchValue)
+                      || (x.Status ?? "").Contains(filter.SearchValue)
+                      || (x.EstimateId.ToString()).Contains(filter.SearchValue)
+                      || (x.EstimateCode ?? "").Contains(filter.SearchValue)
+                      || (x.EstimateName ?? "").Contains(filter.SearchValue)
+                      || (x.TermsCondition ?? "").Contains(filter.SearchValue)
+                      || (x.DiscountCoupon ?? "").Contains(filter.SearchValue)
+                      || (x.GrandTotal.ToString() ?? "").Contains(filter.SearchValue)))
+                ).ToList();
+
+            return filteredRecords;
+        }
+
+        private void AddJobDetails(OrderList e)
+        {
+
+            var jobdetails1 = (from j1 in dbContext.TblJobs
+                               join j2 in dbContext.TblEstimates on j1.JobId equals j2.JobId
+                               join j3 in dbContext.TblAddresses on j1.AddressId equals j3.AddressId
+                               join j4 in dbContext.MstJobTypes on j1.JobType equals j4.Id
+                               join j5 in dbContext.TblUsers on j1.AssignedPersonnel equals j5.Id
+                               where j1.IsDelete == false
+                               select new JobDetail
+                               {
+                                   JobName = j1.JobName,
+                                   JobNotes = j1.Notes,
+                                   JobType = j4.JobTypeName,
+                                   AssignedPersonnel = j5.FirstName + " " + j5.LastName,
+                                   Address = j3.StreetAddress + " " + j3.City + " " + j3.State + " " + j3.ZipCode,
+                                   AddressLabel = j3.Label,
+                                   ScheduleTime = j1.ScheduledDate
+                               }).FirstOrDefault();
+
+            e.jobDetails = jobdetails1;
+        }
+        private void AddEstimateProducts(TblOrder order, OrderList e)
+        {
+            var productList = orderWindowProductService.GetAllQuerable()
+                .Where(x => x.OrderId == order.OrderId && x.IsDelete == false)
+                .Select(x => new
+                {
+                    x.OrderWindowProductId,
+                    x.ProductId,
+                    x.ProductName,
+                    x.ProductType,
+                    x.Width,
+                    x.Height,
+                    x.ArchHeight,
+                    x.Color,
+                    x.Notes,
+                    x.WindowId,
+                    x.WindowProductId
+                }).ToList();
+
+            e.WindowProductId = productList.Select(p => (Guid)p.WindowProductId).ToArray();
+            foreach (var p in productList)
+            {
+                var optionIds = windowOptionService.GetAllQuerable()
+                    .Where(x => x.IsDelete == false && x.WindowProductId == p.WindowProductId)
+                    .ToList();
+                var optionDetails = optionsTypeService.GetAllQuerable()
+                    .Where(x => x.IsDelete == false && optionIds.Select(y => y.OptionTypeId).Contains(x.OptionTypeId))
+                    .Select(x => new OptionLists { OptionName = x.OptionType })
+                    .ToList();
+                var WindowDetails = orderWindowService.GetAllQuerable()
+                    .Where(x => x.OrderId == order.OrderId && x.IsDelete == false)
+                    .ToList();
+                EstimateProductLists estimateProduct = new EstimateProductLists
+                {
+                    EstimateWindowProductId = p.OrderWindowProductId,
+                    Label = windowService.GetAllQuerable()
+                        .Where(w => w.WindowId == p.WindowId && w.IsDelete == false)
+                        .Select(pt => pt.Label)
+                        .FirstOrDefault(),
+                    ProductType = p.ProductType,
+                    ProductTypeName = productType.GetAllQuerable()
+                        .Where(pt => pt.ProductId.ToString() == p.ProductType && pt.IsDelete == false)
+                        .Select(pt => pt.ProductName)
+                        .FirstOrDefault(),
+                    Width = p.Width,
+                    Height = p.Height,
+                    ArchHeight = p.ArchHeight,
+                    ProductName = p.ProductName,
+                    WindowProductId = p.WindowProductId,
+                    Options = optionDetails,
+                    EstimateWindowDetails = WindowDetails.Where(x => x.WindowId == p.WindowId).Select(x => new EstimateWindowLists
+                    {
+                        ArchHeight = x.ArchHeight,
+                        Height = x.Height,
+                        Width = x.Width
+                    }).FirstOrDefault()
+
+                };
+                e.EstimateProductList.Add(estimateProduct);
+            }
+            AddJobDetails(e);
+        }
+        private async Task ProcessWindowProducts(List<Guid> windowProductIds, Guid estimateId, Guid OrderId, string Version)
+        {
+            FileLogger.Log("Processing window products...");
+            foreach (var product in windowProductIds)
+            {
+                var windowProductData = (await windowProductService.GetAll()).Where(x => x.WindowProductId == product && x.IsDelete == false).FirstOrDefault();
+                if (windowProductData == null)
+                {
+                    Message = "Window Product " + AppConstant.NoDataFound;
+                    return;
+                }
+
+                var windowData = (await windowService.GetAll()).Where(x => x.WindowId == windowProductData.WindowId && x.IsDelete == false).FirstOrDefault();
+                if (windowData == null)
+                {
+                    Message = "Window " + AppConstant.NoDataFound;
+                    return;
+                }
+
+                await AddWindowToOrder(windowData, windowProductData, OrderId, estimateId, Version);
+                await AddProductToOrder(windowProductData, estimateId, OrderId, Version);
+                if (!string.IsNullOrEmpty(Message))
+                {
+                    return;
+                }
+                await AddComponentsToOrder((Guid)windowProductData.ProductId, estimateId, OrderId, Version);
+                if (!string.IsNullOrEmpty(Message))
+                {
+                    return;
+                }
+            }
+        }
+
+        private async Task AddWindowToOrder(TblWindow windowData, TblWindowProduct windowProductData, Guid OrderId, Guid estimateId, string Version)
+        {
+            FileLogger.Log($"Adding window data for window {windowData.WindowId} to order...");
+            TblOrderWindow tblOrderWindow = new TblOrderWindow
+            {
+                OrderWindowId = Guid.NewGuid(),
+                OrderId = OrderId,
+                Version = Version,
+                EstimateId = estimateId,
+                WindowId = windowData.WindowId,
+                IsActive = true,
+                IsDelete = false,
+                CreatedAt = DateTime.Now,
+                CreatedBy = AppConstant.LoggedInUserID,
+                TenantId = AppConstant.LoggedInTenantId,
+                Label = windowData.Label,
+                AddressId = windowData.AddressId,
+                ArchHeight = windowData.ArchHeight,
+                Height = windowData.Height,
+                Width = windowData.Width,
+                Quantity = windowData.Quantity,
+                Notes = windowData.Notes,
+            };
+
+            await orderWindowService.Add(tblOrderWindow);
+        }
+
+        private async Task AddProductToOrder(TblWindowProduct windowProductData, Guid estimateId, Guid OrderId, string Version)
+        {
+            FileLogger.Log($"Adding product data for product {windowProductData.ProductId} to order...");
+            var productData = (await productService.GetAll()).Where(x => x.ProductId == windowProductData.ProductId && x.IsDelete == false).FirstOrDefault();
+            if (productData == null)
+            {
+                Message = "Product " + AppConstant.NoDataFound;
+                return;
+            }
+
+            TblOrderWindowProduct tblOrderWindowProduct = new TblOrderWindowProduct
+            {
+                OrderWindowProductId = Guid.NewGuid(),
+                OrderId = OrderId,
+                Version = Version,
+                WindowId = (Guid)windowProductData.WindowId,
+                ProductName = productData.ProductName,
+                Height = productData.Height,
+                Width = productData.Width,
+                AdditionalWidth = productData.AdditionalWidth,
+                Notes = productData.Notes,
+                IsDelete = false,
+                IsActive = true,
+                CreatedAt = DateTime.Now,
+                CreatedBy = AppConstant.LoggedInUserID,
+                ArchHeight = productData.ArchHeight,
+                Area = productData.Area,
+                Color = productData.Color,
+                EstimateId = estimateId,
+                Length = productData.Length,
+                Markup = productData.Markup,
+                ProductType = productData.ProductType,
+                TenantId = AppConstant.LoggedInTenantId,
+                ProductId = productData.ProductId,
+                WindowProductId = windowProductData.WindowProductId
+            };
+
+            await orderWindowProductService.Add(tblOrderWindowProduct);
+        }
+
+        private async Task AddComponentsToOrder(Guid productId, Guid estimateId, Guid OrderId, string Version)
+        {
+            FileLogger.Log($"Adding components for product {productId} to estimate...");
+            var productComponentData = (await productComponentService.GetAll()).Where(x => x.ProductId == productId && x.IsDelete == false).ToList();
+            if (productComponentData == null || productComponentData.Count == 0)
+            {
+                Message = "No Components " + AppConstant.NoDataFound;
+                return;
+            }
+
+            foreach (var component in productComponentData)
+            {
+                var componentData = (await componentService.GetAll()).Where(x => x.ComponentId == component.ComponentId && x.IsDelete == false).FirstOrDefault();
+                if (componentData == null)
+                {
+                    Message = "Components " + AppConstant.NoDataFound;
+                    return;
+                }
+
+                await AddComponentToOrderWindow(componentData, estimateId, OrderId, Version);
+                await AddComponentMaterialsToOrder(componentData.ComponentId, estimateId, OrderId, Version);
+                if (!string.IsNullOrEmpty(Message))
+                {
+                    return;
+                }
+            }
+        }
+
+        private async Task AddComponentMaterialsToOrder(Guid componentId, Guid estimateId, Guid OrderId, string Version)
+        {
+            FileLogger.Log($"Adding materials for component {componentId} to estimate...");
+
+            var componentMaterialData = (await componentMaterialService.GetAll())
+             .Where(x => x.ComponentId == componentId && x.IsDelete == false)
+              .AsQueryable()
+              .AsNoTracking()
+              .ToList();
+
+
+            if (componentMaterialData == null || componentMaterialData.Count == 0)
+            {
+                Message = "No material " + AppConstant.NoDataFound;
+                return;
+            }
+
+            foreach (var material in componentMaterialData)
+            {
+                var materialData = (await materialService.GetAll())
+                 .AsQueryable()
+                 .Where(x => x.RawMaterialId == material.RawMaterialId && x.IsDelete == false)
+                 .AsNoTracking()
+                 .FirstOrDefault();
+
+
+                if (materialData == null)
+                {
+                    Message = "Material " + AppConstant.NoDataFound;
+                    return;
+                }
+
+                await AddMaterialToOrder(materialData, estimateId, OrderId, Version);
+            }
+        }
+
+
+        private async Task AddMaterialToOrder(TblRawMaterial materialData, Guid estimateId, Guid OrderId, string Version)
+        {
+            FileLogger.Log($"Adding material {materialData.MaterialName} to order...");
+            TblOrderWindowProductComponentMaterial tblEstimateWindowProductComponentMaterial = new TblOrderWindowProductComponentMaterial
+            {
+                OrderId = OrderId,
+                Version = Version,
+                OrderWindowProductComponentMaterialId = Guid.NewGuid(),
+                IsDelete = false,
+                IsActive = true,
+                CreatedAt = DateTime.Now,
+                CreatedBy = AppConstant.LoggedInUserID,
+                TenantId = AppConstant.LoggedInTenantId,
+                EstimateId = estimateId,
+                IsCutSheet = materialData.IsCutSheet,
+                MaterialName = materialData.MaterialName,
+                Notes = materialData.Notes,
+                ProductType = materialData.ProductType,
+                ReorderLevel = materialData.ReorderLevel,
+                Sku = materialData.Sku,
+                StockQuantity = materialData.StockQuantity,
+                UnitCost = materialData.UnitCost,
+                UnitOfMeasurement = materialData.UnitOfMeasurement,
+                VendorId = materialData.VendorId,
+                RawMaterialId = materialData.RawMaterialId,
+            };
+
+            await orderWindowProductComponentMaterialService.Add(tblEstimateWindowProductComponentMaterial);
+        }
+
+        private async Task AddComponentToOrderWindow(TblComponent componentData, Guid estimateId, Guid OrderId, string Version)
+        {
+            FileLogger.Log($"Adding component {componentData.ComponentName} to estimate...");
+            TblOrderWindowProductComponent tblOrderWindowProductComponent = new TblOrderWindowProductComponent
+            {
+                OrderWindowProductComponentId = Guid.NewGuid(),
+                OrderId = OrderId,
+                Version = Version,
+                ComponentId = componentData.ComponentId,
+                EstimateId = estimateId,
+                ComponentName = componentData.ComponentName,
+                IsDelete = false,
+                IsActive = true,
+                CreatedAt = DateTime.Now,
+                CreatedBy = AppConstant.LoggedInUserID,
+                MarkupPercentage = componentData.MarkupPercentage,
+                Notes = componentData.Notes,
+                ProductType = componentData.ProductType,
+                PricingExpression = componentData.PricingExpression,
+                TenantId = AppConstant.LoggedInTenantId,
+            };
+
+            await orderWindowProductComponentService.Add(tblOrderWindowProductComponent);
+        }
+
+
+        #endregion
 
     }
 }
