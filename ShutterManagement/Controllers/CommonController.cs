@@ -47,6 +47,7 @@ namespace ShutterManagement.Controllers
         private readonly IMstContactType contactType;
         private readonly IJobService jobService;
         private readonly IExpressionService expression;
+        private readonly IInvoiceService invoiceService;
 
         public CommonController(IMasterCreate masterCreate, 
             FileUploadHelper fileUpload, ClaimsProperty claimsProperty,
@@ -57,7 +58,7 @@ namespace ShutterManagement.Controllers
             IComponentService componentService, IMstProductType mstProductType,
             IAddress address, IOption option, IProductService productService,
             IUnitofMeasurementService unitofMeasurementService, IRoleService roleService, IRegion region, IContactService contactService,
-            IMstContactType contactType, IJobService jobService,IExpressionService expression)
+            IMstContactType contactType, IJobService jobService,IExpressionService expression ,IInvoiceService invoiceService)
         {
             this.masterCreate = masterCreate;
             this.fileUpload = fileUpload;
@@ -93,6 +94,7 @@ namespace ShutterManagement.Controllers
             this.contactType = contactType;
             this.jobService = jobService;
             this.expression = expression;
+            this.invoiceService = invoiceService;
         }
 
 
@@ -496,6 +498,15 @@ namespace ShutterManagement.Controllers
             return Ok(res);
         }
 
+
+        [HttpGet]
+        [Route("GetAllInvoice")]
+        public async Task<IActionResult> GetAllInvoice(Guid? InvoiceId)
+        {
+            var res = await invoiceService.GetAllInvoice(filter);
+            res.Data = res.Data?.Where(x => x.IsActive == true && x.InvoiceId == InvoiceId).ToList();
+            return Ok(res);
+        }
 
     }
 }

@@ -68,6 +68,18 @@ namespace ShutterManagement.Core.Common
         GenerateOrder
     }
 
+    public enum PaymentStatus
+    {
+        [EnumMember(Value = "Unpaid")]
+        Unpaid,
+        [EnumMember(Value = "PartiallyPaid")]
+        PartiallyPaid,
+        [EnumMember(Value = "Paid")]
+        Paid,
+        [EnumMember(Value = "Overdue")]
+        Overdue
+    }
+
     public static class EnumValue
     {
         public static string GetEnumValue<T>(T enumValue) where T : Enum

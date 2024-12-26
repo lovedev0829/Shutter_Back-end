@@ -23,6 +23,8 @@ public partial class MstProductType
 
     public virtual ICollection<TblEstimateWindowProductComponentMaterial> TblEstimateWindowProductComponentMaterials { get; set; } = new List<TblEstimateWindowProductComponentMaterial>();
 
+    public virtual ICollection<TblExpression> TblExpressions { get; set; } = new List<TblExpression>();
+
     public virtual ICollection<TblOption> TblOptions { get; set; } = new List<TblOption>();
 
     public virtual ICollection<TblRawMaterial> TblRawMaterials { get; set; } = new List<TblRawMaterial>();
