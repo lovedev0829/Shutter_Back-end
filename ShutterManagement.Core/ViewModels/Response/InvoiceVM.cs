@@ -11,6 +11,9 @@ namespace ShutterManagement.Core.ViewModels.Response
         public DateTime? IssueDate { get; set; }
         public DateTime? DueDate { get; set; }
         public decimal? TotalAmount { get; set; }
+        public decimal? PaidAmount { get; set; }
+        public decimal? BalanceDue { get; set; }
+        public string? Status { get; set; }
         public bool? IsActive { get; set; }
 
         public List<InvoicePaymentVM> InvoicePayments { get; set; } = new List<InvoicePaymentVM>();

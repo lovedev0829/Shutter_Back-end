@@ -502,6 +502,7 @@ namespace ShutterManagement.Controllers
 
 
         [HttpGet]
+        [Authorize]
         [Route("GetAllInvoice")]
         public async Task<IActionResult> GetAllInvoice(Guid? InvoiceId)
         {

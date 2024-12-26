@@ -18,9 +18,12 @@ namespace ShutterManagement.Business.Services
     public class PaymentsService : BaseRepository<BtprojecShuttermanagementDevContext, TblPayment1>, IPaymentsService
     {
         private readonly ITenantService tenantService;
-        public PaymentsService(ITenantService tenantService)
+        private readonly IInvoiceService invoiceService;
+
+        public PaymentsService(ITenantService tenantService ,IInvoiceService invoiceService)
         {
             this.tenantService = tenantService;
+            this.invoiceService = invoiceService;
         }
 
         #region Active_InActive_Payment
@@ -80,6 +83,7 @@ namespace ShutterManagement.Business.Services
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
 
+            using var transaction = await dbContext.Database.BeginTransactionAsync();
             try
             {
                 var isTenantValid = await tenantService.AnyAsync(x =>
@@ -92,7 +96,7 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
                 var isTransactionExists = await AnyAsync(x =>
-                  x.TransactionId == model.TransactionId && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
+                    x.TransactionId == model.TransactionId && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
 
                 if (isTransactionExists)
                 {
@@ -100,18 +104,17 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = "TransactionId Already Exists.";
                     return responseVm;
                 }
-
                 TblPayment1 tblPayments = new TblPayment1
                 {
-                    PaymentId=Guid.NewGuid(),
+                    PaymentId = Guid.NewGuid(),
                     InvoiceId = model.InvoiceId,
                     PaymentDate = model.PaymentDate,
                     PaymentDueDate = model.PaymentDueDate,
                     Amount = model?.Amount,
                     PaymentMethod = model?.PaymentMethod,
-                    TransactionId = model?.TransactionId.Trim(),
+                    TransactionId = model?.TransactionId?.Trim(),
                     Notes = model?.Notes,
-                    Status= EnumValue.GetEnumValue(model.PaymentStatus),
+                    Status = EnumValue.GetEnumValue(model.PaymentStatus),
                     CreatedAt = DateTime.Now,
                     TenantId = AppConstant.LoggedInTenantId,
                     CreatedBy = AppConstant.LoggedInUserID,
@@ -119,19 +122,52 @@ namespace ShutterManagement.Business.Services
                     IsDelete = false
                 };
 
-                var res = await Add(tblPayments);
+                await Add(tblPayments);
+                var invoice = invoiceService.GetAllQuerable()
+                    .FirstOrDefault(i => i.InvoiceId == model.InvoiceId && i.IsActive == true);
+
+                if (invoice == null)
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = "Invoice not found.";
+                    await transaction.RollbackAsync();
+                    return responseVm;
+                }
+                if (model.PaymentStatus == PaymentStatus.Paid || model.PaymentStatus == PaymentStatus.PartiallyPaid)
+                {
+                    invoice.PaidAmount += model.Amount ?? 0;
+                    invoice.BalanceDue = invoice.TotalAmount - invoice.PaidAmount;
+                    if (invoice.BalanceDue == 0)
+                    {
+                        invoice.Status = EnumValue.GetEnumValue(PaymentStatus.Paid);
+                    }
+                    else
+                    {
+                        invoice.Status = EnumValue.GetEnumValue(PaymentStatus.PartiallyPaid);
+                    }
+
+                    invoice.UpdatedAt = DateTime.Now;
+                    invoice.ModifiedBy = AppConstant.LoggedInUserID;
+                    await invoiceService.Update(invoice);
+                }
+
+                await transaction.CommitAsync();
+
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.InsertSuccessMsg;
-
             }
             catch (Exception ex)
             {
+                await transaction.RollbackAsync();
+
                 responseVm.IsSuccess = false;
                 responseVm.Message = AppConstant.ExceptionError + ex.Message;
             }
 
             return responseVm;
         }
+
+
 
         #endregion CreatePayment
 
@@ -255,6 +291,7 @@ namespace ShutterManagement.Business.Services
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
 
+            using var transaction = await dbContext.Database.BeginTransactionAsync();
             try
             {
                 var isTenantValid = await tenantService.AnyAsync(x =>
@@ -267,44 +304,73 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-                var Payments = GetAllQuerable()
+                var payment = GetAllQuerable()
                     .Where(c => c.PaymentId == updatePayment.PaymentId
                                 && c.TenantId == AppConstant.LoggedInTenantId
                                 && c.IsDelete == false)
                     .FirstOrDefault();
 
-                if (Payments == null)
+                if (payment == null)
                 {
                     responseVm.IsSuccess = false;
                     responseVm.Message = AppConstant.NoDataFound;
                     return responseVm;
                 }
+                var invoice = invoiceService.GetAllQuerable()
+                    .FirstOrDefault(i => i.InvoiceId == payment.InvoiceId && i.IsActive == true);
 
-                Payments.TransactionId = updatePayment.TransactionId?.Trim();
-                Payments.PaymentDate = updatePayment.PaymentDate;
-                Payments.PaymentDueDate = updatePayment.PaymentDueDate;
-                Payments.PaymentMethod = updatePayment.PaymentMethod;
-                Payments.Amount = updatePayment.Amount;
-                Payments.Status = EnumValue.GetEnumValue(updatePayment.PaymentStatus);
-                Payments.Notes = updatePayment.Notes;
-                Payments.UpdatedAt = DateTime.Now;
-                Payments.ModifiedBy = AppConstant.LoggedInUserID;
+                if (invoice == null)
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = "Invoice not found.";
+                    await transaction.RollbackAsync();
+                    return responseVm;
+                }
+                payment.TransactionId = updatePayment.TransactionId?.Trim();
+                payment.PaymentDate = updatePayment.PaymentDate;
+                payment.PaymentDueDate = updatePayment.PaymentDueDate;
+                payment.PaymentMethod = updatePayment.PaymentMethod;
+                payment.Amount = updatePayment.Amount;
+                payment.Status = EnumValue.GetEnumValue(updatePayment.PaymentStatus);
+                payment.Notes = updatePayment.Notes;
+                payment.UpdatedAt = DateTime.Now;
+                payment.ModifiedBy = AppConstant.LoggedInUserID;
+                await Update(payment);
 
-                await Update(Payments);
+                if (updatePayment.PaymentStatus == PaymentStatus.Paid || updatePayment.PaymentStatus == PaymentStatus.PartiallyPaid)
+                {
+                    invoice.PaidAmount += updatePayment.Amount ?? 0;
+                    invoice.BalanceDue = invoice.TotalAmount - invoice.PaidAmount;
+                    if (invoice.BalanceDue == 0)
+                    {
+                        invoice.Status = EnumValue.GetEnumValue(PaymentStatus.Paid);
+                    }
+                    else
+                    {
+                        invoice.Status = EnumValue.GetEnumValue(PaymentStatus.PartiallyPaid);
+                    }
+
+                    invoice.UpdatedAt = DateTime.Now;
+                    invoice.ModifiedBy = AppConstant.LoggedInUserID;
+                    await invoiceService.Update(invoice);
+                }
+                await transaction.CommitAsync();
 
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.UpdateSuccessMsg;
             }
             catch (Exception ex)
             {
+                await transaction.RollbackAsync();
+
                 responseVm.IsSuccess = false;
                 responseVm.Message = AppConstant.ExceptionError + ex.Message;
             }
 
             return responseVm;
         }
-
         #endregion UpdatePayment
+
 
     }
 

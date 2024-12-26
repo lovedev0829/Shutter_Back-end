@@ -55,7 +55,7 @@ namespace ShutterManagement.Controllers
         }
 
         [HttpPost("Delete")]
-        //[Authorize(Roles = "PaymentDelete")]
+        //[Authorize(Roles = "PaymentEdit")]
         public async Task<IActionResult> DeleteContact(string ContactId)
         {
             Guid guid = Guid.Parse(ContactId);
