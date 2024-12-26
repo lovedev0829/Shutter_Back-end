@@ -73,7 +73,7 @@ namespace ShutterManagement.Business.Services
         }
 
 
-        public async Task<IResponseVm<string>> Create_Order_From_Estimate(Guid EstimateId)
+        public async Task<IResponseVm<string>> Create_Order_From_Estimate(Guid EstimateId, bool fromEstimate = false)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
             FileLogger.Log("Start: Create Order from Estimate...");
@@ -90,14 +90,21 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = "Estimate " + AppConstant.NoDataFound;
                     return responseVm;
                 }
+
+               
                 var OrderNumber =  GenerateUniqueId.GenerateUniqueIds(ModuleName.Order, AppConstant.LoggedInCompanyCode);
                 var version = GetAllQuerable()
-                  .Where(x => x.EstimateId == EstimateId && x.IsDelete == false)
-                  .Select(x => x.Version)
-                  .FirstOrDefault();
+                .Where(x => x.EstimateId == EstimateId && x.IsDelete == false && x.Status != EnumValue.GetEnumValue(Estimation.Approved))
+                .OrderByDescending(x => x.Status)  
+                .Select(x => x.Version)
+                .FirstOrDefault();
+                if (fromEstimate && version.Equals(EnumValue.GetEnumValue(Estimation.GenerateOrder)))
+                {
+                    responseVm.Message = "Order already generated";
+                    return responseVm;
+                }
 
-
-                if (version != null)
+                    if (version != null)
                 {
                     if (int.TryParse(version, out int versionNumber))
                     {
@@ -142,7 +149,7 @@ namespace ShutterManagement.Business.Services
 
                 await Add(newOrder);
                 var windowProductIds = dbContext.TblEstimateWindowProducts
-           .Where(e => e.EstimateId == EstimateId)
+                 .Where(e => e.EstimateId == EstimateId)
            .Select(e => e.WindowProductId)
            .ToList();
 
@@ -440,7 +447,7 @@ namespace ShutterManagement.Business.Services
                 // Log and fetch estimates for the logged-in tenant
                 FileLogger.Log("No TenantId provided, fetching for the logged-in tenant.");
                 return (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId)
-                                       .OrderByDescending(x => x.CreatedAt)
+                                       .OrderByDescending(x => x.CreatedAt) 
                                        .ToList();
             }
 
@@ -596,7 +603,57 @@ namespace ShutterManagement.Business.Services
             AddJobDetails(e);
         }
 
+        public async Task<IResponseVm<List<OrderList>>> GetLatestVersionOrders(Pagination filter)
+        {
+            IResponseVm<List<OrderList>> responseVm = new ResponseVm<List<OrderList>>();
+            try
+            {
+                FileLogger.Log($"Start: Fetching latest version of orders with filter parameters: TenantId = {filter.TenantId}, PageNo = {filter.PageNo}, RecordsPerPage = {filter.RecordPerPage}");
 
+                var orders = await FetchOrders(filter);
+                if (orders == null)
+                {
+                    responseVm.Message = AppConstant.TenantNotFound;
+                    return responseVm;
+                }
+
+                FileLogger.Log($"Fetched {orders.Count} orders.");
+
+                // Group orders by EstimateId and get the latest version for each group
+                var latestVersionOrders = orders
+                    .GroupBy(o => o.EstimateId)  // Group by EstimateId to handle versions
+                    .Select(g => g.OrderByDescending(o => o.Version)  // Order by Version to get the latest
+                                .FirstOrDefault())  // Get the latest order in each group
+                    .ToList();
+
+                // Apply filters (like Status, SearchValue, etc.)
+                var filteredOrders = ApplyFilters(latestVersionOrders, filter);
+
+                // Apply pagination
+                var paginatedOrders = Paginate.Pagination(filteredOrders, filter);
+
+                responseVm.IsSuccess = true;
+                if (paginatedOrders.Any())
+                {
+                    responseVm.Data = paginatedOrders;
+                    responseVm.Message = AppConstant.FetchSuccessMsg;
+                    responseVm.TotalRecords = filteredOrders.Count;
+                    FileLogger.Log($"Successfully fetched {paginatedOrders.Count} orders.");
+                }
+                else
+                {
+                    responseVm.Message = AppConstant.NoDataFound;
+                    FileLogger.Log("No data found after applying filters.");
+                }
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Log($"Error occurred while fetching orders: {ex.Message}");
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+            }
+
+            return responseVm;
+        }
         private void AddJobDetails(OrderList e)
         {
 
@@ -634,8 +691,8 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.TenantNotFound;
                     return responseVm;
                 }
-                var isEstimationOrder = (await GetAll()).Where(c => c.EstimateId == model.EstimationId && c.TenantId == AppConstant.LoggedInTenantId
-              && c.IsDelete == false).ToList();
+                var isEstimationOrder = (await GetAll()).Where(c => c.EstimateId == model.EstimateId && c.TenantId == AppConstant.LoggedInTenantId
+              && c.IsDelete == false ).ToList();
                 if (isEstimationOrder != null)
                 {
                     var latestRecord = isEstimationOrder
@@ -667,7 +724,7 @@ namespace ShutterManagement.Business.Services
                         }
                         else
                         {
-                            await Create_Order_From_Estimate((Guid)model.EstimationId);
+                            await Create_Order_From_Estimate((Guid)model.EstimateId);
                             return responseVm;
                         }
                     }
@@ -675,7 +732,7 @@ namespace ShutterManagement.Business.Services
                 else
                 {
 
-                    await Create_Order_From_Estimate((Guid)model.EstimationId);
+                    await Create_Order_From_Estimate((Guid)model.EstimateId);
                     return responseVm;
                 }
                 
@@ -700,16 +757,16 @@ namespace ShutterManagement.Business.Services
             return isTenantExists;
         }
 
-        public async Task<IResponseVm<string>> ChangeStatus(Guid OrderId, Estimation NewEstimationStatus)
+        public async Task<IResponseVm<string>> ChangeStatus(Guid OrderId, Estimation NewOrderStatus)
         {
             FileLogger.Log($"Processing status change for EstimationId: {OrderId}...");
             IResponseVm<string> responseVm = new ResponseVm<string>();
 
             try
             {
-                var EstimationStatus = GetEstimationStatusById(OrderId);
+                var OrderStatus = GetOrderStatusById(OrderId);
 
-                if (EstimationStatus == null)
+                if (OrderStatus == null)
                 {
                     responseVm.Message = "Estimation not found.";
                     FileLogger.Log($"Estimation with ID {OrderId} not found.");
@@ -717,7 +774,7 @@ namespace ShutterManagement.Business.Services
                 }
 
                 // Safely parse the current status to Estimation enum
-                if (!Enum.TryParse(EstimationStatus.Status, out Estimation currentStatus))
+                if (!Enum.TryParse(OrderStatus.Status, out Estimation currentStatus))
                 {
                     responseVm.Message = "Invalid status found in the system.";
                     FileLogger.Log($"Estimation with ID {OrderId} has an invalid status.");
@@ -725,20 +782,20 @@ namespace ShutterManagement.Business.Services
                 }
 
                 // Check if status change is allowed
-                if (CanChangeStatus(currentStatus, NewEstimationStatus))
+                if (CanChangeStatus(currentStatus, NewOrderStatus))
                 {
-                    EstimationStatus.Status = EnumValue.GetEnumValue(NewEstimationStatus);
-                    await Update(EstimationStatus);
+                    OrderStatus.Status = EnumValue.GetEnumValue(NewOrderStatus);
+                    await Update(OrderStatus);
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.UpdateSuccessMsg;
-                    responseVm.Data = EnumValue.GetEnumValue(NewEstimationStatus);
+                    responseVm.Data = EnumValue.GetEnumValue(NewOrderStatus);
 
                 }
                 else
                 {
-                    responseVm.Message = $"You can't change status from {currentStatus} to {NewEstimationStatus}.";
+                    responseVm.Message = $"You can't change status from {currentStatus} to {NewOrderStatus}.";
                     responseVm.Data = currentStatus.ToString();
-                    FileLogger.Log($"Status change from {currentStatus} to {NewEstimationStatus} is not allowed.");
+                    FileLogger.Log($"Status change from {currentStatus} to {NewOrderStatus} is not allowed.");
                 }
             }
             catch (Exception ex)
@@ -750,7 +807,7 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        private TblOrder GetEstimationStatusById(Guid OrderId)
+        private TblOrder GetOrderStatusById(Guid OrderId)
         {
             return GetAllQuerable()
                     .Where(es => es.OrderId == OrderId && es.IsDelete == false && es.IsActive == true)
@@ -924,6 +981,81 @@ namespace ShutterManagement.Business.Services
             }
             return responseVm;
         }
+
+        public async Task<IResponseVm<dynamic>> ViewHistory(Guid EstimateId)
+        {
+            IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
+
+            try
+            {
+                Pagination pagination = new Pagination
+                {
+                    SearchValue = EstimateId.ToString() 
+                };
+
+                var allVersionsOrder = await GetAll_Order(pagination); 
+
+                if (allVersionsOrder != null)
+                {
+                    responseVm.IsSuccess = true;
+                    responseVm.Data = allVersionsOrder.Data; 
+                    responseVm.Message = "History fetched successfully.";
+                    responseVm.TotalRecords = allVersionsOrder.Data.Count;
+                }
+                else
+                {
+                    responseVm.Message = "No history found for the provided EstimateId.";
+                }
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Log($"Error fetching history for EstimateId: {EstimateId}. Error: {ex.Message}");
+                responseVm.Message = "An error occurred while fetching the history. Please try again later.";
+            }
+
+            return responseVm;
+        }
+
+        public async Task<IResponseVm<dynamic>> ViewOrder(Guid OrderId)
+        {
+            IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
+
+            try
+            {
+                var order = GetAllQuerable()
+                                    .Where(e => e.OrderId == OrderId && e.IsDelete == false)
+                                    .FirstOrDefault();
+                
+                AppConstant.LoggedInTenantId = order.TenantId;
+                Pagination pagination = new Pagination
+                {
+                    SearchValue = OrderId.ToString()
+                };
+                var allVersionsOrder = await GetAll_Order(pagination);
+
+                if (allVersionsOrder != null)
+                {
+                    responseVm.IsSuccess = true;
+                    responseVm.Data = allVersionsOrder.Data;
+                    responseVm.Message = "History fetched successfully.";
+                    responseVm.TotalRecords = allVersionsOrder.Data.Count;
+                }
+                else
+                {
+                    responseVm.Message = "No history found for the provided EstimateId.";
+                }
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Log($"Error fetching history for EstimateId: {OrderId}. Error: {ex.Message}");
+                responseVm.Message = "An error occurred while fetching the history. Please try again later.";
+            }
+
+            return responseVm;
+        }
+
+
+
     }
 }
 

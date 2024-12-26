@@ -1518,11 +1518,15 @@ namespace ShutterManagement.Business.Services
             }
             else if (currentStatus == Estimation.Approved)
             {
-                return false;
+                return newStatus == Estimation.GenerateOrder;
             }
             else if (currentStatus == Estimation.Rejected)
             {
                 return newStatus == Estimation.New;
+            }
+            else if(currentStatus == Estimation.GenerateOrder)
+            {
+                return false;
             }
 
             return false;

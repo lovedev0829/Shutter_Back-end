@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Business.Services;
+using ShutterManagement.Core.Common;
 using ShutterManagement.Core.ViewModels.Request;
 
 namespace ShutterManagement.Controllers
@@ -33,7 +34,17 @@ namespace ShutterManagement.Controllers
         [Authorize(Roles = "OrderView")]
         public async Task<IActionResult> GetAllOrders(Pagination filter)
         {
-            var res = await orderService.GetAll_Order(filter);
+            var res = await orderService.GetLatestVersionOrders(filter);
+            return Ok(res);
+
+        }
+
+
+        [HttpPost("ViewHistory")]
+        [Authorize(Roles = "OrderView")]
+        public async Task<IActionResult> ViewHistory(Guid EstimationId)
+        {
+            var res = await orderService.ViewHistory(EstimationId);
             return Ok(res);
 
         }
@@ -72,6 +83,25 @@ namespace ShutterManagement.Controllers
         {
             var res = await orderService.SendForApproval(OrderId);
             return Ok(res);
+        }
+
+        [HttpPost("ViewOrder")]
+        //[Authorize(Roles = "EstimateView")]
+        [AllowAnonymous]
+        public async Task<IActionResult> ViewOrder(Guid OrderId)
+        {
+            var res = await orderService.ViewOrder(OrderId);
+            return Ok(res);
+
+        }
+
+        [HttpPost("OrderApproved")]
+        [AllowAnonymous]
+        public async Task<IActionResult> OrderApproved(Guid OrderId, Estimation Status)
+        {
+            var res = await orderService.ChangeStatus(OrderId, Status);
+            return Ok(res);
+
         }
     }
 }

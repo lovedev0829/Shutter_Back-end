@@ -14,12 +14,13 @@ namespace ShutterManagement.Business.Interfaces
     {
         Task<IResponseVm<string>> Create_Order_From_Estimate(Guid EstimateId);
         Task<IResponseVm<string>> Update_Order(UpdateOrder model);
-        Task<IResponseVm<string>> ActiveInActiveOrder(Guid EstimateId);
-        Task<IResponseVm<string>> DeleteOrder(Guid EstimateId);
-        Task<IResponseVm<List<OrderList>>> GetAll_Order(Pagination filter);
+        Task<IResponseVm<string>> ActiveInActiveOrder(Guid OrderId);
+        Task<IResponseVm<string>> DeleteOrder(Guid OrderId);
+        Task<IResponseVm<List<OrderList>>> GetLatestVersionOrders(Pagination filter);
         Task<IResponseVm<string>> SendForApproval(Guid OrderId);
-        //Task<IResponseVm<List<EstimateList>>> ViewEachOrder(Guid EstimateId);
-        Task<IResponseVm<string>> ChangeStatus(Guid EstimationId, Estimation NewEstimationStatus);
+        Task<IResponseVm<dynamic>> ViewHistory(Guid EstimateId);
+        Task<IResponseVm<string>> ChangeStatus(Guid OrderId, Estimation NewEstimationStatus);
+        Task<IResponseVm<dynamic>> ViewOrder(Guid OrderId);
 
     }
 }
