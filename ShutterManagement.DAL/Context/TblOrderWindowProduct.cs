@@ -9,8 +9,6 @@ public partial class TblOrderWindowProduct
 
     public string Version { get; set; } = null!;
 
-    public Guid EstimateWindowProductId { get; set; }
-
     public Guid EstimateId { get; set; }
 
     public Guid WindowId { get; set; }
@@ -55,5 +53,5 @@ public partial class TblOrderWindowProduct
 
     public Guid? WindowProductId { get; set; }
 
-    public Guid Id { get; set; }
+    public Guid OrderWindowProductId { get; set; }
 }
