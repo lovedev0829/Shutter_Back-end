@@ -15,6 +15,8 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
     {
     }
 
+    public virtual DbSet<MstComponentPrice> MstComponentPrices { get; set; }
+
     public virtual DbSet<MstContactType> MstContactTypes { get; set; }
 
     public virtual DbSet<MstJobStatus> MstJobStatuses { get; set; }
@@ -89,6 +91,8 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
 
     public virtual DbSet<TblPayment> TblPayments { get; set; }
 
+    public virtual DbSet<TblPayment1> TblPayments1 { get; set; }
+
     public virtual DbSet<TblProduct> TblProducts { get; set; }
 
     public virtual DbSet<TblProductComponent> TblProductComponents { get; set; }
@@ -134,6 +138,21 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("btprojec_admin");
+
+        modelBuilder.Entity<MstComponentPrice>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__MstCompo__3214EC070EAF3683");
+
+            entity.ToTable("MstComponentPrice", "dbo");
+
+            entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.ComponentName).HasMaxLength(200);
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
+            entity.Property(e => e.IsDelete).HasDefaultValue(false);
+            entity.Property(e => e.PriceNonRated).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.PriceRated).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.ProductType).HasMaxLength(100);
+        });
 
         modelBuilder.Entity<MstContactType>(entity =>
         {
@@ -666,6 +685,10 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
             entity.Property(e => e.ExpressionName).HasMaxLength(100);
             entity.Property(e => e.UpdateAt).HasColumnType("datetime");
+
+            entity.HasOne(d => d.ProductTypeNavigation).WithMany(p => p.TblExpressions)
+                .HasForeignKey(d => d.ProductType)
+                .HasConstraintName("FK__TblExpres__Produ__353DDB1D");
         });
 
         modelBuilder.Entity<TblInvoice>(entity =>
@@ -996,6 +1019,31 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.HasOne(d => d.Invoice).WithMany(p => p.TblPayments)
                 .HasForeignKey(d => d.InvoiceId)
                 .HasConstraintName("FK__TblPaymen__Invoi__671F4F74");
+        });
+
+        modelBuilder.Entity<TblPayment1>(entity =>
+        {
+            entity.HasKey(e => e.PaymentId).HasName("PK__TblPayme__9B556A384603A2EB");
+
+            entity.ToTable("TblPayments", "dbo");
+
+            entity.Property(e => e.PaymentId).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.Amount).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.PaymentDate).HasColumnType("datetime");
+            entity.Property(e => e.PaymentDueDate).HasColumnType("datetime");
+            entity.Property(e => e.PaymentMethod)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.Status)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.TransactionId).HasMaxLength(100);
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+
+            entity.HasOne(d => d.Invoice).WithMany(p => p.TblPayment1s)
+                .HasForeignKey(d => d.InvoiceId)
+                .HasConstraintName("FK__TblPaymen__Invoi__25077354");
         });
 
         modelBuilder.Entity<TblProduct>(entity =>

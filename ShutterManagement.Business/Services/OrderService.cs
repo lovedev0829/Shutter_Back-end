@@ -489,7 +489,7 @@ namespace ShutterManagement.Business.Services
                     DiscountCoupon = order.DiscountCoupon,
                     EstimateName = order.EstimateName,
                     EstimateCode = order.EstimateCode,
-                  //  SubTotal = order.S,
+                    SubTotal = order.TotalPrice,
                     GrandTotal = order.GrandTotal,
                     Notes = order.Notes,
                     Tax = order.TaxAmount,

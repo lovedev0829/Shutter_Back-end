@@ -24,4 +24,10 @@ public partial class TblExpression
     public bool? IsDelete { get; set; }
 
     public Guid? TenantId { get; set; }
+
+    public Guid? ProductType { get; set; }
+
+    public Guid? ProductId { get; set; }
+
+    public virtual MstProductType? ProductTypeNavigation { get; set; }
 }

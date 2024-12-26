@@ -41,5 +41,7 @@ public partial class TblInvoice
 
     public virtual TblJob? Job { get; set; }
 
+    public virtual ICollection<TblPayment1> TblPayment1s { get; set; } = new List<TblPayment1>();
+
     public virtual ICollection<TblPayment> TblPayments { get; set; } = new List<TblPayment>();
 }
