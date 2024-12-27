@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ShutterManagement.Core.Common;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -17,6 +18,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public decimal? Amount { get; set; }
         public string? TransactionId { get; set; }
         public string? Status { get; set; }
+        public PaymentStatus? PaymentStatus { get; set; } 
         public bool? IsActive { get; set; }
     }
     

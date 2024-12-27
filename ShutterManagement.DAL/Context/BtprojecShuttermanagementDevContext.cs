@@ -67,6 +67,8 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
 
     public virtual DbSet<TblInvoice> TblInvoices { get; set; }
 
+    public virtual DbSet<TblInvoicePayment> TblInvoicePayments { get; set; }
+
     public virtual DbSet<TblJob> TblJobs { get; set; }
 
     public virtual DbSet<TblJobComponent> TblJobComponents { get; set; }
@@ -91,9 +93,7 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
 
     public virtual DbSet<TblOrderWindowProductComponentMaterial> TblOrderWindowProductComponentMaterials { get; set; }
 
-    public virtual DbSet<TblPayment> TblPayments { get; set; }
-
-    public virtual DbSet<TblPayment1> TblPayments1 { get; set; }
+    public virtual DbSet<TblPayments> TblPayments { get; set; }
 
     public virtual DbSet<TblProduct> TblProducts { get; set; }
 
@@ -728,6 +728,28 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
                 .HasConstraintName("FK__TblInvoic__JobId__607251E5");
         });
 
+        modelBuilder.Entity<TblInvoicePayment>(entity =>
+        {
+            entity.HasKey(e => e.InvoicePaymentId).HasName("PK__TblInvoi__A79CC7FE3E232C75");
+
+            entity.ToTable("TblInvoicePayment", "dbo");
+
+            entity.Property(e => e.InvoicePaymentId).ValueGeneratedNever();
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.InvoiceAmount).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
+            entity.Property(e => e.IsDelete).HasDefaultValue(false);
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+
+            entity.HasOne(d => d.Invoice).WithMany(p => p.TblInvoicePayments)
+                .HasForeignKey(d => d.InvoiceId)
+                .HasConstraintName("FK__TblInvoic__Invoi__52CE3E04");
+        });
+
         modelBuilder.Entity<TblJob>(entity =>
         {
             entity.HasKey(e => e.JobId).HasName("PK__TblJob__056690C26EFF9CAD");
@@ -1016,37 +1038,9 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.Property(e => e.Version).HasMaxLength(3);
         });
 
-        modelBuilder.Entity<TblPayment>(entity =>
+        modelBuilder.Entity<TblPayments>(entity =>
         {
-            entity.HasKey(e => e.PaymentId).HasName("PK__TblPayme__9B556A3882F4472D");
-
-            entity.ToTable("TblPayment", "dbo");
-
-            entity.Property(e => e.PaymentId).HasDefaultValueSql("(newid())");
-            entity.Property(e => e.Amount).HasColumnType("decimal(10, 2)");
-            entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
-            entity.Property(e => e.IsActive).HasDefaultValue(true);
-            entity.Property(e => e.IsDelete).HasDefaultValue(false);
-            entity.Property(e => e.PaymentDate).HasColumnType("datetime");
-            entity.Property(e => e.PaymentMethod)
-                .HasMaxLength(50)
-                .IsUnicode(false);
-            entity.Property(e => e.TotalAmount).HasColumnType("decimal(10, 2)");
-            entity.Property(e => e.TransactionId).HasMaxLength(100);
-            entity.Property(e => e.UpdatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
-
-            entity.HasOne(d => d.Invoice).WithMany(p => p.TblPayments)
-                .HasForeignKey(d => d.InvoiceId)
-                .HasConstraintName("FK__TblPaymen__Invoi__671F4F74");
-        });
-
-        modelBuilder.Entity<TblPayment1>(entity =>
-        {
-            entity.HasKey(e => e.PaymentId).HasName("PK__TblPayme__9B556A384603A2EB");
+            entity.HasKey(e => e.PaymentId).HasName("PK__TblPayme__9B556A38349E201F");
 
             entity.ToTable("TblPayments", "dbo");
 
@@ -1064,9 +1058,9 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.Property(e => e.TransactionId).HasMaxLength(100);
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
 
-            entity.HasOne(d => d.Invoice).WithMany(p => p.TblPayment1s)
+            entity.HasOne(d => d.Invoice).WithMany(p => p.TblPayments)
                 .HasForeignKey(d => d.InvoiceId)
-                .HasConstraintName("FK__TblPaymen__Invoi__25077354");
+                .HasConstraintName("FK__TblPaymen__Invoi__5792F321");
         });
 
         modelBuilder.Entity<TblProduct>(entity =>

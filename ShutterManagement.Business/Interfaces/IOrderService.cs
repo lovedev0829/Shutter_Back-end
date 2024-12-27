@@ -12,7 +12,7 @@ namespace ShutterManagement.Business.Interfaces
 {
     public interface IOrderService
     {
-        Task<IResponseVm<string>> Create_Order_From_Estimate(Guid EstimateId, bool fromEstimate = false);
+        Task<IResponseVm<string>> Create_Order_From_Estimate(Guid EstimateId, bool fromEstimate = false, UpdateOrder updateOrder = null);
         Task<IResponseVm<string>> Update_Order(UpdateOrder model);
         Task<IResponseVm<string>> ActiveInActiveOrder(Guid OrderId);
         Task<IResponseVm<string>> DeleteOrder(Guid OrderId);
