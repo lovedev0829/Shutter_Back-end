@@ -71,6 +71,8 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
 
     public virtual DbSet<TblJobComponent> TblJobComponents { get; set; }
 
+    public virtual DbSet<TblJobSchedule> TblJobSchedules { get; set; }
+
     public virtual DbSet<TblJobStatus> TblJobStatuses { get; set; }
 
     public virtual DbSet<TblMeasurement> TblMeasurements { get; set; }
@@ -801,6 +803,27 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.HasOne(d => d.Job).WithMany(p => p.TblJobComponents)
                 .HasForeignKey(d => d.JobId)
                 .HasConstraintName("FK__TblJobCom__JobId__65370702");
+        });
+
+        modelBuilder.Entity<TblJobSchedule>(entity =>
+        {
+            entity.HasKey(e => e.JobScheduleId).HasName("PK__TblJobSc__2EB48C451454220D");
+
+            entity.ToTable("TblJobSchedule", "dbo");
+
+            entity.Property(e => e.JobScheduleId).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.EndDate).HasColumnType("datetime");
+            entity.Property(e => e.StartDate).HasColumnType("datetime");
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+
+            entity.HasOne(d => d.JobTitle).WithMany(p => p.TblJobSchedules)
+                .HasForeignKey(d => d.JobTitleId)
+                .HasConstraintName("FK__TblJobSch__JobTi__4B2D1C3C");
+
+            entity.HasOne(d => d.User).WithMany(p => p.TblJobSchedules)
+                .HasForeignKey(d => d.UserId)
+                .HasConstraintName("FK__TblJobSch__UserI__4C214075");
         });
 
         modelBuilder.Entity<TblJobStatus>(entity =>
