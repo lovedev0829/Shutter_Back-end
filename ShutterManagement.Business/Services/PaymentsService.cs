@@ -11,11 +11,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using ShutterManagement.Core.Common;
+using System.Drawing;
 
 namespace ShutterManagement.Business.Services
 {
 
-    public class PaymentsService : BaseRepository<BtprojecShuttermanagementDevContext, TblPayment1>, IPaymentsService
+    public class PaymentsService : BaseRepository<BtprojecShuttermanagementDevContext, TblPayments>, IPaymentsService
     {
         private readonly ITenantService tenantService;
         private readonly IInvoiceService invoiceService;
@@ -104,7 +105,18 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = "TransactionId Already Exists.";
                     return responseVm;
                 }
-                TblPayment1 tblPayments = new TblPayment1
+                var invoice = invoiceService.GetAllQuerable()
+                    .FirstOrDefault(i => i.InvoiceId == model.InvoiceId && i.IsActive == true);
+
+                if (model.Amount > invoice.BalanceDue)
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = "Please enter an amount equal to or less than balance due.";
+                    return responseVm;
+                }
+
+
+                TblPayments tblPayments = new TblPayments
                 {
                     PaymentId = Guid.NewGuid(),
                     InvoiceId = model.InvoiceId,
@@ -123,8 +135,7 @@ namespace ShutterManagement.Business.Services
                 };
 
                 await Add(tblPayments);
-                var invoice = invoiceService.GetAllQuerable()
-                    .FirstOrDefault(i => i.InvoiceId == model.InvoiceId && i.IsActive == true);
+                
 
                 if (invoice == null)
                 {
@@ -133,6 +144,7 @@ namespace ShutterManagement.Business.Services
                     await transaction.RollbackAsync();
                     return responseVm;
                 }
+                
                 if (model.PaymentStatus == PaymentStatus.Paid || model.PaymentStatus == PaymentStatus.PartiallyPaid)
                 {
                     invoice.PaidAmount += model.Amount ?? 0;
@@ -238,10 +250,8 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-                var PaymentsQuery = from i in dbContext.TblPayments1
-                                    where i.IsDelete == false
-                                    orderby i.CreatedAt descending
-                                    select new PaymentsVM
+                var PaymentsQuery = GetAllQuerable().Where(x=>x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId).OrderByDescending(x=>x.CreatedAt).
+                                    Select(i=>  new PaymentsVM
                                     {
                                         PaymentId = i.PaymentId,
                                         InvoiceId = i.InvoiceId,
@@ -252,9 +262,13 @@ namespace ShutterManagement.Business.Services
                                         TransactionId = i.TransactionId,
                                         Notes = i.Notes,
                                         Status = i.Status,
+                                        //PaymentStatus = Enum.GetValues(typeof(PaymentStatus))
+                                        //      .Cast<PaymentStatus>()
+                                        //      .FirstOrDefault(e => e.ToString() == i.Status),
+                                        //PaymentStatuss = Enum.GetValues<PaymentStatus>().First(),
                                         IsActive = i.IsActive,
-                                    };
-                filter.SearchValue = filter.SearchValue.Trim().ToLower();
+                                    }).ToList();
+                filter.SearchValue = filter?.SearchValue.Trim().ToLower();
                 var filteredPayments = PaymentsQuery
                     .Where(x =>
                         (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&

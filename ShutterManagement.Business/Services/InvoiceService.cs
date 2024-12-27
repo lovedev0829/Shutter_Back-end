@@ -109,7 +109,7 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
                 var isInvoiceNumberExists = await AnyAsync(x =>
-                  x.InvoiceNumber == model.InvoiceNumber && x.IsDelete==false && x.TenantId == AppConstant.LoggedInTenantId);
+                  x.InvoiceNumber == model.InvoiceNumber && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
 
                 if (isInvoiceNumberExists)
                 {
@@ -125,10 +125,11 @@ namespace ShutterManagement.Business.Services
                     InvoiceNumber = model.InvoiceNumber,
                     IssueDate = model?.IssueDate,
                     DueDate = model?.DueDate,
-                    TotalAmount=model.TotalAmount,
+                    TotalAmount = model.TotalAmount,
+                    BalanceDue = model.TotalAmount,
                     CreatedAt = DateTime.Now,
-                    TenantId=AppConstant.LoggedInTenantId,
-                    CreatedBy=AppConstant.LoggedInUserID,
+                    TenantId = AppConstant.LoggedInTenantId,
+                    CreatedBy = AppConstant.LoggedInUserID,
                     IsActive = true,
                     IsDelete = false
                 };
@@ -142,26 +143,26 @@ namespace ShutterManagement.Business.Services
                 }
 
                 foreach (var invoicePayment in model.InvoicePayment)
-                { 
-                        var tblInvoicePayment = new TblPayment
-                        {
-                            PaymentId = Guid.NewGuid(),
-                            InvoiceId = tblInvoice.InvoiceId,
-                            Notes = invoicePayment.Notes,
-                            Amount = invoicePayment.InvoiceAmount.Value,
-                            CreatedAt = DateTime.Now,
-                            IsActive = true,
-                            IsDelete = false
-                        };
+                {
+                    var tblInvoicePayment = new TblInvoicePayment
+                    {
+                        InvoicePaymentId = Guid.NewGuid(),
+                        InvoiceId = tblInvoice.InvoiceId,
+                        Notes = invoicePayment.Notes,
+                        InvoiceAmount = invoicePayment.InvoiceAmount,
+                        CreatedAt = DateTime.Now,
+                        CreatedBy = AppConstant.LoggedInUserID,
+                        IsActive = true,
+                        IsDelete = false
+                    };
 
-                        var paymentResult = await invoicePaymentService.Add(tblInvoicePayment);
-                        if (paymentResult == null || paymentResult.PaymentId == Guid.Empty)
-                        {
-                            responseVm.IsSuccess = false;
-                            responseVm.Message = "Insert Failed";
-                            return responseVm;
-                        }
-                    
+                    var paymentResult = await invoicePaymentService.Add(tblInvoicePayment);
+                    if (paymentResult == null || paymentResult.InvoicePaymentId == Guid.Empty)
+                    {
+                        responseVm.IsSuccess = false;
+                        responseVm.Message = "Insert Failed";
+                        return responseVm;
+                    }
                 }
 
                 responseVm.IsSuccess = true;
@@ -270,12 +271,12 @@ namespace ShutterManagement.Business.Services
                                         InvoiceNumber = i.InvoiceNumber,
                                         JobId = i.JobId,
                                         IssueDate = i.IssueDate,
-                                        TotalAmount=i.TotalAmount,
-                                        PaidAmount=i.PaidAmount,
-                                        BalanceDue=i.BalanceDue,
+                                        TotalAmount = i.TotalAmount,
+                                        PaidAmount = i.PaidAmount,
+                                        BalanceDue = i.BalanceDue,
                                         DueDate = i.DueDate,
                                         Status = i.Status,
-                                        IsActive =i.IsActive,
+                                        IsActive = i.IsActive,
                                     };
                 filter.SearchValue = filter.SearchValue.Trim().ToLower();
                 var filteredInvoices = invoicesQuery
@@ -284,23 +285,23 @@ namespace ShutterManagement.Business.Services
                         (string.IsNullOrEmpty(filter.SearchValue) ? true :
                             (x.InvoiceNumber.Contains(filter.SearchValue.Trim())) ||
                             (x.Status.Contains(filter.SearchValue.Trim())) ||
-                            (x.InvoiceId.ToString()==filter.SearchValue.Trim())) ||
+                            (x.InvoiceId.ToString() == filter.SearchValue.Trim())) ||
                             (x.JobId.ToString() == filter.SearchValue.Trim())).ToList();
 
                 foreach (var invoice in filteredInvoices)
                 {
-                    invoice.InvoicePayment = dbContext.TblPayments
+                    invoice.InvoicePayment = dbContext.TblInvoicePayments
                         .Where(p => p.InvoiceId == invoice.InvoiceId && p.IsDelete == false)
                         .Select(p => new InvoicePaymentVM
                         {
-                            InvoicePaymentId = p.PaymentId,
+                            InvoicePaymentId = p.InvoicePaymentId,
                             InvoiceId = p.InvoiceId,
-                            InvoiceAmount = p.Amount,
+                            InvoiceAmount = p.InvoiceAmount,
                             Notes = p.Notes,
                             PaymentDate = p.CreatedAt,
-                            IsActive=p.IsActive
+                            IsActive = p.IsActive
                         })
-                        .OrderBy(p => p.PaymentDate) 
+                        .OrderBy(p => p.PaymentDate)
                         .ToList();
                 }
 
@@ -330,7 +331,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var isTenantValid = await tenantService.AnyAsync(x =>
-                    x.TenantId == AppConstant.LoggedInTenantId && x.IsActive==true && x.IsDelete==false);
+                    x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
 
                 if (!isTenantValid)
                 {
@@ -342,7 +343,7 @@ namespace ShutterManagement.Business.Services
                 var invoice = GetAllQuerable()
                     .Where(c => c.InvoiceId == updateInvoice.InvoiceId
                                 && c.TenantId == AppConstant.LoggedInTenantId
-                                && c.IsDelete==false)
+                                && c.IsDelete == false)
                     .FirstOrDefault();
 
                 if (invoice == null)
@@ -355,7 +356,7 @@ namespace ShutterManagement.Business.Services
                 invoice.InvoiceNumber = updateInvoice.InvoiceNumber?.Trim();
                 invoice.IssueDate = updateInvoice.IssueDate;
                 invoice.DueDate = updateInvoice.DueDate;
-                invoice.TotalAmount=updateInvoice.TotalAmount;
+                invoice.TotalAmount = updateInvoice.TotalAmount;
                 invoice.UpdatedAt = DateTime.Now;
                 invoice.ModifiedBy = AppConstant.LoggedInUserID;
 
@@ -376,11 +377,11 @@ namespace ShutterManagement.Business.Services
 
                 foreach (var newPayment in updateInvoice.InvoicePayment)
                 {
-                    var tblPayment = new TblPayment
+                    var tblPayment = new TblInvoicePayment
                     {
-                        PaymentId = Guid.NewGuid(),
+                        InvoicePaymentId = Guid.NewGuid(),
                         InvoiceId = updateInvoice.InvoiceId,
-                        Amount = newPayment.InvoiceAmount,
+                        InvoiceAmount = newPayment.InvoiceAmount,
                         Notes = newPayment.Notes?.Trim(),
                         CreatedAt = DateTime.Now,
                         ModifiedBy = AppConstant.LoggedInUserID,

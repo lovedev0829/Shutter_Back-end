@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace ShutterManagement.Business.Interfaces
 {
 
-    public interface IInvoicePaymentService : IGenericRepository<TblPayment>
+    public interface IInvoicePaymentService : IGenericRepository<TblInvoicePayment>
     {
 
     }

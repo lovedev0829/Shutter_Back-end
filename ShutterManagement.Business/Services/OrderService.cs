@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Azure;
 using Microsoft.EntityFrameworkCore;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core;
@@ -73,7 +74,7 @@ namespace ShutterManagement.Business.Services
         }
 
 
-        public async Task<IResponseVm<string>> Create_Order_From_Estimate(Guid EstimateId, bool fromEstimate = false)
+        public async Task<IResponseVm<string>> Create_Order_From_Estimate(Guid EstimateId, bool fromEstimate = false, UpdateOrder updateOrder = null)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
             FileLogger.Log("Start: Create Order from Estimate...");
@@ -112,7 +113,7 @@ namespace ShutterManagement.Business.Services
                 {
                     if (int.TryParse(version, out int versionNumber))
                     {
-                        status1 = EnumValue.GetEnumValue(Estimation.PendingForApproval);
+                        status1 = EnumValue.GetEnumValue(Estimation.New);
                         version1 = (versionNumber + 1).ToString();
                     }
                     else
@@ -125,30 +126,57 @@ namespace ShutterManagement.Business.Services
                     status1 = EnumValue.GetEnumValue(Estimation.Approved);
                     version1 = "1";
                 }
-                TblOrder newOrder = new TblOrder
+                TblOrder newOrder = new TblOrder();
+
+                if (updateOrder != null && !fromEstimate)
                 {
-                    OrderId = Guid.NewGuid(),
-                    EstimateId = estimate.EstimateId,
-                    TenantId = estimate.TenantId,
-                    JobId = estimate.JobId,
-                    EstimateName = estimate.EstimateName,
-                    EstimateCode = estimate.EstimateCode,
-                    Notes = estimate.Notes,
-                    DiscountAmount = estimate.DiscountAmount,
-                    DiscountCoupon = estimate.DiscountCoupon,
-                    GrandTotal = estimate.GrandTotal,
-                    TaxAmount = estimate.TaxAmount,
-                    TotalPrice = estimate.TotalPrice,
-                    TermsCondition = estimate.TermsCondition,
-                    Status = status1,
-                    CreatedAt = DateTime.Now,
-                    UpdatedAt = DateTime.Now,
-                    Version = version1,
-                    OrderName = OrderNumber,
-                    IsActive = true,
-                    IsDelete = false,
-                    CreatedBy = AppConstant.LoggedInUserID,
-                    ModifiedBy = AppConstant.LoggedInUserID
+                    newOrder.OrderId = Guid.NewGuid();
+                    newOrder.EstimateId = (Guid)updateOrder.EstimateId;
+                    newOrder.TenantId = estimate.TenantId;
+                    newOrder.JobId = updateOrder.JobId;
+                    newOrder.EstimateName = updateOrder.EstimateName;
+                    newOrder.EstimateCode = updateOrder.EstimateCode;
+                    newOrder.Notes = updateOrder.Notes;
+                    newOrder.DiscountAmount = updateOrder.Discount;
+                    newOrder.DiscountCoupon = updateOrder.DiscountCoupon;
+                    newOrder.GrandTotal = updateOrder.GrandTotal;
+                    newOrder.TaxAmount = updateOrder.Tax;
+                    newOrder.TotalPrice = updateOrder.SubTotal;
+                    newOrder.TermsCondition = updateOrder.TermsCondition;
+                    newOrder.Status = status1;
+                    newOrder.CreatedAt = DateTime.Now;
+                    newOrder.UpdatedAt = DateTime.Now;
+                    newOrder.Version = version1;
+                    newOrder.OrderName = OrderNumber;
+                    newOrder.IsActive = true;
+                    newOrder.IsDelete = false;
+                    newOrder.CreatedBy = AppConstant.LoggedInUserID;
+                    newOrder.ModifiedBy = AppConstant.LoggedInUserID;
+                }
+                else
+                {
+                    newOrder.OrderId = Guid.NewGuid();
+                    newOrder.EstimateId = estimate.EstimateId;
+                    newOrder.TenantId = estimate.TenantId;
+                    newOrder.JobId = estimate.JobId;
+                    newOrder.EstimateName = estimate.EstimateName;
+                    newOrder.EstimateCode = estimate.EstimateCode;
+                    newOrder.Notes = estimate.Notes;
+                    newOrder.DiscountAmount = estimate.DiscountAmount;
+                    newOrder.DiscountCoupon = estimate.DiscountCoupon;
+                    newOrder.GrandTotal = estimate.GrandTotal;
+                    newOrder.TaxAmount = estimate.TaxAmount;
+                    newOrder.TotalPrice = estimate.TotalPrice;
+                    newOrder.TermsCondition = estimate.TermsCondition;
+                    newOrder.Status = status1;
+                    newOrder.CreatedAt = DateTime.Now;
+                    newOrder.UpdatedAt = DateTime.Now;
+                    newOrder.Version = version1;
+                    newOrder.OrderName = OrderNumber;
+                    newOrder.IsActive = true;
+                    newOrder.IsDelete = false;
+                    newOrder.CreatedBy = AppConstant.LoggedInUserID;
+                    newOrder.ModifiedBy = AppConstant.LoggedInUserID;
                 };
 
                 await Add(newOrder);
@@ -159,7 +187,7 @@ namespace ShutterManagement.Business.Services
 
                 var windowProductIdsNonNullable = windowProductIds.Where(x => x.HasValue).Select(x => x.Value).ToList();
 
-                await ProcessWindowProducts(windowProductIdsNonNullable, newOrder.OrderId, estimate.EstimateId, newOrder.Version);
+                await ProcessWindowProducts(windowProductIdsNonNullable, estimate.EstimateId, newOrder.OrderId, newOrder.Version);
 
                 if (!string.IsNullOrEmpty(Message))
                 {
@@ -168,6 +196,7 @@ namespace ShutterManagement.Business.Services
                 }
 
                 responseVm.IsSuccess = true;
+                responseVm.Data = newOrder.OrderId.ToString();
                 responseVm.Message = AppConstant.InsertSuccessMsg;
                 FileLogger.Log("Order created successfully from estimate.");
 
@@ -274,7 +303,7 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
-      
+
         public async Task<IResponseVm<string>> Update_Order(UpdateOrder model)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
@@ -288,7 +317,7 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.TenantNotFound;
                     return responseVm;
                 }
-                var isEstimationOrder = (await GetAll()).Where(c => c.EstimateId == model.EstimateId && c.TenantId == AppConstant.LoggedInTenantId
+                var isEstimationOrder = (await GetAll()).Where(c => c.OrderId == model.OrderId && c.TenantId == AppConstant.LoggedInTenantId
               && c.IsDelete == false).ToList();
                 if (isEstimationOrder != null)
                 {
@@ -321,15 +350,16 @@ namespace ShutterManagement.Business.Services
                         }
                         else
                         {
-                            await Create_Order_From_Estimate((Guid)model.EstimateId);
+                            var res = await SetOrderdetailsValues(model);
+                            responseVm = res;
                             return responseVm;
                         }
                     }
                 }
                 else
                 {
-
-                    await Create_Order_From_Estimate((Guid)model.EstimateId);
+                    var res = await SetOrderdetailsValues(model);
+                    responseVm = res;
                     return responseVm;
                 }
 
@@ -342,6 +372,7 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
+
 
         public async Task<IResponseVm<string>> ChangeStatus(Guid OrderId, Estimation NewOrderStatus)
         {
@@ -631,6 +662,12 @@ namespace ShutterManagement.Business.Services
         }
 
         #region Helper methods
+
+        private async Task<IResponseVm<string>> SetOrderdetailsValues(UpdateOrder model)
+        {
+            var res = await Create_Order_From_Estimate((Guid)model.EstimateId, false, model);
+            return res;
+        }
         private async Task<bool> ValidateTenantExists()
         {
             FileLogger.Log($"Checking if tenant with ID {AppConstant.LoggedInTenantId} exists...");
@@ -703,6 +740,10 @@ namespace ShutterManagement.Business.Services
                     Tax = order.TaxAmount,
                     TermsCondition = order.TermsCondition,
                 };
+                var jobDetails = jobService.GetAllQuerable().Where(x => x.JobId == order.JobId).Select(x => x.ContactId).FirstOrDefault();
+
+                var contactDetails = contactService.GetAllQuerable().Where(x => x.ContactId == jobDetails).FirstOrDefault();
+                e.Contact = contactDetails.Name;
 
                 var userdetails = dbContext.TblUsers
                     .Where(x => x.Id == order.CreatedBy && x.IsDelete == false)
