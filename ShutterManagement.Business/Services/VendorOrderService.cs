@@ -315,7 +315,7 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
                 var vendorOrdersQuery = from vo in dbContext.TblVendorOrders
-                                        where vo.IsDelete == false
+                                        where vo.IsDelete == false && vo.TenentId==AppConstant.LoggedInTenantId
                                         orderby vo.CreatedAt descending
                                         select new VendorOrderListVm
                                         {
@@ -327,8 +327,8 @@ namespace ShutterManagement.Business.Services
                                             ExpectedDeliveryDate = vo.ExpectedDeliveryDate,
                                             ActualDeliveryDate = vo.ActualDeliveryDate,
                                             Notes = vo.Notes,
-                                            Status=vo.Status,
-                                            VendorOrderStatus= vo.Status == EnumValue.GetEnumValue(VendorOrderStatus.Pending) ? 0 : 1,
+                                            Status=vo.Status== EnumValue.GetEnumValue(VendorOrderStatus.Pending) ? 0 : 1,
+                                            VendorOrderStatus= vo.Status,
                                             IsActive = vo.IsActive,
                                         };
 
@@ -349,7 +349,7 @@ namespace ShutterManagement.Business.Services
                         })
                         .ToListAsync();
                 }
-
+                filter.SearchValue = filter.SearchValue.Trim().ToLower();
                 filteredRecords = filteredRecords
                     .Where(x =>
                         (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&

@@ -519,7 +519,7 @@ namespace ShutterManagement.Controllers
         }
 
         [HttpGet]
-        [Route("GetAllmaterial")]
+        [Route("GetAllmaterialList")]
         public async Task<IActionResult> GetMaterial()
         {
             var res = await material.GetAll_Material(filter);
