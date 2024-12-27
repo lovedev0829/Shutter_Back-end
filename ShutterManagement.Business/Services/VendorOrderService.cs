@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core;
+using ShutterManagement.Core.Common;
 using ShutterManagement.Core.ViewModels;
 using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.Core.ViewModels.Response;
@@ -113,7 +114,7 @@ namespace ShutterManagement.Business.Services
                     OrderDate = model.OrderDate,
                     ExpectedDeliveryDate = model.ExpectedDeliveryDate,
                     ActualDeliveryDate = model.ActualDeliveryDate,
-                    Status = model.Status?.Trim(),
+                    Status = EnumValue.GetEnumValue(model.Status),
                     Notes = model.Notes?.Trim(),
                     IsActive = true,
                     IsDelete = false,
@@ -181,7 +182,7 @@ namespace ShutterManagement.Business.Services
                 existingOrder.OrderDate = model.OrderDate;
                 existingOrder.ExpectedDeliveryDate = model.ExpectedDeliveryDate;
                 existingOrder.ActualDeliveryDate = model.ActualDeliveryDate;
-                existingOrder.Status = model.Status?.Trim();
+                existingOrder.Status = EnumValue.GetEnumValue(model.Status);
                 existingOrder.Notes = model.Notes?.Trim();
                 existingOrder.UpdatedAt = DateTime.Now;
                 existingOrder.ModifiedBy = AppConstant.LoggedInUserID;
@@ -326,6 +327,8 @@ namespace ShutterManagement.Business.Services
                                             ExpectedDeliveryDate = vo.ExpectedDeliveryDate,
                                             ActualDeliveryDate = vo.ActualDeliveryDate,
                                             Notes = vo.Notes,
+                                            Status=vo.Status,
+                                            VendorOrderStatus= vo.Status == EnumValue.GetEnumValue(VendorOrderStatus.Pending) ? 0 : 1,
                                             IsActive = vo.IsActive,
                                         };
 

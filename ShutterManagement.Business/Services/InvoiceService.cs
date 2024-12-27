@@ -18,7 +18,7 @@ namespace ShutterManagement.Business.Services
         private readonly ITenantService tenantService;
         private readonly IInvoicePaymentService invoicePaymentService;
 
-        public InvoiceService(ITenantService tenantService, IInvoicePaymentService invoicePaymentService)
+        public InvoiceService(ITenantService tenantService, IInvoicePaymentService invoicePaymentService )
         {
             this.tenantService = tenantService;
             this.invoicePaymentService = invoicePaymentService;
@@ -109,7 +109,7 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
                 var isInvoiceNumberExists = await AnyAsync(x =>
-                  x.InvoiceNumber == model.InvoiceNumber && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
+                  x.InvoiceNumber == model.InvoiceNumber && x.IsDelete == false && x.IsActive==true && x.TenantId == AppConstant.LoggedInTenantId);
 
                 if (isInvoiceNumberExists)
                 {
@@ -127,6 +127,7 @@ namespace ShutterManagement.Business.Services
                     DueDate = model?.DueDate,
                     TotalAmount = model.TotalAmount,
                     BalanceDue = model.TotalAmount,
+                    PaidAmount = 0,
                     CreatedAt = DateTime.Now,
                     TenantId = AppConstant.LoggedInTenantId,
                     CreatedBy = AppConstant.LoggedInUserID,
@@ -194,6 +195,19 @@ namespace ShutterManagement.Business.Services
                                    && c.TenantId == AppConstant.LoggedInTenantId
                                    && c.IsDelete == false)
                         .FirstOrDefault();
+
+                    //var CheckPaymentExist = paymentsService.GetAllQuerable()
+                    //   .Where(c => c.InvoiceId == InvoiceId
+                    //              && c.TenantId == AppConstant.LoggedInTenantId
+                    //              && c.IsDelete == false)
+                    //   .FirstOrDefault();
+
+                    //if(CheckPaymentExist!=null)
+                    //{
+                    //    responseVm.IsSuccess = false;
+                    //    responseVm.Message = "Payment Exit in This Invoice";
+                    //    return responseVm;
+                    //}
 
                     if (invoice != null)
                     {

@@ -9,6 +9,7 @@ using ShutterManagement.DAL.Context;
 
 namespace ShutterManagement.Core.ViewModels.Request
 {
+    using ShutterManagement.Core.Common;
     using System;
     using System.Collections.Generic;
     using System.ComponentModel.DataAnnotations;
@@ -40,8 +41,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         public DateTime? ActualDeliveryDate { get; set; }
 
         [Required]
-        [DefaultValue("")]
-        public string? Status { get; set; }
+        public VendorOrderStatus Status { get; set; }
 
         [Required]
         [DefaultValue("")]

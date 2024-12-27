@@ -509,5 +509,23 @@ namespace ShutterManagement.Controllers
             return Ok(res);
         }
 
+        [HttpGet]
+        [Route("GetAllJobs")]
+        public async Task<IActionResult> GetAllJobs()
+        {
+            var res = await jobService.GetAllJobsTenant_SubTenant(filter);
+            res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
+            return Ok(res);
+        }
+
+        [HttpGet]
+        [Route("GetAllmaterial")]
+        public async Task<IActionResult> GetMaterial()
+        {
+            var res = await material.GetAll_Material(filter);
+            res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
+            return Ok(res);
+        }
+
     }
 }

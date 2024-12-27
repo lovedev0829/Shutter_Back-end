@@ -19,6 +19,8 @@ namespace ShutterManagement.Core.ViewModels.Response
         public DateTime? ActualDeliveryDate { get; set; }
         public string? Notes { get; set; }
 
+        public string? Status { get; set; }
+        public int? VendorOrderStatus { get; set; }
         public bool? IsActive { get; set; }
         public List<VendorOrderItem> VendorOrderItems { get; set; } = new List<VendorOrderItem>();
 

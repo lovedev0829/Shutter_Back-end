@@ -97,7 +97,7 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
                 var isTransactionExists = await AnyAsync(x =>
-                    x.TransactionId == model.TransactionId && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
+                    x.TransactionId == model.TransactionId && x.IsDelete == false && x.IsActive==true && x.TenantId == AppConstant.LoggedInTenantId);
 
                 if (isTransactionExists)
                 {
@@ -107,6 +107,12 @@ namespace ShutterManagement.Business.Services
                 }
                 var invoice = invoiceService.GetAllQuerable()
                     .FirstOrDefault(i => i.InvoiceId == model.InvoiceId && i.IsActive == true);
+                if (invoice.BalanceDue == 0)
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = "Payment Already Paid.";
+                    return responseVm;
+                }
 
                 if (model.Amount > invoice.BalanceDue)
                 {
@@ -114,8 +120,6 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = "Please enter an amount equal to or less than balance due.";
                     return responseVm;
                 }
-
-
                 TblPayments tblPayments = new TblPayments
                 {
                     PaymentId = Guid.NewGuid(),
@@ -135,8 +139,6 @@ namespace ShutterManagement.Business.Services
                 };
 
                 await Add(tblPayments);
-                
-
                 if (invoice == null)
                 {
                     responseVm.IsSuccess = false;
@@ -145,26 +147,16 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
                 
-                if (model.PaymentStatus == PaymentStatus.Paid || model.PaymentStatus == PaymentStatus.PartiallyPaid)
+                if (model.PaymentStatus == PaymentStatus.Paid)
                 {
                     invoice.PaidAmount += model.Amount ?? 0;
                     invoice.BalanceDue = invoice.TotalAmount - invoice.PaidAmount;
-                    if (invoice.BalanceDue == 0)
-                    {
-                        invoice.Status = EnumValue.GetEnumValue(PaymentStatus.Paid);
-                    }
-                    else
-                    {
-                        invoice.Status = EnumValue.GetEnumValue(PaymentStatus.PartiallyPaid);
-                    }
-
+                    invoice.Status = EnumValue.GetEnumValue(PaymentStatus.Paid);
                     invoice.UpdatedAt = DateTime.Now;
                     invoice.ModifiedBy = AppConstant.LoggedInUserID;
                     await invoiceService.Update(invoice);
                 }
-
                 await transaction.CommitAsync();
-
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.InsertSuccessMsg;
             }
@@ -178,8 +170,6 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
-
-
 
         #endregion CreatePayment
 
@@ -200,6 +190,14 @@ namespace ShutterManagement.Business.Services
                                    && c.TenantId == AppConstant.LoggedInTenantId
                                    && c.IsDelete == false)
                         .FirstOrDefault();
+
+
+                    if (Payment != null && Payment.Status == EnumValue.GetEnumValue(PaymentStatus.Paid))
+                    {
+                        responseVm.IsSuccess = false;
+                        responseVm.Message = $"Payment Paid Already {AppConstant.AccessDenied}";
+                        return responseVm;
+                    }
 
                     if (Payment != null)
                     {
@@ -262,10 +260,7 @@ namespace ShutterManagement.Business.Services
                                         TransactionId = i.TransactionId,
                                         Notes = i.Notes,
                                         Status = i.Status,
-                                        //PaymentStatus = Enum.GetValues(typeof(PaymentStatus))
-                                        //      .Cast<PaymentStatus>()
-                                        //      .FirstOrDefault(e => e.ToString() == i.Status),
-                                        //PaymentStatuss = Enum.GetValues<PaymentStatus>().First(),
+                                        PaymentStatus= i.Status == EnumValue.GetEnumValue(PaymentStatus.Unpaid) ? 0 : 1,
                                         IsActive = i.IsActive,
                                     }).ToList();
                 filter.SearchValue = filter?.SearchValue.Trim().ToLower();
@@ -319,10 +314,9 @@ namespace ShutterManagement.Business.Services
                 }
 
                 var payment = GetAllQuerable()
-                    .Where(c => c.PaymentId == updatePayment.PaymentId
-                                && c.TenantId == AppConstant.LoggedInTenantId
-                                && c.IsDelete == false)
-                    .FirstOrDefault();
+                    .FirstOrDefault(c => c.PaymentId == updatePayment.PaymentId
+                                         && c.TenantId == AppConstant.LoggedInTenantId
+                                         && c.IsDelete == false);
 
                 if (payment == null)
                 {
@@ -330,6 +324,7 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.NoDataFound;
                     return responseVm;
                 }
+
                 var invoice = invoiceService.GetAllQuerable()
                     .FirstOrDefault(i => i.InvoiceId == payment.InvoiceId && i.IsActive == true);
 
@@ -340,6 +335,18 @@ namespace ShutterManagement.Business.Services
                     await transaction.RollbackAsync();
                     return responseVm;
                 }
+
+                invoice.PaidAmount -= payment.Amount ?? 0;
+                invoice.BalanceDue = invoice.TotalAmount - invoice.PaidAmount;
+
+                if (updatePayment.Amount > invoice.BalanceDue)
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = "Please enter an amount equal to or less than balance due.";
+                    await transaction.RollbackAsync();
+                    return responseVm;
+                }
+
                 payment.TransactionId = updatePayment.TransactionId?.Trim();
                 payment.PaymentDate = updatePayment.PaymentDate;
                 payment.PaymentDueDate = updatePayment.PaymentDueDate;
@@ -351,23 +358,13 @@ namespace ShutterManagement.Business.Services
                 payment.ModifiedBy = AppConstant.LoggedInUserID;
                 await Update(payment);
 
-                if (updatePayment.PaymentStatus == PaymentStatus.Paid || updatePayment.PaymentStatus == PaymentStatus.PartiallyPaid)
-                {
-                    invoice.PaidAmount += updatePayment.Amount ?? 0;
-                    invoice.BalanceDue = invoice.TotalAmount - invoice.PaidAmount;
-                    if (invoice.BalanceDue == 0)
-                    {
-                        invoice.Status = EnumValue.GetEnumValue(PaymentStatus.Paid);
-                    }
-                    else
-                    {
-                        invoice.Status = EnumValue.GetEnumValue(PaymentStatus.PartiallyPaid);
-                    }
+                invoice.PaidAmount += updatePayment.Amount ?? 0;
+                invoice.BalanceDue = invoice.TotalAmount - invoice.PaidAmount;
+                invoice.Status = EnumValue.GetEnumValue(PaymentStatus.Paid);
+                invoice.UpdatedAt = DateTime.Now;
+                invoice.ModifiedBy = AppConstant.LoggedInUserID;
+                await invoiceService.Update(invoice);
 
-                    invoice.UpdatedAt = DateTime.Now;
-                    invoice.ModifiedBy = AppConstant.LoggedInUserID;
-                    await invoiceService.Update(invoice);
-                }
                 await transaction.CommitAsync();
 
                 responseVm.IsSuccess = true;
@@ -384,6 +381,9 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
         #endregion UpdatePayment
+
+
+
 
 
     }
