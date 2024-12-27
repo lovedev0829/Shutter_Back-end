@@ -46,6 +46,8 @@ namespace ShutterManagement.Core.ViewModels.Request
         [Required]
         [DefaultValue("")]
         public string? Notes { get; set; }
+        [Required]
+        public decimal? TotalAmount { get; set; }
 
         [MinLength(1, ErrorMessage = "At least one VendorOrderItem is required.")]
         public List<VendorOrderItem> VendorOrderItems { get; set; } = new List<VendorOrderItem>();
@@ -67,7 +69,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         [Required(ErrorMessage = "TotalPrice is required.")]
         [Range(0.01, double.MaxValue, ErrorMessage = "TotalPrice must be greater than zero.")]
         //public decimal TotalPrice { get; set; }
-        public decimal? TotalPrice => Quantity * UnitPrice;
+        //public decimal? TotalPrice => Quantity * UnitPrice;
     }
 
 }

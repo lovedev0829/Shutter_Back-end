@@ -118,6 +118,7 @@ namespace ShutterManagement.Business.Services
                     Notes = model.Notes?.Trim(),
                     IsActive = true,
                     IsDelete = false,
+                    TotalCost=model.TotalAmount,
                     CreatedAt = DateTime.Now,
                     CreatedBy = AppConstant.LoggedInUserID,
                     TenentId = AppConstant.LoggedInTenantId
@@ -182,6 +183,7 @@ namespace ShutterManagement.Business.Services
                 existingOrder.OrderDate = model.OrderDate;
                 existingOrder.ExpectedDeliveryDate = model.ExpectedDeliveryDate;
                 existingOrder.ActualDeliveryDate = model.ActualDeliveryDate;
+                existingOrder.TotalCost = model.TotalAmount;
                 existingOrder.Status = EnumValue.GetEnumValue(model.Status);
                 existingOrder.Notes = model.Notes?.Trim();
                 existingOrder.UpdatedAt = DateTime.Now;
@@ -213,7 +215,7 @@ namespace ShutterManagement.Business.Services
                         MaterialId = newItem.MaterialId,
                         Quantity = newItem.Quantity,
                         UnitPrice = newItem.UnitPrice,
-                        TotalPrice = newItem.Quantity * newItem.UnitPrice,
+                        //TotalPrice = newItem.Quantity * newItem.UnitPrice,
                         CreatedAt = DateTime.Now,
                         ModifiedBy = AppConstant.LoggedInUserID.ToString(),
                         IsDelete = false,
@@ -326,6 +328,7 @@ namespace ShutterManagement.Business.Services
                                             OrderDate = vo.OrderDate,
                                             ExpectedDeliveryDate = vo.ExpectedDeliveryDate,
                                             ActualDeliveryDate = vo.ActualDeliveryDate,
+                                            TotalAmount=vo.TotalCost,
                                             Notes = vo.Notes,
                                             Status=vo.Status== EnumValue.GetEnumValue(VendorOrderStatus.Pending) ? 0 : 1,
                                             VendorOrderStatus= vo.Status,
@@ -344,7 +347,7 @@ namespace ShutterManagement.Business.Services
                             MaterialId = x.MaterialId,
                             Quantity = x.Quantity,
                             UnitPrice = x.UnitPrice,
-                            TotalPrice = x.TotalPrice,
+                            //TotalPrice = x.TotalPrice,
                             IsActive = x.IsActive
                         })
                         .ToListAsync();

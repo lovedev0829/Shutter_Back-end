@@ -19,6 +19,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public DateTime? ActualDeliveryDate { get; set; }
         public string? Notes { get; set; }
 
+        public decimal? TotalAmount { get; set; }
         public int? Status { get; set; }
         public string? VendorOrderStatus { get; set; }
         public bool? IsActive { get; set; }
@@ -30,7 +31,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public Guid? MaterialId { get; set; }
         public int? Quantity { get; set; }
         public decimal? UnitPrice { get; set; }
-        public decimal? TotalPrice { get; set; }
+        //public decimal? TotalPrice { get; set; }
         public bool? IsActive { get; set; }
         //public decimal TotalPrice => Quantity * UnitPrice;
     }
