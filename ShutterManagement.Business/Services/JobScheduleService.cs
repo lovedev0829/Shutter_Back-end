@@ -17,10 +17,12 @@ namespace ShutterManagement.Business.Services
     public class JobScheduleService : BaseRepository<BtprojecShuttermanagementDevContext, TblJobSchedule>, IJobSchedule
     {
         private readonly ITenantService tenantService;
+        private readonly ClaimsProperty claimsProperty;
 
-        public JobScheduleService(ITenantService tenantService)
+        public JobScheduleService(ITenantService tenantService,ClaimsProperty claimsProperty)
         {
             this.tenantService = tenantService;
+            this.claimsProperty = claimsProperty;
         }
 
         public async Task<IResponseVm<string>> ActiveInActive(Guid JobScheduleId)
@@ -59,6 +61,8 @@ namespace ShutterManagement.Business.Services
                     responseVm.IsSuccess = false;
                     responseVm.Message = AppConstant.AccessDenied;
                 }
+                responseVm.IsSuccess = true;
+                responseVm.Message = AppConstant.UpdateSuccessMsg;
             }
             catch (Exception ex)
             {
@@ -93,8 +97,8 @@ namespace ShutterManagement.Business.Services
                     UserId = model.UserId,
                     StartDate = model?.StartDate,
                     EndDate = model?.EndDate,
-                    DayStartTime = model.DayStartTime,
-                    DayEndDateTime = model.DayEndDateTime,
+                    DayStartTime = TimeOnly.Parse(model.DayStartTime),
+                    DayEndDateTime = TimeOnly.Parse(model.DayEndDateTime),
                     CreatedAt = DateTime.Now,
                     TenantId = AppConstant.LoggedInTenantId,
                     CreatedBy = AppConstant.LoggedInUserID,
@@ -151,6 +155,8 @@ namespace ShutterManagement.Business.Services
                     responseVm.IsSuccess = false;
                     responseVm.Message = AppConstant.AccessDenied;
                 }
+                responseVm.IsSuccess = true;
+                responseVm.Message = AppConstant.DeleteSuccessMsg;
             }
             catch (Exception ex)
             {
@@ -177,28 +183,41 @@ namespace ShutterManagement.Business.Services
                 }
 
                 var JobScheduleQuery = from i in dbContext.TblJobSchedules
-                                    where i.IsDelete == false
-                                    orderby i.CreatedAt descending
-                                    select new JobScheduleVm
-                                    {
-                                        ScheduleJobId = i.JobScheduleId,
-                                        JobTitleId = i.JobTitleId,
-                                        UserId = i.UserId,
-                                        StartDate = i.StartDate,
-                                        EndDate = i.EndDate,
-                                        DayStartTime = i.DayStartTime,
-                                        DayEndDateTime = i.DayEndDateTime,  
-                                        IsActive = i.IsActive,
-                                    };
-                filter.SearchValue = filter.SearchValue.Trim().ToLower();
+                                       join jt in dbContext.MstJobTitles on i.JobTitleId equals jt.Id
+                                       join u in dbContext.TblUsers on i.UserId equals u.Id
+                                       where i.IsDelete == false
+                                       orderby i.CreatedAt descending
+                                       select new JobScheduleVm
+                                       {
+                                           ScheduleJobId = i.JobScheduleId,
+                                           JobTitleId = i.JobTitleId,
+                                           JobTitle= jt.JobTitleName, 
+                                           UserId = i.UserId,
+                                           UserFullname = u.FirstName+ " " +u.LastName,
+                                           StartDate = i.StartDate,
+                                           EndDate = i.EndDate,
+                                           DayStartTime = i.DayStartTime,
+                                           DayEndDateTime = i.DayEndDateTime,
+                                           TenantId= i.TenantId,
+                                           IsActive = i.IsActive,
+                                       };
+
+                filter.SearchValue = filter.SearchValue?.Trim().ToLower();
+
                 var filteredJobSchedul = JobScheduleQuery
                     .Where(x =>
                         (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
                         (string.IsNullOrEmpty(filter.SearchValue) ? true :
-                            (x.JobTitleId.ToString() == filter.SearchValue.Trim())) ||
-                            (x.UserId.ToString() == filter.SearchValue.Trim())).ToList();
+                            (
+                                x.JobTitleId.ToString().Contains(filter.SearchValue) || 
+                                x.JobTitle.ToLower().Contains(filter.SearchValue) ||    
+                                x.UserId.ToString().Contains(filter.SearchValue) ||    
+                                x.UserFullname.ToLower().Contains(filter.SearchValue) ||       
+                                x.TenantId.ToString().Contains(filter.SearchValue)
+                            )
+                        )
+                    ).ToList();
 
-              
 
                 var paginatedInvoices = filteredJobSchedul
                     .Skip((filter.PageNo - 1) * filter.RecordPerPage)
@@ -252,8 +271,8 @@ namespace ShutterManagement.Business.Services
                 JobSchedule.UserId = model.UserId;
                 JobSchedule.StartDate = model.StartDate;
                 JobSchedule.EndDate = model.EndDate;
-                JobSchedule.DayStartTime = model.DayStartTime;
-                JobSchedule.DayEndDateTime = model.DayEndDateTime;
+                JobSchedule.DayStartTime = TimeOnly.Parse(model.DayStartTime);
+                JobSchedule.DayEndDateTime = TimeOnly.Parse(model.DayEndDateTime);
                 JobSchedule.UpdatedAt = DateTime.Now;
                 JobSchedule.ModifiedBy = AppConstant.LoggedInUserID;
 

@@ -369,16 +369,24 @@ namespace ShutterManagement.Business.Services
                 invoice.IssueDate = updateInvoice.IssueDate;
                 invoice.DueDate = updateInvoice.DueDate;
                 invoice.TotalAmount = updateInvoice.TotalAmount;
+
+                invoice.BalanceDue = updateInvoice.TotalAmount - invoice.PaidAmount;
                 invoice.UpdatedAt = DateTime.Now;
                 invoice.ModifiedBy = AppConstant.LoggedInUserID;
 
-                await Update(invoice);
+                var result = await Update(invoice);
+                if (result == null)
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = "Failed to update the invoice.";
+                    return responseVm;
+                }
 
-                var invoicePayments = invoicePaymentService.GetAllQuerable()
+                var existingPayments = invoicePaymentService.GetAllQuerable()
                     .Where(x => x.InvoiceId == updateInvoice.InvoiceId && x.IsDelete == false)
                     .ToList();
 
-                foreach (var payment in invoicePayments)
+                foreach (var payment in existingPayments)
                 {
                     payment.IsDelete = true;
                     payment.IsActive = false;
@@ -415,6 +423,7 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
+
 
     }
 }

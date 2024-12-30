@@ -23,10 +23,10 @@ namespace ShutterManagement.Core.ViewModels.Request
         public DateTime? EndDate { get; set; }
 
         [Required(ErrorMessage = "DayStartTime is required.")]
-        public TimeOnly? DayStartTime { get; set; }
+        public string? DayStartTime { get; set; }
 
         [Required(ErrorMessage = "DayEndDateTime is required.")]
-        public TimeOnly? DayEndDateTime { get; set; }
+        public string? DayEndDateTime { get; set; }
 
 
     }

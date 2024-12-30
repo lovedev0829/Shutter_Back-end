@@ -29,5 +29,7 @@ public partial class TblExpression
 
     public Guid? ProductId { get; set; }
 
+    public string? FormulaeArray { get; set; }
+
     public virtual MstProductType? ProductTypeNavigation { get; set; }
 }
