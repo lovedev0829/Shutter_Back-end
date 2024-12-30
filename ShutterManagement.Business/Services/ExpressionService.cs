@@ -77,6 +77,7 @@ namespace ShutterManagement.Business.Services
                     ExpressionName = model.ExpressionName,
                     ProductId = model.ProductId,
                     ProductType = model.ProductTypeId,
+                    FormulaeArray = string.Join(", ", model.FormulaeArray),
                     IsActive = true,
                     IsDelete = false,
                     CreatedAt = DateTime.Now,
@@ -121,6 +122,7 @@ namespace ShutterManagement.Business.Services
                     IsExpressionExist.ProductId = model.ProductId;
                     IsExpressionExist.UpdateAt = DateTime.Now;
                     IsExpressionExist.ModifiedBy = AppConstant.LoggedInUserID;
+                    IsExpressionExist.FormulaeArray = string.Join(", ", model.FormulaeArray);
                 }
                 var res = await Update(IsExpressionExist);
                 responseVm.IsSuccess = true;    
@@ -167,50 +169,49 @@ namespace ShutterManagement.Business.Services
             IResponseVm<List<GetExpression>> responseVm = new ResponseVm<List<GetExpression>>();
             try
             {
-             bool IsTenantValid = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
-               if (!IsTenantValid)
-               {
-                  responseVm.Message = AppConstant.TenantNotFound;
-                  return responseVm;
-               }
-               var Expressionlist = (from t1 in  dbContext.TblExpressions join
-                                     t2 in dbContext.MstProductTypes on t1.ProductType equals t2.ProductId join
-                                     t3 in dbContext.TblProducts on t1.ProductId equals t3.ProductId
-                                     where t1.TenantId == AppConstant.LoggedInTenantId && t1.IsDelete == false
-                                     select new GetExpression {
-                                         ExpressionId = t1.Id,
-                                         ExpressionName = t1.ExpressionName,
-                                         ExpressionFormulae = t1.ExpressionFormulae,
-                                         IsActive = t1.IsActive,
-                                         ProductId = t1.ProductId,
-                                         ProductName = t3.ProductName,
-                                         ProductTypeId = t1.ProductType,
-                                         ProductTypeName = t2.ProductName,
-                                         TenantId = t1.TenantId,
+                bool IsTenantValid = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+                if (!IsTenantValid)
+                {
+                    responseVm.Message = AppConstant.TenantNotFound;
+                    return responseVm;
+                }
 
-                                     }).ToList();
+       
+                var Expressionlist = (from t1 in dbContext.TblExpressions.OrderByDescending(x => x.CreatedAt)
+                                      join t2 in dbContext.MstProductTypes on t1.ProductType equals t2.ProductId 
+                                      join t3 in dbContext.TblProducts on t1.ProductId equals t3.ProductId 
+                                      where t1.TenantId == AppConstant.LoggedInTenantId && t1.IsDelete == false
+                                      select new GetExpression
+                                      {
+                                          ExpressionId = t1.Id,
+                                          ExpressionName = t1.ExpressionName,
+                                          ExpressionFormulae = t1.ExpressionFormulae,
+                                          formulaeArray = !string.IsNullOrEmpty(t1.FormulaeArray) ? t1.FormulaeArray.Split(new[] { "," }, StringSplitOptions.None) : new string[0], 
+                                          ProductId = t1.ProductId,
+                                          ProductName = t3.ProductName,  
+                                          ProductTypeId = t1.ProductType,
+                                          ProductTypeName = t2.ProductName,  
+                                          TenantId = t1.TenantId,
+                                      }).ToList();
 
                 filter.SearchValue = filter.SearchValue.Trim().ToLower();
+
                 var FilterRecords = Expressionlist
-                                    .Where(x =>
-                                    (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
-                                    (string.IsNullOrEmpty(filter.TenantId) ? true : (filter.TenantId == x.TenantId.ToString())) &&
-                                    (filter.SearchValue != "" ?
-                                    (x.ExpressionId.ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
-                                    (x.ProductId.ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
-                                    (x.ProductTypeId.ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
-                                    (x.ProductName ?? "").ToLower().Contains(filter.SearchValue) ||
-                                    (x.ProductTypeName ?? "").ToLower().Contains(filter.SearchValue) ||
-                                    (x.ExpressionFormulae ?? "").ToLower().Contains(filter.SearchValue) ||
-                                    (x.ExpressionName ?? "").ToLower().Contains(filter.SearchValue)
-                                    : true)).ToList();
-
-
+                    .Where(x =>
+                        (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
+                        (string.IsNullOrEmpty(filter.TenantId) ? true : (filter.TenantId == x.TenantId.ToString())) &&
+                        (filter.SearchValue != "" ?
+                            (x.ExpressionId.ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
+                            (x.ProductId.ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
+                            (x.ProductTypeId.ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
+                            (x.ProductName ?? "").ToLower().Contains(filter.SearchValue) ||
+                            (x.ProductTypeName ?? "").ToLower().Contains(filter.SearchValue) ||
+                            (x.ExpressionFormulae ?? "").ToLower().Contains(filter.SearchValue) ||
+                            (x.ExpressionName ?? "").ToLower().Contains(filter.SearchValue)
+                            : true)).ToList();
 
                 var TakenRecords = FilterRecords
-                                    .Skip((filter.PageNo - 1) * filter.RecordPerPage).Take(filter.RecordPerPage).ToList();
-
-
+                    .Skip((filter.PageNo - 1) * filter.RecordPerPage).Take(filter.RecordPerPage).ToList();
 
                 responseVm.Data = TakenRecords.Select(x => new GetExpression
                 {
@@ -221,9 +222,11 @@ namespace ShutterManagement.Business.Services
                     ProductName = x.ProductName,
                     ProductTypeId = x.ProductTypeId,
                     ProductTypeName = x.ProductTypeName,
+                    formulaeArray = x.formulaeArray,
                     IsActive = x.IsActive,
                     TenantId = x.TenantId
                 }).ToList();
+
                 responseVm.IsSuccess = true;
                 responseVm.Message = $"{AppConstant.FetchSuccessMsg}";
                 responseVm.TotalRecords = TakenRecords.Count;
@@ -232,8 +235,10 @@ namespace ShutterManagement.Business.Services
             {
                 responseVm.Message = AppConstant.ExceptionError + ex.Message;
             }
+
             return responseVm;
         }
-      }   
+
     }
+}
 
