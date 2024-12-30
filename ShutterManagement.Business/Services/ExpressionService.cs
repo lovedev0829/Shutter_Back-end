@@ -75,6 +75,8 @@ namespace ShutterManagement.Business.Services
                 {
                     ExpressionFormulae = model.ExpressionFormulae,  
                     ExpressionName = model.ExpressionName,
+                    ProductId = model.ProductId,
+                    ProductType = model.ProductTypeId,
                     IsActive = true,
                     IsDelete = false,
                     CreatedAt = DateTime.Now,
@@ -114,7 +116,9 @@ namespace ShutterManagement.Business.Services
                 if (IsExpressionNameExist != null)
                 {
                     IsExpressionExist.ExpressionName = model.ExpressionName;    
-                    IsExpressionExist.ExpressionFormulae = model.ExpressionFormulae;    
+                    IsExpressionExist.ExpressionFormulae = model.ExpressionFormulae;
+                    IsExpressionExist.ProductType = model.ProductTypeId;
+                    IsExpressionExist.ProductId = model.ProductId;
                     IsExpressionExist.UpdateAt = DateTime.Now;
                     IsExpressionExist.ModifiedBy = AppConstant.LoggedInUserID;
                 }
@@ -169,14 +173,34 @@ namespace ShutterManagement.Business.Services
                   responseVm.Message = AppConstant.TenantNotFound;
                   return responseVm;
                }
-                var Expressionlist = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false).ToList();
+               var Expressionlist = (from t1 in  dbContext.TblExpressions join
+                                     t2 in dbContext.MstProductTypes on t1.ProductType equals t2.ProductId join
+                                     t3 in dbContext.TblProducts on t1.ProductId equals t3.ProductId
+                                     where t1.TenantId == AppConstant.LoggedInTenantId && t1.IsDelete == false
+                                     select new GetExpression {
+                                         ExpressionId = t1.Id,
+                                         ExpressionName = t1.ExpressionName,
+                                         ExpressionFormulae = t1.ExpressionFormulae,
+                                         IsActive = t1.IsActive,
+                                         ProductId = t1.ProductId,
+                                         ProductName = t3.ProductName,
+                                         ProductTypeId = t1.ProductType,
+                                         ProductTypeName = t2.ProductName,
+                                         TenantId = t1.TenantId,
+
+                                     }).ToList();
+
                 filter.SearchValue = filter.SearchValue.Trim().ToLower();
                 var FilterRecords = Expressionlist
                                     .Where(x =>
                                     (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
                                     (string.IsNullOrEmpty(filter.TenantId) ? true : (filter.TenantId == x.TenantId.ToString())) &&
                                     (filter.SearchValue != "" ?
-                                    (x.Id.ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
+                                    (x.ExpressionId.ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
+                                    (x.ProductId.ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
+                                    (x.ProductTypeId.ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
+                                    (x.ProductName ?? "").ToLower().Contains(filter.SearchValue) ||
+                                    (x.ProductTypeName ?? "").ToLower().Contains(filter.SearchValue) ||
                                     (x.ExpressionFormulae ?? "").ToLower().Contains(filter.SearchValue) ||
                                     (x.ExpressionName ?? "").ToLower().Contains(filter.SearchValue)
                                     : true)).ToList();
@@ -190,10 +214,15 @@ namespace ShutterManagement.Business.Services
 
                 responseVm.Data = TakenRecords.Select(x => new GetExpression
                 {
-                    ExpressionId = x.Id,
+                    ExpressionId = x.ExpressionId,
                     ExpressionName = x.ExpressionName,
                     ExpressionFormulae = x.ExpressionFormulae,
-                    IsActive = x.IsActive
+                    ProductId = x.ProductId,
+                    ProductName = x.ProductName,
+                    ProductTypeId = x.ProductTypeId,
+                    ProductTypeName = x.ProductTypeName,
+                    IsActive = x.IsActive,
+                    TenantId = x.TenantId
                 }).ToList();
                 responseVm.IsSuccess = true;
                 responseVm.Message = $"{AppConstant.FetchSuccessMsg}";

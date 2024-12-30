@@ -11,6 +11,11 @@ namespace ShutterManagement.Core.ViewModels.Response
         public Guid? ExpressionId { get; set; }
         public string? ExpressionName { get; set; }
         public string? ExpressionFormulae { get; set; }
+        public Guid? ProductId { get; set; }
+        public string? ProductName { get; set; }
+        public Guid? ProductTypeId { get; set; }
+        public string? ProductTypeName { get; set; }
         public bool? IsActive { get; set; }
+        public Guid? TenantId { get; set; }
     }
 }

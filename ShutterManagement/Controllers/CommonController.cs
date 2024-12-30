@@ -451,9 +451,13 @@ namespace ShutterManagement.Controllers
 
         [HttpGet]
         [Route("GetAllExpression")]
-        public async Task<IActionResult> GetAllExpression()
+        public async Task<IActionResult> GetAllExpression(Guid ProductId)
         {
-            var res = await expression.Get_AllExpression(filter);
+            Pagination pagination = new Pagination
+            {
+                SearchValue = ProductId.ToString(),
+            };
+            var res = await expression.Get_AllExpression(pagination);
             res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
             return Ok(res);
         }
