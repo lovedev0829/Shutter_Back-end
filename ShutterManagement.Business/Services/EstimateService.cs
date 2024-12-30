@@ -26,6 +26,7 @@ namespace ShutterManagement.Business.Services
     public class EstimateService : BaseRepository<BtprojecShuttermanagementDevContext, TblEstimate>, IEstimateService
     {
         private readonly BtprojecShuttermanagementDevContext _context;
+        private readonly IComponentPriceService componentPriceService;
         private readonly IExpressionService expressionService;
         private readonly IProductComponentService productComponentService;
         private readonly IComponentService componentService;
@@ -52,6 +53,7 @@ namespace ShutterManagement.Business.Services
         List<Guid> expressionList = new List<Guid>();
 
         public EstimateService(BtprojecShuttermanagementDevContext context,
+            IComponentPriceService componentPriceService,
             IExpressionService expressionService,
             IProductComponentService productComponentService,
             IComponentService componentService,
@@ -76,6 +78,7 @@ namespace ShutterManagement.Business.Services
             )
         {
             _context = context;
+            this.componentPriceService = componentPriceService;
             this.expressionService = expressionService;
             this.productComponentService = productComponentService;
             this.componentService = componentService;
@@ -327,8 +330,8 @@ namespace ShutterManagement.Business.Services
                         return responseVm;
                     }
                     var TotalPrice = await CalculateEstimate(createEstimate.EstimateId);
-                    //createEstimate.TotalPrice = TotalPrice;
-                    //await Update(createEstimate);
+                    createEstimate.TotalPrice = TotalPrice;
+                    await Update(createEstimate);
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.InsertSuccessMsg;
                     FileLogger.Log("Estimate created and all related data added successfully.");
@@ -348,6 +351,36 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
+        public async Task<IResponseVm<dynamic>> BuildEstimate(Guid[] windowProductIds)
+        {
+            IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
+            FileLogger.Log("Start: Calculate Estimate price...");
+
+            try
+            {
+                // Validate tenant existence
+                var isTenantExists = await ValidateTenantExists();
+                if (!isTenantExists)
+                {
+                    responseVm.Message = AppConstant.TenantNotFound;
+                    return responseVm; // Return early if tenant is not found
+                }
+                if(windowProductIds == null || windowProductIds.Length == 0)
+                {
+                    responseVm.Message = "Incorrect data.";
+                    return responseVm;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Log($"Error occurred: {ex.Message}");
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+            }
+
+            // Always return the response after completing the operation
+            return responseVm;
+        }
 
         private async Task<decimal> CalculateEstimate(Guid EstimateId) 
         {
@@ -365,17 +398,21 @@ namespace ShutterManagement.Business.Services
             {
                 var exp = item.mt.ExpressionFormulae;
                 Dictionary<string,decimal> placeholders = new Dictionary<string, decimal>{ };
-                string pattern = @"{{[a-zA-Z]+}}";
+                string pattern = @"{{.*?}}";
                 var matches = Regex.Matches(exp ?? "", pattern);
                 if(matches != null && matches.Count() > 0)
                 {
                     foreach(Match match in matches)
                     {
-
-                        var val = GetProperty.GetColumnValue(item.tewp,match.Value.Replace("{{","").Replace("}}",""));
+                        var property = match.Value.Replace("{{", "").Replace("}}", "");
+                        var val = GetProperty.GetColumnValue(item.tewp, property);
                         if (val == null)
                         {
-                            //val = item.tewpc.ComponentName.Contains(match.Value) ? item.tewp
+                            string[] info = property.Split('.');
+                            if(info!= null && info.Length > 0 && info.Length == 3)
+                            {
+                                val = componentPriceService.GetAllQuerable().Where(x => x.ProductType == info[1]  && x.ComponentName == info[2]).Select(x=>x.PriceRated).FirstOrDefault();
+                            }
                         }
                         placeholders.Add(match.Value, Convert.ToDecimal(val));
                         exp = exp?.Replace(match.Value, Convert.ToDecimal(val).ToString());
