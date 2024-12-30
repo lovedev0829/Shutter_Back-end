@@ -189,7 +189,7 @@ namespace ShutterManagement.Business.Services
                                            JobTitleId = i.JobTitleId,
                                            JobTitle= jt.JobTitleName, 
                                            UserId = i.UserId,
-                                           User = u.Username,
+                                           UserFullname = u.FirstName+u.LastName,
                                            StartDate = i.StartDate,
                                            EndDate = i.EndDate,
                                            DayStartTime = i.DayStartTime,
@@ -208,7 +208,7 @@ namespace ShutterManagement.Business.Services
                                 x.JobTitleId.ToString().Contains(filter.SearchValue) || 
                                 x.JobTitle.ToLower().Contains(filter.SearchValue) ||    
                                 x.UserId.ToString().Contains(filter.SearchValue) ||    
-                                x.User.ToLower().Contains(filter.SearchValue) ||       
+                                x.UserFullname.ToLower().Contains(filter.SearchValue) ||       
                                 x.TenantId.ToString().Contains(filter.SearchValue)
                             )
                         )

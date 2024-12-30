@@ -12,7 +12,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public Guid? JobTitleId { get; set; }
         public string? JobTitle { get; set; }
         public Guid? UserId { get; set; }
-        public string? User { get; set; }
+        public string? UserFullname { get; set; }
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
         public TimeOnly? DayStartTime { get; set; }
