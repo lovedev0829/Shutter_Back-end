@@ -373,7 +373,6 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-
         public async Task<IResponseVm<string>> ChangeStatus(Guid OrderId, Estimation NewOrderStatus)
         {
             FileLogger.Log($"Processing status change for EstimationId: {OrderId}...");
@@ -424,28 +423,6 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        public bool CanChangeStatus(Estimation currentStatus, Estimation newStatus)
-        {
-            if (currentStatus == Estimation.New)
-            {
-                return newStatus == Estimation.PendingForApproval || newStatus == Estimation.Approved || newStatus == Estimation.Rejected;
-            }
-            else if (currentStatus == Estimation.PendingForApproval)
-            {
-                return newStatus == Estimation.Approved || newStatus == Estimation.Rejected;
-            }
-            else if (currentStatus == Estimation.Approved)
-            {
-                return false;
-            }
-            else if (currentStatus == Estimation.Rejected)
-            {
-                return newStatus == Estimation.New;
-            }
-
-            return false;
-        }
-
         public async Task<IResponseVm<string>> ActiveInActiveOrder(Guid OrderId)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
@@ -491,6 +468,7 @@ namespace ShutterManagement.Business.Services
             }
             return responseVm;
         }
+
         public async Task<IResponseVm<string>> DeleteOrder(Guid OrderId)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
@@ -662,6 +640,27 @@ namespace ShutterManagement.Business.Services
         }
 
         #region Helper methods
+        private bool CanChangeStatus(Estimation currentStatus, Estimation newStatus)
+        {
+            if (currentStatus == Estimation.New)
+            {
+                return newStatus == Estimation.PendingForApproval || newStatus == Estimation.Approved || newStatus == Estimation.Rejected;
+            }
+            else if (currentStatus == Estimation.PendingForApproval)
+            {
+                return newStatus == Estimation.Approved || newStatus == Estimation.Rejected;
+            }
+            else if (currentStatus == Estimation.Approved)
+            {
+                return false;
+            }
+            else if (currentStatus == Estimation.Rejected)
+            {
+                return newStatus == Estimation.New;
+            }
+
+            return false;
+        }
 
         private async Task<IResponseVm<string>> SetOrderdetailsValues(UpdateOrder model)
         {
