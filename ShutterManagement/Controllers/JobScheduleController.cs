@@ -17,21 +17,21 @@ namespace ShutterManagement.Controllers
             this.jobSchedule = jobSchedule;
         }
         [HttpPost("Create")]
-        [Authorize(Roles = "JobScheduleAdd")]
+        //[Authorize(Roles = "JobScheduleAdd")]
         public async Task<IActionResult> CreateDiscoount([FromBody] CreateJobSchedule model)
         {
             var res = await jobSchedule.CreateJobSchedule(model);
             return Ok(res);
         }
         [HttpPost("Update")]
-        [Authorize(Roles = "JobScheduleEdit")]
+        //[Authorize(Roles = "JobScheduleEdit")]
         public async Task<IActionResult> UpdateDiscount(UpdateJobSchedule model)
         {
             var res = await jobSchedule.UpdateJobSchedule(model);
             return Ok(res);
         }
         [HttpPost("Delete")]
-        [Authorize(Roles = "JobScheduleDelete")]
+        //[Authorize(Roles = "JobScheduleDelete")]
         public async Task<IActionResult> DeleteDiscount(Guid JobScheduleId)
         {
             var res = await jobSchedule.DeleteJobSchedule(JobScheduleId);
@@ -39,7 +39,7 @@ namespace ShutterManagement.Controllers
         }
 
         [HttpPost("ActiveInActive")]
-        [Authorize(Roles = "JobScheduleEdit")]
+        //[Authorize(Roles = "JobScheduleEdit")]
         public async Task<IActionResult> ActiveInActive(Guid JobScheduleId)
         {
             var res = await jobSchedule.ActiveInActive(JobScheduleId);
@@ -48,7 +48,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("GetAll")]
-        [Authorize(Roles = "JobScheduleView")]
+        //[Authorize(Roles = "JobScheduleView")]
         public async Task<IActionResult> GetAll(Pagination filter)
         {
             var res = await jobSchedule.GetAll_JobSchedule(filter);
