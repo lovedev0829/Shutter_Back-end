@@ -72,12 +72,15 @@ namespace ShutterManagement.Core.Common
     {
         [EnumMember(Value = "Unpaid")]
         Unpaid,
-        [EnumMember(Value = "PartiallyPaid")]
-        PartiallyPaid,
         [EnumMember(Value = "Paid")]
-        Paid,
-        [EnumMember(Value = "Overdue")]
-        Overdue
+        Paid
+    }
+    public enum VendorOrderStatus
+    {
+        [EnumMember(Value = "Pending")]
+        Pending,
+        [EnumMember(Value = "Approved")]
+        Approved
     }
 
     public static class EnumValue

@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core;
+using ShutterManagement.Core.Common;
 using ShutterManagement.Core.ViewModels;
 using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.Core.ViewModels.Response;
@@ -113,10 +114,11 @@ namespace ShutterManagement.Business.Services
                     OrderDate = model.OrderDate,
                     ExpectedDeliveryDate = model.ExpectedDeliveryDate,
                     ActualDeliveryDate = model.ActualDeliveryDate,
-                    Status = model.Status?.Trim(),
+                    Status = EnumValue.GetEnumValue(model.Status),
                     Notes = model.Notes?.Trim(),
                     IsActive = true,
                     IsDelete = false,
+                    TotalCost=model.TotalAmount,
                     CreatedAt = DateTime.Now,
                     CreatedBy = AppConstant.LoggedInUserID,
                     TenentId = AppConstant.LoggedInTenantId
@@ -181,7 +183,8 @@ namespace ShutterManagement.Business.Services
                 existingOrder.OrderDate = model.OrderDate;
                 existingOrder.ExpectedDeliveryDate = model.ExpectedDeliveryDate;
                 existingOrder.ActualDeliveryDate = model.ActualDeliveryDate;
-                existingOrder.Status = model.Status?.Trim();
+                existingOrder.TotalCost = model.TotalAmount;
+                existingOrder.Status = EnumValue.GetEnumValue(model.Status);
                 existingOrder.Notes = model.Notes?.Trim();
                 existingOrder.UpdatedAt = DateTime.Now;
                 existingOrder.ModifiedBy = AppConstant.LoggedInUserID;
@@ -212,7 +215,7 @@ namespace ShutterManagement.Business.Services
                         MaterialId = newItem.MaterialId,
                         Quantity = newItem.Quantity,
                         UnitPrice = newItem.UnitPrice,
-                        TotalPrice = newItem.Quantity * newItem.UnitPrice,
+                        //TotalPrice = newItem.Quantity * newItem.UnitPrice,
                         CreatedAt = DateTime.Now,
                         ModifiedBy = AppConstant.LoggedInUserID.ToString(),
                         IsDelete = false,
@@ -314,7 +317,7 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
                 var vendorOrdersQuery = from vo in dbContext.TblVendorOrders
-                                        where vo.IsDelete == false
+                                        where vo.IsDelete == false && vo.TenentId==AppConstant.LoggedInTenantId
                                         orderby vo.CreatedAt descending
                                         select new VendorOrderListVm
                                         {
@@ -325,7 +328,10 @@ namespace ShutterManagement.Business.Services
                                             OrderDate = vo.OrderDate,
                                             ExpectedDeliveryDate = vo.ExpectedDeliveryDate,
                                             ActualDeliveryDate = vo.ActualDeliveryDate,
+                                            TotalAmount=vo.TotalCost,
                                             Notes = vo.Notes,
+                                            Status=vo.Status== EnumValue.GetEnumValue(VendorOrderStatus.Pending) ? 0 : 1,
+                                            VendorOrderStatus= vo.Status,
                                             IsActive = vo.IsActive,
                                         };
 
@@ -341,12 +347,12 @@ namespace ShutterManagement.Business.Services
                             MaterialId = x.MaterialId,
                             Quantity = x.Quantity,
                             UnitPrice = x.UnitPrice,
-                            TotalPrice = x.TotalPrice,
+                            //TotalPrice = x.TotalPrice,
                             IsActive = x.IsActive
                         })
                         .ToListAsync();
                 }
-
+                filter.SearchValue = filter.SearchValue.Trim().ToLower();
                 filteredRecords = filteredRecords
                     .Where(x =>
                         (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&

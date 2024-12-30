@@ -18,7 +18,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public decimal? Amount { get; set; }
         public string? TransactionId { get; set; }
         public string? Status { get; set; }
-        public PaymentStatus? PaymentStatus { get; set; } 
+        public int? PaymentStatus { get; set; } 
         public bool? IsActive { get; set; }
     }
     
