@@ -104,6 +104,7 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = $"Order Number {AppConstant.AlreadyExists}";
                     return responseVm;
                 }
+                decimal? totalCost = model.VendorOrderItems.Sum(item => item.Quantity * item.UnitPrice);
 
                 var vendorOrder = new TblVendorOrder
                 {
@@ -118,7 +119,7 @@ namespace ShutterManagement.Business.Services
                     Notes = model.Notes?.Trim(),
                     IsActive = true,
                     IsDelete = false,
-                    TotalCost=model.TotalAmount,
+                    TotalCost = totalCost,
                     CreatedAt = DateTime.Now,
                     CreatedBy = AppConstant.LoggedInUserID,
                     TenentId = AppConstant.LoggedInTenantId
@@ -179,11 +180,14 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
+                decimal? totalCost = model.VendorOrderItems.Sum(item => item.Quantity * item.UnitPrice);
+
+
                 existingOrder.OrderNumber = model.OrderNumber?.Trim();
                 existingOrder.OrderDate = model.OrderDate;
                 existingOrder.ExpectedDeliveryDate = model.ExpectedDeliveryDate;
                 existingOrder.ActualDeliveryDate = model.ActualDeliveryDate;
-                existingOrder.TotalCost = model.TotalAmount;
+                existingOrder.TotalCost = totalCost;
                 existingOrder.Status = EnumValue.GetEnumValue(model.Status);
                 existingOrder.Notes = model.Notes?.Trim();
                 existingOrder.UpdatedAt = DateTime.Now;
@@ -215,7 +219,7 @@ namespace ShutterManagement.Business.Services
                         MaterialId = newItem.MaterialId,
                         Quantity = newItem.Quantity,
                         UnitPrice = newItem.UnitPrice,
-                        //TotalPrice = newItem.Quantity * newItem.UnitPrice,
+                        TotalPrice = newItem.Quantity * newItem.UnitPrice,
                         CreatedAt = DateTime.Now,
                         ModifiedBy = AppConstant.LoggedInUserID.ToString(),
                         IsDelete = false,
@@ -317,23 +321,28 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
                 var vendorOrdersQuery = from vo in dbContext.TblVendorOrders
-                                        where vo.IsDelete == false && vo.TenentId==AppConstant.LoggedInTenantId
+                                        join v in dbContext.TblVendors on vo.VendorId equals v.VendorId
+                                        join j in dbContext.TblJobs on vo.JobId equals j.JobId
+                                        where vo.IsDelete == false && vo.TenentId == AppConstant.LoggedInTenantId
                                         orderby vo.CreatedAt descending
                                         select new VendorOrderListVm
                                         {
                                             VendorOrderId = vo.VendorOrderId,
                                             VendorId = vo.VendorId,
                                             JobId = vo.JobId,
+                                            Vendorname = v.VendorName,
+                                            JobName = j.JobName, 
                                             OrderNumber = vo.OrderNumber,
                                             OrderDate = vo.OrderDate,
                                             ExpectedDeliveryDate = vo.ExpectedDeliveryDate,
                                             ActualDeliveryDate = vo.ActualDeliveryDate,
-                                            TotalAmount=vo.TotalCost,
+                                            TotalAmount = vo.TotalCost,
                                             Notes = vo.Notes,
-                                            Status=vo.Status== EnumValue.GetEnumValue(VendorOrderStatus.Pending) ? 0 : 1,
-                                            VendorOrderStatus= vo.Status,
+                                            Status = vo.Status == EnumValue.GetEnumValue(VendorOrderStatus.Pending) ? 0 : 1,
+                                            VendorOrderStatus = vo.Status,
                                             IsActive = vo.IsActive,
                                         };
+
 
                 var filteredRecords = await vendorOrdersQuery.ToListAsync();
 

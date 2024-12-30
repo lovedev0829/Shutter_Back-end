@@ -46,8 +46,8 @@ namespace ShutterManagement.Core.ViewModels.Request
         [Required]
         [DefaultValue("")]
         public string? Notes { get; set; }
-        [Required]
-        public decimal? TotalAmount { get; set; }
+        //[Required]
+        //public decimal? TotalAmount { get; set; }
 
         [MinLength(1, ErrorMessage = "At least one VendorOrderItem is required.")]
         public List<VendorOrderItem> VendorOrderItems { get; set; } = new List<VendorOrderItem>();

@@ -259,8 +259,8 @@ namespace ShutterManagement.Business.Services
                                         PaymentMethod = i.PaymentMethod,
                                         TransactionId = i.TransactionId,
                                         Notes = i.Notes,
+                                        PaymentStatus = i.Status == EnumValue.GetEnumValue(PaymentStatus.Unpaid) ? 0 : 1,
                                         Status = i.Status,
-                                        PaymentStatus= i.Status == EnumValue.GetEnumValue(PaymentStatus.Unpaid) ? 0 : 1,
                                         IsActive = i.IsActive,
                                     }).ToList();
                 filter.SearchValue = filter?.SearchValue.Trim().ToLower();
