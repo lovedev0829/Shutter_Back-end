@@ -43,7 +43,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         [Required]
         public VendorOrderStatus Status { get; set; }
 
-        [Required]
+        //[Required]
         [DefaultValue("")]
         public string? Notes { get; set; }
         //[Required]

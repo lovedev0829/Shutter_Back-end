@@ -514,7 +514,7 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> GetAllJobs()
         {
             var res = await jobService.GetAllJobsTenant_SubTenant(filter);
-            res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
+            res.Data = res.Data?.Where(x => x.IsActive == true && x.TenantId==AppConstant.LoggedInTenantId).ToList();
             return Ok(res);
         }
 

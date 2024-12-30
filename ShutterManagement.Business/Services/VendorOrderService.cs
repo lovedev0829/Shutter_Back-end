@@ -364,11 +364,14 @@ namespace ShutterManagement.Business.Services
                 filter.SearchValue = filter.SearchValue.Trim().ToLower();
                 filteredRecords = filteredRecords
                     .Where(x =>
-                        (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
+                        (filter.Status == 0 ? x.VendorOrderStatus ==EnumValue.GetEnumValue(VendorOrderStatus.Pending) :
+                        (filter.Status == 1 ? x.VendorOrderStatus == EnumValue.GetEnumValue(VendorOrderStatus.Approved) : true)) &&
                         (string.IsNullOrEmpty(filter.SearchValue) ? true :
                             (x.VendorId.ToString() == filter.SearchValue) ||
                             (x.JobId.ToString() == filter.SearchValue) ||
                             (x.OrderNumber ?? "").Contains(filter.SearchValue.Trim()) ||
+                            (x.JobName ?? "").Contains(filter.SearchValue.Trim()) ||
+                            (x.Vendorname ?? "").Contains(filter.SearchValue.Trim()) ||
                             (x.OrderDate.ToString() ?? "").Contains(filter.SearchValue.Trim()) ||
                             (x.VendorOrderItems.Any(item => item.MaterialId.ToString().Contains(filter.SearchValue))))
                     )
