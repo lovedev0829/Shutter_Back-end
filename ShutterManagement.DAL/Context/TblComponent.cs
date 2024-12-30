@@ -31,6 +31,8 @@ public partial class TblComponent
 
     public bool? IsDelete { get; set; }
 
+    public decimal? Price { get; set; }
+
     public virtual ICollection<TblComponentMaterial> TblComponentMaterials { get; set; } = new List<TblComponentMaterial>();
 
     public virtual ICollection<TblJobComponent> TblJobComponents { get; set; } = new List<TblJobComponent>();

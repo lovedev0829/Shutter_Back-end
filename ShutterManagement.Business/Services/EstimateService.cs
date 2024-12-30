@@ -26,6 +26,7 @@ namespace ShutterManagement.Business.Services
     public class EstimateService : BaseRepository<BtprojecShuttermanagementDevContext, TblEstimate>, IEstimateService
     {
         private readonly BtprojecShuttermanagementDevContext _context;
+        private readonly IComponentPriceService componentPriceService;
         private readonly IExpressionService expressionService;
         private readonly IProductComponentService productComponentService;
         private readonly IComponentService componentService;
@@ -48,9 +49,11 @@ namespace ShutterManagement.Business.Services
         private readonly EmailHelper emailHelper;
         private string Message = "";
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IOption optionService;
         List<Guid> expressionList = new List<Guid>();
 
         public EstimateService(BtprojecShuttermanagementDevContext context,
+            IComponentPriceService componentPriceService,
             IExpressionService expressionService,
             IProductComponentService productComponentService,
             IComponentService componentService,
@@ -70,10 +73,12 @@ namespace ShutterManagement.Business.Services
             ITenantService tenantService, ClaimsProperty claimsProperty,
             IMstProductType productType,
             EmailHelper emailHelper,
-            IHttpContextAccessor _httpContextAccessor
+            IHttpContextAccessor _httpContextAccessor,
+            IOption optionService
             )
         {
             _context = context;
+            this.componentPriceService = componentPriceService;
             this.expressionService = expressionService;
             this.productComponentService = productComponentService;
             this.componentService = componentService;
@@ -95,6 +100,7 @@ namespace ShutterManagement.Business.Services
             this.productType = productType;
             this.emailHelper = emailHelper;
              this._httpContextAccessor = _httpContextAccessor;
+            this.optionService = optionService;
         }
 
         public async Task<IResponseVm<string>> ActiveInActiveEstimate(Guid EstimateId)
@@ -324,8 +330,8 @@ namespace ShutterManagement.Business.Services
                         return responseVm;
                     }
                     var TotalPrice = await CalculateEstimate(createEstimate.EstimateId);
-                    //createEstimate.TotalPrice = TotalPrice;
-                    //await Update(createEstimate);
+                    createEstimate.TotalPrice = TotalPrice;
+                    await Update(createEstimate);
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.InsertSuccessMsg;
                     FileLogger.Log("Estimate created and all related data added successfully.");
@@ -345,6 +351,36 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
+        public async Task<IResponseVm<dynamic>> BuildEstimate(Guid[] windowProductIds)
+        {
+            IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
+            FileLogger.Log("Start: Calculate Estimate price...");
+
+            try
+            {
+                // Validate tenant existence
+                var isTenantExists = await ValidateTenantExists();
+                if (!isTenantExists)
+                {
+                    responseVm.Message = AppConstant.TenantNotFound;
+                    return responseVm; // Return early if tenant is not found
+                }
+                if(windowProductIds == null || windowProductIds.Length == 0)
+                {
+                    responseVm.Message = "Incorrect data.";
+                    return responseVm;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Log($"Error occurred: {ex.Message}");
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+            }
+
+            // Always return the response after completing the operation
+            return responseVm;
+        }
 
         private async Task<decimal> CalculateEstimate(Guid EstimateId) 
         {
@@ -362,17 +398,21 @@ namespace ShutterManagement.Business.Services
             {
                 var exp = item.mt.ExpressionFormulae;
                 Dictionary<string,decimal> placeholders = new Dictionary<string, decimal>{ };
-                string pattern = @"{{[a-zA-Z]+}}";
+                string pattern = @"{{.*?}}";
                 var matches = Regex.Matches(exp ?? "", pattern);
                 if(matches != null && matches.Count() > 0)
                 {
                     foreach(Match match in matches)
                     {
-
-                        var val = GetProperty.GetColumnValue(item.tewp,match.Value.Replace("{{","").Replace("}}",""));
+                        var property = match.Value.Replace("{{", "").Replace("}}", "");
+                        var val = GetProperty.GetColumnValue(item.tewp, property);
                         if (val == null)
                         {
-                            //val = item.tewpc.ComponentName.Contains(match.Value) ? item.tewp
+                            string[] info = property.Split('.');
+                            if(info!= null && info.Length > 0 && info.Length == 3)
+                            {
+                                val = componentPriceService.GetAllQuerable().Where(x => x.ProductType == info[1]  && x.ComponentName == info[2]).Select(x=>x.PriceRated).FirstOrDefault();
+                            }
                         }
                         placeholders.Add(match.Value, Convert.ToDecimal(val));
                         exp = exp?.Replace(match.Value, Convert.ToDecimal(val).ToString());
@@ -1126,5 +1166,113 @@ namespace ShutterManagement.Business.Services
 
 
         #endregion
+
+        public async Task<IResponseVm<List<EstimationBreakdown>>> EstimationBreakdown(Guid windowProductId)
+        {
+            IResponseVm<List<EstimationBreakdown>> responseVm = new ResponseVm<List<EstimationBreakdown>>();
+
+            try
+            {
+                if (windowProductId == Guid.Empty)
+                {
+                    responseVm.Message = "Invalid Estimate ID.";
+                    return responseVm;
+                }
+
+                var windowProductDetails = windowProductService.GetAllQuerable()
+                    .FirstOrDefault(x => x.WindowProductId == windowProductId && x.IsDelete == false);
+
+                if (windowProductDetails == null)
+                {
+                    responseVm.Message = "Window product not found.";
+                    return responseVm;
+                }
+
+                var windowQty = windowService.GetAllQuerable()
+                    .Where(x => x.WindowId == windowProductDetails.WindowId && x.IsDelete == false).Select(x =>x.Quantity).FirstOrDefault();
+
+                if (windowQty == null)
+                {
+                    responseVm.Message = "Window quantity not found.";
+                    return responseVm;
+                }
+
+                var productDetails = productService.GetAllQuerable()
+                    .FirstOrDefault(x => x.ProductId == windowProductDetails.ProductId && x.IsDelete == false);
+
+                if (productDetails == null)
+                {
+                    responseVm.Message = "Product details not found.";
+                    return responseVm;
+                }
+
+                var productTypeName = productType.GetAllQuerable()
+                    .Where(x => x.ProductId == windowProductDetails.ProductTypeId && x.IsDelete == false)
+                    .Select(pt => pt.ProductName)
+                    .FirstOrDefault();
+
+                var optiontypeId = windowOptionService.GetAllQuerable().Where(x => x.WindowProductId == windowProductDetails.WindowProductId &&
+                x.IsDelete == false).Select(op=> op.OptionTypeId).FirstOrDefault();
+                var optiontypeName = optionsTypeService.GetAllQuerable().Where(x => x.OptionTypeId == optiontypeId &&
+                x.IsDelete == false).FirstOrDefault();
+                var optionName = optionService.GetAllQuerable().Where(x => x.OptionId == optiontypeName.OptionId && x.IsDelete == false).
+                    Select(x => x.OptionName).FirstOrDefault();
+                var componentsList = productComponentService.GetAllQuerable()
+                    .Where(x => x.ProductId == productDetails.ProductId && x.IsDelete == false)
+                    .ToList();
+
+                if (!componentsList.Any())
+                {
+                    responseVm.Message = "No components found for the product.";
+                    return responseVm;
+                }
+
+                var detailedComponents = new List<ProductComponent>();
+
+                foreach (var component in componentsList)
+                {
+                    var componentDetails = componentService.GetAllQuerable()
+                        .FirstOrDefault(x => x.ComponentId == component.ComponentId && x.IsDelete == false);
+
+                    if (componentDetails != null)
+                    {
+                        detailedComponents.Add(new ProductComponent
+                        {
+                            Price = componentDetails.Price,
+                            ComponentName = componentDetails.ComponentName
+                        });
+                    }
+                }
+
+                responseVm.Data = new List<EstimationBreakdown>
+        {
+            new EstimationBreakdown
+            {
+                ProductTypeId = windowProductDetails.ProductTypeId,
+                ProductTypeName = productTypeName,
+                ProductId = windowProductDetails.ProductId,
+                ProductName = productDetails.ProductName,
+                OptionName = optionName,
+                OptionTypeName = optiontypeName.OptionType,
+                Quantity = windowQty,
+                Height = productDetails.Height,
+                Width = productDetails.Width,
+                productComponents = detailedComponents 
+            }
+            
+        };
+                responseVm.IsSuccess = true;
+                responseVm.Message = AppConstant.FetchSuccessMsg;
+            }
+            catch (Exception ex)
+            {
+                responseVm.Message = $"{AppConstant.ExceptionError} {ex.Message}";
+            }
+
+            return responseVm;
+        }
+
+
+
     }
 }

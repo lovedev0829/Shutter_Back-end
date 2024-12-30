@@ -93,7 +93,7 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
 
     public virtual DbSet<TblOrderWindowProductComponentMaterial> TblOrderWindowProductComponentMaterials { get; set; }
 
-    public virtual DbSet<TblPayments> TblPayments { get; set; }
+    public virtual DbSet<TblPayment> TblPayments { get; set; }
 
     public virtual DbSet<TblProduct> TblProducts { get; set; }
 
@@ -329,6 +329,7 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.MarkupPercentage).HasColumnType("decimal(5, 2)");
+            entity.Property(e => e.Price).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.ProductType)
                 .HasMaxLength(50)
                 .IsUnicode(false);
@@ -699,8 +700,6 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
 
             entity.ToTable("TblInvoice", "dbo");
 
-            entity.HasIndex(e => e.InvoiceNumber, "UQ__TblInvoi__D776E981C4B274EE").IsUnique();
-
             entity.Property(e => e.InvoiceId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.BalanceDue).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.CreatedAt)
@@ -1038,7 +1037,7 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.Property(e => e.Version).HasMaxLength(3);
         });
 
-        modelBuilder.Entity<TblPayments>(entity =>
+        modelBuilder.Entity<TblPayment>(entity =>
         {
             entity.HasKey(e => e.PaymentId).HasName("PK__TblPayme__9B556A38349E201F");
 

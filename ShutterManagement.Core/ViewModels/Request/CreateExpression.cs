@@ -11,6 +11,8 @@ namespace ShutterManagement.Core.ViewModels.Request
         public string? ExpressionName { get; set; }
 
         public string? ExpressionFormulae { get; set; }
+        public Guid? ProductId { get; set; }
+        public Guid? ProductTypeId { get; set; }
 
     }
 }

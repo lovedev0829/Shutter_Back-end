@@ -71,7 +71,6 @@ namespace ShutterManagement.Core.ViewModels.Request
         //public decimal TotalPrice { get; set; }
         //public decimal? TotalPrice => Quantity * UnitPrice;
     }
-
 }
 
 
