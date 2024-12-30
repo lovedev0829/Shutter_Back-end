@@ -66,12 +66,11 @@ namespace ShutterManagement.Core.ViewModels.Request
         [Range(0.01, double.MaxValue, ErrorMessage = "UnitPrice must be greater than zero.")]
         public decimal? UnitPrice { get; set; }
 
-        [Required(ErrorMessage = "TotalPrice is required.")]
-        [Range(0.01, double.MaxValue, ErrorMessage = "TotalPrice must be greater than zero.")]
+        //[Required(ErrorMessage = "TotalPrice is required.")]
+        //[Range(0.01, double.MaxValue, ErrorMessage = "TotalPrice must be greater than zero.")]
         //public decimal TotalPrice { get; set; }
         //public decimal? TotalPrice => Quantity * UnitPrice;
     }
-
 }
 
 

@@ -181,9 +181,9 @@ namespace ShutterManagement.Business.Services
 
                 await Add(newOrder);
                 var windowProductIds = dbContext.TblEstimateWindowProducts
-                 .Where(e => e.EstimateId == EstimateId)
-           .Select(e => e.WindowProductId)
-           .ToList();
+                .Where(e => e.EstimateId == EstimateId)
+                .Select(e => e.WindowProductId)
+                .ToList();
 
                 var windowProductIdsNonNullable = windowProductIds.Where(x => x.HasValue).Select(x => x.Value).ToList();
 
