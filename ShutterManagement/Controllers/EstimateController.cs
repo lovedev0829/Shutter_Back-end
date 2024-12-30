@@ -46,6 +46,15 @@ namespace ShutterManagement.Controllers
             return Ok(res);
         }
 
+        [HttpPost("BuildEstimate")]
+        [Authorize(Roles = "EstimateAdd")]
+        public async Task<IActionResult> BuildEstimate( Guid[] WindowProductIds,  bool IsBreakDown)
+        {
+
+            var res = await _EstimateService.BuildEstimate(WindowProductIds, IsBreakDown);
+            return Ok(res);
+        }
+
         [HttpPost("ActiveInactive")]
         [Authorize(Roles = "EstimateEdit")]
         public async Task<IActionResult> ActiveInActiveEstimate(string EstimateId)
@@ -88,7 +97,7 @@ namespace ShutterManagement.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> EstimateApproved(Guid EstimationId, Estimation Status)
         {
-            var res = await _EstimateService.ChangeStatus(EstimationId,Status);
+            var res = await _EstimateService.ChangeStatus(EstimationId, Status);
             return Ok(res);
 
         }
