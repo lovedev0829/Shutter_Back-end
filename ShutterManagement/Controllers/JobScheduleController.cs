@@ -24,7 +24,7 @@ namespace ShutterManagement.Controllers
             return Ok(res);
         }
         [HttpPost("Update")]
-        //[Authorize(Roles = "JobScheduleEdit")]
+       // [Authorize(Roles = "JobScheduleEdit")]
         public async Task<IActionResult> UpdateDiscount(UpdateJobSchedule model)
         {
             var res = await jobSchedule.UpdateJobSchedule(model);
@@ -48,7 +48,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("GetAll")]
-        //[Authorize(Roles = "JobScheduleView")]
+       // [Authorize(Roles = "JobScheduleView")]
         public async Task<IActionResult> GetAll(Pagination filter)
         {
             var res = await jobSchedule.GetAll_JobSchedule(filter);

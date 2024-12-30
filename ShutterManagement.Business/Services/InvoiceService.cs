@@ -295,11 +295,13 @@ namespace ShutterManagement.Business.Services
                 filter.SearchValue = filter.SearchValue.Trim().ToLower();
                 var filteredInvoices = invoicesQuery
                     .Where(x =>
-                        (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
+                        (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) && 
                         (string.IsNullOrEmpty(filter.SearchValue) ? true :
                             (x.InvoiceNumber.Contains(filter.SearchValue.Trim())) ||
                             (x.Status.Contains(filter.SearchValue.Trim())) ||
                             (x.InvoiceId.ToString() == filter.SearchValue.Trim())) ||
+                            (x.InvoiceNumber.ToString() == filter.SearchValue.Trim()) ||
+                            (x.TotalAmount.ToString() == filter.SearchValue.Trim()) ||
                             (x.JobId.ToString() == filter.SearchValue.Trim())).ToList();
 
                 foreach (var invoice in filteredInvoices)
@@ -371,16 +373,24 @@ namespace ShutterManagement.Business.Services
                 invoice.IssueDate = updateInvoice.IssueDate;
                 invoice.DueDate = updateInvoice.DueDate;
                 invoice.TotalAmount = updateInvoice.TotalAmount;
+
+                invoice.BalanceDue = updateInvoice.TotalAmount - invoice.PaidAmount;
                 invoice.UpdatedAt = DateTime.Now;
                 invoice.ModifiedBy = AppConstant.LoggedInUserID;
 
-                await Update(invoice);
+                var result = await Update(invoice);
+                if (result == null)
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = "Failed to update the invoice.";
+                    return responseVm;
+                }
 
-                var invoicePayments = invoicePaymentService.GetAllQuerable()
+                var existingPayments = invoicePaymentService.GetAllQuerable()
                     .Where(x => x.InvoiceId == updateInvoice.InvoiceId && x.IsDelete == false)
                     .ToList();
 
-                foreach (var payment in invoicePayments)
+                foreach (var payment in existingPayments)
                 {
                     payment.IsDelete = true;
                     payment.IsActive = false;
@@ -417,6 +427,7 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
+
 
     }
 }

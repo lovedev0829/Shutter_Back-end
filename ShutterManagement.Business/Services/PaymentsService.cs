@@ -107,6 +107,14 @@ namespace ShutterManagement.Business.Services
                 }
                 var invoice = invoiceService.GetAllQuerable()
                     .FirstOrDefault(i => i.InvoiceId == model.InvoiceId && i.IsActive == true);
+
+                if (model.Amount > invoice.TotalAmount)
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = "Payment cannot be greater than the total Amount";
+                    return responseVm;
+                }
+
                 if (invoice.BalanceDue == 0)
                 {
                     responseVm.IsSuccess = false;
@@ -336,9 +344,6 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-                invoice.PaidAmount -= payment.Amount ?? 0;
-                invoice.BalanceDue = invoice.TotalAmount - invoice.PaidAmount;
-
                 if (updatePayment.Amount > invoice.BalanceDue)
                 {
                     responseVm.IsSuccess = false;
@@ -356,15 +361,18 @@ namespace ShutterManagement.Business.Services
                 payment.Notes = updatePayment.Notes;
                 payment.UpdatedAt = DateTime.Now;
                 payment.ModifiedBy = AppConstant.LoggedInUserID;
+
                 await Update(payment);
 
-                invoice.PaidAmount += updatePayment.Amount ?? 0;
-                invoice.BalanceDue = invoice.TotalAmount - invoice.PaidAmount;
-                invoice.Status = EnumValue.GetEnumValue(PaymentStatus.Paid);
-                invoice.UpdatedAt = DateTime.Now;
-                invoice.ModifiedBy = AppConstant.LoggedInUserID;
-                await invoiceService.Update(invoice);
-
+                if (updatePayment.PaymentStatus == PaymentStatus.Paid)
+                {
+                    invoice.PaidAmount += updatePayment.Amount ?? 0;
+                    invoice.BalanceDue = invoice.TotalAmount - invoice.PaidAmount;
+                    invoice.Status = EnumValue.GetEnumValue(PaymentStatus.Paid);
+                    invoice.UpdatedAt = DateTime.Now;
+                    invoice.ModifiedBy = AppConstant.LoggedInUserID;
+                    await invoiceService.Update(invoice);
+                }
                 await transaction.CommitAsync();
 
                 responseVm.IsSuccess = true;
@@ -380,6 +388,7 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
+
         #endregion UpdatePayment
 
 

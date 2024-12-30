@@ -10,16 +10,15 @@ namespace ShutterManagement.Core.ViewModels.Response
     {
         public Guid? ScheduleJobId { get; set; }
         public Guid? JobTitleId { get; set; }
+        public string? JobTitle { get; set; }
         public Guid? UserId { get; set; }
+        public string? UserFullname { get; set; }
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
         public TimeOnly? DayStartTime { get; set; }
         public TimeOnly? DayEndDateTime { get; set; }
         public Guid? TenantId { get; set; }
-        public Guid? CreatedBy { get; set; }
-        public Guid? ModifiedBy { get; set; }
         public bool? IsActive { get; set; }
-        public bool? IsDelete { get; set; }
     }
 }
 
