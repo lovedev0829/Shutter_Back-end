@@ -1148,7 +1148,8 @@ namespace ShutterManagement.Business.Services
                 Message = "Product " + AppConstant.NoDataFound;
                 return; // Return early if product data not found
             }
-
+            Guid[] arr = { windowProductData.WindowProductId };
+            var buildEstimate = await BuildEstimate(arr, false);
             TblEstimateWindowProduct tblEstimateWindowProduct = new TblEstimateWindowProduct
             {
                 WindowId = (Guid)windowProductData.WindowId,
@@ -1159,6 +1160,7 @@ namespace ShutterManagement.Business.Services
                 Notes = productData.Notes,
                 IsDelete = false,
                 IsActive = true,
+                Price = buildEstimate.Data[0].Price,
                 CreatedAt = DateTime.Now,
                 CreatedBy = AppConstant.LoggedInUserID,
                 ArchHeight = productData.ArchHeight,
