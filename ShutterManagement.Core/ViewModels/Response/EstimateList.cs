@@ -13,6 +13,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public Guid EstimateId { get; set; }
         public Guid? JobId { get; set; }
         public string? EstimateName { get; set; }
+        public decimal? TotalPrice { get; set; }
         public string? EstimateCode { get; set; }
         public Guid[]? WindowProductId { get; set; } = new Guid[] { };
         public string? TermsCondition { get; set; }
@@ -63,7 +64,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? ProductName { get; set; }
         public Guid? WindowProductId { get; set; }
 
-        //public decimal? ArchTop { get; set; }
+        public decimal? TotalPrice { get; set; }
         public EstimateWindowList EstimateWindowDetails { get; set; } = new EstimateWindowList();
 
         public List<OptionList> Options { get; set; } = new List<OptionList>();

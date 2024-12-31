@@ -101,14 +101,14 @@ namespace ShutterManagement.Controllers
 
         }
 
-        [HttpPost("EstimationBreakdown")]
-        [Authorize(Roles = "EstimateView")]
-        public async Task<IActionResult> EstiamtionBreakdown(Guid WndowProductId)
-        {
-            var res = await _EstimateService.EstimationBreakdown(WndowProductId);
-            return Ok(res);
+        //[HttpPost("EstimationBreakdown")]
+        //[Authorize(Roles = "EstimateView")]
+        //public async Task<IActionResult> EstiamtionBreakdown(Guid WndowProductId)
+        //{
+        //    var res = await _EstimateService.EstimationBreakdown(WndowProductId);
+        //    return Ok(res);
 
-        }
+        //}
 
     }
 }

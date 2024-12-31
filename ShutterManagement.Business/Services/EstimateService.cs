@@ -351,9 +351,9 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        public async Task<IResponseVm<dynamic>> BuildEstimate(Guid[] windowProductIds, bool IsBreakdown)
+        public async Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> BuildEstimate(Guid[] windowProductIds, bool IsBreakdown)
         {
-            IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
+            IResponseVm<List<WindowProdcutDetailsForEstimate>> responseVm = new ResponseVm<List<WindowProdcutDetailsForEstimate>>();
             FileLogger.Log("Start: Calculate Estimate price...");
 
             try
@@ -384,7 +384,7 @@ namespace ShutterManagement.Business.Services
                     }
                 }
                 var forProduct = WindowProductData.Select(x =>
-                                    new
+                                    new WindowProdcutDetailsForEstimate
                                     {
                                         // Window Properties
                                         WindowId = x.WindowId,
@@ -699,110 +699,110 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        public async Task<IResponseVm<List<EstimationBreakdown>>> EstimationBreakdown(Guid windowProductId)
-        {
-            IResponseVm<List<EstimationBreakdown>> responseVm = new ResponseVm<List<EstimationBreakdown>>();
+        //public async Task<IResponseVm<List<EstimationBreakdown>>> EstimationBreakdown(Guid windowProductId)
+        //{
+        //    IResponseVm<List<EstimationBreakdown>> responseVm = new ResponseVm<List<EstimationBreakdown>>();
 
-            try
-            {
-                if (windowProductId == Guid.Empty)
-                {
-                    responseVm.Message = "Invalid Estimate ID.";
-                    return responseVm;
-                }
+        //    try
+        //    {
+        //        if (windowProductId == Guid.Empty)
+        //        {
+        //            responseVm.Message = "Invalid Estimate ID.";
+        //            return responseVm;
+        //        }
 
-                var windowProductDetails = windowProductService.GetAllQuerable()
-                    .FirstOrDefault(x => x.WindowProductId == windowProductId && x.IsDelete == false);
+        //        var windowProductDetails = windowProductService.GetAllQuerable()
+        //            .FirstOrDefault(x => x.WindowProductId == windowProductId && x.IsDelete == false);
 
-                if (windowProductDetails == null)
-                {
-                    responseVm.Message = "Window product not found.";
-                    return responseVm;
-                }
+        //        if (windowProductDetails == null)
+        //        {
+        //            responseVm.Message = "Window product not found.";
+        //            return responseVm;
+        //        }
 
-                var windowQty = windowService.GetAllQuerable()
-                    .Where(x => x.WindowId == windowProductDetails.WindowId && x.IsDelete == false).Select(x => x.Quantity).FirstOrDefault();
+        //        var windowQty = windowService.GetAllQuerable()
+        //            .Where(x => x.WindowId == windowProductDetails.WindowId && x.IsDelete == false).Select(x => x.Quantity).FirstOrDefault();
 
-                if (windowQty == null)
-                {
-                    responseVm.Message = "Window quantity not found.";
-                    return responseVm;
-                }
+        //        if (windowQty == null)
+        //        {
+        //            responseVm.Message = "Window quantity not found.";
+        //            return responseVm;
+        //        }
 
-                var productDetails = productService.GetAllQuerable()
-                    .FirstOrDefault(x => x.ProductId == windowProductDetails.ProductId && x.IsDelete == false);
+        //        var productDetails = productService.GetAllQuerable()
+        //            .FirstOrDefault(x => x.ProductId == windowProductDetails.ProductId && x.IsDelete == false);
 
-                if (productDetails == null)
-                {
-                    responseVm.Message = "Product details not found.";
-                    return responseVm;
-                }
+        //        if (productDetails == null)
+        //        {
+        //            responseVm.Message = "Product details not found.";
+        //            return responseVm;
+        //        }
 
-                var productTypeName = productType.GetAllQuerable()
-                    .Where(x => x.ProductId == windowProductDetails.ProductTypeId && x.IsDelete == false)
-                    .Select(pt => pt.ProductName)
-                    .FirstOrDefault();
+        //        var productTypeName = productType.GetAllQuerable()
+        //            .Where(x => x.ProductId == windowProductDetails.ProductTypeId && x.IsDelete == false)
+        //            .Select(pt => pt.ProductName)
+        //            .FirstOrDefault();
 
-                var optiontypeId = windowOptionService.GetAllQuerable().Where(x => x.WindowProductId == windowProductDetails.WindowProductId &&
-                x.IsDelete == false).Select(op => op.OptionTypeId).FirstOrDefault();
-                var optiontypeName = optionsTypeService.GetAllQuerable().Where(x => x.OptionTypeId == optiontypeId &&
-                x.IsDelete == false).FirstOrDefault();
-                var optionName = optionService.GetAllQuerable().Where(x => x.OptionId == optiontypeName.OptionId && x.IsDelete == false).
-                    Select(x => x.OptionName).FirstOrDefault();
-                var componentsList = productComponentService.GetAllQuerable()
-                    .Where(x => x.ProductId == productDetails.ProductId && x.IsDelete == false)
-                    .ToList();
+        //        var optiontypeId = windowOptionService.GetAllQuerable().Where(x => x.WindowProductId == windowProductDetails.WindowProductId &&
+        //        x.IsDelete == false).Select(op => op.OptionTypeId).FirstOrDefault();
+        //        var optiontypeName = optionsTypeService.GetAllQuerable().Where(x => x.OptionTypeId == optiontypeId &&
+        //        x.IsDelete == false).FirstOrDefault();
+        //        var optionName = optionService.GetAllQuerable().Where(x => x.OptionId == optiontypeName.OptionId && x.IsDelete == false).
+        //            Select(x => x.OptionName).FirstOrDefault();
+        //        var componentsList = productComponentService.GetAllQuerable()
+        //            .Where(x => x.ProductId == productDetails.ProductId && x.IsDelete == false)
+        //            .ToList();
 
-                if (!componentsList.Any())
-                {
-                    responseVm.Message = "No components found for the product.";
-                    return responseVm;
-                }
+        //        if (!componentsList.Any())
+        //        {
+        //            responseVm.Message = "No components found for the product.";
+        //            return responseVm;
+        //        }
 
-                var detailedComponents = new List<ProductComponent>();
+        //        var detailedComponents = new List<ProductComponent>();
 
-                foreach (var component in componentsList)
-                {
-                    var componentDetails = componentService.GetAllQuerable()
-                        .FirstOrDefault(x => x.ComponentId == component.ComponentId && x.IsDelete == false);
+        //        foreach (var component in componentsList)
+        //        {
+        //            var componentDetails = componentService.GetAllQuerable()
+        //                .FirstOrDefault(x => x.ComponentId == component.ComponentId && x.IsDelete == false);
 
-                    if (componentDetails != null)
-                    {
-                        detailedComponents.Add(new ProductComponent
-                        {
-                            Price = componentDetails.Price,
-                            ComponentName = componentDetails.ComponentName
-                        });
-                    }
-                }
+        //            if (componentDetails != null)
+        //            {
+        //                detailedComponents.Add(new ProductComponent
+        //                {
+        //                    TotalPrice = componentDetails.TotalPrice,
+        //                    ComponentName = componentDetails.ComponentName
+        //                });
+        //            }
+        //        }
 
-                responseVm.Data = new List<EstimationBreakdown>
-        {
-            new EstimationBreakdown
-            {
-                ProductTypeId = windowProductDetails.ProductTypeId,
-                ProductTypeName = productTypeName,
-                ProductId = windowProductDetails.ProductId,
-                ProductName = productDetails.ProductName,
-                OptionName = optionName,
-                OptionTypeName = optiontypeName.OptionType,
-                Quantity = windowQty,
-                Height = productDetails.Height,
-                Width = productDetails.Width,
-                productComponents = detailedComponents
-            }
+        //        responseVm.Data = new List<EstimationBreakdown>
+        //{
+        //    new EstimationBreakdown
+        //    {
+        //        ProductTypeId = windowProductDetails.ProductTypeId,
+        //        ProductTypeName = productTypeName,
+        //        ProductId = windowProductDetails.ProductId,
+        //        ProductName = productDetails.ProductName,
+        //        OptionName = optionName,
+        //        OptionTypeName = optiontypeName.OptionType,
+        //        Quantity = windowQty,
+        //        Height = productDetails.Height,
+        //        Width = productDetails.Width,
+        //        productComponents = detailedComponents
+        //    }
 
-        };
-                responseVm.IsSuccess = true;
-                responseVm.Message = AppConstant.FetchSuccessMsg;
-            }
-            catch (Exception ex)
-            {
-                responseVm.Message = $"{AppConstant.ExceptionError} {ex.Message}";
-            }
+        //};
+        //        responseVm.IsSuccess = true;
+        //        responseVm.Message = AppConstant.FetchSuccessMsg;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        responseVm.Message = $"{AppConstant.ExceptionError} {ex.Message}";
+        //    }
 
-            return responseVm;
-        }
+        //    return responseVm;
+        //}
 
 
         #region private methods
@@ -936,7 +936,8 @@ namespace ShutterManagement.Business.Services
                     x.Color,
                     x.Notes,
                     x.WindowId,
-                    x.WindowProductId
+                    x.WindowProductId,
+                    x.Price
                 }).ToList();
 
             e.WindowProductId = productList.Select(p => (Guid)p.WindowProductId).ToArray();
@@ -969,6 +970,7 @@ namespace ShutterManagement.Business.Services
                     ArchHeight = p.ArchHeight,
                     ProductName = p.ProductName,
                     WindowProductId = p.WindowProductId,
+                    TotalPrice = p.Price,
                     Options = optionDetails,
                     EstimateWindowDetails = WindowDetails.Where(x => x.WindowId == p.WindowId).Select(x => new EstimateWindowList
                     {
@@ -1160,7 +1162,7 @@ namespace ShutterManagement.Business.Services
                 Notes = productData.Notes,
                 IsDelete = false,
                 IsActive = true,
-                Price = buildEstimate.Data[0].Price,
+                Price = (buildEstimate.Data.FirstOrDefault() != null ? buildEstimate.Data.FirstOrDefault().TotalPrice : 0.00M ) ,
                 CreatedAt = DateTime.Now,
                 CreatedBy = AppConstant.LoggedInUserID,
                 ArchHeight = productData.ArchHeight,

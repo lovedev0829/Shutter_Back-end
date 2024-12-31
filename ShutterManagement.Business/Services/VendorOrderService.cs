@@ -133,7 +133,7 @@ namespace ShutterManagement.Business.Services
                     TblVendorOrderItem tblVendorOrderItem = new TblVendorOrderItem
                     {
                         VendorOrderItemId = Guid.NewGuid(),
-                        VendorOrderId=res.VendorOrderId,
+                        VendorOrderId = res.VendorOrderId,
                         MaterialId = item.MaterialId,
                         Quantity = item.Quantity,
                         UnitPrice = item.UnitPrice,
@@ -197,7 +197,7 @@ namespace ShutterManagement.Business.Services
 
                 await Update(existingOrder);
 
-                var vendorOrderItems =  vendorItemService.GetAllQuerable()
+                var vendorOrderItems = vendorItemService.GetAllQuerable()
                     .Where(x =>
                         x.IsActive == true &&
                         x.IsDelete == false &&
@@ -247,14 +247,14 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                if(vendorOrderId!=Guid.Empty)
+                if (vendorOrderId != Guid.Empty)
                 {
-                    var IsTenant = await _tenantService.AnyAsync(x =>x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false);
+                    var IsTenant = await _tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false);
                     if (IsTenant)
                     {
                         var existingOrder = GetAllQuerable().Where(x =>
                             x.IsDelete == false &&
-                            x.VendorOrderId== vendorOrderId &&
+                            x.VendorOrderId == vendorOrderId &&
                             x.TenentId == AppConstant.LoggedInTenantId)
                             .FirstOrDefault();
 
@@ -267,7 +267,7 @@ namespace ShutterManagement.Business.Services
 
                             await Update(existingOrder);
 
-                            var vendorOrderItems = vendorItemService.GetAllQuerable().Where(x => 
+                            var vendorOrderItems = vendorItemService.GetAllQuerable().Where(x =>
                            x.IsDelete == false && x.VendorOrderId == vendorOrderId).ToList();
 
                             foreach (var items in vendorOrderItems)
@@ -333,7 +333,7 @@ namespace ShutterManagement.Business.Services
                                             VendorId = vo.VendorId,
                                             JobId = vo.JobId,
                                             Vendorname = v.VendorName,
-                                            JobName = j.JobName, 
+                                            JobName = j.JobName,
                                             OrderNumber = vo.OrderNumber,
                                             OrderDate = vo.OrderDate,
                                             ExpectedDeliveryDate = vo.ExpectedDeliveryDate,
@@ -348,26 +348,30 @@ namespace ShutterManagement.Business.Services
 
                 var filteredRecords = await vendorOrdersQuery.ToListAsync();
 
+                var materials = await materialService.GetAllQuerable()
+.Where(m => m.IsDelete == false)
+.ToDictionaryAsync(m => m.RawMaterialId, m => m.MaterialName);
+
                 foreach (var item in filteredRecords)
                 {
-                    item.VendorOrderItems = await vendorItemService.GetAllQuerable()
-                        .Where(x => x.IsDelete == false && x.VendorOrderId == item.VendorOrderId)
+                    var vendorOrderItems = await vendorItemService.GetAllQuerable()
+                        .Where(x => x.IsDelete == false && x.VendorOrderId == item.VendorOrderId && x.MaterialId.HasValue)
                         .OrderBy(x => x.CreatedAt)
-                        .Select(x => new ShutterManagement.Core.ViewModels.Response.VendorOrderItem
-                        {
-                            MaterialId = x.MaterialId,
-                            MaterialName = materialService.GetAllQuerable().Where(x=>x.RawMaterialId == x.RawMaterialId).Select(x=>x.MaterialName).FirstOrDefault(),
-                            Quantity = x.Quantity,
-                            UnitPrice = x.UnitPrice,
-                            //TotalPrice = x.TotalPrice,
-                            IsActive = x.IsActive
-                        })
                         .ToListAsync();
+
+                    item.VendorOrderItems = vendorOrderItems.Select(x => new ShutterManagement.Core.ViewModels.Response.VendorOrderItem
+                    {
+                        MaterialId = x.MaterialId.Value,
+                        MaterialName = materials.TryGetValue(x.MaterialId.Value, out var materialName) ? materialName : null,
+                        Quantity = x.Quantity,
+                        UnitPrice = x.UnitPrice,
+                        IsActive = x.IsActive
+                    }).ToList();
                 }
                 filter.SearchValue = filter.SearchValue.Trim().ToLower();
                 filteredRecords = filteredRecords
                     .Where(x =>
-                        (filter.Status == 0 ? x.VendorOrderStatus ==EnumValue.GetEnumValue(VendorOrderStatus.Pending) :
+                        (filter.Status == 0 ? x.VendorOrderStatus == EnumValue.GetEnumValue(VendorOrderStatus.Pending) :
                         (filter.Status == 1 ? x.VendorOrderStatus == EnumValue.GetEnumValue(VendorOrderStatus.Approved) : true)) &&
                         (string.IsNullOrEmpty(filter.SearchValue) ? true :
                             (x.VendorId.ToString() == filter.SearchValue) ||
