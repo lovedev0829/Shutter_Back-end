@@ -16,7 +16,7 @@ using System.Drawing;
 namespace ShutterManagement.Business.Services
 {
 
-    public class PaymentsService : BaseRepository<BtprojecShuttermanagementDevContext, TblPayments>, IPaymentsService
+    public class PaymentsService : BaseRepository<BtprojecShuttermanagementDevContext, TblPayment>, IPaymentsService
     {
         private readonly ITenantService tenantService;
         private readonly IInvoiceService invoiceService;
@@ -128,7 +128,7 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = "Please enter an amount equal to or less than balance due.";
                     return responseVm;
                 }
-                TblPayments tblPayments = new TblPayments
+                TblPayment tblPayments = new TblPayment
                 {
                     PaymentId = Guid.NewGuid(),
                     InvoiceId = model.InvoiceId,

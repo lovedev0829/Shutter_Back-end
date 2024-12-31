@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 namespace ShutterManagement.Business.Interfaces
 {
 
-    public interface IPaymentsService : IGenericRepository<TblPayments>
+    public interface IPaymentsService : IGenericRepository<TblPayment>
     {
         Task<IResponseVm<string>> CreatePayment(CreatePayments model);
         Task<IResponseVm<string>> UpdatePayment(UpdatePayments updatePayment);
