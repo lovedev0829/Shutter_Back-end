@@ -93,7 +93,7 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
 
     public virtual DbSet<TblOrderWindowProductComponentMaterial> TblOrderWindowProductComponentMaterials { get; set; }
 
-    public virtual DbSet<TblPayments> TblPayments { get; set; }
+    public virtual DbSet<TblPayment> TblPayments { get; set; }
 
     public virtual DbSet<TblProduct> TblProducts { get; set; }
 
@@ -584,6 +584,7 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
             entity.Property(e => e.Length).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.Markup).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.Price).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.ProductName).HasMaxLength(255);
             entity.Property(e => e.ProductType)
                 .HasMaxLength(50)
@@ -1037,7 +1038,7 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.Property(e => e.Version).HasMaxLength(3);
         });
 
-        modelBuilder.Entity<TblPayments>(entity =>
+        modelBuilder.Entity<TblPayment>(entity =>
         {
             entity.HasKey(e => e.PaymentId).HasName("PK__TblPayme__9B556A38349E201F");
 
