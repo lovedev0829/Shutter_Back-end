@@ -48,10 +48,9 @@ namespace ShutterManagement.Controllers
 
         [HttpPost("BuildEstimate")]
         [Authorize(Roles = "EstimateAdd")]
-        public async Task<IActionResult> BuildEstimate( Guid[] WindowProductIds,  bool IsBreakDown)
+        public async Task<IActionResult> BuildEstimate(BuildEstimate buildEstimate)
         {
-
-            var res = await _EstimateService.BuildEstimate(WindowProductIds, IsBreakDown);
+            var res = await _EstimateService.BuildEstimate(buildEstimate.WindowProductIds, buildEstimate.IsBreakDown);
             return Ok(res);
         }
 

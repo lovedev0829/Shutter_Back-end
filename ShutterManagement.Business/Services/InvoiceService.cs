@@ -287,7 +287,7 @@ namespace ShutterManagement.Business.Services
                                         PaidAmount = i.PaidAmount,
                                         BalanceDue = i.BalanceDue,
                                         DueDate = i.DueDate,
-                                        Status = i.Status,
+                                        Status = i.Status??"",
                                         IsActive = i.IsActive,
                                     }).ToList();
                 filter.SearchValue = filter.SearchValue?.Trim().ToLower();

@@ -17,12 +17,14 @@ namespace ShutterManagement.Business.Services
     public class VendorOrderService : BaseRepository<BtprojecShuttermanagementDevContext, TblVendorOrder>, IVendorOrderService
     {
         private readonly ITenantService _tenantService;
+        private readonly IMaterial materialService;
         private readonly IVendorItemService vendorItemService;
         public ClaimsProperty ClaimsProperty { get; }
 
-        public VendorOrderService(ITenantService tenantService, ClaimsProperty claimsProperty, IVendorItemService vendorItemService)
+        public VendorOrderService(ITenantService tenantService, IMaterial materialService, ClaimsProperty claimsProperty, IVendorItemService vendorItemService)
         {
             _tenantService = tenantService;
+            this.materialService = materialService;
             ClaimsProperty = claimsProperty;
             this.vendorItemService = vendorItemService;
         }
@@ -354,6 +356,7 @@ namespace ShutterManagement.Business.Services
                         .Select(x => new ShutterManagement.Core.ViewModels.Response.VendorOrderItem
                         {
                             MaterialId = x.MaterialId,
+                            MaterialName = materialService.GetAllQuerable().Where(x=>x.RawMaterialId == x.RawMaterialId).Select(x=>x.MaterialName).FirstOrDefault(),
                             Quantity = x.Quantity,
                             UnitPrice = x.UnitPrice,
                             //TotalPrice = x.TotalPrice,
@@ -368,9 +371,10 @@ namespace ShutterManagement.Business.Services
                         (filter.Status == 1 ? x.VendorOrderStatus == EnumValue.GetEnumValue(VendorOrderStatus.Approved) : true)) &&
                         (string.IsNullOrEmpty(filter.SearchValue) ? true :
                             (x.VendorId.ToString() == filter.SearchValue) ||
+                            (x.VendorOrderId.ToString() == filter.SearchValue) ||
                             (x.JobId.ToString() == filter.SearchValue) ||
                             (x.OrderNumber ?? "").Contains(filter.SearchValue.Trim()) ||
-                            (x.JobName ?? "").Contains(filter.SearchValue.Trim()) ||
+                            (x.JobName.ToString() ?? "").Contains(filter.SearchValue.Trim().ToLower()) ||
                             (x.Vendorname ?? "").Contains(filter.SearchValue.Trim()) ||
                             (x.OrderDate.ToString() ?? "").Contains(filter.SearchValue.Trim()) ||
                             (x.VendorOrderItems.Any(item => item.MaterialId.ToString().Contains(filter.SearchValue))))

@@ -31,6 +31,7 @@ namespace ShutterManagement.Core.ViewModels.Response
     public class VendorOrderItem
     {
         public Guid? MaterialId { get; set; }
+        public string? MaterialName { get; set; }
         public int? Quantity { get; set; }
         public decimal? UnitPrice { get; set; }
         //public decimal? TotalPrice { get; set; }
