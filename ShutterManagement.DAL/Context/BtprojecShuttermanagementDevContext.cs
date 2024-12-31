@@ -1042,7 +1042,7 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
         {
             entity.HasKey(e => e.PaymentId).HasName("PK__TblPayme__9B556A38349E201F");
 
-            entity.ToTable("TblPayments", "dbo");
+            entity.ToTable("TblPayment", "dbo");
 
             entity.Property(e => e.PaymentId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.Amount).HasColumnType("decimal(10, 2)");
