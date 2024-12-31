@@ -383,34 +383,41 @@ namespace ShutterManagement.Business.Services
                         responseVm.IsSuccess = true;
                     }
                 }
-                var forProduct = WindowProductData.Select(x =>
-                                    new WindowProdcutDetailsForEstimate
-                                    {
-                                        // Window Properties
-                                        WindowId = x.WindowId,
-                                        AddressId = x.AddressId,
-                                        Label = x.Label,
-                                        Width = x.Width,
-                                        Height = x.Height,
-                                        ArchHeight = x.ArchHeight,
-                                        Quantity = x.Quantity,
-                                        JobId = x.JobId,
-                                        WindowProdcutId = x.WindowProdcutId,
-                                        ProductId = x.ProductId,
-                                        BuildWidth = x.BuildWidth,
-                                        BuildHeight = x.BuildHeight,
-                                        ProductName = x.ProductName,
-                                        ProductWidth = x.Width,
-                                        ProductHeight = x.Height,
-                                        ProductArchHeight = x.ArchHeight,
-                                        Area = x.Area,
-                                        Length = x.Length,
-                                        AdditionalWidth = x.AdditionalWidth,
-                                        Markup = x.Markup,
-                                        ProductTypeName = x.ProductName,
-                                        TotalPrice = x.TotalPrice
-                                    }).Distinct().ToList();
-                responseVm.Data = IsBreakdown ? WindowProductData : forProduct;
+                if (!IsBreakdown)
+                {
+                    var forProduct = WindowProductData.Select(x =>
+                                        new WindowProdcutDetailsForEstimate
+                                        {
+                                            // Window Properties
+                                            WindowId = x.WindowId,
+                                            AddressId = x.AddressId,
+                                            Label = x.Label,
+                                            Width = x.Width,
+                                            Height = x.Height,
+                                            ArchHeight = x.ArchHeight,
+                                            Quantity = x.Quantity,
+                                            JobId = x.JobId,
+                                            WindowProdcutId = x.WindowProdcutId,
+                                            ProductId = x.ProductId,
+                                            BuildWidth = x.BuildWidth,
+                                            BuildHeight = x.BuildHeight,
+                                            ProductName = x.ProductName,
+                                            ProductWidth = x.Width,
+                                            ProductHeight = x.Height,
+                                            ProductArchHeight = x.ArchHeight,
+                                            Area = x.Area,
+                                            Length = x.Length,
+                                            AdditionalWidth = x.AdditionalWidth,
+                                            Markup = x.Markup,
+                                            ProductTypeName = x.ProductName,
+                                            TotalPrice = x.TotalPrice
+                                        }).DistinctBy(x => x.WindowProdcutId).ToList();
+                    responseVm.Data =  forProduct;
+                }
+                else
+                {
+                    responseVm.Data =  WindowProductData;
+                }
             }
             catch (Exception ex)
             {
