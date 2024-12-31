@@ -43,7 +43,7 @@ namespace ShutterManagement.Business.Services
                     var res = Update(IsVendorExist);
 
                     responseVm.IsSuccess = true;
-                    responseVm.Message = AppConstant.DeleteSuccessMsg;
+                    responseVm.Message = AppConstant.UpdateSuccessMsg;
                 }
                 else
                 {
