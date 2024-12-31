@@ -93,7 +93,7 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
 
     public virtual DbSet<TblOrderWindowProductComponentMaterial> TblOrderWindowProductComponentMaterials { get; set; }
 
-    public virtual DbSet<TblPayment> TblPayments { get; set; }
+    public virtual DbSet<TblPayments> TblPayments { get; set; }
 
     public virtual DbSet<TblProduct> TblProducts { get; set; }
 
@@ -1037,7 +1037,7 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.Property(e => e.Version).HasMaxLength(3);
         });
 
-        modelBuilder.Entity<TblPayment>(entity =>
+        modelBuilder.Entity<TblPayments>(entity =>
         {
             entity.HasKey(e => e.PaymentId).HasName("PK__TblPayme__9B556A38349E201F");
 

@@ -1,4 +1,5 @@
 ﻿using ShutterManagement.Core.ViewModels;
+using ShutterManagement.Core.ViewModels.Response;
 using ShutterManagement.DAL.Context;
 using ShutterManagement.Interfaces;
 using System;
@@ -12,5 +13,6 @@ namespace ShutterManagement.Business.Interfaces
     public interface IComponentPriceService : IGenericRepository<MstComponentPrice>
     {
         Task<IResponseVm<dynamic>> GetAllComponentsChip(string Product);
+        Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> GetProductData(Guid WindowProductId);
     }
 }

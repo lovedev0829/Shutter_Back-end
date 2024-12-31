@@ -61,6 +61,8 @@ namespace ShutterManagement.Business.Services
                     responseVm.IsSuccess = false;
                     responseVm.Message = AppConstant.AccessDenied;
                 }
+                responseVm.IsSuccess = true;
+                responseVm.Message = AppConstant.UpdateSuccessMsg;
             }
             catch (Exception ex)
             {
@@ -153,6 +155,8 @@ namespace ShutterManagement.Business.Services
                     responseVm.IsSuccess = false;
                     responseVm.Message = AppConstant.AccessDenied;
                 }
+                responseVm.IsSuccess = true;
+                responseVm.Message = AppConstant.DeleteSuccessMsg;
             }
             catch (Exception ex)
             {
@@ -189,7 +193,7 @@ namespace ShutterManagement.Business.Services
                                            JobTitleId = i.JobTitleId,
                                            JobTitle= jt.JobTitleName, 
                                            UserId = i.UserId,
-                                           UserFullname = u.FirstName+u.LastName,
+                                           UserFullname = u.FirstName+ " " +u.LastName,
                                            StartDate = i.StartDate,
                                            EndDate = i.EndDate,
                                            DayStartTime = i.DayStartTime,

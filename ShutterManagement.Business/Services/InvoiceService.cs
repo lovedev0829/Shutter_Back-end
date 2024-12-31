@@ -276,10 +276,8 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-                var invoicesQuery = from i in dbContext.TblInvoices
-                                    where i.IsDelete == false
-                                    orderby i.CreatedAt descending
-                                    select new InvoiceVM
+                var invoicesQuery = GetAllQuerable().Where(x => x.IsDelete == false).OrderByDescending(x => x.CreatedAt)
+                                    .Select(i => new InvoiceVM
                                     {
                                         InvoiceId = i.InvoiceId,
                                         InvoiceNumber = i.InvoiceNumber,
@@ -291,18 +289,16 @@ namespace ShutterManagement.Business.Services
                                         DueDate = i.DueDate,
                                         Status = i.Status,
                                         IsActive = i.IsActive,
-                                    };
-                filter.SearchValue = filter.SearchValue.Trim().ToLower();
+                                    }).ToList();
+                filter.SearchValue = filter.SearchValue?.Trim().ToLower();
                 var filteredInvoices = invoicesQuery
                     .Where(x =>
-                        (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) && 
-                        (string.IsNullOrEmpty(filter.SearchValue) ? true :
+                        (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
+                        ((string.IsNullOrEmpty(filter.SearchValue) ? true :
                             (x.InvoiceNumber.Contains(filter.SearchValue.Trim())) ||
                             (x.Status.Contains(filter.SearchValue.Trim())) ||
                             (x.InvoiceId.ToString() == filter.SearchValue.Trim())) ||
-                            (x.InvoiceNumber.ToString() == filter.SearchValue.Trim()) ||
-                            (x.TotalAmount.ToString() == filter.SearchValue.Trim()) ||
-                            (x.JobId.ToString() == filter.SearchValue.Trim())).ToList();
+                            (x.JobId.ToString() == filter.SearchValue.Trim()))).ToList();
 
                 foreach (var invoice in filteredInvoices)
                 {
