@@ -186,11 +186,12 @@ namespace ShutterManagement.Business.Services
                                           ExpressionId = t1.Id,
                                           ExpressionName = t1.ExpressionName,
                                           ExpressionFormulae = t1.ExpressionFormulae,
-                                          formulaeArray = !string.IsNullOrEmpty(t1.FormulaeArray) ? t1.FormulaeArray.Split(new[] { "," }, StringSplitOptions.None) : new string[0], 
+                                          formulaeArray = !string.IsNullOrEmpty(t1.FormulaeArray) ? t1.FormulaeArray.Split(new[] { "," }, StringSplitOptions.TrimEntries) : new string[0], 
                                           ProductId = t1.ProductId,
                                           ProductName = t3.ProductName,  
                                           ProductTypeId = t1.ProductType,
-                                          ProductTypeName = t2.ProductName,  
+                                          ProductTypeName = t2.ProductName,
+                                          IsActive = t1.IsActive,
                                           TenantId = t1.TenantId,
                                       }).ToList();
 
