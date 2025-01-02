@@ -17,10 +17,12 @@ namespace ShutterManagement.Business.Services
     public class JobContactService : BaseRepository<BtprojecShuttermanagementDevContext, TblJobContact>, IJobContactService
     {
         private readonly ITenantService tenantService;
+        private readonly IMstContactType mstContactType;
 
-        public JobContactService(ITenantService tenantService)
+        public JobContactService(ITenantService tenantService,IMstContactType mstContactType )
         {
             this.tenantService = tenantService;
+            this.mstContactType = mstContactType;
         }
 
         public async Task<IResponseVm<string>> ActiveInActiveJobContact(Guid JobContactId)
@@ -90,6 +92,7 @@ namespace ShutterManagement.Business.Services
                     ContactTypeId = model.ContactTypeId,
                     ContactName = model.Contactname,
                     IsActive = true,
+                    IsDelete=false,
                     CreatedAt = DateTime.Now,
                     TenantId = AppConstant.LoggedInTenantId,
                     CreatedBy=AppConstant.LoggedInUserID
@@ -108,7 +111,6 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
-
 
         public async Task<IResponseVm<string>> DeleteJobContact(Guid? JobContactId)
         {
@@ -152,45 +154,69 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-
         public async Task<IResponseVm<List<JobContactVm>>> GetAll_JobContact(Pagination filter)
         {
             IResponseVm<List<JobContactVm>> responseVm = new ResponseVm<List<JobContactVm>>();
 
             try
             {
-                var query = GetAllQuerable()
-                    .Where(x => x.IsDelete==false && x.TenantId == AppConstant.LoggedInTenantId);
+                var isTenantValid = await tenantService.AnyAsync(x =>
+                    x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
 
-                var totalRecords = query.Count();
+                if (!isTenantValid)
+                {
+                    responseVm.Message = AppConstant.TenantNotFound;
+                    responseVm.IsSuccess = false;
+                    return responseVm;
+                }
 
-                var contacts = query
-                    .OrderBy(x => x.CreatedAt)
+                var jobContactsQuery = from x in dbContext.TblJobContacts.Where(x => x.IsDelete==false && x.TenantId == AppConstant.LoggedInTenantId)
+                join c in dbContext.MstContactTypes
+                on x.ContactTypeId equals c.MstContactId
+                orderby x.CreatedAt
+                select new JobContactVm
+                {
+                JobContactId = x.JobContactId,
+                ContactTypeId = x.ContactTypeId,
+                ContactTypeName = c.MstContactName,
+                JobId = x.JobId,
+                ContactName = x.ContactName,
+                isActive = x.IsActive
+                };
+
+                filter.SearchValue = filter.SearchValue?.Trim().ToLower();
+                var filteredInvoices = jobContactsQuery
+                    .Where(x =>
+                        (filter.Status == 0 ? x.isActive == false : (filter.Status == 1 ? x.isActive == true : true)) &&
+                        ((string.IsNullOrEmpty(filter.SearchValue) ? true :
+                            (x.ContactName.Contains(filter.SearchValue.Trim())) ||
+                            (x.JobId.ToString() == filter.SearchValue.Trim())) ||
+                            (x.JobId.ToString() == filter.SearchValue.Trim())) ||
+                            (x.ContactTypeId.ToString() == filter.SearchValue.Trim())).ToList();
+
+                
+
+                var totalRecords =  jobContactsQuery.Count();
+
+
+                var jobContacts =  jobContactsQuery
                     .Skip((filter.PageNo - 1) * filter.RecordPerPage)
-                        .Take(filter.RecordPerPage)
-                    .Select(x => new JobContactVm
-                    {
-                        JobContactId = x.JobContactId,
-                        //jobid = x.JobContactId,
-                        ContactTypeId = x.ContactTypeId,
-                        ContactName = x.ContactName,
-                        isActive = x.IsActive
-                    }).ToList();
+                    .Take(filter.RecordPerPage)
+                    .ToList();
 
-
+                responseVm.IsSuccess = true;
+                responseVm.Data = jobContacts;
                 responseVm.TotalRecords = totalRecords;
                 responseVm.Message = AppConstant.FetchSuccessMsg;
-                responseVm.IsSuccess = true;
             }
             catch (Exception ex)
             {
-                responseVm.Message = $"Error occurred: {ex.Message}";
                 responseVm.IsSuccess = false;
+                responseVm.Message = $"{AppConstant.ExceptionError} {ex.Message}";
             }
 
             return responseVm;
         }
-
 
         public async Task<IResponseVm<string>> Update_JobContact(UpdateJobContact model)
         {
