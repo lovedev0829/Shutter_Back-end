@@ -235,7 +235,7 @@ namespace ShutterManagement.Business.Services
             {
                 var isTenantValid = await tenantService.AnyAsync(x =>
                     x.TenantId == AppConstant.LoggedInTenantId &&
-                    x.ParentTenantId == null &&
+                  //  x.ParentTenantId == null &&
                     x.IsDelete == false &&
                     x.IsActive == true);
 
@@ -243,7 +243,7 @@ namespace ShutterManagement.Business.Services
                 {
                     var productList = (from p in dbContext.TblProducts.OrderByDescending(x => x.CreatedAt)
                                        join pt in dbContext.MstProductTypes on p.ProductType equals pt.ProductId.ToString()
-                                       where p.IsDelete == false && p.TenantId == AppConstant.LoggedInTenantId
+                                       where p.IsDelete == false && (p.TenantId == AppConstant.LoggedInTenantId || p.TenantId.ToString() == AppConstant.LoggedInParentTenantId) 
                                        select new ProductListVm
                                        {
                                            ProductId = p.ProductId,
