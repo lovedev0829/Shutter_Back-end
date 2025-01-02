@@ -447,7 +447,7 @@ namespace ShutterManagement.Business.Services
                     foreach (Match match in matches)
                     {
                         var property = match.Value.Replace("{{", "").Replace("}}", "");
-                        var val = GetProperty.GetColumnValue(data, property);
+                        var val = GetProperty.GetColumnValue(item, property);
                         if (val == null)
                         {
                             string[] info = property.Split("__");
