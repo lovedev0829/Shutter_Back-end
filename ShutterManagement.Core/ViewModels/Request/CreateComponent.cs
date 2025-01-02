@@ -29,7 +29,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         //public Guid? ExpressionId { get; set; }
 
         [DefaultValue("")]
-        [Required]
+       // [Required]
         [MaxLength(500)]
         public string? PricingExpression { get; set; }
 
