@@ -15,7 +15,9 @@ namespace ShutterManagement.Business.Interfaces
     {
         Task<IResponseVm<string>> Create_VendorOrder(CreateVendorOrder model);
         Task<IResponseVm<string>> Update_VendorOrder(UpdateVendorOrder model);
-        Task<IResponseVm<string>> Delete_VendorOrder(Guid vendorOrderId);
+        Task<IResponseVm<string>> Update_VendorOrderItem(UpdateVendorOrderItem model);
+        Task<IResponseVm<string>> Delete_VendorOrderItem(Guid? VendorOrderIdItem);
+        Task<IResponseVm<string>> Delete_VendorOrder(Guid? vendorOrderId);
         Task<IResponseVm<string>> ActiveInActive(Guid Id);
         Task<IResponseVm<List<VendorOrderListVm>>> GetAll_VendorOrder(Pagination filter);
     }

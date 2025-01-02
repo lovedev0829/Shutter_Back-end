@@ -54,4 +54,6 @@ public partial class TblOrderWindowProduct
     public Guid? WindowProductId { get; set; }
 
     public Guid OrderWindowProductId { get; set; }
+
+    public decimal? Price { get; set; }
 }

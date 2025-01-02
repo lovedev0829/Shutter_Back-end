@@ -30,6 +30,7 @@ namespace ShutterManagement.Core.ViewModels.Response
     }
     public class VendorOrderItem
     {
+        public Guid? vendorOrderItemId { get; set; }
         public Guid? MaterialId { get; set; }
         public string? MaterialName { get; set; }
         public int? Quantity { get; set; }

@@ -58,6 +58,24 @@ namespace ShutterManagement.Controllers
             return Ok(res);
         }
 
+        [HttpPost]
+        [Route("update_VendorOrderItem")]
+        [Authorize]
+        public async Task<IActionResult> update_VendorOrderItem(UpdateVendorOrderItem mode)
+        {
+            var res = await vendorOrderService.Update_VendorOrderItem(mode);
+            return Ok(res);
+        }
+
+        [HttpPost]
+        [Route("Delete_VendorOrderItem")]
+        [Authorize]
+        public async Task<IActionResult> Delete_VendorOrderItem(Guid? VendorOrderItemId)
+        {
+            var res = await vendorOrderService.Delete_VendorOrderItem(VendorOrderItemId);
+            return Ok(res);
+        }
+
 
     }
 }

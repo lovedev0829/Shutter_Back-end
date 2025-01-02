@@ -133,7 +133,7 @@ namespace ShutterManagement.Business.Services
                     TblVendorOrderItem tblVendorOrderItem = new TblVendorOrderItem
                     {
                         VendorOrderItemId = Guid.NewGuid(),
-                        VendorOrderId=res.VendorOrderId,
+                        VendorOrderId = res.VendorOrderId,
                         MaterialId = item.MaterialId,
                         Quantity = item.Quantity,
                         UnitPrice = item.UnitPrice,
@@ -197,7 +197,7 @@ namespace ShutterManagement.Business.Services
 
                 await Update(existingOrder);
 
-                var vendorOrderItems =  vendorItemService.GetAllQuerable()
+                var vendorOrderItems = vendorItemService.GetAllQuerable()
                     .Where(x =>
                         x.IsActive == true &&
                         x.IsDelete == false &&
@@ -242,19 +242,19 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        public async Task<IResponseVm<string>> Delete_VendorOrder(Guid vendorOrderId)
+        public async Task<IResponseVm<string>> Delete_VendorOrder(Guid? vendorOrderId)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                if(vendorOrderId!=Guid.Empty)
+                if (vendorOrderId != Guid.Empty)
                 {
-                    var IsTenant = await _tenantService.AnyAsync(x =>x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false);
+                    var IsTenant = await _tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false);
                     if (IsTenant)
                     {
                         var existingOrder = GetAllQuerable().Where(x =>
                             x.IsDelete == false &&
-                            x.VendorOrderId== vendorOrderId &&
+                            x.VendorOrderId == vendorOrderId &&
                             x.TenentId == AppConstant.LoggedInTenantId)
                             .FirstOrDefault();
 
@@ -267,7 +267,7 @@ namespace ShutterManagement.Business.Services
 
                             await Update(existingOrder);
 
-                            var vendorOrderItems = vendorItemService.GetAllQuerable().Where(x => 
+                            var vendorOrderItems = vendorItemService.GetAllQuerable().Where(x =>
                            x.IsDelete == false && x.VendorOrderId == vendorOrderId).ToList();
 
                             foreach (var items in vendorOrderItems)
@@ -308,6 +308,7 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
+
         public async Task<IResponseVm<List<VendorOrderListVm>>> GetAll_VendorOrder(Pagination filter)
         {
             var responseVm = new ResponseVm<List<VendorOrderListVm>>();
@@ -333,7 +334,7 @@ namespace ShutterManagement.Business.Services
                                             VendorId = vo.VendorId,
                                             JobId = vo.JobId,
                                             Vendorname = v.VendorName,
-                                            JobName = j.JobName, 
+                                            JobName = j.JobName,
                                             OrderNumber = vo.OrderNumber,
                                             OrderDate = vo.OrderDate,
                                             ExpectedDeliveryDate = vo.ExpectedDeliveryDate,
@@ -348,33 +349,40 @@ namespace ShutterManagement.Business.Services
 
                 var filteredRecords = await vendorOrdersQuery.ToListAsync();
 
+                var materials = await materialService.GetAllQuerable()
+                .Where(m => m.IsDelete == false)
+                .ToDictionaryAsync(m => m.RawMaterialId, m => m.MaterialName);
+
                 foreach (var item in filteredRecords)
                 {
-                    item.VendorOrderItems = await vendorItemService.GetAllQuerable()
-                        .Where(x => x.IsDelete == false && x.VendorOrderId == item.VendorOrderId)
+                    var vendorOrderItems = await vendorItemService.GetAllQuerable()
+                        .Where(x => x.IsDelete == false && x.VendorOrderId == item.VendorOrderId && x.MaterialId.HasValue)
                         .OrderBy(x => x.CreatedAt)
-                        .Select(x => new ShutterManagement.Core.ViewModels.Response.VendorOrderItem
-                        {
-                            MaterialId = x.MaterialId,
-                            MaterialName = materialService.GetAllQuerable().Where(x=>x.RawMaterialId == x.RawMaterialId).Select(x=>x.MaterialName).FirstOrDefault(),
-                            Quantity = x.Quantity,
-                            UnitPrice = x.UnitPrice,
-                            //TotalPrice = x.TotalPrice,
-                            IsActive = x.IsActive
-                        })
                         .ToListAsync();
+
+                    item.VendorOrderItems = vendorOrderItems.Select(x => new ShutterManagement.Core.ViewModels.Response.VendorOrderItem
+                    {
+                        vendorOrderItemId = x.VendorOrderItemId,
+                        MaterialId = x.MaterialId.Value,
+                        MaterialName = materials.TryGetValue(x.MaterialId.Value, out var materialName) ? materialName : null,
+                        Quantity = x.Quantity,
+                        UnitPrice = x.UnitPrice,
+                        IsActive = x.IsActive,
+                    }).ToList();
                 }
+
+
                 filter.SearchValue = filter.SearchValue.Trim().ToLower();
                 filteredRecords = filteredRecords
                     .Where(x =>
-                        (filter.Status == 0 ? x.VendorOrderStatus ==EnumValue.GetEnumValue(VendorOrderStatus.Pending) :
+                        (filter.Status == 0 ? x.VendorOrderStatus == EnumValue.GetEnumValue(VendorOrderStatus.Pending) :
                         (filter.Status == 1 ? x.VendorOrderStatus == EnumValue.GetEnumValue(VendorOrderStatus.Approved) : true)) &&
                         (string.IsNullOrEmpty(filter.SearchValue) ? true :
                             (x.VendorId.ToString() == filter.SearchValue) ||
                             (x.VendorOrderId.ToString() == filter.SearchValue) ||
                             (x.JobId.ToString() == filter.SearchValue) ||
                             (x.OrderNumber ?? "").Contains(filter.SearchValue.Trim()) ||
-                            (x.JobName.ToString() ?? "").Contains(filter.SearchValue.Trim().ToLower()) ||
+                            (x.JobName ?? "").Contains(filter.SearchValue.Trim()) ||
                             (x.Vendorname ?? "").Contains(filter.SearchValue.Trim()) ||
                             (x.OrderDate.ToString() ?? "").Contains(filter.SearchValue.Trim()) ||
                             (x.VendorOrderItems.Any(item => item.MaterialId.ToString().Contains(filter.SearchValue))))
@@ -398,6 +406,143 @@ namespace ShutterManagement.Business.Services
             }
             return responseVm;
         }
+
+        public async Task<IResponseVm<string>> Update_VendorOrderItem(UpdateVendorOrderItem model)
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+            try
+            {
+                bool isTenantValid = await _tenantService.AnyAsync(x =>
+                    x.TenantId == AppConstant.LoggedInTenantId &&
+                    x.IsActive == true &&
+                    x.IsDelete == false);
+                if (!isTenantValid)
+                {
+                    responseVm.Message = AppConstant.TenantNotFound;
+                    return responseVm;
+                }
+
+                var existingOrderItem = await vendorItemService.FirstOrDefaultAsync(x =>
+                    x.IsDelete == false &&
+                    x.VendorOrderId == model.VendorOrderId &&
+                    x.MaterialId == model.MaterialId);
+
+                if (existingOrderItem == null)
+                {
+                    responseVm.Message = AppConstant.NoDataFound;
+                    return responseVm;
+                }
+
+                existingOrderItem.Quantity = model.Quantity;
+                existingOrderItem.UnitPrice = model.UnitPrice;
+                existingOrderItem.TotalPrice = model.Quantity * model.UnitPrice;
+                existingOrderItem.UpdatedAt = DateTime.Now;
+                existingOrderItem.ModifiedBy = AppConstant.LoggedInUserID.ToString();
+
+                await vendorItemService.Update(existingOrderItem);
+
+                var vendorOrderItems = await vendorItemService.GetAllQuerable()
+                    .Where(x => x.VendorOrderId == model.VendorOrderId && x.IsDelete==false)
+                    .ToListAsync();
+
+                // var totalOrderPrice = vendorOrderItems.Sum(x => x.TotalPrice);
+
+                var total_price = model.Quantity * model.UnitPrice;
+
+                var vendorOrderItemsList = vendorItemService.GetAllQuerable()
+               .Where(x => x.VendorOrderId == model.VendorOrderId && x.IsDelete == false)
+               .ToList();
+
+                decimal? totalOrderPrice = 0;
+
+                foreach (var vendorItem in vendorOrderItemsList)
+                {
+                    totalOrderPrice += vendorItem.TotalPrice;
+                }
+
+                var vendorOrder = await FirstOrDefaultAsync(x => x.VendorOrderId == model.VendorOrderId);
+                if (vendorOrder != null)
+                {
+                    vendorOrder.TotalCost = totalOrderPrice;
+                    vendorOrder.UpdatedAt = DateTime.Now;
+                    vendorOrder.ModifiedBy = AppConstant.LoggedInUserID;
+                    await Update(vendorOrder);
+                }
+
+                responseVm.IsSuccess = true;
+                responseVm.Message = AppConstant.UpdateSuccessMsg;
+            }
+            catch (Exception ex)
+            {
+                responseVm.Message = $"{AppConstant.ExceptionError} {ex.Message}";
+            }
+
+            return responseVm;
+        }
+
+
+        public async Task<IResponseVm<string>> Delete_VendorOrderItem(Guid? vendorOrderItemId)
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+            try
+            {
+                if (vendorOrderItemId == Guid.Empty || !vendorOrderItemId.HasValue)
+                {
+                    responseVm.Message = AppConstant.NoDataFound;
+                    return responseVm;
+                }
+
+                bool isTenantValid = await _tenantService.AnyAsync(x =>
+                    x.TenantId == AppConstant.LoggedInTenantId &&
+                    x.IsDelete == false);
+                if (!isTenantValid)
+                {
+                    responseVm.Message = AppConstant.TenantNotFound;
+                    return responseVm;
+                }
+
+                var vendorOrderItem = await vendorItemService.FirstOrDefaultAsync(x =>
+                    x.IsDelete == false &&
+                    x.VendorOrderItemId == vendorOrderItemId);
+                if (vendorOrderItem == null)
+                {
+                    responseVm.Message = AppConstant.NoDataFound;
+                    return responseVm;
+                }
+
+                vendorOrderItem.IsDelete = true;
+                vendorOrderItem.IsActive = false;
+                vendorOrderItem.UpdatedAt = DateTime.Now;
+                vendorOrderItem.ModifiedBy = AppConstant.LoggedInUserID.ToString();
+
+                await vendorItemService.Update(vendorOrderItem);
+
+                var vendorOrderItems = await vendorItemService.GetAllQuerable()
+                    .Where(x => x.VendorOrderId == vendorOrderItem.VendorOrderId && x.IsDelete==false)
+                    .ToListAsync();
+
+                var vendorOrder = await FirstOrDefaultAsync(x => x.VendorOrderId == vendorOrderItem.VendorOrderId);
+                if (vendorOrder != null)
+                {
+                    vendorOrder.TotalCost = vendorOrder.TotalCost-vendorOrderItem.TotalPrice;
+                    vendorOrder.UpdatedAt = DateTime.Now;
+                    vendorOrder.ModifiedBy = AppConstant.LoggedInUserID;
+
+                    await Update(vendorOrder);
+                }
+
+                responseVm.IsSuccess = true;
+                responseVm.Message = AppConstant.DeleteSuccessMsg;
+            }
+            catch (Exception ex)
+            {
+                responseVm.Message = $"{AppConstant.ExceptionError} {ex.Message}";
+            }
+
+            return responseVm;
+        }
+
+
 
     }
 }

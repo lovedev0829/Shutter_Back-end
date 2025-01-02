@@ -33,6 +33,10 @@ public partial class TblJobSchedule
 
     public bool? IsDelete { get; set; }
 
+    public Guid? JobId { get; set; }
+
+    public virtual TblJob? Job { get; set; }
+
     public virtual MstJobTitle? JobTitle { get; set; }
 
     public virtual TblUser? User { get; set; }

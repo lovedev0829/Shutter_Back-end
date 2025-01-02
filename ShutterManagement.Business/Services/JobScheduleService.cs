@@ -193,6 +193,7 @@ namespace ShutterManagement.Business.Services
                                            JobTitleId = i.JobTitleId,
                                            JobTitle= jt.JobTitleName, 
                                            UserId = i.UserId,
+                                           //JobId = i.jobid,
                                            UserFullname = u.FirstName+ " " +u.LastName,
                                            StartDate = i.StartDate,
                                            EndDate = i.EndDate,
