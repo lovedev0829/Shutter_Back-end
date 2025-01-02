@@ -47,6 +47,8 @@ namespace ShutterManagement.Business.Services
                 if (jobContact != null)
                 {
                     jobContact.IsActive = !jobContact.IsActive;
+                    jobContact.ModifiedBy = AppConstant.LoggedInUserID;
+                    jobContact.UpdatedAt=DateTime.Now;
                     await Update(jobContact);
 
                     responseVm.Message = AppConstant.UpdateSuccessMsg;

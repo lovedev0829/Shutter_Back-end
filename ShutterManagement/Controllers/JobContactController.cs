@@ -41,6 +41,14 @@ namespace ShutterManagement.Controllers
             return Ok();
         }
 
+        [HttpPost("ActiveInActive")]
+        //[Authorize(Roles = "JobContacteDelete")]
+        public async Task<IActionResult> ActiveInActive(Guid JobContactId)
+        {
+            var res = await jobContactService.ActiveInActiveJobContact(JobContactId);
+            return Ok();
+        }
+
         [HttpPost("Edit")]
         //[Authorize(Roles = "JobContacteEdit")]
         public async Task<IActionResult> EditJobContact(UpdateJobContact model)
