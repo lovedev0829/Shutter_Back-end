@@ -26,9 +26,11 @@ namespace ShutterManagement.Business.Services
         private readonly IProductComponentService productService;
         private readonly IMaterial material;
         private readonly IMstProductType mstProductType;
+        private readonly IExpressionService expressionService;
 
         public ComponentService(BtprojecShuttermanagementDevContext dbContext, ClaimsProperty claimsProperty, ITenantService tenantService,
-            IComponentMaterial componentMaterial, IProductComponentService productService, IMaterial material, IMstProductType mstProductType)
+            IComponentMaterial componentMaterial, IProductComponentService productService, IMaterial material, 
+            IMstProductType mstProductType,IExpressionService expressionService)
         {
             _dbContext = dbContext;
             this.claimsProperty = claimsProperty;
@@ -37,6 +39,7 @@ namespace ShutterManagement.Business.Services
             this.productService = productService;
             this.material = material;
             this.mstProductType = mstProductType;
+            this.expressionService = expressionService;
         }
 
 
@@ -289,102 +292,167 @@ namespace ShutterManagement.Business.Services
         public async Task<IResponseVm<List<ComponentListVm>>> GetAll_Component(Pagination filter)
         {
             IResponseVm<List<ComponentListVm>> responseVm = new ResponseVm<List<ComponentListVm>>();
+
             try
             {
-                var isTenantValid = await tenantService.AnyAsync(x =>
-                    x.TenantId == AppConstant.LoggedInTenantId &&
-                    x.ParentTenantId == null &&
-                    x.IsDelete == false &&
-                    x.IsActive == true);
-
-                if (isTenantValid)
+                // Validate tenant
+                var isTenantValid = await IsTenantValid();
+                if (!isTenantValid)
                 {
-       
-                    var componentList = (from c in dbContext.TblComponents.OrderByDescending(x=>x.CreatedAt)
-                                         join pt in dbContext.MstProductTypes on c.ProductType equals pt.ProductId.ToString()
-                                         join exp in dbContext.TblExpressions on c.PricingExpression equals exp.Id.ToString()
-                                         where c.IsDelete == false && c.TenantId == AppConstant.LoggedInTenantId
-                                         select new ComponentListVm
-                                         {
-                                             ComponentId = c.ComponentId,
-                                             ComponentName = c.ComponentName,
-                                             IsActive = c.IsActive,
-                                             MarkupPercentage = c.MarkupPercentage,
-                                             Notes = c.Notes,
-                                             PricingExpression = c.PricingExpression,
-                                             ExpressionName = exp.ExpressionName,
-                                             ExpressionFormulae = exp.ExpressionFormulae,
-                                             ProductType = pt.ProductId.ToString().ToLower(),
-                                             ProductTypeName = pt.ProductName,
-                                             TenantId = c.TenantId,
-                                         }).ToList();
-                    foreach(var item in componentList)
-                    {
-                        var ComponentMaterial = (from cm in dbContext.TblComponentMaterials.OrderByDescending(x => x.CreatedAt)
-                                                 join m in dbContext.TblRawMaterials on cm.RawMaterialId equals m.RawMaterialId
-                                                 where cm.ComponentId == item.ComponentId && cm.IsDelete == false && cm.TenantId == AppConstant.LoggedInTenantId
-                                                 select new ComponentMaterialVm
-                                                 {
-                                                     ComponentMaterialId = cm.ComponentMaterialId,
-                                                     RawMaterialId = cm.RawMaterialId,
-                                                     WasteFactor = cm.WasteFactor,
-                                                     Quantity = cm.Quantity,
-                                                     MaterialName = m.MaterialName,
-                                                     IsDelete = cm.IsDelete,
-                                                     IsActive = cm.IsActive
-                                                 }).ToList();
+                    responseVm.Message = AppConstant.AccessDenied;
+                    return responseVm;
+                }
 
-                        item.ComponentMaterials = ComponentMaterial;
-                    }
+                // Fetch components
+                var component = GetComponent();
+                var productTypeDetail = GetProductTypeDetail(component);
+                var expression = GetExpression(component);
 
+                // Prepare component list
+                var componentList = GetComponentList(component, expression, productTypeDetail);
 
+                // Apply filters
+                var filteredRecords = ApplyFilters(componentList, filter);
 
-                    filter.SearchValue = filter.SearchValue?.Trim().ToLower();
-                    var FilterRecords = componentList
-                              .Where(x =>
-                                    (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) && 
-                                    (string.IsNullOrEmpty(filter.ProductType) ? true : (filter.ProductType == x.ProductType.ToString())) &&
-                                  (string.IsNullOrEmpty(filter.SearchValue) ? true :
-                                 (x.ComponentId.ToString() == filter.SearchValue) ||
-                                 (x.ProductType.ToString() == filter.SearchValue) ||
-                                 (x.ComponentName ?? "").ToLower().Contains(filter.SearchValue) ||
-                                 (x.ProductType.ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
-                                 (x.PricingExpression ?? "").ToLower().Contains(filter.SearchValue) ||
-                                 (x.Notes ?? "").ToLower().Contains(filter.SearchValue) ||
-                                 (x.MarkupPercentage.ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
-                                 (x.ProductTypeName ?? "").ToLower().Contains(filter.SearchValue))
-                             ).ToList();
+                // Paginate the results
+                var pagedRecords = Paginate(filteredRecords, filter);
 
-
-
-                    var TakenRecords = FilterRecords
-                        .Skip((filter.PageNo - 1) * filter.RecordPerPage)
-                        .Take(filter.RecordPerPage)
-                        .ToList();
-                    responseVm.IsSuccess = true;
-
-                    if (TakenRecords != null && TakenRecords.Count > 0)
-                    {
-                        responseVm.Data = TakenRecords.ToList();
-                        responseVm.Message = AppConstant.UpdateSuccessMsg;
-                        responseVm.TotalRecords = FilterRecords.Count;
-                    }
-                    else
-                    {
-                        responseVm.Message = AppConstant.NoDataFound;
-                    }
+                responseVm.IsSuccess = true;
+                if (pagedRecords.Any())
+                {
+                    responseVm.Data = pagedRecords;
+                    responseVm.Message = AppConstant.FetchSuccessMsg;
+                    responseVm.TotalRecords = filteredRecords.Count();
                 }
                 else
                 {
-                    responseVm.Message = AppConstant.AccessDenied;
+                    responseVm.Message = AppConstant.NoDataFound;
                 }
             }
             catch (Exception ex)
             {
-                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+                responseVm.Message = $"{AppConstant.ExceptionError} {ex.Message}";
             }
 
             return responseVm;
         }
+
+        // Method to check tenant validity
+        private async Task<bool> IsTenantValid()
+        {
+            return await tenantService.AnyAsync(x =>
+                x.TenantId == AppConstant.LoggedInTenantId &&
+                x.ParentTenantId == null &&
+                x.IsDelete == false &&
+                x.IsActive == true);
+        }
+
+        // Method to get component
+        private TblComponent GetComponent()
+        {
+            return GetAllQuerable()
+                .Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false)
+                .FirstOrDefault();
+        }
+
+        // Method to get product type detail
+        private MstProductType GetProductTypeDetail(TblComponent component)
+        {
+            return mstProductType.GetAllQuerable()
+                .Where(x => x.ProductId.ToString() == component.ProductType && x.IsDelete == false)
+                .FirstOrDefault();
+        }
+
+        // Method to get expression
+        private TblExpression GetExpression(TblComponent component)
+        {
+            return expressionService.GetAllQuerable()
+                .Where(x => x.Id.ToString() == component.PricingExpression && x.IsDelete == false)
+                .FirstOrDefault();
+        }
+
+        private List<ComponentListVm> GetComponentList(TblComponent component, TblExpression expression, MstProductType productType)
+        {
+            // Fetch only the relevant properties for the query
+            var componentList = GetAllQuerable()
+                .Where(c => c.TenantId == AppConstant.LoggedInTenantId && c.IsDelete == false)
+                .Select(c => new ComponentListVm
+                {
+                    ComponentId = c.ComponentId,
+                    ComponentName = c.ComponentName,
+                    IsActive = c.IsActive,
+                    MarkupPercentage = c.MarkupPercentage,
+                    Notes = c.Notes,
+                    PricingExpression = c.PricingExpression,
+                    TenantId = c.TenantId,
+                }).ToList();
+
+            // After the query has executed, we can safely add expression and product type details
+            foreach (var item in componentList)
+            {
+                // Attach expression and product type details after fetching the data
+                item.ExpressionName = expression?.ExpressionName;
+                item.ExpressionFormulae = expression?.ExpressionFormulae;
+                item.ProductType = productType?.ProductId.ToString().ToLower();
+                item.ProductTypeName = productType?.ProductName;
+
+                // Attach component materials
+                item.ComponentMaterials = GetComponentMaterials((Guid)item.ComponentId);
+            }
+
+            return componentList;
+        }
+
+
+      
+        // Method to fetch component materials
+        private List<ComponentMaterialVm> GetComponentMaterials(Guid componentId)
+        {
+            return (from cm in dbContext.TblComponentMaterials.OrderByDescending(x => x.CreatedAt)
+                    join m in dbContext.TblRawMaterials on cm.RawMaterialId equals m.RawMaterialId
+                    where cm.ComponentId == componentId && cm.IsDelete == false && cm.TenantId == AppConstant.LoggedInTenantId
+                    select new ComponentMaterialVm
+                    {
+                        ComponentMaterialId = cm.ComponentMaterialId,
+                        RawMaterialId = cm.RawMaterialId,
+                        WasteFactor = cm.WasteFactor,
+                        Quantity = cm.Quantity,
+                        MaterialName = m.MaterialName,
+                        IsDelete = cm.IsDelete,
+                        IsActive = cm.IsActive
+                    }).ToList();
+        }
+
+        // Method to apply filtering to the component list
+        private IEnumerable<ComponentListVm> ApplyFilters(IEnumerable<ComponentListVm> componentList, Pagination filter)
+        {
+            // Search filter
+            filter.SearchValue = filter.SearchValue?.Trim().ToLower();
+
+            return componentList
+                .Where(x =>
+                    (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
+                    (string.IsNullOrEmpty(filter.ProductType) ? true : (filter.ProductType == x.ProductType)) &&
+                    (string.IsNullOrEmpty(filter.SearchValue) ? true :
+                        (x.ComponentId.ToString() == filter.SearchValue) ||
+                        (x.ProductType == filter.SearchValue) ||
+                        (x.ComponentName ?? "").ToLower().Contains(filter.SearchValue) ||
+                        (x.ProductType ?? "").ToLower().Contains(filter.SearchValue) ||
+                        (x.PricingExpression ?? "").ToLower().Contains(filter.SearchValue) ||
+                        (x.Notes ?? "").ToLower().Contains(filter.SearchValue) ||
+                        (x.MarkupPercentage.ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
+                        (x.ProductTypeName ?? "").ToLower().Contains(filter.SearchValue))
+                );
+        }
+
+        // Method to paginate the results
+        private List<ComponentListVm> Paginate(IEnumerable<ComponentListVm> filteredRecords, Pagination filter)
+        {
+            return filteredRecords
+                .Skip((filter.PageNo - 1) * filter.RecordPerPage)
+                .Take(filter.RecordPerPage)
+                .ToList();
+        }
+
     }
 }
