@@ -192,7 +192,7 @@ namespace ShutterManagement.Business.Services
                 if (IsTenant)
                 {
                     var IsOptionExists = (await GetAll())
-                        .Where(x => x.IsDelete == false && (x.TenantId == AppConstant.LoggedInTenantId || x.TenantId.ToString() == AppConstant.LoggedInParentTenantId)).OrderByDescending(x => x.CreatedAt)
+                        .Where(x => x.IsDelete == false && (x.TenantId == AppConstant.LoggedInTenantId || x.TenantId.ToString().ToLower() == AppConstant.LoggedInParentTenantId.ToLower())).OrderByDescending(x => x.CreatedAt)
                         .Select(x => new OptionsList
                         {
                             OptionId = x.OptionId,
