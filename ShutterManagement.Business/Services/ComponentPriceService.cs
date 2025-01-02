@@ -127,6 +127,18 @@ namespace ShutterManagement.Business.Services
                  }).ToList();
                 if (query != null && query.Count > 0)
                 {
+                    foreach(var item in query)
+                    {
+                        var Options = (from windowOption in dbContext.WindowOptions
+                                       join optionType in dbContext.TblOptionsTypes on windowOption.OptionTypeId equals optionType.OptionTypeId
+                                       join options in dbContext.TblOptions on optionType.OptionId equals options.OptionId
+                                       where windowOption.WindowProductId == item.WindowProdcutId
+                                       select new 
+                                       {
+                                          option = Convert.ToString(options.OptionName + " - " + optionType.OptionType) 
+                                       }).ToList();
+                        item.Options = string.Join( ", ",  Options );
+                    }
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.FetchSuccessMsg;
                     responseVm.Data = query;

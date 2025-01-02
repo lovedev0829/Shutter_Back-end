@@ -30,7 +30,6 @@ namespace ShutterManagement.Core.ViewModels.Request
         [Required]
         public decimal? StockQuantity { get; set; }
 
-        [DefaultValue("")]
         //  [Required]
         public decimal? ReorderLevel { get; set; } = 0m;
         [Required]
