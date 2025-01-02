@@ -53,6 +53,10 @@ public partial class TblJob
 
     public virtual ICollection<TblJobComponent> TblJobComponents { get; set; } = new List<TblJobComponent>();
 
+    public virtual ICollection<TblJobContact> TblJobContacts { get; set; } = new List<TblJobContact>();
+
+    public virtual ICollection<TblJobSchedule> TblJobSchedules { get; set; } = new List<TblJobSchedule>();
+
     public virtual ICollection<TblVendorOrder> TblVendorOrders { get; set; } = new List<TblVendorOrder>();
 
     public virtual ICollection<TblWindow> TblWindows { get; set; } = new List<TblWindow>();

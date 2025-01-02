@@ -12,4 +12,6 @@ public partial class MstContactType
     public bool? IsActive { get; set; }
 
     public bool? IsDeleted { get; set; }
+
+    public virtual ICollection<TblJobContact> TblJobContacts { get; set; } = new List<TblJobContact>();
 }

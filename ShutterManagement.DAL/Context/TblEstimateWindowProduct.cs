@@ -53,6 +53,8 @@ public partial class TblEstimateWindowProduct
 
     public decimal? Price { get; set; }
 
+    public string? Options { get; set; }
+
     public virtual TblEstimate Estimate { get; set; } = null!;
 
     public virtual TblTenant? Tenant { get; set; }

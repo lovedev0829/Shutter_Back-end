@@ -73,6 +73,8 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
 
     public virtual DbSet<TblJobComponent> TblJobComponents { get; set; }
 
+    public virtual DbSet<TblJobContact> TblJobContacts { get; set; }
+
     public virtual DbSet<TblJobSchedule> TblJobSchedules { get; set; }
 
     public virtual DbSet<TblJobStatus> TblJobStatuses { get; set; }
@@ -827,6 +829,25 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
                 .HasConstraintName("FK__TblJobCom__JobId__65370702");
         });
 
+        modelBuilder.Entity<TblJobContact>(entity =>
+        {
+            entity.HasKey(e => e.JobContactId).HasName("PK__TblJobCo__BB491B5F0239F7CC");
+
+            entity.ToTable("TblJobContact", "dbo");
+
+            entity.Property(e => e.JobContactId).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+
+            entity.HasOne(d => d.ContactType).WithMany(p => p.TblJobContacts)
+                .HasForeignKey(d => d.ContactTypeId)
+                .HasConstraintName("FK__TblJobCon__Conta__5E3FF0B0");
+
+            entity.HasOne(d => d.Job).WithMany(p => p.TblJobContacts)
+                .HasForeignKey(d => d.JobId)
+                .HasConstraintName("FK_tbljobcontact_tbljob_JobId");
+        });
+
         modelBuilder.Entity<TblJobSchedule>(entity =>
         {
             entity.HasKey(e => e.JobScheduleId).HasName("PK__TblJobSc__2EB48C451454220D");
@@ -838,6 +859,10 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.Property(e => e.EndDate).HasColumnType("datetime");
             entity.Property(e => e.StartDate).HasColumnType("datetime");
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+
+            entity.HasOne(d => d.Job).WithMany(p => p.TblJobSchedules)
+                .HasForeignKey(d => d.JobId)
+                .HasConstraintName("FK_TblJobSchedule_TblJob");
 
             entity.HasOne(d => d.JobTitle).WithMany(p => p.TblJobSchedules)
                 .HasForeignKey(d => d.JobTitleId)
@@ -988,6 +1013,7 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.Property(e => e.Length).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.Markup).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.OrderId).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.Price).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.ProductName).HasMaxLength(255);
             entity.Property(e => e.ProductType)
                 .HasMaxLength(50)
