@@ -95,6 +95,7 @@ namespace ShutterManagement.Business.Services
                     JobScheduleId = Guid.NewGuid(),
                     JobTitleId = model.JobTitleId,
                     UserId = model.UserId,
+                    JobId = model.JobId,
                     StartDate = model?.StartDate,
                     EndDate = model?.EndDate,
                     DayStartTime = TimeOnly.Parse(model.DayStartTime),
@@ -193,7 +194,7 @@ namespace ShutterManagement.Business.Services
                                            JobTitleId = i.JobTitleId,
                                            JobTitle= jt.JobTitleName, 
                                            UserId = i.UserId,
-                                           //JobId = i.jobid,
+                                           JobId = i.JobId,
                                            UserFullname = u.FirstName+ " " +u.LastName,
                                            StartDate = i.StartDate,
                                            EndDate = i.EndDate,
@@ -214,7 +215,8 @@ namespace ShutterManagement.Business.Services
                                 x.JobTitle.ToLower().Contains(filter.SearchValue) ||    
                                 x.UserId.ToString().Contains(filter.SearchValue) ||    
                                 x.UserFullname.ToLower().Contains(filter.SearchValue) ||       
-                                x.TenantId.ToString().Contains(filter.SearchValue)
+                                x.TenantId.ToString().Contains(filter.SearchValue) ||
+                                x.JobId.ToString().Contains(filter.SearchValue) 
                             )
                         )
                     ).ToList();

@@ -18,7 +18,7 @@ namespace ShutterManagement.Controllers
         }
 
         [HttpPost("Getall")]
-        [Authorize(Roles = "JobContacteView")]
+        //[Authorize(Roles = "JobContacteView")]
         public async Task<IActionResult> Getall_JobContact(Pagination pagination)
         {
             var res = await jobContactService.GetAll_JobContact(pagination);
@@ -26,7 +26,7 @@ namespace ShutterManagement.Controllers
         }
 
         [HttpPost("Add")]
-        [Authorize(Roles = "JobContacteAdd")]
+        //[Authorize(Roles = "JobContacteAdd")]
         public async Task<IActionResult> AddJobContact(CreateJobContact model)
         {
             var res = await jobContactService.Create_JobContact(model);
@@ -34,7 +34,7 @@ namespace ShutterManagement.Controllers
         }
 
         [HttpPost("Delete")]
-        [Authorize(Roles = "JobContacteDelete")]
+        //[Authorize(Roles = "JobContacteDelete")]
         public async Task<IActionResult> DeleteJobContact(Guid? JobContactId)
         {
             var res = await jobContactService.DeleteJobContact(JobContactId);
@@ -42,7 +42,7 @@ namespace ShutterManagement.Controllers
         }
 
         [HttpPost("Edit")]
-        [Authorize(Roles = "JobContacteEdit")]
+        //[Authorize(Roles = "JobContacteEdit")]
         public async Task<IActionResult> EditJobContact(UpdateJobContact model)
         {
             var res = await jobContactService.Update_JobContact(model);
