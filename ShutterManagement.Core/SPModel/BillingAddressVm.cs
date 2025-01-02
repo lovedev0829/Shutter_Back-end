@@ -47,7 +47,7 @@ namespace ShutterManagement.Core.SPModel
 
         [Required]
         [MaxLength(50)]
-        [RegularExpression("^[\\p{L} .'-]+$", ErrorMessage = AppConstant.AlphabaticalError)]
+      //  [RegularExpression("^[\\p{L} .'-]+$", ErrorMessage = AppConstant.AlphabaticalError)]
         [DefaultValue("")]
         public string? StreetAddress { get; set; } = string.Empty;
     }
