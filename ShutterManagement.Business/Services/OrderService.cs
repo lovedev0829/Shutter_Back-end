@@ -40,6 +40,7 @@ namespace ShutterManagement.Business.Services
         private readonly IMstProductType productType;
         private readonly IJobService jobService;
         private readonly IContactService contactService;
+        private readonly IEstimateWindowProductService estimateWindowProduct;
         private string Message = "";
         public OrderService(ITenantService tenantService, IWindowProductService windowProductService,
              IWindowService windowService, IComponentMaterial componentMaterialService,
@@ -50,7 +51,7 @@ namespace ShutterManagement.Business.Services
              IOrderWindowProductComponentMaterialService orderWindowProductComponentMaterialService,
              IEstimateService estimateService, BtprojecShuttermanagementDevContext context,
              IWindowOptionService windowOptionService, IOptionsTypeService optionsTypeService, IMstProductType productType,
-             IJobService jobService, IContactService contactService)
+             IJobService jobService, IContactService contactService, IEstimateWindowProductService estimateWindowProduct)
         {
             this.tenantService = tenantService;
             this.windowProductService = windowProductService;
@@ -71,6 +72,7 @@ namespace ShutterManagement.Business.Services
             this.productType = productType;
             this.jobService = jobService;
             this.contactService = contactService;
+            this.estimateWindowProduct = estimateWindowProduct;
         }
 
 
@@ -825,7 +827,8 @@ namespace ShutterManagement.Business.Services
                     x.Color,
                     x.Notes,
                     x.WindowId,
-                    x.WindowProductId
+                    x.WindowProductId,
+                    x.Price
                 }).ToList();
 
             e.WindowProductId = productList.Select(p => (Guid)p.WindowProductId).ToArray();
@@ -858,6 +861,7 @@ namespace ShutterManagement.Business.Services
                     ArchHeight = p.ArchHeight,
                     ProductName = p.ProductName,
                     WindowProductId = p.WindowProductId,
+                    Price = p.Price,    
                     Options = optionDetails,
                     EstimateWindowDetails = WindowDetails.Where(x => x.WindowId == p.WindowId).Select(x => new EstimateWindowLists
                     {
@@ -935,6 +939,7 @@ namespace ShutterManagement.Business.Services
         {
             FileLogger.Log($"Adding product data for product {windowProductData.ProductId} to order...");
             var productData = (await productService.GetAll()).Where(x => x.ProductId == windowProductData.ProductId && x.IsDelete == false).FirstOrDefault();
+            var estimatePrice = estimateWindowProduct.GetAllQuerable().Where(x => x.EstimateId == estimateId && x.IsDelete == false).Select(x => x.Price).FirstOrDefault();
             if (productData == null)
             {
                 Message = "Product " + AppConstant.NoDataFound;
@@ -965,6 +970,7 @@ namespace ShutterManagement.Business.Services
                 ProductType = productData.ProductType,
                 TenantId = AppConstant.LoggedInTenantId,
                 ProductId = productData.ProductId,
+                Price = estimatePrice,
                 WindowProductId = windowProductData.WindowProductId
             };
 

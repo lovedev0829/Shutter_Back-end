@@ -295,7 +295,6 @@ namespace ShutterManagement.Business.Services
 
             try
             {
-                // Validate tenant
                 var isTenantValid = await IsTenantValid();
                 if (!isTenantValid)
                 {
@@ -303,18 +302,14 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-                // Fetch components
                 var component = GetComponent();
                 var productTypeDetail = GetProductTypeDetail(component);
                 var expression = GetExpression(component);
 
-                // Prepare component list
                 var componentList = GetComponentList(component, expression, productTypeDetail);
 
-                // Apply filters
                 var filteredRecords = ApplyFilters(componentList, filter);
 
-                // Paginate the results
                 var pagedRecords = Paginate(filteredRecords, filter);
 
                 responseVm.IsSuccess = true;
@@ -337,7 +332,6 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        // Method to check tenant validity
         private async Task<bool> IsTenantValid()
         {
             return await tenantService.AnyAsync(x =>
@@ -347,7 +341,6 @@ namespace ShutterManagement.Business.Services
                 x.IsActive == true);
         }
 
-        // Method to get component
         private TblComponent GetComponent()
         {
             return GetAllQuerable()
@@ -355,7 +348,6 @@ namespace ShutterManagement.Business.Services
                 .FirstOrDefault();
         }
 
-        // Method to get product type detail
         private MstProductType GetProductTypeDetail(TblComponent component)
         {
             return mstProductType.GetAllQuerable()
@@ -363,7 +355,6 @@ namespace ShutterManagement.Business.Services
                 .FirstOrDefault();
         }
 
-        // Method to get expression
         private TblExpression GetExpression(TblComponent component)
         {
             return expressionService.GetAllQuerable()
@@ -373,7 +364,6 @@ namespace ShutterManagement.Business.Services
 
         private List<ComponentListVm> GetComponentList(TblComponent component, TblExpression expression, MstProductType productType)
         {
-            // Fetch only the relevant properties for the query
             var componentList = GetAllQuerable()
                 .Where(c => c.TenantId == AppConstant.LoggedInTenantId && c.IsDelete == false)
                 .Select(c => new ComponentListVm
@@ -387,25 +377,19 @@ namespace ShutterManagement.Business.Services
                     TenantId = c.TenantId,
                 }).ToList();
 
-            // After the query has executed, we can safely add expression and product type details
             foreach (var item in componentList)
             {
-                // Attach expression and product type details after fetching the data
                 item.ExpressionName = expression?.ExpressionName;
                 item.ExpressionFormulae = expression?.ExpressionFormulae;
                 item.ProductType = productType?.ProductId.ToString().ToLower();
                 item.ProductTypeName = productType?.ProductName;
 
-                // Attach component materials
                 item.ComponentMaterials = GetComponentMaterials((Guid)item.ComponentId);
             }
 
             return componentList;
         }
 
-
-      
-        // Method to fetch component materials
         private List<ComponentMaterialVm> GetComponentMaterials(Guid componentId)
         {
             return (from cm in dbContext.TblComponentMaterials.OrderByDescending(x => x.CreatedAt)
@@ -423,10 +407,8 @@ namespace ShutterManagement.Business.Services
                     }).ToList();
         }
 
-        // Method to apply filtering to the component list
         private IEnumerable<ComponentListVm> ApplyFilters(IEnumerable<ComponentListVm> componentList, Pagination filter)
         {
-            // Search filter
             filter.SearchValue = filter.SearchValue?.Trim().ToLower();
 
             return componentList
@@ -445,7 +427,6 @@ namespace ShutterManagement.Business.Services
                 );
         }
 
-        // Method to paginate the results
         private List<ComponentListVm> Paginate(IEnumerable<ComponentListVm> filteredRecords, Pagination filter)
         {
             return filteredRecords

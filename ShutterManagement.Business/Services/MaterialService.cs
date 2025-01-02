@@ -121,7 +121,6 @@ namespace ShutterManagement.Business.Services
             
             return responseVm;
         }
-
         public async Task<IResponseVm<string>> Create_Material(CreateMaterial model)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
@@ -192,7 +191,6 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
-
         public async Task<IResponseVm<string>> Delete(Guid Id)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
