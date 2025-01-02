@@ -153,6 +153,7 @@ builder.Services.AddScoped<IInvoicePaymentService, InvoicePaymentService>();
 builder.Services.AddScoped<IPaymentsService, PaymentsService>();
 builder.Services.AddScoped<IComponentPriceService, ComponentPriceService>();
 builder.Services.AddScoped<IJobSchedule, JobScheduleService>();
+builder.Services.AddScoped<IJobContactService, JobContactService>();
 
 
 
