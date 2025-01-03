@@ -19,7 +19,7 @@ namespace ShutterManagement.Controllers
         }
 
         [HttpPost("Create")]
-        [Authorize]
+        [Authorize(Roles = "VendorOrderAdd")]
         public async Task<IActionResult> Create([FromBody] CreateVendorOrder createVendorOrder)
         {
             var result = await vendorOrderService.Create_VendorOrder(createVendorOrder);
@@ -27,7 +27,7 @@ namespace ShutterManagement.Controllers
         }
 
         [HttpPost("Update")]
-        [Authorize]
+        [Authorize(Roles = "VendorOrderEdit")]
         public async Task<IActionResult> Update([FromBody] UpdateVendorOrder updateVendorOrder)
         {
             var result = await vendorOrderService.Update_VendorOrder(updateVendorOrder);
@@ -35,14 +35,15 @@ namespace ShutterManagement.Controllers
         }
 
         [HttpPost("Delete")]
-        [Authorize]
+        [Authorize(Roles = "VendorOrderDelete")]
         public async Task<IActionResult> Delete(Guid VendorOrderId)
         {
             var result = await vendorOrderService.Delete_VendorOrder(VendorOrderId);
             return Ok(result);
         }
+
         [HttpPost("ActiveInActive")]
-        [Authorize]
+        [Authorize(Roles = "VendorOrderEdit")]
         public async Task<IActionResult> ActiveInactive(Guid VendorOrderId)
         {
             var result = await vendorOrderService.ActiveInActive(VendorOrderId);
@@ -51,7 +52,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("GetAll")]
-        [Authorize]
+        [Authorize(Roles = "VendorOrderView")]
         public async Task<IActionResult> GetAll(Pagination filter)
         {
             var res = await vendorOrderService.GetAll_VendorOrder(filter);
@@ -60,7 +61,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("update_VendorOrderItem")]
-        [Authorize]
+        [Authorize(Roles = "VendorOrderEdit")]
         public async Task<IActionResult> update_VendorOrderItem(UpdateVendorOrderItem mode)
         {
             var res = await vendorOrderService.Update_VendorOrderItem(mode);
@@ -69,7 +70,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("Delete_VendorOrderItem")]
-        [Authorize]
+        [Authorize(Roles = "VendorOrderDelete")]
         public async Task<IActionResult> Delete_VendorOrderItem(Guid? VendorOrderItemId)
         {
             var res = await vendorOrderService.Delete_VendorOrderItem(VendorOrderItemId);
