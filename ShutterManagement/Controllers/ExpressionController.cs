@@ -21,7 +21,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("Create")]
-       // [Authorize(Roles = "AddressAdd")]
+        [Authorize(Roles = "ExpressionAdd")]
         public async Task<IActionResult> Create([FromBody] CreateExpression model)
         {
             var result = await expression.Create_Expression(model);
@@ -30,7 +30,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("Update")]
-        //[Authorize(Roles = "AddressEdit")]
+        [Authorize(Roles = "ExpressionEdit")]
         public async Task<IActionResult> Update([FromBody] UpdateExpression model)
         {
             var result = await expression.Update_Expression(model);
@@ -39,7 +39,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("Delete")]
-        //[Authorize(Roles = "AddressDelete")]
+        [Authorize(Roles = "ExpressionDelete")]
         public async Task<IActionResult> Delete(Guid ExpressionId)
         {
             var result = await expression.Delete(ExpressionId);
@@ -48,7 +48,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("ActiveInActive")]
-        //[Authorize(Roles = "AddressEdit")]
+        [Authorize(Roles = "ExpressionEdit")]
         public async Task<IActionResult> ActiveInactive(Guid ExpressionId)
         {
             var result = await expression.ActiveInActive(ExpressionId);
@@ -57,7 +57,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("GetAll")]
-        //[Authorize(Roles = "AddressView")]
+        [Authorize(Roles = "ExpressionView")]
         public async Task<IActionResult> GetAll_Expression(Pagination filter)
         {
             var result = await expression.Get_AllExpression(filter);
