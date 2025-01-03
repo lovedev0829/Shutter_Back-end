@@ -1,6 +1,7 @@
 ﻿using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core;
 using ShutterManagement.Core.ViewModels;
+using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.Core.ViewModels.Response;
 using ShutterManagement.DAL.Context;
 using ShutterManagement.Services;
@@ -14,25 +15,44 @@ namespace ShutterManagement.Business.Services
 {
     public class ComponentPriceService : BaseRepository<BtprojecShuttermanagementDevContext, MstComponentPrice>, IComponentPriceService
     {
-        public async Task<IResponseVm<dynamic>> GetAllComponentsChip(string Product)
+        private readonly IOption optionService;
+
+        public ComponentPriceService(IOption optionService)
+        {
+            this.optionService = optionService;
+        }
+        public async Task<IResponseVm<dynamic>> GetAllComponentsChip(string Product, string? Option)
         {
             IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
             try
             {
-                var res = (await GetAll()).Where(x => x.ProductType == Product && x.IsActive == true).ToList();
-                if (res.Count() > 0)
+                var Component = (await GetAll()).Where(x => x.ProductType == Product && x.IsActive == true).ToList();
+                var ChipData = Component.Select(x => new ComponentPrice
+                {
+                    //PriceRated = (decimal)x.PriceRated,
+                    //PriceNonRated = (decimal)x.PriceNonRated,
+                    //ProductName = x.ProductType,
+                    ComponentName = x.ComponentName,
+                    Name = "Component__" + x.ProductType + "__" + x.ComponentName,
+                }).ToList();
+                Pagination filter = new Pagination();
+                filter.SearchValue = Option;
+                var Options = await optionService.GetAll_Option(filter);
+                if (Options.IsSuccess)
+                {
+                    var OptionData = Options.Data.Select(x => new ComponentPrice
+                    {
+                        ComponentName = "Option - " +x.OptionName,
+                        Name = "Options__" + x.ProductTypeName + "__"+x.OptionName
+                    });
+                    ChipData.AddRange(OptionData);
+                }
+                
+                if (Component.Count() > 0)
                 {
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.FetchSuccessMsg;
-                    responseVm.Data = res.Select(x => new ComponentPrice
-                    {
-                        Id = x.Id,
-                        PriceRated = (decimal)x.PriceRated,
-                        PriceNonRated = (decimal)x.PriceNonRated,
-                        ProductName = x.ProductType,
-                        ComponentName = x.ComponentName,
-                        Name = "MstComponentPrice__" + x.ProductType + "__" + x.ComponentName,
-                    });
+                    responseVm.Data = ChipData;
                 }
             }
             catch (Exception ex)
@@ -79,6 +99,7 @@ namespace ShutterManagement.Business.Services
                      ArchHeight = window.ArchHeight,
                      Quantity = window.Quantity,
                      JobId = window.JobId,
+                     IsRated = window.IsRated,
 
                      // WindowProduct Properties
                      WindowProdcutId = windowProduct.WindowProductId,
@@ -133,11 +154,12 @@ namespace ShutterManagement.Business.Services
                                        join optionType in dbContext.TblOptionsTypes on windowOption.OptionTypeId equals optionType.OptionTypeId
                                        join options in dbContext.TblOptions on optionType.OptionId equals options.OptionId
                                        where windowOption.WindowProductId == item.WindowProdcutId
-                                       select new 
+                                       select  new
                                        {
-                                          option = Convert.ToString(options.OptionName + " - " + optionType.OptionType) 
+                                           OptionTypeId = optionType.OptionTypeId,
+                                           OptionTypeName = Convert.ToString(options.OptionName + " - " + optionType.OptionType)
                                        }).ToList();
-                        item.Options = string.Join( ", ",  Options );
+                        item.Options = Options.Select(x=>x.OptionTypeName).ToArray();
                     }
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.FetchSuccessMsg;

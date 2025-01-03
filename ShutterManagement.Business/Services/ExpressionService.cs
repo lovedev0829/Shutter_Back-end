@@ -80,6 +80,7 @@ namespace ShutterManagement.Business.Services
                     FormulaeArray = string.Join(", ", model.FormulaeArray),
                     IsActive = true,
                     IsDelete = false,
+                    OptionId = model.OptionId,
                     CreatedAt = DateTime.Now,
                     CreatedBy = AppConstant.LoggedInUserID,
                     TenantId = AppConstant.LoggedInTenantId
@@ -121,6 +122,7 @@ namespace ShutterManagement.Business.Services
                     IsExpressionExist.ProductType = model.ProductTypeId;
                     IsExpressionExist.ProductId = model.ProductId;
                     IsExpressionExist.UpdateAt = DateTime.Now;
+                    IsExpressionExist.OptionId = model.OptionId;
                     IsExpressionExist.ModifiedBy = AppConstant.LoggedInUserID;
                     IsExpressionExist.FormulaeArray = string.Join(", ", model.FormulaeArray);
                 }
@@ -188,6 +190,7 @@ namespace ShutterManagement.Business.Services
                                           ExpressionFormulae = t1.ExpressionFormulae,
                                           formulaeArray = !string.IsNullOrEmpty(t1.FormulaeArray) ? t1.FormulaeArray.Split(new[] { "," }, StringSplitOptions.TrimEntries) : new string[0], 
                                           ProductId = t1.ProductId,
+                                          OptionId = t1.OptionId,
                                           ProductName = t3.ProductName,  
                                           ProductTypeId = t1.ProductType,
                                           ProductTypeName = t2.ProductName,
@@ -220,6 +223,7 @@ namespace ShutterManagement.Business.Services
                     ExpressionName = x.ExpressionName,
                     ExpressionFormulae = x.ExpressionFormulae,
                     ProductId = x.ProductId,
+                    OptionId = x.OptionId,
                     ProductName = x.ProductName,
                     ProductTypeId = x.ProductTypeId,
                     ProductTypeName = x.ProductTypeName,

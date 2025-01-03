@@ -162,6 +162,7 @@ namespace ShutterManagement.Business.Services
                     IsActive = true,
                     IsDelete = false,
                     JobId = model.JobId,
+                    IsRated = model.IsRated,
                     TenantId = AppConstant.LoggedInTenantId
                 };
 
@@ -468,6 +469,7 @@ namespace ShutterManagement.Business.Services
                     Height = g.FirstOrDefault().w.Height,
                     Width = g.FirstOrDefault().w.Width,
                     Notes = g.FirstOrDefault().w.Notes,
+                    IsRated = g.FirstOrDefault().w.IsRated,
                     Photo = g.FirstOrDefault().w.Photo.Trim().Split( "," , StringSplitOptions.RemoveEmptyEntries).ToArray(),
                     TenantId = g.FirstOrDefault().w.TenantId,
                     IsActive = g.FirstOrDefault().w.IsActive,
@@ -551,6 +553,7 @@ namespace ShutterManagement.Business.Services
             existingWindow.ArchHeight = model.ArchHeight;
             existingWindow.JobId = model.JobId;
             existingWindow.UpdatedAt = DateTime.Now;
+            existingWindow.IsRated = model.IsRated;
             existingWindow.ModifiedBy = AppConstant.LoggedInUserID;
         }
 
