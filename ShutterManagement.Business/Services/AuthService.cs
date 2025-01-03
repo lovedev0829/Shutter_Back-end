@@ -112,7 +112,7 @@ namespace ShutterManagement.Services
                 claims.AddClaim(new Claim(ClaimTypes.Email, UserDetails[0].Email ?? ""));
                 claims.AddClaim(new Claim("Phone", UserDetails[0].Phone ?? ""));
                 claims.AddClaim(new Claim("TenantId", UserDetails[0].TenantId.ToString() ?? ""));
-                claims.AddClaim(new Claim("ParentTenantId", loginDetails.ParentTenantId ?? ""));
+                claims.AddClaim(new Claim("ParentTenantId", UserDetails[0].ParentTenantId.ToString() ?? ""));
                 claims.AddClaim(new Claim("CompanyCode", user.CompanyCode));
 
                 var tokenHandler = new JwtSecurityTokenHandler();

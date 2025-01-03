@@ -188,11 +188,11 @@ namespace ShutterManagement.Business.Services
             IResponseVm<List<OptionsList>> responseVm = new ResponseVm<List<OptionsList>>();
             try
             {
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsActive == true && x.IsDelete == false);
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
                 if (IsTenant)
                 {
                     var IsOptionExists = (await GetAll())
-                        .Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId).OrderByDescending(x => x.CreatedAt)
+                        .Where(x => x.IsDelete == false && (x.TenantId == AppConstant.LoggedInTenantId || x.TenantId.ToString().ToLower() == AppConstant.LoggedInParentTenantId.ToLower())).OrderByDescending(x => x.CreatedAt)
                         .Select(x => new OptionsList
                         {
                             OptionId = x.OptionId,
