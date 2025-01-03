@@ -8,6 +8,6 @@ namespace ShutterManagement.Core.ViewModels.Request
 {
     public class UpdateJobSchedule :CreateJobSchedule
     {
-        public Guid? JobScheduleId { get; set; }
+        public Guid? ScheduleJobId { get; set; }
     }
 }
