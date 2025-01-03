@@ -16,6 +16,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public decimal? ArchHeight { get; set; }
         public decimal? Quantity { get; set; }
         public Guid? JobId { get; set; }
+        public bool? IsRated { get; set; }
 
         // WindowProduct Properties
         public Guid? WindowProdcutId { get; set; }
@@ -32,7 +33,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public decimal? Length { get; set; }
         public decimal? AdditionalWidth { get; set; }
         public decimal? Markup { get; set; }
-        public string? Options { get; set; } 
+        public string[]? Options { get; set; } = [];
 
         // ProductType Properties
         public string? ProductTypeName { get; set; }

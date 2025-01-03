@@ -12,7 +12,7 @@ namespace ShutterManagement.Business.Interfaces
 {
     public interface IComponentPriceService : IGenericRepository<MstComponentPrice>
     {
-        Task<IResponseVm<dynamic>> GetAllComponentsChip(string Product);
+        Task<IResponseVm<dynamic>> GetAllComponentsChip(string Product, string? Option = "");
         Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> GetProductData(Guid WindowProductId);
     }
 }
