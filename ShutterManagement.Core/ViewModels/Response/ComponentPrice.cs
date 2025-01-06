@@ -14,5 +14,6 @@ namespace ShutterManagement.Core.ViewModels.Response
         //public decimal PriceRated { get; set; }
         //public decimal PriceNonRated { get; set; }
         public string? Name { get; set; }
+        public string? Type { get; set; }
     }
 }

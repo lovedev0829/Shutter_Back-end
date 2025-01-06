@@ -13,6 +13,7 @@ namespace ShutterManagement.Business.Interfaces
 {
     public interface IExpressionService : IGenericRepository<TblExpression>
     {
+        Task<IResponseVm<string>> ValidateExpression(ValidateExpression model);
         Task<IResponseVm<string>> Create_Expression(CreateExpression model);
         Task<IResponseVm<string>> Update_Expression(UpdateExpression model);
         Task<IResponseVm<List<GetExpression>>> Get_AllExpression(Pagination filter);
