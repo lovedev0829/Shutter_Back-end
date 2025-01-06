@@ -21,12 +21,15 @@ namespace ShutterManagement.Business.Services
     public class ExpressionService : BaseRepository<BtprojecShuttermanagementDevContext, TblExpression>, IExpressionService
     {
         private readonly BtprojecShuttermanagementDevContext dbContext;
+        private readonly IComponentPriceService componentPriceService;
         private readonly IMaterial materialService;
         private readonly ITenantService tenantService;
 
-        public ExpressionService(BtprojecShuttermanagementDevContext dbContext, IMaterial materialService, ITenantService tenantService)
+        public ExpressionService(BtprojecShuttermanagementDevContext dbContext, IComponentPriceService componentPriceService,
+            IMaterial materialService, ITenantService tenantService)
         {
             this.dbContext = dbContext;
+            this.componentPriceService = componentPriceService;
             this.materialService = materialService;
             this.tenantService = tenantService;
         }
@@ -250,7 +253,11 @@ namespace ShutterManagement.Business.Services
                             string[] info = property.Split("__");
                             if (info != null && info.Length > 0 && info.Length == 3)
                             {
-                                if (info[0] == "Options")
+                                if (info[0] == "Component")
+                                {
+                                    val = componentPriceService.GetAllQuerable().Where(x => x.ProductType == info[1] && x.ComponentName == info[2]).Select(x => x.PriceRated).FirstOrDefault();
+                                }
+                                else if(info[0] == "Options")
                                 {
                                     //var option = 
                                     //val = windowOptionService.GetAllQuerable().Where(x => x. == info[1] && x.ComponentName == info[2]).Select(x => (item.IsRated == true ? x.PriceRated : x.PriceNonRated)).FirstOrDefault();
@@ -260,19 +267,20 @@ namespace ShutterManagement.Business.Services
                                     val = materialService.GetAllQuerable().Where(x => x.ProductType.ToString() == info[1] && x.MaterialName == info[2]).Select(x => x.UnitCost).FirstOrDefault();
                                 }
                             }
+                        }
                             formula = formula.Replace(match.Value, Convert.ToDecimal(val).ToString());
-                        }
-                        var validate = new NCalc.Expression(formula);
-                        if (validate.HasErrors())
-                        {
-                            responseVm.Message = "Expression error: " + validate.Error;
-                            return responseVm;
-                        }
-                        var res = validate.Evaluate();
-                        responseVm.IsSuccess = true;
-                        responseVm.Message = "Expression Validate.";
-                        responseVm.Data = res.ToString() ?? "";
+
                     }
+                    var validate = new NCalc.Expression(formula);
+                    if (validate.HasErrors())
+                    {
+                        responseVm.Message = "Expression error: " + validate.Error;
+                        return responseVm;
+                    }
+                    var res = validate.Evaluate();
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = "Expression Validate.";
+                    responseVm.Data = res.ToString() ?? "";
                 }
             }
             catch (EvaluationException ex)
