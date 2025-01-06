@@ -416,7 +416,8 @@ namespace ShutterManagement.Business.Services
 
                 var existingOrderItem = await vendorItemService.FirstOrDefaultAsync(x =>
                     x.IsDelete == false &&
-                    x.VendorOrderId == model.VendorOrderId);
+                    x.VendorOrderItemId == model.VendorOrderItemId &&
+                    x.VendorOrderId == model.VendorOrderId );
 
                 if (existingOrderItem == null)
                 {
