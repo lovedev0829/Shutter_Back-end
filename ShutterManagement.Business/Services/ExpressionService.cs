@@ -234,7 +234,7 @@ namespace ShutterManagement.Business.Services
 
                 responseVm.IsSuccess = true;
                 responseVm.Message = $"{AppConstant.FetchSuccessMsg}";
-                responseVm.TotalRecords = TakenRecords.Count;
+                responseVm.TotalRecords = FilterRecords.Count;
             }
             catch (Exception ex)
             {
