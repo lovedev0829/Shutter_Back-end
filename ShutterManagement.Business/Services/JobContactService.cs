@@ -42,7 +42,7 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-                var jobContact = GetAllQuerable().FirstOrDefault(x => x.JobContactId == JobContactId && x.IsActive==true);
+                var jobContact = GetAllQuerable().FirstOrDefault(x => x.JobContactId == JobContactId && x.IsDelete==false);
 
                 if (jobContact != null)
                 {
