@@ -36,6 +36,7 @@ namespace ShutterManagement.Business.Services
                 {
                     responseVm.Data = TakenRecords.Select(x => new MstContactTypeVm
                     {
+                        MstContactId=x.MstContactId,
                         MstContactName = x.MstContactName,
                         IsActive = x.IsActive,
                     }).ToList();
