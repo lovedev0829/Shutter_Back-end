@@ -16,12 +16,14 @@ namespace ShutterManagement.Business.Services
     public class ComponentPriceService : BaseRepository<BtprojecShuttermanagementDevContext, MstComponentPrice>, IComponentPriceService
     {
         private readonly IOption optionService;
+        private readonly IMaterial materialService;
 
-        public ComponentPriceService(IOption optionService)
+        public ComponentPriceService(IOption optionService, IMaterial materialService)
         {
             this.optionService = optionService;
+            this.materialService = materialService;
         }
-        public async Task<IResponseVm<dynamic>> GetAllComponentsChip(string Product, string? Option)
+        public async Task<IResponseVm<dynamic>> GetAllComponentsChip(string Product,string? ProductType, string? Option)
         {
             IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
             try
@@ -29,25 +31,39 @@ namespace ShutterManagement.Business.Services
                 var Component = (await GetAll()).Where(x => x.ProductType == Product && x.IsActive == true).ToList();
                 var ChipData = Component.Select(x => new ComponentPrice
                 {
-                    //PriceRated = (decimal)x.PriceRated,
-                    //PriceNonRated = (decimal)x.PriceNonRated,
-                    //ProductName = x.ProductType,
+                    Type = "Component",
                     ComponentName = x.ComponentName,
                     Name = "Component__" + x.ProductType + "__" + x.ComponentName,
                 }).ToList();
                 Pagination filter = new Pagination();
-                filter.SearchValue = Option;
+                filter.ProductType = ProductType;
+                var Materials = await materialService.GetAll_Material(filter);
+                if (Materials.IsSuccess)
+                {
+                    var MaterialData = Materials.Data.Select(x => new ComponentPrice
+                    {
+                        Type = "Material",
+                        ComponentName = x.MaterialName,
+                        Name = "Material__" + x.ProductType + "__" + x.MaterialName
+                    });
+                    ChipData.AddRange(MaterialData);
+                }
+                if (!string.IsNullOrEmpty(Option)) {
+                    filter.SearchValue = Option;
+                }
                 var Options = await optionService.GetAll_Option(filter);
                 if (Options.IsSuccess)
                 {
                     var OptionData = Options.Data.Select(x => new ComponentPrice
                     {
+                        Type = "Option",
                         ComponentName = "Option - " +x.OptionName,
-                        Name = "Options__" + x.ProductTypeName + "__"+x.OptionName
+                        Name = "Options__" + x.ProductTypeId + "__"+x.OptionName
                     });
                     ChipData.AddRange(OptionData);
                 }
-                
+
+
                 if (Component.Count() > 0)
                 {
                     responseVm.IsSuccess = true;

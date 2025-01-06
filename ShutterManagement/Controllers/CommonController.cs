@@ -66,7 +66,7 @@ namespace ShutterManagement.Controllers
             this.jobTitleService = jobTitleService;
             this.material = material;
             filter.PageNo = 1;
-            filter.RecordPerPage = 100;
+            filter.RecordPerPage = 1000;
             filter.SearchValue = "";
             filter.TenantId = "";
             filter.Status = 1;
@@ -256,9 +256,9 @@ namespace ShutterManagement.Controllers
 
         [HttpGet]
         [Route("GetAllExpressionChip")]
-        public async Task<IActionResult> GetAllExpressionChip(string Product, string Option = "")
+        public async Task<IActionResult> GetAllExpressionChip(string Product, string? ProductType, string Option = "")
         {
-            var res = await componentPriceService.GetAllComponentsChip(Product, Option);
+            var res = await componentPriceService.GetAllComponentsChip(Product,ProductType, Option);
             return Ok(res);
         }
 
@@ -453,11 +453,9 @@ namespace ShutterManagement.Controllers
         [Route("GetAllExpression")]
         public async Task<IActionResult> GetAllExpression(Guid ProductId)
         {
-            Pagination pagination = new Pagination
-            {
-                SearchValue = ProductId.ToString(),
-            };
-            var res = await expression.Get_AllExpression(pagination);
+
+            filter.SearchValue = ProductId.ToString();
+            var res = await expression.Get_AllExpression(filter);
             res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
             return Ok(res);
         }

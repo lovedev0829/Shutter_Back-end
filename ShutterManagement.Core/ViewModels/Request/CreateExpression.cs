@@ -26,7 +26,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         [Required]
         public Guid? ProductTypeId { get; set; }
         [Default("")]
-        public Guid? OptionId { get; set; } = null;
+        public string? OptionId { get; set; } = "";
 
         [Default("")]
         [Required]

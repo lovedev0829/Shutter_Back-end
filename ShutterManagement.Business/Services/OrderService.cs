@@ -834,13 +834,14 @@ namespace ShutterManagement.Business.Services
             e.WindowProductId = productList.Select(p => (Guid)p.WindowProductId).ToArray();
             foreach (var p in productList)
             {
-                var optionIds = windowOptionService.GetAllQuerable()
-                    .Where(x => x.IsDelete == false && x.WindowProductId == p.WindowProductId)
-                    .ToList();
-                var optionDetails = optionsTypeService.GetAllQuerable()
-                    .Where(x => x.IsDelete == false && optionIds.Select(y => y.OptionTypeId).Contains(x.OptionTypeId))
-                    .Select(x => new OptionLists { OptionName = x.OptionType })
-                    .ToList();
+                var Options = (from windowOption in dbContext.WindowOptions
+                               join optionType in dbContext.TblOptionsTypes on windowOption.OptionTypeId equals optionType.OptionTypeId
+                               join options in dbContext.TblOptions on optionType.OptionId equals options.OptionId
+                               where windowOption.WindowProductId == p.WindowProductId
+                               select new
+                               {
+                                   OptionName = Convert.ToString(options.OptionName + " - " + optionType.OptionType)
+                               }).ToList();
                 var WindowDetails = orderWindowService.GetAllQuerable()
                     .Where(x => x.OrderId == order.OrderId && x.IsDelete == false)
                     .ToList();
@@ -861,8 +862,8 @@ namespace ShutterManagement.Business.Services
                     ArchHeight = p.ArchHeight,
                     ProductName = p.ProductName,
                     WindowProductId = p.WindowProductId,
-                    Price = p.Price,    
-                    Options = optionDetails,
+                    Price = p.Price,
+                    Options = Options.Select(x => x.OptionName).ToArray(),
                     EstimateWindowDetails = WindowDetails.Where(x => x.WindowId == p.WindowId).Select(x => new EstimateWindowLists
                     {
                         ArchHeight = x.ArchHeight,

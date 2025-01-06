@@ -308,7 +308,6 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-
         public async Task<IResponseVm<List<VendorOrderListVm>>> GetAll_VendorOrder(Pagination filter)
         {
             var responseVm = new ResponseVm<List<VendorOrderListVm>>();
@@ -349,10 +348,6 @@ namespace ShutterManagement.Business.Services
 
                 var filteredRecords = await vendorOrdersQuery.ToListAsync();
 
-                var materials = await materialService.GetAllQuerable()
-                .Where(m => m.IsDelete == false)
-                .ToDictionaryAsync(m => m.RawMaterialId, m => m.MaterialName);
-
                 foreach (var item in filteredRecords)
                 {
                     var vendorOrderItems = await vendorItemService.GetAllQuerable()
@@ -364,7 +359,7 @@ namespace ShutterManagement.Business.Services
                     {
                         vendorOrderItemId = x.VendorOrderItemId,
                         MaterialId = x.MaterialId,
-                        MaterialName = materials.TryGetValue(x.MaterialId.Value, out var materialName) ? materialName : null,
+                        MaterialName = materialService.GetAllQuerable().Where(y=>y.RawMaterialId == x.MaterialId).Select(z=>z.MaterialName).FirstOrDefault(),
                         Quantity = x.Quantity,
                         UnitPrice = x.UnitPrice,
                         IsActive = x.IsActive,
@@ -372,7 +367,7 @@ namespace ShutterManagement.Business.Services
                 }
 
 
-                filter.SearchValue = filter.SearchValue.Trim().ToLower();
+                filter.SearchValue = filter.SearchValue?.Trim().ToLower();
                 filteredRecords = filteredRecords
                     .Where(x =>
                         (filter.Status == 0 ? x.VendorOrderStatus == EnumValue.GetEnumValue(VendorOrderStatus.Pending) :
@@ -389,10 +384,7 @@ namespace ShutterManagement.Business.Services
                     )
                     .ToList();
 
-                var paginatedRecords = filteredRecords
-                    .Skip((filter.PageNo - 1) * filter.RecordPerPage)
-                    .Take(filter.RecordPerPage)
-                    .ToList();
+                var paginatedRecords = Paginate.Pagination(filteredRecords, filter);
 
                 responseVm.IsSuccess = true;
                 responseVm.Data = paginatedRecords;
@@ -479,7 +471,6 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
-
 
         public async Task<IResponseVm<string>> Delete_VendorOrderItem(Guid? vendorOrderItemId)
         {
