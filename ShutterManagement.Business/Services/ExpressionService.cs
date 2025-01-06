@@ -194,7 +194,7 @@ namespace ShutterManagement.Business.Services
                                           ExpressionId = t1.Id,
                                           ExpressionName = t1.ExpressionName,
                                           ExpressionFormulae = t1.ExpressionFormulae,
-                                          formulaeArray = !string.IsNullOrEmpty(t1.FormulaeArray) ? t1.FormulaeArray.Split(new[] { "," }, StringSplitOptions.TrimEntries) : new string[0],
+                                          formulaeArray = !string.IsNullOrEmpty(t1.FormulaeArray) ? t1.FormulaeArray.Split(new[] { ", " }, StringSplitOptions.TrimEntries) : new string[0],
                                           ProductId = t1.ProductId,
                                           OptionId = t1.OptionId,
                                           ProductName = t3.ProductName,
