@@ -22,13 +22,15 @@ namespace ShutterManagement.Business.Services
         private readonly ITenantService tenantService;
         private readonly IWindowProductService windowProductService;
         private readonly IWindowOptionService windowOptionService;
+        private readonly IEstimateWindowService estimateWindowService;
 
         public WindowService(ITenantService tenantService, 
-            IWindowProductService windowProductService, IWindowOptionService windowOptionService)
+            IWindowProductService windowProductService, IWindowOptionService windowOptionService,IEstimateWindowService estimateWindowService)
         {
             this.tenantService = tenantService;
             this.windowProductService = windowProductService;
             this.windowOptionService = windowOptionService;
+            this.estimateWindowService = estimateWindowService;
         }
 
         public async Task<IResponseVm<string>> ActiveInActiveWindow(Guid WindowId)
@@ -290,6 +292,12 @@ namespace ShutterManagement.Business.Services
                 FileLogger.Log($"Delete window process started for WindowId: {WindowId}.");
 
                 var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false && (bool)x.IsActive == true);
+                bool WindowUsedInEstimation = await estimateWindowService.AnyAsync(x => x.WindowId == WindowId && x.IsDelete == false);
+                if(WindowUsedInEstimation)
+                {
+                    responseVm.Message = "Window used in Estimation.It's not alllowed to delete.";
+                    return responseVm;
+                }
 
                 if (IsTenant)
                 {
