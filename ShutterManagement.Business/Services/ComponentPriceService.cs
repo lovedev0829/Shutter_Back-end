@@ -37,6 +37,7 @@ namespace ShutterManagement.Business.Services
                 }).ToList();
                 Pagination filter = new Pagination();
                 filter.ProductType = ProductType;
+                filter.RecordPerPage = 100000;
                 var Materials = await materialService.GetAll_Material(filter);
                 if (Materials.IsSuccess)
                 {
