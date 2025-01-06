@@ -182,7 +182,7 @@ namespace ShutterManagement.Business.Services
                 ContactTypeId = x.ContactTypeId,
                 ContactTypeName = c.MstContactName,
                 JobId = x.JobId,
-                ContactName = x.ContactName,
+                Contactname = x.ContactName,
                 isActive = x.IsActive
                 };
 
@@ -191,7 +191,7 @@ namespace ShutterManagement.Business.Services
                     .Where(x =>
                         (filter.Status == 0 ? x.isActive == false : (filter.Status == 1 ? x.isActive == true : true)) &&
                         ((string.IsNullOrEmpty(filter.SearchValue) ? true :
-                            (x.ContactName.Contains(filter.SearchValue.Trim())) ||
+                            (x.Contactname.Contains(filter.SearchValue.Trim())) ||
                             (x.JobId.ToString() == filter.SearchValue.Trim())) ||
                             (x.JobId.ToString() == filter.SearchValue.Trim())) ||
                             (x.ContactTypeId.ToString() == filter.SearchValue.Trim())).ToList();

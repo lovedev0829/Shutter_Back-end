@@ -38,7 +38,7 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> DeleteJobContact(Guid? JobContactId)
         {
             var res = await jobContactService.DeleteJobContact(JobContactId);
-            return Ok();
+            return Ok(res);
         }
 
         [HttpPost("ActiveInActive")]
@@ -46,7 +46,7 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> ActiveInActive(Guid JobContactId)
         {
             var res = await jobContactService.ActiveInActiveJobContact(JobContactId);
-            return Ok();
+            return Ok(res);
         }
 
         [HttpPost("Edit")]
@@ -54,7 +54,7 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> EditJobContact(UpdateJobContact model)
         {
             var res = await jobContactService.Update_JobContact(model);
-            return Ok();
+            return Ok(res);
         }
        
 
