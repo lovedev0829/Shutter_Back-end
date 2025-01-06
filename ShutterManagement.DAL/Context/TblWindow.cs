@@ -39,6 +39,8 @@ public partial class TblWindow
 
     public Guid? JobId { get; set; }
 
+    public bool? IsRated { get; set; }
+
     public virtual TblAddress? Address { get; set; }
 
     public virtual TblJob? Job { get; set; }

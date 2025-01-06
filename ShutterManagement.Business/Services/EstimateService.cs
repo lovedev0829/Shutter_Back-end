@@ -397,6 +397,7 @@ namespace ShutterManagement.Business.Services
                                             ArchHeight = x.ArchHeight,
                                             Quantity = x.Quantity,
                                             JobId = x.JobId,
+                                            Options = x.Options,
                                             WindowProdcutId = x.WindowProdcutId,
                                             ProductId = x.ProductId,
                                             BuildWidth = x.BuildWidth,
@@ -453,7 +454,14 @@ namespace ShutterManagement.Business.Services
                             string[] info = property.Split("__");
                             if (info != null && info.Length > 0 && info.Length == 3)
                             {
-                                val = componentPriceService.GetAllQuerable().Where(x => x.ProductType == info[1] && x.ComponentName == info[2]).Select(x => x.PriceRated).FirstOrDefault();
+                                if (info[0] == "Component")
+                                {
+                                    val = componentPriceService.GetAllQuerable().Where(x => x.ProductType == info[1] && x.ComponentName == info[2]).Select(x => (item.IsRated == true ? x.PriceRated : x.PriceNonRated)).FirstOrDefault();
+                                }
+                                else if (info[0] == "Options")
+                                {
+                                    //val = windowOptionService.GetAllQuerable().Where(x => x. == info[1] && x.ComponentName == info[2]).Select(x => (item.IsRated == true ? x.PriceRated : x.PriceNonRated)).FirstOrDefault();
+                                }
                             }
                         }
                         // Set parameters
@@ -950,13 +958,15 @@ namespace ShutterManagement.Business.Services
             e.WindowProductId = productList.Select(p => (Guid)p.WindowProductId).ToArray();
             foreach (var p in productList)
             {
-                var optionIds = windowOptionService.GetAllQuerable()
-                    .Where(x => x.IsDelete == false && x.WindowProductId == p.WindowProductId)
-                    .ToList();
-                var optionDetails = optionsTypeService.GetAllQuerable()
-                    .Where(x => x.IsDelete == false && optionIds.Select(y => y.OptionTypeId).Contains(x.OptionTypeId))
-                    .Select(x => new OptionList { OptionName = x.OptionType })
-                    .ToList();
+               
+                var Options = (from windowOption in dbContext.WindowOptions
+                               join optionType in dbContext.TblOptionsTypes on windowOption.OptionTypeId equals optionType.OptionTypeId
+                               join options in dbContext.TblOptions on optionType.OptionId equals options.OptionId
+                               where windowOption.WindowProductId == p.WindowProductId
+                               select new OptionList
+                               {
+                                   OptionName = Convert.ToString(options.OptionName + " - " + optionType.OptionType)
+                               }).ToList();
                 var WindowDetails = estimateWindowService.GetAllQuerable()
                     .Where(x => x.EstimateId == estimate.EstimateId && x.IsDelete == false)
                     .ToList();
@@ -978,7 +988,7 @@ namespace ShutterManagement.Business.Services
                     ProductName = p.ProductName,
                     WindowProductId = p.WindowProductId,
                     TotalPrice = p.Price,
-                    Options = optionDetails,
+                    Options = Options,
                     EstimateWindowDetails = WindowDetails.Where(x => x.WindowId == p.WindowId).Select(x => new EstimateWindowList
                     {
                         ArchHeight = x.ArchHeight,

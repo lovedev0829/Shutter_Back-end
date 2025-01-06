@@ -1527,6 +1527,7 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.Property(e => e.Height).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
+            entity.Property(e => e.IsRated).HasDefaultValue(false);
             entity.Property(e => e.Label).HasMaxLength(100);
             entity.Property(e => e.Quantity).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.UpdatedAt)

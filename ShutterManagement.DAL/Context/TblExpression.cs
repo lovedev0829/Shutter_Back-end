@@ -31,5 +31,7 @@ public partial class TblExpression
 
     public string? FormulaeArray { get; set; }
 
+    public Guid? OptionId { get; set; }
+
     public virtual MstProductType? ProductTypeNavigation { get; set; }
 }

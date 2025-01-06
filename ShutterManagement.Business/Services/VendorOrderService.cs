@@ -363,7 +363,7 @@ namespace ShutterManagement.Business.Services
                     item.VendorOrderItems = vendorOrderItems.Select(x => new ShutterManagement.Core.ViewModels.Response.VendorOrderItem
                     {
                         vendorOrderItemId = x.VendorOrderItemId,
-                        MaterialId = x.MaterialId.Value,
+                        MaterialId = x.MaterialId,
                         MaterialName = materials.TryGetValue(x.MaterialId.Value, out var materialName) ? materialName : null,
                         Quantity = x.Quantity,
                         UnitPrice = x.UnitPrice,
@@ -424,8 +424,7 @@ namespace ShutterManagement.Business.Services
 
                 var existingOrderItem = await vendorItemService.FirstOrDefaultAsync(x =>
                     x.IsDelete == false &&
-                    x.VendorOrderId == model.VendorOrderId &&
-                    x.MaterialId == model.MaterialId);
+                    x.VendorOrderId == model.VendorOrderId);
 
                 if (existingOrderItem == null)
                 {
@@ -435,15 +434,16 @@ namespace ShutterManagement.Business.Services
 
                 existingOrderItem.Quantity = model.Quantity;
                 existingOrderItem.UnitPrice = model.UnitPrice;
+                existingOrderItem.MaterialId=model.MaterialId;
                 existingOrderItem.TotalPrice = model.Quantity * model.UnitPrice;
                 existingOrderItem.UpdatedAt = DateTime.Now;
                 existingOrderItem.ModifiedBy = AppConstant.LoggedInUserID.ToString();
 
                 await vendorItemService.Update(existingOrderItem);
 
-                var vendorOrderItems = await vendorItemService.GetAllQuerable()
+                var vendorOrderItems =  vendorItemService.GetAllQuerable()
                     .Where(x => x.VendorOrderId == model.VendorOrderId && x.IsDelete==false)
-                    .ToListAsync();
+                    .ToList();
 
                 // var totalOrderPrice = vendorOrderItems.Sum(x => x.TotalPrice);
 

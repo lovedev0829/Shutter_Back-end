@@ -258,7 +258,7 @@ namespace ShutterManagement.Business.Services
                 }
 
                 var JobSchedule = GetAllQuerable()
-                    .Where(c => c.JobScheduleId == model.JobScheduleId
+                    .Where(c => c.JobScheduleId == model.ScheduleJobId
                                 && c.TenantId == AppConstant.LoggedInTenantId
                                 && c.IsDelete == false)
                     .FirstOrDefault();
