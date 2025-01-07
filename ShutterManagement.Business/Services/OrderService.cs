@@ -765,10 +765,11 @@ namespace ShutterManagement.Business.Services
                 var Tenant = dbContext.TblTenants
                     .Where(e => e.TenantId == order.TenantId && e.IsDelete == false)
                     .FirstOrDefault();
-                e.primarycolor = dbContext.TblTenantBrandingInfos
-                    .Where(tb => tb.Id == Tenant.BrandingInfo)
-                    .Select(tb => tb.PrimaryColor)
+                var tenantdetails = dbContext.TblTenantBrandingInfos
+                 .Where(tb => tb.Id == Tenant.BrandingInfo)
                     .FirstOrDefault();
+                e.primarycolor = tenantdetails.PrimaryColor;
+                e.CompanyName = tenantdetails.CompanyName;
                 AddEstimateProducts(order, e);
                 orderlist.Add(e);
             }

@@ -739,10 +739,11 @@ namespace ShutterManagement.Business.Services
                   .FirstOrDefault();
                 e.CreatedBy = Userdetails.FirstName + " " + Userdetails.LastName;
                 var Tenant = dbContext.TblTenants.Where(e => e.TenantId == estimate.TenantId && e.IsDelete == false).FirstOrDefault();
-                e.primarycolor = dbContext.TblTenantBrandingInfos
+                var tenantdetails = dbContext.TblTenantBrandingInfos
                  .Where(tb => tb.Id == Tenant.BrandingInfo)
-                    .Select(tb => tb.PrimaryColor)
                     .FirstOrDefault();
+                e.primarycolor = tenantdetails.PrimaryColor;
+                e.CompanyName = tenantdetails.CompanyName;
 
 
                 // Fetch and add related products and options

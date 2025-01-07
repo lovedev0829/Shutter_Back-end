@@ -30,6 +30,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? CreatedBy { get; set; }
 
         public string? primarycolor { get; set; }
+        public string? CompanyName { get; set; }
 
         public JobDetails jobDetails { get; set; } = new JobDetails();
         public List<EstimateProductList> EstimateProductList { get; set; } = new List<EstimateProductList>();

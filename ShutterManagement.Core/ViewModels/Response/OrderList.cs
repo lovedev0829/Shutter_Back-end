@@ -33,6 +33,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? CreatedBy { get; set; }
 
         public string? primarycolor { get; set; }
+        public string? CompanyName { get; set; }
         public string? TenantId { get; set; }
 
         public JobDetail jobDetails { get; set; } = new JobDetail();
