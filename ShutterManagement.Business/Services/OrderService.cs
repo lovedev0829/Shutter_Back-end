@@ -142,6 +142,7 @@ namespace ShutterManagement.Business.Services
                     newOrder.DiscountAmount = updateOrder.Discount;
                     newOrder.DiscountCoupon = updateOrder.DiscountCoupon;
                     newOrder.GrandTotal = updateOrder.GrandTotal;
+                    newOrder.TaxId = updateOrder.taxRateId;
                     newOrder.TaxAmount = updateOrder.Tax;
                     newOrder.TotalPrice = updateOrder.SubTotal;
                     newOrder.TermsCondition = updateOrder.TermsCondition;
@@ -167,6 +168,7 @@ namespace ShutterManagement.Business.Services
                     newOrder.DiscountAmount = estimate.DiscountAmount;
                     newOrder.DiscountCoupon = estimate.DiscountCoupon;
                     newOrder.GrandTotal = estimate.GrandTotal;
+                    newOrder.TaxId = updateOrder.taxRateId;
                     newOrder.TaxAmount = estimate.TaxAmount;
                     newOrder.TotalPrice = estimate.TotalPrice;
                     newOrder.TermsCondition = estimate.TermsCondition;
@@ -340,6 +342,7 @@ namespace ShutterManagement.Business.Services
                             orderExist.DiscountCoupon = model.DiscountCoupon;
                             orderExist.GrandTotal = model.GrandTotal;
                             orderExist.JobId = model.JobId;
+                            orderExist.TaxId = model.taxRateId;
                             orderExist.TaxAmount = model.Tax;
                             orderExist.TotalPrice = model.SubTotal;
                             orderExist.TermsCondition = model.TermsCondition;
@@ -729,6 +732,7 @@ namespace ShutterManagement.Business.Services
                     EstimateId = order.EstimateId,
                     CreatedDate = order.CreatedAt,
                     JobId = order.JobId,
+                    taxRateId = order.TaxId,
                     Status = order.Status,
                     IsActive = order.IsActive,
                     Discount = order.DiscountAmount,

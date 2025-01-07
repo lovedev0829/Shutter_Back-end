@@ -48,4 +48,6 @@ public partial class TblOrder
     public string? DiscountCoupon { get; set; }
 
     public string? OrderName { get; set; }
+
+    public Guid? TaxId { get; set; }
 }

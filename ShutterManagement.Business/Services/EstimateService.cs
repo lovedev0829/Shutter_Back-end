@@ -533,6 +533,7 @@ namespace ShutterManagement.Business.Services
                 estimate.DiscountCoupon = model.DiscountCoupon;
                 estimate.GrandTotal = model.GrandTotal;
                 estimate.JobId = model.JobId;
+                estimate.TaxId = model.taxRateId;
                 estimate.TaxAmount = model.Tax;
                 estimate.TotalPrice = model.SubTotal;
                 estimate.TermsCondition = model.TermsCondition;
@@ -724,6 +725,7 @@ namespace ShutterManagement.Business.Services
                     IsActive = estimate.IsActive,
                     Discount = estimate.DiscountAmount,
                     DiscountCoupon = estimate.DiscountCoupon,
+                    taxRateId = estimate.TaxId,
                     EstimateName = estimate.EstimateName,
                     EstimateCode = estimate.EstimateCode,
                     SubTotal = estimate.TotalPrice,
@@ -942,6 +944,7 @@ namespace ShutterManagement.Business.Services
                 DiscountCoupon = model.DiscountCoupon,
                 GrandTotal = model.GrandTotal,
                 JobId = model.JobId,
+                TaxId = model.taxRateId,
                 TaxAmount = model.Tax,
                 TermsCondition = model.TermsCondition,
                 CreatedBy = AppConstant.LoggedInUserID,

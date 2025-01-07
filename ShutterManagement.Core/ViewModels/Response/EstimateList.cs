@@ -12,6 +12,7 @@ namespace ShutterManagement.Core.ViewModels.Response
 
         public Guid EstimateId { get; set; }
         public Guid? JobId { get; set; }
+        public Guid? taxRateId { get; set; }
         public string? EstimateName { get; set; }
         public decimal? TotalPrice { get; set; }
         public string? EstimateCode { get; set; }
