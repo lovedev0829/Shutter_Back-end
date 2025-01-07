@@ -301,12 +301,7 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.AccessDenied;
                     return responseVm;
                 }
-
-                var component = GetComponent();
-                var productTypeDetail = GetProductTypeDetail(component);
-                var expression = GetExpression(component);
-
-                var componentList = GetComponentList(component, expression, productTypeDetail);
+                var componentList = GetComponentList();
 
                 var filteredRecords = ApplyFilters(componentList, filter);
 
@@ -348,21 +343,21 @@ namespace ShutterManagement.Business.Services
                 .FirstOrDefault();
         }
 
-        private MstProductType GetProductTypeDetail(TblComponent component)
+        private MstProductType GetProductTypeDetail(string ProductType)
         {
             return mstProductType.GetAllQuerable()
-                .Where(x => x.ProductId.ToString() == component.ProductType && x.IsDelete == false)
+                .Where(x => x.ProductId.ToString().ToLower() == ProductType.ToLower() && x.IsDelete == false)
                 .FirstOrDefault();
         }
 
-        private TblExpression GetExpression(TblComponent component)
+        private TblExpression GetExpression(string PricingExpression)
         {
             return expressionService.GetAllQuerable()
-                .Where(x => x.Id.ToString() == component.PricingExpression && x.IsDelete == false)
+                .Where(x => x.Id.ToString() == PricingExpression && x.IsDelete == false)
                 .FirstOrDefault();
         }
 
-        private List<ComponentListVm> GetComponentList(TblComponent component, TblExpression expression, MstProductType productType)
+        private List<ComponentListVm> GetComponentList()
         {
             var componentList = GetAllQuerable()
                 .Where(c => c.TenantId == AppConstant.LoggedInTenantId && c.IsDelete == false)
@@ -373,16 +368,20 @@ namespace ShutterManagement.Business.Services
                     IsActive = c.IsActive,
                     MarkupPercentage = c.MarkupPercentage,
                     Notes = c.Notes,
+                    ProductType = c.ProductType,
                     PricingExpression = c.PricingExpression,
                     TenantId = c.TenantId,
                 }).ToList();
 
             foreach (var item in componentList)
             {
+                //var component = GetComponent();
+                var productTypeDetail = GetProductTypeDetail(item.ProductType ?? "");
+                var expression = GetExpression(item.PricingExpression ?? "");
                 item.ExpressionName = expression?.ExpressionName;
                 item.ExpressionFormulae = expression?.ExpressionFormulae;
-                item.ProductType = productType?.ProductId.ToString().ToLower();
-                item.ProductTypeName = productType?.ProductName;
+                item.ProductType = productTypeDetail?.ProductId.ToString().ToLower();
+                item.ProductTypeName = productTypeDetail?.ProductName;
 
                 item.ComponentMaterials = GetComponentMaterials((Guid)item.ComponentId);
             }

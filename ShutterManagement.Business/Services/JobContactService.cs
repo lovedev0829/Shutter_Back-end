@@ -183,18 +183,19 @@ namespace ShutterManagement.Business.Services
                 ContactTypeName = c.MstContactName,
                 JobId = x.JobId,
                 Contactname = x.ContactName,
-                isActive = x.IsActive
+                IsActive = x.IsActive
                 };
+
+                jobContactsQuery= jobContactsQuery.Where(x=>filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true));
 
                 filter.SearchValue = filter.SearchValue?.Trim().ToLower();
                 var filteredInvoices = jobContactsQuery
                     .Where(x =>
-                        (filter.Status == 0 ? x.isActive == false : (filter.Status == 1 ? x.isActive == true : true)) &&
+                        (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
                         ((string.IsNullOrEmpty(filter.SearchValue) ? true :
                             (x.Contactname.Contains(filter.SearchValue.Trim())) ||
                             (x.JobId.ToString() == filter.SearchValue.Trim())) ||
-                            (x.JobId.ToString() == filter.SearchValue.Trim())) ||
-                            (x.ContactTypeId.ToString() == filter.SearchValue.Trim())).ToList();
+                            (x.ContactTypeId.ToString() == filter.SearchValue.Trim()))).ToList();
 
                 
 

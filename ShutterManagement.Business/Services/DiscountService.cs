@@ -270,6 +270,15 @@ namespace ShutterManagement.Business.Services
 
         private bool ValidateDiscountType(CreateDiscount discount, out string message)
         {
+            DateTime expiryDate = Convert.ToDateTime(discount.ExpiryDate);
+            DateTime startDate = Convert.ToDateTime(discount.StartDate);
+
+            if (expiryDate < startDate)
+            {
+                message = "Expiry Date must be greater than Start Date.";
+                return false;
+            }
+
             if (discount.discountType == DiscountType.Percentage)
             {
                 if (discount.PercentageDiscount is null or <= 0 or > 100)

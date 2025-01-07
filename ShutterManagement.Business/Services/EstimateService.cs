@@ -376,7 +376,7 @@ namespace ShutterManagement.Business.Services
                     {
                         //calculate price
                         var price = await CalculateEstimate(data.Data);
-                        data.Data.ForEach(x => x.TotalPrice = price);
+                        data.Data.ForEach(x => x.TotalPrice = Convert.ToDecimal(price.ToString("0.00")));
                         WindowProductData.AddRange(data.Data);
                         responseVm.IsSuccess = true;
                     }
