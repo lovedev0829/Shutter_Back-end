@@ -1333,6 +1333,7 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.ToTable("TblTenant_BrandingInfo", "dbo");
 
             entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.CompanyName).HasMaxLength(50);
             entity.Property(e => e.Email).HasMaxLength(200);
             entity.Property(e => e.PhoneNumber).HasMaxLength(100);
             entity.Property(e => e.PrimaryColor).HasMaxLength(20);

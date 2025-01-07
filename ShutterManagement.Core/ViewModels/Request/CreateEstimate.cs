@@ -13,6 +13,11 @@ namespace ShutterManagement.Core.ViewModels.Request
         [Default("")]
         [Required]
         public Guid? JobId { get; set; }
+
+        [Default("")]
+        [Required]
+        public Guid? TaxId { get; set; }
+
         [Default("")]
         [Required]
         public string? EstimateName { get; set; }

@@ -17,5 +17,7 @@ public partial class TblTenantBrandingInfo
 
     public string? SecondaryColor { get; set; }
 
+    public string? CompanyName { get; set; }
+
     public virtual ICollection<TblTenant> TblTenants { get; set; } = new List<TblTenant>();
 }
