@@ -253,16 +253,18 @@ namespace ShutterManagement.Business.Services
                             string[] info = property.Split("__");
                             if (info != null && info.Length > 0 && info.Length == 3)
                             {
-                                if (info[0] == "Component")
-                                {
-                                    val = componentPriceService.GetAllQuerable().Where(x => x.ProductType == info[1] && x.ComponentName == info[2]).Select(x => x.PriceRated).FirstOrDefault();
-                                }
-                                else if(info[0] == "Options")
-                                {
-                                    //var option = 
-                                    //val = windowOptionService.GetAllQuerable().Where(x => x. == info[1] && x.ComponentName == info[2]).Select(x => (item.IsRated == true ? x.PriceRated : x.PriceNonRated)).FirstOrDefault();
-                                }
-                                else if (info[0] == "Material")
+                                //if (info[0] == "Component")
+                                //{
+                                //    val = componentPriceService.GetAllQuerable().Where(x => x.ProductType == info[1] && x.ComponentName == info[2]).Select(x => x.PriceRated).FirstOrDefault();
+                                //}
+                                //else
+                                //if(info[0] == "Options")
+                                //{
+                                //    //var option = 
+                                //    //val = windowOptionService.GetAllQuerable().Where(x => x. == info[1] && x.ComponentName == info[2]).Select(x => (item.IsRated == true ? x.PriceRated : x.PriceNonRated)).FirstOrDefault();
+                                //}
+                                //else
+                                if (info[0] == "Material")
                                 {
                                     val = materialService.GetAllQuerable().Where(x => x.ProductType.ToString() == info[1] && x.MaterialName == info[2]).Select(x => x.UnitCost).FirstOrDefault();
                                 }
@@ -279,7 +281,7 @@ namespace ShutterManagement.Business.Services
                     }
                     var res = validate.Evaluate();
                     responseVm.IsSuccess = true;
-                    responseVm.Message = "Expression Validate.";
+                    responseVm.Message = "Expression is correct. You can add this expression now.";
                     responseVm.Data = res.ToString() ?? "";
                 }
             }
