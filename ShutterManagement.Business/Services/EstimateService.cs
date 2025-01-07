@@ -50,6 +50,8 @@ namespace ShutterManagement.Business.Services
         private string Message = "";
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IOption optionService;
+        private readonly ITaxRate taxRate;
+        private readonly IRegion region;
         List<Guid> expressionList = new List<Guid>();
 
         public EstimateService(BtprojecShuttermanagementDevContext context,
@@ -74,7 +76,9 @@ namespace ShutterManagement.Business.Services
             IMstProductType productType,
             EmailHelper emailHelper,
             IHttpContextAccessor _httpContextAccessor,
-            IOption optionService
+            IOption optionService,
+            ITaxRate taxRate,
+            IRegion region
             )
         {
             _context = context;
@@ -101,6 +105,8 @@ namespace ShutterManagement.Business.Services
             this.emailHelper = emailHelper;
             this._httpContextAccessor = _httpContextAccessor;
             this.optionService = optionService;
+            this.taxRate = taxRate;
+            this.region = region;
         }
 
         public async Task<IResponseVm<string>> ActiveInActiveEstimate(Guid EstimateId)
@@ -744,6 +750,10 @@ namespace ShutterManagement.Business.Services
                     .FirstOrDefault();
                 e.primarycolor = tenantdetails.PrimaryColor;
                 e.CompanyName = tenantdetails.CompanyName;
+                var taxdetails = taxRate.GetAllQuerable().Where(x => x.TaxRateId == estimate.TaxId && x.IsDelete == false).FirstOrDefault();
+                var region1 = dbContext.MstRegions.Where(x => x.Id == taxdetails.Region && x.IsDelete == false).Select(pt=> pt.RegionName).FirstOrDefault();
+                e.TaxRate = taxdetails.Rate;
+                e.Region = region1;
 
 
                 // Fetch and add related products and options

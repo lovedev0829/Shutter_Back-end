@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -41,6 +42,8 @@ namespace ShutterManagement.Business.Services
         private readonly IJobService jobService;
         private readonly IContactService contactService;
         private readonly IEstimateWindowProductService estimateWindowProduct;
+        private readonly ITaxRate taxRate;
+        private readonly IRegion region;
         private string Message = "";
         public OrderService(ITenantService tenantService, IWindowProductService windowProductService,
              IWindowService windowService, IComponentMaterial componentMaterialService,
@@ -51,7 +54,8 @@ namespace ShutterManagement.Business.Services
              IOrderWindowProductComponentMaterialService orderWindowProductComponentMaterialService,
              IEstimateService estimateService, BtprojecShuttermanagementDevContext context,
              IWindowOptionService windowOptionService, IOptionsTypeService optionsTypeService, IMstProductType productType,
-             IJobService jobService, IContactService contactService, IEstimateWindowProductService estimateWindowProduct)
+             IJobService jobService, IContactService contactService, IEstimateWindowProductService estimateWindowProduct, ITaxRate taxRate,
+            IRegion region)
         {
             this.tenantService = tenantService;
             this.windowProductService = windowProductService;
@@ -73,6 +77,8 @@ namespace ShutterManagement.Business.Services
             this.jobService = jobService;
             this.contactService = contactService;
             this.estimateWindowProduct = estimateWindowProduct;
+            this.taxRate = taxRate;
+            this.region = region;
         }
 
 
@@ -168,7 +174,7 @@ namespace ShutterManagement.Business.Services
                     newOrder.DiscountAmount = estimate.DiscountAmount;
                     newOrder.DiscountCoupon = estimate.DiscountCoupon;
                     newOrder.GrandTotal = estimate.GrandTotal;
-                    newOrder.TaxId = updateOrder.taxRateId;
+                    newOrder.TaxId = estimate.TaxId;
                     newOrder.TaxAmount = estimate.TaxAmount;
                     newOrder.TotalPrice = estimate.TotalPrice;
                     newOrder.TermsCondition = estimate.TermsCondition;
@@ -770,6 +776,10 @@ namespace ShutterManagement.Business.Services
                     .FirstOrDefault();
                 e.primarycolor = tenantdetails.PrimaryColor;
                 e.CompanyName = tenantdetails.CompanyName;
+                var taxdetails = taxRate.GetAllQuerable().Where(x => x.TaxRateId == order.TaxId && x.IsDelete == false).FirstOrDefault();
+                var region1 = dbContext.MstRegions.Where(x => x.Id == taxdetails.Region && x.IsDelete == false).Select(pt => pt.RegionName).FirstOrDefault();
+                e.TaxRate = taxdetails.Rate;
+                e.Region = region1;
                 AddEstimateProducts(order, e);
                 orderlist.Add(e);
             }
