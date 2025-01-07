@@ -48,6 +48,7 @@ namespace ShutterManagement.Core.ViewModels.Response
 
     public class EstimateWindowList
     {
+      
         public decimal? Height { get; set; }
         public decimal? Width { get; set; }
         public decimal? ArchHeight { get; set; }
@@ -55,6 +56,8 @@ namespace ShutterManagement.Core.ViewModels.Response
     public class EstimateProductList
     {
         public Guid EstimateWindowProductId { get; set; }
+
+        public decimal? WindowQty { get; set; }
         public string? Label { get; set; }
         public string? ProductType { get; set; }
         public string? ProductTypeName { get; set; }

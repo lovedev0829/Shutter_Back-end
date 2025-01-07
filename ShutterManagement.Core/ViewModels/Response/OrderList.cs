@@ -60,6 +60,7 @@ namespace ShutterManagement.Core.ViewModels.Response
     {
         public Guid EstimateWindowProductId { get; set; }
         public string? Label { get; set; }
+        public decimal? WindowQty { get; set; }
         public string? ProductType { get; set; }
         public string? ProductTypeName { get; set; }
         public decimal? Width { get; set; }

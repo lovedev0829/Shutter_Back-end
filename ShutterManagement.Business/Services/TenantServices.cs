@@ -53,10 +53,16 @@ namespace ShutterManagement.Business.Services
                 }
 
                 var TenantDetails = (await GetAll()).Where(x => x.IsDelete == false).Select(x => x.BrandingInfo).ToList();
-                bool IsTenantEmailExists = await tenantBrandingService.AnyAsync(x => x.Email == model.Email && TenantDetails.Contains(x.Id));
+                bool IsTenantEmailExists = await tenantBrandingService.AnyAsync(x => x.Email == model.Email && x.IsDelete == false && TenantDetails.Contains(x.Id));
                 if (IsTenantEmailExists)
                 {
                     responseVm.Message = "Email " + AppConstant.AlreadyExists;
+                    return responseVm;
+                }
+                bool IsTenantCompanynameExists = await tenantBrandingService.AnyAsync(x => x.CompanyName == model.CompanyName && x.IsDelete == false);
+                if (IsTenantCompanynameExists)
+                {
+                    responseVm.Message = "CompanyName " + AppConstant.AlreadyExists;
                     return responseVm;
                 }
                 bool IsUserEmailExists = await userService.AnyAsync(x => x.Email == model.UserEmail && x.IsDelete == false);
@@ -76,6 +82,7 @@ namespace ShutterManagement.Business.Services
                     new SqlParameter("@Email", SqlDbType.NVarChar) { SqlValue = model.Email },
                     new SqlParameter("@PhoneNumber", SqlDbType.NVarChar) { SqlValue = model.PhoneNumber },
                     new SqlParameter("@Logo", SqlDbType.NVarChar) { SqlValue = model.Logo },
+                    new SqlParameter("@CompanyName", SqlDbType.NVarChar) { SqlValue = model.CompanyName },
                     new SqlParameter("@PrimaryColor", SqlDbType.NVarChar) { SqlValue = model.PrimaryColor },
                     new SqlParameter("@SecondaryColor", SqlDbType.NVarChar) { SqlValue = model.SecondaryColor },
                     new SqlParameter("@UserFirstName", SqlDbType.NVarChar) { SqlValue = model.UserFirstName },
@@ -152,13 +159,19 @@ namespace ShutterManagement.Business.Services
                 var tenantid = Guid.Parse(model.TenantId);
                 //var braindingInfo = GetAllQuerable().Where(x => x.TenantId.ToString() == model.TenantId && x.IsDelete == false).Select(x => x.BrandingInfo).FirstOrDefault();
                 var TenantDetails = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId.ToString() != model.TenantId).Select(x => x.BrandingInfo).ToList();
-                bool IsTenantEmailExists = await tenantBrandingService.AnyAsync(x => x.Email == model.Email && TenantDetails.Contains(x.Id));
+                bool IsTenantEmailExists = await tenantBrandingService.AnyAsync(x => x.Email == model.Email  && x.IsDelete == false && TenantDetails.Contains(x.Id));
                 if (IsTenantEmailExists)
                 {
                     responseVm.Message = "Email " + AppConstant.AlreadyExists;
                     return responseVm;
                 }
-
+                bool IsTenantCompanynameExists = await tenantBrandingService.AnyAsync(x => x.CompanyName == model.CompanyName.Trim() && x.IsDelete == false &&
+                TenantDetails.Contains(x.Id));
+                if (IsTenantCompanynameExists)
+                {
+                    responseVm.Message = "CompanyName " + AppConstant.AlreadyExists;
+                    return responseVm;
+                }
                 var IsCodeExists = await AnyAsync(x => x.IsActive == true
                     && x.IsDelete == false && x.Code == model.Code.Trim() && x.TenantId != tenantid);
                 if (!IsCodeExists)
@@ -177,6 +190,7 @@ namespace ShutterManagement.Business.Services
                     new SqlParameter("@Email", SqlDbType.NVarChar) { SqlValue = model.Email?.Trim() },
                     new SqlParameter("@PhoneNumber", SqlDbType.NVarChar) { SqlValue = model.PhoneNumber },
                     new SqlParameter("@Logo", SqlDbType.NVarChar) { SqlValue = model.Logo },
+                    new SqlParameter("@CompanyName", SqlDbType.NVarChar) { SqlValue = model.CompanyName.Trim() },
                     new SqlParameter("@PrimaryColor", SqlDbType.NVarChar) { SqlValue = model.PrimaryColor },
                     new SqlParameter("@SecondaryColor", SqlDbType.NVarChar) { SqlValue = model.SecondaryColor },
                     new SqlParameter("@UserFirstName", SqlDbType.NVarChar) { SqlValue = model.UserFirstName },
@@ -219,6 +233,13 @@ namespace ShutterManagement.Business.Services
                     TenantDetails.IsActive = false;
                     TenantDetails.ModifiedBy = AppConstant.LoggedInUserID;
                     TenantDetails.UpdatedAt = DateTime.Now;
+
+                    var brandingInfo = tenantBrandingService.GetAllQuerable().Where(x => x.Id == TenantDetails.BrandingInfo && x.IsDelete == false).FirstOrDefault();
+                    if (brandingInfo != null)
+                    {
+                        brandingInfo.IsActive = false;
+                        brandingInfo.IsDelete = true;   
+                    }
                     var TenantUser = userService.GetAllQuerable().Where(x => x.TenantId.ToString() == TenantId).ToList();
 
                     foreach (var item in TenantUser)
@@ -258,6 +279,14 @@ namespace ShutterManagement.Business.Services
                     TenantDetails.IsActive = !TenantDetails.IsActive;
                     TenantDetails.ModifiedBy = AppConstant.LoggedInUserID;
                     TenantDetails.UpdatedAt = DateTime.Now;
+
+
+                    var brandingInfo = tenantBrandingService.GetAllQuerable().Where(x => x.Id == TenantDetails.BrandingInfo && x.IsDelete == false).FirstOrDefault();
+                    if (brandingInfo != null)
+                    {
+                        brandingInfo.IsActive = !brandingInfo.IsActive;
+                        //brandingInfo.IsDelete = true;
+                    }
 
                     var TenantUser = userService.GetAllQuerable().Where(x => x.TenantId.ToString() == TenantId).ToList();
 
@@ -308,6 +337,7 @@ namespace ShutterManagement.Business.Services
                                     (x.TenantId.ToString() == filter.SearchValue) ||
                                     ((x.BrandingInfoNavigation?.Email ?? "").ToLower().Contains(filter.SearchValue)
                                     || (x.BrandingInfoNavigation?.PhoneNumber ?? "").ToLower().Contains(filter.SearchValue)
+                                    || (x.BrandingInfoNavigation?.CompanyName ?? "").ToLower().Contains(filter.SearchValue)
                                     || (x.FirstName ?? "").ToLower().Contains(filter.SearchValue)
                                     || (x.LastName ?? "").ToLower().Contains(filter.SearchValue)
                                     || (x.MiddleName ?? "").ToLower().Contains(filter.SearchValue)
@@ -328,6 +358,7 @@ namespace ShutterManagement.Business.Services
                         Email = x.BrandingInfoNavigation.Email,
                         PhoneNumber = x.BrandingInfoNavigation.PhoneNumber,
                         Logo = x.BrandingInfoNavigation.Logo,
+                        CompanyName = x.BrandingInfoNavigation.CompanyName,
                         PrimaryColor = x.BrandingInfoNavigation.PrimaryColor,
                         SecondaryColor = x.BrandingInfoNavigation.SecondaryColor,
                         IsActive = x.IsActive

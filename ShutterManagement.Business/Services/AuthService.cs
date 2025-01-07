@@ -182,7 +182,9 @@ namespace ShutterManagement.Services
                         Logo = brandInfo.Logo,
                         PrimaryColor = brandInfo.PrimaryColor,
                         SecondaryColor = brandInfo.SecondaryColor,
+                        CompanyName = brandInfo.CompanyName,
                     };
+
                     responseVm.IsSuccess = true;
                     responseVm.Data = homePageContent;
                 }

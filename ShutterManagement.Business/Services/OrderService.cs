@@ -845,13 +845,17 @@ namespace ShutterManagement.Business.Services
                 var WindowDetails = orderWindowService.GetAllQuerable()
                     .Where(x => x.OrderId == order.OrderId && x.IsDelete == false)
                     .ToList();
-                EstimateProductLists estimateProduct = new EstimateProductLists
-                {
+
+                var WindowQty_Label = windowService.GetAllQuerable()
+                       .Where(w => w.WindowId == p.WindowId && w.IsDelete == false)
+                       .FirstOrDefault();
+               
+                   
+                    EstimateProductLists estimateProduct = new EstimateProductLists
+                    {
                     EstimateWindowProductId = p.OrderWindowProductId,
-                    Label = windowService.GetAllQuerable()
-                        .Where(w => w.WindowId == p.WindowId && w.IsDelete == false)
-                        .Select(pt => pt.Label)
-                        .FirstOrDefault(),
+                    Label = WindowQty_Label.Label,
+                    WindowQty = WindowQty_Label.Quantity,
                     ProductType = p.ProductType,
                     ProductTypeName = productType.GetAllQuerable()
                         .Where(pt => pt.ProductId.ToString() == p.ProductType && pt.IsDelete == false)

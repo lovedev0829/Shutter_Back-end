@@ -18,5 +18,6 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? Logo { get; set; }
         public string? PrimaryColor { get; set; }
         public string? SecondaryColor { get; set; }
+        public string? CompanyName { get; set; }
     }
 }
