@@ -186,6 +186,8 @@ namespace ShutterManagement.Business.Services
                 IsActive = x.IsActive
                 };
 
+                jobContactsQuery= jobContactsQuery.Where(x=>filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true));
+
                 filter.SearchValue = filter.SearchValue?.Trim().ToLower();
                 var filteredInvoices = jobContactsQuery
                     .Where(x =>
