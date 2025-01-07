@@ -776,10 +776,25 @@ namespace ShutterManagement.Business.Services
                     .FirstOrDefault();
                 e.primarycolor = tenantdetails.PrimaryColor;
                 e.CompanyName = tenantdetails.CompanyName;
-                var taxdetails = taxRate.GetAllQuerable().Where(x => x.TaxRateId == order.TaxId && x.IsDelete == false).FirstOrDefault();
-                var region1 = dbContext.MstRegions.Where(x => x.Id == taxdetails.Region && x.IsDelete == false).Select(pt => pt.RegionName).FirstOrDefault();
-                e.TaxRate = taxdetails.Rate;
-                e.Region = region1;
+                var taxdetails = taxRate.GetAllQuerable()
+    .Where(x => x.TaxRateId == order.TaxId && x.IsDelete == false)
+    .FirstOrDefault();
+
+                if (taxdetails != null)
+                {
+                    var region1 = region.GetAllQuerable()
+                        .Where(x => x.Id == taxdetails.Region && x.IsDelete == false)
+                        .Select(pt => pt.RegionName)
+                        .FirstOrDefault();
+
+                    e.TaxRate = taxdetails.Rate;
+                    e.Region = region1 ?? "";
+                }
+                else
+                {
+                    e.TaxRate = 0;
+                    e.Region = "";
+                }
                 AddEstimateProducts(order, e);
                 orderlist.Add(e);
             }
