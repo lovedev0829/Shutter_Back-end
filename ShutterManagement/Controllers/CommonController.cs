@@ -48,6 +48,7 @@ namespace ShutterManagement.Controllers
         private readonly IJobService jobService;
         private readonly IExpressionService expression;
         private readonly IInvoiceService invoiceService;
+        private readonly ITaxRate taxService;
 
         public CommonController(IMasterCreate masterCreate, 
             FileUploadHelper fileUpload, ClaimsProperty claimsProperty,
@@ -58,7 +59,7 @@ namespace ShutterManagement.Controllers
             IComponentService componentService, IMstProductType mstProductType,
             IAddress address, IOption option, IProductService productService,
             IUnitofMeasurementService unitofMeasurementService, IRoleService roleService, IRegion region, IContactService contactService,
-            IMstContactType contactType, IJobService jobService,IExpressionService expression ,IInvoiceService invoiceService)
+            IMstContactType contactType, IJobService jobService,IExpressionService expression ,IInvoiceService invoiceService,ITaxRate taxService)
         {
             this.masterCreate = masterCreate;
             this.fileUpload = fileUpload;
@@ -95,6 +96,7 @@ namespace ShutterManagement.Controllers
             this.jobService = jobService;
             this.expression = expression;
             this.invoiceService = invoiceService;
+            this.taxService = taxService;
         }
 
 
@@ -526,6 +528,20 @@ namespace ShutterManagement.Controllers
         {
             var res = await material.GetAll_Material(filter);
             res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
+            return Ok(res);
+        }
+
+
+        [HttpGet]
+        [Route("GetAllTax")]
+        public async Task<IActionResult> GetAllTax()
+        {
+            var res = await taxService.GetAll_Tax(filter);
+            DateTime current = Convert.ToDateTime(DateTime.Now.ToShortDateString());
+            var d = res.Data
+        .Where(x => x.IsActive == true && x.EffectiveDate <= current && x.ExpiryDate >= current)
+        .ToList();
+            res.Data = d;
             return Ok(res);
         }
 
