@@ -77,6 +77,7 @@ namespace ShutterManagement.Services
                     Logo = reader.GetString(reader.GetOrdinal("Logo")),
                     PrimaryColor = reader.GetString(reader.GetOrdinal("PrimaryColor")),
                     SecondaryColor = reader.GetString(reader.GetOrdinal("SecondaryColor")),
+                    CompanyName = reader.GetString(reader.GetOrdinal("CompanyName")),
                 };
             },
              new SqlParameter("@Username", SqlDbType.NVarChar, 100) { SqlValue = user.Username },
@@ -114,6 +115,7 @@ namespace ShutterManagement.Services
                 claims.AddClaim(new Claim("TenantId", UserDetails[0].TenantId.ToString() ?? ""));
                 claims.AddClaim(new Claim("ParentTenantId", UserDetails[0].ParentTenantId.ToString() ?? ""));
                 claims.AddClaim(new Claim("CompanyCode", user.CompanyCode));
+                claims.AddClaim(new Claim("CompanyName", UserDetails[0].CompanyName));
 
                 var tokenHandler = new JwtSecurityTokenHandler();
                 var key = Encoding.UTF8.GetBytes(AppConstant.JWTSecretKey);

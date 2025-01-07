@@ -21,6 +21,7 @@ namespace ShutterManagement.Core.SPModel.SP_Responses
         public string? Logo { get; set; }
         public string? PrimaryColor { get; set; }
         public string? SecondaryColor { get; set; }
+        public string? CompanyName { get; set; }
         public Guid? TenantId { get; set; }
         public string? ParentTenantId { get; set; }
 
