@@ -276,7 +276,7 @@ namespace ShutterManagement.Business.Services
                     var validate = new NCalc.Expression(formula);
                     if (validate.HasErrors())
                     {
-                        responseVm.Message = "Expression error: " + validate.Error;
+                        responseVm.Message = "There is some issue in Expression.";
                         return responseVm;
                     }
                     var res = validate.Evaluate();
