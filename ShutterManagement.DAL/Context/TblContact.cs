@@ -41,6 +41,8 @@ public partial class TblContact
 
     public bool? IsArchive { get; set; }
 
+    public string? ContactUniqueId { get; set; }
+
     public virtual ICollection<TblAddress> TblAddresses { get; set; } = new List<TblAddress>();
 
     public virtual ICollection<TblContactBillingAddress> TblContactBillingAddresses { get; set; } = new List<TblContactBillingAddress>();

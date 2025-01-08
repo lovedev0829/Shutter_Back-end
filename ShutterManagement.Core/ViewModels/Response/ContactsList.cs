@@ -20,6 +20,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? Website { get; set; }
         public string? Notes { get; set; }
         public string? Referral { get; set; }
+        public string? ContactUniqueId { get; set; }
         public bool IsBillingAddressSameAsAddress { get; set; } = false;
         public BillingAddressVm billingAddressVm { get; set; } = new BillingAddressVm();
         public bool IsTaxExemption { get; set; } = false;

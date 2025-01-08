@@ -42,6 +42,8 @@ namespace ShutterManagement.Core.Common
 
     public enum ModuleName
     {
+        [EnumMember(Value = "Contact")]
+        Contact,
         [EnumMember(Value = "JOB")]
         Job,
         [EnumMember(Value = "EST")]

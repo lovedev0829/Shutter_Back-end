@@ -385,6 +385,7 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.Property(e => e.ContactType)
                 .HasMaxLength(50)
                 .IsUnicode(false);
+            entity.Property(e => e.ContactUniqueId).HasMaxLength(50);
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
