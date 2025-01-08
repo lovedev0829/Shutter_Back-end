@@ -19,6 +19,6 @@ namespace ShutterManagement.Business.Interfaces
         Task<IResponseVm<string>> TenantUpdate(UpdateTenant model);
         Task<IResponseVm<string>> TenantDelete(string TenantId);
         Task<IResponseVm<string>> TenantActiveInactive(string TenantId);
-        Task<IResponseVm<dynamic>> TenantGetAll(Pagination filter);
+        Task<IResponseVm<List<GetAllTenant>>> TenantGetAll(Pagination filter);
     }
 }

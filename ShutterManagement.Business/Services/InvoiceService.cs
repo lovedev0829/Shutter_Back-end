@@ -10,6 +10,16 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Azure;
+using Azure.Core;
+using Microsoft.Extensions.Hosting;
+using System.Drawing.Imaging;
+using System.Drawing.Printing;
+using CsvHelper.TypeConversion;
+using DinkToPdf;
+using DinkToPdf.Contracts;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.Text;
 
 namespace ShutterManagement.Business.Services
 {
@@ -17,13 +27,27 @@ namespace ShutterManagement.Business.Services
     {
         private readonly ITenantService tenantService;
         private readonly IInvoicePaymentService invoicePaymentService;
+        private readonly IHostEnvironment environment;
+        private readonly IConverter converter;
+        private readonly IContactService contactService;
+        private readonly IEstimateService estimateService;
+        private readonly ITenantBrandingService tenantBrandingService;
+        public Pagination filter = new Pagination();
 
-        public InvoiceService(ITenantService tenantService, IInvoicePaymentService invoicePaymentService )
+        public InvoiceService(ITenantService tenantService, IInvoicePaymentService invoicePaymentService,
+            IHostEnvironment environment, IConverter converter ,IContactService contactService 
+            ,IEstimateService estimateService, ITenantBrandingService tenantBrandingService)
         {
             this.tenantService = tenantService;
             this.invoicePaymentService = invoicePaymentService;
+            this.environment = environment;
+            this.converter = converter;
+            this.contactService = contactService;
+            this.estimateService = estimateService;
+            this.tenantBrandingService = tenantBrandingService;
         }
 
+        #region Create  update ActiveInActive Delete Getall
         public async Task<IResponseVm<string>> ActiveInActive(Guid InvoiceId)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
@@ -336,6 +360,7 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
+        #endregion 
         public async Task<IResponseVm<string>> UpdateInvoice(UpdateInvoice updateInvoice)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
@@ -425,5 +450,170 @@ namespace ShutterManagement.Business.Services
         }
 
 
+        #region Invoice_Generate_Methods
+
+        public async Task<IResponseVm<string>> SendInvoiceAttachment(GenerateInvoiceModel model)
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+            try
+            {
+                var isTenantValid = await tenantService.AnyAsync(x =>
+                    x.TenantId == AppConstant.LoggedInTenantId && x.IsActive==true && x.IsDelete==false);
+                if (!isTenantValid)
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = AppConstant.AccessDenied;
+                    return responseVm;
+                }
+
+                var invoiceTemplate = dbContext.TblTemplates.FirstOrDefault(c =>
+                    c.TemplateId == model.TemplateId &&
+                    c.TenantId == AppConstant.LoggedInTenantId &&
+                    c.IsDelete==false);
+
+                if (invoiceTemplate == null)
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = AppConstant.NoDataFound;
+                    return responseVm;
+                }
+
+                var customerDetails = (await contactService.GetAll_Contact(filter))
+                    .Data.FirstOrDefault(x => x.ContactId == model.ContactId && x.IsActive==true);
+
+                var tenantDetails = (await tenantService.TenantGetAll(filter))
+                    .Data.FirstOrDefault(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive==true);
+
+                var estimationDetails = dbContext.TblEstimates.FirstOrDefault(c =>
+                    c.EstimateId == model.EstimationId &&
+                    c.TenantId == AppConstant.LoggedInTenantId &&
+                    c.IsDelete==false);
+
+                var estimationRecord = await estimateService.ViewEachEstimation(model.EstimationId);
+
+                var productList = estimationRecord.Data
+                    .FirstOrDefault(x => x.IsActive == true)
+                    ?.EstimateProductList?? new List<EstimateProductList>();
+
+                var invoiceData = new InvoiceDataModel
+                {
+                    CustomerName = customerDetails?.Name ?? "",
+                    PreparedBy = tenantDetails?.FirstName +" " +tenantDetails?.LastName ?? "",
+                    CustomerId = customerDetails?.ContactId.ToString() ?? "",
+                    CustomerCity = customerDetails?.billingAddressVm?.City ?? "",
+                    CustomerState = customerDetails?.billingAddressVm?.State ?? "",
+                    CustomerZipCode = customerDetails?.billingAddressVm?.ZipCode ?? "",
+                    HomePhone = customerDetails?.billingAddressVm?.PhoneNumber ?? "",
+                    CompanyStreetAddress = customerDetails?.billingAddressVm?.PhoneNumber ?? "",
+                    MobilePhone = customerDetails?.PhoneNumber ?? "",
+                    TenantCompanyName = tenantDetails?.CompanyName ?? "",
+                    Logo = tenantDetails?.Logo ?? "",
+                    EstimationDate = estimationDetails?.CreatedAt.ToString() ?? "",
+                    CreatedBy = estimationDetails?.CreatedBy.ToString() ?? "",
+                    EstimationSubtotal = estimationDetails?.TotalPrice.ToString() ?? "",
+                    EstimationGrandTotal = estimationDetails?.GrandTotal.ToString() ?? "",
+                    EstimationId = estimationDetails?.EstimateId.ToString() ?? "",
+                    EmailAddress = customerDetails?.Email ?? "",
+                    ProductListHtml = GenerateProductListHtml(productList)
+                };
+
+                var htmlContent = ReplaceTemplatePlaceholders(invoiceTemplate.TemplateValue, invoiceData);
+
+                var pdfBytes = GenerateInvoicePdf(htmlContent);
+
+                var tenantId = AppConstant.LoggedInTenantId.ToString();
+                var rootPath = Path.Combine(AppConstant.FileUploadPath, tenantId);
+                if (!Directory.Exists(rootPath))
+                {
+                    Directory.CreateDirectory(rootPath);
+                }
+
+                var fileName = $"Invoice_{Guid.NewGuid()}.pdf";
+                var savePath = Path.Combine(rootPath, fileName);
+
+                await using (var stream = new FileStream(savePath, FileMode.Create))
+                {
+                    await stream.WriteAsync(pdfBytes, 0, pdfBytes.Length);
+                }
+                var pdfBase64 = Convert.ToBase64String(pdfBytes);
+
+                responseVm.IsSuccess = true;
+                responseVm.Message = "Invoice sent successfully.";
+                responseVm.Data = pdfBase64;
+
+               File.Delete(savePath);
+            }
+            catch (Exception ex)
+            {
+                responseVm.IsSuccess = false;
+                responseVm.Message = $"{AppConstant.ExceptionError}: {ex.Message}";
+            }
+
+            return responseVm;
+        }
+
+        private string GenerateProductListHtml(List<EstimateProductList> productList)
+        {
+            var productListHtml = new StringBuilder();
+            int i = 0;
+            foreach (var product in productList)
+            {
+                productListHtml.Append($@"
+    <tr>
+        <td>{++i}</td>
+        <td>{product.ProductTypeName}</td>
+        <td>{product.ProductName}</td>
+        <td>{string.Join(", ", product.Options)}</td>
+        <td>{product.WindowQty}</td>
+        <td>{product.Width}</td>
+        <td>{product.Height}</td>
+        <td></td>
+        <td>{product.TotalPrice}</td>
+    </tr>");
+            }
+
+            return $"<tbody>{productListHtml}</tbody>";
+        }
+
+        private string ReplaceTemplatePlaceholders(string template, InvoiceDataModel data)
+        {
+            return template
+                .Replace("{{customerName}}", data.CustomerName ?? "")
+                .Replace("{{customerId}}", data.CustomerId ?? "")
+                .Replace("{{customercity}}", data.CustomerCity ?? "")
+                .Replace("{{customerstate}}", data.CustomerState ?? "")
+                .Replace("{{customerZipcode}}", data.CustomerZipCode ?? "")
+                .Replace("{{homephone}}", data.HomePhone ?? "")
+                .Replace("{{companystreetaddress}}", data.CompanyStreetAddress ?? "")
+                .Replace("{{mobilephone}}", data.MobilePhone ?? "")
+                .Replace("{{tenantCompanyName}}", data.TenantCompanyName ?? "")
+                .Replace("{{logo}}", data.Logo ?? "")
+                .Replace("{{estimationdate}}", data.EstimationDate ?? "")
+                .Replace("{{createdby}}", data.PreparedBy?? "")
+                .Replace("{{estimationsubtotal}}", data.EstimationSubtotal ?? "")
+                .Replace("{{estimationgrandtotal}}", data.EstimationGrandTotal ?? "")
+                .Replace("{{estimationId}}", data.EstimationId ?? "")
+                .Replace("{{emailaddress}}", data.EmailAddress ?? "")
+                //.Replace("Address", "Street Address")
+                .Replace("{{productlist}}", data.ProductListHtml ?? "");
+        }
+
+        public byte[] GenerateInvoicePdf(string htmlContent)
+        {
+            var pdfDocument = new HtmlToPdfDocument
+            {
+                GlobalSettings = new GlobalSettings
+                {
+                    ColorMode = DinkToPdf.ColorMode.Color,
+                    Orientation = Orientation.Portrait,
+                    PaperSize = DinkToPdf.PaperKind.A4
+                },
+                Objects = { new ObjectSettings { HtmlContent = htmlContent } }
+            };
+
+            return converter.Convert(pdfDocument);
+        }
+
+        #endregion Invoice_Generate_Methods
     }
 }

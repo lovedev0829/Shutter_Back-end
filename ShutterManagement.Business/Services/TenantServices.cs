@@ -317,9 +317,9 @@ namespace ShutterManagement.Business.Services
 
         }
 
-        public async Task<IResponseVm<dynamic>> TenantGetAll(Pagination filter)
+        public async Task<IResponseVm<List<GetAllTenant>>> TenantGetAll(Pagination filter)
         {
-            IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
+            IResponseVm<List<GetAllTenant>> responseVm = new ResponseVm<List<GetAllTenant>>();
             try
             {
                 var TenantList = (await GetAll()).Where(x => x.IsDelete == false && x.ParentTenantId == null && x.TenantId != AppConstant.LoggedInTenantId).ToList().OrderByDescending(x => x.CreatedAt);

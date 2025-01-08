@@ -15,6 +15,8 @@ using AutoMapper;
 using ShutterManagement.Business;
 using ShutterManagement.Core.Common;
 using Microsoft.Extensions.FileProviders;
+using DinkToPdf.Contracts;
+using DinkToPdf;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -154,7 +156,7 @@ builder.Services.AddScoped<IPaymentsService, PaymentsService>();
 builder.Services.AddScoped<IComponentPriceService, ComponentPriceService>();
 builder.Services.AddScoped<IJobSchedule, JobScheduleService>();
 builder.Services.AddScoped<IJobContactService, JobContactService>();
-
+builder.Services.AddSingleton(typeof(IConverter), new SynchronizedConverter(new PdfTools()));
 
 
 

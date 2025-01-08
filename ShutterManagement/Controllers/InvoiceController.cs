@@ -63,5 +63,14 @@ namespace ShutterManagement.Controllers
 
             return Ok(res);
         }
+
+        [HttpPost("SendInvoice")]
+        public async Task<IActionResult> SendInvoice(GenerateInvoiceModel model)
+        {
+            var res = await invoiceService.SendInvoiceAttachment(model);
+
+            return Ok(res);
+        }
+
     }
 }

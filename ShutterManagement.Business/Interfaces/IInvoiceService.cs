@@ -17,6 +17,7 @@ namespace ShutterManagement.Business.Interfaces
         Task<IResponseVm<string>> UpdateInvoice(UpdateInvoice updateInvoice);
         Task<IResponseVm<string>> DeleteInvoice(Guid InvoiceId);
         Task<IResponseVm<string>> ActiveInActive(Guid InvoiceId);
+        Task<IResponseVm<string>> SendInvoiceAttachment(GenerateInvoiceModel model);
         Task<IResponseVm<List<InvoiceVM>>> GetAllInvoice(Pagination filter);
 
     }
