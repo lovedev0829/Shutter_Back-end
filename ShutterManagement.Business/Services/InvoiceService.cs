@@ -508,7 +508,7 @@ namespace ShutterManagement.Business.Services
                     MobilePhone = customerDetails?.PhoneNumber ?? "",
                     TenantCompanyName = tenantDetails?.CompanyName ?? "",
                     Logo = tenantDetails?.Logo ?? "",
-                    EstimationDate = estimationDetails?.CreatedAt.ToString() ?? "",
+                    EstimationDate = Convert.ToDateTime(estimationDetails?.CreatedAt).ToShortDateString() ?? "",
                     CreatedBy = estimationDetails?.CreatedBy.ToString() ?? "",
                     EstimationSubtotal = estimationDetails?.TotalPrice.ToString() ?? "",
                     EstimationGrandTotal = estimationDetails?.GrandTotal.ToString() ?? "",
