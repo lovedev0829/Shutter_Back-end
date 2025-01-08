@@ -17,6 +17,7 @@ using ShutterManagement.Core.SPModel.SP_Responses;
 using Microsoft.IdentityModel.Tokens;
 using ShutterManagement.Core.ViewModels.Response;
 using static System.Runtime.InteropServices.JavaScript.JSType;
+using ShutterManagement.Core.Common;
 
 namespace ShutterManagement.Business.Services
 {
@@ -108,6 +109,8 @@ namespace ShutterManagement.Business.Services
                         responseVm.Message = "ExpiryDate must be greater than EffectiveDate.";
                         return responseVm;
                     }
+
+                    var contactUniqueId =  GenerateUniqueId.GenerateUniqueIds(ModuleName.Contact, AppConstant.LoggedInCompanyCode);
                     TblContact CreateContact = new TblContact
                     {
                         ContactId = Guid.NewGuid(),
@@ -118,6 +121,7 @@ namespace ShutterManagement.Business.Services
                         Website = model.Website,
                         Notes = model.Notes,
                         Referral = model.Referral,
+                        ContactUniqueId = contactUniqueId,
                         IsTaxExemption = model.IsTaxExemption,
                         IsBillingAddressSameAsAddress = model.IsBillingAddressSameAsAddress,
                         CreatedBy = AppConstant.LoggedInUserID,
@@ -515,6 +519,7 @@ namespace ShutterManagement.Business.Services
                         Website = contact.Website,
                         Notes = contact.Notes,
                         Referral = contact.Referral,
+                        ContactUniqueId = contact.ContactUniqueId,
                         IsTaxExemption = contact.IsTaxExemption ?? false,
                         IsBillingAddressSameAsAddress = contact.IsBillingAddressSameAsAddress,
                         IsActive = contact.IsActive
