@@ -498,7 +498,7 @@ namespace ShutterManagement.Business.Services
                 var invoiceData = new InvoiceDataModel
                 {
                     CustomerName = customerDetails?.Name ?? "",
-                    PreparedBy = tenantDetails?.FirstName +" " +tenantDetails?.LastName ?? "",
+                    PreparedBy = AppConstant.LoggedInName,
                     CustomerId = customerDetails?.ContactId.ToString() ?? "",
                     CustomerCity = customerDetails?.billingAddressVm?.City ?? "",
                     CustomerState = customerDetails?.billingAddressVm?.State ?? "",
@@ -512,7 +512,7 @@ namespace ShutterManagement.Business.Services
                     CreatedBy = estimationDetails?.CreatedBy.ToString() ?? "",
                     EstimationSubtotal = estimationDetails?.TotalPrice.ToString() ?? "",
                     EstimationGrandTotal = estimationDetails?.GrandTotal.ToString() ?? "",
-                    EstimationId = estimationDetails?.EstimateId.ToString() ?? "",
+                    EstimationId = estimationDetails?.EstimateCode.ToString() ?? "",
                     EmailAddress = customerDetails?.Email ?? "",
                     ProductListHtml = GenerateProductListHtml(productList)
                 };
