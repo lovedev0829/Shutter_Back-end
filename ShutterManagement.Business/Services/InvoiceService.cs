@@ -552,6 +552,12 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
+
+
+
+
+
+
         private string GenerateProductListHtml(List<EstimateProductList> productList)
         {
             var productListHtml = new StringBuilder();
