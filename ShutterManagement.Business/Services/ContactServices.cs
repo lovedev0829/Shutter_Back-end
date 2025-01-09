@@ -450,9 +450,9 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        public async Task<IResponseVm<dynamic>> ArchiveContacts(ArchiveUser archiveModel)
+        public async Task<IResponseVm<string>> ArchiveContacts(ArchiveUser archiveModel)
         {
-            IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
+            IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
                 var contact = GetAllQuerable()

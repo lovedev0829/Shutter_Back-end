@@ -21,6 +21,6 @@ namespace ShutterManagement.Business.Interfaces
         Task<IResponseVm<string>> ActiveInActiveContact(Guid ContactId);
         Task<IResponseVm<string>> DeleteContact(Guid ContactId);
         Task<IResponseVm<dynamic>> GetAllArchiveContacts(ArchiveUser archiveModel);
-        Task<IResponseVm<dynamic>> ArchiveContacts(ArchiveUser archiveModel);
+        Task<IResponseVm<string>> ArchiveContacts(ArchiveUser archiveModel);
     }
 }
