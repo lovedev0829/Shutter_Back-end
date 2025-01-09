@@ -65,6 +65,7 @@ namespace ShutterManagement.Controllers
         }
 
         [HttpPost("SendInvoice")]
+        [Authorize(Roles = "EstimateView")]
         public async Task<IActionResult> SendInvoice(GenerateInvoiceModel model)
         {
             var res = await invoiceService.SendInvoiceAttachment(model);

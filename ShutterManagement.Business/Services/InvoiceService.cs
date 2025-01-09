@@ -465,9 +465,10 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.AccessDenied;
                     return responseVm;
                 }
+                Guid? templateId = Guid.Parse("1A57E027-D6B1-441B-9552-F1B0BF07E587");
 
                 var invoiceTemplate = dbContext.TblTemplates.FirstOrDefault(c =>
-                    c.TemplateId == model.TemplateId &&
+                    c.TemplateId == templateId &&
                     c.TenantId == AppConstant.LoggedInTenantId &&
                     c.IsDelete==false);
 
@@ -481,8 +482,8 @@ namespace ShutterManagement.Business.Services
                 var customerDetails = (await contactService.GetAll_Contact(filter))
                     .Data.FirstOrDefault(x => x.ContactId == model.ContactId && x.IsActive==true);
 
-                var tenantDetails = (await tenantService.TenantGetAll(filter))
-                    .Data.FirstOrDefault(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive==true);
+                var tenantDetails = await tenantService.TenantGetAll(filter);
+                    tenantDetails.Data.FirstOrDefault(x => x.TenantId== AppConstant.LoggedInTenantId && x.IsActive==true);
 
                 var estimationDetails = dbContext.TblEstimates.FirstOrDefault(c =>
                     c.EstimateId == model.EstimationId &&
@@ -498,7 +499,7 @@ namespace ShutterManagement.Business.Services
                 var invoiceData = new InvoiceDataModel
                 {
                     CustomerName = customerDetails?.Name ?? "",
-                    PreparedBy = AppConstant.LoggedInName,
+                    PreparedBy = tenantDetails.Data.First().FirstName+" "+ tenantDetails.Data.First().LastName,
                     CustomerId = customerDetails?.ContactId.ToString() ?? "",
                     CustomerCity = customerDetails?.billingAddressVm?.City ?? "",
                     CustomerState = customerDetails?.billingAddressVm?.State ?? "",
@@ -506,9 +507,9 @@ namespace ShutterManagement.Business.Services
                     HomePhone = customerDetails?.billingAddressVm?.PhoneNumber ?? "",
                     CompanyStreetAddress = customerDetails?.billingAddressVm?.PhoneNumber ?? "",
                     MobilePhone = customerDetails?.PhoneNumber ?? "",
-                    TenantCompanyName = tenantDetails?.CompanyName ?? "",
-                    Logo = tenantDetails?.Logo ?? "",
-                    EstimationDate = Convert.ToDateTime(estimationDetails?.CreatedAt).ToShortDateString() ?? "",
+                    TenantCompanyName = tenantDetails?.Data.First().CompanyName ?? "",
+                    Logo = tenantDetails?.Data.First().Logo ?? "",
+                    EstimationDate = Convert.ToDateTime(estimationDetails?.CreatedAt).ToString("MM-dd-yyyy") ?? "",
                     CreatedBy = estimationDetails?.CreatedBy.ToString() ?? "",
                     EstimationSubtotal = estimationDetails?.TotalPrice.ToString() ?? "",
                     EstimationGrandTotal = estimationDetails?.GrandTotal.ToString() ?? "",
@@ -538,7 +539,7 @@ namespace ShutterManagement.Business.Services
                 var pdfBase64 = Convert.ToBase64String(pdfBytes);
 
                 responseVm.IsSuccess = true;
-                responseVm.Message = "Invoice sent successfully.";
+                responseVm.Message = AppConstant.InvoiceDownloadSuccessMsg;
                 responseVm.Data = pdfBase64;
 
                File.Delete(savePath);
@@ -581,7 +582,7 @@ namespace ShutterManagement.Business.Services
             return $"<tbody>{productListHtml}</tbody>";
         }
 
-        private string ReplaceTemplatePlaceholders(string template, InvoiceDataModel data)
+        private string ReplaceTemplatePlaceholders(string template, InvoiceDataModel data) 
         {
             return template
                 .Replace("{{customerName}}", data.CustomerName ?? "")
