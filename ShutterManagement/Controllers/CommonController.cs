@@ -340,42 +340,41 @@ namespace ShutterManagement.Controllers
 
         [HttpGet]
         [Route("ContactEstimationProductBreakdown")]
-        public async Task<IActionResult> ContactEstimationProductBreakdown(Guid EstimationId,string? ProductId)
+        public async Task<IActionResult> ContactEstimationProductBreakdown(Guid EstimationId,string ProductId = "")
         {
             filter.SearchValue = EstimationId.ToString().ToLower();
             var res = await estimateService.GetAll_Estimate(filter);
             var windowProductIds = res.Data.FirstOrDefault()?.WindowProductId;
 
             var estimateResponse = await estimateService.BuildEstimate(windowProductIds, true);
-            if(ProductId != null)
+            if(!string.IsNullOrEmpty(ProductId))
             {
-                var filteredData = estimateResponse.Data.Where(item => item.ProductId.ToString() == ProductId).ToList();
-                return Ok(filteredData);
+               estimateResponse.Data =  estimateResponse.Data.Where(item => item.WindowProdcutId.ToString() == ProductId).ToList();
             }
-            return Ok(estimateResponse.Data);
+            return Ok(estimateResponse);
         }
 
-        [HttpGet]
-        [Route("GetProductBreakdown")]
-        public async Task<IActionResult> GetProductBreakdown(Guid EstimationId)
-        {
-            var ProductId = "";
-            var res = await ContactEstimationProductBreakdown(EstimationId,ProductId=null);
+        //[HttpGet]
+        //[Route("GetProductBreakdown")]
+        //public async Task<IActionResult> GetProductBreakdown(Guid EstimationId)
+        //{
+        //    var ProductId = "";
+        //    var res = await ContactEstimationProductBreakdown(EstimationId,ProductId=null);
 
-            if (res is OkObjectResult okResult && okResult.Value is List<WindowProdcutDetailsForEstimate> data)
-            {
-                var productList = data
-                    .Select(item => new
-                    {
-                        ProductId = item.ProductId,
-                        ProductName = item.ProductName
-                    })
-                    .Distinct()
-                    .ToList();
-                return Ok(productList);
-            }
-            return null;
-        }
+        //    if (res is OkObjectResult okResult && okResult.Value is List<WindowProdcutDetailsForEstimate> data)
+        //    {
+        //        var productList = data
+        //            .Select(item => new
+        //            {
+        //                ProductId = item.ProductId,
+        //                ProductName = item.ProductName
+        //            })
+        //            .Distinct()
+        //            .ToList();
+        //        return Ok(productList);
+        //    }
+        //    return null;
+        //}
 
 
         //[HttpGet]
