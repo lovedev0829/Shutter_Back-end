@@ -32,11 +32,12 @@ namespace ShutterManagement.Business.Services
         private readonly IContactService contactService;
         private readonly IEstimateService estimateService;
         private readonly ITenantBrandingService tenantBrandingService;
+        private readonly IUserService userService;
         public Pagination filter = new Pagination();
 
         public InvoiceService(ITenantService tenantService, IInvoicePaymentService invoicePaymentService,
             IHostEnvironment environment, IConverter converter ,IContactService contactService 
-            ,IEstimateService estimateService, ITenantBrandingService tenantBrandingService)
+            ,IEstimateService estimateService, ITenantBrandingService tenantBrandingService,IUserService userService)
         {
             this.tenantService = tenantService;
             this.invoicePaymentService = invoicePaymentService;
@@ -45,6 +46,7 @@ namespace ShutterManagement.Business.Services
             this.contactService = contactService;
             this.estimateService = estimateService;
             this.tenantBrandingService = tenantBrandingService;
+            this.userService = userService;
         }
 
         #region Create  update ActiveInActive Delete Getall
@@ -360,7 +362,7 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        #endregion 
+        
         public async Task<IResponseVm<string>> UpdateInvoice(UpdateInvoice updateInvoice)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
@@ -448,7 +450,7 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
-
+        #endregion 
 
         #region Invoice_Generate_Methods
 
@@ -465,7 +467,7 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.AccessDenied;
                     return responseVm;
                 }
-                Guid? templateId = Guid.Parse("1A57E027-D6B1-441B-9552-F1B0BF07E587");
+                Guid? templateId = Guid.Parse("DFBD5BD7-D9F9-4E41-8B48-375B3BA79610");
 
                 var invoiceTemplate = dbContext.TblTemplates.FirstOrDefault(c =>
                     c.TemplateId == templateId &&
@@ -482,13 +484,32 @@ namespace ShutterManagement.Business.Services
                 var customerDetails = (await contactService.GetAll_Contact(filter))
                     .Data.FirstOrDefault(x => x.ContactId == model.ContactId && x.IsActive==true);
 
-                var tenantDetails = await tenantService.TenantGetAll(filter);
-                    tenantDetails.Data.FirstOrDefault(x => x.TenantId== AppConstant.LoggedInTenantId && x.IsActive==true);
+                var tenantDetails = tenantService.GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true).FirstOrDefault();
+                if (tenantDetails == null)
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = $"Tenant " + AppConstant.NoDataFound;
+                    return responseVm;
+                }
+                var tenantInfoDetails = tenantBrandingService.GetAllQuerable().Where(x => x.Id == tenantDetails.BrandingInfo && x.IsActive == true).FirstOrDefault();
+
+               
 
                 var estimationDetails = dbContext.TblEstimates.FirstOrDefault(c =>
                     c.EstimateId == model.EstimationId &&
                     c.TenantId == AppConstant.LoggedInTenantId &&
                     c.IsDelete==false);
+                if (estimationDetails == null)
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = $"EstimationDetails " + AppConstant.NoDataFound;
+                    return responseVm;
+                }
+
+                var userDetails = dbContext.TblUsers.FirstOrDefault(c =>
+                   c.Id == estimationDetails.CreatedBy &&
+                   c.TenantId == AppConstant.LoggedInTenantId &&
+                   c.IsDelete == false);
 
                 var estimationRecord = await estimateService.ViewEachEstimation(model.EstimationId);
 
@@ -499,16 +520,20 @@ namespace ShutterManagement.Business.Services
                 var invoiceData = new InvoiceDataModel
                 {
                     CustomerName = customerDetails?.Name ?? "",
-                    PreparedBy = tenantDetails.Data.First().FirstName+" "+ tenantDetails.Data.First().LastName,
-                    CustomerId = customerDetails?.ContactId.ToString() ?? "",
+                    PreparedBy = userDetails?.FirstName+" "+ userDetails?.LastName,
+                    CustomerId = customerDetails?.ContactUniqueId ?? "",
                     CustomerCity = customerDetails?.billingAddressVm?.City ?? "",
                     CustomerState = customerDetails?.billingAddressVm?.State ?? "",
                     CustomerZipCode = customerDetails?.billingAddressVm?.ZipCode ?? "",
                     HomePhone = customerDetails?.billingAddressVm?.PhoneNumber ?? "",
-                    CompanyStreetAddress = customerDetails?.billingAddressVm?.PhoneNumber ?? "",
+                    CompanyStreetAddress = tenantInfoDetails?.StreetAddress ?? "",
+                    CompanyCity = tenantInfoDetails?.City ?? "",
+                    CompanyCountry = tenantInfoDetails?.Country ?? "",
+                    CompanyZipCode = tenantInfoDetails?.ZipCode ?? "",
+                    CustomerStreetAddress= customerDetails?.billingAddressVm?.StreetAddress ?? "",
                     MobilePhone = customerDetails?.PhoneNumber ?? "",
-                    TenantCompanyName = tenantDetails?.Data.First().CompanyName ?? "",
-                    Logo = tenantDetails?.Data.First().Logo ?? "",
+                    TenantCompanyName = tenantInfoDetails?.CompanyName ?? "",
+                    Logo = tenantInfoDetails?.Logo ?? "",
                     EstimationDate = Convert.ToDateTime(estimationDetails?.CreatedAt).ToString("MM-dd-yyyy") ?? "",
                     CreatedBy = estimationDetails?.CreatedBy.ToString() ?? "",
                     EstimationSubtotal = estimationDetails?.TotalPrice.ToString() ?? "",
@@ -553,12 +578,6 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-
-
-
-
-
-
         private string GenerateProductListHtml(List<EstimateProductList> productList)
         {
             var productListHtml = new StringBuilder();
@@ -566,16 +585,16 @@ namespace ShutterManagement.Business.Services
             foreach (var product in productList)
             {
                 productListHtml.Append($@"
-    <tr>
-        <td>{++i}</td>
-        <td>{product.ProductTypeName}</td>
-        <td>{product.ProductName}</td>
-        <td>{string.Join(", ", product.Options)}</td>
-        <td>{product.WindowQty}</td>
-        <td>{product.Width}</td>
-        <td>{product.Height}</td>
+    <tr style='background-color: #efefef;'>
+        <td style='text-align: center; padding: 5px 5px;'>{++i}</td>
+        <td style='text-align: center; padding: 5px 5px;'>{product.ProductTypeName}</td>
+        <td style='text-align: center; padding: 5px 5px;'>{product.ProductName}</td>
+        <td style='text-align: center; padding: 5px 5px;'>{string.Join(", ", product.Options)}</td>
+        <td style='text-align: center; padding: 5px 5px;'>{product.WindowQty}</td>
+        <td style='text-align: center; padding: 5px 5px;'>{product.Width}</td>
+        <td style='text-align: center; padding: 5px 5px;'>{product.Height}</td>
         <td></td>
-        <td>{product.TotalPrice}</td>
+        <td style='text-align: center; padding: 5px 5px;'>{product.TotalPrice}</td>
     </tr>");
             }
 
@@ -590,8 +609,12 @@ namespace ShutterManagement.Business.Services
                 .Replace("{{customercity}}", data.CustomerCity ?? "")
                 .Replace("{{customerstate}}", data.CustomerState ?? "")
                 .Replace("{{customerZipcode}}", data.CustomerZipCode ?? "")
+                .Replace("{{streetaddress}}", data.CustomerStreetAddress ?? "")
                 .Replace("{{homephone}}", data.HomePhone ?? "")
                 .Replace("{{companystreetaddress}}", data.CompanyStreetAddress ?? "")
+                .Replace("{{companycity}}", data.CompanyCity ?? "")
+                .Replace("{{companycountry}}", data.CompanyCountry ?? "")
+                .Replace("{{companyzipcode}}", data.CompanyZipCode ?? "")
                 .Replace("{{mobilephone}}", data.MobilePhone ?? "")
                 .Replace("{{tenantCompanyName}}", data.TenantCompanyName ?? "")
                 .Replace("{{logo}}", data.Logo ?? "")
@@ -601,7 +624,6 @@ namespace ShutterManagement.Business.Services
                 .Replace("{{estimationgrandtotal}}", data.EstimationGrandTotal ?? "")
                 .Replace("{{estimationId}}", data.EstimationId ?? "")
                 .Replace("{{emailaddress}}", data.EmailAddress ?? "")
-                //.Replace("Address", "Street Address")
                 .Replace("{{productlist}}", data.ProductListHtml ?? "");
         }
 

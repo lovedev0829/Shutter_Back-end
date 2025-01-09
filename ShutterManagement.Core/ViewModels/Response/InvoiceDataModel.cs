@@ -16,6 +16,10 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? CustomerZipCode { get; set; }
         public string? HomePhone { get; set; }
         public string? CompanyStreetAddress { get; set; }
+        public string? CompanyCity { get; set; }
+        public string? CompanyCountry { get; set; }
+        public string? CompanyZipCode { get; set; }
+        public string? CustomerStreetAddress { get; set; }
         public string? MobilePhone { get; set; }
         public string? TenantCompanyName { get; set; }
         public string? Logo { get; set; }

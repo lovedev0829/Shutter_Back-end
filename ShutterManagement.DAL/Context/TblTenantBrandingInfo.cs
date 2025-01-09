@@ -23,5 +23,13 @@ public partial class TblTenantBrandingInfo
 
     public bool? IsDelete { get; set; }
 
+    public string? StreetAddress { get; set; }
+
+    public string? City { get; set; }
+
+    public string? Country { get; set; }
+
+    public string? ZipCode { get; set; }
+
     public virtual ICollection<TblTenant> TblTenants { get; set; } = new List<TblTenant>();
 }
