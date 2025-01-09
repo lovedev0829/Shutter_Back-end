@@ -110,7 +110,7 @@ namespace ShutterManagement.Business.Services
                         return responseVm;
                     }
 
-                    var contactUniqueId =  GenerateUniqueId.GenerateUniqueIds(ModuleName.Contact, AppConstant.LoggedInCompanyCode);
+                    var contactUniqueId =  GenerateUniqueId.GenerateUniqueIds(ModuleName.Cus, AppConstant.LoggedInCompanyCode);
                     TblContact CreateContact = new TblContact
                     {
                         ContactId = Guid.NewGuid(),
@@ -566,7 +566,7 @@ namespace ShutterManagement.Business.Services
                 if (TakenRecords != null && TakenRecords.Count > 0)
                 {
                     responseVm.Data = TakenRecords.ToList();
-                    responseVm.Message = AppConstant.UpdateSuccessMsg;
+                    responseVm.Message = AppConstant.FetchSuccessMsg;
                     responseVm.TotalRecords = FilterRecords.Count;
                 }
                 else
