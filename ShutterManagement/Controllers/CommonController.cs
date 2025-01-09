@@ -337,23 +337,63 @@ namespace ShutterManagement.Controllers
 
             return Ok(res);
         }
+
         [HttpGet]
         [Route("ContactEstimationProductBreakdown")]
-        public async Task<IActionResult> ContactEstimationProductBreakdown(Guid EstimationId)
+        public async Task<IActionResult> ContactEstimationProductBreakdown(Guid EstimationId,string? ProductId)
         {
             filter.SearchValue = EstimationId.ToString().ToLower();
             var res = await estimateService.GetAll_Estimate(filter);
             var windowProductIds = res.Data.FirstOrDefault()?.WindowProductId;
 
-            if (windowProductIds == null || !windowProductIds.Any())
+            var estimateResponse = await estimateService.BuildEstimate(windowProductIds, true);
+            if(ProductId != null)
             {
-                return NotFound("No window product IDs found.");
+                var filteredData = estimateResponse.Data.Where(item => item.ProductId.ToString() == ProductId).ToList();
+                return Ok(filteredData);
             }
-         
-            var estimateResponse = await estimateService.BuildEstimate(windowProductIds,true);
-            return Ok(estimateResponse);
-        
+            return Ok(estimateResponse.Data);
         }
+
+        [HttpGet]
+        [Route("GetProductBreakdown")]
+        public async Task<IActionResult> GetProductBreakdown(Guid EstimationId)
+        {
+            var ProductId = "";
+            var res = await ContactEstimationProductBreakdown(EstimationId,ProductId=null);
+
+            if (res is OkObjectResult okResult && okResult.Value is List<WindowProdcutDetailsForEstimate> data)
+            {
+                var productList = data
+                    .Select(item => new
+                    {
+                        ProductId = item.ProductId,
+                        ProductName = item.ProductName
+                    })
+                    .Distinct()
+                    .ToList();
+                return Ok(productList);
+            }
+            return null;
+        }
+
+
+        //[HttpGet]
+        //[Route("ContactEstimationProductCompoentBreakdown")]
+        //public async Task<IActionResult> ContactEstimationProductCompoentBreakdown(string EstimationId, Guid ProductId)
+        //{
+        //    filter.SearchValue = EstimationId.ToLower();
+        //    var res = await estimateService.GetAll_Estimate(filter);
+        //    var windowProductIds = res.Data.FirstOrDefault()?.WindowProductId;
+           
+        //    var estimateResponse = await estimateService.BuildEstimate(windowProductIds, true);
+        //    var filteredData = estimateResponse.Data.Where(item => item.ProductId == ProductId).ToList();
+        //        return Ok(filteredData);
+        //}
+
+
+
+
 
 
 
