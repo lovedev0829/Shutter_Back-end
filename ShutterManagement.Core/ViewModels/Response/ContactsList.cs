@@ -27,4 +27,11 @@ namespace ShutterManagement.Core.ViewModels.Response
         public TaxExemption taxExemptionVm { get; set; } = new TaxExemption();
         public bool? IsActive { get; set; }
     }
+
+    public class ContactBreakdown
+    {
+        public string? Name { get; set; }
+        public Guid? ContactId { get; set; }
+        public string? ContactUniqueId { get; set; }
+    }
 }

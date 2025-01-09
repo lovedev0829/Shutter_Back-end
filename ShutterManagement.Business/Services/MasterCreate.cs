@@ -199,6 +199,7 @@ namespace ShutterManagement.Business.Services
                                      PhoneNumber = c.PhoneNumber,
                                      Email = c.Email,
                                      SecondaryColor = c.SecondaryColor,
+                                     CompanyName = c.CompanyName,
                                  })
                     .FirstOrDefault();
 
@@ -246,6 +247,7 @@ namespace ShutterManagement.Business.Services
                     brandinginfo.SecondaryColor = updatesetting.SecondaryColor;
                     brandinginfo.Email = updatesetting.Email;
                     brandinginfo.PhoneNumber = updatesetting.PhoneNumber;
+                    brandinginfo.CompanyName = updatesetting.CompanyName;
                     var res = tenantBrandingService.Update(brandinginfo);
                     result.IsSuccess = true;
                     result.Message = AppConstant.UpdateSuccessMsg;

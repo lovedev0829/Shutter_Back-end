@@ -14,6 +14,7 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 using System.ComponentModel;
 using ShutterManagement.DAL.Context;
 using ShutterManagement.Business.Services;
+using ShutterManagement.Core.ViewModels.Response;
 
 namespace ShutterManagement.Controllers
 {
@@ -49,6 +50,7 @@ namespace ShutterManagement.Controllers
         private readonly IExpressionService expression;
         private readonly IInvoiceService invoiceService;
         private readonly ITaxRate taxService;
+        private readonly IEstimateService estimateService;
 
         public CommonController(IMasterCreate masterCreate, 
             FileUploadHelper fileUpload, ClaimsProperty claimsProperty,
@@ -59,7 +61,8 @@ namespace ShutterManagement.Controllers
             IComponentService componentService, IMstProductType mstProductType,
             IAddress address, IOption option, IProductService productService,
             IUnitofMeasurementService unitofMeasurementService, IRoleService roleService, IRegion region, IContactService contactService,
-            IMstContactType contactType, IJobService jobService,IExpressionService expression ,IInvoiceService invoiceService,ITaxRate taxService)
+            IMstContactType contactType, IJobService jobService,IExpressionService expression ,IInvoiceService invoiceService,
+            ITaxRate taxService,IEstimateService estimateService)
         {
             this.masterCreate = masterCreate;
             this.fileUpload = fileUpload;
@@ -97,6 +100,7 @@ namespace ShutterManagement.Controllers
             this.expression = expression;
             this.invoiceService = invoiceService;
             this.taxService = taxService;
+            this.estimateService = estimateService;
         }
 
 
@@ -263,6 +267,97 @@ namespace ShutterManagement.Controllers
             var res = await componentPriceService.GetAllComponentsChip(Product,ProductType, Option);
             return Ok(res);
         }
+
+
+        [HttpGet]
+        [Route("ContactBreakdown")]
+        public async Task<IActionResult> ContactBreakdown()
+        {
+            var res = await contactService.GetAll_Contact(filter);
+
+            if (res?.Data != null)
+            {
+                var activeContacts = res.Data.Where(x => x.IsActive == true).ToList();
+                var distinctContacts = activeContacts
+                    .GroupBy(x => x.Name) 
+                    .Select(group => group.First()) 
+                    .ToList();
+                res.Data = distinctContacts;
+            }
+            return Ok(res);
+        }
+
+        [HttpGet]
+        [Route("ContactUniqueIdBreakdown")]
+        public async Task<IActionResult> ContactUniqueIdBreakdown(Guid ContactId)
+        {
+            filter.SearchValue = ContactId.ToString().ToLower();
+            var res = await contactService.GetAll_Contact(filter);
+
+            if (res?.Data != null)
+            {
+                var activeContacts = res.Data.Where(x => x.IsActive == true).ToList();
+                var distinctContactUniqueIds = activeContacts.ToList();
+                res.Data = distinctContactUniqueIds;
+            }
+
+            return Ok(res);
+        }
+
+        [HttpGet]
+        [Route("ContactJobBreakdown")]
+        public async Task<IActionResult> ContactJobBreakdown(Guid ContactId)
+        {
+            filter.SearchValue = ContactId.ToString().ToLower();
+            var res = await jobService.GetAllJobsTenant_SubTenant(filter);
+
+            if (res?.Data != null)
+            {
+                var activeContacts = res.Data.Where(x => x.IsActive == true).ToList();
+                var distinctContactUniqueIds = activeContacts.ToList();
+                res.Data = distinctContactUniqueIds;
+            }
+
+            return Ok(res);
+        }
+
+        [HttpGet]
+        [Route("ContactEstimatioBreakdown")]
+        public async Task<IActionResult> ContactEstimatioBreakdown(Guid JobId)
+        {
+            filter.SearchValue = JobId.ToString().ToLower();
+            var res = await estimateService.GetAll_Estimate(filter);
+
+            if (res?.Data != null)
+            {
+                var activeContacts = res.Data.Where(x => x.IsActive == true).ToList();
+                var distinctContactUniqueIds = activeContacts.ToList();
+                res.Data = distinctContactUniqueIds;
+            }
+
+            return Ok(res);
+        }
+        [HttpGet]
+        [Route("ContactEstimationProductBreakdown")]
+        public async Task<IActionResult> ContactEstimationProductBreakdown(Guid EstimationId)
+        {
+            filter.SearchValue = EstimationId.ToString().ToLower();
+            var res = await estimateService.GetAll_Estimate(filter);
+            var windowProductIds = res.Data.FirstOrDefault()?.WindowProductId;
+
+            if (windowProductIds == null || !windowProductIds.Any())
+            {
+                return NotFound("No window product IDs found.");
+            }
+         
+            var estimateResponse = await estimateService.BuildEstimate(windowProductIds,true);
+            return Ok(estimateResponse);
+        
+        }
+
+
+
+
 
         //[HttpPost]
         //[Route("MasterCreate")]
