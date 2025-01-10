@@ -22,6 +22,12 @@ namespace ShutterManagement.Core.Common
         Document
     }
 
+    public enum ArchiveType
+    {
+        Single,
+        All
+    }
+
     public enum AppliedFor
     {
         [EnumMember(Value = "All")]
@@ -77,6 +83,9 @@ namespace ShutterManagement.Core.Common
         [EnumMember(Value = "Paid")]
         Paid
     }
+
+
+
     public enum VendorOrderStatus
     {
         [EnumMember(Value = "Pending")]

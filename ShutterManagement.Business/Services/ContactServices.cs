@@ -416,68 +416,86 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        public async Task<IResponseVm<dynamic>> GetAllArchiveContacts(ArchiveUser archiveModel)
-        {
-            IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
-            try
-            {
-                var contact = GetAllQuerable()
-                    .Where(c =>
-                    (archiveModel.Status  ? c.IsActive == true : c.IsActive == false) &&
-                    //(archiveModel.LastOrderDate != null ? c)
-                     c.TenantId == AppConstant.LoggedInTenantId && c.IsDelete == false ).ToList();
-                if (contact == null)
-                {
-                    responseVm.Message = AppConstant.NoDataFound;
-                    return responseVm;
-                }
-                
-                //contact.IsArchive = true;
-                //contact.UpdatedAt = DateTime.Now;
-                //contact.ModifiedBy = AppConstant.LoggedInUserID;
-                //await Update(contact);
-                responseVm.IsSuccess = true;
-                responseVm.Message = AppConstant.FetchSuccessMsg;
-                responseVm.Data = contact;
+        //public async Task<IResponseVm<string>> GetAllArchiveContacts()
+        //{
+        //    IResponseVm<string> responseVm = new ResponseVm<string>();
+        //    try
+        //    {
+        //        ////var contact = GetAllQuerable()
+        //        ////    .Where(c =>
+        //        ////    (archiveModel.Status  ? c.IsActive == true : c.IsActive == false) &&
+        //        ////    //(archiveModel.LastOrderDate != null ? c)
+        //        ////     c.TenantId == AppConstant.LoggedInTenantId && c.IsDelete == false ).ToList();
+        //        //var contact = GetAllQuerable()
+        //        //    .Where(c =>c.TenantId == AppConstant.LoggedInTenantId && c.IsDelete == false).ToList();
 
-            }
-            catch (Exception ex)
-            {
-                responseVm.Message = AppConstant.ExceptionError + ex.Message;
-            }
-            return responseVm;
-        }
+
+        //        //if (contact == null)
+        //        //{
+        //        //    responseVm.Message = AppConstant.NoDataFound;
+        //        //    return responseVm;
+        //        //}
+                
+        //        ////contact.IsArchive = true;
+        //        ////contact.UpdatedAt = DateTime.Now;
+        //        ////contact.ModifiedBy = AppConstant.LoggedInUserID;
+        //        ////await Update(contact);
+        //        //responseVm.IsSuccess = true;
+        //        //responseVm.Message = AppConstant.FetchSuccessMsg;
+        //        //responseVm.Data = contact;
+
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        responseVm.Message = AppConstant.ExceptionError + ex.Message;
+        //    }
+        //    return responseVm;
+        //}
 
         public async Task<IResponseVm<string>> ArchiveContacts(ArchiveUser archiveModel)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
-            {
-                var contact = GetAllQuerable()
-                    .Where(c =>
-                    (archiveModel.Status ? c.IsActive == true : c.IsActive == false) &&
-                    //(archiveModel.LastOrderDate != null ? c)
-                     c.TenantId == AppConstant.LoggedInTenantId && c.IsDelete == false).ToList();
-                if (contact == null)
+            { 
+
+                var query = GetAllQuerable().Where(c =>c.IsActive==false && c.TenantId == AppConstant.LoggedInTenantId && c.IsDelete == false);
+                if(query==null)
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = $"Contact "+ AppConstant.NoDataFound;
+                    return responseVm;
+                }
+
+                if (archiveModel.ArchiveType == 0)
+                {
+                    query = query.Where(c => c.ContactId == archiveModel.ContactId);  
+                }
+
+                var contactList = query.ToList(); 
+
+                if (!contactList.Any()) 
                 {
                     responseVm.Message = AppConstant.NoDataFound;
                     return responseVm;
                 }
-                foreach (var c in contact) {
-                    c.IsArchive = true;
-                    await Update(c);
+
+                foreach (var contact in contactList)
+                {
+                    contact.IsArchive = true;  
+                    await Update(contact);    
                 }
-               
+
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.UpdateSuccessMsg;
-
             }
             catch (Exception ex)
             {
-                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+                responseVm.Message = $"{AppConstant.ExceptionError}: {ex.Message}";
             }
+
             return responseVm;
         }
+
 
         public async Task<IResponseVm<List<ContactsList>>> GetAll_Contact(Pagination filter)
         {
@@ -496,12 +514,12 @@ namespace ShutterManagement.Business.Services
                     }
                     else
                     {
-                        Contacts = (await GetAll()).Where(x => x.IsDelete == false && x.IsArchive == false && x.TenantId.ToString() == filter.TenantId).OrderByDescending(x=>x.CreatedAt).ToList();
+                        Contacts = (await GetAll()).Where(x => x.IsDelete == false  && x.TenantId.ToString() == filter.TenantId).OrderByDescending(x=>x.CreatedAt).ToList();
                     }
                 }
                 else
                 {
-                    Contacts = (await GetAll()).Where(x => x.IsDelete == false && x.IsArchive == false && x.TenantId == AppConstant.LoggedInTenantId).OrderByDescending(x => x.CreatedAt).ToList();
+                    Contacts = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId).OrderByDescending(x => x.CreatedAt).ToList();
                 }
 
 
@@ -520,7 +538,8 @@ namespace ShutterManagement.Business.Services
                         ContactUniqueId = contact.ContactUniqueId,
                         IsTaxExemption = contact.IsTaxExemption ?? false,
                         IsBillingAddressSameAsAddress = contact.IsBillingAddressSameAsAddress,
-                        IsActive = contact.IsActive
+                        IsActive = contact.IsActive,
+                        IsArchive = contact.IsArchive
                     };
 
                     contacts.billingAddressVm = billingService.GetAllQuerable()

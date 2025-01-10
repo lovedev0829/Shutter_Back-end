@@ -28,6 +28,8 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> GetAllContacts(Pagination filter)
         {
             var res = await _contactService.GetAll_Contact(filter);
+            res.Data = res.Data?.Where(x => x.IsArchive == false).ToList();
+
             return Ok(res);
 
         }
@@ -71,9 +73,11 @@ namespace ShutterManagement.Controllers
 
         [HttpPost("GetAllArchiveContacts")]
         [Authorize]
-        public async Task<IActionResult> GetAllArchiveContacts(ArchiveUser archiveModel)
+        public async Task<IActionResult> GetAllArchiveContacts(Pagination filter)
         {
-            var res = await _contactService.GetAllArchiveContacts(archiveModel);
+            var res = await _contactService.GetAll_Contact(filter);
+            res.Data = res.Data?.Where(x => x.IsArchive == true && x.IsActive==false).ToList();
+            res.TotalRecords = res.Data.Count;
 
             return Ok(res);
         }

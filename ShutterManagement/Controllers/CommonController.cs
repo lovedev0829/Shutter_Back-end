@@ -257,7 +257,7 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> GetAllContact()
         {
             var res = await contactService.GetAll_Contact(filter);
-            res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
+            res.Data = res.Data?.Where(x => x.IsActive == true && x.IsArchive==false).ToList();
             return Ok(res);
         }
 
