@@ -21,6 +21,7 @@ using Azure;
 using ShutterManagement.Core.ViewModels.Response;
 using System.Data.Entity;
 using System.Diagnostics.Metrics;
+using ShutterManagement.Core.Common;
 
 namespace ShutterManagement.Business.Services
 {
@@ -36,11 +37,14 @@ namespace ShutterManagement.Business.Services
         private readonly ITenantService tenantService;
         private readonly ITaxExemption taxExemptionService;
         private readonly IContactBillingService billingService;
+        private readonly IEstimateService estimateService;
         private readonly IMstProductType productType;
 
-        public ImportandExportCSV(BtprojecShuttermanagementDevContext context,IVendorService vendorService, 
+        public ImportandExportCSV(BtprojecShuttermanagementDevContext context, IVendorService vendorService,
             IMaterial material, IContactService contactService, ClaimsProperty claimsProperty,
-            IUnitofMeasurementService unitofMeasurement,ITenantService tenantService ,ITaxExemption taxExemptionService, IContactBillingService billingService ,BtprojecShuttermanagementDevContext btprojecShuttermanagementDevContext)
+            IUnitofMeasurementService unitofMeasurement, ITenantService tenantService,
+            ITaxExemption taxExemptionService, IContactBillingService billingService,
+            BtprojecShuttermanagementDevContext btprojecShuttermanagementDevContext , IEstimateService estimateService)
         {
             dbContext = context;
             this.vendorService = vendorService;
@@ -51,7 +55,7 @@ namespace ShutterManagement.Business.Services
             this.tenantService = tenantService;
             this.taxExemptionService = taxExemptionService;
             this.billingService = billingService;
-
+            this.estimateService = estimateService;
             this.productType = productType;
         }
 
@@ -63,7 +67,7 @@ namespace ShutterManagement.Business.Services
             int successfulImports = 0;
             int totalRecords = 0;
 
-            var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive==true);
+            var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
             if (!isTenantExists)
             {
                 responseVm.Message = AppConstant.TenantNotFound;
@@ -95,8 +99,8 @@ namespace ShutterManagement.Business.Services
                             continue;
                         }
 
-                        var vendor =  vendorService.GetAllQuerable()
-                            .Where(v => v.VendorCode == record.VendorCode && v.IsDelete==false)
+                        var vendor = vendorService.GetAllQuerable()
+                            .Where(v => v.VendorCode == record.VendorCode && v.IsDelete == false)
                             .FirstOrDefault();
 
                         if (vendor == null)
@@ -117,7 +121,7 @@ namespace ShutterManagement.Business.Services
                             continue;
                         }
 
-                        var unitOfMeasurement =  unitofMeasurement.GetAllQuerable()
+                        var unitOfMeasurement = unitofMeasurement.GetAllQuerable()
                             .Where(u => u.IsDelete == false)
                             .ToList();
 
@@ -227,7 +231,7 @@ namespace ShutterManagement.Business.Services
 
             try
             {
-                var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive==true);
+                var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
                 if (!isTenantExists)
                 {
                     responseVm.Message = AppConstant.TenantNotFound;
@@ -491,7 +495,7 @@ namespace ShutterManagement.Business.Services
 
                 if (filter.Status == 0)
                 {
-                    Contacts = Contacts.Where(x => x.IsActive==false).ToList();
+                    Contacts = Contacts.Where(x => x.IsActive == false).ToList();
                 }
                 else if (filter.Status == 1)
                 {
@@ -544,7 +548,7 @@ namespace ShutterManagement.Business.Services
                         }).FirstOrDefault();
 
                     var taxExemption = taxExemptionService.GetAllQuerable()
-                        .Where(x => x.ContactId == contact.ContactId && x.IsDelete==false)
+                        .Where(x => x.ContactId == contact.ContactId && x.IsDelete == false)
                         .Select(x => new TaxExemption
                         {
                             EffectiveDate = x.EffectiveDate,
@@ -620,11 +624,11 @@ namespace ShutterManagement.Business.Services
                 }
 
                 var materialQuery = dbContext.TblRawMaterials
-                    .Where(x => x.IsDelete==false && x.TenantId==AppConstant.LoggedInTenantId);
+                    .Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
 
                 if (filter.Status == 0)
                 {
-                    materialQuery = materialQuery.Where(x => x.IsActive==false);
+                    materialQuery = materialQuery.Where(x => x.IsActive == false);
                 }
                 else if (filter.Status == 1)
                 {
@@ -709,7 +713,7 @@ namespace ShutterManagement.Business.Services
 
             try
             {
-                var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive==true);
+                var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
                 if (!isTenantExists)
                 {
                     responseVm.IsSuccess = false;
@@ -718,7 +722,7 @@ namespace ShutterManagement.Business.Services
                 }
 
                 var subTenantlist = (await tenantService.GetAll())
-                    .Where(x => x.ParentTenantId == AppConstant.LoggedInTenantId && x.IsActive==true && x.IsDelete==false)
+                    .Where(x => x.ParentTenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false)
                     .Select(pt => pt.TenantId)
                     .ToList();
 
@@ -727,11 +731,11 @@ namespace ShutterManagement.Business.Services
 
                 if (filter.Status == 0)
                 {
-                    jobsQuery = jobsQuery.Where(x => x.IsActive==false);
+                    jobsQuery = jobsQuery.Where(x => x.IsActive == false);
                 }
                 else if (filter.Status == 1)
                 {
-                    jobsQuery = jobsQuery.Where(x => x.IsActive==true);
+                    jobsQuery = jobsQuery.Where(x => x.IsActive == true);
                 }
 
                 if (!string.IsNullOrEmpty(filter.JobStatus))
@@ -817,7 +821,103 @@ namespace ShutterManagement.Business.Services
         }
 
 
+        public async Task<IResponseVm<string>> ExportDynamicBreakdown(Pagination filter, Guid[] windowProductIds, string filePath)
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+
+            try
+            {
+                var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
+                if (!isTenantExists)
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = AppConstant.TenantNotFound;
+                    return responseVm;
+                }
+
+                var estimateResponse = await estimateService.BuildEstimate(windowProductIds, true);
+
+                if (estimateResponse.Data == null || !estimateResponse.Data.Any())
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = "No data available to export.";
+                    return responseVm;
+                }
+
+                var commonHeaders = new List<string>
+        {
+            "ProductTypeName",
+            "ProductName",
+            "Quantity",
+            "Width",
+            "Height"
+        };
+
+                var dynamicHeaders = estimateResponse.Data
+                    .Where(data => data.GetType().GetProperty("ComponentName") != null)
+                    .Select(data => data.GetType().GetProperty("ComponentName")?.GetValue(data)?.ToString())
+                    .ToList();
+
+                var headers = commonHeaders.Concat(dynamicHeaders).ToList();
+
+                var csvBuilder = new StringBuilder();
+                csvBuilder.AppendLine(string.Join(",", headers));
+
+                foreach (var breakdownGroup in estimateResponse.Data.GroupBy(d => d.GetType().GetProperty("WindowId")?.GetValue(d)))
+                {
+                    var firstEntry = breakdownGroup.First();
+                    var rowValues = new List<string>();
+
+                    foreach (var header in commonHeaders)
+                    {
+                        var property = firstEntry.GetType().GetProperty(header);
+                        rowValues.Add(property != null ? property.GetValue(firstEntry)?.ToString() ?? "" : "");
+                    }
+
+                    var componentPrices = new Dictionary<string, string>();
+                    foreach (var breakdown in breakdownGroup)
+                    {
+                        var componentName = breakdown.GetType().GetProperty("ComponentName")?.GetValue(breakdown)?.ToString();
+                        var componentPrice = breakdown.GetType().GetProperty("Price")?.GetValue(breakdown)?.ToString();
+
+                        if (!string.IsNullOrEmpty(componentName))
+                        {
+                            componentPrices[componentName] = componentPrice;
+                        }
+                    }
+
+                    foreach (var dynamicHeader in dynamicHeaders)
+                    {
+                        rowValues.Add(componentPrices.ContainsKey(dynamicHeader) ? componentPrices[dynamicHeader] : "0");
+                    }
+
+                    csvBuilder.AppendLine(string.Join(",", rowValues));
+                }
+
+                var fileBytes = Encoding.UTF8.GetBytes(csvBuilder.ToString());
+                var base64Csv = Convert.ToBase64String(fileBytes);
+
+                responseVm.IsSuccess = true;
+                responseVm.Message = AppConstant.ExportSuccessMsg;
+                responseVm.Data = base64Csv;
+            }
+            catch (Exception ex)
+            {
+                responseVm.IsSuccess = false;
+                responseVm.Message = $"{AppConstant.ExceptionError} {ex.Message}";
+            }
+
+            return responseVm;
+        }
+
+
+
+
+
+
     }
+
+
 }
 
 
