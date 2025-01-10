@@ -64,6 +64,7 @@ namespace ShutterManagement.Business.Services
                 if (res?.Data != null)
                 {
                     var activeContacts = res.Data.Where(x => x.IsActive == true).ToList();
+                    responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.FetchSuccessMsg;
                     responseVm.Data = activeContacts;
                     responseVm.TotalRecords += activeContacts.Count;
