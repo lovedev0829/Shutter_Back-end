@@ -51,6 +51,7 @@ namespace ShutterManagement.Controllers
         private readonly IInvoiceService invoiceService;
         private readonly ITaxRate taxService;
         private readonly IEstimateService estimateService;
+        private readonly IEstimationBreakdownService estimationBreakdownService;
 
         public CommonController(IMasterCreate masterCreate, 
             FileUploadHelper fileUpload, ClaimsProperty claimsProperty,
@@ -62,7 +63,7 @@ namespace ShutterManagement.Controllers
             IAddress address, IOption option, IProductService productService,
             IUnitofMeasurementService unitofMeasurementService, IRoleService roleService, IRegion region, IContactService contactService,
             IMstContactType contactType, IJobService jobService,IExpressionService expression ,IInvoiceService invoiceService,
-            ITaxRate taxService,IEstimateService estimateService)
+            ITaxRate taxService,IEstimateService estimateService,IEstimationBreakdownService estimationBreakdownService)
         {
             this.masterCreate = masterCreate;
             this.fileUpload = fileUpload;
@@ -101,6 +102,7 @@ namespace ShutterManagement.Controllers
             this.invoiceService = invoiceService;
             this.taxService = taxService;
             this.estimateService = estimateService;
+            this.estimationBreakdownService = estimationBreakdownService;
         }
 
 
@@ -273,35 +275,17 @@ namespace ShutterManagement.Controllers
         [Route("ContactBreakdown")]
         public async Task<IActionResult> ContactBreakdown()
         {
-            var res = await contactService.GetAll_Contact(filter);
-
-            if (res?.Data != null)
-            {
-                var activeContacts = res.Data.Where(x => x.IsActive == true).ToList();
-                var distinctContacts = activeContacts
-                    .GroupBy(x => x.Name) 
-                    .Select(group => group.First()) 
-                    .ToList();
-                res.Data = distinctContacts;
-            }
-            return Ok(res);
+            var res = await estimationBreakdownService.GetDistinctActiveContacts(filter);
+            return Ok(res.Data);
+            
         }
-
         [HttpGet]
         [Route("ContactUniqueIdBreakdown")]
         public async Task<IActionResult> ContactUniqueIdBreakdown(Guid ContactId)
         {
             filter.SearchValue = ContactId.ToString().ToLower();
-            var res = await contactService.GetAll_Contact(filter);
-
-            if (res?.Data != null)
-            {
-                var activeContacts = res.Data.Where(x => x.IsActive == true).ToList();
-                var distinctContactUniqueIds = activeContacts.ToList();
-                res.Data = distinctContactUniqueIds;
-            }
-
-            return Ok(res);
+            var res = await estimationBreakdownService.GetDistinctActiveContacts(filter);
+            return Ok(res.Data);
         }
 
         [HttpGet]
@@ -309,16 +293,8 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> ContactJobBreakdown(Guid ContactId)
         {
             filter.SearchValue = ContactId.ToString().ToLower();
-            var res = await jobService.GetAllJobsTenant_SubTenant(filter);
-
-            if (res?.Data != null)
-            {
-                var activeContacts = res.Data.Where(x => x.IsActive == true).ToList();
-                var distinctContactUniqueIds = activeContacts.ToList();
-                res.Data = distinctContactUniqueIds;
-            }
-
-            return Ok(res);
+            var res = await estimationBreakdownService.GetContactJobsBreakdown(filter);
+            return Ok(res.Data);
         }
 
         [HttpGet]
@@ -326,56 +302,27 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> ContactEstimatioBreakdown(Guid JobId)
         {
             filter.SearchValue = JobId.ToString().ToLower();
-            var res = await estimateService.GetAll_Estimate(filter);
-
-            if (res?.Data != null)
-            {
-                var activeContacts = res.Data.Where(x => x.IsActive == true).ToList();
-                var distinctContactUniqueIds = activeContacts.ToList();
-                res.Data = distinctContactUniqueIds;
-            }
-
+            var res = await estimationBreakdownService.GetContactEstimationsBreakdown(filter);
             return Ok(res);
         }
 
         [HttpGet]
         [Route("ContactEstimationProductBreakdown")]
-        public async Task<IActionResult> ContactEstimationProductBreakdown(Guid EstimationId,string ProductId = "")
+        public async Task<IActionResult> ContactEstimationProductBreakdown(Guid EstimationId, string WindowProdcutId = "")
         {
-            filter.SearchValue = EstimationId.ToString().ToLower();
-            var res = await estimateService.GetAll_Estimate(filter);
-            var windowProductIds = res.Data.FirstOrDefault()?.WindowProductId;
-
-            var estimateResponse = await estimateService.BuildEstimate(windowProductIds, true);
-            if(!string.IsNullOrEmpty(ProductId))
-            {
-               estimateResponse.Data =  estimateResponse.Data.Where(item => item.WindowProdcutId.ToString() == ProductId).ToList();
-            }
-            return Ok(estimateResponse);
+            var res = await estimationBreakdownService.GetProductBreakdown(EstimationId, WindowProdcutId);
+            return Ok(res.Data);
+          
         }
 
-        //[HttpGet]
-        //[Route("GetProductBreakdown")]
-        //public async Task<IActionResult> GetProductBreakdown(Guid EstimationId)
-        //{
-        //    var ProductId = "";
-        //    var res = await ContactEstimationProductBreakdown(EstimationId,ProductId=null);
+        [HttpGet]
+        [Route("GetProductBreakdown")]
+        public async Task<IActionResult> GetProductBreakdown(Guid EstimationId)
+        {
+            var productList = await estimationBreakdownService.GetProductListForEstimation(EstimationId);
+            return Ok(productList.Data);
 
-        //    if (res is OkObjectResult okResult && okResult.Value is List<WindowProdcutDetailsForEstimate> data)
-        //    {
-        //        var productList = data
-        //            .Select(item => new
-        //            {
-        //                ProductId = item.ProductId,
-        //                ProductName = item.ProductName
-        //            })
-        //            .Distinct()
-        //            .ToList();
-        //        return Ok(productList);
-        //    }
-        //    return null;
-        //}
-
+        }
 
         //[HttpGet]
         //[Route("ContactEstimationProductCompoentBreakdown")]
@@ -384,7 +331,7 @@ namespace ShutterManagement.Controllers
         //    filter.SearchValue = EstimationId.ToLower();
         //    var res = await estimateService.GetAll_Estimate(filter);
         //    var windowProductIds = res.Data.FirstOrDefault()?.WindowProductId;
-           
+
         //    var estimateResponse = await estimateService.BuildEstimate(windowProductIds, true);
         //    var filteredData = estimateResponse.Data.Where(item => item.ProductId == ProductId).ToList();
         //        return Ok(filteredData);
