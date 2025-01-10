@@ -59,7 +59,7 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = "Email " + AppConstant.AlreadyExists;
                     return responseVm;
                 }
-                bool IsTenantCompanynameExists = await tenantBrandingService.AnyAsync(x => x.CompanyName == model.CompanyName && x.IsDelete == false);
+                bool IsTenantCompanynameExists = await tenantBrandingService.AnyAsync(x => x.CompanyName == model.CompanyName.Trim() && x.IsDelete == false);
                 if (IsTenantCompanynameExists)
                 {
                     responseVm.Message = "CompanyName " + AppConstant.AlreadyExists;
@@ -82,9 +82,13 @@ namespace ShutterManagement.Business.Services
                     new SqlParameter("@Email", SqlDbType.NVarChar) { SqlValue = model.Email },
                     new SqlParameter("@PhoneNumber", SqlDbType.NVarChar) { SqlValue = model.PhoneNumber },
                     new SqlParameter("@Logo", SqlDbType.NVarChar) { SqlValue = model.Logo },
-                    new SqlParameter("@CompanyName", SqlDbType.NVarChar) { SqlValue = model.CompanyName },
+                    new SqlParameter("@CompanyName", SqlDbType.NVarChar) { SqlValue = model.CompanyName.Trim() },
                     new SqlParameter("@PrimaryColor", SqlDbType.NVarChar) { SqlValue = model.PrimaryColor },
                     new SqlParameter("@SecondaryColor", SqlDbType.NVarChar) { SqlValue = model.SecondaryColor },
+                    new SqlParameter("@StreetAddress", SqlDbType.NVarChar) { SqlValue = model.StreetAddress },
+                    new SqlParameter("@City", SqlDbType.NVarChar) { SqlValue = model.City },
+                    new SqlParameter("@Country", SqlDbType.NVarChar) { SqlValue = model.Country },
+                    new SqlParameter("@ZipCode", SqlDbType.NVarChar) { SqlValue = model.ZipCode },
                     new SqlParameter("@UserFirstName", SqlDbType.NVarChar) { SqlValue = model.UserFirstName },
                     new SqlParameter("@UserMiddleName", SqlDbType.NVarChar) { SqlValue = model.UserMiddleName },
                     new SqlParameter("@UserLastName", SqlDbType.NVarChar) { SqlValue = model.UserLastName },
@@ -193,6 +197,10 @@ namespace ShutterManagement.Business.Services
                     new SqlParameter("@CompanyName", SqlDbType.NVarChar) { SqlValue = model.CompanyName.Trim() },
                     new SqlParameter("@PrimaryColor", SqlDbType.NVarChar) { SqlValue = model.PrimaryColor },
                     new SqlParameter("@SecondaryColor", SqlDbType.NVarChar) { SqlValue = model.SecondaryColor },
+                    new SqlParameter("@StreetAddress", SqlDbType.NVarChar) { SqlValue = model.StreetAddress },
+                    new SqlParameter("@City", SqlDbType.NVarChar) { SqlValue = model.City },
+                    new SqlParameter("@Country", SqlDbType.NVarChar) { SqlValue = model.Country },
+                    new SqlParameter("@ZipCode", SqlDbType.NVarChar) { SqlValue = model.ZipCode },
                     new SqlParameter("@UserFirstName", SqlDbType.NVarChar) { SqlValue = model.UserFirstName },
                     new SqlParameter("@UserMiddleName", SqlDbType.NVarChar) { SqlValue = model.UserMiddleName },
                     new SqlParameter("@UserLastName", SqlDbType.NVarChar) { SqlValue = model.UserLastName },
@@ -361,6 +369,10 @@ namespace ShutterManagement.Business.Services
                         CompanyName = x.BrandingInfoNavigation.CompanyName,
                         PrimaryColor = x.BrandingInfoNavigation.PrimaryColor,
                         SecondaryColor = x.BrandingInfoNavigation.SecondaryColor,
+                        StreetAddress = x.BrandingInfoNavigation.StreetAddress,
+                        City = x.BrandingInfoNavigation.City,
+                        Country = x.BrandingInfoNavigation.Country,
+                        ZipCode = x.BrandingInfoNavigation.ZipCode,
                         IsActive = x.IsActive
                     }).ToList();
                     for (int i = 0; i < data.Count; i++)

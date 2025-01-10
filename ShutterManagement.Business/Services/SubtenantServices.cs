@@ -99,6 +99,10 @@ namespace ShutterManagement.Business.Services
                         new SqlParameter("@Logo", SqlDbType.NVarChar) { SqlValue = model.Logo },
                         new SqlParameter("@CompanyName", SqlDbType.NVarChar) { SqlValue = model.CompanyName },
                         new SqlParameter("@PrimaryColor", SqlDbType.NVarChar) { SqlValue = model.PrimaryColor },
+                        new SqlParameter("@StreetAddress", SqlDbType.NVarChar) { SqlValue = model.StreetAddress },
+                        new SqlParameter("@City", SqlDbType.NVarChar) { SqlValue = model.City },
+                       new SqlParameter("@Country", SqlDbType.NVarChar) { SqlValue = model.Country },
+                       new SqlParameter("@ZipCode", SqlDbType.NVarChar) { SqlValue = model.ZipCode },
                         new SqlParameter("@SecondaryColor", SqlDbType.NVarChar) { SqlValue = model.SecondaryColor },
                         new SqlParameter("@UserFirstName", SqlDbType.NVarChar) { SqlValue = model.UserFirstName },
                         new SqlParameter("@UserMiddleName", SqlDbType.NVarChar) { SqlValue = model.UserMiddleName },
@@ -223,6 +227,10 @@ namespace ShutterManagement.Business.Services
                     new SqlParameter("@CompanyName", SqlDbType.NVarChar) { SqlValue = model.CompanyName },
                     new SqlParameter("@PrimaryColor", SqlDbType.NVarChar) { SqlValue = model.PrimaryColor },
                     new SqlParameter("@SecondaryColor", SqlDbType.NVarChar) { SqlValue = model.SecondaryColor },
+                     new SqlParameter("@StreetAddress", SqlDbType.NVarChar) { SqlValue = model.StreetAddress },
+                    new SqlParameter("@City", SqlDbType.NVarChar) { SqlValue = model.City },
+                    new SqlParameter("@Country", SqlDbType.NVarChar) { SqlValue = model.Country },
+                    new SqlParameter("@ZipCode", SqlDbType.NVarChar) { SqlValue = model.ZipCode },
                     new SqlParameter("@UserFirstName", SqlDbType.NVarChar) { SqlValue = model.UserFirstName },
                     new SqlParameter("@UserMiddleName", SqlDbType.NVarChar) { SqlValue = model.UserMiddleName },
                     new SqlParameter("@UserLastName", SqlDbType.NVarChar) { SqlValue = model.UserLastName },
@@ -389,6 +397,10 @@ namespace ShutterManagement.Business.Services
                         CompanyName = x.BrandingInfoNavigation.CompanyName,
                         PrimaryColor = x.BrandingInfoNavigation.PrimaryColor,
                         SecondaryColor = x.BrandingInfoNavigation.SecondaryColor,
+                        StreetAddress = x.BrandingInfoNavigation.StreetAddress,
+                        City = x.BrandingInfoNavigation.City,
+                        Country = x.BrandingInfoNavigation.Country,
+                        ZipCode = x.BrandingInfoNavigation.ZipCode,
                         IsActive = x.IsActive
                     }).ToList();
 

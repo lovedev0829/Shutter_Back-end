@@ -90,6 +90,35 @@ namespace ShutterManagement.Core.ViewModels.Request
         [MaxLength(50)]
         [RegularExpression("^[\\p{L} .'-]+$", ErrorMessage = AppConstant.AlphabaticalError)]
         public string? CompanyName { get; set; }
+
+
+        [Required]
+        [MaxLength(100)]
+        [DefaultValue("")]
+
+        public string? StreetAddress { get; set; }
+
+
+        [Required]
+        [MaxLength(50)]
+        [RegularExpression("^[\\p{L} .'-]+$", ErrorMessage = AppConstant.AlphabaticalError)]
+        [DefaultValue("")]
+
+        public string? City { get; set; }
+
+        [Required]
+        [MaxLength(50)]
+        [RegularExpression("^[\\p{L} .'-]+$", ErrorMessage = AppConstant.AlphabaticalError)]
+        [DefaultValue("")]
+
+        public string? Country { get; set; }
+
+        [Required]
+        [MaxLength(6), MinLength(5)]
+        [RegularExpression(@"^\d{5,6}$", ErrorMessage = AppConstant.ZipCodeError)]
+        [DefaultValue("")]
+
+        public string? ZipCode { get; set; }
         //[Required]
         //[DefaultValue("")]
         //[MinLength(8), MaxLength(12)]

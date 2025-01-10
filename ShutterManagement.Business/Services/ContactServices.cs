@@ -79,8 +79,6 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-
-
         public async Task<IResponseVm<string>> Create_Contact(Sp_Contact model)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
