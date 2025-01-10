@@ -72,7 +72,7 @@ namespace ShutterManagement.Controllers
         }
 
         [HttpPost("GetAllArchiveContacts")]
-        [Authorize]
+        [Authorize(Roles = "ArchiveCustomerView")]
         public async Task<IActionResult> GetAllArchiveContacts(Pagination filter)
         {
             var res = await _contactService.GetAll_Contact(filter);
