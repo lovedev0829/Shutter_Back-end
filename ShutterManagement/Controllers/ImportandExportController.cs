@@ -82,7 +82,7 @@ namespace ShutterManagement.Controllers
         [HttpPost("ExportAll")]
         [Authorize(Roles = "ContactView")]
 
-        public async Task<IResponseVm<string>> ExportToCsv(Pagination filter, string Type)
+        public async Task<IResponseVm<string>> ExportToCsv([FromBody] Pagination filter, string Type, [FromQuery] Guid[]? WindowProductId=null)
         {
 
             IResponseVm<string> responseVm = new ResponseVm<string>();
@@ -114,8 +114,16 @@ namespace ShutterManagement.Controllers
                             return result3;
                         }
                         break;
+                    case "breakdown":
+                        var filePath4 = Path.Combine(Directory.GetCurrentDirectory(), "Breakdown.csv");
+                        var result4 = await importandExportCSV.ExportDynamicBreakdown(filter, WindowProductId, filePath4);
+                        if (result4 != null)
+                        {
+                            return result4;
+                        }
+                        break;
                     default:
-                        responseVm.Message = "Please Select valid Type";
+                        responseVm.Message = "Please input valid Type";
                         return responseVm;
                 }
 

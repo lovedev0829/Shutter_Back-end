@@ -440,6 +440,8 @@ namespace ShutterManagement.Controllers
         //    return Ok(contacts);
         //}
 
+
+
         //[HttpGet]
         //[Route("MasterGetById")]
         //public async Task<IActionResult> MasterGetById([FromQuery] Guid id, [FromQuery] MasterItemEnum type)
