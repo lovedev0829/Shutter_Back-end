@@ -276,7 +276,7 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> ContactBreakdown()
         {
             var res = await estimationBreakdownService.GetDistinctActiveContacts(filter);
-            return Ok(res.Data);
+            return Ok(res);
             
         }
         [HttpGet]
@@ -285,7 +285,7 @@ namespace ShutterManagement.Controllers
         {
             filter.SearchValue = ContactId.ToString().ToLower();
             var res = await estimationBreakdownService.GetDistinctActiveContacts(filter);
-            return Ok(res.Data);
+            return Ok(res);
         }
 
         [HttpGet]
@@ -294,7 +294,7 @@ namespace ShutterManagement.Controllers
         {
             filter.SearchValue = ContactId.ToString().ToLower();
             var res = await estimationBreakdownService.GetContactJobsBreakdown(filter);
-            return Ok(res.Data);
+            return Ok(res);
         }
 
         [HttpGet]
@@ -311,7 +311,7 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> ContactEstimationProductBreakdown(Guid EstimationId, string WindowProdcutId = "")
         {
             var res = await estimationBreakdownService.GetProductBreakdown(EstimationId, WindowProdcutId);
-            return Ok(res.Data);
+            return Ok(res);
           
         }
 
@@ -320,7 +320,7 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> GetProductBreakdown(Guid EstimationId)
         {
             var productList = await estimationBreakdownService.GetProductListForEstimation(EstimationId);
-            return Ok(productList.Data);
+            return Ok(productList);
 
         }
 

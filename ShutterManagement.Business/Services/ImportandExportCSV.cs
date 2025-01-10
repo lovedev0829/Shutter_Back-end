@@ -38,13 +38,15 @@ namespace ShutterManagement.Business.Services
         private readonly ITaxExemption taxExemptionService;
         private readonly IContactBillingService billingService;
         private readonly IEstimateService estimateService;
+        private readonly IEstimationBreakdownService estimationBreakdownService;
         private readonly IMstProductType productType;
 
         public ImportandExportCSV(BtprojecShuttermanagementDevContext context, IVendorService vendorService,
             IMaterial material, IContactService contactService, ClaimsProperty claimsProperty,
             IUnitofMeasurementService unitofMeasurement, ITenantService tenantService,
             ITaxExemption taxExemptionService, IContactBillingService billingService,
-            BtprojecShuttermanagementDevContext btprojecShuttermanagementDevContext , IEstimateService estimateService)
+            BtprojecShuttermanagementDevContext btprojecShuttermanagementDevContext , 
+            IEstimateService estimateService,IEstimationBreakdownService estimationBreakdownService)
         {
             dbContext = context;
             this.vendorService = vendorService;
@@ -56,6 +58,7 @@ namespace ShutterManagement.Business.Services
             this.taxExemptionService = taxExemptionService;
             this.billingService = billingService;
             this.estimateService = estimateService;
+            this.estimationBreakdownService = estimationBreakdownService;
             this.productType = productType;
         }
 
@@ -821,7 +824,7 @@ namespace ShutterManagement.Business.Services
         }
 
 
-        public async Task<IResponseVm<string>> ExportDynamicBreakdown(Pagination filter, Guid[] windowProductIds, string filePath)
+        public async Task<IResponseVm<string>> ExportDynamicBreakdown(Pagination filter, string EstimationId,string windowProductId, string filePath)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
 
@@ -834,8 +837,10 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.TenantNotFound;
                     return responseVm;
                 }
-
-                var estimateResponse = await estimateService.BuildEstimate(windowProductIds, true);
+                var estimateResponse = windowProductId != null
+              ? await estimationBreakdownService.GetProductBreakdown(Guid.Parse(EstimationId), windowProductId)
+              : await estimationBreakdownService.GetProductBreakdown(Guid.Parse(EstimationId), null);
+                
 
                 if (estimateResponse.Data == null || !estimateResponse.Data.Any())
                 {
