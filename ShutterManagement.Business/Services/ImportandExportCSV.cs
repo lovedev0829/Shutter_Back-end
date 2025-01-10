@@ -837,9 +837,12 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.TenantNotFound;
                     return responseVm;
                 }
-                var estimateResponse = windowProductId != null
-              ? await estimationBreakdownService.GetProductBreakdown(Guid.Parse(EstimationId), windowProductId)
-              : await estimationBreakdownService.GetProductBreakdown(Guid.Parse(EstimationId), null);
+
+                Guid[] ids = string.IsNullOrEmpty(windowProductId) ? null : new Guid[] { Guid.Parse(windowProductId) };
+
+                var estimateResponse = EstimationId != null
+                ? await estimationBreakdownService.GetProductBreakdown(Guid.Parse(EstimationId), null)
+                : await estimateService.BuildEstimate(ids,true);
                 
 
                 if (estimateResponse.Data == null || !estimateResponse.Data.Any())

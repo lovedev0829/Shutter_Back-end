@@ -158,7 +158,7 @@ namespace ShutterManagement.Business.Services
 
         public async Task<IResponseVm<List<object>>> GetProductListForEstimation(Guid EstimationId)
         {
-            var responseVm = new ResponseVm<List<object>>(); 
+            var responseVm = new ResponseVm<List<object>>();
 
             try
             {
@@ -166,15 +166,16 @@ namespace ShutterManagement.Business.Services
 
                 if (res != null && res.IsSuccess && res.Data != null && res.Data.Any())
                 {
-                    var productList = res.Data.Select(item => new
-                    {
-                        ProductId = item.ProductId,
-                        ProductName = item.ProductName,
-                        WindowProductIds = item.WindowProdcutId
-                    })
-                    .Distinct() 
-                    .Cast<object>() 
-                    .ToList();
+                    var productList = res.Data
+                        .GroupBy(item => item.ProductName) 
+                        .Select(group => new
+                        {
+                            ProductId = group.First().ProductId,
+                            ProductName = group.Key,  
+                            WindowProductIds = group.Select(x => x.WindowProdcutId).Distinct().ToList()  
+                        })
+                        .Cast<object>()  
+                        .ToList();
 
                     responseVm.IsSuccess = true;
                     responseVm.Data = productList;
@@ -193,6 +194,7 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
+
 
 
     }

@@ -539,7 +539,8 @@ namespace ShutterManagement.Business.Services
                         IsTaxExemption = contact.IsTaxExemption ?? false,
                         IsBillingAddressSameAsAddress = contact.IsBillingAddressSameAsAddress,
                         IsActive = contact.IsActive,
-                        IsArchive = contact.IsArchive
+                        IsArchive = contact.IsArchive,
+                        CreatedAt = contact.CreatedAt
                     };
 
                     contacts.billingAddressVm = billingService.GetAllQuerable()

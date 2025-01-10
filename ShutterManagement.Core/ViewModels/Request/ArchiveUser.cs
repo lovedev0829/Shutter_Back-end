@@ -11,7 +11,7 @@ namespace ShutterManagement.Core.ViewModels.Request
     public class ArchiveUser
     {
 
-        [Required(ErrorMessage = "ContactId is required.")]
+        //[Required(ErrorMessage = "ContactId is required.")]
         public Guid? ContactId { get; set; }
 
         [Required(ErrorMessage = "Status is required.")]

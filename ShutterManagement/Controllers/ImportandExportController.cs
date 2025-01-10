@@ -82,7 +82,7 @@ namespace ShutterManagement.Controllers
         [HttpPost("ExportAll")]
         [Authorize(Roles = "ContactView")]
 
-        public async Task<IResponseVm<string>> ExportToCsv([FromBody] Pagination filter, string Type,string EstimationId, string WindowProductId = null)
+        public async Task<IResponseVm<string>> ExportToCsv([FromBody] Pagination filter, string Type,string? EstimationId, string? WindowProductId = null)
         {
 
             IResponseVm<string> responseVm = new ResponseVm<string>();
