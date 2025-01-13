@@ -571,11 +571,11 @@ namespace ShutterManagement.Business.Services
                                     (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
                                     (filter.SearchValue != "" ?
                                     ((x.Notes ?? "").Contains(filter.SearchValue)
-                                    || (x.ContactId.ToString()).Contains(filter.SearchValue)
-                                    || (x.Email ?? "").Contains(filter.SearchValue)
-                                    || (x.Website ?? "").Contains(filter.SearchValue)
+                                    || (x.ContactId.ToString().ToLower()).Contains(filter.SearchValue)
+                                    || (x.Email.ToLower() ?? "").Contains(filter.SearchValue)
+                                    || (x.Website.ToLower() ?? "").Contains(filter.SearchValue)
                                     || (x.PhoneNumber ?? "").Contains(filter.SearchValue)
-                                    || (x.Name ?? "").Contains(filter.SearchValue)
+                                    || (x.Name.ToLower() ?? "").Contains(filter.SearchValue)
                                     ) : true)).ToList();
                 var TakenRecords = FilterRecords
                                     .Skip((filter.PageNo - 1) * filter.RecordPerPage).Take(filter.RecordPerPage).ToList();
