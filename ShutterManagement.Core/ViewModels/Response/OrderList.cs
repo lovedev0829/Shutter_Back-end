@@ -33,6 +33,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public decimal? GrandTotal { get; set; }
         public bool? IsActive { get; set; }
         public DateTime? CreatedDate { get; set; }
+        public DateTime? UpdatedAt { get; set; }
         public string? CreatedBy { get; set; }
 
         public string? primarycolor { get; set; }

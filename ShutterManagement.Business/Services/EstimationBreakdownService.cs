@@ -9,6 +9,7 @@ using ShutterManagement.Core.ViewModels.Response;
 using ShutterManagement.Core.ViewModels;
 using ShutterManagement.Core.SPModel;
 using ShutterManagement.Core;
+using static ShutterManagement.Business.Services.ReportServices;
 
 namespace ShutterManagement.Business.Services
 {
@@ -54,6 +55,40 @@ namespace ShutterManagement.Business.Services
             }
             return responseVm;
         }
+
+        public async Task<IResponseVm<List<ContactBreakdown>>> GetContactUniqueId(Pagination filter)
+        {
+            IResponseVm<List<ContactBreakdown>> responseVm = new ResponseVm<List<ContactBreakdown>>();
+            try
+            {
+                var res = await contactService.GetAll_Contact(filter);
+                if (res?.Data != null)
+                {
+                    var activeContacts = res.Data.Where(x => x.IsActive == true).ToList();
+
+                    var contactBreakdowns = activeContacts.Select(item => new ContactBreakdown
+                    {
+                        Name = item.Name,
+                        ContactId = item.ContactId,
+                        ContactUniqueId = item.ContactUniqueId
+                    }).ToList(); 
+
+                    responseVm.IsSuccess = true;
+                    responseVm.Data = contactBreakdowns;
+                    responseVm.TotalRecords = contactBreakdowns.Count;
+                }
+                else
+                {
+                    responseVm.Message = AppConstant.NoDataFound;
+                }
+            }
+            catch (Exception ex)
+            {
+                responseVm.Message = ex.Message;
+            }
+            return responseVm;
+        }
+
 
         public async Task<IResponseVm<List<GetAllJobsSubtenant_tenant>>> GetContactJobsBreakdown(Pagination filter)
         {

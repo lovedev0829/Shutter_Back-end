@@ -139,7 +139,7 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-                var IsLabelExists = await AnyAsync(x => x.Label == model.Label.Trim() && !(bool)x.IsDelete  && x.TenantId == AppConstant.LoggedInTenantId);
+                var IsLabelExists = await AnyAsync(x => x.Label == model.Label.Trim() && x.JobId == model.JobId  && !(bool)x.IsDelete  && x.TenantId == AppConstant.LoggedInTenantId);
 
                 if (IsLabelExists)
                 {
@@ -404,9 +404,9 @@ namespace ShutterManagement.Business.Services
                 }
 
                 // Step 2: Check for duplicate Job Name
-                if (await IsJobNameExists(model))
+                if (await IsWindowExists(model))
                 {
-                    responseVm.Message = $"JobName {AppConstant.AlreadyExists}";
+                    responseVm.Message = $"Window LabelName {AppConstant.AlreadyExists}";
                     return responseVm;
                 }
 
@@ -528,11 +528,12 @@ namespace ShutterManagement.Business.Services
                 (bool)x.IsActive);
         }
 
-        private async Task<bool> IsJobNameExists(UpdateWindow model)
+        private async Task<bool> IsWindowExists(UpdateWindow model)
         {
-            FileLogger.Log("Checking for duplicate Job Name...");
+            FileLogger.Log("Checking for duplicate Window Name...");
             return await AnyAsync(x =>
                 x.Label == model.Label &&
+                x.JobId == model.JobId &&
                 x.WindowId != model.WindowId &&
                 !(bool)x.IsDelete &&
                 x.TenantId == AppConstant.LoggedInTenantId);
