@@ -281,10 +281,10 @@ namespace ShutterManagement.Controllers
         }
         [HttpGet]
         [Route("ContactUniqueIdBreakdown")]
-        public async Task<IActionResult> ContactUniqueIdBreakdown(Guid ContactId)
+        public async Task<IActionResult> ContactUniqueIdBreakdown(string ContactName)
         {
-            filter.SearchValue = ContactId.ToString().ToLower();
-            var res = await estimationBreakdownService.GetDistinctActiveContacts(filter);
+            filter.SearchValue = ContactName.ToString().ToLower();
+            var res = await estimationBreakdownService.GetContactUniqueId(filter);
             return Ok(res);
         }
 

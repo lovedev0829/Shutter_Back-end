@@ -12,6 +12,7 @@ namespace ShutterManagement.Business.Interfaces
     public interface IEstimationBreakdownService
     {
         Task<IResponseVm<List<ContactsList>>> GetDistinctActiveContacts(Pagination filter);
+        Task<IResponseVm<List<ContactBreakdown>>> GetContactUniqueId(Pagination filter);
         Task<IResponseVm<List<GetAllJobsSubtenant_tenant>>> GetContactJobsBreakdown(Pagination filter);
 
         Task<IResponseVm<List<EstimateList>>> GetContactEstimationsBreakdown(Pagination filter);

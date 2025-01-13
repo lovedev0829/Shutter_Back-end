@@ -575,7 +575,7 @@ namespace ShutterManagement.Business.Services
                                     || (x.Email ?? "").Contains(filter.SearchValue)
                                     || (x.Website ?? "").Contains(filter.SearchValue)
                                     || (x.PhoneNumber ?? "").Contains(filter.SearchValue)
-                                    || (x.Name ?? "").Contains(filter.SearchValue)
+                                    || (x.Name.ToLower() ?? "").Contains(filter.SearchValue)
                                     ) : true)).ToList();
                 var TakenRecords = FilterRecords
                                     .Skip((filter.PageNo - 1) * filter.RecordPerPage).Take(filter.RecordPerPage).ToList();
