@@ -22,6 +22,8 @@ using ShutterManagement.Core.ViewModels.Response;
 using System.Data.Entity;
 using System.Diagnostics.Metrics;
 using ShutterManagement.Core.Common;
+using System.ComponentModel.DataAnnotations;
+using AutoMapper.Internal;
 
 namespace ShutterManagement.Business.Services
 {
@@ -824,47 +826,40 @@ namespace ShutterManagement.Business.Services
         }
 
 
-        public async Task<IResponseVm<string>> ExportDynamicBreakdown(Pagination filter, string EstimationId,string windowProductId, string filePath)
+        public async Task<IResponseVm<string>> ExportDynamicBreakdown(Pagination filter, string estimationId, string windowProductId, string filePath)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
 
             try
             {
-                var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
+                var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive==true);
                 if (!isTenantExists)
                 {
-                    responseVm.IsSuccess = false;
-                    responseVm.Message = AppConstant.TenantNotFound;
-                    return responseVm;
+                    return CreateErrorResponse(AppConstant.TenantNotFound);
                 }
 
                 Guid[] ids = string.IsNullOrEmpty(windowProductId) ? null : new Guid[] { Guid.Parse(windowProductId) };
-
-                var estimateResponse = EstimationId != null
-                ? await estimationBreakdownService.GetProductBreakdown(Guid.Parse(EstimationId), null)
-                : await estimateService.BuildEstimate(ids,true);
-                
+                var estimateResponse = !string.IsNullOrEmpty(estimationId)
+                    ? await estimationBreakdownService.GetProductBreakdown(Guid.Parse(estimationId), null)
+                    : await estimateService.BuildEstimate(ids, true);
 
                 if (estimateResponse.Data == null || !estimateResponse.Data.Any())
                 {
-                    responseVm.IsSuccess = false;
-                    responseVm.Message = "No data available to export.";
-                    return responseVm;
+                    return CreateErrorResponse("No data available to export.");
                 }
 
                 var commonHeaders = new List<string>
-        {
-            "ProductTypeName",
-            "ProductName",
-            "Quantity",
-            "Width",
-            "Height"
-        };
+                {
+                "WindowLabel",
+                "ProductTypeName",
+                "ProductName",
+                "Quantity",
+                "Width",
+                "Height"
+                };
 
-                var dynamicHeaders = estimateResponse.Data
-                    .Where(data => data.GetType().GetProperty("ComponentName") != null)
-                    .Select(data => data.GetType().GetProperty("ComponentName")?.GetValue(data)?.ToString())
-                    .ToList();
+
+                var dynamicHeaders = GetDynamicHeaders(estimateResponse.Data, "ComponentName");
 
                 var headers = commonHeaders.Concat(dynamicHeaders).ToList();
 
@@ -876,28 +871,11 @@ namespace ShutterManagement.Business.Services
                     var firstEntry = breakdownGroup.First();
                     var rowValues = new List<string>();
 
-                    foreach (var header in commonHeaders)
-                    {
-                        var property = firstEntry.GetType().GetProperty(header);
-                        rowValues.Add(property != null ? property.GetValue(firstEntry)?.ToString() ?? "" : "");
-                    }
+                    rowValues.AddRange(GetHeaderValues(firstEntry, commonHeaders));
 
-                    var componentPrices = new Dictionary<string, string>();
-                    foreach (var breakdown in breakdownGroup)
-                    {
-                        var componentName = breakdown.GetType().GetProperty("ComponentName")?.GetValue(breakdown)?.ToString();
-                        var componentPrice = breakdown.GetType().GetProperty("Price")?.GetValue(breakdown)?.ToString();
+                    var componentPrices = GetComponentPrices(breakdownGroup, "ComponentName", "Price");
 
-                        if (!string.IsNullOrEmpty(componentName))
-                        {
-                            componentPrices[componentName] = componentPrice;
-                        }
-                    }
-
-                    foreach (var dynamicHeader in dynamicHeaders)
-                    {
-                        rowValues.Add(componentPrices.ContainsKey(dynamicHeader) ? componentPrices[dynamicHeader] : "0");
-                    }
+                    rowValues.AddRange(dynamicHeaders.Select(header => componentPrices.GetValueOrDefault(header, "0")));
 
                     csvBuilder.AppendLine(string.Join(",", rowValues));
                 }
@@ -917,6 +895,64 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
+
+        private List<string> GetDynamicHeaders(IEnumerable<object> data, string propertyName)
+        {
+            return data
+                .Where(d => d.GetType().GetProperty(propertyName) != null)
+                .Select(d => d.GetType().GetProperty(propertyName)?.GetValue(d)?.ToString())
+                .Where(header => !string.IsNullOrEmpty(header))
+                .Distinct()
+                .ToList();
+        }
+
+        private List<string> GetHeaderValues(object entry, List<string> headers)
+        {
+            var values = new List<string>();
+
+            foreach (var header in headers)
+            {
+                var property = entry.GetType().GetProperty(header);
+
+                if (header == "WindowLabel")
+                {
+                    var labelValue = entry.GetType().GetProperty("Label")?.GetValue(entry)?.ToString();
+                    values.Add(labelValue ?? "");
+                }
+                else
+                {
+                    values.Add(property?.GetValue(entry)?.ToString() ?? "");
+                }
+            }
+
+            return values;
+        }
+
+        private Dictionary<string, string> GetComponentPrices(IEnumerable<object> breakdownGroup, string componentNameProperty, string priceProperty)
+        {
+            var componentPrices = new Dictionary<string, string>();
+            foreach (var breakdown in breakdownGroup)
+            {
+                var componentName = breakdown.GetType().GetProperty(componentNameProperty)?.GetValue(breakdown)?.ToString();
+                var componentPrice = breakdown.GetType().GetProperty(priceProperty)?.GetValue(breakdown)?.ToString();
+
+                if (!string.IsNullOrEmpty(componentName))
+                {
+                    componentPrices[componentName] = componentPrice ?? "0";
+                }
+            }
+            return componentPrices;
+        }
+
+        private IResponseVm<string> CreateErrorResponse(string message)
+        {
+            return new ResponseVm<string>
+            {
+                IsSuccess = false,
+                Message = message
+            };
+        }
+
 
 
 
