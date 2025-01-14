@@ -152,6 +152,7 @@ namespace ShutterManagement.Business.Services
                     newOrder.TaxAmount = updateOrder.Tax;
                     newOrder.TotalPrice = updateOrder.SubTotal;
                     newOrder.TermsCondition = updateOrder.TermsCondition;
+                    newOrder.ContactId = updateOrder.ContactId;
                     newOrder.Status = status1;
                     newOrder.CreatedAt = DateTime.Now;
                     newOrder.UpdatedAt = DateTime.Now;
@@ -178,6 +179,7 @@ namespace ShutterManagement.Business.Services
                     newOrder.TaxAmount = estimate.TaxAmount;
                     newOrder.TotalPrice = estimate.TotalPrice;
                     newOrder.TermsCondition = estimate.TermsCondition;
+                    newOrder.ContactId = estimate.ContactId;
                     newOrder.Status = status1;
                     newOrder.CreatedAt = DateTime.Now;
                     newOrder.UpdatedAt = DateTime.Now;
@@ -280,7 +282,7 @@ namespace ShutterManagement.Business.Services
 
                 // Group orders by EstimateId and get the latest version for each group
                 var latestVersionOrders = orders
-                    .GroupBy(o => o.EstimateId)  // Group by EstimateId to handle versions
+                    .GroupBy(o => o.EstimateId) 
                     .Select(g => g.OrderByDescending(o => o.Version)  // Order by Version to get the latest
                                 .FirstOrDefault())  // Get the latest order in each group
                     .ToList();
@@ -695,7 +697,7 @@ namespace ShutterManagement.Business.Services
                     .Where(es => es.OrderId == OrderId && es.IsDelete == false && es.IsActive == true)
                     .FirstOrDefault();
         }
-        private async Task<List<TblOrder>> FetchOrders(Pagination filter)
+        public async Task<List<TblOrder>> FetchOrders(Pagination filter)
         {
             if (string.IsNullOrEmpty(filter.TenantId))
             {
@@ -738,6 +740,7 @@ namespace ShutterManagement.Business.Services
                     EstimateId = order.EstimateId,
                     CreatedDate = order.CreatedAt,
                     JobId = order.JobId,
+                    ContactId = order.ContactId.ToString(),
                     taxRateId = order.TaxId,
                     Status = order.Status,
                     IsActive = order.IsActive,
