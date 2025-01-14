@@ -7,6 +7,7 @@ using ShutterManagement.Core.Common;
 using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.Core.ViewModels.Response;
 using ShutterManagement.Core.ViewModels;
+using ShutterManagement.DAL.Context;
 
 namespace ShutterManagement.Business.Interfaces
 {
@@ -21,6 +22,7 @@ namespace ShutterManagement.Business.Interfaces
         Task<IResponseVm<dynamic>> ViewHistory(Guid EstimateId);
         Task<IResponseVm<string>> ChangeStatus(Guid OrderId, Estimation NewEstimationStatus);
         Task<IResponseVm<dynamic>> ViewOrder(Guid OrderId);
+        Task<List<TblOrder>> FetchOrders(Pagination filter);
 
     }
 }

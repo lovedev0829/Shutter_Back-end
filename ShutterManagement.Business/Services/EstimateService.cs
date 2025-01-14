@@ -975,6 +975,7 @@ namespace ShutterManagement.Business.Services
                 TermsCondition = model.TermsCondition,
                 CreatedBy = AppConstant.LoggedInUserID,
                 CreatedAt = DateTime.Now,
+                ContactId = model.ConctactId,
                 TenantId = AppConstant.LoggedInTenantId,
                 IsActive = true,
                 IsDelete = false,
