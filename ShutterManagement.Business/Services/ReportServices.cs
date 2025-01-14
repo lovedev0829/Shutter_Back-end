@@ -1,70 +1,71 @@
-﻿using ShutterManagement.Business.Interfaces;
+﻿using System.Drawing;
+using System.Linq;
+using ShutterManagement.Business.Interfaces;
+using ShutterManagement.Core;
 using ShutterManagement.Core.Common;
 using ShutterManagement.Core.ViewModels;
 using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.Core.ViewModels.Response;
+using ShutterManagement.DAL.Context;
 
 namespace ShutterManagement.Business.Services
 {
     public class ReportServices : IReportServices
     {
+        private readonly BtprojecShuttermanagementDevContext dbContext;
+        private readonly IJobTypeService jobTypeService;
         private readonly IOrderService orderService;
         private readonly IContactService contactService;
+        private readonly IJobService jobService;
 
-        public ReportServices(IOrderService orderService,IContactService contactService)
+        public ReportServices(BtprojecShuttermanagementDevContext dbContext,
+            IJobTypeService jobTypeService,
+            IOrderService orderService, IContactService contactService, IJobService jobService)
         {
+            this.dbContext = dbContext;
+            this.jobTypeService = jobTypeService;
             this.orderService = orderService;
             this.contactService = contactService;
+            this.jobService = jobService;
         }
 
-        Pagination filter = new Pagination();
-        public async Task<IResponseVm<List<OrderReportList>>> GetOrderConfirmed()
+        public async Task<IResponseVm<List<OrderList>>> GetOrderConfirmed(Pagination filter)
         {
-            IResponseVm<List<OrderReportList>> responseVm = new ResponseVm<List<OrderReportList>>();
+            IResponseVm<List<OrderList>> responseVm = new ResponseVm<List<OrderList>>();
 
             try
             {
-                // Assuming 'filter' is already defined or passed into the method.
-                var orders = await orderService.FetchOrders(filter);
+                var orders = await orderService.GetAll_Order(filter);
 
-                if (orders != null && orders.Any())
-                {
-                    // Filter orders by the status of "PendingForApproval".
-                    var confirmedOrders = orders
-                        .Where(o => o.Status == EnumValue.GetEnumValue(Estimation.Approved)) 
-                        .OrderByDescending(o => o.CreatedAt)
-                        .GroupBy(o => o.EstimateId)
-                        .Select(g => g.FirstOrDefault()) // Get the first order in each group (distinct EstimateId)
-                        .ToList();
-
-                    var Contactname = 
-                    // Mapping orders to OrderReportList DTO (you need to implement the mapping logic)
-                    responseVm.Data = confirmedOrders.Select(order => new OrderReportList
-                    {
-                        OrderNo = order.OrderName,
-                        EstimateId = order.EstimateId,
-                        Confirmdate = order.UpdatedAt,
-                        Orderdate = order.CreatedAt,
-                        // Add any other required fields for `OrderReportList`
-                    }).ToList();
-                }
-                else
+                if (orders.Data == null || !orders.Data.Any())
                 {
                     responseVm.Message = "No orders found.";
-                 //   responseVm.IsSuccess = false;
+                    return responseVm;
                 }
+
+                var filteredOrders = orders.Data
+                    .Where(o => o.Status == EnumValue.GetEnumValue(Estimation.Approved))
+                    
+                    .GroupBy(x => x.EstimateId)
+                    .Select(group => group
+                    .OrderByDescending(o => o.CreatedDate)
+                    .FirstOrDefault())
+                   .ToList();
+
+
+                responseVm.Message = AppConstant.FetchSuccessMsg;
+                responseVm.Data = filteredOrders;
+                responseVm.TotalRecords = filteredOrders.Count;
             }
             catch (Exception ex)
             {
                 responseVm.Message = $"An error occurred: {ex.Message}";
-                //responseVm.Status = false;
             }
-
             return responseVm;
         }
 
-
-
+     
+     
 
         //public async Task<IResponseVm<List<OrderReportList>>> GetOrderConfirmed()
         //{

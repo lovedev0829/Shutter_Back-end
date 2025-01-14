@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core.ViewModels.Request;
+using ShutterManagement.Core.ViewModels.Response;
+using ShutterManagement.Core.ViewModels;
 
 namespace ShutterManagement.Controllers
 {
@@ -18,12 +20,13 @@ namespace ShutterManagement.Controllers
             this.reportServices = reportServices;
         }
 
+        
         [HttpPost]
         [Route("GetOrderConfirmed")]
         //[Authorize(Roles = "AddressView")]
-        public async Task<IActionResult> GetOrderConfirmed()
+        public async Task<IActionResult> GetOrderConfirmed(Pagination filter)
         {
-            var result = await reportServices.GetOrderConfirmed();
+            var result = await reportServices.GetOrderConfirmed(filter);
             return Ok(result);
         }
     }
