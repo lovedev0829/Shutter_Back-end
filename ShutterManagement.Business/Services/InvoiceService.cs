@@ -307,29 +307,36 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-                var invoicesQuery = GetAllQuerable().Where(x => x.IsDelete == false).OrderByDescending(x => x.CreatedAt)
-                                    .Select(i => new InvoiceVM
-                                    {
-                                        InvoiceId = i.InvoiceId,
-                                        InvoiceNumber = i.InvoiceNumber,
-                                        JobId = i.JobId,
-                                        EstimateId=i.EstimateId,
-                                        IssueDate = i.IssueDate,
-                                        TotalAmount = i.TotalAmount,
-                                        PaidAmount = i.PaidAmount,
-                                        BalanceDue = i.BalanceDue,
-                                        DueDate = i.DueDate,
-                                        Status = i.Status??"",
-                                        IsActive = i.IsActive,
-                                    }).ToList();
+                var invoicesQuery = (from i in GetAllQuerable()
+                                     join j in dbContext.TblJobs on i.JobId equals j.JobId
+                                     join c in dbContext.TblContacts on j.ContactId equals c.ContactId
+                                     where i.IsDelete == false
+                                     orderby i.CreatedAt descending
+                                     select new InvoiceVM
+                                     {
+                                         InvoiceId = i.InvoiceId,
+                                         InvoiceNumber = i.InvoiceNumber,
+                                         JobId = i.JobId,
+                                         EstimateId = i.EstimateId,
+                                         IssueDate = i.IssueDate,
+                                         TotalAmount = i.TotalAmount,
+                                         PaidAmount = i.PaidAmount,
+                                         BalanceDue = i.BalanceDue,
+                                         DueDate = i.DueDate,
+                                         Status = i.Status ?? "",
+                                         IsActive = i.IsActive,
+                                         ContactName = c.Name 
+                                     }).ToList();
 
-              
+
+
                 filter.SearchValue = filter.SearchValue?.Trim().ToLower();
                 var filteredInvoices = invoicesQuery
                     .Where(x =>
                         (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
                         ((string.IsNullOrEmpty(filter.SearchValue) ? true :
                             (x.InvoiceNumber.Contains(filter.SearchValue.Trim())) ||
+                            ((x.ContactName.ToString().ToLower() == filter.SearchValue.Trim())) ||
                             (x.Status.ToLower().Contains(filter.SearchValue.Trim())) ||
                             (x.InvoiceId.ToString() == filter.SearchValue.Trim())) ||
                             (x.JobId.ToString() == filter.SearchValue.Trim()))).ToList();
@@ -475,7 +482,7 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.AccessDenied;
                     return responseVm;
                 }
-                Guid? templateId = Guid.Parse("DFBD5BD7-D9F9-4E41-8B48-375B3BA79610");
+                Guid? templateId = Guid.Parse("3A49D48B-CA1D-4E0E-9E1F-A22E7529EF47");
 
                 var invoiceTemplate = dbContext.TblTemplates.FirstOrDefault(c =>
                     c.TemplateId == templateId &&
@@ -548,6 +555,8 @@ namespace ShutterManagement.Business.Services
                     EstimationGrandTotal = estimationDetails?.GrandTotal.ToString() ?? "",
                     EstimationId = estimationDetails?.EstimateCode.ToString() ?? "",
                     EmailAddress = customerDetails?.Email ?? "",
+                    Terms = estimationDetails?.TermsCondition ?? "",
+                    Note = estimationDetails?.Notes ?? "",
                     ProductListHtml = GenerateProductListHtml(productList)
                 };
 
@@ -592,6 +601,7 @@ namespace ShutterManagement.Business.Services
             int i = 0;
             foreach (var product in productList)
             {
+                decimal? unitprice = product.TotalPrice / product.WindowQty;
                 productListHtml.Append($@"
     <tr style='background-color: #efefef;'>
         <td style='text-align: center; padding: 5px 5px;'>{++i}</td>
@@ -601,7 +611,7 @@ namespace ShutterManagement.Business.Services
         <td style='text-align: center; padding: 5px 5px;'>{product.WindowQty}</td>
         <td style='text-align: center; padding: 5px 5px;'>{product.Width}</td>
         <td style='text-align: center; padding: 5px 5px;'>{product.Height}</td>
-        <td></td>
+        <td style='text-align: center; padding: 5px 5px;'>{unitprice}</td>
         <td style='text-align: center; padding: 5px 5px;'>{product.TotalPrice}</td>
     </tr>");
             }
@@ -632,7 +642,9 @@ namespace ShutterManagement.Business.Services
                 .Replace("{{estimationgrandtotal}}", data.EstimationGrandTotal ?? "")
                 .Replace("{{estimationId}}", data.EstimationId ?? "")
                 .Replace("{{emailaddress}}", data.EmailAddress ?? "")
-                .Replace("{{productlist}}", data.ProductListHtml ?? "");
+                .Replace("{{productlist}}", data.ProductListHtml ?? "")
+                .Replace("{{terms}}", data.Terms ?? "")
+                .Replace("{{note}}", data.Note ?? "");
         }
 
         public byte[] GenerateInvoicePdf(string htmlContent)
