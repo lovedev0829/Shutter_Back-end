@@ -726,6 +726,10 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
 
+            entity.HasOne(d => d.Estimate).WithMany(p => p.TblInvoices)
+                .HasForeignKey(d => d.EstimateId)
+                .HasConstraintName("FK__TblInvoic__Estim__149C0161");
+
             entity.HasOne(d => d.Job).WithMany(p => p.TblInvoices)
                 .HasForeignKey(d => d.JobId)
                 .HasConstraintName("FK__TblInvoic__JobId__607251E5");

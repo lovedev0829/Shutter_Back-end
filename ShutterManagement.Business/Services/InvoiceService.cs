@@ -20,6 +20,7 @@ using DinkToPdf;
 using DinkToPdf.Contracts;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 using System.Text;
+using ShutterManagement.Core.Common;
 
 namespace ShutterManagement.Business.Services
 {
@@ -33,11 +34,12 @@ namespace ShutterManagement.Business.Services
         private readonly IEstimateService estimateService;
         private readonly ITenantBrandingService tenantBrandingService;
         private readonly IUserService userService;
+        private readonly IJobService jobService;
         public Pagination filter = new Pagination();
 
         public InvoiceService(ITenantService tenantService, IInvoicePaymentService invoicePaymentService,
             IHostEnvironment environment, IConverter converter ,IContactService contactService 
-            ,IEstimateService estimateService, ITenantBrandingService tenantBrandingService,IUserService userService)
+            ,IEstimateService estimateService, ITenantBrandingService tenantBrandingService,IUserService userService ,IJobService jobService)
         {
             this.tenantService = tenantService;
             this.invoicePaymentService = invoicePaymentService;
@@ -47,6 +49,7 @@ namespace ShutterManagement.Business.Services
             this.estimateService = estimateService;
             this.tenantBrandingService = tenantBrandingService;
             this.userService = userService;
+            this.jobService = jobService;
         }
 
         #region Create  update ActiveInActive Delete Getall
@@ -134,21 +137,22 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.TenantNotFound;
                     return responseVm;
                 }
-                var isInvoiceNumberExists = await AnyAsync(x =>
-                  x.InvoiceNumber == model.InvoiceNumber && x.IsDelete == false && x.IsActive==true && x.TenantId == AppConstant.LoggedInTenantId);
+                //var isInvoiceNumberExists = await AnyAsync(x =>
+                //  x.InvoiceNumber == model.InvoiceNumber && x.IsDelete == false && x.IsActive==true && x.TenantId == AppConstant.LoggedInTenantId);
 
-                if (isInvoiceNumberExists)
-                {
-                    responseVm.IsSuccess = false;
-                    responseVm.Message = "Invoice Number Already Exists.";
-                    return responseVm;
-                }
+                //if (isInvoiceNumberExists)
+                //{
+                //    responseVm.IsSuccess = false;
+                //    responseVm.Message = "Invoice Number Already Exists.";
+                //    return responseVm;
+                //}
 
+                var InvoiceNumberUniquNumber = GenerateUniqueId.GenerateUniqueIds(ModuleName.Invoice, AppConstant.LoggedInCompanyCode);
                 TblInvoice tblInvoice = new TblInvoice
                 {
                     InvoiceId = Guid.NewGuid(),
                     JobId = model.JobId,
-                    InvoiceNumber = model.InvoiceNumber,
+                    InvoiceNumber = InvoiceNumberUniquNumber,
                     IssueDate = model?.IssueDate,
                     DueDate = model?.DueDate,
                     TotalAmount = model.TotalAmount,
@@ -308,6 +312,7 @@ namespace ShutterManagement.Business.Services
                                         InvoiceId = i.InvoiceId,
                                         InvoiceNumber = i.InvoiceNumber,
                                         JobId = i.JobId,
+                                        EstimateId=i.EstimateId,
                                         IssueDate = i.IssueDate,
                                         TotalAmount = i.TotalAmount,
                                         PaidAmount = i.PaidAmount,
@@ -316,6 +321,8 @@ namespace ShutterManagement.Business.Services
                                         Status = i.Status??"",
                                         IsActive = i.IsActive,
                                     }).ToList();
+
+              
                 filter.SearchValue = filter.SearchValue?.Trim().ToLower();
                 var filteredInvoices = invoicesQuery
                     .Where(x =>
@@ -396,7 +403,7 @@ namespace ShutterManagement.Business.Services
                 invoice.IssueDate = updateInvoice.IssueDate;
                 invoice.DueDate = updateInvoice.DueDate;
                 invoice.TotalAmount = updateInvoice.TotalAmount;
-
+                invoice.EstimateId = updateInvoice.EstimateId;
                 invoice.BalanceDue = updateInvoice.TotalAmount - invoice.PaidAmount;
                 invoice.UpdatedAt = DateTime.Now;
                 invoice.ModifiedBy = AppConstant.LoggedInUserID;

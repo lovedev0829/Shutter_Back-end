@@ -45,6 +45,8 @@ public partial class TblEstimate
 
     public Guid? TaxId { get; set; }
 
+    public Guid? ContactId { get; set; }
+
     public virtual TblJob? Job { get; set; }
 
     public virtual ICollection<TblEstimateWindowProductComponentMaterial> TblEstimateWindowProductComponentMaterials { get; set; } = new List<TblEstimateWindowProductComponentMaterial>();
@@ -54,6 +56,8 @@ public partial class TblEstimate
     public virtual ICollection<TblEstimateWindowProduct> TblEstimateWindowProducts { get; set; } = new List<TblEstimateWindowProduct>();
 
     public virtual ICollection<TblEstimateWindow> TblEstimateWindows { get; set; } = new List<TblEstimateWindow>();
+
+    public virtual ICollection<TblInvoice> TblInvoices { get; set; } = new List<TblInvoice>();
 
     public virtual TblTenant? Tenant { get; set; }
 }

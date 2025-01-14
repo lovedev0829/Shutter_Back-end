@@ -50,4 +50,6 @@ public partial class TblOrder
     public string? OrderName { get; set; }
 
     public Guid? TaxId { get; set; }
+
+    public Guid? ContactId { get; set; }
 }

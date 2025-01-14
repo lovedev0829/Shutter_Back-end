@@ -12,6 +12,9 @@ namespace ShutterManagement.Core.ViewModels.Request
 
         [Required]
         public Guid InvoiceId { get; set; }
+
+        [Required]
+        public string? InvoiceNumber { get; set; }
     }
 
 }

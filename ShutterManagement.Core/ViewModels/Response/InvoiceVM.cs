@@ -7,6 +7,7 @@ namespace ShutterManagement.Core.ViewModels.Response
     {
         public Guid InvoiceId { get; set; }
         public Guid? JobId { get; set; }
+        public Guid? EstimateId { get; set; }
         public string? InvoiceNumber { get; set; }
         public DateTime? IssueDate { get; set; }
         public DateTime? DueDate { get; set; }
