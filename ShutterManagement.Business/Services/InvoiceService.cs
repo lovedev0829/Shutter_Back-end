@@ -21,6 +21,7 @@ using DinkToPdf.Contracts;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 using System.Text;
 using ShutterManagement.Core.Common;
+using Microsoft.Extensions.Primitives;
 
 namespace ShutterManagement.Business.Services
 {
@@ -329,7 +330,7 @@ namespace ShutterManagement.Business.Services
                         (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
                         ((string.IsNullOrEmpty(filter.SearchValue) ? true :
                             (x.InvoiceNumber.Contains(filter.SearchValue.Trim())) ||
-                            (x.Status.Contains(filter.SearchValue.Trim())) ||
+                            (x.Status.ToLower().Contains(filter.SearchValue.Trim())) ||
                             (x.InvoiceId.ToString() == filter.SearchValue.Trim())) ||
                             (x.JobId.ToString() == filter.SearchValue.Trim()))).ToList();
 
@@ -649,6 +650,78 @@ namespace ShutterManagement.Business.Services
 
             return converter.Convert(pdfDocument);
         }
+
+        public async Task<IResponseVm<List<InvoiceVM>>> InvoiceReport(Pagination filter, ReportFilterType type)
+        {
+            IResponseVm<List<InvoiceVM>> responseVm = new ResponseVm<List<InvoiceVM>>();
+            try
+            {
+                var isTenantValid = await tenantService.AnyAsync(x =>
+                    x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+                if (!isTenantValid)
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = AppConstant.AccessDenied;
+                    return responseVm;
+                }
+                var invoiceResponse = await GetAllInvoice(filter);
+                if (invoiceResponse == null || !invoiceResponse.Data.Any())
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = "No invoices found";
+                    return responseVm;
+                }
+                var filterLogic = new Dictionary<ReportFilterType, Func<InvoiceVM, bool>>
+                {
+                { ReportFilterType.Duedate, invoice => invoice.DueDate <= DateTime.Now },
+                { ReportFilterType.Pending, invoice => invoice.BalanceDue > 0 },
+                { ReportFilterType.Paid, invoice => invoice.BalanceDue == 0 }
+                };
+                if (!filterLogic.TryGetValue(type, out var filterCondition))
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = "Invalid filter type specified.";
+                    return responseVm;
+                }
+
+                
+
+                var filteredInvoices = invoiceResponse.Data.Where(filterCondition).ToList();
+
+                if (filter.ToDate.HasValue)
+                {
+                    filteredInvoices = filteredInvoices.Where(invoice => invoice.DueDate <= filter.ToDate.Value).ToList();
+                }
+
+                if (filter.FormDate.HasValue)
+                {
+                    filteredInvoices = filteredInvoices.Where(invoice => invoice.DueDate >= filter.FormDate.Value).ToList();
+                }
+
+
+                if (!filteredInvoices.Any())
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = "No invoices match the specified filter criteria.";
+                    return responseVm;
+                }
+
+                responseVm.IsSuccess = true;
+                responseVm.Data = filteredInvoices;
+                responseVm.TotalRecords = filteredInvoices.Count;
+                responseVm.Message = AppConstant.FetchSuccessMsg;
+            }
+            catch (Exception ex)
+            {
+                responseVm.IsSuccess = false;
+                responseVm.Message = $"An error occurred while generating the report: {ex.Message}";
+            }
+
+            return responseVm;
+        }
+
+
+
 
         #endregion Invoice_Generate_Methods
     }

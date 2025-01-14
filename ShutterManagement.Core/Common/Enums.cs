@@ -16,6 +16,14 @@ namespace ShutterManagement.Core.Common
         Assembly,
         Address,
     }
+
+    public enum ReportFilterType
+    {
+        Pending,
+        Paid,
+        Duedate,
+    }
+
     public enum FileType
     {
         Image,
