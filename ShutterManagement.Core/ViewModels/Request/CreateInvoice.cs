@@ -18,8 +18,12 @@ namespace ShutterManagement.Core.ViewModels.Request
 
         [Required]
         [DefaultValue("")]
-        [StringLength(50, ErrorMessage = "Invoice number cannot exceed 50 characters.")]
-        public string? InvoiceNumber { get; set; }
+        public Guid? EstimateId { get; set; }
+
+        //[Required]
+        //[DefaultValue("")]
+        //[StringLength(50, ErrorMessage = "Invoice number cannot exceed 50 characters.")]
+        //public string? InvoiceNumber { get; set; }
 
         [Required]
         public DateTime? IssueDate { get; set; }

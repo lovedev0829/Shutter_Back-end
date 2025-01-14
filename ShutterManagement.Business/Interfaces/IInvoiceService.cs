@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ShutterManagement.Core.Common;
 
 namespace ShutterManagement.Business.Interfaces
 {
@@ -19,6 +20,7 @@ namespace ShutterManagement.Business.Interfaces
         Task<IResponseVm<string>> ActiveInActive(Guid InvoiceId);
         Task<IResponseVm<string>> SendInvoiceAttachment(GenerateInvoiceModel model);
         Task<IResponseVm<List<InvoiceVM>>> GetAllInvoice(Pagination filter);
+        Task<IResponseVm<List<InvoiceVM>>> InvoiceReport(Pagination filter, ReportFilterType Type);
 
     }
 }

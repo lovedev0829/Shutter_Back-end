@@ -628,5 +628,14 @@ namespace ShutterManagement.Controllers
             return Ok(res);
         }
 
+        [HttpGet]
+        [Route("GetAllEstimate")]
+        public async Task<IActionResult> GetAllEstimate()
+        {
+            filter.Status = 1;
+            var res = await estimateService.GetAll_Estimate(filter);
+            return Ok(res);
+        }
+
     }
 }

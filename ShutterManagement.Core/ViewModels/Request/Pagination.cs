@@ -23,6 +23,13 @@ namespace ShutterManagement.Core.ViewModels.Request
 
         [DefaultValue(null)]
         public DateTime? ExpiryDate { get; set; } = null;
+
+        [DefaultValue(null)]
+        public DateTime? ToDate { get; set; } = null;
+
+        [DefaultValue(null)]
+        public DateTime? FormDate { get; set; } = null;
+
         [DefaultValue(2)]
         public int Status { get; set; } = 2;
         [DefaultValue("")]

@@ -39,6 +39,10 @@ public partial class TblInvoice
 
     public Guid? ModifiedBy { get; set; }
 
+    public Guid? EstimateId { get; set; }
+
+    public virtual TblEstimate? Estimate { get; set; }
+
     public virtual TblJob? Job { get; set; }
 
     public virtual ICollection<TblInvoicePayment> TblInvoicePayments { get; set; } = new List<TblInvoicePayment>();

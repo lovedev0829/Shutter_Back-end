@@ -57,5 +57,7 @@ public partial class TblEstimate
 
     public virtual ICollection<TblEstimateWindow> TblEstimateWindows { get; set; } = new List<TblEstimateWindow>();
 
+    public virtual ICollection<TblInvoice> TblInvoices { get; set; } = new List<TblInvoice>();
+
     public virtual TblTenant? Tenant { get; set; }
 }

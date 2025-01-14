@@ -471,6 +471,8 @@ namespace ShutterManagement.Business.Services
         //    return responseVm;
         //}
 
+        #region Start Export ExportContactsToCsv
+
         public async Task<IResponseVm<string>> ExportContactsToCsvAsync(Pagination filter, string filePath)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
@@ -614,6 +616,9 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
+        #endregion Start Export ExportContactsToCsv
+
+        #region Start Export ExportMaterialsToCsv
         public async Task<IResponseVm<string>> ExportMaterialsToCsvAsync(Pagination filter, string filePath)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
@@ -711,7 +716,9 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
+        #endregion Start Export ExportMaterialsToCsvAsync
 
+        #region Start Export ExportJobsToCsv
         public async Task<IResponseVm<string>> ExportJobsToCsv(Pagination filter, string filePath)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
@@ -824,7 +831,9 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
+        #endregion Start Export ExportJobsToCsv
 
+        #region Start Export Breakdowns
 
         public async Task<IResponseVm<string>> ExportDynamicBreakdown(Pagination filter, string estimationId, string windowProductId, string filePath)
         {
@@ -953,7 +962,7 @@ namespace ShutterManagement.Business.Services
             };
         }
 
-
+        #endregion End Export Breakdowns
 
 
 
