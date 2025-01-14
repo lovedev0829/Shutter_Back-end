@@ -200,6 +200,10 @@ namespace ShutterManagement.Business.Services
                                      Email = c.Email,
                                      SecondaryColor = c.SecondaryColor,
                                      CompanyName = c.CompanyName,
+                                     StreetAddress = c.StreetAddress,
+                                     City = c.City,
+                                     Country = c.Country,
+                                     ZipCode = c.ZipCode
                                  })
                     .FirstOrDefault();
 
@@ -248,6 +252,10 @@ namespace ShutterManagement.Business.Services
                     brandinginfo.Email = updatesetting.Email;
                     brandinginfo.PhoneNumber = updatesetting.PhoneNumber;
                     brandinginfo.CompanyName = updatesetting.CompanyName;
+                    brandinginfo.StreetAddress = updatesetting.StreetAddress;
+                    brandinginfo.City = updatesetting.City;
+                    brandinginfo.Country = updatesetting.Country;
+                    brandinginfo.ZipCode = updatesetting.ZipCode;   
                     var res = tenantBrandingService.Update(brandinginfo);
                     result.IsSuccess = true;
                     result.Message = AppConstant.UpdateSuccessMsg;
