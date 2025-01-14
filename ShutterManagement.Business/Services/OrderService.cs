@@ -805,6 +805,7 @@ namespace ShutterManagement.Business.Services
             var filteredRecords = orderlist
                 .Where(x =>
                     (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
+                    (string.IsNullOrEmpty(filter.JobStatus.ToLower()) ? true : x.jobDetails.JobStatusId.ToLower() == filter.JobStatus.ToLower()) &&
                     (string.IsNullOrWhiteSpace(filter.SearchValue) ||
                      ((x.Notes ?? "").Contains(filter.SearchValue)
                       || (x.JobId.ToString() ?? "").Contains(filter.SearchValue)
@@ -826,11 +827,13 @@ namespace ShutterManagement.Business.Services
         {
 
             var jobdetails1 = (from j1 in dbContext.TblJobs
-                               join j2 in dbContext.TblEstimates on j1.JobId equals j2.JobId
+                               join j2 in dbContext.TblOrders on j1.JobId equals j2.JobId
                                join j3 in dbContext.TblAddresses on j1.AddressId equals j3.AddressId
                                join j4 in dbContext.MstJobTypes on j1.JobType equals j4.Id
                                join j5 in dbContext.TblUsers on j1.AssignedPersonnel equals j5.Id
-                               where j1.IsDelete == false
+                               join c in dbContext.TblContacts on j1.ContactId equals c.ContactId
+                               join j6 in dbContext.MstJobStatuses on j1.JobStatus equals j6.JobStatusId 
+                               where j1.IsDelete == false && c.IsDelete == false
                                select new JobDetail
                                {
                                    JobName = j1.JobName,
@@ -839,7 +842,13 @@ namespace ShutterManagement.Business.Services
                                    AssignedPersonnel = j5.FirstName + " " + j5.LastName,
                                    Address = j3.StreetAddress + " " + j3.City + " " + j3.State + " " + j3.ZipCode,
                                    AddressLabel = j3.Label,
-                                   ScheduleTime = j1.ScheduledDate
+                                   ScheduleTime = j1.ScheduledDate,
+                                   JobStatusId = j1.JobStatus.ToString().ToLower(),
+                                   JobStatus = j6.JobStatusName,
+                                   ContactId = j1.ContactId.ToString(),
+                                   ContactName = c.Name,
+                                   CreatedAt = j1.CreatedAt,
+                                   UpdatedAt = j1.UpdatedAt
                                }).FirstOrDefault();
 
             e.jobDetails = jobdetails1;

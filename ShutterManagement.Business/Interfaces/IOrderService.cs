@@ -22,7 +22,7 @@ namespace ShutterManagement.Business.Interfaces
         Task<IResponseVm<dynamic>> ViewHistory(Guid EstimateId);
         Task<IResponseVm<string>> ChangeStatus(Guid OrderId, Estimation NewEstimationStatus);
         Task<IResponseVm<dynamic>> ViewOrder(Guid OrderId);
-        Task<List<TblOrder>> FetchOrders(Pagination filter);
+        Task<IResponseVm<List<OrderList>>> GetAll_Order(Pagination filter);
 
     }
 }
