@@ -154,6 +154,7 @@ namespace ShutterManagement.Business.Services
                     InvoiceId = Guid.NewGuid(),
                     JobId = model.JobId,
                     InvoiceNumber = InvoiceNumberUniquNumber,
+                    EstimateId=model.EstimateId,
                     IssueDate = model?.IssueDate,
                     DueDate = model?.DueDate,
                     TotalAmount = model.TotalAmount,

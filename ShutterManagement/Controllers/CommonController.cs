@@ -607,10 +607,10 @@ namespace ShutterManagement.Controllers
 
         [HttpGet]
         [Route("GetAllmaterialList")]
-        public async Task<IActionResult> GetMaterial()
+        public async Task<IActionResult> GetMaterial(Guid? VendorId)
         {
             var res = await material.GetAll_Material(filter);
-            res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
+            res.Data = res.Data?.Where(x => x.IsActive == true && x.VendorId==VendorId).ToList();
             return Ok(res);
         }
 
@@ -630,9 +630,10 @@ namespace ShutterManagement.Controllers
 
         [HttpGet]
         [Route("GetAllEstimate")]
-        public async Task<IActionResult> GetAllEstimate()
+        public async Task<IActionResult> GetAllEstimate(string? JobId)
         {
             filter.Status = 1;
+            filter.SearchValue=JobId?.ToLower();
             var res = await estimateService.GetAll_Estimate(filter);
             return Ok(res);
         }
