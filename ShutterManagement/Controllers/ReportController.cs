@@ -26,7 +26,7 @@ namespace ShutterManagement.Controllers
         
         [HttpPost]
         [Route("GetOrderConfirmed")]
-        //[Authorize(Roles = "AddressView")]
+        [Authorize(Roles = "ReportsView")]
         public async Task<IActionResult> GetOrderConfirmed(Pagination filter)
         {
             var result = await reportServices.GetOrderConfirmed(filter);
