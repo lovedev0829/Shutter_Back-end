@@ -811,7 +811,7 @@ namespace ShutterManagement.Business.Services
                     (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
                     (string.IsNullOrWhiteSpace(filter.SearchValue) ||
                     ((x.Notes ?? "").Contains(filter.SearchValue)
-                     || (x.JobId.ToString() ?? "").Contains(filter.SearchValue)
+                     || (x.JobId.ToString().ToLower() ?? "").Contains(filter.SearchValue)
                      || (x.Status ?? "").Contains(filter.SearchValue)
                      || (x.EstimateId.ToString()).Contains(filter.SearchValue)
                      || (x.EstimateCode ?? "").Contains(filter.SearchValue)

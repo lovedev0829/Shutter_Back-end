@@ -329,39 +329,73 @@ namespace ShutterManagement.Services
             IResponseVm<string> result = new ResponseVm<string>();
             try
             {
-                var res = (await GetAll()).Where(x => x.IsActive == true && x.IsDelete == false && x.Email == forgetPassword.Email).FirstOrDefault();
-                if (res != null)
-                {
-                    var VerifyCode = tenantService.GetAllQuerable().Where(x => x.Code == forgetPassword.Code && x.IsActive == true && x.IsDelete == false).FirstOrDefault();
-                    if (VerifyCode != null)
-                    {
-                        var IsRelateToTenant = await tenantService.AnyAsync(x => x.IsDelete == false && x.IsActive == true && (x.TenantId == VerifyCode.TenantId || x.ParentTenantId == VerifyCode.TenantId) && x.TenantId == res.TenantId);
-                        if (IsRelateToTenant)
-                        {
-                            var Token = GenerateTokenForgotPassword(res.Email ?? "", res.Id);
-                            if (!string.IsNullOrEmpty(Token))
-                            {
-                                string resetLinks = $"/reset-password/{forgetPassword.Code}/{Token}";
-                                res.Token = Token;
-                                res.ModifiedAt = DateTime.Now;
-                                await Update(res);
-                                result.IsSuccess = true;
-                                result.Data = resetLinks;
-                                result.Message = AppConstant.ForgotPasswordSuccess;
-                                return result;
-                            }
-                        }
+                var user = (await GetAll())
+                    .FirstOrDefault(x => x.IsActive ==true && x.IsDelete==false && x.Email == forgetPassword.Email);
 
-                    }
+                if (user == null)
+                {
+                    result.IsSuccess = false;
+                    result.Message = AppConstant.NoDataFound;
+                    return result;
                 }
-                result.Message = AppConstant.NoDataFound;
+
+                var verifyCode = tenantService.GetAllQuerable()
+                    .FirstOrDefault(x => x.Code == forgetPassword.Code && x.IsActive==true && x.IsDelete==false);
+
+                if (verifyCode == null)
+                {
+                    result.IsSuccess = false;
+                    result.Message = "InvalidCode";
+                    return result;
+                }
+
+                var isRelateToTenant = await tenantService.AnyAsync(x =>
+                    x.IsDelete==false && x.IsActive==true &&
+                    (x.TenantId == verifyCode.TenantId || x.ParentTenantId == verifyCode.TenantId) &&
+                    x.TenantId == user.TenantId);
+
+                if (!isRelateToTenant)
+                {
+                    result.IsSuccess = false;
+                    result.Message = "InvalidTenantRelation";
+                    return result;
+                }
+
+                var token = GenerateTokenForgotPassword(user.Email ?? "", user.Id);
+                if (string.IsNullOrEmpty(token))
+                {
+                    result.IsSuccess = false;
+                    result.Message = "TokenGenerationFailed";
+                    return result;
+                }
+
+                string resetLink = $"/reset-password/{forgetPassword.Code}/{token}";
+                user.Token = token;
+                user.ModifiedAt = DateTime.Now;
+                await Update(user);
+
+                var emailHelper = new EmailHelper();
+                var emailToSend = new SendEmail
+                {
+                    To = user.Email,
+                    Subject = "Reset Your Password",
+                    Body = $"Please reset your password using the following link: {resetLink}"
+                };
+                emailHelper.SendMail(emailToSend);
+
+                result.IsSuccess = true;
+                result.Data = resetLink;
+                result.Message = AppConstant.ForgotPasswordSuccess;
             }
             catch (Exception ex)
             {
-                result.Message = AppConstant.ExceptionError + ex.Message;
+                result.IsSuccess = false;
+                result.Message = $"{AppConstant.ExceptionError} {ex.Message}";
             }
+
             return result;
         }
+
 
         private string GenerateTokenForgotPassword(string Email, Guid UserId)
         {
