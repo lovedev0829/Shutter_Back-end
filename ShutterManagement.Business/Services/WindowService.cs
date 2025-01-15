@@ -164,7 +164,6 @@ namespace ShutterManagement.Business.Services
                     IsActive = true,
                     IsDelete = false,
                     JobId = model.JobId,
-                    ContactId = model.ContactId,
                     IsRated = model.IsRated,
                     TenantId = AppConstant.LoggedInTenantId
                 };

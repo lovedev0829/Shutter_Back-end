@@ -52,6 +52,7 @@ namespace ShutterManagement.Business.Services
         private readonly IOption optionService;
         private readonly ITaxRate taxRate;
         private readonly IRegion region;
+        private readonly ITaxExemption taxExemption;
         List<Guid> expressionList = new List<Guid>();
 
         public EstimateService(BtprojecShuttermanagementDevContext context,
@@ -78,7 +79,7 @@ namespace ShutterManagement.Business.Services
             IHttpContextAccessor _httpContextAccessor,
             IOption optionService,
             ITaxRate taxRate,
-            IRegion region
+            IRegion region,ITaxExemption taxExemption
             )
         {
             _context = context;
@@ -107,6 +108,7 @@ namespace ShutterManagement.Business.Services
             this.optionService = optionService;
             this.taxRate = taxRate;
             this.region = region;
+            this.taxExemption = taxExemption;
         }
 
         public async Task<IResponseVm<string>> ActiveInActiveEstimate(Guid EstimateId)
@@ -415,8 +417,10 @@ namespace ShutterManagement.Business.Services
                                             AdditionalWidth = x.AdditionalWidth,
                                             Markup = x.Markup,
                                             ProductTypeName = x.ProductName,
-                                            TotalPrice = x.TotalPrice
+                                            TotalPrice = x.TotalPrice,
+                                         //   IsTaxApplied = IstaxApplied((Guid)x.JobId)
                                         }).DistinctBy(x => x.WindowProdcutId).ToList();
+
                     responseVm.Data =  forProduct;
                 }
                 else
@@ -434,6 +438,31 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
+        //private  Task<bool> IstaxApplied(Guid JobId)
+        //{
+           
+        //    var Jobdetail = jobService.GetAllQuerable().Where(x => x.JobId == JobId && x.IsDelete == false).Select(pt=> pt.ContactId).FirstOrDefault();
+        //    var IsTaxApplied = contactService.GetAllQuerable()
+        //        .Where(x => x.ContactId == Jobdetail && x.IsDelete == false)
+        //        .Join(
+        //            taxExemption.GetAllQuerable(), // The collection to join with
+        //            contact => contact.ContactId,    // The key from the first collection
+        //            tax => tax.ContactId,            // The key from the second collection
+        //            (contact, tax) => new         // The result projection
+        //            {
+        //                contact.ContactId,
+        //                contact.Name,
+        //                tax.TaxExemptionId,
+        //            }
+        //        ).FirstOrDefault();
+
+        //    if(IstaxApplied == null)
+        //    {
+        //        return true;
+        //    }
+        //    return false;
+
+        //}
         private async Task<decimal> CalculateEstimate(List<WindowProdcutDetailsForEstimate> data)
         {
             decimal finalSubTotal = 0.00M;
@@ -975,7 +1004,6 @@ namespace ShutterManagement.Business.Services
                 TermsCondition = model.TermsCondition,
                 CreatedBy = AppConstant.LoggedInUserID,
                 CreatedAt = DateTime.Now,
-                ContactId = model.ConctactId,
                 TenantId = AppConstant.LoggedInTenantId,
                 IsActive = true,
                 IsDelete = false,

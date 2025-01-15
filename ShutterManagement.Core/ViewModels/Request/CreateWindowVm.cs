@@ -11,8 +11,8 @@ namespace ShutterManagement.Core.ViewModels.Request
     public class CreateWindow
     {
 
-        [Required]
-        public Guid? ContactId { get; set; }
+        //[Required]
+        //public Guid? ContactId { get; set; }
         [Required]
         public Guid? AddressId { get; set; }
         [Required]
