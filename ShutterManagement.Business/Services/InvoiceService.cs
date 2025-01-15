@@ -336,8 +336,8 @@ namespace ShutterManagement.Business.Services
                     .Where(x =>
                         (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
                         ((string.IsNullOrEmpty(filter.SearchValue) ? true :
-                            (x.InvoiceNumber.Contains(filter.SearchValue.Trim())) ||
-                            ((x.ContactName.ToString().ToLower() == filter.SearchValue.Trim())) ||
+                            (x.InvoiceNumber.ToString().ToLower().Contains(filter.SearchValue.Trim()) ||
+                            (x.ContactName?.ToString().ToLower() == filter.SearchValue.Trim())) ||
                             (x.Status.ToLower().Contains(filter.SearchValue.Trim())) ||
                             (x.InvoiceId.ToString() == filter.SearchValue.Trim())) ||
                             (x.JobId.ToString() == filter.SearchValue.Trim()))).ToList();
@@ -677,8 +677,8 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.AccessDenied;
                     return responseVm;
                 }
-                var invoiceResponse = await GetAllInvoice(filter);
-                if (invoiceResponse == null || !invoiceResponse.Data.Any())
+                var invoiceResponse = GetFilteredInvoices(filter);
+                if (invoiceResponse == null || !invoiceResponse.Any())
                 {
                     responseVm.IsSuccess = false;
                     responseVm.Message = "No invoices found";
@@ -696,10 +696,7 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = "Invalid filter type specified.";
                     return responseVm;
                 }
-
-                
-
-                var filteredInvoices = invoiceResponse.Data.Where(filterCondition).ToList();
+                var filteredInvoices = invoiceResponse.Where(filterCondition).ToList();
 
                 if (filter.ToDate.HasValue)
                 {
@@ -718,9 +715,13 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = "No invoices match the specified filter criteria.";
                     return responseVm;
                 }
+                var paginatedInvoices = filteredInvoices
+                    .Skip((filter.PageNo - 1) * filter.RecordPerPage)
+                    .Take(filter.RecordPerPage)
+                    .ToList();
 
                 responseVm.IsSuccess = true;
-                responseVm.Data = filteredInvoices;
+                responseVm.Data = paginatedInvoices;
                 responseVm.TotalRecords = filteredInvoices.Count;
                 responseVm.Message = AppConstant.FetchSuccessMsg;
             }
@@ -731,6 +732,65 @@ namespace ShutterManagement.Business.Services
             }
 
             return responseVm;
+        }
+
+
+        public List<InvoiceVM> GetFilteredInvoices(Pagination filter)
+        {
+            var invoicesQuery = (from i in GetAllQuerable()
+                                 join j in dbContext.TblJobs on i.JobId equals j.JobId
+                                 join c in dbContext.TblContacts on j.ContactId equals c.ContactId
+                                 where i.IsDelete == false
+                                 orderby i.CreatedAt descending
+                                 select new InvoiceVM
+                                 {
+                                     InvoiceId = i.InvoiceId,
+                                     InvoiceNumber = i.InvoiceNumber,
+                                     JobId = i.JobId,
+                                     EstimateId = i.EstimateId,
+                                     IssueDate = i.IssueDate,
+                                     TotalAmount = i.TotalAmount,
+                                     PaidAmount = i.PaidAmount,
+                                     BalanceDue = i.BalanceDue,
+                                     DueDate = i.DueDate,
+                                     Status = i.Status ?? "",
+                                     IsActive = i.IsActive,
+                                     ContactName = c.Name
+                                 }).ToList();
+
+            filter.SearchValue = filter.SearchValue?.Trim().ToLower();
+
+            var filteredInvoices = invoicesQuery
+                .Where(x =>
+                    (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
+                    (
+                        string.IsNullOrEmpty(filter.SearchValue) ||
+                        x.InvoiceNumber.ToString().ToLower().Contains(filter.SearchValue) ||
+                        (x.ContactName?.ToLower() == filter.SearchValue) ||
+                        x.Status.ToLower().Contains(filter.SearchValue) ||
+                        x.InvoiceId.ToString() == filter.SearchValue ||
+                        x.JobId.ToString() == filter.SearchValue
+                    )
+                ).ToList();
+
+            foreach (var invoice in filteredInvoices)
+            {
+                invoice.InvoicePayment = dbContext.TblInvoicePayments
+                    .Where(p => p.InvoiceId == invoice.InvoiceId && p.IsDelete == false)
+                    .Select(p => new InvoicePaymentVM
+                    {
+                        InvoicePaymentId = p.InvoicePaymentId,
+                        InvoiceId = p.InvoiceId,
+                        InvoiceAmount = p.InvoiceAmount,
+                        Notes = p.Notes,
+                        PaymentDate = p.CreatedAt,
+                        IsActive = p.IsActive
+                    })
+                    .OrderBy(p => p.PaymentDate)
+                    .ToList();
+            }
+
+            return filteredInvoices;
         }
 
 

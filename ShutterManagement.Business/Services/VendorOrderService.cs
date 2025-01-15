@@ -376,9 +376,9 @@ namespace ShutterManagement.Business.Services
                             (x.VendorId.ToString() == filter.SearchValue) ||
                             (x.VendorOrderId.ToString() == filter.SearchValue) ||
                             (x.JobId.ToString() == filter.SearchValue) ||
-                            (x.OrderNumber ?? "").Contains(filter.SearchValue.Trim()) ||
-                            (x.JobName ?? "").Contains(filter.SearchValue.Trim()) ||
-                            (x.Vendorname ?? "").Contains(filter.SearchValue.Trim()) ||
+                            (x.OrderNumber?.ToLower() ?? "").Contains(filter.SearchValue.Trim()) ||
+                            (x.JobName?.ToLower() ?? "").Contains(filter.SearchValue.Trim()) ||
+                            (x.Vendorname?.ToLower() ?? "").Contains(filter.SearchValue.Trim()) ||
                             (x.OrderDate.ToString() ?? "").Contains(filter.SearchValue.Trim()) ||
                             (x.VendorOrderItems.Any(item => item.MaterialId.ToString().Contains(filter.SearchValue))))
                     )
