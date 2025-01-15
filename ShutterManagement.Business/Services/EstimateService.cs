@@ -391,41 +391,54 @@ namespace ShutterManagement.Business.Services
                 }
                 if (!IsBreakdown)
                 {
-                    var forProduct = WindowProductData.Select(x =>
-                                        new WindowProdcutDetailsForEstimate
-                                        {
-                                            // Window Properties
-                                            WindowId = x.WindowId,
-                                            AddressId = x.AddressId,
-                                            Label = x.Label,
-                                            Width = x.Width,
-                                            Height = x.Height,
-                                            ArchHeight = x.ArchHeight,
-                                            Quantity = x.Quantity,
-                                            JobId = x.JobId,
-                                            Options = x.Options,
-                                            WindowProdcutId = x.WindowProdcutId,
-                                            ProductId = x.ProductId,
-                                            BuildWidth = x.BuildWidth,
-                                            BuildHeight = x.BuildHeight,
-                                            ProductName = x.ProductName,
-                                            ProductWidth = x.Width,
-                                            ProductHeight = x.Height,
-                                            ProductArchHeight = x.ArchHeight,
-                                            Area = x.Area,
-                                            Length = x.Length,
-                                            AdditionalWidth = x.AdditionalWidth,
-                                            Markup = x.Markup,
-                                            ProductTypeName = x.ProductName,
-                                            TotalPrice = x.TotalPrice,
-                                         //   IsTaxApplied = IstaxApplied((Guid)x.JobId)
-                                        }).DistinctBy(x => x.WindowProdcutId).ToList();
+                    // Use a loop to await IstaxApplied asynchronously for each item
+                    var forProduct = new List<WindowProdcutDetailsForEstimate>();
 
-                    responseVm.Data =  forProduct;
+                    foreach (var item in WindowProductData)
+                    {
+                        var isTaxApplied = await IsTaxApplied((Guid)item.JobId); 
+                        forProduct.Add(new WindowProdcutDetailsForEstimate
+                        {
+                            // Window Properties
+                            WindowId = item.WindowId,
+                            AddressId = item.AddressId,
+                            Label = item.Label,
+                            Width = item.Width,
+                            Height = item.Height,
+                            ArchHeight = item.ArchHeight,
+                            Quantity = item.Quantity,
+                            JobId = item.JobId,
+                            Options = item.Options,
+                            WindowProdcutId = item.WindowProdcutId,
+                            ProductId = item.ProductId,
+                            BuildWidth = item.BuildWidth,
+                            BuildHeight = item.BuildHeight,
+                            ProductName = item.ProductName,
+                            ProductWidth = item.Width,
+                            ProductHeight = item.Height,
+                            ProductArchHeight = item.ArchHeight,
+                            Area = item.Area,
+                            Length = item.Length,
+                            AdditionalWidth = item.AdditionalWidth,
+                            Markup = item.Markup,
+                            ProductTypeName = item.ProductName,
+                            TotalPrice = item.TotalPrice,
+                            IsTaxApplied = isTaxApplied
+                        });
+                    }
+
+                    responseVm.Data = forProduct.DistinctBy(x => x.WindowProdcutId).ToList();
+                    responseVm.TotalRecords = WindowProductData.Count;
+
                 }
                 else
                 {
-                    responseVm.Data =  WindowProductData;
+                    foreach (var item in WindowProductData)
+                    {
+                        item.IsTaxApplied = await IsTaxApplied((Guid)item.JobId); 
+                    }
+                    responseVm.Data = WindowProductData;
+                    responseVm.TotalRecords = WindowProductData.Count;
                 }
             }
             catch (Exception ex)
@@ -434,35 +447,25 @@ namespace ShutterManagement.Business.Services
                 responseVm.Message = AppConstant.ExceptionError + ex.Message;
             }
 
-            // Always return the response after completing the operation
             return responseVm;
         }
+        private async Task<bool> IsTaxApplied(Guid JobId)
+        {
+            var Jobdetail = jobService.GetAllQuerable()
+                .Where(x => x.JobId == JobId && x.IsDelete == false)
+                .Select(pt => pt.ContactId)
+                .FirstOrDefault();
 
-        //private  Task<bool> IstaxApplied(Guid JobId)
-        //{
-           
-        //    var Jobdetail = jobService.GetAllQuerable().Where(x => x.JobId == JobId && x.IsDelete == false).Select(pt=> pt.ContactId).FirstOrDefault();
-        //    var IsTaxApplied = contactService.GetAllQuerable()
-        //        .Where(x => x.ContactId == Jobdetail && x.IsDelete == false)
-        //        .Join(
-        //            taxExemption.GetAllQuerable(), // The collection to join with
-        //            contact => contact.ContactId,    // The key from the first collection
-        //            tax => tax.ContactId,            // The key from the second collection
-        //            (contact, tax) => new         // The result projection
-        //            {
-        //                contact.ContactId,
-        //                contact.Name,
-        //                tax.TaxExemptionId,
-        //            }
-        //        ).FirstOrDefault();
+            if (Jobdetail == Guid.Empty)
+            {
+                return false;
+            }
 
-        //    if(IstaxApplied == null)
-        //    {
-        //        return true;
-        //    }
-        //    return false;
+            bool IsTaxApplied = await taxExemption.AnyAsync(x => x.ContactId == Jobdetail && x.IsDelete == false);
 
-        //}
+            return IsTaxApplied;
+        }
+
         private async Task<decimal> CalculateEstimate(List<WindowProdcutDetailsForEstimate> data)
         {
             decimal finalSubTotal = 0.00M;
