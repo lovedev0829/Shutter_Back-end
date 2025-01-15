@@ -69,7 +69,7 @@ namespace ShutterManagement.Core.ViewModels.Response
 
         //Tax Excemption
 
-        public bool? IsTaxApplied { get; set; }
+        public bool? IsTaxApplied { get; set; } = false;
 
     }
 }

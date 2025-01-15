@@ -152,7 +152,6 @@ namespace ShutterManagement.Business.Services
                     newOrder.TaxAmount = updateOrder.Tax;
                     newOrder.TotalPrice = updateOrder.SubTotal;
                     newOrder.TermsCondition = updateOrder.TermsCondition;
-                    newOrder.ContactId = updateOrder.ContactId;
                     newOrder.Status = status1;
                     newOrder.CreatedAt = DateTime.Now;
                     newOrder.UpdatedAt = DateTime.Now;
@@ -179,7 +178,6 @@ namespace ShutterManagement.Business.Services
                     newOrder.TaxAmount = estimate.TaxAmount;
                     newOrder.TotalPrice = estimate.TotalPrice;
                     newOrder.TermsCondition = estimate.TermsCondition;
-                    newOrder.ContactId = estimate.ContactId;
                     newOrder.Status = status1;
                     newOrder.CreatedAt = DateTime.Now;
                     newOrder.UpdatedAt = DateTime.Now;
@@ -740,7 +738,6 @@ namespace ShutterManagement.Business.Services
                     EstimateId = order.EstimateId,
                     CreatedDate = order.CreatedAt,
                     JobId = order.JobId,
-                    ContactId = order.ContactId.ToString(),
                     taxRateId = order.TaxId,
                     Status = order.Status,
                     IsActive = order.IsActive,
