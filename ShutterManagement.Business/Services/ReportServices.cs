@@ -52,7 +52,7 @@ namespace ShutterManagement.Business.Services
                     .FirstOrDefault())
                    .ToList();
 
-
+                responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.FetchSuccessMsg;
                 responseVm.Data = filteredOrders;
                 responseVm.TotalRecords = filteredOrders.Count;
