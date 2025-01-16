@@ -377,7 +377,7 @@ namespace ShutterManagement.Services
                 var emailHelper = new EmailHelper();
                 var emailToSend = new SendEmail
                 {
-                    To = user.Email,
+                    ToEmail = user.Email,
                     Subject = "Reset Your Password",
                     Body = $"Please reset your password using the following link: {resetLink}"
                 };

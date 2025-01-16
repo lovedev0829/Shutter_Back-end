@@ -562,7 +562,7 @@ namespace ShutterManagement.Business.Services
                         var contactEmail = contactData.Email;
                         SendEmail sendEmail = new SendEmail
                         {
-                            FromEmail = contactEmail,
+                            ToEmail = contactEmail,
                         };
                         //emailHelper.SendMail(sendEmail);
                     }
