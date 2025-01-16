@@ -183,6 +183,7 @@ namespace ShutterManagement.Business.Services
                 ContactTypeId = x.ContactTypeId,
                 ContactTypeName = c.MstContactName,
                 JobId = x.JobId,
+                ContactId = x.ContactId,
                 Contactname = d.Name,
                 IsActive = x.IsActive
                 };

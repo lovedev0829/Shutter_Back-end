@@ -12,7 +12,7 @@ namespace ShutterManagement.Core.ViewModels.Response
 
         public Guid? JobId { get; set; }
 
-
+        public Guid? ContactId { get; set; }
         public Guid? ContactTypeId { get; set; }
         public string? Contactname { get; set; }
         public string? ContactTypeName { get; set; }
