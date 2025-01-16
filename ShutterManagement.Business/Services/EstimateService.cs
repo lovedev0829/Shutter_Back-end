@@ -53,6 +53,7 @@ namespace ShutterManagement.Business.Services
         private readonly ITaxRate taxRate;
         private readonly IRegion region;
         private readonly ITaxExemption taxExemption;
+        private readonly IDiscountService discountservice;
         List<Guid> expressionList = new List<Guid>();
 
         public EstimateService(BtprojecShuttermanagementDevContext context,
@@ -79,7 +80,7 @@ namespace ShutterManagement.Business.Services
             IHttpContextAccessor _httpContextAccessor,
             IOption optionService,
             ITaxRate taxRate,
-            IRegion region,ITaxExemption taxExemption
+            IRegion region,ITaxExemption taxExemption, IDiscountService discountservice
             )
         {
             _context = context;
@@ -109,6 +110,7 @@ namespace ShutterManagement.Business.Services
             this.taxRate = taxRate;
             this.region = region;
             this.taxExemption = taxExemption;
+            this.discountservice = discountservice;
         }
 
         public async Task<IResponseVm<string>> ActiveInActiveEstimate(Guid EstimateId)
@@ -992,6 +994,35 @@ namespace ShutterManagement.Business.Services
         private async Task<TblEstimate> CreateEstimateRecord(CreateEstimate model)
         {
             FileLogger.Log("Creating new estimate...");
+
+            decimal subtotal = 0m;
+            decimal grandtotal = 0m;
+            Guid? taxRateId = null;
+            Guid? discountId = null;
+            var windowproductdetails = await BuildEstimate(model.WindowProductId, false);
+                if (windowproductdetails.Data != null && windowproductdetails.Data.Any())
+                {
+                    subtotal =(decimal)windowproductdetails.Data.Sum(x => x.TotalPrice);
+                }
+            if (model.taxRateId == Guid.Empty && string.IsNullOrEmpty(model.DiscountCoupon))
+            {
+                  grandtotal = subtotal;
+            }
+            else
+            {
+                if (model.taxRateId == Guid.Empty || string.IsNullOrEmpty(model.DiscountCoupon))
+                {
+                    taxRateId = null;
+                    discountId = null;
+
+                }
+                else
+                {
+                    taxRateId = model.taxRateId;
+                    discountId = Guid.Parse(model.DiscountCoupon);
+                }
+                grandtotal = await DiscountApplied(discountId, subtotal, taxRateId) ?? 0m;
+            }
             TblEstimate createEstimate = new TblEstimate
             {
                 EstimateId = Guid.NewGuid(),
@@ -1000,7 +1031,7 @@ namespace ShutterManagement.Business.Services
                 Notes = model.Notes,
                 DiscountAmount = model.Discount,
                 DiscountCoupon = model.DiscountCoupon,
-                GrandTotal = model.GrandTotal,
+                GrandTotal = grandtotal,
                 JobId = model.JobId,
                 TaxId = model.taxRateId,
                 TaxAmount = model.Tax,
@@ -1010,7 +1041,7 @@ namespace ShutterManagement.Business.Services
                 TenantId = AppConstant.LoggedInTenantId,
                 IsActive = true,
                 IsDelete = false,
-                TotalPrice = model.SubTotal,
+                TotalPrice = subtotal,
                 Status = EnumValue.GetEnumValue(Estimation.New),
             };
 
@@ -1018,6 +1049,56 @@ namespace ShutterManagement.Business.Services
             return res;
         }
 
+        private async Task<decimal?> DiscountApplied(Guid? discountId, decimal subtotal, Guid? taxId)
+        {
+            if (discountId == null)
+            {
+                decimal? tax = await TaskApplied(taxId, subtotal);
+                return subtotal + tax;
+            }
+            else
+            {
+                var discountdetails = discountservice.GetAllQuerable()
+                    .Where(x => x.DiscountId == discountId && x.IsDelete == false)
+                    .FirstOrDefault();
+                decimal? discount = 0m;
+                decimal grandtotal = 0m;
+                decimal? tax = await TaskApplied(taxId, subtotal);
+
+                if (discountdetails != null)
+                {
+                    if (discountdetails.DiscountType == EnumValue.GetEnumValue(DiscountType.Fixed))
+                    {
+                        discount = discountdetails.FixedAmount > subtotal ? subtotal : discountdetails.FixedAmount;
+                    }
+                    else if (discountdetails.DiscountType == EnumValue.GetEnumValue(DiscountType.Percentage))
+                    {
+                        discount = (subtotal * discountdetails.PercentageDiscount) / 100;
+                    }
+                }
+
+                grandtotal = (decimal)(subtotal + tax - discount);
+                return grandtotal;
+            }
+        }
+
+        private async Task<decimal?> TaskApplied(Guid? taxId, decimal subtotal)
+        {
+            if (taxId == null)
+            {
+                return 0m;
+            }
+
+            var tax = taxRate.GetAllQuerable().Where(x => x.TaxRateId == taxId && x.IsDelete== false).Select(x => x.Rate).FirstOrDefault();
+
+            if (tax == null)
+            {
+                return 0m;
+            }
+
+            decimal taxApplied = (decimal)(subtotal * (tax / 100));
+            return taxApplied;
+        }
         private async Task ProcessWindowProducts(List<Guid> windowProductIds, Guid estimateId)
         {
             FileLogger.Log("Processing window products...");

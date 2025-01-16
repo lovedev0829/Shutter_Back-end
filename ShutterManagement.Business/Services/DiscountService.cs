@@ -203,8 +203,8 @@ namespace ShutterManagement.Business.Services
                     (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
                     (string.IsNullOrEmpty(filter.CustomerId) ? true : x.CustomerId.ToString() == filter.CustomerId || x.CustomerId == null) &&
                     (string.IsNullOrEmpty(filter.SearchValue) ? true :
-                        (x.CustomerName ?? "").Contains(filter.SearchValue.Trim()) ||
-                        (x.CouponCode ?? "").Contains(filter.SearchValue.Trim()) ||
+                        (x.CustomerName?.ToLower() ?? "").Contains(filter.SearchValue.Trim().ToLower()) ||
+                        (x.CouponCode?.ToLower() ?? "").Contains(filter.SearchValue.Trim().ToLower()) ||
                         (x.PercentageDiscount.ToString() ?? "").Contains(filter.SearchValue.Trim()) ||
                         (x.FixedAmount.ToString() ?? "").Contains(filter.SearchValue.Trim()) ||
                         (x.ExpiryDate.ToString() ?? "").Contains(filter.SearchValue.Trim()) ||
