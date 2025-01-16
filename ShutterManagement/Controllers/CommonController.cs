@@ -638,5 +638,15 @@ namespace ShutterManagement.Controllers
             return Ok(res);
         }
 
+        [HttpGet]
+        [Route("GetAllJobDetails")]
+        public async Task<IActionResult> GetAllJobDetails()
+        {
+            filter.Status = 1;
+            filter.TenantId = AppConstant.LoggedInTenantId.ToString();
+            var res = await jobService.GetAllJobsTenant_SubTenant(filter);
+            return Ok(res);
+        }
+
     }
 }
