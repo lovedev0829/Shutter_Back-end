@@ -19,6 +19,8 @@ namespace ShutterManagement.Core.ViewModels.Response
         public TimeOnly? DayStartTime { get; set; }
         public TimeOnly? DayEndDateTime { get; set; }
         public Guid? TenantId { get; set; }
+        public Guid? EstimateId { get; set; }
+        public string? EstimateName { get; set; }
         public bool? IsActive { get; set; }
     }
 }

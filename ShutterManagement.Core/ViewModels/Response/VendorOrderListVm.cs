@@ -20,7 +20,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public DateTime? ExpectedDeliveryDate { get; set; }
         public DateTime? ActualDeliveryDate { get; set; }
         public string? Notes { get; set; }
-
+        public string[]? Photo { get; set; } = new string[] { };
         public decimal? TotalAmount { get; set; }
         public int? Status { get; set; }
         public string? VendorOrderStatus { get; set; }

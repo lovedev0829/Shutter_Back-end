@@ -57,5 +57,7 @@ public partial class TblEstimate
 
     public virtual ICollection<TblInvoice> TblInvoices { get; set; } = new List<TblInvoice>();
 
+    public virtual ICollection<TblJobSchedule> TblJobSchedules { get; set; } = new List<TblJobSchedule>();
+
     public virtual TblTenant? Tenant { get; set; }
 }

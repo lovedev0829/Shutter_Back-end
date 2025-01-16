@@ -27,6 +27,10 @@ public partial class TblJobContact
 
     public Guid? JobId { get; set; }
 
+    public Guid? ContactId { get; set; }
+
+    public virtual TblContact? Contact { get; set; }
+
     public virtual MstContactType? ContactType { get; set; }
 
     public virtual TblJob? Job { get; set; }

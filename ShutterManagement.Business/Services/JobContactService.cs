@@ -92,7 +92,7 @@ namespace ShutterManagement.Business.Services
                     JobContactId = Guid.NewGuid(),
                     JobId=model.Jobid,
                     ContactTypeId = model.ContactTypeId,
-                    ContactName = model.Contactname,
+                    ContactId = model.ContactId,
                     IsActive = true,
                     IsDelete=false,
                     CreatedAt = DateTime.Now,
@@ -172,19 +172,21 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-                var jobContactsQuery = from x in dbContext.TblJobContacts.Where(x => x.IsDelete==false && x.TenantId == AppConstant.LoggedInTenantId)
-                join c in dbContext.MstContactTypes
-                on x.ContactTypeId equals c.MstContactId
-                orderby x.CreatedAt
+                var jobContactsQuery = from x in dbContext.TblJobContacts.Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId)
+                                       join c in dbContext.MstContactTypes
+                                       on x.ContactTypeId equals c.MstContactId
+                                       join d in dbContext.TblContacts on x.ContactId equals d.ContactId
+                                       orderby x.CreatedAt
                 select new JobContactVm
                 {
                 JobContactId = x.JobContactId,
                 ContactTypeId = x.ContactTypeId,
                 ContactTypeName = c.MstContactName,
                 JobId = x.JobId,
-                Contactname = x.ContactName,
+                Contactname = d.Name,
                 IsActive = x.IsActive
                 };
+
 
                 jobContactsQuery= jobContactsQuery.Where(x=>filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true));
 
@@ -193,8 +195,8 @@ namespace ShutterManagement.Business.Services
                     .Where(x =>
                         (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
                         ((string.IsNullOrEmpty(filter.SearchValue) ? true :
-                            (x.Contactname.Contains(filter.SearchValue.Trim())) ||
-                            (x.JobId.ToString() == filter.SearchValue.Trim())) ||
+                            (x.Contactname.ToLower().Contains(filter.SearchValue.Trim())) ||
+                            (x.JobId.ToString().ToLower() == filter.SearchValue.Trim())) ||
                             (x.ContactTypeId.ToString() == filter.SearchValue.Trim()))).ToList();
 
                 
@@ -227,13 +229,23 @@ namespace ShutterManagement.Business.Services
 
             try
             {
+                var isTenantValid = await tenantService.AnyAsync(x =>
+                   x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+
+                if (!isTenantValid)
+                {
+                    responseVm.Message = AppConstant.TenantNotFound;
+                    responseVm.IsSuccess = false;
+                    return responseVm;
+                }
+
                 var jobContact = GetAllQuerable().FirstOrDefault(x => x.JobContactId == model.JobContactId);
 
                 if (jobContact != null)
                 {
                     jobContact.ContactTypeId = model.ContactTypeId;
                     jobContact.JobId = model.Jobid;
-                    jobContact.ContactName = model.Contactname;
+                    jobContact.ContactId = model.ContactId;
                     jobContact.UpdatedAt = DateTime.Now;
                     jobContact.ModifiedBy=AppConstant.LoggedInUserID;
 

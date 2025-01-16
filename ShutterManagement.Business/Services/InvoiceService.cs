@@ -311,6 +311,7 @@ namespace ShutterManagement.Business.Services
                 var invoicesQuery = (from i in GetAllQuerable()
                                      join j in dbContext.TblJobs on i.JobId equals j.JobId
                                      join c in dbContext.TblContacts on j.ContactId equals c.ContactId
+                                     join d in dbContext.TblEstimates on i.EstimateId equals d.EstimateId
                                      where i.IsDelete == false
                                      orderby i.CreatedAt descending
                                      select new InvoiceVM
@@ -326,7 +327,8 @@ namespace ShutterManagement.Business.Services
                                          DueDate = i.DueDate,
                                          Status = i.Status ?? "",
                                          IsActive = i.IsActive,
-                                         ContactName = c.Name 
+                                         ContactName = c.Name ,
+                                         EstimateName=d.EstimateName,
                                      }).ToList();
 
 

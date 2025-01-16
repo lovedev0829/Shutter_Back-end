@@ -35,6 +35,10 @@ public partial class TblJobSchedule
 
     public Guid? JobId { get; set; }
 
+    public Guid? EstimateId { get; set; }
+
+    public virtual TblEstimate? Estimate { get; set; }
+
     public virtual TblJob? Job { get; set; }
 
     public virtual MstJobTitle? JobTitle { get; set; }

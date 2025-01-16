@@ -844,6 +844,10 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
 
+            entity.HasOne(d => d.Contact).WithMany(p => p.TblJobContacts)
+                .HasForeignKey(d => d.ContactId)
+                .HasConstraintName("FK__TblJobCon__Conta__28A2FA0E");
+
             entity.HasOne(d => d.ContactType).WithMany(p => p.TblJobContacts)
                 .HasForeignKey(d => d.ContactTypeId)
                 .HasConstraintName("FK__TblJobCon__Conta__5E3FF0B0");
@@ -864,6 +868,10 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.Property(e => e.EndDate).HasColumnType("datetime");
             entity.Property(e => e.StartDate).HasColumnType("datetime");
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+
+            entity.HasOne(d => d.Estimate).WithMany(p => p.TblJobSchedules)
+                .HasForeignKey(d => d.EstimateId)
+                .HasConstraintName("FK__TblJobSch__Estim__27AED5D5");
 
             entity.HasOne(d => d.Job).WithMany(p => p.TblJobSchedules)
                 .HasForeignKey(d => d.JobId)

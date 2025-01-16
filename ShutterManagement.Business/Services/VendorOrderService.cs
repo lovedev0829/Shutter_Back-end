@@ -107,7 +107,7 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
                 decimal? totalCost = model.VendorOrderItems.Sum(item => item.Quantity * item.UnitPrice);
-
+                string arrayString = string.Join(", ", model.Photo).Trim();
                 var vendorOrder = new TblVendorOrder
                 {
                     VendorOrderId = Guid.NewGuid(),
@@ -119,6 +119,7 @@ namespace ShutterManagement.Business.Services
                     ActualDeliveryDate = model.ActualDeliveryDate,
                     Status = EnumValue.GetEnumValue(model.Status),
                     Notes = model.Notes?.Trim(),
+                    Photo= arrayString ?? "",
                     IsActive = true,
                     IsDelete = false,
                     TotalCost = totalCost,
@@ -184,7 +185,7 @@ namespace ShutterManagement.Business.Services
 
                 decimal? totalCost = model.VendorOrderItems.Sum(item => item.Quantity * item.UnitPrice);
 
-
+                string arrayString = string.Join(", ", model.Photo);
                 existingOrder.OrderNumber = model.OrderNumber?.Trim();
                 existingOrder.OrderDate = model.OrderDate;
                 existingOrder.ExpectedDeliveryDate = model.ExpectedDeliveryDate;
@@ -192,6 +193,7 @@ namespace ShutterManagement.Business.Services
                 existingOrder.TotalCost = totalCost;
                 existingOrder.Status = EnumValue.GetEnumValue(model.Status);
                 existingOrder.Notes = model.Notes?.Trim();
+                existingOrder.Photo = arrayString;
                 existingOrder.UpdatedAt = DateTime.Now;
                 existingOrder.ModifiedBy = AppConstant.LoggedInUserID;
 
@@ -332,14 +334,15 @@ namespace ShutterManagement.Business.Services
                                             VendorOrderId = vo.VendorOrderId,
                                             VendorId = vo.VendorId,
                                             JobId = vo.JobId,
-                                            Vendorname = v.VendorName,
-                                            JobName = j.JobName,
-                                            OrderNumber = vo.OrderNumber,
+                                            Vendorname = v.VendorName ?? "",
+                                            JobName = j.JobName ?? "",
+                                            OrderNumber = vo.OrderNumber ?? "",
                                             OrderDate = vo.OrderDate,
                                             ExpectedDeliveryDate = vo.ExpectedDeliveryDate,
                                             ActualDeliveryDate = vo.ActualDeliveryDate,
                                             TotalAmount = vo.TotalCost,
-                                            Notes = vo.Notes,
+                                            Notes = vo.Notes ?? "",
+                                            Photo = vo.Photo != null ? vo.Photo.Split(",", StringSplitOptions.RemoveEmptyEntries).ToArray() : null,
                                             Status = vo.Status == EnumValue.GetEnumValue(VendorOrderStatus.Pending) ? 0 : 1,
                                             VendorOrderStatus = vo.Status,
                                             IsActive = vo.IsActive,

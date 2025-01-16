@@ -96,6 +96,7 @@ namespace ShutterManagement.Business.Services
                     JobTitleId = model.JobTitleId,
                     UserId = model.UserId,
                     JobId = model.JobId,
+                    EstimateId=model.EstimateId,
                     StartDate = model?.StartDate,
                     EndDate = model?.EndDate,
                     DayStartTime = TimeOnly.Parse(model.DayStartTime),
@@ -186,21 +187,24 @@ namespace ShutterManagement.Business.Services
                 var JobScheduleQuery = from i in dbContext.TblJobSchedules
                                        join jt in dbContext.MstJobTitles on i.JobTitleId equals jt.Id
                                        join u in dbContext.TblUsers on i.UserId equals u.Id
+                                       join e in dbContext.TblEstimates on i.EstimateId equals e.EstimateId
                                        where i.IsDelete == false
                                        orderby i.CreatedAt descending
                                        select new JobScheduleVm
                                        {
                                            ScheduleJobId = i.JobScheduleId,
                                            JobTitleId = i.JobTitleId,
-                                           JobTitle= jt.JobTitleName, 
+                                           JobTitle= jt.JobTitleName ?? "", 
                                            UserId = i.UserId,
                                            JobId = i.JobId,
-                                           UserFullname = u.FirstName+ " " +u.LastName,
+                                           UserFullname = u.FirstName+ " " +u.LastName ?? "",
                                            StartDate = i.StartDate,
                                            EndDate = i.EndDate,
                                            DayStartTime = i.DayStartTime,
                                            DayEndDateTime = i.DayEndDateTime,
                                            TenantId= i.TenantId,
+                                           EstimateId=i.EstimateId,
+                                           EstimateName=e.EstimateName ?? "",
                                            IsActive = i.IsActive,
                                        };
 
@@ -272,6 +276,7 @@ namespace ShutterManagement.Business.Services
 
                 JobSchedule.JobTitleId = model.JobTitleId;
                 JobSchedule.UserId = model.UserId;
+                JobSchedule.EstimateId = model.EstimateId;
                 JobSchedule.StartDate = model.StartDate;
                 JobSchedule.EndDate = model.EndDate;
                 JobSchedule.DayStartTime = TimeOnly.Parse(model.DayStartTime);

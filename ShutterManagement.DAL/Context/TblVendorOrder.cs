@@ -39,6 +39,8 @@ public partial class TblVendorOrder
 
     public Guid? TenentId { get; set; }
 
+    public string? Photo { get; set; }
+
     public virtual TblJob? Job { get; set; }
 
     public virtual ICollection<TblVendorOrderItem> TblVendorOrderItems { get; set; } = new List<TblVendorOrderItem>();

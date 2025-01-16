@@ -19,6 +19,9 @@ namespace ShutterManagement.Core.ViewModels.Request
         [Required(ErrorMessage = "JobId is required.")]
         public Guid? JobId { get; set; }
 
+        [Required(ErrorMessage = "Estimate is required.")]
+        public Guid? EstimateId { get; set; }
+
         [Required(ErrorMessage = "StartDate is required.")]
         public DateTime? StartDate { get; set; }
 
