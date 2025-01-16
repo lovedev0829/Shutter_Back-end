@@ -34,6 +34,8 @@ namespace ShutterManagement.Core.ViewModels.Response
         public decimal? AdditionalWidth { get; set; }
         public decimal? Markup { get; set; }
         public string[]? Options { get; set; } = [];
+        public decimal[]? OptionsPrice { get; set; } = [];
+        public decimal? AdditionalCost { get; set; }
 
         // ProductType Properties
         public string? ProductTypeName { get; set; }

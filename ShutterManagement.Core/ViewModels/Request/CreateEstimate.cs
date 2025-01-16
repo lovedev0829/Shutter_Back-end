@@ -32,6 +32,9 @@ namespace ShutterManagement.Core.ViewModels.Request
         public string? TermsCondition { get; set; }
         [Default("")]
         public string? Notes { get; set; }
+
+        [Default("")]
+        public Guid? DiscountId { get; set; }
         [Default("")]
         public string? DiscountCoupon { get; set; }
         [Default(0.00)]

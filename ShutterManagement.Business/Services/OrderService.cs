@@ -138,6 +138,39 @@ namespace ShutterManagement.Business.Services
 
                 if (updateOrder != null && !fromEstimate)
                 {
+                    decimal subtotal = 0m;
+                    decimal grandtotal = 0m;
+                    Guid? taxRateId = null;
+                    Guid? discountId = null;
+                    var windowproductdetails = await estimateService.BuildEstimate(updateOrder.WindowProductId, false);
+                    if (windowproductdetails.Data != null && windowproductdetails.Data.Any())
+                    {
+                        subtotal = (decimal)windowproductdetails.Data.Sum(x => x.TotalPrice);
+                    }
+                    if (string.IsNullOrEmpty((updateOrder.taxRateId).ToString()) && string.IsNullOrEmpty(updateOrder.DiscountCoupon))
+                    {
+                        grandtotal = subtotal;
+                    }
+                    else
+                    {
+                        if (string.IsNullOrEmpty((updateOrder.taxRateId).ToString()))
+                        {
+                            taxRateId = Guid.Empty;
+                        }
+                        else
+                        {
+                            taxRateId = updateOrder.taxRateId;
+                        }
+                        if (string.IsNullOrEmpty(updateOrder.DiscountId.ToString()))
+                        {
+                            discountId = Guid.Empty;
+                        }
+                        else
+                        {
+                            discountId = updateOrder.DiscountId;
+                        }
+                        grandtotal = await estimateService.DiscountApplied(discountId, subtotal, taxRateId) ?? 0m;
+                    }
                     newOrder.OrderId = Guid.NewGuid();
                     newOrder.EstimateId = (Guid)updateOrder.EstimateId;
                     newOrder.TenantId = estimate.TenantId;
@@ -147,10 +180,10 @@ namespace ShutterManagement.Business.Services
                     newOrder.Notes = updateOrder.Notes;
                     newOrder.DiscountAmount = updateOrder.Discount;
                     newOrder.DiscountCoupon = updateOrder.DiscountCoupon;
-                    newOrder.GrandTotal = updateOrder.GrandTotal;
+                    newOrder.GrandTotal = grandtotal;
                     newOrder.TaxId = updateOrder.taxRateId;
                     newOrder.TaxAmount = updateOrder.Tax;
-                    newOrder.TotalPrice = updateOrder.SubTotal;
+                    newOrder.TotalPrice = subtotal;
                     newOrder.TermsCondition = updateOrder.TermsCondition;
                     newOrder.Status = status1;
                     newOrder.CreatedAt = DateTime.Now;
@@ -342,15 +375,48 @@ namespace ShutterManagement.Business.Services
                         x.IsDelete == false && x.Status != EnumValue.GetEnumValue(Estimation.Approved)).FirstOrDefault();
                         if (orderExist != null)
                         {
+                            decimal subtotal = 0m;
+                            decimal grandtotal = 0m;
+                            Guid? taxRateId = null;
+                            Guid? discountId = null;
+                            var windowproductdetails = await estimateService.BuildEstimate(model.WindowProductId, false);
+                            if (windowproductdetails.Data != null && windowproductdetails.Data.Any())
+                            {
+                                subtotal = (decimal)windowproductdetails.Data.Sum(x => x.TotalPrice);
+                            }
+                            if (string.IsNullOrEmpty((model.taxRateId).ToString()) && string.IsNullOrEmpty(model.DiscountCoupon))
+                            {
+                                grandtotal = subtotal;
+                            }
+                            else
+                            {
+                                if (string.IsNullOrEmpty((model.taxRateId).ToString()))
+                                {
+                                    taxRateId = Guid.Empty;
+                                }
+                                else
+                                {
+                                    taxRateId = model.taxRateId;
+                                }
+                                if (string.IsNullOrEmpty(model.DiscountId.ToString()))
+                                {
+                                    discountId = Guid.Empty;
+                                }
+                                else
+                                {
+                                    discountId = model.DiscountId;
+                                }
+                                grandtotal = await estimateService.DiscountApplied(discountId, subtotal, taxRateId) ?? 0m;
+                            }
 
                             orderExist.Notes = model.Notes;
                             orderExist.DiscountAmount = model.Discount;
                             orderExist.DiscountCoupon = model.DiscountCoupon;
-                            orderExist.GrandTotal = model.GrandTotal;
+                            orderExist.GrandTotal = grandtotal;
                             orderExist.JobId = model.JobId;
                             orderExist.TaxId = model.taxRateId;
                             orderExist.TaxAmount = model.Tax;
-                            orderExist.TotalPrice = model.SubTotal;
+                            orderExist.TotalPrice = subtotal;
                             orderExist.TermsCondition = model.TermsCondition;
                             orderExist.ModifiedBy = AppConstant.LoggedInUserID;
                             orderExist.UpdatedAt = DateTime.Now;
