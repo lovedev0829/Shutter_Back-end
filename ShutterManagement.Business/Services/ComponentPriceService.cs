@@ -1,4 +1,5 @@
-﻿using ShutterManagement.Business.Interfaces;
+﻿using Microsoft.Extensions.Options;
+using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core;
 using ShutterManagement.Core.ViewModels;
 using ShutterManagement.Core.ViewModels.Request;
@@ -175,9 +176,11 @@ namespace ShutterManagement.Business.Services
                                        select  new
                                        {
                                            OptionTypeId = optionType.OptionTypeId,
-                                           OptionTypeName = Convert.ToString(options.OptionName + " - " + optionType.OptionType)
+                                           OptionTypeName = Convert.ToString(options.OptionName + " - " + optionType.OptionType),
+                                           OptionPrice = optionType.AdditionalCost ?? 0m
                                        }).ToList();
-                        item.Options = Options.Select(x=>x.OptionTypeName).ToArray();
+                        item.Options = Options.Select(x => x.OptionTypeName).ToArray();
+                        item.OptionsPrice = Options.Select(x => x.OptionPrice).ToArray();
                     }
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.FetchSuccessMsg;

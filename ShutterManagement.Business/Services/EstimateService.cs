@@ -382,6 +382,7 @@ namespace ShutterManagement.Business.Services
                 foreach (var windowProductId in windowProductIds)
                 {
                     var data = await componentPriceService.GetProductData(windowProductId);
+                    
                     if (data.IsSuccess)
                     {
                         //calculate price
@@ -411,6 +412,7 @@ namespace ShutterManagement.Business.Services
                             Quantity = item.Quantity,
                             JobId = item.JobId,
                             Options = item.Options,
+                            OptionsPrice = item.OptionsPrice,
                             WindowProdcutId = item.WindowProdcutId,
                             ProductId = item.ProductId,
                             BuildWidth = item.BuildWidth,
@@ -515,7 +517,10 @@ namespace ShutterManagement.Business.Services
                 var expression = new NCalc.Expression(formula);
                 var res = expression.Evaluate();
                 item.Price = Convert.ToDecimal(res);
+                item.AdditionalCost = item.OptionsPrice.Sum();
+                finalSubTotal = (decimal)item.AdditionalCost + finalSubTotal;
                 finalSubTotal += Convert.ToDecimal(res);
+
             }
             return finalSubTotal;
         }
@@ -565,17 +570,50 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = "Waiting for approval, can't edit this estimate";
                     return responseVm;
                 }
+                decimal subtotal = 0m;
+                decimal grandtotal = 0m;
+                Guid? taxRateId = null;
+                Guid? discountId = null;
+                var windowproductdetails = await BuildEstimate(model.WindowProductId, false);
+                if (windowproductdetails.Data != null && windowproductdetails.Data.Any())
+                {
+                    subtotal = (decimal)windowproductdetails.Data.Sum(x => x.TotalPrice);
+                }
+                if (string.IsNullOrEmpty((model.taxRateId).ToString()) && string.IsNullOrEmpty(model.DiscountCoupon))
+                {
+                    grandtotal = subtotal;
+                }
+                else
+                {
+                    if (string.IsNullOrEmpty((model.taxRateId).ToString()))
+                    {
+                        taxRateId = Guid.Empty;
+                    }
+                    else
+                    {
+                        taxRateId = model.taxRateId;
+                    }
+                    if (string.IsNullOrEmpty(model.DiscountId.ToString()))
+                    {
+                        discountId = Guid.Empty;
+                    }
+                    else
+                    {
+                        discountId = model.DiscountId;
+                    }
+                    grandtotal = await DiscountApplied(discountId, subtotal, taxRateId) ?? 0m;
+                }
 
                 // Update the estimate details
                 estimate.EstimateName = model.EstimateName;
                 estimate.Notes = model.Notes;
                 estimate.DiscountAmount = model.Discount;
                 estimate.DiscountCoupon = model.DiscountCoupon;
-                estimate.GrandTotal = model.GrandTotal;
+                estimate.GrandTotal = grandtotal;
                 estimate.JobId = model.JobId;
                 estimate.TaxId = model.taxRateId;
                 estimate.TaxAmount = model.Tax;
-                estimate.TotalPrice = model.SubTotal;
+                estimate.TotalPrice = subtotal;
                 estimate.TermsCondition = model.TermsCondition;
                 estimate.ModifiedBy = AppConstant.LoggedInUserID;
                 estimate.UpdatedAt = DateTime.Now;
@@ -1004,22 +1042,27 @@ namespace ShutterManagement.Business.Services
                 {
                     subtotal =(decimal)windowproductdetails.Data.Sum(x => x.TotalPrice);
                 }
-            if (model.taxRateId == Guid.Empty && string.IsNullOrEmpty(model.DiscountCoupon))
+            if (string.IsNullOrEmpty((model.taxRateId).ToString()) && string.IsNullOrEmpty(model.DiscountCoupon))
             {
                   grandtotal = subtotal;
             }
             else
             {
-                if (model.taxRateId == Guid.Empty || string.IsNullOrEmpty(model.DiscountCoupon))
+                if (string.IsNullOrEmpty((model.taxRateId).ToString()))
                 {
-                    taxRateId = null;
-                    discountId = null;
-
+                    taxRateId = Guid.Empty;
                 }
                 else
                 {
                     taxRateId = model.taxRateId;
-                    discountId = Guid.Parse(model.DiscountCoupon);
+                }
+                if (string.IsNullOrEmpty(model.DiscountId.ToString()))
+                {
+                    discountId = Guid.Empty;
+                }
+                else
+                {
+                    discountId = model.DiscountId;
                 }
                 grandtotal = await DiscountApplied(discountId, subtotal, taxRateId) ?? 0m;
             }
@@ -1049,9 +1092,9 @@ namespace ShutterManagement.Business.Services
             return res;
         }
 
-        private async Task<decimal?> DiscountApplied(Guid? discountId, decimal subtotal, Guid? taxId)
+        public async Task<decimal?> DiscountApplied(Guid? discountId, decimal subtotal, Guid? taxId)
         {
-            if (discountId == null)
+            if (discountId == Guid.Empty)
             {
                 decimal? tax = await TaskApplied(taxId, subtotal);
                 return subtotal + tax;
@@ -1084,7 +1127,7 @@ namespace ShutterManagement.Business.Services
 
         private async Task<decimal?> TaskApplied(Guid? taxId, decimal subtotal)
         {
-            if (taxId == null)
+            if (taxId == Guid.Empty)
             {
                 return 0m;
             }
