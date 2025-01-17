@@ -145,6 +145,7 @@ namespace ShutterManagement.Business.Services
                         {
                             MaterialName = model.MaterialName.Trim(),
                             UnitCost = model.UnitCost,
+                            NonRatedUnitCost = model.Non_Rated_UnitCost,
                             UnitOfMeasurement = model.UnitOfMeasurement,
                             StockQuantity = model.StockQuantity,
                             ReorderLevel = model.ReorderLevel,
@@ -266,6 +267,7 @@ namespace ShutterManagement.Business.Services
                                             SKU = t2.Sku,
                                             StockQuantity = t2.StockQuantity,
                                             UnitCost = t2.UnitCost,
+                                            Non_Rated_UnitCost = t2.NonRatedUnitCost,
                                             ProductType = t2.ProductType,
                                             UnitOfMeasurement = t2.UnitOfMeasurement,
                                             VendorId = t2.VendorId,
@@ -283,6 +285,7 @@ namespace ShutterManagement.Business.Services
                                         || (x.ProductType.ToString() == filter.SearchValue)
                                         || (x.MaterialName ?? "").ToLower().Contains(filter.SearchValue)
                                         || (x.UnitCost.ToString() ?? "").ToLower().Contains(filter.SearchValue)
+                                        || (x.Non_Rated_UnitCost.ToString() ?? "").ToLower().Contains(filter.SearchValue)
                                         || (x.ReorderLevel.ToString() ?? "").ToLower().Contains(filter.SearchValue)
                                         || (x.StockQuantity.ToString() ?? "").ToLower().Contains(filter.SearchValue)
                                         || (x.Notes.ToString() ?? "").ToLower().Contains(filter.SearchValue)
@@ -356,6 +359,7 @@ namespace ShutterManagement.Business.Services
                             IsMaterialExists.IsCutSheet = model.IsCutSheet;
                             IsMaterialExists.MaterialName = model.MaterialName;
                             IsMaterialExists.UnitCost = model.UnitCost;
+                            IsMaterialExists.NonRatedUnitCost = model.Non_Rated_UnitCost;
                             IsMaterialExists.Sku = model.SKU;
                             IsMaterialExists.ProductType = Guid.Parse(model.ProductType);
                             IsMaterialExists.UnitOfMeasurement = model.UnitOfMeasurement;

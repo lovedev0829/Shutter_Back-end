@@ -160,6 +160,7 @@ namespace ShutterManagement.Business.Services
                      // Material Properties
                      MaterialName = material.MaterialName,
                      UnitCost = material.UnitCost,
+                     Non_Rated_UnitCost = material.NonRatedUnitCost,
                      UnitOfMeasurement = material.UnitOfMeasurement,
                      StockQuantity = material.StockQuantity,
                      ReorderLevel = material.ReorderLevel,
