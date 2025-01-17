@@ -14,5 +14,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         [DefaultValue("")]
         [Required]
         public Guid EstimateId { get; set; }
+
+        public bool? IsTaxApplied { get; set; } = false;
     }
 }
