@@ -12,5 +12,6 @@ namespace ShutterManagement.Business.Interfaces
     public interface IReportServices
     {
         Task<IResponseVm<List<OrderList>>> GetOrderConfirmed(Pagination filter);
+        Task<IResponseVm<List<EstimateList>>> GetTaxReport(Pagination filter);
     }
 }

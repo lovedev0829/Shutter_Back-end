@@ -33,6 +33,17 @@ namespace ShutterManagement.Controllers
             return Ok(result);
         }
 
+
+        [HttpPost]
+        [Route("GetTaxReport")]
+        [Authorize(Roles = "ReportsView")]
+        public async Task<IActionResult> GetTaxReport(Pagination filter)
+        {
+            var result = await reportServices.GetTaxReport(filter);
+            return Ok(result);
+        }
+
+
         [HttpPost]
         [Route("GetInvoiceReport")]
         [Authorize(Roles = "ReportsView")]
