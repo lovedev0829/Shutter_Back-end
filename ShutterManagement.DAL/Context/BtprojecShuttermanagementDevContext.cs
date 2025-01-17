@@ -975,6 +975,7 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.ToTable("TblOrder", "dbo");
 
             entity.Property(e => e.OrderId).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.AdditionalCost).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
             entity.Property(e => e.DiscountAmount).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.DiscountCoupon).HasMaxLength(200);
@@ -1173,6 +1174,9 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
             entity.Property(e => e.MaterialName).HasMaxLength(255);
+            entity.Property(e => e.NonRatedUnitCost)
+                .HasColumnType("decimal(10, 2)")
+                .HasColumnName("Non_Rated_UnitCost");
             entity.Property(e => e.ReorderLevel).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.Sku)
                 .HasMaxLength(50)

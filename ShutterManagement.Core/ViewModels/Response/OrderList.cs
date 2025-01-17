@@ -20,6 +20,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? Region { get; set; }
         public decimal? TaxRate { get; set; }
 
+        public decimal? additionalCost { get; set; }
         public string? EstimateName { get; set; }
         public string? EstimateCode { get; set; }
         public Guid[]? WindowProductId { get; set; } = new Guid[] { };
