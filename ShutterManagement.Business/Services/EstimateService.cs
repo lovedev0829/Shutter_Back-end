@@ -1125,7 +1125,7 @@ namespace ShutterManagement.Business.Services
                     }
                 }
 
-                grandtotal = (decimal)(subtotal + tax - discount);
+                grandtotal = (decimal)((subtotal - discount) + tax);
                 return grandtotal;
             }
         }
