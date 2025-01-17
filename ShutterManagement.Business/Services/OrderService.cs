@@ -916,7 +916,7 @@ namespace ShutterManagement.Business.Services
 
             e.jobDetails = jobdetails1;
         }
-        private void AddEstimateProducts(TblOrder order, OrderList e)
+        private async void AddEstimateProducts(TblOrder order, OrderList e)
         {
             var productList = orderWindowProductService.GetAllQuerable()
                 .Where(x => x.OrderId == order.OrderId && x.IsDelete == false)
@@ -984,6 +984,7 @@ namespace ShutterManagement.Business.Services
                 e.EstimateProductList.Add(estimateProduct);
             }
             AddJobDetails(e);
+            e.IsTaxApplied = await estimateService.IsTaxApplied((Guid)e.JobId);
         }
         private async Task ProcessWindowProducts(List<Guid> windowProductIds, Guid estimateId, Guid OrderId, string Version)
         {

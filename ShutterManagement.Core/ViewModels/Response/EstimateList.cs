@@ -35,6 +35,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? primarycolor { get; set; }
         public string? CompanyName { get; set; }
 
+        public bool? IsTaxApplied { get; set; } = false;
         public JobDetails jobDetails { get; set; } = new JobDetails();
         public List<EstimateProductList> EstimateProductList { get; set; } = new List<EstimateProductList>();
     }

@@ -423,6 +423,7 @@ namespace ShutterManagement.Business.Services
                             ProductArchHeight = item.ArchHeight,
                             Area = item.Area,
                             Length = item.Length,
+                            AdditionalCost = item.AdditionalCost,
                             AdditionalWidth = item.AdditionalWidth,
                             Markup = item.Markup,
                             ProductTypeName = item.ProductName,
@@ -453,7 +454,7 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
-        private async Task<bool> IsTaxApplied(Guid JobId)
+        public async Task<bool> IsTaxApplied(Guid JobId)
         {
             var Jobdetail = jobService.GetAllQuerable()
                 .Where(x => x.JobId == JobId && x.IsDelete == false)
@@ -841,8 +842,6 @@ namespace ShutterManagement.Business.Services
                     e.TaxRate = 0;
                     e.Region = "";
                 }
-
-
                 // Fetch and add related products and options
                 AddEstimateProducts(estimate, e);
                 estimateList.Add(e);
@@ -888,10 +887,11 @@ namespace ShutterManagement.Business.Services
                                }).FirstOrDefault();
 
             e.jobDetails = jobdetails1;
+
         }
 
 
-        private void AddEstimateProducts(TblEstimate estimate, EstimateList e)
+        private async void AddEstimateProducts(TblEstimate estimate, EstimateList e)
         {
             var productList = estimateWindowProductService.GetAllQuerable()
                 .Where(x => x.EstimateId == estimate.EstimateId && x.IsDelete == false)
@@ -957,6 +957,7 @@ namespace ShutterManagement.Business.Services
                 e.EstimateProductList.Add(estimateProduct);
             }
             AddJobDetails(e);
+            e.IsTaxApplied = await IsTaxApplied((Guid)e.JobId);
         }
 
         private async Task<bool> ValidateTenantExists()
