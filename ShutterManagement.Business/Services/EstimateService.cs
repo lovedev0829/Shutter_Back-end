@@ -571,6 +571,7 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = "Waiting for approval, can't edit this estimate";
                     return responseVm;
                 }
+                decimal additionalCost = 0m;
                 decimal subtotal = 0m;
                 decimal grandtotal = 0m;
                 Guid? taxRateId = null;
@@ -578,7 +579,8 @@ namespace ShutterManagement.Business.Services
                 var windowproductdetails = await BuildEstimate(model.WindowProductId, false);
                 if (windowproductdetails.Data != null && windowproductdetails.Data.Any())
                 {
-                    subtotal = (decimal)windowproductdetails.Data.Sum(x => x.TotalPrice);
+                    additionalCost = (decimal)windowproductdetails.Data.Sum(x => x.AdditionalCost);
+                    subtotal = (decimal)windowproductdetails.Data.Sum(x => x.TotalPrice) + additionalCost;
                 }
                 if (string.IsNullOrEmpty((model.taxRateId).ToString()) && string.IsNullOrEmpty(model.DiscountCoupon))
                 {
@@ -615,6 +617,7 @@ namespace ShutterManagement.Business.Services
                 estimate.TaxId = model.taxRateId;
                 estimate.TaxAmount = model.Tax;
                 estimate.TotalPrice = subtotal;
+                estimate.AdditionalCost = additionalCost;
                 estimate.TermsCondition = model.TermsCondition;
                 estimate.ModifiedBy = AppConstant.LoggedInUserID;
                 estimate.UpdatedAt = DateTime.Now;
@@ -646,7 +649,6 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
-
 
         public async Task<IResponseVm<List<EstimateList>>> ViewEachEstimation(Guid EstimateId)
         {
@@ -755,9 +757,7 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-
         #region private methods
-
 
         private async Task<List<TblEstimate>> FetchEstimates(Pagination filter)
         {
@@ -808,6 +808,7 @@ namespace ShutterManagement.Business.Services
                     EstimateName = estimate.EstimateName,
                     EstimateCode = estimate.EstimateCode,
                     SubTotal = estimate.TotalPrice,
+                    additionalCost = estimate.AdditionalCost,   
                     GrandTotal = estimate.GrandTotal,
                     Notes = estimate.Notes,
                     Tax = estimate.TaxAmount,
@@ -889,7 +890,6 @@ namespace ShutterManagement.Business.Services
             e.jobDetails = jobdetails1;
 
         }
-
 
         private async void AddEstimateProducts(TblEstimate estimate, EstimateList e)
         {
@@ -1036,12 +1036,15 @@ namespace ShutterManagement.Business.Services
 
             decimal subtotal = 0m;
             decimal grandtotal = 0m;
+            decimal additionalCost = 0m;
             Guid? taxRateId = null;
             Guid? discountId = null;
             var windowproductdetails = await BuildEstimate(model.WindowProductId, false);
                 if (windowproductdetails.Data != null && windowproductdetails.Data.Any())
                 {
-                    subtotal =(decimal)windowproductdetails.Data.Sum(x => x.TotalPrice);
+                additionalCost = (decimal)windowproductdetails.Data.Sum(x => x.AdditionalCost);
+
+                subtotal = (decimal)windowproductdetails.Data.Sum(x => x.TotalPrice) + additionalCost;
                 }
             if (string.IsNullOrEmpty((model.taxRateId).ToString()) && string.IsNullOrEmpty(model.DiscountCoupon))
             {
@@ -1086,6 +1089,7 @@ namespace ShutterManagement.Business.Services
                 IsActive = true,
                 IsDelete = false,
                 TotalPrice = subtotal,
+                AdditionalCost = additionalCost,
                 Status = EnumValue.GetEnumValue(Estimation.New),
             };
 
@@ -1143,6 +1147,7 @@ namespace ShutterManagement.Business.Services
             decimal taxApplied = (decimal)(subtotal * (tax / 100));
             return taxApplied;
         }
+
         private async Task ProcessWindowProducts(List<Guid> windowProductIds, Guid estimateId)
         {
             FileLogger.Log("Processing window products...");
@@ -1345,8 +1350,6 @@ namespace ShutterManagement.Business.Services
             await estimateWindowProductComponentMaterialService.Add(tblEstimateWindowProductComponentMaterial);
         }
 
-
-
         public bool CanChangeStatus(Estimation currentStatus, Estimation newStatus)
         {
             if (currentStatus == Estimation.New)
@@ -1372,7 +1375,6 @@ namespace ShutterManagement.Business.Services
 
             return false;
         }
-
 
         private async Task<IResponseVm<string>> EstimationChangeHistory(Guid EstimationId, Estimation Status)
         {
