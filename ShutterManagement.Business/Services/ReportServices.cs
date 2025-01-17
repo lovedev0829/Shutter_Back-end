@@ -72,7 +72,7 @@ namespace ShutterManagement.Business.Services
 
             try
             {
-                filter.SearchValue = "Awarded";
+                filter.JobStatus = "14D5D2CC-0DD2-4C7A-A88B-8B9DF3A5CC41";
                 var estimates = await estimateService.GetAll_Estimate(filter);
 
                 if (estimates.Data == null || !estimates.Data.Any())

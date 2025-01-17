@@ -850,7 +850,8 @@ namespace ShutterManagement.Business.Services
             // Filter records based on search value and status
             var filteredRecords = estimateList
                 .Where(x =>
-                    (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
+                    (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) && 
+                    (string.IsNullOrEmpty(filter.JobStatus.ToLower()) ? true : x.jobDetails.JobStatus.ToLower() == filter.JobStatus.ToLower()) &&
                     (string.IsNullOrWhiteSpace(filter.SearchValue) ||
                     ((x.Notes ?? "").Contains(filter.SearchValue)
                      || (x.JobId.ToString().ToLower() ?? "").Contains(filter.SearchValue)
@@ -859,6 +860,7 @@ namespace ShutterManagement.Business.Services
                      || (x.EstimateCode ?? "").Contains(filter.SearchValue)
                      || (x.EstimateName ?? "").Contains(filter.SearchValue)
                      || (x.TermsCondition ?? "").Contains(filter.SearchValue)
+                     || (x.jobDetails.JobStatus.ToLower() ?? "").Contains(filter.SearchValue)
                      || (x.DiscountCoupon ?? "").Contains(filter.SearchValue)
                      || (x.GrandTotal.ToString() ?? "").Contains(filter.SearchValue)))
                 ).ToList();
@@ -880,6 +882,7 @@ namespace ShutterManagement.Business.Services
                                    JobName = j1.JobName,
                                    JobNotes = j1.Notes,
                                    JobType = j4.JobTypeName,
+                                   JobStatus = j1.JobStatus.ToString().ToLower(),
                                    AssignedPersonnel = j5.FirstName + " " + j5.LastName,
                                    Address = j3.StreetAddress + " " + j3.City + " " + j3.State + " " + j3.ZipCode,
                                    AddressLabel = j3.Label,

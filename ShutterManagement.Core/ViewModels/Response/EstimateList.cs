@@ -48,6 +48,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? AddressLabel { get; set; }
         public string? AssignedPersonnel { get; set; }
         public string? JobNotes { get; set; }
+        public string? JobStatus { get; set; }
         public DateTime? ScheduleTime { get; set; }
 
     }
