@@ -41,6 +41,7 @@ namespace ShutterManagement.Business.Services
         private readonly IContactBillingService billingService;
         private readonly IEstimateService estimateService;
         private readonly IEstimationBreakdownService estimationBreakdownService;
+        private readonly IInvoiceService invoiceService;
         private readonly IMstProductType productType;
 
         public ImportandExportCSV(BtprojecShuttermanagementDevContext context, IVendorService vendorService,
@@ -48,7 +49,7 @@ namespace ShutterManagement.Business.Services
             IUnitofMeasurementService unitofMeasurement, ITenantService tenantService,
             ITaxExemption taxExemptionService, IContactBillingService billingService,
             BtprojecShuttermanagementDevContext btprojecShuttermanagementDevContext , 
-            IEstimateService estimateService,IEstimationBreakdownService estimationBreakdownService)
+            IEstimateService estimateService,IEstimationBreakdownService estimationBreakdownService , IInvoiceService invoiceService)
         {
             dbContext = context;
             this.vendorService = vendorService;
@@ -61,6 +62,7 @@ namespace ShutterManagement.Business.Services
             this.billingService = billingService;
             this.estimateService = estimateService;
             this.estimationBreakdownService = estimationBreakdownService;
+            this.invoiceService = invoiceService;
             this.productType = productType;
         }
 
@@ -965,9 +967,140 @@ namespace ShutterManagement.Business.Services
         #endregion End Export Breakdowns
 
 
+        #region Start Export ExportJobsToCsv
+        public async Task<IResponseVm<string>> ExportInvoiceReportToCsv(Pagination filter, string filePath,ReportFilterType type)
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+
+            try
+            {
+                var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
+                if (!isTenantExists)
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = AppConstant.TenantNotFound;
+                    return responseVm;
+                }
+
+                var invoiceReportData = GetFilteredInvoices(filter);
+                var filterLogic = new Dictionary<ReportFilterType, Func<InvoiceVM, bool>>
+                {
+                { ReportFilterType.Duedate, invoice => invoice.DueDate < DateTime.Now  && invoice.BalanceDue>0},
+                { ReportFilterType.Pending, invoice => invoice.BalanceDue > 0 },
+                { ReportFilterType.Paid, invoice => invoice.BalanceDue == 0 }
+                };
+                if (!filterLogic.TryGetValue(type, out var filterCondition))
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = "Invalid filter type specified.";
+                    return responseVm;
+                }
+                var filteredInvoices = invoiceReportData.Where(filterCondition).ToList();
+
+                if (filter.ToDate.HasValue)
+                {
+                    filteredInvoices = filteredInvoices.Where(invoice => invoice.DueDate <= filter.ToDate.Value).ToList();
+                }
+
+                if (filter.FormDate.HasValue)
+                {
+                    filteredInvoices = filteredInvoices.Where(invoice => invoice.DueDate >= filter.FormDate.Value).ToList();
+                }
 
 
+                if (!filteredInvoices.Any())
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = "No invoices match the specified filter criteria.";
+                    return responseVm;
+                }
 
+
+                var csvBuilder = new StringBuilder();
+                csvBuilder.AppendLine("InvoiceNumber,ContactName,IssueDate,DueDate,BalanceDue,TotalAmount");
+
+                foreach (var report in filteredInvoices)
+                {
+                    var line = $"{report.InvoiceNumber},{report.ContactName},{report.IssueDate}," +
+                               $"{report.DueDate},{report.BalanceDue},{report.TotalAmount}";
+
+                    csvBuilder.AppendLine(line);
+                }
+
+                var fileBytes = Encoding.UTF8.GetBytes(csvBuilder.ToString());
+                var base64Csv = Convert.ToBase64String(fileBytes);
+
+                responseVm.IsSuccess = true;
+                responseVm.Message = AppConstant.ExportSuccessMsg;
+                responseVm.Data = base64Csv;
+            }
+            catch (Exception ex)
+            {
+                responseVm.IsSuccess = false;
+                responseVm.Message = $"{AppConstant.ExceptionError} {ex.Message}";
+            }
+
+            return responseVm;
+        }
+        #endregion Start Export ExportJobsToCsv
+
+        public List<InvoiceVM> GetFilteredInvoices(Pagination filter)
+        {
+            var invoicesQuery = (from i in dbContext.TblInvoices
+                                 join j in dbContext.TblJobs on i.JobId equals j.JobId
+                                 join c in dbContext.TblContacts on j.ContactId equals c.ContactId
+                                 where i.IsDelete == false
+                                 orderby i.CreatedAt descending
+                                 select new InvoiceVM
+                                 {
+                                     InvoiceId = i.InvoiceId,
+                                     InvoiceNumber = i.InvoiceNumber,
+                                     JobId = i.JobId,
+                                     EstimateId = i.EstimateId,
+                                     IssueDate = i.IssueDate,
+                                     TotalAmount = i.TotalAmount,
+                                     PaidAmount = i.PaidAmount,
+                                     BalanceDue = i.BalanceDue,
+                                     DueDate = i.DueDate,
+                                     Status = i.Status ?? "",
+                                     IsActive = i.IsActive,
+                                     ContactName = c.Name
+                                 }).ToList();
+
+            filter.SearchValue = filter.SearchValue?.Trim().ToLower();
+
+            var filteredInvoices = invoicesQuery
+                .Where(x =>
+                    (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
+                    (
+                        string.IsNullOrEmpty(filter.SearchValue) ||
+                        x.InvoiceNumber.ToString().ToLower().Contains(filter.SearchValue) ||
+                        (x.ContactName?.ToLower() == filter.SearchValue) ||
+                        x.Status.ToLower().Contains(filter.SearchValue) ||
+                        x.InvoiceId.ToString() == filter.SearchValue ||
+                        x.JobId.ToString() == filter.SearchValue
+                    )
+                ).ToList();
+
+            foreach (var invoice in filteredInvoices)
+            {
+                invoice.InvoicePayment = dbContext.TblInvoicePayments
+                    .Where(p => p.InvoiceId == invoice.InvoiceId && p.IsDelete == false)
+                    .Select(p => new InvoicePaymentVM
+                    {
+                        InvoicePaymentId = p.InvoicePaymentId,
+                        InvoiceId = p.InvoiceId,
+                        InvoiceAmount = p.InvoiceAmount,
+                        Notes = p.Notes,
+                        PaymentDate = p.CreatedAt,
+                        IsActive = p.IsActive
+                    })
+                    .OrderBy(p => p.PaymentDate)
+                    .ToList();
+            }
+
+            return filteredInvoices;
+        }
     }
 
 

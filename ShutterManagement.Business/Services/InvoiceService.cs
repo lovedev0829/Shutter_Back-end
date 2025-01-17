@@ -688,7 +688,7 @@ namespace ShutterManagement.Business.Services
                 }
                 var filterLogic = new Dictionary<ReportFilterType, Func<InvoiceVM, bool>>
                 {
-                { ReportFilterType.Duedate, invoice => invoice.DueDate <= DateTime.Now },
+                { ReportFilterType.Duedate, invoice => invoice.DueDate < DateTime.Now  && invoice.BalanceDue>0},
                 { ReportFilterType.Pending, invoice => invoice.BalanceDue > 0 },
                 { ReportFilterType.Paid, invoice => invoice.BalanceDue == 0 }
                 };
