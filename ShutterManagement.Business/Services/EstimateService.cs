@@ -848,7 +848,10 @@ namespace ShutterManagement.Business.Services
                 }
                 // Fetch and add related products and options
                 AddEstimateProducts(estimate, e);
+                AddJobDetails(e);
                 estimateList.Add(e);
+
+
             }
 
             // Filter records based on search value and status
@@ -963,7 +966,7 @@ namespace ShutterManagement.Business.Services
                 };
                 e.EstimateProductList.Add(estimateProduct);
             }
-            AddJobDetails(e);
+         //   AddJobDetails(e);
             e.IsTaxApplied = await IsTaxApplied((Guid)e.JobId);
         }
 
