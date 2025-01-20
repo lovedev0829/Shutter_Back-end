@@ -16,7 +16,7 @@ using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace ShutterManagement.Business.Services
 {
-    public class DiscountService : BaseRepository<BtprojecShuttermanagementDevContext, TblDiscount>, IDiscountService
+    public class DiscountService : BaseRepository<ShutterDBContext, TblDiscount>, IDiscountService
     {
         private readonly ITenantService tenantService;
         private readonly IContactService contactService;

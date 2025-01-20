@@ -14,12 +14,12 @@ using System.Threading.Tasks;
 
 namespace ShutterManagement.Business.Services
 {
-    public class ComponentMaterial : BaseRepository<BtprojecShuttermanagementDevContext, TblComponentMaterial>, IComponentMaterial
+    public class ComponentMaterial : BaseRepository<ShutterDBContext, TblComponentMaterial>, IComponentMaterial
     {
-        private readonly BtprojecShuttermanagementDevContext dbContext;
+        private readonly ShutterDBContext dbContext;
         private readonly ITenantService tenantService;
 
-        public ComponentMaterial(BtprojecShuttermanagementDevContext dbContext, ITenantService tenantService)
+        public ComponentMaterial(ShutterDBContext dbContext, ITenantService tenantService)
         {
             this.dbContext = dbContext;
             this.tenantService = tenantService;

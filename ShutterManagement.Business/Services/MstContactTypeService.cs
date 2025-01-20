@@ -13,7 +13,7 @@ using ShutterManagement.Business.Interfaces;
 
 namespace ShutterManagement.Business.Services
 {
-    public class MstContactTypeService : BaseRepository<BtprojecShuttermanagementDevContext, MstContactType>, IMstContactType
+    public class MstContactTypeService : BaseRepository<ShutterDBContext, MstContactType>, IMstContactType
     {
 
         public async Task<IResponseVm<List<MstContactTypeVm>>> GetAll_MstContactType(Pagination filter)

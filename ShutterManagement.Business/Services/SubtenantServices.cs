@@ -20,7 +20,7 @@ using ShutterManagement.Core.ViewModels.Response;
 
 namespace ShutterManagement.Business.Services
 {
-    public class SubtenantServices : BaseRepository<BtprojecShuttermanagementDevContext, TblTenant>, ISubtenantService
+    public class SubtenantServices : BaseRepository<ShutterDBContext, TblTenant>, ISubtenantService
     {
         private readonly DataServices dataServices;
         private readonly IUserService userService;

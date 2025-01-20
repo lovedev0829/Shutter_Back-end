@@ -25,7 +25,7 @@ using Microsoft.Extensions.Primitives;
 
 namespace ShutterManagement.Business.Services
 {
-    public class InvoiceService : BaseRepository<BtprojecShuttermanagementDevContext, TblInvoice>, IInvoiceService
+    public class InvoiceService : BaseRepository<ShutterDBContext, TblInvoice>, IInvoiceService
     {
         private readonly ITenantService tenantService;
         private readonly IInvoicePaymentService invoicePaymentService;
@@ -708,6 +708,13 @@ namespace ShutterManagement.Business.Services
                 if (filter.FormDate.HasValue)
                 {
                     filteredInvoices = filteredInvoices.Where(invoice => invoice.DueDate >= filter.FormDate.Value).ToList();
+                }
+
+                if (filter.ToDate.HasValue && filter.FormDate.HasValue)
+                {
+                    filteredInvoices = filteredInvoices
+                        .Where(invoice => invoice.DueDate >= filter.FormDate.Value && invoice.DueDate <= filter.ToDate.Value)
+                        .ToList();
                 }
 
 

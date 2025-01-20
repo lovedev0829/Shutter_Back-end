@@ -13,11 +13,11 @@ using ShutterManagement.Core;
 
 namespace ShutterManagement.Business.Services
 {
-    public class RegionServices : BaseRepository<BtprojecShuttermanagementDevContext, MstRegion>, IRegion
+    public class RegionServices : BaseRepository<ShutterDBContext, MstRegion>, IRegion
     {
-        private readonly BtprojecShuttermanagementDevContext dbContext;
+        private readonly ShutterDBContext dbContext;
 
-        public RegionServices(BtprojecShuttermanagementDevContext dbContext)
+        public RegionServices(ShutterDBContext dbContext)
         {
             this.dbContext = dbContext;
         }

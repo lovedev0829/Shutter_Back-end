@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace ShutterManagement.Business.Services
 {
-    public class VendorOrderItemService :BaseRepository<BtprojecShuttermanagementDevContext,TblVendorOrderItem>,IVendorItemService
+    public class VendorOrderItemService :BaseRepository<ShutterDBContext,TblVendorOrderItem>,IVendorItemService
     {
 
     }

@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace ShutterManagement.Business.Services
 {
-    public class EstimateWindowService : BaseRepository<BtprojecShuttermanagementDevContext,TblEstimateWindow>, IEstimateWindowService
+    public class EstimateWindowService : BaseRepository<ShutterDBContext,TblEstimateWindow>, IEstimateWindowService
     {
     }
 }

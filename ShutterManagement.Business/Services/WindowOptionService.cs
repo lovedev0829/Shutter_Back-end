@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace ShutterManagement.Business.Services
 {
-    public class WindowOptionService : BaseRepository<BtprojecShuttermanagementDevContext, WindowOption>,IWindowOptionService
+    public class WindowOptionService : BaseRepository<ShutterDBContext, WindowOption>,IWindowOptionService
     {
     }
 }
