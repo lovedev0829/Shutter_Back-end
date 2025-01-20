@@ -848,7 +848,6 @@ namespace ShutterManagement.Business.Services
                 }
                 // Fetch and add related products and options
                 AddEstimateProducts(estimate, e);
-                AddJobDetails(e);
                 estimateList.Add(e);
 
 
@@ -884,7 +883,7 @@ namespace ShutterManagement.Business.Services
                                join j3 in dbContext.TblAddresses on j1.AddressId equals j3.AddressId
                                join j4 in dbContext.MstJobTypes on j1.JobType equals j4.Id
                                join j5 in dbContext.TblUsers on j1.AssignedPersonnel equals j5.Id
-                               where j1.TenantId == AppConstant.LoggedInTenantId && j1.IsDelete == false
+                               where j1.TenantId == AppConstant.LoggedInTenantId && j1.IsDelete == false && j1.JobId == e.JobId
                                select new JobDetails
                                {
                                    JobName = j1.JobName,
@@ -966,7 +965,7 @@ namespace ShutterManagement.Business.Services
                 };
                 e.EstimateProductList.Add(estimateProduct);
             }
-         //   AddJobDetails(e);
+            AddJobDetails(e);
             e.IsTaxApplied = await IsTaxApplied((Guid)e.JobId);
         }
 
