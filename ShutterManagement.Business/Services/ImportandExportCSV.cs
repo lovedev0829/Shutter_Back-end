@@ -48,8 +48,7 @@ namespace ShutterManagement.Business.Services
         public ImportandExportCSV(ShutterDBContext context, IVendorService vendorService,
             IMaterial material, IContactService contactService, ClaimsProperty claimsProperty,
             IUnitofMeasurementService unitofMeasurement, ITenantService tenantService,
-            ITaxExemption taxExemptionService, IContactBillingService billingService,
-            BtprojecShuttermanagementDevContext btprojecShuttermanagementDevContext , 
+            ITaxExemption taxExemptionService, IContactBillingService billingService, 
             IEstimateService estimateService,IEstimationBreakdownService estimationBreakdownService
             , IInvoiceService invoiceService ,IReportServices reportServices)
         {
@@ -68,6 +67,8 @@ namespace ShutterManagement.Business.Services
             this.reportServices = reportServices;
             this.productType = productType;
         }
+
+        #region Start Export import Contact and material
 
         public async Task<IResponseVm<List<string>>> ImportCsvToDatabase(Stream csvStream)
         {
@@ -382,7 +383,7 @@ namespace ShutterManagement.Business.Services
             return successfulImports;
         }
 
-
+        #endregion Start Export import Contact and material
 
         //public async Task<IResponseVm<dynamic>> ExportContactsToCsvAsync(string filePath)
         //{
@@ -623,6 +624,7 @@ namespace ShutterManagement.Business.Services
 
         #endregion Start Export ExportContactsToCsv
 
+
         #region Start Export ExportMaterialsToCsv
         public async Task<IResponseVm<string>> ExportMaterialsToCsvAsync(Pagination filter, string filePath)
         {
@@ -722,6 +724,7 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
         #endregion Start Export ExportMaterialsToCsvAsync
+
 
         #region Start Export ExportJobsToCsv
         public async Task<IResponseVm<string>> ExportJobsToCsv(Pagination filter, string filePath)
@@ -837,6 +840,7 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
         #endregion Start Export ExportJobsToCsv
+
 
         #region Start Export Breakdowns
 
@@ -1045,7 +1049,7 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
-        #endregion Start Export ExportInvoiceToCsv
+        
 
         public List<InvoiceVM> GetFilteredInvoices(Pagination filter)
         {
@@ -1104,8 +1108,10 @@ namespace ShutterManagement.Business.Services
 
             return filteredInvoices;
         }
+        #endregion Start Export ExportInvoiceToCsv
 
 
+        #region Start Export ExportOrderToCsv
         public async Task<IResponseVm<string>> ExportOrderReportToCsv(Pagination filter)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
@@ -1150,6 +1156,7 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
+        #endregion Start Export ExportOrderToCsv
     }
 
 
