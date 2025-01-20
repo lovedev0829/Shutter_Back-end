@@ -308,6 +308,7 @@ namespace ShutterManagement.Business.Services
                         ProductType = x.ProductType,
                         Notes = x.Notes,
                         UnitCost= x.UnitCost,
+                        Non_Rated_UnitCost = x.Non_Rated_UnitCost,
                         UnitOfMeasurement = x.UnitOfMeasurement,
                         StockQuantity = x.StockQuantity,
                         ReorderLevel = x.ReorderLevel
