@@ -873,6 +873,7 @@ namespace ShutterManagement.Business.Services
                      || (x.TermsCondition ?? "").Contains(filter.SearchValue)
                      || (x.jobDetails.JobStatus.ToLower() ?? "").Contains(filter.SearchValue)
                      || (x.DiscountCoupon ?? "").Contains(filter.SearchValue)
+                     || (x.jobDetails.JobName.ToLower() ?? "").Contains(filter.SearchValue)
                      || (x.GrandTotal.ToString() ?? "").Contains(filter.SearchValue)))
                 ).ToList();
 
@@ -887,7 +888,7 @@ namespace ShutterManagement.Business.Services
                                join j3 in dbContext.TblAddresses on j1.AddressId equals j3.AddressId
                                join j4 in dbContext.MstJobTypes on j1.JobType equals j4.Id
                                join j5 in dbContext.TblUsers on j1.AssignedPersonnel equals j5.Id
-                               where j1.IsDelete == false
+                               where j1.TenantId == AppConstant.LoggedInTenantId && j1.IsDelete == false
                                select new JobDetails
                                {
                                    JobName = j1.JobName,
