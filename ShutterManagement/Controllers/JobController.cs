@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core.ViewModels.Request;
+using ShutterManagement.Core.ViewModels.Response;
 using System.Net;
 
 namespace ShutterManagement.Controllers
@@ -61,6 +62,15 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> GetAll(Pagination filter)
         {
             var result = await jobService.GetAll(filter);
+            return Ok(result);
+        }
+
+        [HttpPost]
+        [Route("UpdateJobStatus")]
+        [Authorize(Roles = "JobEdit")]
+        public async Task<IActionResult> UpdateJobStatus(UpdateJobStatus model)
+        {
+            var result = await jobService.UpdateJobStatus(model);
             return Ok(result);
         }
 

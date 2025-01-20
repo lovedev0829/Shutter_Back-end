@@ -44,6 +44,8 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? CreatedbyUsername { get; set; }
         public string? SubtenantName { get; set; }
         public Guid? TenantId { get; set; }
+        public DateTime? CreatedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
 
         public class GetSubtenant
         {
