@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 
 namespace ShutterManagement.Business.Services
 {
-    public class VendorService : BaseRepository<BtprojecShuttermanagementDevContext, TblVendor>, IVendorService
+    public class VendorService : BaseRepository<ShutterDBContext, TblVendor>, IVendorService
     {
         private readonly ITenantService tenantService;
         public VendorService(ITenantService tenantService)

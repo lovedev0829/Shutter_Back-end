@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 namespace ShutterManagement.Business.Services
 {
 
-    public class JobScheduleService : BaseRepository<BtprojecShuttermanagementDevContext, TblJobSchedule>, IJobSchedule
+    public class JobScheduleService : BaseRepository<ShutterDBContext, TblJobSchedule>, IJobSchedule
     {
         private readonly ITenantService tenantService;
         private readonly ClaimsProperty claimsProperty;

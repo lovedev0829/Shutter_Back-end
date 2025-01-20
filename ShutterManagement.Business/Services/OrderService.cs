@@ -20,7 +20,7 @@ using static Azure.Core.HttpHeader;
 
 namespace ShutterManagement.Business.Services
 {
-    public class OrderService : BaseRepository<BtprojecShuttermanagementDevContext, TblOrder>, IOrderService
+    public class OrderService : BaseRepository<ShutterDBContext, TblOrder>, IOrderService
     {
         private readonly ITenantService tenantService;
         private readonly IWindowProductService windowProductService;
@@ -35,7 +35,7 @@ namespace ShutterManagement.Business.Services
         private readonly IOrderWindowProductComponentService orderWindowProductComponentService;
         private readonly IOrderWindowProductComponentMaterialService orderWindowProductComponentMaterialService;
         private readonly IEstimateService estimateService;
-        private readonly BtprojecShuttermanagementDevContext context;
+        private readonly ShutterDBContext context;
         private readonly IWindowOptionService windowOptionService;
         private readonly IOptionsTypeService optionsTypeService;
         private readonly IMstProductType productType;
@@ -52,7 +52,7 @@ namespace ShutterManagement.Business.Services
              IProductComponentService productComponentService, IComponentService componentService,
              IOrderWindowProductComponentService orderWindowProductComponentService,
              IOrderWindowProductComponentMaterialService orderWindowProductComponentMaterialService,
-             IEstimateService estimateService, BtprojecShuttermanagementDevContext context,
+             IEstimateService estimateService, ShutterDBContext context,
              IWindowOptionService windowOptionService, IOptionsTypeService optionsTypeService, IMstProductType productType,
              IJobService jobService, IContactService contactService, IEstimateWindowProductService estimateWindowProduct, ITaxRate taxRate,
             IRegion region)

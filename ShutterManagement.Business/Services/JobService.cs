@@ -12,14 +12,14 @@ using static ShutterManagement.Core.ViewModels.Response.GetAllJobsSubtenant_tena
 
 namespace ShutterManagement.Business.Services
 {
-    public class JobService : BaseRepository<BtprojecShuttermanagementDevContext, TblJob>, IJobService
+    public class JobService : BaseRepository<ShutterDBContext, TblJob>, IJobService
     {
-        private readonly BtprojecShuttermanagementDevContext _context;
+        private readonly ShutterDBContext _context;
         private readonly ClaimsProperty claimsProperty;
         private readonly IAddress address;
         private readonly ITenantService tenantService;
 
-        public JobService(BtprojecShuttermanagementDevContext context, ClaimsProperty claimsProperty, IAddress address,
+        public JobService(ShutterDBContext context, ClaimsProperty claimsProperty, IAddress address,
             ITenantService tenantService)
         {
             _context = context;

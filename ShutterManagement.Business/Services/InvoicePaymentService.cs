@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace ShutterManagement.Business.Services
 {
-    public class InvoicePaymentService : BaseRepository<BtprojecShuttermanagementDevContext, TblInvoicePayment>, IInvoicePaymentService
+    public class InvoicePaymentService : BaseRepository<ShutterDBContext, TblInvoicePayment>, IInvoicePaymentService
     {
 
     }

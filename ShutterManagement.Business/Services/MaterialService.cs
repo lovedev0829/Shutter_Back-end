@@ -17,16 +17,16 @@ using static Azure.Core.HttpHeader;
 
 namespace ShutterManagement.Business.Services
 {
-    public class MaterialService : BaseRepository<BtprojecShuttermanagementDevContext, TblRawMaterial>, IMaterial
+    public class MaterialService : BaseRepository<ShutterDBContext, TblRawMaterial>, IMaterial
     {
-        private readonly BtprojecShuttermanagementDevContext _context;
+        private readonly ShutterDBContext _context;
         private readonly IVendorService vendorService;
         private readonly ClaimsProperty claimsProperty;
         private readonly ITenantService tenantService;
         private readonly IComponentMaterial componentMaterial;
         private readonly IUnitofMeasurementService unitofMeasurementService;
 
-        public MaterialService(BtprojecShuttermanagementDevContext context, IVendorService vendorService,
+        public MaterialService(ShutterDBContext context, IVendorService vendorService,
             ClaimsProperty claimsProperty, ITenantService tenantService,IComponentMaterial componentMaterial,IUnitofMeasurementService unitofMeasurementService)
         {
             _context = context;

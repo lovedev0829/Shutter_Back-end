@@ -13,14 +13,14 @@ using System.Threading.Tasks;
 
 namespace ShutterManagement.Business.Services
 {
-    public class RoleService : BaseRepository<BtprojecShuttermanagementDevContext,TblRole>,IRoleService
+    public class RoleService : BaseRepository<ShutterDBContext,TblRole>,IRoleService
     {
         private readonly DataServices dataServices;
-        private readonly BtprojecShuttermanagementDevContext dbContext;
+        private readonly ShutterDBContext dbContext;
         private readonly ClaimsProperty claimsProperty;
         private readonly IRolePermissionService rolePermissionService;
 
-        public RoleService(DataServices dataServices, BtprojecShuttermanagementDevContext dbContext
+        public RoleService(DataServices dataServices, ShutterDBContext dbContext
             , ClaimsProperty claimsProperty, IRolePermissionService rolePermissionService
             )
         {

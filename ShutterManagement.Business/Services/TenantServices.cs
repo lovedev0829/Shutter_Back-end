@@ -20,7 +20,7 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace ShutterManagement.Business.Services
 {
-    public class TenantServices : BaseRepository<BtprojecShuttermanagementDevContext, TblTenant>, ITenantService
+    public class TenantServices : BaseRepository<ShutterDBContext, TblTenant>, ITenantService
     {
         private readonly DataServices dataServices;
         private readonly IMapper mapper;

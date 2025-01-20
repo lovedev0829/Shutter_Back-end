@@ -15,14 +15,14 @@ using ShutterManagement.Services;
 
 namespace ShutterManagement.Business.Services
 {
-    public class TemplateService : BaseRepository<BtprojecShuttermanagementDevContext, TblTemplate>, ITemplatesService
+    public class TemplateService : BaseRepository<ShutterDBContext, TblTemplate>, ITemplatesService
     {
-        private readonly BtprojecShuttermanagementDevContext context;
+        private readonly ShutterDBContext context;
         private readonly ClaimsProperty claimsProperty;
         private readonly ITenantService tenantService;
         private readonly IMstPlaceholderService placeholders;
 
-        public TemplateService(BtprojecShuttermanagementDevContext context,ClaimsProperty claimsProperty,ITenantService tenantService,IMstPlaceholderService placeholders)
+        public TemplateService(ShutterDBContext context,ClaimsProperty claimsProperty,ITenantService tenantService,IMstPlaceholderService placeholders)
         {
             this.context = context;
             this.claimsProperty = claimsProperty;
