@@ -1157,10 +1157,10 @@ namespace ShutterManagement.Business.Services
             }
 
             // Fetch the tax rate based on taxId
-            var taxRate1 = await taxRate.GetAllQuerable()
+            var taxRate1 =  taxRate.GetAllQuerable()
                 .Where(x => x.TaxRateId == taxId && x.IsDelete == false)
                 .Select(x => x.Rate)
-                .FirstOrDefaultAsync();
+                .FirstOrDefault();
 
             if (taxRate == null)
             {
