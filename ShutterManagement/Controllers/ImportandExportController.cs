@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Mvc;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Business.Services;
 using ShutterManagement.Core;
-using ShutterManagement.Core.Common;
 using ShutterManagement.Core.ViewModels;
 using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.DAL.Context;
@@ -22,7 +21,7 @@ namespace ShutterManagement.Controllers
       
         private readonly ImportandExportCSV importandExportCSV;
 
-        public ImportandExportController(BtprojecShuttermanagementDevContext context,ImportandExportCSV importandExportCSV)
+        public ImportandExportController(ShutterDBContext context,ImportandExportCSV importandExportCSV)
         {
            
             this.importandExportCSV = importandExportCSV;
@@ -83,7 +82,7 @@ namespace ShutterManagement.Controllers
         [HttpPost("ExportAll")]
         [Authorize(Roles = "ContactView")]
 
-        public async Task<IResponseVm<string>> ExportToCsv([FromBody] Pagination filter, string Type,string? EstimationId, string? WindowProductId = null,ReportFilterType filterType=0)
+        public async Task<IResponseVm<string>> ExportToCsv([FromBody] Pagination filter, string Type,string? EstimationId, string? WindowProductId = null)
         {
 
             IResponseVm<string> responseVm = new ResponseVm<string>();

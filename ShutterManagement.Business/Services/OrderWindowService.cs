@@ -9,7 +9,7 @@ using ShutterManagement.Services;
 
 namespace ShutterManagement.Business.Services
 {
-    public class OrderWindowService : BaseRepository<BtprojecShuttermanagementDevContext, TblOrderWindow>, IOrderWindowService
+    public class OrderWindowService : BaseRepository<ShutterDBContext, TblOrderWindow>, IOrderWindowService
     {
     }
 }

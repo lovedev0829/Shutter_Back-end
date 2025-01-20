@@ -18,7 +18,7 @@ using System.Threading.Tasks;
 
 namespace ShutterManagement.Services
 {
-    public class UserService : BaseRepository<BtprojecShuttermanagementDevContext, TblUser>, IUserService
+    public class UserService : BaseRepository<ShutterDBContext, TblUser>, IUserService
     {
         private readonly DataServices _dataServices;
         private readonly IRoleService roleService;

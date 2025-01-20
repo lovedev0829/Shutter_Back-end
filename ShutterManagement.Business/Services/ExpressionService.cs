@@ -18,14 +18,14 @@ using ShutterManagement.Services;
 
 namespace ShutterManagement.Business.Services
 {
-    public class ExpressionService : BaseRepository<BtprojecShuttermanagementDevContext, TblExpression>, IExpressionService
+    public class ExpressionService : BaseRepository<ShutterDBContext, TblExpression>, IExpressionService
     {
-        private readonly BtprojecShuttermanagementDevContext dbContext;
+        private readonly ShutterDBContext dbContext;
         private readonly IComponentPriceService componentPriceService;
         private readonly IMaterial materialService;
         private readonly ITenantService tenantService;
 
-        public ExpressionService(BtprojecShuttermanagementDevContext dbContext, IComponentPriceService componentPriceService,
+        public ExpressionService(ShutterDBContext dbContext, IComponentPriceService componentPriceService,
             IMaterial materialService, ITenantService tenantService)
         {
             this.dbContext = dbContext;

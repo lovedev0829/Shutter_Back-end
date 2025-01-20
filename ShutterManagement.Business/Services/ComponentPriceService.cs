@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 
 namespace ShutterManagement.Business.Services
 {
-    public class ComponentPriceService : BaseRepository<BtprojecShuttermanagementDevContext, MstComponentPrice>, IComponentPriceService
+    public class ComponentPriceService : BaseRepository<ShutterDBContext, MstComponentPrice>, IComponentPriceService
     {
         private readonly IOption optionService;
         private readonly IMaterial materialService;

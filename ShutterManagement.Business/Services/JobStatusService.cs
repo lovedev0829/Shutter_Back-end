@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace ShutterManagement.Business.Services
 {
-    public class JobStatusService : BaseRepository<BtprojecShuttermanagementDevContext, MstJobStatus>, IJobStatusService
+    public class JobStatusService : BaseRepository<ShutterDBContext, MstJobStatus>, IJobStatusService
     {
         public async Task<IResponseVm<List<JobStatusList>>> GetAll(Pagination filter)
         {

@@ -30,7 +30,7 @@ namespace ShutterManagement.Business.Services
 
     public class ImportandExportCSV
     {
-        private readonly BtprojecShuttermanagementDevContext dbContext;
+        private readonly ShutterDBContext dbContext;
         private readonly IVendorService vendorService;
         private readonly IMaterial material;
         private readonly IContactService contactService;
@@ -45,7 +45,7 @@ namespace ShutterManagement.Business.Services
         private readonly IReportServices reportServices;
         private readonly IMstProductType productType;
 
-        public ImportandExportCSV(BtprojecShuttermanagementDevContext context, IVendorService vendorService,
+        public ImportandExportCSV(ShutterDBContext context, IVendorService vendorService,
             IMaterial material, IContactService contactService, ClaimsProperty claimsProperty,
             IUnitofMeasurementService unitofMeasurement, ITenantService tenantService,
             ITaxExemption taxExemptionService, IContactBillingService billingService,

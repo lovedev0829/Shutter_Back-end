@@ -16,7 +16,7 @@ using System.Drawing;
 namespace ShutterManagement.Business.Services
 {
 
-    public class PaymentsService : BaseRepository<BtprojecShuttermanagementDevContext, TblPayment>, IPaymentsService
+    public class PaymentsService : BaseRepository<ShutterDBContext, TblPayment>, IPaymentsService
     {
         private readonly ITenantService tenantService;
         private readonly IInvoiceService invoiceService;

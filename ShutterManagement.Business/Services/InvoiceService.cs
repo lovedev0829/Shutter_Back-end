@@ -25,7 +25,7 @@ using Microsoft.Extensions.Primitives;
 
 namespace ShutterManagement.Business.Services
 {
-    public class InvoiceService : BaseRepository<BtprojecShuttermanagementDevContext, TblInvoice>, IInvoiceService
+    public class InvoiceService : BaseRepository<ShutterDBContext, TblInvoice>, IInvoiceService
     {
         private readonly ITenantService tenantService;
         private readonly IInvoicePaymentService invoicePaymentService;

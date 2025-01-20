@@ -12,20 +12,18 @@ namespace ShutterManagement.Business.Services
 {
     public class ReportServices : IReportServices
     {
-        private readonly BtprojecShuttermanagementDevContext dbContext;
+        private readonly ShutterDBContext dbContext;
         private readonly IJobTypeService jobTypeService;
-        private readonly IEstimateService estimateService;
         private readonly IOrderService orderService;
         private readonly IContactService contactService;
         private readonly IJobService jobService;
 
-        public ReportServices(BtprojecShuttermanagementDevContext dbContext,
-            IJobTypeService jobTypeService,IEstimateService estimateService,
+        public ReportServices(ShutterDBContext dbContext,
+            IJobTypeService jobTypeService,
             IOrderService orderService, IContactService contactService, IJobService jobService)
         {
             this.dbContext = dbContext;
             this.jobTypeService = jobTypeService;
-            this.estimateService = estimateService;
             this.orderService = orderService;
             this.contactService = contactService;
             this.jobService = jobService;
@@ -65,41 +63,13 @@ namespace ShutterManagement.Business.Services
             }
             return responseVm;
         }
-
         public async Task<IResponseVm<List<EstimateList>>> GetTaxReport(Pagination filter)
         {
             IResponseVm<List<EstimateList>> responseVm = new ResponseVm<List<EstimateList>>();
-
-            try
-            {
-                var estimates = await estimateService.GetAll_Estimate(filter);
-
-                if (estimates.Data == null || !estimates.Data.Any())
-                {
-                    responseVm.Message = "No orders found.";
-                    return responseVm;
-                }
-
-                var filteredOrders = estimates.Data
-                    .Where(o => o.Status == EnumValue.GetEnumValue(Estimation.Approved))
-                    .GroupBy(x => x.JobId)
-                    .Select(group => group
-                    .OrderByDescending(o => o.CreatedDate)
-                    .FirstOrDefault())
-                   .ToList();
-
-                responseVm.IsSuccess = true;
-                responseVm.Message = AppConstant.FetchSuccessMsg;
-                responseVm.Data = filteredOrders;
-                responseVm.TotalRecords = filteredOrders.Count;
-            }
-            catch (Exception ex)
-            {
-                responseVm.Message = $"An error occurred: {ex.Message}";
-            }
             return responseVm;
-
         }
+
+     
      
 
         //public async Task<IResponseVm<List<OrderReportList>>> GetOrderConfirmed()

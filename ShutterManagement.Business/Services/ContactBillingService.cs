@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace ShutterManagement.Business.Services
 {
-    public class ContactBillingService : BaseRepository<BtprojecShuttermanagementDevContext, TblContactBillingAddress>,IContactBillingService
+    public class ContactBillingService : BaseRepository<ShutterDBContext, TblContactBillingAddress>,IContactBillingService
     {
     }
 }

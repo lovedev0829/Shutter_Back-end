@@ -9,7 +9,7 @@ using ShutterManagement.Services;
 
 namespace ShutterManagement.Business.Services
 {
-    public class MstPlaceholderService : BaseRepository<BtprojecShuttermanagementDevContext, MstPlaceholder>, IMstPlaceholderService
+    public class MstPlaceholderService : BaseRepository<ShutterDBContext, MstPlaceholder>, IMstPlaceholderService
     {
     }
 }

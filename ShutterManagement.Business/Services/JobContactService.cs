@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 
 namespace ShutterManagement.Business.Services
 {
-    public class JobContactService : BaseRepository<BtprojecShuttermanagementDevContext, TblJobContact>, IJobContactService
+    public class JobContactService : BaseRepository<ShutterDBContext, TblJobContact>, IJobContactService
     {
         private readonly ITenantService tenantService;
         private readonly IMstContactType mstContactType;
@@ -69,6 +69,7 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
+        
         public async Task<IResponseVm<string>> Create_JobContact(CreateJobContact model)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
@@ -182,7 +183,6 @@ namespace ShutterManagement.Business.Services
                 ContactTypeId = x.ContactTypeId,
                 ContactTypeName = c.MstContactName,
                 JobId = x.JobId,
-                ContactId = x.ContactId,
                 Contactname = d.Name,
                 IsActive = x.IsActive
                 };

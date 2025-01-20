@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace ShutterManagement.Business.Services
 {
-    public class OptionsTypeService : BaseRepository<BtprojecShuttermanagementDevContext,TblOptionsType>, IOptionsTypeService
+    public class OptionsTypeService : BaseRepository<ShutterDBContext,TblOptionsType>, IOptionsTypeService
     {
     }
 }

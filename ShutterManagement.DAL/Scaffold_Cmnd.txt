@@ -1,5 +1,5 @@
 ﻿ Scaffold-DbContext "Server=SYS82\SQLEXPRESS;Database=ShutterDB;TrustServerCertificate=true;Integrated Security=true;" Microsoft.EntityFrameworkCore.SqlServer -OutputDir Context -f
- Scaffold-DbContext "Server=103.93.16.117;Database=btprojec_shuttermanagement_dev;user id=btprojec_admin;password=Bwy0w65ixN*bsE9wy;Integrated Security=false;TrustServerCertificate=true;" Microsoft.EntityFrameworkCore.SqlServer -OutputDir Context -f
+Scaffold-DbContext "Server=103.93.16.117;Database=btprojec_shuttermanagement_uat;user id=btprojec_admin;password=Bwy0w65ixN*bsE9wy;Integrated Security=false;TrustServerCertificate=true;" Microsoft.EntityFrameworkCore.SqlServer -OutputDir Context -Context ShutterDBContext -f
 
    //"ConnectionStrings": {
   //  "DefaultConnection": "Server=103.93.16.117;Database=btprojec_shuttermanagement_dev;user id=btprojec_admin;password=Bwy0w65ixN*bsE9wy;Integrated Security=false;TrustServerCertificate=true;"

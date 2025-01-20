@@ -17,7 +17,7 @@ using System.Threading.Tasks;
 
 namespace ShutterManagement.Business.Services
 {
-    public class WindowService : BaseRepository<BtprojecShuttermanagementDevContext, TblWindow>, IWindowService
+    public class WindowService : BaseRepository<ShutterDBContext, TblWindow>, IWindowService
     {
         private readonly ITenantService tenantService;
         private readonly IWindowProductService windowProductService;
