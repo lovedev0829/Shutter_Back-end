@@ -497,7 +497,7 @@ namespace ShutterManagement.Business.Services
                             {
                                 if (info[0] == "Component")
                                 {
-                                    val = componentPriceService.GetAllQuerable().Where(x => x.ProductType == info[1] && x.ComponentName == info[2]).Select(x => (item.IsRated == true ? x.PriceRated : x.PriceNonRated)).FirstOrDefault();
+                                    val = componentPriceService.GetAllQuerable().Where(x => x.ProductType == info[1] && x.ComponentName == info[2] && x.IsActive == true).Select(x => (item.IsRated == true ? x.PriceRated : x.PriceNonRated)).FirstOrDefault();
                                 }
                                 else if (info[0] == "Options")
                                 {
