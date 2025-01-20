@@ -13,10 +13,9 @@ public partial class ShutterDBContext : DbContext
     {
     }
 
-    public ShutterDBContext(DbContextOptions<ShutterDBContext> options, IConfiguration configuration)
+    public ShutterDBContext(DbContextOptions<ShutterDBContext> options)
         : base(options)
     {
-        _configuration = configuration;
     }
 
    
@@ -25,7 +24,8 @@ public partial class ShutterDBContext : DbContext
         if (!optionsBuilder.IsConfigured)
         {
             // Retrieve the connection string from appsettings.json
-            var connectionString = _configuration.GetConnectionString("DefaultConnection");
+            var connectionString = "Server=103.93.16.117;Database=btprojec_shuttermanagement_uat;user id=btprojec_admin;password=Bwy0w65ixN*bsE9wy;Integrated Security=false;TrustServerCertificate=true;";
+            //var connectionString = _configuration.GetConnectionString("DefaultConnection");
             optionsBuilder.UseSqlServer(connectionString);
         }
     }
