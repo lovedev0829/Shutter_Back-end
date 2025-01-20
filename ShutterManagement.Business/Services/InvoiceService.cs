@@ -710,6 +710,13 @@ namespace ShutterManagement.Business.Services
                     filteredInvoices = filteredInvoices.Where(invoice => invoice.DueDate >= filter.FormDate.Value).ToList();
                 }
 
+                if (filter.ToDate.HasValue && filter.FormDate.HasValue)
+                {
+                    filteredInvoices = filteredInvoices
+                        .Where(invoice => invoice.DueDate >= filter.FormDate.Value && invoice.DueDate <= filter.ToDate.Value)
+                        .ToList();
+                }
+
 
                 if (!filteredInvoices.Any())
                 {

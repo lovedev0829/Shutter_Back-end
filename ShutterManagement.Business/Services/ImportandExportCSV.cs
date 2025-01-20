@@ -42,14 +42,15 @@ namespace ShutterManagement.Business.Services
         private readonly IEstimateService estimateService;
         private readonly IEstimationBreakdownService estimationBreakdownService;
         private readonly IInvoiceService invoiceService;
+        private readonly IReportServices reportServices;
         private readonly IMstProductType productType;
 
         public ImportandExportCSV(ShutterDBContext context, IVendorService vendorService,
             IMaterial material, IContactService contactService, ClaimsProperty claimsProperty,
             IUnitofMeasurementService unitofMeasurement, ITenantService tenantService,
-            ITaxExemption taxExemptionService, IContactBillingService billingService,
-            ShutterDBContext btprojecShuttermanagementDevContext , 
-            IEstimateService estimateService,IEstimationBreakdownService estimationBreakdownService , IInvoiceService invoiceService)
+            ITaxExemption taxExemptionService, IContactBillingService billingService, 
+            IEstimateService estimateService,IEstimationBreakdownService estimationBreakdownService
+            , IInvoiceService invoiceService ,IReportServices reportServices)
         {
             dbContext = context;
             this.vendorService = vendorService;
@@ -63,8 +64,11 @@ namespace ShutterManagement.Business.Services
             this.estimateService = estimateService;
             this.estimationBreakdownService = estimationBreakdownService;
             this.invoiceService = invoiceService;
+            this.reportServices = reportServices;
             this.productType = productType;
         }
+
+        #region Start Export import Contact and material
 
         public async Task<IResponseVm<List<string>>> ImportCsvToDatabase(Stream csvStream)
         {
@@ -379,7 +383,7 @@ namespace ShutterManagement.Business.Services
             return successfulImports;
         }
 
-
+        #endregion Start Export import Contact and material
 
         //public async Task<IResponseVm<dynamic>> ExportContactsToCsvAsync(string filePath)
         //{
@@ -620,6 +624,7 @@ namespace ShutterManagement.Business.Services
 
         #endregion Start Export ExportContactsToCsv
 
+
         #region Start Export ExportMaterialsToCsv
         public async Task<IResponseVm<string>> ExportMaterialsToCsvAsync(Pagination filter, string filePath)
         {
@@ -719,6 +724,7 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
         #endregion Start Export ExportMaterialsToCsvAsync
+
 
         #region Start Export ExportJobsToCsv
         public async Task<IResponseVm<string>> ExportJobsToCsv(Pagination filter, string filePath)
@@ -834,6 +840,7 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
         #endregion Start Export ExportJobsToCsv
+
 
         #region Start Export Breakdowns
 
@@ -967,7 +974,7 @@ namespace ShutterManagement.Business.Services
         #endregion End Export Breakdowns
 
 
-        #region Start Export ExportJobsToCsv
+        #region Start Export ExportInvoiceToCsv
         public async Task<IResponseVm<string>> ExportInvoiceReportToCsv(Pagination filter, string filePath,ReportFilterType type)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
@@ -1042,7 +1049,7 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
-        #endregion Start Export ExportJobsToCsv
+        
 
         public List<InvoiceVM> GetFilteredInvoices(Pagination filter)
         {
@@ -1101,6 +1108,55 @@ namespace ShutterManagement.Business.Services
 
             return filteredInvoices;
         }
+        #endregion Start Export ExportInvoiceToCsv
+
+
+        #region Start Export ExportOrderToCsv
+        public async Task<IResponseVm<string>> ExportOrderReportToCsv(Pagination filter)
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+
+            try
+            {
+                var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
+                if (!isTenantExists)
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = AppConstant.TenantNotFound;
+                    return responseVm;
+                }
+
+                var orderReportData = await (reportServices.GetOrderConfirmed(filter)) ;
+                if (orderReportData==null)
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = "Order Not Found.";
+                    return responseVm;
+                }
+                var csvBuilder = new StringBuilder();
+                csvBuilder.AppendLine("EstimateId,OrderNumber,ContactName,OrderDate,ConfirmedDate,TotalAmount");
+                foreach (var report in orderReportData.Data)
+                {
+                    var line = $"{report.EstimateCode??""},{report.OrderNumber??""},{report.jobDetails.ContactName??""}," +
+                               $"{report.CreatedDate},{report.CreatedDate},{report.GrandTotal}";
+                    csvBuilder.AppendLine(line);
+                }
+
+                var fileBytes = Encoding.UTF8.GetBytes(csvBuilder.ToString());
+                var base64Csv = Convert.ToBase64String(fileBytes);
+                responseVm.IsSuccess = true;
+                responseVm.Message = AppConstant.ExportSuccessMsg;
+                responseVm.Data = base64Csv;
+            }
+            catch (Exception ex)
+            {
+                responseVm.IsSuccess = false;
+                responseVm.Message = $"{AppConstant.ExceptionError} {ex.Message}";
+            }
+
+            return responseVm;
+        }
+        #endregion Start Export ExportOrderToCsv
     }
 
 

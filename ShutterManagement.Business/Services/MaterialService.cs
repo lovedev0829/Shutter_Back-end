@@ -317,7 +317,6 @@ namespace ShutterManagement.Business.Services
                     responseVm.Data = TakenRecords;
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.FetchSuccessMsg;
-                    responseVm.TotalRecords = FilterRecords.Count;
                 }
                 else
                 {
