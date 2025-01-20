@@ -42,6 +42,7 @@ namespace ShutterManagement.Business.Services
         private readonly IEstimateService estimateService;
         private readonly IEstimationBreakdownService estimationBreakdownService;
         private readonly IInvoiceService invoiceService;
+        private readonly IReportServices reportServices;
         private readonly IMstProductType productType;
 
         public ImportandExportCSV(BtprojecShuttermanagementDevContext context, IVendorService vendorService,
@@ -49,7 +50,8 @@ namespace ShutterManagement.Business.Services
             IUnitofMeasurementService unitofMeasurement, ITenantService tenantService,
             ITaxExemption taxExemptionService, IContactBillingService billingService,
             BtprojecShuttermanagementDevContext btprojecShuttermanagementDevContext , 
-            IEstimateService estimateService,IEstimationBreakdownService estimationBreakdownService , IInvoiceService invoiceService)
+            IEstimateService estimateService,IEstimationBreakdownService estimationBreakdownService
+            , IInvoiceService invoiceService ,IReportServices reportServices)
         {
             dbContext = context;
             this.vendorService = vendorService;
@@ -63,6 +65,7 @@ namespace ShutterManagement.Business.Services
             this.estimateService = estimateService;
             this.estimationBreakdownService = estimationBreakdownService;
             this.invoiceService = invoiceService;
+            this.reportServices = reportServices;
             this.productType = productType;
         }
 
@@ -967,7 +970,7 @@ namespace ShutterManagement.Business.Services
         #endregion End Export Breakdowns
 
 
-        #region Start Export ExportJobsToCsv
+        #region Start Export ExportInvoiceToCsv
         public async Task<IResponseVm<string>> ExportInvoiceReportToCsv(Pagination filter, string filePath,ReportFilterType type)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
@@ -1042,7 +1045,7 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
-        #endregion Start Export ExportJobsToCsv
+        #endregion Start Export ExportInvoiceToCsv
 
         public List<InvoiceVM> GetFilteredInvoices(Pagination filter)
         {
@@ -1100,6 +1103,52 @@ namespace ShutterManagement.Business.Services
             }
 
             return filteredInvoices;
+        }
+
+
+        public async Task<IResponseVm<string>> ExportOrderReportToCsv(Pagination filter)
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+
+            try
+            {
+                var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
+                if (!isTenantExists)
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = AppConstant.TenantNotFound;
+                    return responseVm;
+                }
+
+                var orderReportData = await (reportServices.GetOrderConfirmed(filter)) ;
+                if (orderReportData==null)
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = "Order Not Found.";
+                    return responseVm;
+                }
+                var csvBuilder = new StringBuilder();
+                csvBuilder.AppendLine("EstimateId,OrderNumber,ContactName,OrderDate,ConfirmedDate,TotalAmount");
+                foreach (var report in orderReportData.Data)
+                {
+                    var line = $"{report.EstimateCode??""},{report.OrderNumber??""},{report.jobDetails.ContactName??""}," +
+                               $"{report.CreatedDate},{report.CreatedDate},{report.GrandTotal}";
+                    csvBuilder.AppendLine(line);
+                }
+
+                var fileBytes = Encoding.UTF8.GetBytes(csvBuilder.ToString());
+                var base64Csv = Convert.ToBase64String(fileBytes);
+                responseVm.IsSuccess = true;
+                responseVm.Message = AppConstant.ExportSuccessMsg;
+                responseVm.Data = base64Csv;
+            }
+            catch (Exception ex)
+            {
+                responseVm.IsSuccess = false;
+                responseVm.Message = $"{AppConstant.ExceptionError} {ex.Message}";
+            }
+
+            return responseVm;
         }
     }
 

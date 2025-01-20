@@ -131,6 +131,14 @@ namespace ShutterManagement.Controllers
                             return result5;
                         }
                         break;
+                    case "order":
+                        var filePath6 = Path.Combine(Directory.GetCurrentDirectory(), "OrderReport.csv");
+                        var result6 = await importandExportCSV.ExportOrderReportToCsv(filter);
+                        if (result6 != null)
+                        {
+                            return result6;
+                        }
+                        break;
                     default:
                         responseVm.Message = "Please input valid Type";
                         return responseVm;
