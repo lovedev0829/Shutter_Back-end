@@ -13,7 +13,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public Guid? InvoiceId { get; set; }
         public string? Notes { get; set; }
         public DateTime? PaymentDate { get; set; }
-        public DateTime? PaymentDueDate { get; set; }
+       // public DateTime? PaymentDueDate { get; set; }
         public string? PaymentMethod { get; set; }
         public decimal? Amount { get; set; }
         public string? TransactionId { get; set; }

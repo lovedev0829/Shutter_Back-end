@@ -157,6 +157,7 @@ builder.Services.AddScoped<IComponentPriceService, ComponentPriceService>();
 builder.Services.AddScoped<IJobSchedule, JobScheduleService>();
 builder.Services.AddScoped<IJobContactService, JobContactService>();
 builder.Services.AddScoped<IReportServices, ReportServices>();
+builder.Services.AddScoped<IDashboard, DashboardService>();
 builder.Services.AddScoped<IEstimationBreakdownService,EstimationBreakdownService>();
 builder.Services.AddSingleton(typeof(IConverter), new SynchronizedConverter(new PdfTools()));
 

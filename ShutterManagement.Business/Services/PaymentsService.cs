@@ -133,7 +133,7 @@ namespace ShutterManagement.Business.Services
                     PaymentId = Guid.NewGuid(),
                     InvoiceId = model.InvoiceId,
                     PaymentDate = model.PaymentDate,
-                    PaymentDueDate = model.PaymentDueDate,
+                   // PaymentDueDate = model.PaymentDueDate,
                     Amount = model?.Amount,
                     PaymentMethod = model?.PaymentMethod,
                     TransactionId = model?.TransactionId?.Trim(),
@@ -262,7 +262,7 @@ namespace ShutterManagement.Business.Services
                                         PaymentId = i.PaymentId,
                                         InvoiceId = i.InvoiceId,
                                         PaymentDate = i.PaymentDate,
-                                        PaymentDueDate = i.PaymentDueDate,
+                                        //PaymentDueDate = i.PaymentDueDate,
                                         Amount = i.Amount,
                                         PaymentMethod = i.PaymentMethod,
                                         TransactionId = i.TransactionId,
@@ -354,7 +354,7 @@ namespace ShutterManagement.Business.Services
 
                 payment.TransactionId = updatePayment.TransactionId?.Trim();
                 payment.PaymentDate = updatePayment.PaymentDate;
-                payment.PaymentDueDate = updatePayment.PaymentDueDate;
+                //payment.PaymentDueDate = updatePayment.PaymentDueDate;
                 payment.PaymentMethod = updatePayment.PaymentMethod;
                 payment.Amount = updatePayment.Amount;
                 payment.Status = EnumValue.GetEnumValue(updatePayment.PaymentStatus);

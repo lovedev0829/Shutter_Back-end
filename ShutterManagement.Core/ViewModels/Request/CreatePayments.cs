@@ -18,8 +18,8 @@ namespace ShutterManagement.Core.ViewModels.Request
         public DateTime? PaymentDate { get; set; }
 
         //[Compare(nameof(PaymentDate), ErrorMessage = "Payment Due Date must be after or on the Payment Date.")]
-        [Required]
-        public DateTime? PaymentDueDate { get; set; }
+        //[Required]
+        //public DateTime? PaymentDueDate { get; set; }
 
         [Required]
         [MaxLength(50)]

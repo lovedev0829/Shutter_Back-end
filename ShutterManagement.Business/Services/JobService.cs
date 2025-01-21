@@ -361,7 +361,9 @@ namespace ShutterManagement.Business.Services
                                              CreatedBy = t2.CreatedBy.ToString(),
                                              CreatedbyUsername = p1.FirstName + " " + p1.LastName,
                                              SubtenantName = p2.FirstName + " " + p2.LastName,
-                                             TenantId = t2.TenantId
+                                             TenantId = t2.TenantId,
+                                             CreatedAt = t2.CreatedAt,
+                                             UpdatedAt = t2.UpdatedAt,
                                          }).ToListAsync();
 
                    
@@ -411,6 +413,44 @@ namespace ShutterManagement.Business.Services
                 responseVm.Message = AppConstant.ExceptionError + ex.Message;
             }
 
+            return responseVm;
+        }
+
+
+        public async Task<IResponseVm<string>> UpdateJobStatus(UpdateJobStatus model)
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+            try
+            {
+                bool IsTenantvalid = await tenantService.AnyAsync(x => x.IsActive == true && x.IsDelete == false
+                && x.TenantId == AppConstant.LoggedInTenantId);
+                if (!IsTenantvalid)
+                {
+                    responseVm.Message = AppConstant.TenantNotFound;
+                    return responseVm;
+                }
+                var IsJobExist = GetAllQuerable().Where(x => x.JobId == model.JobId &&
+                  x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
+                if (IsJobExist != null)
+                {
+                    IsJobExist.JobStatus = model.JobStatus;
+                    IsJobExist.UpdatedAt = DateTime.Now;
+                    IsJobExist.ModifiedBy = AppConstant.LoggedInUserID;
+                    var res = await Update(IsJobExist);
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = AppConstant.UpdateSuccessMsg;
+                }
+
+                else
+                {
+                    responseVm.Message = AppConstant.NoDataFound;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+            }
             return responseVm;
         }
 

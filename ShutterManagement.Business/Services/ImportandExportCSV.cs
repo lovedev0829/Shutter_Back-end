@@ -1127,7 +1127,7 @@ namespace ShutterManagement.Business.Services
                 }
 
                 var orderReportData = await (reportServices.GetOrderConfirmed(filter)) ;
-                if (orderReportData==null)
+                if (orderReportData.Data==null)
                 {
                     responseVm.IsSuccess = false;
                     responseVm.Message = "Order Not Found.";
