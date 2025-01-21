@@ -1,5 +1,6 @@
 ﻿using System.Drawing;
 using System.Linq;
+using MailKit.Search;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core;
 using ShutterManagement.Core.Common;
@@ -17,16 +18,19 @@ namespace ShutterManagement.Business.Services
         private readonly IOrderService orderService;
         private readonly IContactService contactService;
         private readonly IJobService jobService;
+        private readonly IEstimateService estimateService;
 
         public ReportServices(ShutterDBContext dbContext,
             IJobTypeService jobTypeService,
-            IOrderService orderService, IContactService contactService, IJobService jobService)
+            IOrderService orderService, IContactService contactService,
+            IJobService jobService,IEstimateService estimateService)
         {
             this.dbContext = dbContext;
             this.jobTypeService = jobTypeService;
             this.orderService = orderService;
             this.contactService = contactService;
             this.jobService = jobService;
+            this.estimateService = estimateService;
         }
 
         public async Task<IResponseVm<List<OrderList>>> GetOrderConfirmed(Pagination filter)
@@ -66,6 +70,25 @@ namespace ShutterManagement.Business.Services
         public async Task<IResponseVm<List<EstimateList>>> GetTaxReport(Pagination filter)
         {
             IResponseVm<List<EstimateList>> responseVm = new ResponseVm<List<EstimateList>>();
+            try
+            {
+                var estimatelist = await estimateService.GetAll_Estimate(filter);
+                if(estimatelist == null)
+                {
+                    responseVm.Message = AppConstant.NoDataFound;
+                }
+                var filteredOrders = estimatelist.Data
+                       .Where(o => o.Status == EnumValue.GetEnumValue(Estimation.Approved))
+                      .ToList();
+
+                responseVm.IsSuccess = true;
+                responseVm.Data = filteredOrders;
+                responseVm.TotalRecords = filteredOrders.Count;
+            }
+            catch(Exception ex)
+            {
+                responseVm.Message = $"An error occurred: {ex.Message}";
+            }
             return responseVm;
         }
 
