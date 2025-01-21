@@ -173,7 +173,7 @@ namespace ShutterManagement.Business.Services
                         {
                             discountId = updateOrder.DiscountId;
                         }
-                        grandtotal = await estimateService.DiscountApplied(discountId, SumofSubtotalandAdditionalCost, taxRateId) ?? 0m;
+                        grandtotal = await estimateService.CalculateGrandTotal(discountId, SumofSubtotalandAdditionalCost, taxRateId) ?? 0m;
                     }
                     newOrder.OrderId = Guid.NewGuid();
                     newOrder.EstimateId = (Guid)updateOrder.EstimateId;
@@ -416,7 +416,7 @@ namespace ShutterManagement.Business.Services
                                 {
                                     discountId = model.DiscountId;
                                 }
-                                grandtotal = await estimateService.DiscountApplied(discountId, SumofSubtotalandAdditionalCost, taxRateId) ?? 0m;
+                                grandtotal = await estimateService.CalculateGrandTotal(discountId, SumofSubtotalandAdditionalCost, taxRateId) ?? 0m;
                             }
 
                             orderExist.Notes = model.Notes;
@@ -908,7 +908,7 @@ namespace ShutterManagement.Business.Services
                                join j5 in dbContext.TblUsers on j1.AssignedPersonnel equals j5.Id
                                join c in dbContext.TblContacts on j1.ContactId equals c.ContactId
                                join j6 in dbContext.MstJobStatuses on j1.JobStatus equals j6.JobStatusId 
-                               where j1.IsDelete == false && c.IsDelete == false
+                               where j1.IsDelete == false && c.IsDelete == false && j1.TenantId == AppConstant.LoggedInTenantId && j1.IsDelete == false && j1.JobId == e.JobId
                                select new JobDetail
                                {
                                    JobName = j1.JobName,
