@@ -50,7 +50,13 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? AssignedPersonnel { get; set; }
         public string? JobNotes { get; set; }
         public string? JobStatus { get; set; }
+        public string? ContactId { get; set; }
+        public string? JobStatusId { get; set; }
+        public string? ContactName { get; set; }
+        public string? JobUniqueId { get; set; }
         public DateTime? ScheduleTime { get; set; }
+        public DateTime? CreatedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
 
     }
 

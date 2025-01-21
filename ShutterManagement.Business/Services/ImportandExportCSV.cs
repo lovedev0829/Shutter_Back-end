@@ -1157,6 +1157,54 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
         #endregion Start Export ExportOrderToCsv
+
+
+        #region Start Export ExportTaxtToCsv
+        public async Task<IResponseVm<string>> ExportTaxtReportToCsv(Pagination filter)
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+
+            try
+            {
+                var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
+                if (!isTenantExists)
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = AppConstant.TenantNotFound;
+                    return responseVm;
+                }
+
+                var orderReportData = await (reportServices.GetTaxReport(filter));
+                if (orderReportData.Data == null)
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = "Order Not Found.";
+                    return responseVm;
+                }
+                var csvBuilder = new StringBuilder();
+                csvBuilder.AppendLine("EstimationCode,JobCode,ContactName,TaxAmount");
+                foreach (var report in orderReportData.Data)
+                {
+                    var line = $"{report.EstimateCode ?? ""},{report.jobDetails?.JobUniqueId ?? ""},{report.jobDetails?.ContactName ?? ""}," +
+                               $"{report.Tax}";
+                    csvBuilder.AppendLine(line);
+                }
+
+                var fileBytes = Encoding.UTF8.GetBytes(csvBuilder.ToString());
+                var base64Csv = Convert.ToBase64String(fileBytes);
+                responseVm.IsSuccess = true;
+                responseVm.Message = AppConstant.ExportSuccessMsg;
+                responseVm.Data = base64Csv;
+            }
+            catch (Exception ex)
+            {
+                responseVm.IsSuccess = false;
+                responseVm.Message = $"{AppConstant.ExceptionError} {ex.Message}";
+            }
+
+            return responseVm;
+        }
+        #endregion Start Export ExportTaxToCsv
     }
 
 

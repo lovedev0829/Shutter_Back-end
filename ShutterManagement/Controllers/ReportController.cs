@@ -37,10 +37,8 @@ namespace ShutterManagement.Controllers
         [HttpPost]
         [Route("GetTaxReport")]
         [Authorize(Roles = "ReportsView")]
-        public async Task<IActionResult> GetTaxReport(Guid JobStatus)
+        public async Task<IActionResult> GetTaxReport(Pagination filter)
         {
-            Pagination filter = new Pagination();
-            filter.JobStatus = JobStatus.ToString();
             var result = await reportServices.GetTaxReport(filter);
             return Ok(result);
         }
