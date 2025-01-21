@@ -52,6 +52,7 @@ namespace ShutterManagement.Controllers
         private readonly ITaxRate taxService;
         private readonly IEstimateService estimateService;
         private readonly IEstimationBreakdownService estimationBreakdownService;
+        private readonly IDashboard dashboard;
 
         public CommonController(IMasterCreate masterCreate, 
             FileUploadHelper fileUpload, ClaimsProperty claimsProperty,
@@ -63,7 +64,7 @@ namespace ShutterManagement.Controllers
             IAddress address, IOption option, IProductService productService,
             IUnitofMeasurementService unitofMeasurementService, IRoleService roleService, IRegion region, IContactService contactService,
             IMstContactType contactType, IJobService jobService,IExpressionService expression ,IInvoiceService invoiceService,
-            ITaxRate taxService,IEstimateService estimateService,IEstimationBreakdownService estimationBreakdownService)
+            ITaxRate taxService,IEstimateService estimateService,IEstimationBreakdownService estimationBreakdownService,IDashboard dashboard)
         {
             this.masterCreate = masterCreate;
             this.fileUpload = fileUpload;
@@ -103,6 +104,7 @@ namespace ShutterManagement.Controllers
             this.taxService = taxService;
             this.estimateService = estimateService;
             this.estimationBreakdownService = estimationBreakdownService;
+            this.dashboard = dashboard;
         }
 
 
@@ -227,13 +229,20 @@ namespace ShutterManagement.Controllers
         }
 
 
+        
+        //public IActionResult Dashboard()
+        //{
+        //    var res = new ResponseVm<string>();
+        //    res.IsSuccess = true;
+        //    return Ok(res);
+        //}
         [HttpGet]
         [Route("Dashboard")]
-        public IActionResult Dashboard()
+        public async Task<IActionResult> Dashboard()
         {
-            var res = new ResponseVm<string>();
-            res.IsSuccess = true;
-            return Ok(res);
+            var result = await dashboard.GetallDashBoardData();
+
+            return Ok(result);
         }
 
         [HttpPost]
