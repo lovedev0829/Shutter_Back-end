@@ -10,13 +10,19 @@ namespace ShutterManagement.Core.SPModel
 {
      public class BillingAddressVm
     {
+        [Required]
+        [MaxLength(50)]
+        [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabaticalError)]
         [DefaultValue("")]
-        //[Required]
-        [MaxLength(100)]
-        [RegularExpression("^[\\p{L} .'-]+$", ErrorMessage = AppConstant.AlphabaticalError)]
-        public string? FullName { get; set; } = string.Empty;
+        public string? FirstName { get; set; }
 
-      
+        [Required]
+        [MaxLength(50)]
+        [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabaticalError)]
+        [DefaultValue("")]
+        public string? LastName { get; set; }
+
+
         [DefaultValue("")]
         [MaxLength(10)]
         [RegularExpression(@"^\d{10}$", ErrorMessage = "Phone number must be exactly 10 digits.")]

@@ -79,6 +79,8 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
 
     public virtual DbSet<TblJobStatus> TblJobStatuses { get; set; }
 
+    public virtual DbSet<TblLocation> TblLocations { get; set; }
+
     public virtual DbSet<TblMeasurement> TblMeasurements { get; set; }
 
     public virtual DbSet<TblOption> TblOptions { get; set; }
@@ -298,10 +300,16 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.Email).HasMaxLength(128);
+            entity.Property(e => e.FirstName)
+                .HasMaxLength(50)
+                .IsUnicode(false);
             entity.Property(e => e.FullName).HasMaxLength(128);
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
             entity.Property(e => e.Label).HasMaxLength(100);
+            entity.Property(e => e.LastName)
+                .HasMaxLength(50)
+                .IsUnicode(false);
             entity.Property(e => e.Phone).HasMaxLength(128);
             entity.Property(e => e.State).HasMaxLength(100);
             entity.Property(e => e.StreetAddress).HasMaxLength(128);
@@ -390,8 +398,14 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.Email).HasMaxLength(255);
+            entity.Property(e => e.FirstName)
+                .HasMaxLength(50)
+                .IsUnicode(false);
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
+            entity.Property(e => e.LastName)
+                .HasMaxLength(50)
+                .IsUnicode(false);
             entity.Property(e => e.Name).HasMaxLength(255);
             entity.Property(e => e.PhoneNumber).HasMaxLength(50);
             entity.Property(e => e.Referral).HasMaxLength(100);
@@ -415,10 +429,16 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.Property(e => e.City).HasMaxLength(100);
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
             entity.Property(e => e.Email).HasMaxLength(250);
+            entity.Property(e => e.FirstName)
+                .HasMaxLength(50)
+                .IsUnicode(false);
             entity.Property(e => e.FullName)
                 .HasMaxLength(128)
                 .IsUnicode(false);
             entity.Property(e => e.IsActive).HasDefaultValue(true);
+            entity.Property(e => e.LastName)
+                .HasMaxLength(50)
+                .IsUnicode(false);
             entity.Property(e => e.PhoneNumber).HasMaxLength(20);
             entity.Property(e => e.State).HasMaxLength(100);
             entity.Property(e => e.StreetAddress).HasMaxLength(250);
@@ -898,6 +918,18 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.Property(e => e.StatusName)
                 .HasMaxLength(200)
                 .IsUnicode(false);
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+        });
+
+        modelBuilder.Entity<TblLocation>(entity =>
+        {
+            entity.HasKey(e => e.LocationId).HasName("PK__TblLocat__E7FEA4979D18AAB8");
+
+            entity.ToTable("TblLocation", "dbo");
+
+            entity.Property(e => e.LocationId).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.LocationName).HasMaxLength(100);
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
         });
 

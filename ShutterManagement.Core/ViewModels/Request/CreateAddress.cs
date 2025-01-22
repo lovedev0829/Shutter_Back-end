@@ -56,11 +56,17 @@ namespace ShutterManagement.Core.ViewModels.Request
         [DefaultValue("")]
         public string? AccessCode { get; set; }
 
+       // [Required]
+        [MaxLength(50)]
+        [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabaticalError)]
         [DefaultValue("")]
+        public string? FirstName { get; set; }
+
         //[Required]
-        [MaxLength(100)]
-        [RegularExpression("^[\\p{L} .'-]+$", ErrorMessage = AppConstant.AlphabaticalError)]
-        public string? FullName { get; set; }
+        [MaxLength(50)]
+        [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabaticalError)]
+        [DefaultValue("")]
+        public string? LastName { get; set; }
 
         //[Required,
         [MaxLength(100)]

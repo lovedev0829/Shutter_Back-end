@@ -310,7 +310,8 @@ namespace ShutterManagement.Business.Services
             var contactModel = new Sp_Contact
             {
                 ContactType = record.ContactType?.Trim(),
-                Name = record.Name?.Trim(),
+                FirstName = record.FirstName?.Trim(),
+                LastName = record.LastName?.Trim(),
                 PhoneNumber = record.PhoneNumber.Trim(),
                 Email = record.Email?.Trim(),
                 Website = record.Website.Trim(),
@@ -323,7 +324,8 @@ namespace ShutterManagement.Business.Services
             {
                 contactModel.BillingAddressVm = new BillingAddressVm
                 {
-                    FullName = record.BillingAddressVm.FullName?.Trim(),
+                    FirstName = record.BillingAddressVm.FirstName?.Trim(),
+                    LastName = record.BillingAddressVm.LastName?.Trim(),
                     PhoneNumber = record.BillingAddressVm.PhoneNumber?.Trim(),
                     Email = record.BillingAddressVm.Email?.Trim(),
                     StreetAddress = record.BillingAddressVm.StreetAddress?.Trim(),
@@ -529,7 +531,8 @@ namespace ShutterManagement.Business.Services
                         contact.ContactType,
                         contact.Email,
                         contact.PhoneNumber,
-                        contact.Name,
+                        contact.FirstName,
+                        contact.LastName,
                         contact.Website,
                         contact.Notes,
                         contact.Referral,
@@ -547,7 +550,8 @@ namespace ShutterManagement.Business.Services
                         {
                             City = x.City,
                             Email = x.Email,
-                            FullName = x.FullName,
+                            FirstName = x.FirstName,
+                            LastName = x.LastName,
                             PhoneNumber = x.PhoneNumber,
                             State = x.State,
                             StreetAddress = x.StreetAddress,
@@ -571,7 +575,8 @@ namespace ShutterManagement.Business.Services
                         ContactType = contact.ContactType ?? "",
                         Email = contact.Email,
                         PhoneNumber = contact.PhoneNumber,
-                        Name = contact.Name,
+                        FirstName = contact.FirstName,
+                        LastName = contact.LastName,
                         Website = contact.Website,
                         Notes = contact.Notes,
                         Referral = contact.Referral,
@@ -593,8 +598,8 @@ namespace ShutterManagement.Business.Services
                         ? string.Join(";", contact.taxExemptionVm.ExemptionCertificate)
                         : "";
 
-                    var line = $"{contact.ContactType},{contact.Name},{contact.PhoneNumber},{contact.Email},{contact.Website},{contact.Notes},{contact.Referral}," +
-                               $"{billingAddress.FullName},{billingAddress.PhoneNumber},{billingAddress.Email},{billingAddress.City},{billingAddress.State}," +
+                    var line = $"{contact.ContactType},{contact.FirstName},{contact.LastName},{contact.PhoneNumber},{contact.Email},{contact.Website},{contact.Notes},{contact.Referral}," +
+                               $"{billingAddress.FirstName},{billingAddress.LastName},{billingAddress.PhoneNumber},{billingAddress.Email},{billingAddress.City},{billingAddress.State}," +
                                $"{billingAddress.ZipCode},{billingAddress.StreetAddress},{contact.taxExemptionVm?.EffectiveDate},{contact.taxExemptionVm?.ExpiryDate}";
 
                     csvBuilder.AppendLine(line);

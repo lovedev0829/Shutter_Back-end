@@ -921,7 +921,8 @@ namespace ShutterManagement.Business.Services
                                    JobStatusId = j1.JobStatus.ToString().ToLower(),
                                    JobStatus = j6.JobStatusName,
                                    ContactId = j1.ContactId.ToString(),
-                                   ContactName = c.Name,
+                                   ContactFirstName = c.FirstName,
+                                   ContactLastName = c.LastName,
                                    CreatedAt = j1.CreatedAt,
                                    UpdatedAt = j1.UpdatedAt
                                }).FirstOrDefault();

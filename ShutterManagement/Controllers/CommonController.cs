@@ -52,6 +52,7 @@ namespace ShutterManagement.Controllers
         private readonly ITaxRate taxService;
         private readonly IEstimateService estimateService;
         private readonly IEstimationBreakdownService estimationBreakdownService;
+        private readonly ILocationService locationService;
 
         public CommonController(IMasterCreate masterCreate, 
             FileUploadHelper fileUpload, ClaimsProperty claimsProperty,
@@ -63,7 +64,8 @@ namespace ShutterManagement.Controllers
             IAddress address, IOption option, IProductService productService,
             IUnitofMeasurementService unitofMeasurementService, IRoleService roleService, IRegion region, IContactService contactService,
             IMstContactType contactType, IJobService jobService,IExpressionService expression ,IInvoiceService invoiceService,
-            ITaxRate taxService,IEstimateService estimateService,IEstimationBreakdownService estimationBreakdownService)
+            ITaxRate taxService,IEstimateService estimateService,
+            IEstimationBreakdownService estimationBreakdownService, ILocationService locationService)
         {
             this.masterCreate = masterCreate;
             this.fileUpload = fileUpload;
@@ -103,6 +105,7 @@ namespace ShutterManagement.Controllers
             this.taxService = taxService;
             this.estimateService = estimateService;
             this.estimationBreakdownService = estimationBreakdownService;
+            this.locationService = locationService;
         }
 
 
@@ -266,6 +269,7 @@ namespace ShutterManagement.Controllers
         [Route("GetAllExpressionChip")]
         public async Task<IActionResult> GetAllExpressionChip(string Product, string? ProductType, string Option = "")
         {
+            Product = null;
             var res = await componentPriceService.GetAllComponentsChip(Product,ProductType, Option);
             return Ok(res);
         }
@@ -638,5 +642,22 @@ namespace ShutterManagement.Controllers
             return Ok(res);
         }
 
+        [HttpPost]
+        [Route("CreateLocation")]
+        public async Task<IActionResult> CreateLocation(CreateLocation mode)
+        {
+            var res = await locationService.Create_Location(mode);
+            return Ok(res);
+
+        }
+
+        [HttpGet]
+        [Route("GeltallLocation")]
+        public async Task<IActionResult> GetallLocation()
+        {
+            var res = await locationService.GetAll_Location();
+            return Ok(res);
+
+        }
     }
 }

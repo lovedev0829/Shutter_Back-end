@@ -1442,6 +1442,11 @@ namespace ShutterManagement.Business.Services
         }
 
 
+        //GenerateEstimationUniqueName
+        //public async Task<IResponseVm<string>> EstimationUniqueName(Guid contactId , Guid JobId)
+        //{
+        //    var EstimationExist 
+        //}
         #endregion
 
 
