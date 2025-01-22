@@ -45,7 +45,8 @@ namespace ShutterManagement.Business.Services
                         SqlParameter[] sqlParameters = new SqlParameter[]
                         {
                              new SqlParameter("@ContactType", SqlDbType.VarChar) { SqlValue = contactData.ContactType },
-                             new SqlParameter("@Name", SqlDbType.VarChar) { SqlValue = contactData.Name },
+                             new SqlParameter("@FirstName", SqlDbType.VarChar) { SqlValue = contactData.FirstName },
+                             new SqlParameter("@LastName", SqlDbType.VarChar) { SqlValue = contactData.LastName },
                              new SqlParameter("@PhoneNumber", SqlDbType.VarChar) { SqlValue = contactData.PhoneNumber },
                              new SqlParameter("@Email", SqlDbType.VarChar) { SqlValue = contactData.Email },
                              new SqlParameter("@Website", SqlDbType.VarChar) { SqlValue = contactData.Website },
@@ -88,7 +89,8 @@ namespace ShutterManagement.Business.Services
                         SqlParameter[] sqlParameters = new SqlParameter[]
                         {
                     new SqlParameter("@ContactType", SqlDbType.VarChar) { SqlValue = contactData.ContactType },
-                    new SqlParameter("@Name", SqlDbType.VarChar) { SqlValue = contactData.Name },
+                    new SqlParameter("@FirstName", SqlDbType.VarChar) { SqlValue = contactData.FirstName },
+                    new SqlParameter("@LastName", SqlDbType.VarChar) { SqlValue = contactData.LastName },
                     new SqlParameter("@PhoneNumber", SqlDbType.VarChar) { SqlValue = contactData.PhoneNumber },
                     new SqlParameter("@Email", SqlDbType.VarChar) { SqlValue = contactData.Email },
                     new SqlParameter("@Website", SqlDbType.VarChar) { SqlValue = contactData.Website },
@@ -154,7 +156,8 @@ namespace ShutterManagement.Business.Services
                 {
                     ContactId = reader.GetGuid(reader.GetOrdinal("ContactId")),
                     ContactType = reader.GetString(reader.GetOrdinal("ContactType")),
-                    Name = reader.GetString(reader.GetOrdinal("Name")),
+                    FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
+                    LastName = reader.GetString(reader.GetOrdinal("LastName")),
                     PhoneNumber = reader.IsDBNull(reader.GetOrdinal("PhoneNumber")) ? null : reader.GetString(reader.GetOrdinal("PhoneNumber")),
                     Email = reader.IsDBNull(reader.GetOrdinal("Email")) ? null : reader.GetString(reader.GetOrdinal("Email")),
                     Website = reader.IsDBNull(reader.GetOrdinal("Website")) ? null : reader.GetString(reader.GetOrdinal("Website")),

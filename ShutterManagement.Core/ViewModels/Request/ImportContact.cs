@@ -22,7 +22,13 @@ namespace ShutterManagement.Core.ViewModels.Request
         [MaxLength(255)]
         [RegularExpression("^[\\p{L} .'-]+$", ErrorMessage = AppConstant.AlphabaticalError)]
         [DefaultValue("")]
-        public string? Name { get; set; }
+        public string? FirstName { get; set; }
+
+        [Required]
+        [MaxLength(255)]
+        [RegularExpression("^[\\p{L} .'-]+$", ErrorMessage = AppConstant.AlphabaticalError)]
+        [DefaultValue("")]
+        public string? LastName { get; set; }
 
         [Required]
         [MaxLength(10)]

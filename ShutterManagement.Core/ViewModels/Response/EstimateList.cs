@@ -25,6 +25,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? DiscountCoupon { get; set; }
         public string? Status { get; set; }
         public decimal? SubTotal { get; set; }
+        public decimal? additionalCost { get; set; }
         public decimal? Tax { get; set; }
         public decimal? Discount { get; set; }
         public decimal? GrandTotal { get; set; }
@@ -35,6 +36,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? primarycolor { get; set; }
         public string? CompanyName { get; set; }
 
+        public bool? IsTaxApplied { get; set; } = false;
         public JobDetails jobDetails { get; set; } = new JobDetails();
         public List<EstimateProductList> EstimateProductList { get; set; } = new List<EstimateProductList>();
     }

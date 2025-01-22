@@ -37,7 +37,7 @@ namespace ShutterManagement.Business.Services
                 {
                     var activeContacts = res.Data.Where(x => x.IsActive == true).ToList();
                     var distinctContacts = activeContacts
-                        .GroupBy(x => x.Name)
+                        .GroupBy(x => x.FirstName + x.LastName)
                         .Select(group => group.First())
                         .ToList();
                     responseVm.IsSuccess = true;
@@ -68,7 +68,7 @@ namespace ShutterManagement.Business.Services
 
                     var contactBreakdowns = activeContacts.Select(item => new ContactBreakdown
                     {
-                        Name = item.Name,
+                        Name = item.FirstName + " " + item.LastName,
                         ContactId = item.ContactId,
                         ContactUniqueId = item.ContactUniqueId
                     }).ToList(); 

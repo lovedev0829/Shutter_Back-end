@@ -423,6 +423,7 @@ namespace ShutterManagement.Business.Services
                             ProductArchHeight = item.ArchHeight,
                             Area = item.Area,
                             Length = item.Length,
+                            AdditionalCost = item.AdditionalCost,
                             AdditionalWidth = item.AdditionalWidth,
                             Markup = item.Markup,
                             ProductTypeName = item.ProductName,
@@ -453,7 +454,7 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
-        private async Task<bool> IsTaxApplied(Guid JobId)
+        public async Task<bool> IsTaxApplied(Guid JobId)
         {
             var Jobdetail = jobService.GetAllQuerable()
                 .Where(x => x.JobId == JobId && x.IsDelete == false)
@@ -496,7 +497,7 @@ namespace ShutterManagement.Business.Services
                             {
                                 if (info[0] == "Component")
                                 {
-                                    val = componentPriceService.GetAllQuerable().Where(x => x.ProductType == info[1] && x.ComponentName == info[2]).Select(x => (item.IsRated == true ? x.PriceRated : x.PriceNonRated)).FirstOrDefault();
+                                    val = componentPriceService.GetAllQuerable().Where(x => x.ProductType == info[1] && x.ComponentName == info[2] && x.IsActive == true).Select(x => (item.IsRated == true ? x.PriceRated : x.PriceNonRated)).FirstOrDefault();
                                 }
                                 else if (info[0] == "Options")
                                 {
@@ -505,7 +506,7 @@ namespace ShutterManagement.Business.Services
                                 }
                                 else if (info[0] == "Material")
                                 {
-                                    val = materialService.GetAllQuerable().Where(x => x.ProductType.ToString() == info[1] && x.MaterialName == info[2]).Select(x=>x.UnitCost).FirstOrDefault();
+                                    val = materialService.GetAllQuerable().Where(x => x.ProductType.ToString() == info[1] && x.MaterialName == info[2] && x.IsActive == true && (x.TenantId == AppConstant.LoggedInTenantId || x.TenantId.ToString() == AppConstant.LoggedInParentTenantId)).Select(x => x.UnitCost).FirstOrDefault();
                                 }
                             }
                         }
@@ -570,18 +571,22 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = "Waiting for approval, can't edit this estimate";
                     return responseVm;
                 }
-                decimal subtotal = 0m;
-                decimal grandtotal = 0m;
+                decimal additionalCost = 0.0M;
+                decimal SumofSubtotalandAdditionalCost = 0.0M;
+                decimal subtotal = 0.0M;
+                decimal grandtotal = 0.0M;
                 Guid? taxRateId = null;
                 Guid? discountId = null;
                 var windowproductdetails = await BuildEstimate(model.WindowProductId, false);
                 if (windowproductdetails.Data != null && windowproductdetails.Data.Any())
                 {
+                    additionalCost = (decimal)windowproductdetails.Data.Sum(x => x.AdditionalCost);
                     subtotal = (decimal)windowproductdetails.Data.Sum(x => x.TotalPrice);
+                    SumofSubtotalandAdditionalCost = subtotal + additionalCost;
                 }
                 if (string.IsNullOrEmpty((model.taxRateId).ToString()) && string.IsNullOrEmpty(model.DiscountCoupon))
                 {
-                    grandtotal = subtotal;
+                    grandtotal = SumofSubtotalandAdditionalCost;
                 }
                 else
                 {
@@ -601,7 +606,7 @@ namespace ShutterManagement.Business.Services
                     {
                         discountId = model.DiscountId;
                     }
-                    grandtotal = await DiscountApplied(discountId, subtotal, taxRateId) ?? 0m;
+                    grandtotal = await CalculateGrandTotal(discountId, SumofSubtotalandAdditionalCost, taxRateId) ?? 0m;
                 }
 
                 // Update the estimate details
@@ -614,6 +619,7 @@ namespace ShutterManagement.Business.Services
                 estimate.TaxId = model.taxRateId;
                 estimate.TaxAmount = model.Tax;
                 estimate.TotalPrice = subtotal;
+                estimate.AdditionalCost = additionalCost;
                 estimate.TermsCondition = model.TermsCondition;
                 estimate.ModifiedBy = AppConstant.LoggedInUserID;
                 estimate.UpdatedAt = DateTime.Now;
@@ -645,7 +651,6 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
-
 
         public async Task<IResponseVm<List<EstimateList>>> ViewEachEstimation(Guid EstimateId)
         {
@@ -754,9 +759,7 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-
         #region private methods
-
 
         private async Task<List<TblEstimate>> FetchEstimates(Pagination filter)
         {
@@ -807,6 +810,7 @@ namespace ShutterManagement.Business.Services
                     EstimateName = estimate.EstimateName,
                     EstimateCode = estimate.EstimateCode,
                     SubTotal = estimate.TotalPrice,
+                    additionalCost = estimate.AdditionalCost,   
                     GrandTotal = estimate.GrandTotal,
                     Notes = estimate.Notes,
                     Tax = estimate.TaxAmount,
@@ -841,8 +845,6 @@ namespace ShutterManagement.Business.Services
                     e.TaxRate = 0;
                     e.Region = "";
                 }
-
-
                 // Fetch and add related products and options
                 AddEstimateProducts(estimate, e);
                 estimateList.Add(e);
@@ -875,7 +877,7 @@ namespace ShutterManagement.Business.Services
                                join j3 in dbContext.TblAddresses on j1.AddressId equals j3.AddressId
                                join j4 in dbContext.MstJobTypes on j1.JobType equals j4.Id
                                join j5 in dbContext.TblUsers on j1.AssignedPersonnel equals j5.Id
-                               where j1.IsDelete == false
+                               where j1.TenantId == AppConstant.LoggedInTenantId && j1.IsDelete == false && j1.JobId == e.JobId
                                select new JobDetails
                                {
                                    JobName = j1.JobName,
@@ -888,10 +890,10 @@ namespace ShutterManagement.Business.Services
                                }).FirstOrDefault();
 
             e.jobDetails = jobdetails1;
+
         }
 
-
-        private void AddEstimateProducts(TblEstimate estimate, EstimateList e)
+        private async void AddEstimateProducts(TblEstimate estimate, EstimateList e)
         {
             var productList = estimateWindowProductService.GetAllQuerable()
                 .Where(x => x.EstimateId == estimate.EstimateId && x.IsDelete == false)
@@ -957,6 +959,7 @@ namespace ShutterManagement.Business.Services
                 e.EstimateProductList.Add(estimateProduct);
             }
             AddJobDetails(e);
+            e.IsTaxApplied = await IsTaxApplied((Guid)e.JobId);
         }
 
         private async Task<bool> ValidateTenantExists()
@@ -1033,18 +1036,23 @@ namespace ShutterManagement.Business.Services
         {
             FileLogger.Log("Creating new estimate...");
 
-            decimal subtotal = 0m;
+            decimal subtotal = 0.0M;
+            decimal SumofSubtotalandAdditionalCost = 0.0M;
             decimal grandtotal = 0m;
+            decimal additionalCost = 0m;
             Guid? taxRateId = null;
             Guid? discountId = null;
             var windowproductdetails = await BuildEstimate(model.WindowProductId, false);
                 if (windowproductdetails.Data != null && windowproductdetails.Data.Any())
                 {
-                    subtotal =(decimal)windowproductdetails.Data.Sum(x => x.TotalPrice);
+                additionalCost = (decimal)windowproductdetails.Data.Sum(x => x.AdditionalCost);
+
+                subtotal = (decimal)windowproductdetails.Data.Sum(x => x.TotalPrice); 
+                SumofSubtotalandAdditionalCost = subtotal + additionalCost;
                 }
             if (string.IsNullOrEmpty((model.taxRateId).ToString()) && string.IsNullOrEmpty(model.DiscountCoupon))
             {
-                  grandtotal = subtotal;
+                  grandtotal = SumofSubtotalandAdditionalCost;
             }
             else
             {
@@ -1064,7 +1072,7 @@ namespace ShutterManagement.Business.Services
                 {
                     discountId = model.DiscountId;
                 }
-                grandtotal = await DiscountApplied(discountId, subtotal, taxRateId) ?? 0m;
+                grandtotal = await CalculateGrandTotal(discountId, SumofSubtotalandAdditionalCost, taxRateId) ?? 0m;
             }
             TblEstimate createEstimate = new TblEstimate
             {
@@ -1085,6 +1093,7 @@ namespace ShutterManagement.Business.Services
                 IsActive = true,
                 IsDelete = false,
                 TotalPrice = subtotal,
+                AdditionalCost = additionalCost,
                 Status = EnumValue.GetEnumValue(Estimation.New),
             };
 
@@ -1092,56 +1101,78 @@ namespace ShutterManagement.Business.Services
             return res;
         }
 
-        public async Task<decimal?> DiscountApplied(Guid? discountId, decimal subtotal, Guid? taxId)
+        public async Task<decimal?> CalculateGrandTotal(Guid? discountId, decimal subtotal, Guid? taxId)
         {
-            if (discountId == Guid.Empty)
-            {
-                decimal? tax = await TaskApplied(taxId, subtotal);
-                return subtotal + tax;
-            }
-            else
-            {
-                var discountdetails = discountservice.GetAllQuerable()
-                    .Where(x => x.DiscountId == discountId && x.IsDelete == false)
-                    .FirstOrDefault();
-                decimal? discount = 0m;
-                decimal grandtotal = 0m;
-                decimal? tax = await TaskApplied(taxId, subtotal);
+            decimal discount = 0m;
+            decimal grandTotal = 0m;
 
-                if (discountdetails != null)
+            // Fetch discount details based on discountId
+            var discountdetails = await GetDiscountDetails(discountId);
+
+            if (discountdetails != null)
+            {
+                // Apply discount based on type: Fixed or Percentage
+                if (discountdetails.DiscountType == EnumValue.GetEnumValue(DiscountType.Fixed))
                 {
-                    if (discountdetails.DiscountType == EnumValue.GetEnumValue(DiscountType.Fixed))
-                    {
-                        discount = discountdetails.FixedAmount > subtotal ? subtotal : discountdetails.FixedAmount;
-                    }
-                    else if (discountdetails.DiscountType == EnumValue.GetEnumValue(DiscountType.Percentage))
-                    {
-                        discount = (subtotal * discountdetails.PercentageDiscount) / 100;
-                    }
+                    // For "Fixed" discount type
+                    discount = discountdetails.FixedAmount > subtotal
+                        ? subtotal 
+                        : discountdetails.FixedAmount;
                 }
-
-                grandtotal = (decimal)(subtotal + tax - discount);
-                return grandtotal;
+                else if (discountdetails.DiscountType == EnumValue.GetEnumValue(DiscountType.Percentage))
+                {
+                    // For "Percentage" discount type
+                    discount = ((subtotal) * discountdetails.PercentageDiscount) / 100;
+                }
             }
+
+            // Apply tax
+            decimal? tax = await ApplyTax(taxId, subtotal, discount);
+
+            // Calculate grand total after applying discount and tax
+            grandTotal = Math.Max(0, (subtotal - discount) + tax.Value);
+
+            return grandTotal;
         }
 
-        private async Task<decimal?> TaskApplied(Guid? taxId, decimal subtotal)
+        private async Task<dynamic> GetDiscountDetails(Guid? discountId)
         {
+            // Assuming you have a service or repository to fetch discount details.
+            if (discountId == Guid.Empty)
+            {
+                return null;
+            }
+
+            return discountservice.GetAllQuerable()
+                .Where(x => x.DiscountId == discountId && x.IsDelete == false)
+                .FirstOrDefault();
+        }
+
+        private async Task<decimal?> ApplyTax(Guid? taxId, decimal subtotal, decimal discount)
+        {
+            // Calculate tax if taxId is provided
             if (taxId == Guid.Empty)
             {
                 return 0m;
             }
 
-            var tax = taxRate.GetAllQuerable().Where(x => x.TaxRateId == taxId && x.IsDelete== false).Select(x => x.Rate).FirstOrDefault();
+            // Fetch the tax rate based on taxId
+            var taxRate1 =  taxRate.GetAllQuerable()
+                .Where(x => x.TaxRateId == taxId && x.IsDelete == false)
+                .Select(x => x.Rate)
+                .FirstOrDefault();
 
-            if (tax == null)
+            if (taxRate == null)
             {
                 return 0m;
             }
 
-            decimal taxApplied = (decimal)(subtotal * (tax / 100));
+            // Calculate tax based on subtotal, additional cost, and discount
+            decimal taxApplied = (decimal)((subtotal  - discount) * (taxRate1 / 100));
             return taxApplied;
         }
+
+
         private async Task ProcessWindowProducts(List<Guid> windowProductIds, Guid estimateId)
         {
             FileLogger.Log("Processing window products...");
@@ -1344,8 +1375,6 @@ namespace ShutterManagement.Business.Services
             await estimateWindowProductComponentMaterialService.Add(tblEstimateWindowProductComponentMaterial);
         }
 
-
-
         public bool CanChangeStatus(Estimation currentStatus, Estimation newStatus)
         {
             if (currentStatus == Estimation.New)
@@ -1371,7 +1400,6 @@ namespace ShutterManagement.Business.Services
 
             return false;
         }
-
 
         private async Task<IResponseVm<string>> EstimationChangeHistory(Guid EstimationId, Estimation Status)
         {
@@ -1414,6 +1442,11 @@ namespace ShutterManagement.Business.Services
         }
 
 
+        //GenerateEstimationUniqueName
+        //public async Task<IResponseVm<string>> EstimationUniqueName(Guid contactId , Guid JobId)
+        //{
+        //    var EstimationExist 
+        //}
         #endregion
 
 

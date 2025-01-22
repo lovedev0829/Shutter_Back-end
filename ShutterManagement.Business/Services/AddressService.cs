@@ -54,7 +54,8 @@ namespace ShutterManagement.Business.Services
                         ZipCode = model.ZipCode,
                         Notes = model.Notes,
                         AccessCode = model.AccessCode,
-                        FullName = model.FullName,
+                        FirstName = model.FirstName,
+                        LastName = model.LastName,
                         Email = model.Email,
                         Phone = model.Phone,
                         IsActive = true,
@@ -110,7 +111,8 @@ namespace ShutterManagement.Business.Services
                         AddressDetails.City = model.City;
                         AddressDetails.State = model.State;
                         AddressDetails.ZipCode = model.ZipCode;
-                        AddressDetails.FullName = model.FullName;
+                        AddressDetails.FirstName = model.FirstName;
+                        AddressDetails.LastName = model.LastName;
                         AddressDetails.AccessCode = model.AccessCode;
                         AddressDetails.Phone = model.Phone;
                         AddressDetails.Email = model.Email;
@@ -223,7 +225,8 @@ namespace ShutterManagement.Business.Services
                                     || (x.ZipCode ?? "").Contains(filter.SearchValue.Trim())
                                     || (x.City ?? "").ToLower().Contains(filter.SearchValue.Trim())
                                     || (x.State ?? "").ToLower().Contains(filter.SearchValue.Trim())
-                                    || (x.FullName ?? "").ToLower().Contains(filter.SearchValue.Trim())
+                                    || (x.FirstName ?? "").ToLower().Contains(filter.SearchValue.Trim())
+                                    || (x.LastName ?? "").ToLower().Contains(filter.SearchValue.Trim())
                                     || (x.Phone ?? "").ToLower().Contains(filter.SearchValue.Trim())
                                     || (x.Email ?? "").ToLower().Contains(filter.SearchValue.Trim())
                                     ) : true)).ToList();
@@ -243,7 +246,8 @@ namespace ShutterManagement.Business.Services
                     State = x.State,
                     ZipCode = x.ZipCode,
                     AccessCode = x.AccessCode,
-                    FullName = x.FullName,
+                    FirstName = x.FirstName,
+                    LastName = x.LastName,
                     Email = x.Email,
                     Phone = x.Phone,
                     IsActive = x.IsActive,

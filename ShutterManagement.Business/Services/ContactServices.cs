@@ -113,7 +113,9 @@ namespace ShutterManagement.Business.Services
                     {
                         ContactId = Guid.NewGuid(),
                         ContactType = model.ContactType,
-                        Name = model.Name,
+                        FirstName = model.FirstName,
+                        LastName = model.LastName,
+                       // Name = model.Name,
                         PhoneNumber = model.PhoneNumber,
                         Email = model.Email,
                         Website = model.Website,
@@ -138,7 +140,8 @@ namespace ShutterManagement.Business.Services
                             TblContactBillingAddress CreateContactBillingAddress = new TblContactBillingAddress
                             {
                                 ContactId = res.ContactId,
-                                FullName = model.BillingAddressVm?.FullName,
+                                FirstName = model.BillingAddressVm?.FirstName,
+                                LastName = model.BillingAddressVm?.LastName,
                                 PhoneNumber = model.BillingAddressVm?.PhoneNumber,
                                 Email = model.BillingAddressVm?.Email,
                                 City = model.BillingAddressVm?.City,
@@ -218,7 +221,8 @@ namespace ShutterManagement.Business.Services
                     if (contact != null)
                     {
                         contact.ContactType = model.ContactType;
-                        contact.Name = model.Name;
+                        contact.FirstName = model.FirstName;
+                        contact.LastName = model.LastName;
                         contact.PhoneNumber = model.PhoneNumber;
                         contact.Email = model.Email;
                         contact.Website = model.Website;
@@ -236,7 +240,8 @@ namespace ShutterManagement.Business.Services
                                 .Where(x => x.ContactId == contact.ContactId && x.IsDelete == false).FirstOrDefault();
                             if (contactBillingAddress != null)
                             {
-                                contactBillingAddress.FullName = model.BillingAddressVm?.FullName;
+                                contactBillingAddress.FirstName = model.BillingAddressVm?.FirstName;
+                                contactBillingAddress.LastName = model.BillingAddressVm?.LastName;
                                 contactBillingAddress.PhoneNumber = model.BillingAddressVm?.PhoneNumber;
                                 contactBillingAddress.Email = model.BillingAddressVm?.Email;
                                 contactBillingAddress.City = model.BillingAddressVm?.City;
@@ -252,7 +257,8 @@ namespace ShutterManagement.Business.Services
                                 TblContactBillingAddress CreateContactBillingAddress = new TblContactBillingAddress
                                 {
                                     ContactId = contact.ContactId,
-                                    FullName = model.BillingAddressVm?.FullName,
+                                    FirstName = model.BillingAddressVm?.FirstName,
+                                    LastName = model.BillingAddressVm?.LastName,
                                     PhoneNumber = model.BillingAddressVm?.PhoneNumber,
                                     Email = model.BillingAddressVm?.Email,
                                     City = model.BillingAddressVm?.City,
@@ -531,7 +537,8 @@ namespace ShutterManagement.Business.Services
                         ContactType = contact.ContactType ?? "",
                         Email = contact.Email,
                         PhoneNumber = contact.PhoneNumber,
-                        Name = contact.Name,
+                        FirstName = contact.FirstName,
+                        LastName = contact.LastName,
                         Website = contact.Website,
                         Notes = contact.Notes,
                         Referral = contact.Referral,
@@ -549,7 +556,8 @@ namespace ShutterManagement.Business.Services
                         {
                             City = x.City,
                             Email = x.Email,
-                            FullName = x.FullName,
+                            FirstName = x.FirstName,
+                            LastName = x.LastName,
                             PhoneNumber = x.PhoneNumber,
                             State = x.State,
                             StreetAddress = x.StreetAddress,
@@ -575,7 +583,8 @@ namespace ShutterManagement.Business.Services
                                     || (x.Email.ToLower() ?? "").Contains(filter.SearchValue)
                                     || (x.Website.ToLower() ?? "").Contains(filter.SearchValue)
                                     || (x.PhoneNumber ?? "").Contains(filter.SearchValue)
-                                    || (x.Name.ToLower() ?? "").Contains(filter.SearchValue)
+                                    || (x.FirstName.ToLower() ?? "").Contains(filter.SearchValue)
+                                    || (x.LastName.ToLower() ?? "").Contains(filter.SearchValue)
                                     ) : true)).ToList();
                 var TakenRecords = FilterRecords
                                     .Skip((filter.PageNo - 1) * filter.RecordPerPage).Take(filter.RecordPerPage).ToList();
