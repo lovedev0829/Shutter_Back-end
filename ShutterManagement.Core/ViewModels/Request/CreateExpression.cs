@@ -20,7 +20,7 @@ namespace ShutterManagement.Core.ViewModels.Request
 
         [Default("")]
         //[Required]
-        public Guid? ProductId { get; set; }
+        public Guid? ProductId { get; set; } = Guid.Empty;
 
         [Default("")]
         [Required]

@@ -267,9 +267,8 @@ namespace ShutterManagement.Controllers
 
         [HttpGet]
         [Route("GetAllExpressionChip")]
-        public async Task<IActionResult> GetAllExpressionChip(string Product, string? ProductType, string Option = "")
+        public async Task<IActionResult> GetAllExpressionChip(string? Product, string? ProductType, string Option = "")
         {
-            Product = null;
             var res = await componentPriceService.GetAllComponentsChip(Product,ProductType, Option);
             return Ok(res);
         }

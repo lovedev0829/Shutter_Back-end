@@ -83,7 +83,7 @@ namespace ShutterManagement.Business.Services
                 {
                     ExpressionFormulae = model.ExpressionFormulae,
                     ExpressionName = model.ExpressionName,
-                    ProductId = model.ProductId,
+                    //ProductId = model.ProductId,
                     ProductType = model.ProductTypeId,
                     FormulaeArray = string.Join(", ", model.FormulaeArray),
                     DisplayArray = string.Join(", ", model.displayArray),
@@ -128,7 +128,7 @@ namespace ShutterManagement.Business.Services
                     IsExpressionExist.ExpressionName = model.ExpressionName;
                     IsExpressionExist.ExpressionFormulae = model.ExpressionFormulae;
                     IsExpressionExist.ProductType = model.ProductTypeId;
-                    IsExpressionExist.ProductId = model.ProductId;
+                    //IsExpressionExist.ProductId = model.ProductId;
                     IsExpressionExist.UpdateAt = DateTime.Now;
                     IsExpressionExist.OptionId = string.IsNullOrEmpty(model.OptionId) ? null : Guid.Parse(model.OptionId);
                     IsExpressionExist.ModifiedBy = AppConstant.LoggedInUserID;

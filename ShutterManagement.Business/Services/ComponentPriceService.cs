@@ -24,12 +24,12 @@ namespace ShutterManagement.Business.Services
             this.optionService = optionService;
             this.materialService = materialService;
         }
-        public async Task<IResponseVm<dynamic>> GetAllComponentsChip(string Product,string? ProductType, string? Option)
+        public async Task<IResponseVm<dynamic>> GetAllComponentsChip(string? Product,string? ProductType, string? Option)
         {
             IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
             try
             {
-                var Component = (await GetAll()).Where(x => x.ProductType == Product && x.IsActive == true).ToList();
+                //var Component = (await GetAll()).Where(x => x.ProductType == Product && x.IsActive == true).ToList();
                 List<ComponentPrice> ChipData = new List<ComponentPrice>();
                 //var ChipData = Component.Select(x => new ComponentPrice
                 //{
