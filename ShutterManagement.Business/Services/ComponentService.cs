@@ -380,6 +380,7 @@ namespace ShutterManagement.Business.Services
                 var expression = GetExpression(item.PricingExpression ?? "");
                 item.ExpressionName = expression?.ExpressionName;
                 item.ExpressionFormulae = expression?.ExpressionFormulae;
+                item.displayArray = expression?.DisplayArray;
                 item.ProductType = productTypeDetail?.ProductId.ToString().ToLower();
                 item.ProductTypeName = productTypeDetail?.ProductName;
 
