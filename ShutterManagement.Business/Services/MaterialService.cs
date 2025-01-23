@@ -97,7 +97,7 @@ namespace ShutterManagement.Business.Services
                     var CheckExistingVendorbyCode = GetAllVendorList.Any(x => x.VendorCode == model.VendorCode);
                     if (IsSKUExist)
                     {
-                        responseVm.Message = $"SKU {model.SKU}" + AppConstant.AlreadyExists;
+                        responseVm.Message = $"SKU {model.SKU} " + AppConstant.AlreadyExists;
                         return responseVm;
                     }
                     if(VendorExit==null)

@@ -28,16 +28,16 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                bool isTenant = await tenantService.AnyAsync(x =>
-                    x.TenantId == AppConstant.LoggedInTenantId &&
-                    x.IsDelete == false &&
-                    x.IsActive == true);
-                if (!isTenant)
-                {
-                    responseVm.Message = AppConstant.TenantNotFound;
-                    responseVm.IsSuccess = false;
-                    return responseVm;
-                }
+                //bool isTenant = await tenantService.AnyAsync(x =>
+                //    x.TenantId == AppConstant.LoggedInTenantId &&
+                //    x.IsDelete == false &&
+                //    x.IsActive == true);
+                //if (!isTenant)
+                //{
+                //    responseVm.Message = AppConstant.TenantNotFound;
+                //    responseVm.IsSuccess = false;
+                //    return responseVm;
+                //}
                 var isDuplicateLocation = GetAllQuerable().Where
                     (x => x.LocationName == model.LocationName &&
                                    x.TenantId == AppConstant.LoggedInTenantId &&
@@ -76,7 +76,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var locations = dbContext.TblLocations
-                    .Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false)
+                    .Where(x=> x.IsDelete == false)
                     .OrderBy(x => x.LocationName)
                     .Select(x => new LocationVm
                     {
