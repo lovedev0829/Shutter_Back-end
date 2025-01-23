@@ -27,6 +27,8 @@ public partial class TblProductComponent
 
     public decimal? Quantity { get; set; }
 
+    public string? PricingExpression { get; set; }
+
     public virtual TblComponent? Component { get; set; }
 
     public virtual TblProduct? Product { get; set; }

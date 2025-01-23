@@ -18,5 +18,6 @@ namespace ShutterManagement.Core.ViewModels.Request
     {
         public decimal? Quantity { get; set; }
         public Guid? ComponentId { get; set; }
+        public string? PricingExpression { get; set; }
     }
 }
