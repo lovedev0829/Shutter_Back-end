@@ -191,8 +191,9 @@ namespace ShutterManagement.Business.Services
             ).ToList();
                 foreach (var item in DiscountList)
                 {
-                    var customerData = contactService.GetAllQuerable().Where(x => x.ContactId == item.CustomerId && x.IsDelete == false).Select(x => x.Name).FirstOrDefault();
-                    item.CustomerName = customerData;
+                    var customerData = contactService.GetAllQuerable().Where(x => x.ContactId == item.CustomerId && x.IsDelete == false).Select(x => new { x.FirstName ,x.LastName}  ).FirstOrDefault();
+                    item.FirstName = customerData?.FirstName ??"";
+                    item.LastName = customerData?.LastName??"";
                 }
 
 
@@ -203,7 +204,9 @@ namespace ShutterManagement.Business.Services
                     (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
                     (string.IsNullOrEmpty(filter.CustomerId) ? true : x.CustomerId.ToString() == filter.CustomerId || x.CustomerId == null) &&
                     (string.IsNullOrEmpty(filter.SearchValue) ? true :
-                        (x.CustomerName?.ToLower() ?? "").Contains(filter.SearchValue.Trim().ToLower()) ||
+                        (x.FirstName?.ToLower() ?? "").Contains(filter.SearchValue.Trim().ToLower()) ||
+                        ((x.FirstName?.ToLower() ?? "") + " " + (x.LastName?.ToLower() ?? "")).Contains(filter.SearchValue.Trim().ToLower())||
+                        (x.LastName?.ToLower() ?? "").Contains(filter.SearchValue.Trim().ToLower()) ||
                         (x.CouponCode?.ToLower() ?? "").Contains(filter.SearchValue.Trim().ToLower()) ||
                         (x.PercentageDiscount.ToString() ?? "").Contains(filter.SearchValue.Trim()) ||
                         (x.FixedAmount.ToString() ?? "").Contains(filter.SearchValue.Trim()) ||
