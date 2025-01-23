@@ -132,25 +132,26 @@ namespace ShutterManagement.Business.Services
                         if (!model.IsBillingAddressSameAsAddress)
                         {
 
-                            TblContactBillingAddress CreateContactBillingAddress = new TblContactBillingAddress
-                            {
-                                ContactId = res.ContactId,
-                                FirstName = model.BillingAddressVm?.FirstName,
-                                LastName = model.BillingAddressVm?.LastName,
-                                PhoneNumber = model.BillingAddressVm?.PhoneNumber,
-                                Email = model.BillingAddressVm?.Email,
-                                City = model.BillingAddressVm?.City,
-                                State = model.BillingAddressVm?.State,
-                                ZipCode = model.BillingAddressVm?.ZipCode,
-                                StreetAddress = model.BillingAddressVm?.StreetAddress,
-                                CreatedAt = DateTime.Now,
-                                IsActive = true,
-                                IsDelete = false
-                            };
-                            await billingService.Add(CreateContactBillingAddress);
+                            //TblContactBillingAddress CreateContactBillingAddress = new TblContactBillingAddress
+                            //{
+                            //    ContactId = res.ContactId,
+                            //    FirstName = model.BillingAddressVm?.FirstName,
+                            //    LastName = model.BillingAddressVm?.LastName,
+                            //    PhoneNumber = model.BillingAddressVm?.PhoneNumber,
+                            //    Email = model.BillingAddressVm?.Email,
+                            //    City = model.BillingAddressVm?.City,
+                            //    State = model.BillingAddressVm?.State,
+                            //    ZipCode = model.BillingAddressVm?.ZipCode,
+                            //    StreetAddress = model.BillingAddressVm?.StreetAddress,
+                            //    CreatedAt = DateTime.Now,
+                            //    IsActive = true,
+                            //    IsDelete = false
+                            //};
+                            //await billingService.Add(CreateContactBillingAddress);
 
                             TblAddress address = new TblAddress
                             {
+                                AddressId = Guid.NewGuid(),
                                 ContactId = res.ContactId,
                                 Label = "Primary Address",
                                 FirstName = model.BillingAddressVm?.FirstName,
@@ -169,6 +170,9 @@ namespace ShutterManagement.Business.Services
                             };
                             await dbContext.TblAddresses.AddAsync(address);
                             dbContext.SaveChangesAsync();
+                            res.PrimaryAddress = address.AddressId;
+                            await Update(res);
+
                         }
                         if (!model.IsTaxExemption)
                         {
@@ -253,13 +257,13 @@ namespace ShutterManagement.Business.Services
                         await Update(contact);
                         if (!model.IsBillingAddressSameAsAddress)
                         {
-                            var contactBillingAddress = billingService.GetAllQuerable()
-                                .Where(x => x.ContactId == contact.ContactId && x.IsDelete == false).FirstOrDefault();
+                            var contactBillingAddress = dbContext.TblAddresses
+                                .Where(x => x.ContactId == contact.ContactId && x.AddressId == contact.PrimaryAddress && x.IsDelete == false).FirstOrDefault();
                             if (contactBillingAddress != null)
                             {
                                 contactBillingAddress.FirstName = model.BillingAddressVm?.FirstName;
                                 contactBillingAddress.LastName = model.BillingAddressVm?.LastName;
-                                contactBillingAddress.PhoneNumber = model.BillingAddressVm?.PhoneNumber;
+                                contactBillingAddress.Phone = model.BillingAddressVm?.PhoneNumber;
                                 contactBillingAddress.Email = model.BillingAddressVm?.Email;
                                 contactBillingAddress.City = model.BillingAddressVm?.City;
                                 contactBillingAddress.State = model.BillingAddressVm?.State;
@@ -267,16 +271,18 @@ namespace ShutterManagement.Business.Services
                                 contactBillingAddress.StreetAddress = model.BillingAddressVm?.StreetAddress;
                                 contactBillingAddress.UpdatedAt = DateTime.Now;
 
-                                await billingService.Update(contactBillingAddress);
+                                dbContext.TblAddresses.Update(contactBillingAddress);
+                                dbContext.SaveChanges();
                             }
                             else
                             {
-                                TblContactBillingAddress CreateContactBillingAddress = new TblContactBillingAddress
+                                TblAddress CreateContactBillingAddress = new TblAddress
                                 {
+                                    AddressId = Guid.NewGuid(),
                                     ContactId = contact.ContactId,
                                     FirstName = model.BillingAddressVm?.FirstName,
                                     LastName = model.BillingAddressVm?.LastName,
-                                    PhoneNumber = model.BillingAddressVm?.PhoneNumber,
+                                    Phone = model.BillingAddressVm?.PhoneNumber,
                                     Email = model.BillingAddressVm?.Email,
                                     City = model.BillingAddressVm?.City,
                                     State = model.BillingAddressVm?.State,
@@ -286,7 +292,10 @@ namespace ShutterManagement.Business.Services
                                     IsActive = true,
                                     IsDelete = false
                                 };
-                                await billingService.Add(CreateContactBillingAddress);
+                                dbContext.TblAddresses.Add(CreateContactBillingAddress);
+                                dbContext.SaveChanges();    
+                                contact.PrimaryAddress = CreateContactBillingAddress.AddressId;
+                                await Update(contact);
                             }
                         }
 
@@ -359,14 +368,15 @@ namespace ShutterManagement.Business.Services
                 contact.ModifiedBy = AppConstant.LoggedInUserID;
                 await Update(contact);
 
-                var billingaddress = (await billingService.GetAll())
-                   .Where(c => c.ContactId == ContactId && c.IsDelete == false).FirstOrDefault();
+                var billingaddress =  dbContext.TblAddresses
+                   .Where(c => c.ContactId == ContactId && contact.PrimaryAddress == c.AddressId && c.IsDelete == false).FirstOrDefault();
 
                 if (billingaddress != null)
                 {
                     billingaddress.IsActive = !billingaddress.IsActive;
                     billingaddress.UpdatedAt = DateTime.Now;
-                    await billingService.Update(billingaddress);
+                    dbContext.TblAddresses.Update(billingaddress);
+                    dbContext.SaveChanges();
                 }
                 var taxExemption = (await taxExemptionService.GetAll())
                     .Where(c => c.ContactId == ContactId && c.IsDelete == false)
@@ -407,15 +417,16 @@ namespace ShutterManagement.Business.Services
                 contact.ModifiedBy = AppConstant.LoggedInUserID;
                 await Update(contact);
 
-                var billingaddress = (await billingService.GetAll())
-                   .Where(c => c.ContactId == ContactId && c.IsDelete == false).FirstOrDefault();
+                var billingaddress = dbContext.TblAddresses
+                   .Where(c => c.ContactId == ContactId && c.AddressId == contact.PrimaryAddress && c.IsDelete == false).FirstOrDefault();
 
                 if (billingaddress != null)
                 {
                     billingaddress.IsActive = false;
                     billingaddress.IsDelete = true;
                     billingaddress.UpdatedAt = DateTime.Now;
-                    await billingService.Update(billingaddress);
+                    dbContext.TblAddresses.Update(billingaddress);
+                    dbContext.SaveChanges();
                 }
                 var taxExemption = (await taxExemptionService.GetAll())
                     .Where(c => c.ContactId == ContactId && c.IsDelete == false)
@@ -567,15 +578,15 @@ namespace ShutterManagement.Business.Services
                         CreatedAt = contact.CreatedAt
                     };
 
-                    contacts.billingAddressVm = billingService.GetAllQuerable()
-                        .Where(x => x.ContactId == contact.ContactId
+                    contacts.billingAddressVm = dbContext.TblAddresses
+                        .Where(x => x.ContactId == contact.ContactId && x.AddressId == contact.PrimaryAddress
                         && x.IsDelete == false).Select(x => new BillingAddressVm
                         {
                             City = x.City,
                             Email = x.Email,
                             FirstName = x.FirstName,
                             LastName = x.LastName,
-                            PhoneNumber = x.PhoneNumber,
+                            PhoneNumber = x.Phone,
                             State = x.State,
                             StreetAddress = x.StreetAddress,
                             ZipCode = x.ZipCode,
