@@ -235,7 +235,6 @@ namespace ShutterManagement.Business.Services
                                     .Skip((filter.PageNo - 1) * filter.RecordPerPage).Take(filter.RecordPerPage).ToList();
 
 
-
                 responseVm.Data = TakenRecords.Select(x => new GetAllAddress
                 {
                     AddressId = x.AddressId,
@@ -252,6 +251,7 @@ namespace ShutterManagement.Business.Services
                     Email = x.Email,
                     Phone = x.Phone,
                     IsActive = x.IsActive,
+                    IsBillingAddress = contactService.Any(c => c.PrimaryAddress == x.AddressId)
                 }).ToList();
                 responseVm.IsSuccess = true;
                 responseVm.Message = $"{AppConstant.FetchSuccessMsg}";

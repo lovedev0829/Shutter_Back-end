@@ -13,7 +13,7 @@ namespace ShutterManagement.Core.ViewModels.Response
 
         public Guid AddressId { get; set; }
         public string? ContactId { get; set; }
-       public string? Label { get; set; }
+        public string? Label { get; set; }
         public string? StreetAddress { get; set; }
         public string? Notes { get; set; }
         public string? City { get; set; }
@@ -25,5 +25,6 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? Email { get; set; }
         public string? Phone { get; set; }
         public bool? IsActive { get; set; }
+        public bool? IsBillingAddress { get; set; }
     }
 }

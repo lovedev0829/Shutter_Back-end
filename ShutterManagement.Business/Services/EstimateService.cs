@@ -1074,11 +1074,13 @@ namespace ShutterManagement.Business.Services
                 }
                 grandtotal = await CalculateGrandTotal(discountId, SumofSubtotalandAdditionalCost, taxRateId) ?? 0m;
             }
+
+            string EstimationCode = EstimationUniqueName().Result.Data; 
             TblEstimate createEstimate = new TblEstimate
             {
                 EstimateId = Guid.NewGuid(),
                 EstimateName = model.EstimateName,
-              //  EstimateCode = GenerateUniqueId.GenerateUniqueIds(ModuleName.Estimation, AppConstant.LoggedInCompanyCode),
+                EstimateCode = model.EstimateName,
                 Notes = model.Notes,
                 DiscountAmount = model.Discount,
                 DiscountCoupon = model.DiscountCoupon,
