@@ -834,7 +834,8 @@ namespace ShutterManagement.Business.Services
                 var jobDetails = jobService.GetAllQuerable().Where(x => x.JobId == order.JobId).Select(x => x.ContactId).FirstOrDefault();
 
                 var contactDetails = contactService.GetAllQuerable().Where(x => x.ContactId == jobDetails).FirstOrDefault();
-                e.Contact = (contactDetails.FirstName + " " + contactDetails.LastName);
+                e.FirstContactName = (contactDetails?.FirstName ??"");
+                e.LastContactName = (contactDetails?.LastName ??"");
 
                 var userdetails = dbContext.TblUsers
                     .Where(x => x.Id == order.CreatedBy && x.IsDelete == false)
@@ -886,6 +887,9 @@ namespace ShutterManagement.Business.Services
                     (string.IsNullOrWhiteSpace(filter.SearchValue) ||
                      ((x.Notes ?? "").Contains(filter.SearchValue)
                       || (x.JobId.ToString() ?? "").Contains(filter.SearchValue)
+                      || (x.FirstContactName?.ToLower() ?? "").Contains(filter.SearchValue.Trim().ToLower()) 
+                      || ((x.FirstContactName?.ToLower() ?? "") + " " + (x.LastContactName?.ToLower() ?? "")).Contains(filter.SearchValue.Trim().ToLower()) 
+                      || (x.LastContactName?.ToLower() ?? "").Contains(filter.SearchValue.Trim().ToLower()) 
                       || (x.OrderNumber ?? "").Contains(filter.SearchValue)
                       || (x.OrderId.ToString() ?? "").Contains(filter.SearchValue)
                       || (x.Status ?? "").Contains(filter.SearchValue)
