@@ -51,6 +51,8 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? JobNotes { get; set; }
         public DateTime? ScheduleTime { get; set; }
 
+        public Guid? ContactId { get; set; }
+
     }
 
     public class EstimateWindowList

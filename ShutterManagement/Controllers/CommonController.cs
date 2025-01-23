@@ -644,7 +644,7 @@ namespace ShutterManagement.Controllers
 
         [HttpGet]
         [Route("GetAllEstimate")]
-        public async Task<IActionResult> GetAllEstimate(string? JobId)
+        public async Task<IActionResult> GetAllEstimate(string? JobId )
         {
             filter.Status = 1;
             filter.SearchValue=JobId?.ToLower();
@@ -668,6 +668,17 @@ namespace ShutterManagement.Controllers
             var res = await locationService.GetAll_Location();
             return Ok(res);
 
+        }
+
+
+        [HttpGet]
+        [Route("GetAllEstimateContact")]
+        public async Task<IActionResult> GetAllEstimateContact(string? ContactId)
+        {
+            filter.Status = 1;
+            filter.CustomerId = ContactId?.ToLower();
+            var res = await estimateService.GetAll_Estimate(filter);
+            return Ok(res);
         }
     }
 }

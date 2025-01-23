@@ -857,6 +857,7 @@ namespace ShutterManagement.Business.Services
                     (string.IsNullOrWhiteSpace(filter.SearchValue) ||
                     ((x.Notes ?? "").Contains(filter.SearchValue)
                      || (x.JobId.ToString().ToLower() ?? "").Contains(filter.SearchValue)
+                     || (x.jobDetails?.ContactId?.ToString().ToLower() ?? "").Contains(filter.CustomerId)
                      || (x.Status ?? "").Contains(filter.SearchValue)
                      || (x.EstimateId.ToString()).Contains(filter.SearchValue)
                      || (x.EstimateCode ?? "").Contains(filter.SearchValue)
@@ -877,6 +878,7 @@ namespace ShutterManagement.Business.Services
                                join j3 in dbContext.TblAddresses on j1.AddressId equals j3.AddressId
                                join j4 in dbContext.MstJobTypes on j1.JobType equals j4.Id
                                join j5 in dbContext.TblUsers on j1.AssignedPersonnel equals j5.Id
+                               join j6 in dbContext.TblContacts on j1.ContactId equals j6.ContactId
                                where j1.TenantId == AppConstant.LoggedInTenantId && j1.IsDelete == false && j1.JobId == e.JobId
                                select new JobDetails
                                {
@@ -886,7 +888,8 @@ namespace ShutterManagement.Business.Services
                                    AssignedPersonnel = j5.FirstName + " " + j5.LastName,
                                    Address = j3.StreetAddress + " " + j3.City + " " + j3.State + " " + j3.ZipCode,
                                    AddressLabel = j3.Label,
-                                   ScheduleTime = j1.ScheduledDate
+                                   ScheduleTime = j1.ScheduledDate,
+                                   ContactId=j6.ContactId
                                }).FirstOrDefault();
 
             e.jobDetails = jobdetails1;

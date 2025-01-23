@@ -836,6 +836,7 @@ namespace ShutterManagement.Business.Services
                 var contactDetails = contactService.GetAllQuerable().Where(x => x.ContactId == jobDetails).FirstOrDefault();
                 e.FirstContactName = (contactDetails?.FirstName ??"");
                 e.LastContactName = (contactDetails?.LastName ??"");
+                e.ContactId = (contactDetails?.ContactId);
 
                 var userdetails = dbContext.TblUsers
                     .Where(x => x.Id == order.CreatedBy && x.IsDelete == false)
@@ -891,11 +892,13 @@ namespace ShutterManagement.Business.Services
                       || ((x.FirstContactName?.ToLower() ?? "") + " " + (x.LastContactName?.ToLower() ?? "")).Contains(filter.SearchValue.Trim().ToLower()) 
                       || (x.LastContactName?.ToLower() ?? "").Contains(filter.SearchValue.Trim().ToLower()) 
                       || (x.OrderNumber ?? "").Contains(filter.SearchValue)
+                      || (x.ContactId?.ToString().ToLower() ?? "").Contains(filter.CustomerId.ToLower())
+                      || (x.EstimateId.ToString().ToLower() ?? "").Contains(filter.EstimationId.ToLower())
                       || (x.OrderId.ToString() ?? "").Contains(filter.SearchValue)
                       || (x.Status ?? "").Contains(filter.SearchValue)
                       || (x.EstimateId.ToString()).Contains(filter.SearchValue)
                       || (x.EstimateCode ?? "").Contains(filter.SearchValue)
-                      || (x.EstimateName ?? "").Contains(filter.SearchValue)
+                      || (x.EstimateName ?? "").ToLower().Contains(filter.SearchValue)
                       || (x.TermsCondition ?? "").Contains(filter.SearchValue)
                       || (x.DiscountCoupon ?? "").Contains(filter.SearchValue)
                       || (x.GrandTotal.ToString() ?? "").Contains(filter.SearchValue)))
