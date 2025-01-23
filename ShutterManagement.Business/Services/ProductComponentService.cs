@@ -17,9 +17,12 @@ namespace ShutterManagement.Business.Services
     public class ProductComponentService : BaseRepository<BtprojecShuttermanagementDevContext, TblProductComponent>, IProductComponentService
     {
         private readonly ITenantService tenantService;
-        public ProductComponentService(ITenantService tenantService)
+        private readonly IExpressionService expressionService;
+
+        public ProductComponentService(ITenantService tenantService, IExpressionService expressionService)
         {
             this.tenantService = tenantService;
+            this.expressionService = expressionService;
         }
         public async Task<IResponseVm<string>> AddProductComponent(CreateProductComponentVm model)
         {
@@ -45,12 +48,15 @@ namespace ShutterManagement.Business.Services
 
                             bool IsProductComponentExists = await AnyAsync(x => x.ProductId == model.ProductId && x.ComponentId == productcomp.ComponentId
                             && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
+                            var isPricingExpression = await expressionService.AnyAsync(x => x.Id.ToString() == productcomp.PricingExpression && x.IsActive == true && x.IsDelete == false
+                         && x.TenantId == AppConstant.LoggedInTenantId);
                             if (!IsProductComponentExists)
                             {
                                 TblProductComponent newProductComponent = new TblProductComponent
                                 {
                                     ProductComponentId = Guid.NewGuid(),
                                     ProductId = model.ProductId,
+                                    PricingExpression = productcomp.PricingExpression,
                                     ComponentId = productcomp.ComponentId,
                                     Quantity = productcomp.Quantity,
                                     CreatedAt = DateTime.Now,
@@ -162,8 +168,12 @@ namespace ShutterManagement.Business.Services
                         bool IsProductComponentExists = await AnyAsync(x => x.ProductComponentId != model.ProductComponentId && x.ProductId == model.ProductId && x.ComponentId == model.ComponentId &&
                                     x.TenantId == AppConstant.LoggedInTenantId &&
                                     x.IsDelete == false);
+                        var isPricingExpression = await expressionService.AnyAsync(x => x.Id.ToString() == model.PricingExpression && x.IsActive == true && x.IsDelete == false
+                            && x.TenantId == AppConstant.LoggedInTenantId);
                         if (!IsProductComponentExists)
                         {
+
+                            productComponent.PricingExpression = model.PricingExpression;
                             productComponent.ComponentId = model.ComponentId;
                             productComponent.Quantity = model.Quantity;
                             productComponent.UpdatedAt = DateTime.Now;

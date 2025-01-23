@@ -1177,6 +1177,7 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
 
             entity.Property(e => e.ProductComponentId).ValueGeneratedNever();
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.PricingExpression).HasMaxLength(100);
             entity.Property(e => e.Quantity).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
 
