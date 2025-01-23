@@ -379,7 +379,8 @@ namespace ShutterManagement.Business.Services
                 var productTypeDetail = GetProductTypeDetail(item.ProductType ?? "");
                 var expression = GetExpression(item.PricingExpression ?? "");
                 item.ExpressionName = expression?.ExpressionName;
-                item.ExpressionFormulae = expression?.ExpressionFormulae;
+                item.ExpressionFormulae = expression?.DisplayArray;
+                //item.displayArray = expression?.DisplayArray;
                 item.ProductType = productTypeDetail?.ProductId.ToString().ToLower();
                 item.ProductTypeName = productTypeDetail?.ProductName;
 

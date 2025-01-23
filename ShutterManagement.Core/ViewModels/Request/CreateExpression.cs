@@ -31,6 +31,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         [Default("")]
         [Required]
         public string[]? FormulaeArray { get; set; }
+        public string[]? displayArray { get; set; }
 
     }
 }

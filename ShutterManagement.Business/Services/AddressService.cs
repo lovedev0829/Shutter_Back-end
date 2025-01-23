@@ -227,6 +227,7 @@ namespace ShutterManagement.Business.Services
                                     || (x.State ?? "").ToLower().Contains(filter.SearchValue.Trim())
                                     || (x.FirstName ?? "").ToLower().Contains(filter.SearchValue.Trim())
                                     || (x.LastName ?? "").ToLower().Contains(filter.SearchValue.Trim())
+                                    || ((x.FirstName + " "  + x.LastName) ?? "").ToLower().Contains(filter.SearchValue.Trim())
                                     || (x.Phone ?? "").ToLower().Contains(filter.SearchValue.Trim())
                                     || (x.Email ?? "").ToLower().Contains(filter.SearchValue.Trim())
                                     ) : true)).ToList();

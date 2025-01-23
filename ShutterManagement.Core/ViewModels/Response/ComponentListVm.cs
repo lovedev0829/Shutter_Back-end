@@ -18,6 +18,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public Guid? TenantId { get; set; }
         public decimal? MarkupPercentage { get; set; }
         public string? PricingExpression { get; set; }
+        public string? displayArray { get; set; }
         public string? ExpressionName { get; set; }
         public string? ExpressionFormulae { get; set; }
         public string? Notes { get; set; }

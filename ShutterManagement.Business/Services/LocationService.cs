@@ -40,7 +40,6 @@ namespace ShutterManagement.Business.Services
                 //}
                 var isDuplicateLocation = GetAllQuerable().Where
                     (x => x.LocationName == model.LocationName &&
-                                   x.TenantId == AppConstant.LoggedInTenantId &&
                                    x.IsDelete == false);
 
                 if (isDuplicateLocation != null && isDuplicateLocation.Any())

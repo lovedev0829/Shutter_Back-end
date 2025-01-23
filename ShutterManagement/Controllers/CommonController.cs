@@ -328,6 +328,17 @@ namespace ShutterManagement.Controllers
 
         }
 
+        [HttpGet]
+        [Route("EstimationUniquename")]
+        public async Task<IActionResult> EstimationCode()
+        {
+            var EstimationCode = await estimateService.EstimationUniqueName();
+            return Ok(EstimationCode);
+
+        }
+
+
+
         //[HttpGet]
         //[Route("ContactEstimationProductCompoentBreakdown")]
         //public async Task<IActionResult> ContactEstimationProductCompoentBreakdown(string EstimationId, Guid ProductId)
