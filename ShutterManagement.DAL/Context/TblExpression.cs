@@ -33,5 +33,7 @@ public partial class TblExpression
 
     public Guid? OptionId { get; set; }
 
+    public string? DisplayArray { get; set; }
+
     public virtual MstProductType? ProductTypeNavigation { get; set; }
 }

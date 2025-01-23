@@ -86,6 +86,7 @@ namespace ShutterManagement.Business.Services
                     ProductId = model.ProductId,
                     ProductType = model.ProductTypeId,
                     FormulaeArray = string.Join(", ", model.FormulaeArray),
+                    DisplayArray = string.Join(", ", model.displayArray),
                     IsActive = true,
                     IsDelete = false,
                     OptionId = string.IsNullOrEmpty(model.OptionId) ? null : Guid.Parse(model.OptionId),
@@ -132,6 +133,7 @@ namespace ShutterManagement.Business.Services
                     IsExpressionExist.OptionId = string.IsNullOrEmpty(model.OptionId) ? null : Guid.Parse(model.OptionId);
                     IsExpressionExist.ModifiedBy = AppConstant.LoggedInUserID;
                     IsExpressionExist.FormulaeArray = string.Join(", ", model.FormulaeArray);
+                    IsExpressionExist.DisplayArray = string.Join(", ", model.displayArray);
                 }
                 var res = await Update(IsExpressionExist);
                 responseVm.IsSuccess = true;
@@ -195,6 +197,7 @@ namespace ShutterManagement.Business.Services
                                           ExpressionName = t1.ExpressionName,
                                           ExpressionFormulae = t1.ExpressionFormulae,
                                           formulaeArray = !string.IsNullOrEmpty(t1.FormulaeArray) ? t1.FormulaeArray.Split(new[] { ", " }, StringSplitOptions.TrimEntries) : new string[0],
+                                          displayArray = !string.IsNullOrEmpty(t1.DisplayArray) ? t1.DisplayArray.Split(new[] { ", " }, StringSplitOptions.TrimEntries) : new string[0],
                                           ProductId = t1.ProductId,
                                           OptionId = t1.OptionId,
                                           ProductName = t3.ProductName,
