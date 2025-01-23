@@ -148,7 +148,10 @@ namespace ShutterManagement.Business.Services
                 //    return responseVm;
                 //}
 
-                var InvoiceNumberUniquNumber = GenerateUniqueId.GenerateUniqueIds(ModuleName.Invoice, AppConstant.LoggedInCompanyCode);
+                int Version = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId).OrderByDescending(p => p.CreatedAt)
+               .Select(p => (p.InvoiceNumber.Split("-", StringSplitOptions.RemoveEmptyEntries).Length == 3 ? Convert.ToInt32(p.InvoiceNumber.Split("-", StringSplitOptions.RemoveEmptyEntries)[2]) : 0)).FirstOrDefault();
+                Version += 1;
+                var InvoiceNumberUniquNumber = GenerateUniqueId.GenerateUniqueIds(ModuleName.Invoice, AppConstant.LoggedInCompanyCode, Version);     //   var InvoiceNumberUniquNumber = GenerateUniqueId.GenerateUniqueIds(ModuleName.Invoice, AppConstant.LoggedInCompanyCode);
                 TblInvoice tblInvoice = new TblInvoice
                 {
                     InvoiceId = Guid.NewGuid(),
@@ -342,6 +345,7 @@ namespace ShutterManagement.Business.Services
                             (x.InvoiceNumber.ToString().ToLower().Contains(filter.SearchValue.Trim()) ||
                             (x.ContactFirstName?.ToString().ToLower() == filter.SearchValue.Trim())) ||
                             (x.ContactLastName?.ToString().ToLower() == filter.SearchValue.Trim()) ||
+                            ((x.ContactFirstName + x.ContactLastName)?.ToString().ToLower() == filter.SearchValue.Trim()) ||
                             (x.Status.ToLower().Contains(filter.SearchValue.Trim())) ||
                             (x.InvoiceId.ToString() == filter.SearchValue.Trim())) ||
                             (x.JobId.ToString() == filter.SearchValue.Trim()))).ToList();

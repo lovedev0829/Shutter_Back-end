@@ -1078,7 +1078,7 @@ namespace ShutterManagement.Business.Services
             {
                 EstimateId = Guid.NewGuid(),
                 EstimateName = model.EstimateName,
-                EstimateCode = GenerateUniqueId.GenerateUniqueIds(ModuleName.Estimation, AppConstant.LoggedInCompanyCode),
+              //  EstimateCode = GenerateUniqueId.GenerateUniqueIds(ModuleName.Estimation, AppConstant.LoggedInCompanyCode),
                 Notes = model.Notes,
                 DiscountAmount = model.Discount,
                 DiscountCoupon = model.DiscountCoupon,
@@ -1443,10 +1443,27 @@ namespace ShutterManagement.Business.Services
 
 
         //GenerateEstimationUniqueName
-        //public async Task<IResponseVm<string>> EstimationUniqueName(Guid contactId , Guid JobId)
-        //{
-        //    var EstimationExist 
-        //}
+        public async Task<IResponseVm<string>> EstimationUniqueName()
+        {
+            IResponseVm<string> res = new ResponseVm<string>();
+            try
+            {
+
+
+              int Version = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId).OrderByDescending(p => p.CreatedAt)
+               .Select(p => (p.EstimateCode.Split("-", StringSplitOptions.RemoveEmptyEntries).Length == 3 ? Convert.ToInt32(p.EstimateCode.Split("-", StringSplitOptions.RemoveEmptyEntries)[2]) : 0)).FirstOrDefault();
+                Version += 1;
+                var EstimationCode = GenerateUniqueId.GenerateUniqueIds(ModuleName.Estimation, AppConstant.LoggedInCompanyCode, Version);
+                res.IsSuccess = true;
+                res.Data = EstimationCode;
+                res.Message = "Estimation Code Created";
+            }
+            catch (Exception ex)
+            {
+                res.Message = ex.Message;   
+            }
+            return res;
+        }
         #endregion
 
 

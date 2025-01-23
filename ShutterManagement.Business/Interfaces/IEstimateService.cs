@@ -25,6 +25,7 @@ namespace ShutterManagement.Business.Interfaces
         Task<IResponseVm<string>> ChangeStatus(Guid EstimationId, Estimation NewEstimationStatus);
         Task<decimal?> CalculateGrandTotal(Guid? discountId, decimal subtotal, Guid? taxId);
         Task<bool> IsTaxApplied(Guid JobId);
+        Task<IResponseVm<string>> EstimationUniqueName();
 
         //Task<IResponseVm<List<EstimationBreakdown>>> EstimationBreakdown(Guid windowProductId);
     }

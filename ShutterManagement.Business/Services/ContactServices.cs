@@ -1,23 +1,14 @@
-﻿using ShutterManagement.Business.Interfaces;
-using ShutterManagement.Core.SPModel;
-using ShutterManagement.Core.ViewModels;
-using ShutterManagement.DAL.Context;
-using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using Microsoft.EntityFrameworkCore;
+using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core;
-using ShutterManagement.Services;
-using Azure;
-using ShutterManagement.Core.ViewModels.Request;
-using System.Diagnostics.Metrics;
-using System.Reflection.Emit;
-using ShutterManagement.Core.SPModel.SP_Responses;
-using Microsoft.IdentityModel.Tokens;
-using ShutterManagement.Core.ViewModels.Response;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 using ShutterManagement.Core.Common;
+using ShutterManagement.Core.SPModel;
+using ShutterManagement.Core.SPModel.SP_Responses;
+using ShutterManagement.Core.ViewModels;
+using ShutterManagement.Core.ViewModels.Request;
+using ShutterManagement.Core.ViewModels.Response;
+using ShutterManagement.DAL.Context;
+using ShutterManagement.Services;
 
 namespace ShutterManagement.Business.Services
 {
@@ -102,20 +93,24 @@ namespace ShutterManagement.Business.Services
                         responseVm.Message = "Billing details required.";
                         return responseVm;
                     }
-                    if(model.TaxExemptionVm.ExpiryDate < model.TaxExemptionVm.EffectiveDate)
+                    if (model.TaxExemptionVm.ExpiryDate < model.TaxExemptionVm.EffectiveDate)
                     {
                         responseVm.Message = "ExpiryDate must be greater than EffectiveDate.";
                         return responseVm;
                     }
+                    int Version = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId).OrderByDescending(p => p.CreatedAt)
+                        .Select(p => (p.ContactUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries).Length == 3 ? Convert.ToInt32(p.ContactUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries)[2]) : 0)).FirstOrDefault();
+                    Version += 1;
+                    var contactUniqueId = GenerateUniqueId.GenerateUniqueIds(ModuleName.Contact, AppConstant.LoggedInCompanyCode, Version);
 
-                    var contactUniqueId =  GenerateUniqueId.GenerateUniqueIds(ModuleName.Cus, AppConstant.LoggedInCompanyCode);
+
                     TblContact CreateContact = new TblContact
                     {
                         ContactId = Guid.NewGuid(),
                         ContactType = model.ContactType,
                         FirstName = model.FirstName,
                         LastName = model.LastName,
-                       // Name = model.Name,
+                        // Name = model.Name,
                         PhoneNumber = model.PhoneNumber,
                         Email = model.Email,
                         Website = model.Website,
@@ -153,6 +148,24 @@ namespace ShutterManagement.Business.Services
                                 IsDelete = false
                             };
                             await billingService.Add(CreateContactBillingAddress);
+
+                            TblAddress address = new TblAddress
+                            {
+                                ContactId = res.ContactId,
+                                Label = "Primary Address",
+                                FirstName = model.BillingAddressVm?.FirstName,
+                                LastName = model.BillingAddressVm?.LastName,
+                                Phone = model.BillingAddressVm?.PhoneNumber,
+                                Email = model.BillingAddressVm?.Email,
+                                City = model.BillingAddressVm?.City,
+                                State = model.BillingAddressVm?.State,
+                                ZipCode = model.BillingAddressVm?.ZipCode,
+                                StreetAddress = model.BillingAddressVm?.StreetAddress,
+                                CreatedAt = DateTime.Now,
+                                IsActive = true,
+                                IsDelete = false
+                            };
+                            await dbContext.TblAddresses.AddAsync(address);
                         }
                         if (!model.IsTaxExemption)
                         {
@@ -182,6 +195,7 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.TenantNotFound;
                 }
             }
+
             catch (Exception ex)
             {
                 responseVm.Message = AppConstant.ExceptionError + ex.Message;
@@ -203,7 +217,7 @@ namespace ShutterManagement.Business.Services
                     var IsContactExists = GetAllQuerable()
                         .Where(c => (c.Email == model.Email || c.PhoneNumber == model.PhoneNumber)
                         && c.TenantId == AppConstant.LoggedInTenantId
-                        && c.IsDelete == false && c.ContactId!=model.ContactId).ToList();
+                        && c.IsDelete == false && c.ContactId != model.ContactId).ToList();
                     if (IsContactExists.Count > 0)
                     {
                         responseVm.Message = "Email or Phone " + AppConstant.AlreadyExists;
@@ -281,7 +295,7 @@ namespace ShutterManagement.Business.Services
 
                             if (contactTaxExemption != null)
                             {
-                                contactTaxExemption.ExemptionCertificate =arrayString;
+                                contactTaxExemption.ExemptionCertificate = arrayString;
                                 contactTaxExemption.EffectiveDate = model.TaxExemptionVm?.EffectiveDate;
                                 contactTaxExemption.ExpiryDate = model.TaxExemptionVm?.ExpiryDate;
                                 contactTaxExemption.UpdatedAt = DateTime.Now;
@@ -441,7 +455,7 @@ namespace ShutterManagement.Business.Services
         //        //    responseVm.Message = AppConstant.NoDataFound;
         //        //    return responseVm;
         //        //}
-                
+
         //        ////contact.IsArchive = true;
         //        ////contact.UpdatedAt = DateTime.Now;
         //        ////contact.ModifiedBy = AppConstant.LoggedInUserID;
@@ -462,24 +476,24 @@ namespace ShutterManagement.Business.Services
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
-            { 
+            {
 
-                var query = GetAllQuerable().Where(c =>c.IsActive==false && c.TenantId == AppConstant.LoggedInTenantId && c.IsDelete == false);
-                if(query==null)
+                var query = GetAllQuerable().Where(c => c.IsActive == false && c.TenantId == AppConstant.LoggedInTenantId && c.IsDelete == false);
+                if (query == null)
                 {
                     responseVm.IsSuccess = false;
-                    responseVm.Message = $"Contact "+ AppConstant.NoDataFound;
+                    responseVm.Message = $"Contact " + AppConstant.NoDataFound;
                     return responseVm;
                 }
 
                 if (archiveModel.ArchiveType == 0)
                 {
-                    query = query.Where(c => c.ContactId == archiveModel.ContactId);  
+                    query = query.Where(c => c.ContactId == archiveModel.ContactId);
                 }
 
-                var contactList = query.ToList(); 
+                var contactList = query.ToList();
 
-                if (!contactList.Any()) 
+                if (!contactList.Any())
                 {
                     responseVm.Message = AppConstant.NoDataFound;
                     return responseVm;
@@ -487,8 +501,8 @@ namespace ShutterManagement.Business.Services
 
                 foreach (var contact in contactList)
                 {
-                    contact.IsArchive = true;  
-                    await Update(contact);    
+                    contact.IsArchive = true;
+                    await Update(contact);
                 }
 
                 responseVm.IsSuccess = true;
@@ -520,7 +534,7 @@ namespace ShutterManagement.Business.Services
                     }
                     else
                     {
-                        Contacts = (await GetAll()).Where(x => x.IsDelete == false  && x.TenantId.ToString() == filter.TenantId).OrderByDescending(x=>x.CreatedAt).ToList();
+                        Contacts = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId.ToString() == filter.TenantId).OrderByDescending(x => x.CreatedAt).ToList();
                     }
                 }
                 else
@@ -552,7 +566,7 @@ namespace ShutterManagement.Business.Services
 
                     contacts.billingAddressVm = billingService.GetAllQuerable()
                         .Where(x => x.ContactId == contact.ContactId
-                        && x.IsDelete == false).Select(x=> new BillingAddressVm
+                        && x.IsDelete == false).Select(x => new BillingAddressVm
                         {
                             City = x.City,
                             Email = x.Email,
@@ -583,12 +597,13 @@ namespace ShutterManagement.Business.Services
                                     || (x.Email.ToLower() ?? "").Contains(filter.SearchValue)
                                     || (x.Website.ToLower() ?? "").Contains(filter.SearchValue)
                                     || (x.PhoneNumber ?? "").Contains(filter.SearchValue)
+                                    || ((x.FirstName.ToLower() + " " + x.LastName.ToLower()) ?? "").Contains(filter.SearchValue)
                                     || (x.FirstName.ToLower() ?? "").Contains(filter.SearchValue)
                                     || (x.LastName.ToLower() ?? "").Contains(filter.SearchValue)
                                     ) : true)).ToList();
-                var TakenRecords = FilterRecords
-                                    .Skip((filter.PageNo - 1) * filter.RecordPerPage).Take(filter.RecordPerPage).ToList();
-                    responseVm.IsSuccess = true;
+
+                var TakenRecords = Paginate.Pagination(FilterRecords, filter);
+                responseVm.IsSuccess = true;
 
                 if (TakenRecords != null && TakenRecords.Count > 0)
                 {

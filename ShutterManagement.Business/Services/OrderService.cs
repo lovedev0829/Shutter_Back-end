@@ -100,8 +100,10 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-
-                var OrderNumber = GenerateUniqueId.GenerateUniqueIds(ModuleName.Order, AppConstant.LoggedInCompanyCode);
+                int Version = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId).OrderByDescending(p => p.CreatedAt)
+                     .Select(p => (p.OrderName.Split("-", StringSplitOptions.RemoveEmptyEntries).Length == 3 ? Convert.ToInt32(p.OrderName.Split("-", StringSplitOptions.RemoveEmptyEntries)[2]) : 0)).FirstOrDefault();
+                Version += 1;
+                var OrderNumber = GenerateUniqueId.GenerateUniqueIds(ModuleName.Order, AppConstant.LoggedInCompanyCode, Version);
                 var version = GetAllQuerable()
                 .Where(x => x.EstimateId == EstimateId && x.IsDelete == false)
                 .OrderByDescending(x => x.Version)
@@ -832,7 +834,7 @@ namespace ShutterManagement.Business.Services
                 var jobDetails = jobService.GetAllQuerable().Where(x => x.JobId == order.JobId).Select(x => x.ContactId).FirstOrDefault();
 
                 var contactDetails = contactService.GetAllQuerable().Where(x => x.ContactId == jobDetails).FirstOrDefault();
-                e.Contact = contactDetails.Name;
+                e.Contact = (contactDetails.FirstName + " " + contactDetails.LastName);
 
                 var userdetails = dbContext.TblUsers
                     .Where(x => x.Id == order.CreatedBy && x.IsDelete == false)

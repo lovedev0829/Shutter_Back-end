@@ -199,6 +199,7 @@ namespace ShutterManagement.Business.Services
                         ((string.IsNullOrEmpty(filter.SearchValue) ? true :
                             (x.ContactLastname.ToLower().Contains(filter.SearchValue.Trim())) ||
                             (x.ContactFirstname.ToLower().Contains(filter.SearchValue.Trim())) ||
+                            ((x.ContactFirstname.ToLower() + x.ContactLastname.ToLower()).Contains(filter.SearchValue.Trim())) ||
                             (x.JobId.ToString().ToLower() == filter.SearchValue.Trim())) ||
                             (x.ContactTypeId.ToString() == filter.SearchValue.Trim()))).ToList();
 
