@@ -163,9 +163,12 @@ namespace ShutterManagement.Business.Services
                                 StreetAddress = model.BillingAddressVm?.StreetAddress,
                                 CreatedAt = DateTime.Now,
                                 IsActive = true,
-                                IsDelete = false
+                                IsDelete = false,
+                                TenantId = AppConstant.LoggedInTenantId,
+                                CreatedBy = AppConstant.LoggedInUserID
                             };
                             await dbContext.TblAddresses.AddAsync(address);
+                            dbContext.SaveChangesAsync();
                         }
                         if (!model.IsTaxExemption)
                         {
