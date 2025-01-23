@@ -371,9 +371,27 @@
 2025-01-02 16:00:10 : Checking if tenant with ID e2ca1134-0832-424f-833f-66141346aee2 exists...
 2025-01-02 16:07:14 : Start: Calculate Estimate price...
 2025-01-02 16:07:14 : Checking if tenant with ID e2ca1134-0832-424f-833f-66141346aee2 exists...
-2025-01-20 18:09:15 : Start: Create Estimate...
-2025-01-20 18:09:17 : Checking if tenant with ID e2ca1134-0832-424f-833f-66141346aee2 exists...
-2025-01-20 18:09:33 : Checking if estimate with name Breakdow23 already exists...
-2025-01-20 18:09:41 : Creating new estimate...
-2025-01-20 18:09:47 : Start: Calculate Estimate price...
-2025-01-20 18:09:47 : Checking if tenant with ID e2ca1134-0832-424f-833f-66141346aee2 exists...
+2025-01-23 14:31:37 : Start: Fetching all coupons.
+2025-01-23 14:31:42 : Success: Coupons fetched successfully.
+2025-01-23 14:32:04 : Start: Fetching all coupons.
+2025-01-23 14:32:04 : Success: Coupons fetched successfully.
+2025-01-23 14:43:01 : Start: Fetching all coupons.
+2025-01-23 14:43:05 : Success: Coupons fetched successfully.
+2025-01-23 14:43:28 : Start: Fetching all coupons.
+2025-01-23 14:43:28 : Success: Coupons fetched successfully.
+2025-01-23 14:46:06 : Start: Fetching all coupons.
+2025-01-23 14:46:10 : Success: Coupons fetched successfully.
+2025-01-23 14:46:30 : Start: Fetching all coupons.
+2025-01-23 14:46:31 : Success: Coupons fetched successfully.
+2025-01-23 14:46:39 : Start: Fetching all coupons.
+2025-01-23 14:46:39 : Success: Coupons fetched successfully.
+2025-01-23 14:49:43 : Start: Fetching all coupons.
+2025-01-23 14:49:47 : Success: Coupons fetched successfully.
+2025-01-23 14:50:16 : Start: Fetching all coupons.
+2025-01-23 14:50:16 : Success: Coupons fetched successfully.
+2025-01-23 14:50:28 : Start: Fetching all coupons.
+2025-01-23 14:50:29 : Success: Coupons fetched successfully.
+2025-01-23 14:53:29 : Start: Fetching all coupons.
+2025-01-23 14:53:33 : Success: Coupons fetched successfully.
+2025-01-23 14:53:52 : Start: Fetching all coupons.
+2025-01-23 14:53:55 : Success: Coupons fetched successfully.

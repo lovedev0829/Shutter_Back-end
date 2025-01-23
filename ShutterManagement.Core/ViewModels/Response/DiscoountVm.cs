@@ -17,7 +17,9 @@ namespace ShutterManagement.Core.ViewModels.Response
         public int? DiscountType { get; set; }
         public string? ApplyforName { get; set; }
         public string? DiscountTypeName { get; set; }
-        public string? CustomerName { get; set; }
+       // public string? CustomerName { get; set; }
+        public string? FirstName { get; set; }
+        public string? LastName { get; set; }
 
         public decimal? PercentageDiscount { get; set; }
 

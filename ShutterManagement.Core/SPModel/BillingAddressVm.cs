@@ -15,12 +15,14 @@ namespace ShutterManagement.Core.SPModel
         [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabaticalError)]
         [DefaultValue("")]
         public string? FirstName { get; set; }
+        public string? BillingFirstName { get; set; }
 
         [Required]
         [MaxLength(50)]
         [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabaticalError)]
         [DefaultValue("")]
         public string? LastName { get; set; }
+        public string? BillingLastName { get; set; }
 
 
         [DefaultValue("")]
@@ -56,5 +58,6 @@ namespace ShutterManagement.Core.SPModel
       //  [RegularExpression("^[\\p{L} .'-]+$", ErrorMessage = AppConstant.AlphabaticalError)]
         [DefaultValue("")]
         public string? StreetAddress { get; set; } = string.Empty;
+
     }
 }

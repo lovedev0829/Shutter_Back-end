@@ -13,7 +13,8 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string Version { get; set; }
 
         public string? OrderNumber { get; set; }
-        public string? Contact { get; set; }
+        public string? FirstContactName { get; set; }
+        public string? LastContactName { get; set; }
         public Guid EstimateId { get; set; }
         public Guid? JobId { get; set; }
         public Guid? taxRateId { get; set; }

@@ -75,7 +75,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var locations = dbContext.TblLocations
-                    .Where(x => x.IsDelete == false)
+                    .Where(x=> x.IsDelete == false)
                     .OrderBy(x => x.LocationName)
                     .Select(x => new LocationVm
                     {

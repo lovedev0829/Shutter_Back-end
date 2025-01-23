@@ -84,7 +84,24 @@ namespace ShutterManagement.Business.Services
                 using (var reader = new StreamReader(csvStream))
                 using (var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture)))
                 {
+                    //var records = csv.GetRecords<ImportMaterial>().ToList();
+                    var expectedHeaders = new[]
+                   {
+                   "MaterialName", "UnitCost", "UnitOfMeasurement", "StockQuantity", "ReorderLevel",
+                   "VendorCode", "Notes", "ProductType", "SKU", "IsCutSheet"
+                    };
+
+                    csv.Read();
+                    csv.ReadHeader();
+                    var actualHeaders = csv.HeaderRecord;
+
+                    if (!expectedHeaders.SequenceEqual(actualHeaders, StringComparer.InvariantCultureIgnoreCase))
+                    {
+                        responseVm.Message = "The CSV file format is incorrect. Please Export Formate";
+                        return responseVm;
+                    }
                     var records = csv.GetRecords<ImportMaterial>().ToList();
+
                     totalRecords = records.Count;
                     if (totalRecords == 0)
                     {
@@ -246,6 +263,22 @@ namespace ShutterManagement.Business.Services
                 using (var reader = new StreamReader(csvStream))
                 using (var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture)))
                 {
+                    var expectedHeaders = new[]
+                    {
+                   "ContactType", "FirstName","LastName", "PhoneNumber", "Email", "Website",
+                   "Notes", "Referral", "BillingFirstName","BillingLastName", "PhoneNumber", "Email","City","State","ZipCode","StreetAddress","EffectiveDate","ExpiryDate"
+                    };
+
+                    csv.Read();
+                    csv.ReadHeader();
+                    var actualHeaders = csv.HeaderRecord;
+
+                    if (!expectedHeaders.SequenceEqual(actualHeaders, StringComparer.InvariantCultureIgnoreCase))
+                    {
+                        responseVm.Message = "The CSV file format is incorrect. Please Export Formate";
+                        return responseVm;
+                    }
+
                     var records = csv.GetRecords<ImportContact>().ToList();
                     totalRecords = records.Count;
                     int rowNumber = 1;
@@ -324,8 +357,8 @@ namespace ShutterManagement.Business.Services
             {
                 contactModel.BillingAddressVm = new BillingAddressVm
                 {
-                    FirstName = record.BillingAddressVm.FirstName?.Trim(),
-                    LastName = record.BillingAddressVm.LastName?.Trim(),
+                    FirstName = record.BillingAddressVm.BillingFirstName?.Trim(),
+                    LastName = record.BillingAddressVm.BillingLastName?.Trim(),
                     PhoneNumber = record.BillingAddressVm.PhoneNumber?.Trim(),
                     Email = record.BillingAddressVm.Email?.Trim(),
                     StreetAddress = record.BillingAddressVm.StreetAddress?.Trim(),
@@ -589,7 +622,7 @@ namespace ShutterManagement.Business.Services
                 }
 
                 var csvBuilder = new StringBuilder();
-                csvBuilder.AppendLine("ContactType,Name,PhoneNumber,Email,Website,Notes,Referral,FullName,PhoneNumber,Email,City,State,ZipCode,StreetAddress,EffectiveDate,ExpiryDate");
+                csvBuilder.AppendLine("ContactType,FirstName,LastName,PhoneNumber,Email,Website,Notes,Referral,BillingFirstName,BillingLastName,PhoneNumber,Email,City,State,ZipCode,StreetAddress,EffectiveDate,ExpiryDate");
 
                 foreach (var contact in detailedContactList)
                 {
