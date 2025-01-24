@@ -81,6 +81,124 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
+        //public async Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> GetProductData(Guid WindowProductId)
+        //{
+        //    IResponseVm<List<WindowProdcutDetailsForEstimate>> responseVm = new ResponseVm<List<WindowProdcutDetailsForEstimate>>();
+
+        //    try
+        //    {
+        //        var query =
+        //         (from window in dbContext.TblWindows
+        //         join windowProduct in dbContext.TblWindowProducts on window.WindowId equals windowProduct.WindowId
+        //         join product in dbContext.TblProducts on windowProduct.ProductId equals product.ProductId
+        //         join productType in dbContext.MstProductTypes on product.ProductType equals productType.ProductId.ToString()
+        //         join productComponent in dbContext.TblProductComponents on product.ProductId equals productComponent.ProductId
+        //         join component in dbContext.TblComponents on productComponent.ComponentId equals component.ComponentId
+        //         join expression in dbContext.TblExpressions on component.PricingExpression equals expression.Id.ToString()
+        //         join componentMaterial in dbContext.TblComponentMaterials on component.ComponentId equals componentMaterial.ComponentId
+        //         join material in dbContext.TblRawMaterials on componentMaterial.RawMaterialId equals material.RawMaterialId
+        //         where windowProduct.WindowProductId == WindowProductId
+        //         && window.IsActive == true && window.IsDelete == false
+        //         && windowProduct.IsActive == true && windowProduct.IsDelete == false
+        //         && product.IsActive == true && product.IsDelete == false
+        //         && productType.IsActive == true && productType.IsDelete == false
+        //         && productComponent.IsActive == true && productComponent.IsDelete == false
+        //         && component.IsActive == true && component.IsDelete == false
+        //         && expression.IsActive == true && expression.IsDelete == false
+        //         && componentMaterial.IsActive == true && componentMaterial.IsDelete == false
+        //         && material.IsActive == true && material.IsDelete == false
+        //         select new WindowProdcutDetailsForEstimate
+        //         {
+        //             // Window Properties
+        //             WindowId = window.WindowId,
+        //             AddressId = window.AddressId,
+        //             Label = window.Label,
+        //             Width = window.Width,
+        //             Height = window.Height,
+        //             ArchHeight = window.ArchHeight,
+        //             Quantity = window.Quantity,
+        //             JobId = window.JobId,
+        //             IsRated = window.IsRated,
+
+        //             // WindowProduct Properties
+        //             WindowProdcutId = windowProduct.WindowProductId,
+        //             ProductId = windowProduct.ProductId,
+        //             BuildWidth = windowProduct.BuildWidth,
+        //             BuildHeight = windowProduct.BuildHeight,
+
+        //             // Product Properties
+        //             ProductName = product.ProductName,
+        //             ProductWidth = product.Width,
+        //             ProductHeight = product.Height,
+        //             ProductArchHeight = product.ArchHeight,
+        //             Area = product.Area,
+        //             Length = product.Length,
+        //             AdditionalWidth = product.AdditionalWidth,
+        //             Markup = product.Markup,
+
+        //             // ProductType Properties
+        //             ProductTypeName = productType.ProductName,
+
+        //             // ProductComponent Properties
+        //             ComponentId = productComponent.ComponentId,
+        //             ComponentQuantity = productComponent.Quantity,
+
+        //             // Component Properties
+        //             ComponentName = component.ComponentName,
+        //             MarkupPercentage = component.MarkupPercentage,
+        //             PricingExpression = component.PricingExpression,
+        //             Price = component.Price,
+
+        //             // Expression Properties
+        //             ExpressionFormulae = expression.ExpressionFormulae,
+
+        //             // ComponentMaterial Properties
+        //             RawMaterialId = componentMaterial.RawMaterialId,
+        //             MaterialQuantity = componentMaterial.Quantity,
+        //             WasteFactor = componentMaterial.WasteFactor,
+
+        //             // Material Properties
+        //             MaterialName = material.MaterialName,
+        //             UnitCost = material.UnitCost,
+        //             UnitOfMeasurement = material.UnitOfMeasurement,
+        //             StockQuantity = material.StockQuantity,
+        //             ReorderLevel = material.ReorderLevel,
+        //             IsCutSheet = material.IsCutSheet
+        //         }).ToList();
+        //        if (query != null && query.Count > 0)
+        //        {
+        //            foreach(var item in query)
+        //            {
+        //                var Options = (from windowOption in dbContext.WindowOptions
+        //                               join optionType in dbContext.TblOptionsTypes on windowOption.OptionTypeId equals optionType.OptionTypeId
+        //                               join options in dbContext.TblOptions on optionType.OptionId equals options.OptionId
+        //                               where windowOption.WindowProductId == item.WindowProdcutId
+        //                               select  new
+        //                               {
+        //                                   OptionTypeId = optionType.OptionTypeId,
+        //                                   OptionTypeName = Convert.ToString(options.OptionName + " - " + optionType.OptionType),
+        //                                   OptionPrice = optionType.AdditionalCost ?? 0m
+        //                               }).ToList();
+        //                item.Options = Options.Select(x => x.OptionTypeName).ToArray();
+        //                item.OptionsPrice = Options.Select(x => x.OptionPrice).ToArray();
+        //            }
+        //            responseVm.IsSuccess = true;
+        //            responseVm.Message = AppConstant.FetchSuccessMsg;
+        //            responseVm.Data = query;
+        //            return responseVm;
+        //        }
+        //        else
+        //        {
+        //            responseVm.Message = AppConstant.NoDataFound;
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        responseVm.Message = AppConstant.ExceptionError + ex.Message;
+        //    }
+        //    return responseVm;
+        //}
+
         public async Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> GetProductData(Guid WindowProductId)
         {
             IResponseVm<List<WindowProdcutDetailsForEstimate>> responseVm = new ResponseVm<List<WindowProdcutDetailsForEstimate>>();
@@ -89,91 +207,91 @@ namespace ShutterManagement.Business.Services
             {
                 var query =
                  (from window in dbContext.TblWindows
-                 join windowProduct in dbContext.TblWindowProducts on window.WindowId equals windowProduct.WindowId
-                 join product in dbContext.TblProducts on windowProduct.ProductId equals product.ProductId
-                 join productType in dbContext.MstProductTypes on product.ProductType equals productType.ProductId.ToString()
-                 join productComponent in dbContext.TblProductComponents on product.ProductId equals productComponent.ProductId
-                 join component in dbContext.TblComponents on productComponent.ComponentId equals component.ComponentId
-                 join expression in dbContext.TblExpressions on component.PricingExpression equals expression.Id.ToString()
-                 join componentMaterial in dbContext.TblComponentMaterials on component.ComponentId equals componentMaterial.ComponentId
-                 join material in dbContext.TblRawMaterials on componentMaterial.RawMaterialId equals material.RawMaterialId
-                 where windowProduct.WindowProductId == WindowProductId
-                 && window.IsActive == true && window.IsDelete == false
-                 && windowProduct.IsActive == true && windowProduct.IsDelete == false
-                 && product.IsActive == true && product.IsDelete == false
-                 && productType.IsActive == true && productType.IsDelete == false
-                 && productComponent.IsActive == true && productComponent.IsDelete == false
-                 && component.IsActive == true && component.IsDelete == false
-                 && expression.IsActive == true && expression.IsDelete == false
-                 && componentMaterial.IsActive == true && componentMaterial.IsDelete == false
-                 && material.IsActive == true && material.IsDelete == false
-                 select new WindowProdcutDetailsForEstimate
-                 {
-                     // Window Properties
-                     WindowId = window.WindowId,
-                     AddressId = window.AddressId,
-                     Label = window.Label,
-                     Width = window.Width,
-                     Height = window.Height,
-                     ArchHeight = window.ArchHeight,
-                     Quantity = window.Quantity,
-                     JobId = window.JobId,
-                     IsRated = window.IsRated,
+                  join windowProduct in dbContext.TblWindowProducts on window.WindowId equals windowProduct.WindowId
+                  join product in dbContext.TblProducts on windowProduct.ProductId equals product.ProductId
+                  join productType in dbContext.MstProductTypes on product.ProductType equals productType.ProductId.ToString()
+                  join productComponent in dbContext.TblProductComponents on product.ProductId equals productComponent.ProductId
+                  join expression in dbContext.TblExpressions on productComponent.PricingExpression equals expression.Id.ToString()
+                  join component in dbContext.TblComponents on productComponent.ComponentId equals component.ComponentId
+                  join componentMaterial in dbContext.TblComponentMaterials on component.ComponentId equals componentMaterial.ComponentId
+                  join material in dbContext.TblRawMaterials on componentMaterial.RawMaterialId equals material.RawMaterialId
+                  where windowProduct.WindowProductId == WindowProductId
+                  && window.IsActive == true && window.IsDelete == false
+                  && windowProduct.IsActive == true && windowProduct.IsDelete == false
+                  && product.IsActive == true && product.IsDelete == false
+                  && productType.IsActive == true && productType.IsDelete == false
+                  && productComponent.IsActive == true && productComponent.IsDelete == false
+                  && component.IsActive == true && component.IsDelete == false
+                  && expression.IsActive == true && expression.IsDelete == false
+                  && componentMaterial.IsActive == true && componentMaterial.IsDelete == false
+                  && material.IsActive == true && material.IsDelete == false
+                  select new WindowProdcutDetailsForEstimate
+                  {
+                      // Window Properties
+                      WindowId = window.WindowId,
+                      AddressId = window.AddressId,
+                      Label = window.Label,
+                      Width = window.Width,
+                      Height = window.Height,
+                      ArchHeight = window.ArchHeight,
+                      Quantity = window.Quantity,
+                      JobId = window.JobId,
+                      IsRated = window.IsRated,
 
-                     // WindowProduct Properties
-                     WindowProdcutId = windowProduct.WindowProductId,
-                     ProductId = windowProduct.ProductId,
-                     BuildWidth = windowProduct.BuildWidth,
-                     BuildHeight = windowProduct.BuildHeight,
+                      // WindowProduct Properties
+                      WindowProdcutId = windowProduct.WindowProductId,
+                      ProductId = windowProduct.ProductId,
+                      BuildWidth = windowProduct.BuildWidth,
+                      BuildHeight = windowProduct.BuildHeight,
 
-                     // Product Properties
-                     ProductName = product.ProductName,
-                     ProductWidth = product.Width,
-                     ProductHeight = product.Height,
-                     ProductArchHeight = product.ArchHeight,
-                     Area = product.Area,
-                     Length = product.Length,
-                     AdditionalWidth = product.AdditionalWidth,
-                     Markup = product.Markup,
+                      // Product Properties
+                      ProductName = product.ProductName,
+                      ProductWidth = product.Width,
+                      ProductHeight = product.Height,
+                      ProductArchHeight = product.ArchHeight,
+                      Area = product.Area,
+                      Length = product.Length,
+                      AdditionalWidth = product.AdditionalWidth,
+                      Markup = product.Markup,
 
-                     // ProductType Properties
-                     ProductTypeName = productType.ProductName,
+                      // ProductType Properties
+                      ProductTypeName = productType.ProductName,
 
-                     // ProductComponent Properties
-                     ComponentId = productComponent.ComponentId,
-                     ComponentQuantity = productComponent.Quantity,
+                      // ProductComponent Properties
+                      ComponentId = productComponent.ComponentId,
+                      ComponentQuantity = productComponent.Quantity,
 
-                     // Component Properties
-                     ComponentName = component.ComponentName,
-                     MarkupPercentage = component.MarkupPercentage,
-                     PricingExpression = component.PricingExpression,
-                     Price = component.Price,
+                      // Component Properties
+                      ComponentName = component.ComponentName,
+                      MarkupPercentage = component.MarkupPercentage,
+                      PricingExpression = productComponent.PricingExpression,
+                      Price = component.Price,
 
-                     // Expression Properties
-                     ExpressionFormulae = expression.ExpressionFormulae,
+                      // Expression Properties
+                      ExpressionFormulae = expression.ExpressionFormulae,
 
-                     // ComponentMaterial Properties
-                     RawMaterialId = componentMaterial.RawMaterialId,
-                     MaterialQuantity = componentMaterial.Quantity,
-                     WasteFactor = componentMaterial.WasteFactor,
+                      // ComponentMaterial Properties
+                      RawMaterialId = componentMaterial.RawMaterialId,
+                      MaterialQuantity = componentMaterial.Quantity,
+                      WasteFactor = componentMaterial.WasteFactor,
 
-                     // Material Properties
-                     MaterialName = material.MaterialName,
-                     UnitCost = material.UnitCost,
-                     UnitOfMeasurement = material.UnitOfMeasurement,
-                     StockQuantity = material.StockQuantity,
-                     ReorderLevel = material.ReorderLevel,
-                     IsCutSheet = material.IsCutSheet
-                 }).ToList();
+                      // Material Properties
+                      MaterialName = material.MaterialName,
+                      UnitCost = material.UnitCost,
+                      UnitOfMeasurement = material.UnitOfMeasurement,
+                      StockQuantity = material.StockQuantity,
+                      ReorderLevel = material.ReorderLevel,
+                      IsCutSheet = material.IsCutSheet
+                  }).ToList();
                 if (query != null && query.Count > 0)
                 {
-                    foreach(var item in query)
+                    foreach (var item in query)
                     {
                         var Options = (from windowOption in dbContext.WindowOptions
                                        join optionType in dbContext.TblOptionsTypes on windowOption.OptionTypeId equals optionType.OptionTypeId
                                        join options in dbContext.TblOptions on optionType.OptionId equals options.OptionId
                                        where windowOption.WindowProductId == item.WindowProdcutId
-                                       select  new
+                                       select new
                                        {
                                            OptionTypeId = optionType.OptionTypeId,
                                            OptionTypeName = Convert.ToString(options.OptionName + " - " + optionType.OptionType),
