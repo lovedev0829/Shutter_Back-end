@@ -313,7 +313,7 @@ namespace ShutterManagement.Business.Services
                 }
 
                 // Validate if the estimate already exists
-                var isEstimateExists = await ValidateEstimateExists(model.EstimateName, (Guid)model.JobId, Guid.Empty);
+                var isEstimateExists = await ValidateEstimateExists(model.EstimateName.Trim(), (Guid)model.JobId, Guid.Empty);
                 if (isEstimateExists)
                 {
                     responseVm.Message = "Estimates Name " + AppConstant.AlreadyExists;
@@ -1086,7 +1086,7 @@ namespace ShutterManagement.Business.Services
             TblEstimate createEstimate = new TblEstimate
             {
                 EstimateId = Guid.NewGuid(),
-                EstimateName = model.EstimateName,
+                EstimateName = model.EstimateName.Trim(),
                 EstimateCode = EstimationCode,
                 Notes = model.Notes,
                 DiscountAmount = model.Discount,
