@@ -5,6 +5,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Newtonsoft.Json.Serialization;
 
 namespace ShutterManagement.Core.ViewModels.Request
 {
@@ -119,9 +120,9 @@ namespace ShutterManagement.Core.ViewModels.Request
         [DefaultValue("")]
 
         public string? ZipCode { get; set; }
-        //[Required]
-        //[DefaultValue("")]
-        //[MinLength(8), MaxLength(12)]
-        //public string? Password { get; set; }
+
+        [DefaultValue("")]
+       // [MinLength(4),MaxLength(4)]
+        public string? InvoicePrefix { get; set; }
     }
 }
