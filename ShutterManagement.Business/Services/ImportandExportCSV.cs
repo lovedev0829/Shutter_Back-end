@@ -97,7 +97,7 @@ namespace ShutterManagement.Business.Services
 
                     if (!expectedHeaders.SequenceEqual(actualHeaders, StringComparer.InvariantCultureIgnoreCase))
                     {
-                        responseVm.Message = "The CSV file format is incorrect. Please Export Formate";
+                        responseVm.Message = "The CSV file header format is  incorrect. Please export format";
                         return responseVm;
                     }
                     var records = csv.GetRecords<ImportMaterial>().ToList();
@@ -275,7 +275,7 @@ namespace ShutterManagement.Business.Services
 
                     if (!expectedHeaders.SequenceEqual(actualHeaders, StringComparer.InvariantCultureIgnoreCase))
                     {
-                        responseVm.Message = "The CSV file format is incorrect. Please Export Formate";
+                        responseVm.Message = "The CSV file header format is  incorrect. Please export format";
                         return responseVm;
                     }
 

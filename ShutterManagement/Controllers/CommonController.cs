@@ -678,6 +678,7 @@ namespace ShutterManagement.Controllers
             filter.Status = 1;
             filter.CustomerId = ContactId?.ToLower();
             var res = await estimateService.GetAll_Estimate(filter);
+            res.Data = res.Data?.Where(x => x.jobDetails?.ContactId?.ToString().ToLower() == ContactId.ToLower()).ToList();
             return Ok(res);
         }
     }
