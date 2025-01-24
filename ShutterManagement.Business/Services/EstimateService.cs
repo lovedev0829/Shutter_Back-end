@@ -1078,12 +1078,16 @@ namespace ShutterManagement.Business.Services
                 grandtotal = await CalculateGrandTotal(discountId, SumofSubtotalandAdditionalCost, taxRateId) ?? 0m;
             }
 
-            string EstimationCode = EstimationUniqueName().Result.Data; 
+            int Version = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId).OrderByDescending(p => p.CreatedAt)
+           .Select(p => (p.EstimateCode.Split("-", StringSplitOptions.RemoveEmptyEntries).Length == 3 ? Convert.ToInt32(p.EstimateCode.Split("-", StringSplitOptions.RemoveEmptyEntries)[2]) : 0)).FirstOrDefault();
+            Version += 1;
+
+            string EstimationCode = GenerateUniqueId.GenerateUniqueIds(ModuleName.Estimation, AppConstant.LoggedInCompanyCode, Version,false); 
             TblEstimate createEstimate = new TblEstimate
             {
                 EstimateId = Guid.NewGuid(),
                 EstimateName = model.EstimateName,
-                EstimateCode = model.EstimateName,
+                EstimateCode = EstimationCode,
                 Notes = model.Notes,
                 DiscountAmount = model.Discount,
                 DiscountCoupon = model.DiscountCoupon,
@@ -1454,11 +1458,12 @@ namespace ShutterManagement.Business.Services
             try
             {
 
-
-              int Version = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId).OrderByDescending(p => p.CreatedAt)
-               .Select(p => (p.EstimateCode.Split("-", StringSplitOptions.RemoveEmptyEntries).Length == 3 ? Convert.ToInt32(p.EstimateCode.Split("-", StringSplitOptions.RemoveEmptyEntries)[2]) : 0)).FirstOrDefault();
-                Version += 1;
-                var EstimationCode = GenerateUniqueId.GenerateUniqueIds(ModuleName.Estimation, AppConstant.LoggedInCompanyCode, Version);
+               var EstimationCount = GetAllQuerable().OrderByDescending(p => p.CreatedAt)
+                  .Where(c => c.TenantId == AppConstant.LoggedInTenantId && c.IsDelete == false)
+                  .ToList().Count();
+                EstimationCount += 1; 
+                
+                var EstimationCode = GenerateUniqueId.GenerateUniqueIds(ModuleName.Estimation, AppConstant.LoggedInCompanyCode, EstimationCount,true);
                 res.IsSuccess = true;
                 res.Data = EstimationCode;
                 res.Message = "Estimation Code Created";
