@@ -386,8 +386,8 @@ namespace ShutterManagement.Business.Services
                     if (data.IsSuccess)
                     {
                         //calculate price
-                        var price = await CalculateEstimate(data.Data);
-                        data.Data.ForEach(x => x.TotalPrice = Convert.ToDecimal(price.ToString("0.00")));
+                        var ComponentPriceWithoutAdditionalCost = await CalculateEstimate(data.Data);
+                        data.Data.ForEach(x => x.TotalPrice = Convert.ToDecimal(ComponentPriceWithoutAdditionalCost.ToString("0.00")));
                         WindowProductData.AddRange(data.Data);
                         responseVm.IsSuccess = true;
                     }
@@ -473,7 +473,7 @@ namespace ShutterManagement.Business.Services
 
         private async Task<decimal> CalculateEstimate(List<WindowProdcutDetailsForEstimate> data)
         {
-            decimal finalSubTotal = 0.00M;
+            decimal ComponentSubTotal = 0.00M;
 
             foreach (var item in data)
             {
@@ -519,11 +519,11 @@ namespace ShutterManagement.Business.Services
                 var res = expression.Evaluate();
                 item.Price = Convert.ToDecimal(res);
                 item.AdditionalCost = item.OptionsPrice.Sum();
-                finalSubTotal = (decimal)item.AdditionalCost + finalSubTotal;
-                finalSubTotal += Convert.ToDecimal(res);
+                //finalSubTotal = (decimal)item.AdditionalCost + finalSubTotal;
+                ComponentSubTotal += Convert.ToDecimal(res);
 
             }
-            return finalSubTotal;
+            return ComponentSubTotal;
         }
 
         public async Task<IResponseVm<string>> Update_Estimate(UpdatetEstimate model)
@@ -1046,16 +1046,15 @@ namespace ShutterManagement.Business.Services
             Guid? taxRateId = null;
             Guid? discountId = null;
             var windowproductdetails = await BuildEstimate(model.WindowProductId, false);
-                if (windowproductdetails.Data != null && windowproductdetails.Data.Any())
-                {
+            if (windowproductdetails.Data != null && windowproductdetails.Data.Any())
+            {
                 additionalCost = (decimal)windowproductdetails.Data.Sum(x => x.AdditionalCost);
-
-                subtotal = (decimal)windowproductdetails.Data.Sum(x => x.TotalPrice); 
+                subtotal = (decimal)windowproductdetails.Data.Sum(x => x.TotalPrice);
                 SumofSubtotalandAdditionalCost = subtotal + additionalCost;
-                }
+            }
             if (string.IsNullOrEmpty((model.taxRateId).ToString()) && string.IsNullOrEmpty(model.DiscountCoupon))
             {
-                  grandtotal = SumofSubtotalandAdditionalCost;
+                grandtotal = SumofSubtotalandAdditionalCost;
             }
             else
             {
@@ -1177,7 +1176,7 @@ namespace ShutterManagement.Business.Services
             }
 
             // Calculate tax based on subtotal, additional cost, and discount
-            decimal taxApplied = (decimal)((subtotal  - discount) * (taxRate1 / 100));
+            decimal taxApplied = (decimal)((subtotal  - discount) * taxRate1) / 100;
             return taxApplied;
         }
 

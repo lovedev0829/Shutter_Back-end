@@ -285,7 +285,7 @@ namespace ShutterManagement.Business.Services
                   }).ToList();
                 if (query != null && query.Count > 0)
                 {
-                    foreach (var item in query)
+                    foreach (var item in query.DistinctBy(x=>x.ProductId))
                     {
                         var Options = (from windowOption in dbContext.WindowOptions
                                        join optionType in dbContext.TblOptionsTypes on windowOption.OptionTypeId equals optionType.OptionTypeId
