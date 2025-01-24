@@ -97,7 +97,7 @@ namespace ShutterManagement.Business.Services
 
                     if (!expectedHeaders.SequenceEqual(actualHeaders, StringComparer.InvariantCultureIgnoreCase))
                     {
-                        responseVm.Message = "The CSV file format is incorrect. Please Export Formate";
+                        responseVm.Message = "The CSV file header format is  incorrect. Please export format";
                         return responseVm;
                     }
                     var records = csv.GetRecords<ImportMaterial>().ToList();
@@ -275,7 +275,7 @@ namespace ShutterManagement.Business.Services
 
                     if (!expectedHeaders.SequenceEqual(actualHeaders, StringComparer.InvariantCultureIgnoreCase))
                     {
-                        responseVm.Message = "The CSV file format is incorrect. Please Export Formate";
+                        responseVm.Message = "The CSV file header format is  incorrect. Please export format";
                         return responseVm;
                     }
 
@@ -828,7 +828,8 @@ namespace ShutterManagement.Business.Services
                                join t6 in dbContext.TblContacts on t2.ContactId equals t6.ContactId
                                select new ExportJobsVm
                                {
-                                   ContactName = t6.Name,
+                                   ContactFirstName = t6.FirstName,
+                                   ContactLastName = t6.LastName,
                                    ContactEmail = t6.Email,
                                    ContactPhone = t6.PhoneNumber,
                                    SubtenantName = p2.FirstName + " " + p2.LastName,
@@ -842,11 +843,11 @@ namespace ShutterManagement.Business.Services
                                }).ToList();
 
                 var csvBuilder = new StringBuilder();
-                csvBuilder.AppendLine("ContactName,ContactEmail,ContactPhone,Partner/Tenant,CreatedBy,JobName,Status,Address,City,State,ZipCode");
+                csvBuilder.AppendLine("ContactFirstName,ContactFirstName,ContactEmail,ContactPhone,Partner/Tenant,CreatedBy,JobName,Status,Address,City,State,ZipCode");
 
                 foreach (var job in jobList)
                 {
-                    var line = $"{job.ContactName},{job.ContactEmail},{job.ContactPhone}," +
+                    var line = $"{job.ContactFirstName},{job.ContactLastName},{job.ContactEmail},{job.ContactPhone}," +
                                $"{job.SubtenantName},{job.CreatedbyUsername},{job.JobName}," +
                                $"{job.JobStatusName},{job.StreetAddress},{job.City}," +
                                $"{job.State},{job.ZipCode}";

@@ -885,6 +885,8 @@ namespace ShutterManagement.Business.Services
                 .Where(x =>
                     (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
                     (string.IsNullOrEmpty(filter.JobStatus.ToLower()) ? true : x.jobDetails.JobStatusId.ToLower() == filter.JobStatus.ToLower()) &&
+                    (string.IsNullOrEmpty(filter.EstimationId.ToLower()) ? true : x.EstimateId.ToString().ToLower() == filter.EstimationId.ToLower()) &&
+                    (string.IsNullOrEmpty(filter.CustomerId.ToLower()) ? true : x.jobDetails.ContactId.ToString().ToLower() == filter.CustomerId.ToLower()) &&
                     (string.IsNullOrWhiteSpace(filter.SearchValue) ||
                      ((x.Notes ?? "").Contains(filter.SearchValue)
                       || (x.JobId.ToString() ?? "").Contains(filter.SearchValue)
@@ -892,11 +894,10 @@ namespace ShutterManagement.Business.Services
                       || ((x.FirstContactName?.ToLower() ?? "") + " " + (x.LastContactName?.ToLower() ?? "")).Contains(filter.SearchValue.Trim().ToLower()) 
                       || (x.LastContactName?.ToLower() ?? "").Contains(filter.SearchValue.Trim().ToLower()) 
                       || (x.OrderNumber ?? "").Contains(filter.SearchValue)
-                      || (x.ContactId?.ToString().ToLower() ?? "").Contains(filter.CustomerId.ToLower())
-                      || (x.EstimateId.ToString().ToLower() ?? "").Contains(filter.EstimationId.ToLower())
                       || (x.OrderId.ToString() ?? "").Contains(filter.SearchValue)
                       || (x.Status ?? "").Contains(filter.SearchValue)
                       || (x.EstimateId.ToString()).Contains(filter.SearchValue)
+                      || (x.ContactId?.ToString()).Contains(filter.SearchValue)
                       || (x.EstimateCode ?? "").Contains(filter.SearchValue)
                       || (x.EstimateName ?? "").ToLower().Contains(filter.SearchValue)
                       || (x.TermsCondition ?? "").Contains(filter.SearchValue)
