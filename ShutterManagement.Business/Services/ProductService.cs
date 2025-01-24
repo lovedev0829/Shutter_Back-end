@@ -271,7 +271,7 @@ namespace ShutterManagement.Business.Services
                                                 {
                                                     ComponentId = pm.ComponentId,
                                                     PricingExpression = pm.PricingExpression,
-                                                    PricingExpressionFormula = pe.DisplayArray,
+                                                    PricingExpressionFormula = !string.IsNullOrEmpty(pe.DisplayArray) ? pe.DisplayArray.Split(new[] { ", " }, StringSplitOptions.TrimEntries) : new string[0],
                                                     ComponentName = c.ComponentName,
                                                     Quantity = pm.Quantity,
                                                     ProductComponentId = pm.ProductComponentId,

@@ -169,9 +169,10 @@ namespace ShutterManagement.Business.Services
                                 CreatedBy = AppConstant.LoggedInUserID
                             };
                             await dbContext.TblAddresses.AddAsync(address);
-                            dbContext.SaveChangesAsync();
+                            dbContext.SaveChanges();
                             res.PrimaryAddress = address.AddressId;
                             await Update(res);
+
 
                         }
                         if (!model.IsTaxExemption)
@@ -571,15 +572,15 @@ namespace ShutterManagement.Business.Services
                         Notes = contact.Notes,
                         Referral = contact.Referral,
                         ContactUniqueId = contact.ContactUniqueId,
+                        PrimaryAddress = contact.PrimaryAddress,
                         IsTaxExemption = contact.IsTaxExemption ?? false,
                         IsBillingAddressSameAsAddress = contact.IsBillingAddressSameAsAddress,
                         IsActive = contact.IsActive,
                         IsArchive = contact.IsArchive,
                         CreatedAt = contact.CreatedAt
                     };
-
                     contacts.billingAddressVm = dbContext.TblAddresses
-                        .Where(x => x.ContactId == contact.ContactId && x.AddressId == contact.PrimaryAddress
+                        .Where(x => x.AddressId == contact.PrimaryAddress
                         && x.IsDelete == false).Select(x => new BillingAddressVm
                         {
                             City = x.City,
