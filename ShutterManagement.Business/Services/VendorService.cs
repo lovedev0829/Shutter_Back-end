@@ -64,14 +64,14 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                bool IsVendorNameExist = await AnyAsync(x => x.IsDelete == false &&
-                                        x.VendorName == model.VendorName.Trim() && x.TenantId == AppConstant.LoggedInTenantId);
+                //bool IsVendorNameExist = await AnyAsync(x => x.IsDelete == false &&
+                //                        x.VendorName == model.VendorName.Trim() && x.TenantId == AppConstant.LoggedInTenantId);
 
-                if (IsVendorNameExist)
-                {
-                    responseVm.Message = "Vendor Name " + AppConstant.AlreadyExists;
-                    return responseVm;
-                }
+                //if (IsVendorNameExist)
+                //{
+                //    responseVm.Message = "Vendor Name " + AppConstant.AlreadyExists;
+                //    return responseVm;
+                //}
                 bool IsVendorEmailExists = await AnyAsync(x => x.IsDelete == false &&
                      (x.Email == model.Email.Trim())
                      && x.TenantId == AppConstant.LoggedInTenantId);
@@ -97,7 +97,8 @@ namespace ShutterManagement.Business.Services
 
                 TblVendor vendor = new TblVendor
                 {
-                    VendorName = model.VendorName.Trim(),
+                    FirstName = model?.FirstName?.Trim(),
+                    LastName = model?.LastName?.Trim(),
                     Email = model.Email.Trim(),
                     PhoneNumber = model.PhoneNumber.Trim(),
                     State = model.State.Trim(),
@@ -186,7 +187,9 @@ namespace ShutterManagement.Business.Services
                         (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
                             (string.IsNullOrEmpty(filter.SearchValue) ? true :
                                     (x.VendorId.ToString() == filter.SearchValue) ||
-                                    (x.VendorName ?? "").Contains(filter.SearchValue.Trim()) ||
+                                    ((x.FirstName.ToLower() + " " + x.LastName.ToLower()) ?? "").Contains(filter.SearchValue) ||
+                                    (x.FirstName.ToLower() ?? "").Contains(filter.SearchValue) ||
+                                    (x.LastName.ToLower() ?? "").Contains(filter.SearchValue) ||
                                     (x.Email ?? "").Contains(filter.SearchValue.Trim()) ||
                                     (x.PhoneNumber ?? "").Contains(filter.SearchValue.Trim()) ||
                                     (x.City ?? "").Contains(filter.SearchValue.Trim()) ||
@@ -205,7 +208,8 @@ namespace ShutterManagement.Business.Services
                     responseVm.Data = TakenRecords.Select(x => new VendorListVm
                     {
                         VendorId = x.VendorId,
-                        VendorName = x.VendorName,
+                        FirstName = x.FirstName,
+                        LastName = x.LastName,
                         City = x.City,
                         State = x.State,
                         ZipCode = x.ZipCode,
@@ -263,15 +267,15 @@ namespace ShutterManagement.Business.Services
                         responseVm.Message = "Vendor Phone " + AppConstant.AlreadyExists;
                         return (responseVm);
                     }
-                   bool IsVendorNameEXists = Any(x => x.IsDelete == false &&
-                                        (x.VendorName == model.VendorName.Trim())
-                                        && x.TenantId == AppConstant.LoggedInTenantId && x.VendorId != model.VendorId);
-                    if (IsVendorNameEXists)
+                   //bool IsVendorNameEXists = Any(x => x.IsDelete == false &&
+                   //                     (x.VendorName == model.VendorName.Trim())
+                   //                     && x.TenantId == AppConstant.LoggedInTenantId && x.VendorId != model.VendorId);
+                   // if (IsVendorNameEXists)
                     
-                        {
-                         responseVm.Message="Vendor Name"+ AppConstant.AlreadyExists;
-                        return (responseVm);
-                        }
+                   //     {
+                   //      responseVm.Message="Vendor Name"+ AppConstant.AlreadyExists;
+                   //     return (responseVm);
+                   //     }
                     //bool IsVendorCodeExists = Any(x => x.IsDelete == false &&
                     //                   (x.VendorCode == model.VendorCode.Trim())
                     //                   && x.TenantId == AppConstant.LoggedInTenantId && x.VendorId != model.VendorId);
@@ -283,7 +287,8 @@ namespace ShutterManagement.Business.Services
                     //}
                     if (vendor != null)
                     {
-                        vendor.VendorName = model.VendorName;
+                        vendor.FirstName = model.FirstName;
+                        vendor.LastName = model.LastName;
                         vendor.Email = model.Email;
                         vendor.PhoneNumber = model.PhoneNumber;
                         vendor.StreetAddress = model.StreetAddress;

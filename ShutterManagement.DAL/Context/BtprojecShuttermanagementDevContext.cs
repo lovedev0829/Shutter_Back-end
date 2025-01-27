@@ -1475,8 +1475,14 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.Property(e => e.Email)
                 .HasMaxLength(200)
                 .IsUnicode(false);
+            entity.Property(e => e.FirstName)
+                .HasMaxLength(100)
+                .IsUnicode(false);
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
+            entity.Property(e => e.LastName)
+                .HasMaxLength(100)
+                .IsUnicode(false);
             entity.Property(e => e.PhoneNumber).HasMaxLength(200);
             entity.Property(e => e.State)
                 .HasMaxLength(200)
