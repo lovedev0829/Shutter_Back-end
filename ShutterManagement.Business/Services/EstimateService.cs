@@ -375,7 +375,7 @@ namespace ShutterManagement.Business.Services
                 var res = validate.Evaluate();
                 responseVm.IsSuccess = true;
                 responseVm.Message = "Expression is correct. You can add this expression now.";
-                responseVm.Data = Convert.ToDecimal(res).ToString("0.00") ?? "";
+                responseVm.Data = Convert.ToDecimal(res).ToString("0.000") ?? "";
 
             }
             catch (EvaluationException ex)
@@ -416,7 +416,7 @@ namespace ShutterManagement.Business.Services
                     {
                         //calculate price
                         var ComponentPriceWithoutAdditionalCost = await CalculateEstimate(data.Data);
-                        data.Data.ForEach(x => x.TotalPrice = Convert.ToDecimal(ComponentPriceWithoutAdditionalCost.ToString("0.00")));
+                        data.Data.ForEach(x => x.TotalPrice = Convert.ToDecimal(ComponentPriceWithoutAdditionalCost.ToString("0.000")));
                         WindowProductData.AddRange(data.Data);
                         responseVm.IsSuccess = true;
                     }
@@ -511,8 +511,8 @@ namespace ShutterManagement.Business.Services
                 // Define an expression with a nudget and a custom function
                 var expression = CalculateExpression(formula,item);
                 var res = expression.Evaluate();
-                item.Price = Convert.ToDecimal(Convert.ToDecimal(res).ToString("0.00"));
-                item.AdditionalCost = Convert.ToDecimal(item.OptionsPrice.Sum().ToString("0.00"));
+                item.Price = Convert.ToDecimal(Convert.ToDecimal(res).ToString("0.000"));
+                item.AdditionalCost = Convert.ToDecimal(item.OptionsPrice.Sum().ToString("0.000"));
                 //finalSubTotal = (decimal)item.AdditionalCost + finalSubTotal;
                 ComponentSubTotal += (decimal)item.Price;
             }
