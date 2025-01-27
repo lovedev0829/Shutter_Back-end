@@ -375,7 +375,7 @@ namespace ShutterManagement.Business.Services
                 var res = validate.Evaluate();
                 responseVm.IsSuccess = true;
                 responseVm.Message = "Expression is correct. You can add this expression now.";
-                responseVm.Data = res.ToString() ?? "";
+                responseVm.Data = Convert.ToDecimal(res).ToString("0.00") ?? "";
 
             }
             catch (EvaluationException ex)
