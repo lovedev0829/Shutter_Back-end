@@ -12,20 +12,13 @@ namespace ShutterManagement.Core.Common
     public static class GenerateUniqueId
     {
    
-        public static string GenerateUniqueIds(ModuleName moduleName, string Code, int Version, bool forEstimationName = false)
+        public static string GenerateUniqueIds(ModuleName moduleName, string Code, int Version)
         {
             var Tenantcode = Code;
             var GenerateUniqueName = "";
             if (Tenantcode != null)
             {
-               if(forEstimationName)
-                {
-                 GenerateUniqueName = $"{EnumValue.GetEnumValue(moduleName)}-{Tenantcode.ToUpper()}{DateTime.Now:yyyyMMdd}-{Version}";
-                }
-                else
-                {
-                GenerateUniqueName = $"{EnumValue.GetEnumValue(moduleName)}-{Tenantcode.ToUpper()}{DateTime.Now:yyyyMMddhhmmssffffff}-{Version}";
-                }
+                GenerateUniqueName = $"{EnumValue.GetEnumValue(moduleName)}-{Tenantcode.ToUpper()}{DateTime.Now:yyyyMMdd}-{Version}";
             }
             return GenerateUniqueName;
         }

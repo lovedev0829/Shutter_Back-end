@@ -1077,11 +1077,8 @@ namespace ShutterManagement.Business.Services
                 grandtotal = await CalculateGrandTotal(discountId, SumofSubtotalandAdditionalCost, taxRateId) ?? 0m;
             }
 
-            int Version = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId).OrderByDescending(p => p.CreatedAt)
-           .Select(p => (p.EstimateCode.Split("-", StringSplitOptions.RemoveEmptyEntries).Length == 3 ? Convert.ToInt32(p.EstimateCode.Split("-", StringSplitOptions.RemoveEmptyEntries)[2]) : 0)).FirstOrDefault();
-            Version += 1;
-
-            string EstimationCode = GenerateUniqueId.GenerateUniqueIds(ModuleName.Estimation, AppConstant.LoggedInCompanyCode, Version,false); 
+           
+            string EstimationCode = EstimationUniqueName().Result.Data; 
             TblEstimate createEstimate = new TblEstimate
             {
                 EstimateId = Guid.NewGuid(),
@@ -1458,11 +1455,11 @@ namespace ShutterManagement.Business.Services
             {
 
                var EstimationCount = GetAllQuerable().OrderByDescending(p => p.CreatedAt)
-                  .Where(c => c.TenantId == AppConstant.LoggedInTenantId && c.IsDelete == false)
+                  .Where(c => c.TenantId == AppConstant.LoggedInTenantId && c.CreatedAt.Value.Date == DateTime.Today.Date)
                   .ToList().Count();
                 EstimationCount += 1; 
                 
-                var EstimationCode = GenerateUniqueId.GenerateUniqueIds(ModuleName.Estimation, AppConstant.LoggedInCompanyCode, EstimationCount,true);
+                var EstimationCode = GenerateUniqueId.GenerateUniqueIds(ModuleName.Estimation, AppConstant.LoggedInCompanyCode, EstimationCount);
                 res.IsSuccess = true;
                 res.Data = EstimationCode;
                 res.Message = "Estimation Code Created";
