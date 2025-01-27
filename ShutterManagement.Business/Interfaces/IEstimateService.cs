@@ -18,6 +18,7 @@ namespace ShutterManagement.Business.Interfaces
         Task<IResponseVm<string>> Update_Estimate(UpdatetEstimate model);
         Task<IResponseVm<string>> ActiveInActiveEstimate(Guid EstimateId);
         Task<IResponseVm<string>> DeleteEstimate(Guid EstimateId);
+        Task<IResponseVm<string>> ValidateExpression(ValidateExpression model);
         Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> BuildEstimate(Guid[] windowProductIds, bool IsBreakDown);
         Task<IResponseVm<List<EstimateList>>> GetAll_Estimate(Pagination filter);
         Task<IResponseVm<string>> SendForApproval(Guid EstimateId);
@@ -25,6 +26,7 @@ namespace ShutterManagement.Business.Interfaces
         Task<IResponseVm<string>> ChangeStatus(Guid EstimationId, Estimation NewEstimationStatus);
         Task<decimal?> CalculateGrandTotal(Guid? discountId, decimal subtotal, Guid? taxId);
         Task<bool> IsTaxApplied(Guid JobId);
+        NCalc.Expression CalculateExpression(string formula, dynamic values);
         Task<IResponseVm<string>> EstimationUniqueName();
 
         //Task<IResponseVm<List<EstimationBreakdown>>> EstimationBreakdown(Guid windowProductId);

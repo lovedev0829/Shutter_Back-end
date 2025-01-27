@@ -20,6 +20,7 @@ using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json.Linq;
 using System.Text.RegularExpressions;
 using System.Linq.Expressions;
+using NCalc;
 
 namespace ShutterManagement.Business.Services
 {
@@ -358,7 +359,35 @@ namespace ShutterManagement.Business.Services
             // Always return the response after completing the operation
             return responseVm;
         }
+        public async Task<IResponseVm<string>> ValidateExpression(ValidateExpression model)
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+            try
+            {
+                string formula = model.Expression ?? "";
 
+                var validate = CalculateExpression(formula, model);
+                if (validate.HasErrors())
+                {
+                    responseVm.Message = "There is some issue in Expression.";
+                    return responseVm;
+                }
+                var res = validate.Evaluate();
+                responseVm.IsSuccess = true;
+                responseVm.Message = "Expression is correct. You can add this expression now.";
+                responseVm.Data = res.ToString() ?? "";
+
+            }
+            catch (EvaluationException ex)
+            {
+                responseVm.Message = "Expression error: " + ex.Message;
+            }
+            catch (Exception ex)
+            {
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+            }
+            return responseVm;
+        }
         public async Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> BuildEstimate(Guid[] windowProductIds, bool IsBreakdown)
         {
             IResponseVm<List<WindowProdcutDetailsForEstimate>> responseVm = new ResponseVm<List<WindowProdcutDetailsForEstimate>>();
@@ -477,45 +506,10 @@ namespace ShutterManagement.Business.Services
 
             foreach (var item in data)
             {
-                var formula = item.ExpressionFormulae;
+                var formula = item.ExpressionFormulae ?? "";
 
                 // Define an expression with a nudget and a custom function
-
-                // check placeholders
-                string pattern = @"{{.*?}}";
-                var matches = Regex.Matches(formula ?? "", pattern);
-                if (matches != null && matches.Count() > 0)
-                {
-                    foreach (Match match in matches)
-                    {
-                        var property = match.Value.Replace("{{", "").Replace("}}", "");
-                        var val = GetProperty.GetColumnValue(item, property);
-                        if (val == null)
-                        {
-                            string[] info = property.Split("__");
-                            if (info != null && info.Length > 0 && info.Length == 3)
-                            {
-                                if (info[0] == "Component")
-                                {
-                                    val = componentPriceService.GetAllQuerable().Where(x => x.ProductType == info[1] && x.ComponentName == info[2] && x.IsActive == true).Select(x => (item.IsRated == true ? x.PriceRated : x.PriceNonRated)).FirstOrDefault();
-                                }
-                                else if (info[0] == "Options")
-                                {
-                                    //var option = 
-                                    //val = windowOptionService.GetAllQuerable().Where(x => x. == info[1] && x.ComponentName == info[2]).Select(x => (item.IsRated == true ? x.PriceRated : x.PriceNonRated)).FirstOrDefault();
-                                }
-                                else if (info[0] == "Material")
-                                {
-                                    val = materialService.GetAllQuerable().Where(x => x.ProductType.ToString() == info[1] && x.MaterialName == info[2] && x.IsActive == true && (x.TenantId == AppConstant.LoggedInTenantId || x.TenantId.ToString() == AppConstant.LoggedInParentTenantId)).Select(x => x.UnitCost).FirstOrDefault();
-                                }
-                            }
-                        }
-                        // Set parameters
-                        formula = formula?.Replace(match.Value, Convert.ToDecimal(val).ToString());
-                        //expression.Parameters[match.Value] = Convert.ToDecimal(val);
-                    }
-                }
-                var expression = new NCalc.Expression(formula);
+                var expression = CalculateExpression(formula,item);
                 var res = expression.Evaluate();
                 item.Price = Convert.ToDecimal(res);
                 item.AdditionalCost = item.OptionsPrice.Sum();
@@ -524,6 +518,48 @@ namespace ShutterManagement.Business.Services
 
             }
             return ComponentSubTotal;
+        }
+
+        public NCalc.Expression CalculateExpression(string formula, dynamic values)
+        {
+            // check placeholders
+            string pattern = @"{{.*?}}";
+            var matches = Regex.Matches(formula ?? "", pattern);
+            if (matches != null && matches.Count() > 0)
+            {
+                foreach (Match match in matches)
+                {
+                    var property = match.Value.Replace("{{", "").Replace("}}", "");
+                    var val = GetProperty.GetColumnValue(values, property);
+                    if (val == null)
+                    {
+                        string[] info = property.Split("__");
+                        if (info != null && info.Length > 0 && info.Length == 3)
+                        {
+                            if (info[0] == "Material")
+                            {
+                                val = materialService.GetAllQuerable().Where(x => x.ProductType.ToString() == info[1] && x.MaterialName == info[2] && x.IsActive == true && (x.TenantId == AppConstant.LoggedInTenantId || x.TenantId.ToString() == AppConstant.LoggedInParentTenantId)).Select(x => x.UnitCost).FirstOrDefault();
+                            }
+                            else
+                            {
+                                val = 0;
+                            }
+                        }
+                    }
+                    //calculate Waste factor
+                    if (GetProperty.GetColumnValue(values, "WasteFactor") != null)
+                    {
+                        val = (val * (val + values.WasteFactor ?? 0) / 100);
+                    }
+
+                    // Set parameters
+                    formula = formula?.Replace(match.Value, Convert.ToDecimal(val).ToString());
+                    //expression.Parameters[match.Value] = Convert.ToDecimal(val);
+                }
+            }
+
+            var expression = new NCalc.Expression(formula);
+            return expression;
         }
 
         public async Task<IResponseVm<string>> Update_Estimate(UpdatetEstimate model)

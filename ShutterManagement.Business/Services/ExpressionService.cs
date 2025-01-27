@@ -33,7 +33,7 @@ namespace ShutterManagement.Business.Services
             this.materialService = materialService;
             this.tenantService = tenantService;
         }
-        
+
         public async Task<IResponseVm<string>> ActiveInActive(Guid ExpressionId)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
@@ -235,69 +235,6 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
-        public async Task<IResponseVm<string>> ValidateExpression(ValidateExpression model)
-        {
-            IResponseVm<string> responseVm = new ResponseVm<string>();
-            try
-            {
-                string formula = model.Expression ?? "";
-                string pattern = @"{{.*?}}";
-                var matches = Regex.Matches(formula, pattern);
-                if (matches != null && matches.Count() > 0)
-                {
-                    foreach (Match match in matches)
-                    {
-                        var property = match.Value.Replace("{{", "").Replace("}}", "");
-                        var val = GetProperty.GetColumnValue(model, property);
-                        if (val == null)
-                        {
-                            string[] info = property.Split("__");
-                            if (info != null && info.Length > 0 && info.Length == 3)
-                            {
-                                //if (info[0] == "Component")
-                                //{
-                                //    val = componentPriceService.GetAllQuerable().Where(x => x.ProductType == info[1] && x.ComponentName == info[2]).Select(x => x.PriceRated).FirstOrDefault();
-                                //}
-                                //else
-                                //if(info[0] == "Options")
-                                //{
-                                //    //var option = 
-                                //    //val = windowOptionService.GetAllQuerable().Where(x => x. == info[1] && x.ComponentName == info[2]).Select(x => (item.IsRated == true ? x.PriceRated : x.PriceNonRated)).FirstOrDefault();
-                                //}
-                                //else
-                                if (info[0] == "Material")
-                                {
-                                    val = materialService.GetAllQuerable().Where(x => x.ProductType.ToString() == info[1] && x.MaterialName == info[2]).Select(x => x.UnitCost).FirstOrDefault();
-                                }
-                            }
-                        }
-                            formula = formula.Replace(match.Value, Convert.ToDecimal(val).ToString());
-
-                    }
-                    var validate = new NCalc.Expression(formula);
-                    if (validate.HasErrors())
-                    {
-                        responseVm.Message = "There is some issue in Expression.";
-                        return responseVm;
-                    }
-                    var res = validate.Evaluate();
-                    responseVm.IsSuccess = true;
-                    responseVm.Message = "Expression is correct. You can add this expression now.";
-                    responseVm.Data = res.ToString() ?? "";
-                }
-            }
-            catch (EvaluationException ex)
-            {
-                responseVm.Message = "Expression error: " + ex.Message;
-            }
-            catch (Exception ex)
-            {
-                responseVm.Message = AppConstant.ExceptionError + ex.Message;
-            }
-            return responseVm;
-        }
-
-
     }
 }
 
