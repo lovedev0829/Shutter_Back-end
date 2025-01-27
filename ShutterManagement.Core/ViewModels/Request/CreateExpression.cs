@@ -18,9 +18,6 @@ namespace ShutterManagement.Core.ViewModels.Request
         [Required]
         public string? ExpressionFormulae { get; set; }
 
-        [Default("")]
-        //[Required]
-        public Guid? ProductId { get; set; } = Guid.Empty;
 
         [Default("")]
         [Required]

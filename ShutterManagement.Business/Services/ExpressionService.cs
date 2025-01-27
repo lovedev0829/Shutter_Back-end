@@ -189,7 +189,6 @@ namespace ShutterManagement.Business.Services
 
                 var Expressionlist = (from t1 in dbContext.TblExpressions.OrderByDescending(x => x.CreatedAt)
                                       join t2 in dbContext.MstProductTypes on t1.ProductType equals t2.ProductId
-                                      join t3 in dbContext.TblProducts on t1.ProductId equals t3.ProductId
                                       where t1.TenantId == AppConstant.LoggedInTenantId && t1.IsDelete == false
                                       select new GetExpression
                                       {
@@ -200,7 +199,6 @@ namespace ShutterManagement.Business.Services
                                           displayArray = !string.IsNullOrEmpty(t1.DisplayArray) ? t1.DisplayArray.Split(new[] { ", " }, StringSplitOptions.TrimEntries) : new string[0],
                                           ProductId = t1.ProductId,
                                           OptionId = t1.OptionId,
-                                          ProductName = t3.ProductName,
                                           ProductTypeId = t1.ProductType,
                                           ProductTypeName = t2.ProductName,
                                           IsActive = t1.IsActive,
