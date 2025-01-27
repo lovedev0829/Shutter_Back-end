@@ -269,7 +269,8 @@ namespace ShutterManagement.Business.Services
                                             ProductType = t2.ProductType,
                                             UnitOfMeasurement = t2.UnitOfMeasurement,
                                             VendorId = t2.VendorId,
-                                            VendorName = t1.VendorName,
+                                            VendorFirstName = t1.FirstName,
+                                            VendorLastName = t1.LastName,
                                             IsCutSheet = t2.IsCutSheet,
                                         }).ToList();
                     filter.SearchValue = filter.SearchValue?.Trim().ToLower();
@@ -287,7 +288,9 @@ namespace ShutterManagement.Business.Services
                                         || (x.StockQuantity.ToString() ?? "").ToLower().Contains(filter.SearchValue)
                                         || (x.Notes.ToString() ?? "").ToLower().Contains(filter.SearchValue)
                                         || (x.SKU ?? "").ToLower().Contains(filter.SearchValue)
-                                        || (x.VendorName ?? "").ToLower().Contains(filter.SearchValue)
+                                        || ((x.VendorFirstName.ToLower() + " " + x.VendorLastName.ToLower()) ?? "").Contains(filter.SearchValue) 
+                                        || (x.VendorFirstName.ToLower() ?? "").Contains(filter.SearchValue)
+                                        || (x.VendorLastName.ToLower() ?? "").Contains(filter.SearchValue) 
                                         || (x.UnitOfMeasurement ?? "").ToLower().Contains(filter.SearchValue)))
                                     .ToList();
 
