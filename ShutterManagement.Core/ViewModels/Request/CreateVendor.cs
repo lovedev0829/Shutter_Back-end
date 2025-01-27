@@ -14,7 +14,14 @@ namespace ShutterManagement.Core.ViewModels.Request
         [Required]
         [MaxLength(100)]
         [RegularExpression("^[\\p{L} .'-]+$", ErrorMessage = AppConstant.AlphabaticalError)]
-        public string? VendorName { get; set; }
+        public string? FirstName { get; set; }
+
+        [DefaultValue("")]
+        [Required]
+        [MaxLength(100)]
+        [RegularExpression("^[\\p{L} .'-]+$", ErrorMessage = AppConstant.AlphabaticalError)]
+        public string? LastName { get; set; }
+
         [Required, MaxLength(100)]
         [RegularExpression(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", ErrorMessage = "Invalid email address.")]
         [EmailAddress]

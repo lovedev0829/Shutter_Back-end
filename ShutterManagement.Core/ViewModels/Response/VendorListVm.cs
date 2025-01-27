@@ -9,7 +9,8 @@ namespace ShutterManagement.Core.ViewModels.Response
     public class VendorListVm
     {
         public Guid VendorId { get; set; }
-        public string? VendorName { get; set; }
+        public string? FirstName { get; set; }
+        public string? LastName { get; set; }
         public bool? IsActive { get; set; }
         public Guid? TenantId { get; set; }
         public string? Email { get; set; }

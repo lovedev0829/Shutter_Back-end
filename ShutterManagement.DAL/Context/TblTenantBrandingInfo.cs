@@ -31,5 +31,7 @@ public partial class TblTenantBrandingInfo
 
     public string? ZipCode { get; set; }
 
+    public string? InvoicePrefix { get; set; }
+
     public virtual ICollection<TblTenant> TblTenants { get; set; } = new List<TblTenant>();
 }
