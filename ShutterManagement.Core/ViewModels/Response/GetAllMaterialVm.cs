@@ -21,8 +21,8 @@ namespace ShutterManagement.Core.ViewModels.Response
 
         public Guid? VendorId { get; set; }
 
-        public string? VendorFirstName { get; set; }
-        public string? VendorLastName { get; set; }
+        public string? FirstName { get; set; }
+        public string? LastName { get; set; }
 
         public string? Notes { get; set; }
         public Guid? ProductType { get; set; }
