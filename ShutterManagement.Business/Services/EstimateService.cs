@@ -511,11 +511,10 @@ namespace ShutterManagement.Business.Services
                 // Define an expression with a nudget and a custom function
                 var expression = CalculateExpression(formula,item);
                 var res = expression.Evaluate();
-                item.Price = Convert.ToDecimal(res);
-                item.AdditionalCost = item.OptionsPrice.Sum();
+                item.Price = Convert.ToDecimal(Convert.ToDecimal(res).ToString("0.00"));
+                item.AdditionalCost = Convert.ToDecimal(item.OptionsPrice.Sum().ToString("0.00"));
                 //finalSubTotal = (decimal)item.AdditionalCost + finalSubTotal;
-                ComponentSubTotal += Convert.ToDecimal(res);
-
+                ComponentSubTotal += (decimal)item.Price;
             }
             return ComponentSubTotal;
         }
