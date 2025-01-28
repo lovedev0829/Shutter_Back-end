@@ -538,6 +538,10 @@ namespace ShutterManagement.Business.Services
                             if (info[0] == "Material")
                             {
                                 val = materialService.GetAllQuerable().Where(x => x.ProductType.ToString() == info[1] && x.MaterialName == info[2] && x.IsActive == true && (x.TenantId == AppConstant.LoggedInTenantId || x.TenantId.ToString() == AppConstant.LoggedInParentTenantId)).Select(x => x.UnitCost).FirstOrDefault();
+                                if (GetProperty.GetColumnValue(values, "WasteFactor") != null)
+                                {
+                                    val = (val * (100 + values.WasteFactor ?? 0) / 100);
+                                }
                             }
                             else
                             {
@@ -546,10 +550,7 @@ namespace ShutterManagement.Business.Services
                         }
                     }
                     //calculate Waste factor
-                    if (GetProperty.GetColumnValue(values, "WasteFactor") != null)
-                    {
-                        val = (val * (val + values.WasteFactor ?? 0) / 100);
-                    }
+                    
 
                     // Set parameters
                     formula = formula?.Replace(match.Value, Convert.ToDecimal(val).ToString());
