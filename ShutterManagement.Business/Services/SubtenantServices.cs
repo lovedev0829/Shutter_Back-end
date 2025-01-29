@@ -423,6 +423,7 @@ namespace ShutterManagement.Business.Services
                         City = x.BrandingInfoNavigation.City,
                         Country = x.BrandingInfoNavigation.Country,
                         ZipCode = x.BrandingInfoNavigation.ZipCode,
+                        Markup = x.BrandingInfoNavigation.Markup,
                         IsActive = x.IsActive
                     }).ToList();
 

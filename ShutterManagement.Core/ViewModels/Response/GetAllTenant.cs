@@ -35,6 +35,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? City { get; set; }
         public string? Country { get; set; }
         public string? ZipCode { get; set; }
+        public decimal? Markup { get; set; }
         public bool? IsActive { get; set; }
 
         public string? UserFirstName { get; set; }

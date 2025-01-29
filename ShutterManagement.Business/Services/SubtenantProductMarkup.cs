@@ -38,6 +38,12 @@ namespace ShutterManagement.Business.Services
                 var IsTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId != null && x.IsActive == true && x.IsDelete ==false);
                 if (IsTenantExists)
                 {
+                    var isproductExists = GetAllQuerable().Where(x => x.ProductId.ToString().ToLower() == model.ProductId.ToString().ToLower() && x.Isdelete == false && x.IsActive == true).FirstOrDefault();
+                    if(isproductExists != null)
+                    {
+                        responseVm.Message = "Product" + AppConstant.AlreadyExists;
+                        return responseVm;
+                    }
                     var markup = new TblSubtenantProductMarkup
                     {
                         ProductId = model.ProductId,
@@ -76,6 +82,12 @@ namespace ShutterManagement.Business.Services
                 var IsTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId != null && x.IsActive == true && x.IsDelete == false);
                 if (IsTenantExists)
                 {
+                    var isproductExists = GetAllQuerable().Where(x => x.Id.ToString().ToLower() != model.Id.ToString().ToLower() && x.ProductId.ToString().ToLower() == model.ProductId.ToString().ToLower() && x.Isdelete == false && x.IsActive == true).FirstOrDefault();
+                    if (isproductExists != null)
+                    {
+                        responseVm.Message = "Product" + AppConstant.AlreadyExists;
+                        return responseVm;
+                    }
                     var markup = GetAllQuerable().Where(x => x.Id == model.Id && x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
                     if(markup != null)
                     {

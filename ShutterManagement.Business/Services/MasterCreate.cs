@@ -17,6 +17,8 @@ using Newtonsoft.Json;
 using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.Core.ViewModels.Response;
 using ShutterManagement.Core;
+using System.Net.Http.Headers;
+using Microsoft.IdentityModel.Tokens;
 
 namespace ShutterManagement.Business.Services
 {
@@ -195,8 +197,8 @@ namespace ShutterManagement.Business.Services
                     .Select(t => t.BrandingInfo).FirstOrDefault();
 
                 bool IsSubtenant = false;
-                var IsSubtenants = tenantService.AnyAsync
-                    (t => t.TenantId == AppConstant.LoggedInTenantId && t.ParentTenantId != null && t.IsActive == true && t.IsDelete == false);
+                var IsSubtenants = (await tenantService.GetAll()).Where
+                    (t => t.TenantId == AppConstant.LoggedInTenantId && ( t.ParentTenantId != null || !string.IsNullOrEmpty(t.ParentTenantId.ToString())) && t.IsActive == true && t.IsDelete == false).FirstOrDefault();
                 if(IsSubtenants != null)
                 {
                     IsSubtenant = true;
@@ -244,7 +246,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var tenantinfo = (await tenantService.GetAll())
-                    .Where(t => t.TenantId == AppConstant.LoggedInTenantId && t.IsActive == true && t.IsDelete == false && t.ParentTenantId.ToString() == AppConstant.LoggedInParentTenantId)
+                    .Where(t => t.TenantId.ToString().ToLower() == AppConstant.LoggedInTenantId.ToString().ToLower() && t.IsActive == true && t.IsDelete == false && t.ParentTenantId.ToString().ToLower() == AppConstant.LoggedInParentTenantId.ToLower())
                     .Select(t => t.BrandingInfo).FirstOrDefault();
 
                 var brandinginfo = tenantBrandingService.GetAllQuerable()

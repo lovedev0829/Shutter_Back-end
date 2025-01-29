@@ -523,10 +523,17 @@ namespace ShutterManagement.Controllers
 
         [HttpGet]
         [Route("GetAllProduct")]
-        public async Task<IActionResult> GetAllProduct(string ProductTypeId)
+        public async Task<IActionResult> GetAllProduct(string? ProductTypeId)
         {
             var res = await productService.GetAll_Product(filter);
-            res.Data = res.Data?.Where(x => x.IsActive == true && x.ProductType == ProductTypeId).ToList();
+            if (ProductTypeId == null)
+            {
+                return Ok(res);
+            }
+            else
+            {
+                res.Data = res.Data?.Where(x => x.IsActive == true && x.ProductType == ProductTypeId).ToList();
+            }
             return Ok(res);
         }
 
