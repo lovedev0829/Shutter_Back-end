@@ -42,6 +42,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         [DefaultValue("")]
 
         public string? ZipCode { get; set; }
+        public decimal? Markup { get; set; }
 
     }
 }

@@ -24,10 +24,9 @@ namespace ShutterManagement.Core.ViewModels.Response
 
         public string? Country { get; set; }
 
-
-    
-
         public string? ZipCode { get; set; }
+        public decimal? Markup { get; set; }
+        public bool? IsSubtenant { get; set; } = false;
 
 
     }

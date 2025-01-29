@@ -124,5 +124,8 @@ namespace ShutterManagement.Core.ViewModels.Request
         [DefaultValue("")]
        // [MinLength(4),MaxLength(4)]
         public string? InvoicePrefix { get; set; }
+
+        //[DefaultValue(0)]
+        //public decimal? Markup { get; set; }
     }
 }

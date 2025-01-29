@@ -194,6 +194,13 @@ namespace ShutterManagement.Business.Services
                     .Where(t => t.TenantId == AppConstant.LoggedInTenantId && t.IsActive == true && t.IsDelete == false )
                     .Select(t => t.BrandingInfo).FirstOrDefault();
 
+                bool IsSubtenant = false;
+                var IsSubtenants = tenantService.AnyAsync
+                    (t => t.TenantId == AppConstant.LoggedInTenantId && t.ParentTenantId != null && t.IsActive == true && t.IsDelete == false);
+                if(IsSubtenants != null)
+                {
+                    IsSubtenant = true;
+                }
                 var brandinginfo = tenantBrandingService.GetAllQuerable()
                                  .Where(c => c.Id == tenantinfo).Select(c => new BrandingInfoResponse
                                  {
@@ -206,10 +213,12 @@ namespace ShutterManagement.Business.Services
                                      StreetAddress = c.StreetAddress,
                                      City = c.City,
                                      Country = c.Country,
-                                     ZipCode = c.ZipCode
+                                     ZipCode = c.ZipCode,
+                                     Markup = c.Markup,
+                                     IsSubtenant = IsSubtenant
                                  })
                     .FirstOrDefault();
-
+               
                 if (brandinginfo != null)
                 {
                     responseVm.IsSuccess = true;
@@ -258,7 +267,8 @@ namespace ShutterManagement.Business.Services
                     brandinginfo.StreetAddress = updatesetting.StreetAddress;
                     brandinginfo.City = updatesetting.City;
                     brandinginfo.Country = updatesetting.Country;
-                    brandinginfo.ZipCode = updatesetting.ZipCode;   
+                    brandinginfo.ZipCode = updatesetting.ZipCode;
+                    brandinginfo.Markup = updatesetting.Markup;
                     var res = tenantBrandingService.Update(brandinginfo);
                     result.IsSuccess = true;
                     result.Message = AppConstant.UpdateSuccessMsg;

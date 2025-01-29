@@ -13,5 +13,6 @@ namespace ShutterManagement.Core.ViewModels.Request
         public string? LastName { get; set; }
         //public string? Email { get; set; }
         public string? Phone { get; set; }
+       // public decimal? Markup { get; set; }
     }
 }

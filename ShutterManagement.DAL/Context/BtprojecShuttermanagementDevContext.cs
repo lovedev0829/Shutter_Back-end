@@ -109,6 +109,8 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
 
     public virtual DbSet<TblRolesPermission> TblRolesPermissions { get; set; }
 
+    public virtual DbSet<TblSubtenantProductMarkup> TblSubtenantProductMarkups { get; set; }
+
     public virtual DbSet<TblTaxExemption> TblTaxExemptions { get; set; }
 
     public virtual DbSet<TblTaxRate> TblTaxRates { get; set; }
@@ -1270,6 +1272,18 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
                 .HasConstraintName("FK__TblRoles___RoleI__2DB1C7EE");
         });
 
+        modelBuilder.Entity<TblSubtenantProductMarkup>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__TblSubte__3214EC077FC08328");
+
+            entity.ToTable("TblSubtenantProductMarkup", "dbo");
+
+            entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.Markup).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.ModifiedAt).HasColumnType("datetime");
+        });
+
         modelBuilder.Entity<TblTaxExemption>(entity =>
         {
             entity.HasKey(e => e.TaxExemptionId).HasName("PK__TblTaxEx__BCE64BE6436D5A55");
@@ -1387,8 +1401,10 @@ public partial class BtprojecShuttermanagementDevContext : DbContext
             entity.Property(e => e.City).HasMaxLength(200);
             entity.Property(e => e.CompanyName).HasMaxLength(50);
             entity.Property(e => e.Country).HasMaxLength(200);
+            entity.Property(e => e.Discount).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.Email).HasMaxLength(200);
             entity.Property(e => e.InvoicePrefix).HasMaxLength(20);
+            entity.Property(e => e.Markup).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.PhoneNumber).HasMaxLength(100);
             entity.Property(e => e.PrimaryColor).HasMaxLength(20);
             entity.Property(e => e.SecondaryColor).HasMaxLength(20);
