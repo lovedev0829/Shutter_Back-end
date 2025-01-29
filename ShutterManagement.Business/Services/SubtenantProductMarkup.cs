@@ -73,7 +73,6 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
-
         public async Task<IResponseVm<string>> Update_SubtenantProductMarkup(UpdateSubtenantProductMarkup model)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
@@ -181,7 +180,6 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
-
         public async Task<IResponseVm<List<GetAllSubtenantProductMarkup>>> GetAllSubtenantProductMarkup(Pagination filter)
         {
             IResponseVm<List<GetAllSubtenantProductMarkup>> responseVm = new ResponseVm<List<GetAllSubtenantProductMarkup>>();
@@ -196,21 +194,29 @@ namespace ShutterManagement.Business.Services
                         .Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.Isdelete == false && x.IsActive == true)
                         .ToList(); 
 
-                    var products =  productService.GetAllQuerable()
-                        .ToList(); 
+                    var products =  productService.GetAllQuerable().Where(x => x.IsActive == true && x.IsDelete == false)
+                        .ToList();
 
-                    var markup = markups.Join(
-                        products,
-                        markups => markups.ProductId,
-                        product => product.ProductId,
-                        (markups, product) => new GetAllSubtenantProductMarkup
+                    var markup = products
+                      .GroupJoin(
+                        markups, 
+                        product => product.ProductId, 
+                        markup => markup.ProductId, 
+                        (product, markupGroup) => new { product, markupGroup }  
+                        )
+                      .SelectMany(
+                        x => x.markupGroup.DefaultIfEmpty(), 
+                        (x, markup) => new GetAllSubtenantProductMarkup
                         {
-                            Id = markups.Id,
-                            ProductId = product.ProductId,
-                            ProductName = product.ProductName,
-                            Markup = markups.Markup
-                        }).ToList();
-                    var filteredRecords = markup
+                         Id = markup?.Id,  
+                         ProductId = x.product.ProductId,  
+                         ProductName = x.product.ProductName,  
+                         Markup = markup?.Markup ?? 0  
+                         }
+                        )
+                      .ToList();
+
+                var filteredRecords = markup
                 .Where(x =>
                 (string.IsNullOrWhiteSpace(filter.SearchValue) ||
                 ((x.ProductId.ToString() ?? "").Contains(filter.SearchValue)
