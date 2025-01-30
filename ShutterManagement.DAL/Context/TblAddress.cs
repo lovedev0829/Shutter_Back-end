@@ -43,6 +43,10 @@ public partial class TblAddress
 
     public string? Phone { get; set; }
 
+    public string? FirstName { get; set; }
+
+    public string? LastName { get; set; }
+
     public virtual TblContact? Contact { get; set; }
 
     public virtual ICollection<TblEstimateWindow> TblEstimateWindows { get; set; } = new List<TblEstimateWindow>();

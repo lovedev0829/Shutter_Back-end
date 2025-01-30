@@ -33,7 +33,7 @@ namespace ShutterManagement.Business.Services
             this.materialService = materialService;
             this.tenantService = tenantService;
         }
-        
+
         public async Task<IResponseVm<string>> ActiveInActive(Guid ExpressionId)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
@@ -83,9 +83,10 @@ namespace ShutterManagement.Business.Services
                 {
                     ExpressionFormulae = model.ExpressionFormulae,
                     ExpressionName = model.ExpressionName,
-                    ProductId = model.ProductId,
+                    //ProductId = model.ProductId,
                     ProductType = model.ProductTypeId,
                     FormulaeArray = string.Join(", ", model.FormulaeArray),
+                    DisplayArray = string.Join(", ", model.displayArray),
                     IsActive = true,
                     IsDelete = false,
                     OptionId = string.IsNullOrEmpty(model.OptionId) ? null : Guid.Parse(model.OptionId),
@@ -127,11 +128,12 @@ namespace ShutterManagement.Business.Services
                     IsExpressionExist.ExpressionName = model.ExpressionName;
                     IsExpressionExist.ExpressionFormulae = model.ExpressionFormulae;
                     IsExpressionExist.ProductType = model.ProductTypeId;
-                    IsExpressionExist.ProductId = model.ProductId;
+                    //IsExpressionExist.ProductId = model.ProductId;
                     IsExpressionExist.UpdateAt = DateTime.Now;
                     IsExpressionExist.OptionId = string.IsNullOrEmpty(model.OptionId) ? null : Guid.Parse(model.OptionId);
                     IsExpressionExist.ModifiedBy = AppConstant.LoggedInUserID;
                     IsExpressionExist.FormulaeArray = string.Join(", ", model.FormulaeArray);
+                    IsExpressionExist.DisplayArray = string.Join(", ", model.displayArray);
                 }
                 var res = await Update(IsExpressionExist);
                 responseVm.IsSuccess = true;
@@ -187,7 +189,6 @@ namespace ShutterManagement.Business.Services
 
                 var Expressionlist = (from t1 in dbContext.TblExpressions.OrderByDescending(x => x.CreatedAt)
                                       join t2 in dbContext.MstProductTypes on t1.ProductType equals t2.ProductId
-                                      join t3 in dbContext.TblProducts on t1.ProductId equals t3.ProductId
                                       where t1.TenantId == AppConstant.LoggedInTenantId && t1.IsDelete == false
                                       select new GetExpression
                                       {
@@ -195,9 +196,9 @@ namespace ShutterManagement.Business.Services
                                           ExpressionName = t1.ExpressionName,
                                           ExpressionFormulae = t1.ExpressionFormulae,
                                           formulaeArray = !string.IsNullOrEmpty(t1.FormulaeArray) ? t1.FormulaeArray.Split(new[] { ", " }, StringSplitOptions.TrimEntries) : new string[0],
+                                          displayArray = !string.IsNullOrEmpty(t1.DisplayArray) ? t1.DisplayArray.Split(new[] { ", " }, StringSplitOptions.TrimEntries) : new string[0],
                                           ProductId = t1.ProductId,
                                           OptionId = t1.OptionId,
-                                          ProductName = t3.ProductName,
                                           ProductTypeId = t1.ProductType,
                                           ProductTypeName = t2.ProductName,
                                           IsActive = t1.IsActive,
@@ -234,69 +235,6 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
-        public async Task<IResponseVm<string>> ValidateExpression(ValidateExpression model)
-        {
-            IResponseVm<string> responseVm = new ResponseVm<string>();
-            try
-            {
-                string formula = model.Expression ?? "";
-                string pattern = @"{{.*?}}";
-                var matches = Regex.Matches(formula, pattern);
-                if (matches != null && matches.Count() > 0)
-                {
-                    foreach (Match match in matches)
-                    {
-                        var property = match.Value.Replace("{{", "").Replace("}}", "");
-                        var val = GetProperty.GetColumnValue(model, property);
-                        if (val == null)
-                        {
-                            string[] info = property.Split("__");
-                            if (info != null && info.Length > 0 && info.Length == 3)
-                            {
-                                //if (info[0] == "Component")
-                                //{
-                                //    val = componentPriceService.GetAllQuerable().Where(x => x.ProductType == info[1] && x.ComponentName == info[2]).Select(x => x.PriceRated).FirstOrDefault();
-                                //}
-                                //else
-                                //if(info[0] == "Options")
-                                //{
-                                //    //var option = 
-                                //    //val = windowOptionService.GetAllQuerable().Where(x => x. == info[1] && x.ComponentName == info[2]).Select(x => (item.IsRated == true ? x.PriceRated : x.PriceNonRated)).FirstOrDefault();
-                                //}
-                                //else
-                                if (info[0] == "Material")
-                                {
-                                    val = materialService.GetAllQuerable().Where(x => x.ProductType.ToString() == info[1] && x.MaterialName == info[2]).Select(x => x.UnitCost).FirstOrDefault();
-                                }
-                            }
-                        }
-                            formula = formula.Replace(match.Value, Convert.ToDecimal(val).ToString());
-
-                    }
-                    var validate = new NCalc.Expression(formula);
-                    if (validate.HasErrors())
-                    {
-                        responseVm.Message = "There is some issue in Expression.";
-                        return responseVm;
-                    }
-                    var res = validate.Evaluate();
-                    responseVm.IsSuccess = true;
-                    responseVm.Message = "Expression is correct. You can add this expression now.";
-                    responseVm.Data = res.ToString() ?? "";
-                }
-            }
-            catch (EvaluationException ex)
-            {
-                responseVm.Message = "Expression error: " + ex.Message;
-            }
-            catch (Exception ex)
-            {
-                responseVm.Message = AppConstant.ExceptionError + ex.Message;
-            }
-            return responseVm;
-        }
-
-
     }
 }
 

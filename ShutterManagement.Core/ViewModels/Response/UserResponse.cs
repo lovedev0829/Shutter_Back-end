@@ -14,5 +14,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? Email { get; set; }
         public string? Phone { get; set; }
         public string? UserName { get; set; }
+        //public bool? IsSubtenant { get; set; } = false;
+        //public decimal? Markup { get; set; }
     }
 }

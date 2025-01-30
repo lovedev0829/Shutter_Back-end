@@ -14,7 +14,8 @@ namespace ShutterManagement.Core.ViewModels.Response
 
         public Guid? ContactId { get; set; }
         public Guid? ContactTypeId { get; set; }
-        public string? Contactname { get; set; }
+        public string? ContactFirstname { get; set; }
+        public string? ContactLastname { get; set; }
         public string? ContactTypeName { get; set; }
         public bool? IsActive { get; set; }
     }

@@ -13,7 +13,8 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string Version { get; set; }
 
         public string? OrderNumber { get; set; }
-        public string? Contact { get; set; }
+        public string? FirstContactName { get; set; }
+        public string? LastContactName { get; set; }
         public Guid EstimateId { get; set; }
         public Guid? JobId { get; set; }
         public Guid? taxRateId { get; set; }
@@ -40,7 +41,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? primarycolor { get; set; }
         public string? CompanyName { get; set; }
         public string? TenantId { get; set; }
-        public string? ContactId { get; set; }
+        public Guid? ContactId { get; set; }
         public bool? IsTaxApplied { get; set; } = false;
         public JobDetail jobDetails { get; set; } = new JobDetail();
         public List<EstimateProductLists> EstimateProductList { get; set; } = new List<EstimateProductLists>();
@@ -57,7 +58,8 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? JobStatus { get; set; }
         public string? ContactId { get; set; }
         public string? JobStatusId { get; set; }
-        public string? ContactName { get; set; }
+        public string? ContactFirstName { get; set; }
+        public string? ContactLastName { get; set; }
         public DateTime? ScheduleTime { get; set; }
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }

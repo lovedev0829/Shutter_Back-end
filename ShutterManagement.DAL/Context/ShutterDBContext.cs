@@ -93,6 +93,8 @@ public partial class ShutterDBContext : DbContext
 
     public virtual DbSet<TblJobStatus> TblJobStatuses { get; set; }
 
+    public virtual DbSet<TblLocation> TblLocations { get; set; }
+
     public virtual DbSet<TblMeasurement> TblMeasurements { get; set; }
 
     public virtual DbSet<TblOption> TblOptions { get; set; }
@@ -120,6 +122,8 @@ public partial class ShutterDBContext : DbContext
     public virtual DbSet<TblRole> TblRoles { get; set; }
 
     public virtual DbSet<TblRolesPermission> TblRolesPermissions { get; set; }
+
+    public virtual DbSet<TblSubtenantProductMarkup> TblSubtenantProductMarkups { get; set; }
 
     public virtual DbSet<TblTaxExemption> TblTaxExemptions { get; set; }
 
@@ -308,10 +312,16 @@ public partial class ShutterDBContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.Email).HasMaxLength(128);
+            entity.Property(e => e.FirstName)
+                .HasMaxLength(50)
+                .IsUnicode(false);
             entity.Property(e => e.FullName).HasMaxLength(128);
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
             entity.Property(e => e.Label).HasMaxLength(100);
+            entity.Property(e => e.LastName)
+                .HasMaxLength(50)
+                .IsUnicode(false);
             entity.Property(e => e.Phone).HasMaxLength(128);
             entity.Property(e => e.State).HasMaxLength(100);
             entity.Property(e => e.StreetAddress).HasMaxLength(128);
@@ -400,8 +410,14 @@ public partial class ShutterDBContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.Email).HasMaxLength(255);
+            entity.Property(e => e.FirstName)
+                .HasMaxLength(50)
+                .IsUnicode(false);
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
+            entity.Property(e => e.LastName)
+                .HasMaxLength(50)
+                .IsUnicode(false);
             entity.Property(e => e.Name).HasMaxLength(255);
             entity.Property(e => e.PhoneNumber).HasMaxLength(50);
             entity.Property(e => e.Referral).HasMaxLength(100);
@@ -425,10 +441,16 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.City).HasMaxLength(100);
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
             entity.Property(e => e.Email).HasMaxLength(250);
+            entity.Property(e => e.FirstName)
+                .HasMaxLength(50)
+                .IsUnicode(false);
             entity.Property(e => e.FullName)
                 .HasMaxLength(128)
                 .IsUnicode(false);
             entity.Property(e => e.IsActive).HasDefaultValue(true);
+            entity.Property(e => e.LastName)
+                .HasMaxLength(50)
+                .IsUnicode(false);
             entity.Property(e => e.PhoneNumber).HasMaxLength(20);
             entity.Property(e => e.State).HasMaxLength(100);
             entity.Property(e => e.StreetAddress).HasMaxLength(250);
@@ -911,6 +933,18 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
         });
 
+        modelBuilder.Entity<TblLocation>(entity =>
+        {
+            entity.HasKey(e => e.LocationId).HasName("PK__TblLocat__E7FEA4979D18AAB8");
+
+            entity.ToTable("TblLocation", "dbo");
+
+            entity.Property(e => e.LocationId).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.LocationName).HasMaxLength(100);
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+        });
+
         modelBuilder.Entity<TblMeasurement>(entity =>
         {
             entity.HasKey(e => e.MeasurementId).HasName("PK__TblMeasu__85599FB873C0E0A4");
@@ -1155,6 +1189,7 @@ public partial class ShutterDBContext : DbContext
 
             entity.Property(e => e.ProductComponentId).ValueGeneratedNever();
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.PricingExpression).HasMaxLength(100);
             entity.Property(e => e.Quantity).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
 
@@ -1245,6 +1280,18 @@ public partial class ShutterDBContext : DbContext
             entity.HasOne(d => d.Role).WithMany(p => p.TblRolesPermissions)
                 .HasForeignKey(d => d.RoleId)
                 .HasConstraintName("FK__TblRoles___RoleI__2DB1C7EE");
+        });
+
+        modelBuilder.Entity<TblSubtenantProductMarkup>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__TblSubte__3214EC077FC08328");
+
+            entity.ToTable("TblSubtenantProductMarkup", "dbo");
+
+            entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.Markup).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.ModifiedAt).HasColumnType("datetime");
         });
 
         modelBuilder.Entity<TblTaxExemption>(entity =>
@@ -1364,7 +1411,10 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.City).HasMaxLength(200);
             entity.Property(e => e.CompanyName).HasMaxLength(50);
             entity.Property(e => e.Country).HasMaxLength(200);
+            entity.Property(e => e.Discount).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.Email).HasMaxLength(200);
+            entity.Property(e => e.InvoicePrefix).HasMaxLength(20);
+            entity.Property(e => e.Markup).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.PhoneNumber).HasMaxLength(100);
             entity.Property(e => e.PrimaryColor).HasMaxLength(20);
             entity.Property(e => e.SecondaryColor).HasMaxLength(20);
@@ -1451,8 +1501,14 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.Email)
                 .HasMaxLength(200)
                 .IsUnicode(false);
+            entity.Property(e => e.FirstName)
+                .HasMaxLength(100)
+                .IsUnicode(false);
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
+            entity.Property(e => e.LastName)
+                .HasMaxLength(100)
+                .IsUnicode(false);
             entity.Property(e => e.PhoneNumber).HasMaxLength(200);
             entity.Property(e => e.State)
                 .HasMaxLength(200)

@@ -301,8 +301,8 @@ namespace ShutterManagement.Services
                         FirstName = c.FirstName,
                         LastName = c.LastName,
                         Email = c.Email,
-                        UserName=c.Username,
-                        Phone=c.Phone
+                        UserName = c.Username,
+                        Phone = c.Phone
                     })
                     .FirstOrDefaultAsync();
 
@@ -324,6 +324,7 @@ namespace ShutterManagement.Services
             }
             return responseVm;
         }
+
         public async Task<IResponseVm<string>> ForgetPassword(ForgetPassword forgetPassword)
         {
             IResponseVm<string> result = new ResponseVm<string>();

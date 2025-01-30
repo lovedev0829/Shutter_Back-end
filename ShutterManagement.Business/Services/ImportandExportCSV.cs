@@ -90,7 +90,24 @@ namespace ShutterManagement.Business.Services
                 using (var reader = new StreamReader(csvStream))
                 using (var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture)))
                 {
+                    //var records = csv.GetRecords<ImportMaterial>().ToList();
+                    var expectedHeaders = new[]
+                   {
+                   "MaterialName", "UnitCost", "UnitOfMeasurement", "StockQuantity", "ReorderLevel",
+                   "VendorCode", "Notes", "ProductType", "SKU", "IsCutSheet"
+                    };
+
+                    csv.Read();
+                    csv.ReadHeader();
+                    var actualHeaders = csv.HeaderRecord;
+
+                    if (!expectedHeaders.SequenceEqual(actualHeaders, StringComparer.InvariantCultureIgnoreCase))
+                    {
+                        responseVm.Message = "The CSV file header format is  incorrect. Please export format";
+                        return responseVm;
+                    }
                     var records = csv.GetRecords<ImportMaterial>().ToList();
+
                     totalRecords = records.Count;
                     if (totalRecords == 0)
                     {
@@ -252,6 +269,22 @@ namespace ShutterManagement.Business.Services
                 using (var reader = new StreamReader(csvStream))
                 using (var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture)))
                 {
+                    var expectedHeaders = new[]
+                    {
+                   "ContactType", "FirstName","LastName", "PhoneNumber", "Email", "Website",
+                   "Notes", "Referral", "BillingFirstName","BillingLastName", "PhoneNumber", "Email","City","State","ZipCode","StreetAddress","EffectiveDate","ExpiryDate"
+                    };
+
+                    csv.Read();
+                    csv.ReadHeader();
+                    var actualHeaders = csv.HeaderRecord;
+
+                    if (!expectedHeaders.SequenceEqual(actualHeaders, StringComparer.InvariantCultureIgnoreCase))
+                    {
+                        responseVm.Message = "The CSV file header format is  incorrect. Please export format";
+                        return responseVm;
+                    }
+
                     var records = csv.GetRecords<ImportContact>().ToList();
                     totalRecords = records.Count;
                     int rowNumber = 1;
@@ -316,7 +349,8 @@ namespace ShutterManagement.Business.Services
             var contactModel = new Sp_Contact
             {
                 ContactType = record.ContactType?.Trim(),
-                Name = record.Name?.Trim(),
+                FirstName = record.FirstName?.Trim(),
+                LastName = record.LastName?.Trim(),
                 PhoneNumber = record.PhoneNumber.Trim(),
                 Email = record.Email?.Trim(),
                 Website = record.Website.Trim(),
@@ -329,7 +363,8 @@ namespace ShutterManagement.Business.Services
             {
                 contactModel.BillingAddressVm = new BillingAddressVm
                 {
-                    FullName = record.BillingAddressVm.FullName?.Trim(),
+                    FirstName = record.BillingAddressVm.BillingFirstName?.Trim(),
+                    LastName = record.BillingAddressVm.BillingLastName?.Trim(),
                     PhoneNumber = record.BillingAddressVm.PhoneNumber?.Trim(),
                     Email = record.BillingAddressVm.Email?.Trim(),
                     StreetAddress = record.BillingAddressVm.StreetAddress?.Trim(),
@@ -535,7 +570,8 @@ namespace ShutterManagement.Business.Services
                         contact.ContactType,
                         contact.Email,
                         contact.PhoneNumber,
-                        contact.Name,
+                        contact.FirstName,
+                        contact.LastName,
                         contact.Website,
                         contact.Notes,
                         contact.Referral,
@@ -553,7 +589,8 @@ namespace ShutterManagement.Business.Services
                         {
                             City = x.City,
                             Email = x.Email,
-                            FullName = x.FullName,
+                            FirstName = x.FirstName,
+                            LastName = x.LastName,
                             PhoneNumber = x.PhoneNumber,
                             State = x.State,
                             StreetAddress = x.StreetAddress,
@@ -577,7 +614,8 @@ namespace ShutterManagement.Business.Services
                         ContactType = contact.ContactType ?? "",
                         Email = contact.Email,
                         PhoneNumber = contact.PhoneNumber,
-                        Name = contact.Name,
+                        FirstName = contact.FirstName,
+                        LastName = contact.LastName,
                         Website = contact.Website,
                         Notes = contact.Notes,
                         Referral = contact.Referral,
@@ -590,7 +628,7 @@ namespace ShutterManagement.Business.Services
                 }
 
                 var csvBuilder = new StringBuilder();
-                csvBuilder.AppendLine("ContactType,Name,PhoneNumber,Email,Website,Notes,Referral,FullName,PhoneNumber,Email,City,State,ZipCode,StreetAddress,EffectiveDate,ExpiryDate");
+                csvBuilder.AppendLine("ContactType,FirstName,LastName,PhoneNumber,Email,Website,Notes,Referral,BillingFirstName,BillingLastName,PhoneNumber,Email,City,State,ZipCode,StreetAddress,EffectiveDate,ExpiryDate");
 
                 foreach (var contact in detailedContactList)
                 {
@@ -599,8 +637,8 @@ namespace ShutterManagement.Business.Services
                         ? string.Join(";", contact.taxExemptionVm.ExemptionCertificate)
                         : "";
 
-                    var line = $"{contact.ContactType},{contact.Name},{contact.PhoneNumber},{contact.Email},{contact.Website},{contact.Notes},{contact.Referral}," +
-                               $"{billingAddress.FullName},{billingAddress.PhoneNumber},{billingAddress.Email},{billingAddress.City},{billingAddress.State}," +
+                    var line = $"{contact.ContactType},{contact.FirstName},{contact.LastName},{contact.PhoneNumber},{contact.Email},{contact.Website},{contact.Notes},{contact.Referral}," +
+                               $"{billingAddress.FirstName},{billingAddress.LastName},{billingAddress.PhoneNumber},{billingAddress.Email},{billingAddress.City},{billingAddress.State}," +
                                $"{billingAddress.ZipCode},{billingAddress.StreetAddress},{contact.taxExemptionVm?.EffectiveDate},{contact.taxExemptionVm?.ExpiryDate}";
 
                     csvBuilder.AppendLine(line);
@@ -798,7 +836,8 @@ namespace ShutterManagement.Business.Services
                                join t6 in dbContext.TblContacts on t2.ContactId equals t6.ContactId
                                select new ExportJobsVm
                                {
-                                   ContactName = t6.Name,
+                                   ContactFirstName = t6.FirstName,
+                                   ContactLastName = t6.LastName,
                                    ContactEmail = t6.Email,
                                    ContactPhone = t6.PhoneNumber,
                                    SubtenantName = p2.FirstName + " " + p2.LastName,
@@ -812,11 +851,11 @@ namespace ShutterManagement.Business.Services
                                }).ToList();
 
                 var csvBuilder = new StringBuilder();
-                csvBuilder.AppendLine("ContactName,ContactEmail,ContactPhone,Partner/Tenant,CreatedBy,JobName,Status,Address,City,State,ZipCode");
+                csvBuilder.AppendLine("ContactFirstName,ContactFirstName,ContactEmail,ContactPhone,Partner/Tenant,CreatedBy,JobName,Status,Address,City,State,ZipCode");
 
                 foreach (var job in jobList)
                 {
-                    var line = $"{job.ContactName},{job.ContactEmail},{job.ContactPhone}," +
+                    var line = $"{job.ContactFirstName},{job.ContactLastName},{job.ContactEmail},{job.ContactPhone}," +
                                $"{job.SubtenantName},{job.CreatedbyUsername},{job.JobName}," +
                                $"{job.JobStatusName},{job.StreetAddress},{job.City}," +
                                $"{job.State},{job.ZipCode}";

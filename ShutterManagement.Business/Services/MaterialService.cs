@@ -97,7 +97,7 @@ namespace ShutterManagement.Business.Services
                     var CheckExistingVendorbyCode = GetAllVendorList.Any(x => x.VendorCode == model.VendorCode);
                     if (IsSKUExist)
                     {
-                        responseVm.Message = $"SKU {model.SKU}" + AppConstant.AlreadyExists;
+                        responseVm.Message = $"SKU {model.SKU} " + AppConstant.AlreadyExists;
                         return responseVm;
                     }
                     if(VendorExit==null)
@@ -271,7 +271,8 @@ namespace ShutterManagement.Business.Services
                                             ProductType = t2.ProductType,
                                             UnitOfMeasurement = t2.UnitOfMeasurement,
                                             VendorId = t2.VendorId,
-                                            VendorName = t1.VendorName,
+                                            FirstName = t1.FirstName,
+                                            LastName = t1.LastName,
                                             IsCutSheet = t2.IsCutSheet,
                                         }).ToList();
                     filter.SearchValue = filter.SearchValue?.Trim().ToLower();
@@ -290,7 +291,9 @@ namespace ShutterManagement.Business.Services
                                         || (x.StockQuantity.ToString() ?? "").ToLower().Contains(filter.SearchValue)
                                         || (x.Notes.ToString() ?? "").ToLower().Contains(filter.SearchValue)
                                         || (x.SKU ?? "").ToLower().Contains(filter.SearchValue)
-                                        || (x.VendorName ?? "").ToLower().Contains(filter.SearchValue)
+                                        || ((x.FirstName.ToLower() + " " + x.LastName.ToLower()) ?? "").Contains(filter.SearchValue) 
+                                        || (x.FirstName.ToLower() ?? "").Contains(filter.SearchValue)
+                                        || (x.LastName.ToLower() ?? "").Contains(filter.SearchValue) 
                                         || (x.UnitOfMeasurement ?? "").ToLower().Contains(filter.SearchValue)))
                                     .ToList();
 

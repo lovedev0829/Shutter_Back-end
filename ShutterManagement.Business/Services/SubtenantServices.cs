@@ -79,6 +79,14 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = "User Email " + AppConstant.AlreadyExists;
                     return responseVm;
                 }
+                if (model.InvoicePrefix != "")
+                {
+                    if (model.InvoicePrefix.Length != 4)
+                    {
+                        responseVm.Message = "4 characters is Mandatory.";
+                        return responseVm;
+                    }
+                }
                 //bool IsSubTenantEmailExists = await userService.AnyAsync(x => x.Email == model.Email && x.TenantId == AppConstant.LoggedInTenantId);
                 //    if (IsSubTenantEmailExists)
                 //    {
@@ -103,7 +111,9 @@ namespace ShutterManagement.Business.Services
                         new SqlParameter("@City", SqlDbType.NVarChar) { SqlValue = model.City },
                        new SqlParameter("@Country", SqlDbType.NVarChar) { SqlValue = model.Country },
                        new SqlParameter("@ZipCode", SqlDbType.NVarChar) { SqlValue = model.ZipCode },
+                      // new SqlParameter("@Markup", SqlDbType.NVarChar) { SqlValue = model.Markup },
                         new SqlParameter("@SecondaryColor", SqlDbType.NVarChar) { SqlValue = model.SecondaryColor },
+                        new SqlParameter("@InvoicePrefix", SqlDbType.NVarChar) { SqlValue = model.InvoicePrefix },
                         new SqlParameter("@UserFirstName", SqlDbType.NVarChar) { SqlValue = model.UserFirstName },
                         new SqlParameter("@UserMiddleName", SqlDbType.NVarChar) { SqlValue = model.UserMiddleName },
                         new SqlParameter("@UserLastName", SqlDbType.NVarChar) { SqlValue = model.UserLastName },
@@ -208,6 +218,15 @@ namespace ShutterManagement.Business.Services
                         responseVm.Message = "CompanyName " + AppConstant.AlreadyExists;
                         return responseVm;
                     }
+
+                    if (model.InvoicePrefix != "")
+                    {
+                        if (model.InvoicePrefix.Length != 4)
+                        {
+                            responseVm.Message = "4 characters is Mandatory.";
+                            return responseVm;
+                        }
+                    }
                     var tenantid = Guid.Parse(model.TenantId);
                     var Parenttenantid = AppConstant.LoggedInTenantId;
                     var HashPassword = string.IsNullOrEmpty(model.Password) ? "" : AesEncryptionHelper.Encrypt(model.Password ?? "");
@@ -227,6 +246,8 @@ namespace ShutterManagement.Business.Services
                     new SqlParameter("@CompanyName", SqlDbType.NVarChar) { SqlValue = model.CompanyName },
                     new SqlParameter("@PrimaryColor", SqlDbType.NVarChar) { SqlValue = model.PrimaryColor },
                     new SqlParameter("@SecondaryColor", SqlDbType.NVarChar) { SqlValue = model.SecondaryColor },
+              //      new SqlParameter("@Markup", SqlDbType.NVarChar) { SqlValue = model.Markup },
+                    new SqlParameter("@InvoicePrefix", SqlDbType.NVarChar) { SqlValue = model.InvoicePrefix },
                      new SqlParameter("@StreetAddress", SqlDbType.NVarChar) { SqlValue = model.StreetAddress },
                     new SqlParameter("@City", SqlDbType.NVarChar) { SqlValue = model.City },
                     new SqlParameter("@Country", SqlDbType.NVarChar) { SqlValue = model.Country },
@@ -397,10 +418,12 @@ namespace ShutterManagement.Business.Services
                         CompanyName = x.BrandingInfoNavigation.CompanyName,
                         PrimaryColor = x.BrandingInfoNavigation.PrimaryColor,
                         SecondaryColor = x.BrandingInfoNavigation.SecondaryColor,
+                        InvoicePrefix = x.BrandingInfoNavigation.InvoicePrefix,
                         StreetAddress = x.BrandingInfoNavigation.StreetAddress,
                         City = x.BrandingInfoNavigation.City,
                         Country = x.BrandingInfoNavigation.Country,
                         ZipCode = x.BrandingInfoNavigation.ZipCode,
+                        Markup = x.BrandingInfoNavigation.Markup,
                         IsActive = x.IsActive
                     }).ToList();
 

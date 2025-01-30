@@ -100,8 +100,10 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-
-                var OrderNumber = GenerateUniqueId.GenerateUniqueIds(ModuleName.Order, AppConstant.LoggedInCompanyCode);
+                int Version = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt)
+                     .Select(p => (p.OrderName.Split("-", StringSplitOptions.RemoveEmptyEntries).Length == 3 ? Convert.ToInt32(p.OrderName.Split("-", StringSplitOptions.RemoveEmptyEntries)[2]) : 0)).FirstOrDefault();
+                Version += 1;
+                var OrderNumber = GenerateUniqueId.GenerateUniqueIds(ModuleName.Order, AppConstant.LoggedInCompanyCode, Version);
                 var version = GetAllQuerable()
                 .Where(x => x.EstimateId == EstimateId && x.IsDelete == false)
                 .OrderByDescending(x => x.Version)
@@ -832,7 +834,9 @@ namespace ShutterManagement.Business.Services
                 var jobDetails = jobService.GetAllQuerable().Where(x => x.JobId == order.JobId).Select(x => x.ContactId).FirstOrDefault();
 
                 var contactDetails = contactService.GetAllQuerable().Where(x => x.ContactId == jobDetails).FirstOrDefault();
-                e.Contact = contactDetails.Name;
+                e.FirstContactName = (contactDetails?.FirstName ??"");
+                e.LastContactName = (contactDetails?.LastName ??"");
+                e.ContactId = (contactDetails?.ContactId);
 
                 var userdetails = dbContext.TblUsers
                     .Where(x => x.Id == order.CreatedBy && x.IsDelete == false)
@@ -881,15 +885,21 @@ namespace ShutterManagement.Business.Services
                 .Where(x =>
                     (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
                     (string.IsNullOrEmpty(filter.JobStatus.ToLower()) ? true : x.jobDetails.JobStatusId.ToLower() == filter.JobStatus.ToLower()) &&
+                    (string.IsNullOrEmpty(filter.EstimationId.ToLower()) ? true : x.EstimateId.ToString().ToLower() == filter.EstimationId.ToLower()) &&
+                    (string.IsNullOrEmpty(filter.CustomerId.ToLower()) ? true : x.jobDetails.ContactId.ToString().ToLower() == filter.CustomerId.ToLower()) &&
                     (string.IsNullOrWhiteSpace(filter.SearchValue) ||
                      ((x.Notes ?? "").Contains(filter.SearchValue)
                       || (x.JobId.ToString() ?? "").Contains(filter.SearchValue)
+                      || (x.FirstContactName?.ToLower() ?? "").Contains(filter.SearchValue.Trim().ToLower()) 
+                      || ((x.FirstContactName?.ToLower() ?? "") + " " + (x.LastContactName?.ToLower() ?? "")).Contains(filter.SearchValue.Trim().ToLower()) 
+                      || (x.LastContactName?.ToLower() ?? "").Contains(filter.SearchValue.Trim().ToLower()) 
                       || (x.OrderNumber ?? "").Contains(filter.SearchValue)
                       || (x.OrderId.ToString() ?? "").Contains(filter.SearchValue)
                       || (x.Status ?? "").Contains(filter.SearchValue)
                       || (x.EstimateId.ToString()).Contains(filter.SearchValue)
+                      || (x.ContactId?.ToString()).Contains(filter.SearchValue)
                       || (x.EstimateCode ?? "").Contains(filter.SearchValue)
-                      || (x.EstimateName ?? "").Contains(filter.SearchValue)
+                      || (x.EstimateName ?? "").ToLower().Contains(filter.SearchValue)
                       || (x.TermsCondition ?? "").Contains(filter.SearchValue)
                       || (x.DiscountCoupon ?? "").Contains(filter.SearchValue)
                       || (x.GrandTotal.ToString() ?? "").Contains(filter.SearchValue)))
@@ -921,7 +931,8 @@ namespace ShutterManagement.Business.Services
                                    JobStatusId = j1.JobStatus.ToString().ToLower(),
                                    JobStatus = j6.JobStatusName,
                                    ContactId = j1.ContactId.ToString(),
-                                   ContactName = c.Name,
+                                   ContactFirstName = c.FirstName,
+                                   ContactLastName = c.LastName,
                                    CreatedAt = j1.CreatedAt,
                                    UpdatedAt = j1.UpdatedAt
                                }).FirstOrDefault();

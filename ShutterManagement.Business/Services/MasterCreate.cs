@@ -17,6 +17,8 @@ using Newtonsoft.Json;
 using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.Core.ViewModels.Response;
 using ShutterManagement.Core;
+using System.Net.Http.Headers;
+using Microsoft.IdentityModel.Tokens;
 
 namespace ShutterManagement.Business.Services
 {
@@ -45,7 +47,8 @@ namespace ShutterManagement.Business.Services
                         SqlParameter[] sqlParameters = new SqlParameter[]
                         {
                              new SqlParameter("@ContactType", SqlDbType.VarChar) { SqlValue = contactData.ContactType },
-                             new SqlParameter("@Name", SqlDbType.VarChar) { SqlValue = contactData.Name },
+                             new SqlParameter("@FirstName", SqlDbType.VarChar) { SqlValue = contactData.FirstName },
+                             new SqlParameter("@LastName", SqlDbType.VarChar) { SqlValue = contactData.LastName },
                              new SqlParameter("@PhoneNumber", SqlDbType.VarChar) { SqlValue = contactData.PhoneNumber },
                              new SqlParameter("@Email", SqlDbType.VarChar) { SqlValue = contactData.Email },
                              new SqlParameter("@Website", SqlDbType.VarChar) { SqlValue = contactData.Website },
@@ -88,7 +91,8 @@ namespace ShutterManagement.Business.Services
                         SqlParameter[] sqlParameters = new SqlParameter[]
                         {
                     new SqlParameter("@ContactType", SqlDbType.VarChar) { SqlValue = contactData.ContactType },
-                    new SqlParameter("@Name", SqlDbType.VarChar) { SqlValue = contactData.Name },
+                    new SqlParameter("@FirstName", SqlDbType.VarChar) { SqlValue = contactData.FirstName },
+                    new SqlParameter("@LastName", SqlDbType.VarChar) { SqlValue = contactData.LastName },
                     new SqlParameter("@PhoneNumber", SqlDbType.VarChar) { SqlValue = contactData.PhoneNumber },
                     new SqlParameter("@Email", SqlDbType.VarChar) { SqlValue = contactData.Email },
                     new SqlParameter("@Website", SqlDbType.VarChar) { SqlValue = contactData.Website },
@@ -154,7 +158,8 @@ namespace ShutterManagement.Business.Services
                 {
                     ContactId = reader.GetGuid(reader.GetOrdinal("ContactId")),
                     ContactType = reader.GetString(reader.GetOrdinal("ContactType")),
-                    Name = reader.GetString(reader.GetOrdinal("Name")),
+                    FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
+                    LastName = reader.GetString(reader.GetOrdinal("LastName")),
                     PhoneNumber = reader.IsDBNull(reader.GetOrdinal("PhoneNumber")) ? null : reader.GetString(reader.GetOrdinal("PhoneNumber")),
                     Email = reader.IsDBNull(reader.GetOrdinal("Email")) ? null : reader.GetString(reader.GetOrdinal("Email")),
                     Website = reader.IsDBNull(reader.GetOrdinal("Website")) ? null : reader.GetString(reader.GetOrdinal("Website")),
@@ -191,6 +196,13 @@ namespace ShutterManagement.Business.Services
                     .Where(t => t.TenantId == AppConstant.LoggedInTenantId && t.IsActive == true && t.IsDelete == false )
                     .Select(t => t.BrandingInfo).FirstOrDefault();
 
+                bool IsSubtenant = false;
+                var IsSubtenants = (await tenantService.GetAll()).Where
+                    (t => t.TenantId == AppConstant.LoggedInTenantId && ( t.ParentTenantId != null || !string.IsNullOrEmpty(t.ParentTenantId.ToString())) && t.IsActive == true && t.IsDelete == false).FirstOrDefault();
+                if(IsSubtenants != null)
+                {
+                    IsSubtenant = true;
+                }
                 var brandinginfo = tenantBrandingService.GetAllQuerable()
                                  .Where(c => c.Id == tenantinfo).Select(c => new BrandingInfoResponse
                                  {
@@ -203,10 +215,12 @@ namespace ShutterManagement.Business.Services
                                      StreetAddress = c.StreetAddress,
                                      City = c.City,
                                      Country = c.Country,
-                                     ZipCode = c.ZipCode
+                                     ZipCode = c.ZipCode,
+                                     Markup = c.Markup,
+                                     IsSubtenant = IsSubtenant
                                  })
                     .FirstOrDefault();
-
+               
                 if (brandinginfo != null)
                 {
                     responseVm.IsSuccess = true;
@@ -232,7 +246,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var tenantinfo = (await tenantService.GetAll())
-                    .Where(t => t.TenantId == AppConstant.LoggedInTenantId && t.IsActive == true && t.IsDelete == false && t.ParentTenantId.ToString() == AppConstant.LoggedInParentTenantId)
+                    .Where(t => t.TenantId.ToString().ToLower() == AppConstant.LoggedInTenantId.ToString().ToLower() && t.IsActive == true && t.IsDelete == false && t.ParentTenantId.ToString().ToLower() == AppConstant.LoggedInParentTenantId.ToLower())
                     .Select(t => t.BrandingInfo).FirstOrDefault();
 
                 var brandinginfo = tenantBrandingService.GetAllQuerable()
@@ -255,7 +269,8 @@ namespace ShutterManagement.Business.Services
                     brandinginfo.StreetAddress = updatesetting.StreetAddress;
                     brandinginfo.City = updatesetting.City;
                     brandinginfo.Country = updatesetting.Country;
-                    brandinginfo.ZipCode = updatesetting.ZipCode;   
+                    brandinginfo.ZipCode = updatesetting.ZipCode;
+                    brandinginfo.Markup = updatesetting.Markup;
                     var res = tenantBrandingService.Update(brandinginfo);
                     result.IsSuccess = true;
                     result.Message = AppConstant.UpdateSuccessMsg;

@@ -18,12 +18,23 @@ namespace ShutterManagement.Core.SPModel
         [DefaultValue("")]
         public string ContactType { get; set; } = string.Empty;
 
-        [Required]
-        [MaxLength(255)]
-        [RegularExpression("^[\\p{L} .'-]+$", ErrorMessage = AppConstant.AlphabaticalError)]
-        [DefaultValue("")]
-        public string? Name { get; set; }
+        //[Required]
+        //[MaxLength(255)]
+        //[RegularExpression("^[\\p{L} .'-]+$", ErrorMessage = AppConstant.AlphabaticalError)]
+        //[DefaultValue("")]
+        //public string? Name { get; set; }
 
+        [Required]
+        [MaxLength(50)]
+        [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabaticalError)]
+        [DefaultValue("")]
+        public string? FirstName { get; set; }
+
+        [Required]
+        [MaxLength(50)]
+        [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabaticalError)]
+        [DefaultValue("")]
+        public string? LastName { get; set; }
         [Required]
         [MaxLength(10)]
         [RegularExpression(@"^\d{10}$", ErrorMessage = "Phone number must be exactly 10 digits.")]

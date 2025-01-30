@@ -1,5 +1,6 @@
 ﻿using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core;
+using ShutterManagement.Core.Common;
 using ShutterManagement.Core.ViewModels;
 using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.Core.ViewModels.Response;
@@ -18,12 +19,14 @@ namespace ShutterManagement.Business.Services
     public class ProductService : BaseRepository<ShutterDBContext, TblProduct>, IProductService
     {
         private readonly ITenantService tenantService;
+        private readonly IExpressionService expressionService;
         private readonly IProductComponentService productComponentService;
         private readonly ClaimsProperty claimProperty;
         private readonly IComponentService componentService;
-        public ProductService(ITenantService tenantService, IProductComponentService productComponentService, ClaimsProperty claimsProperty,IComponentService componentService)
+        public ProductService(ITenantService tenantService, IExpressionService expressionService, IProductComponentService productComponentService, ClaimsProperty claimsProperty,IComponentService componentService)
         {
             this.tenantService = tenantService;
+            this.expressionService = expressionService;
             this.claimProperty = claimsProperty;
             this.productComponentService = productComponentService;
         }
@@ -133,13 +136,16 @@ namespace ShutterManagement.Business.Services
 
                         var isComponentExists = await productComponentService.AnyAsync(x => x.ComponentId == item.ComponentId && x.ProductId == product.ProductId
                         && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
-                        if (!isComponentExists)
+                        var isPricingExpression = await expressionService.AnyAsync(x => x.Id.ToString() == item.PricingExpression && x.IsActive == true && x.IsDelete == false
+                         && x.TenantId == AppConstant.LoggedInTenantId);
+                        if (!isComponentExists && isPricingExpression)
                         {
                             TblProductComponent productcomponent = new TblProductComponent
                             {
                                 ProductComponentId = Guid.NewGuid(),
                                 ProductId = product.ProductId,
                                 ComponentId = item.ComponentId,
+                                PricingExpression = item.PricingExpression,
                                 Quantity = item.Quantity,
                                 CreatedAt = DateTime.Now,
                                 CreatedBy = AppConstant.LoggedInUserID,
@@ -259,10 +265,13 @@ namespace ShutterManagement.Business.Services
                     {
                         var productComponent = (from pm in dbContext.TblProductComponents.OrderByDescending(x => x.CreatedAt)
                                                 join c in dbContext.TblComponents on pm.ComponentId equals c.ComponentId
+                                                join pe in dbContext.TblExpressions on pm.PricingExpression equals pe.Id.ToString()
                                                 where pm.ProductId == item.ProductId && pm.IsDelete == false
                                                 select new ProductComponentVmm
                                                 {
                                                     ComponentId = pm.ComponentId,
+                                                    PricingExpression = pm.PricingExpression,
+                                                    PricingExpressionFormula = !string.IsNullOrEmpty(pe.DisplayArray) ? pe.DisplayArray.Split(new[] { ", " }, StringSplitOptions.TrimEntries) : new string[0],
                                                     ComponentName = c.ComponentName,
                                                     Quantity = pm.Quantity,
                                                     ProductComponentId = pm.ProductComponentId,
@@ -288,10 +297,7 @@ namespace ShutterManagement.Business.Services
 
 
 
-                    var TakenRecords = FilterRecords
-                        .Skip((filter.PageNo - 1) * filter.RecordPerPage)
-                        .Take(filter.RecordPerPage)
-                        .ToList();
+                    var TakenRecords = Paginate.Pagination(FilterRecords, filter);
                     responseVm.IsSuccess = true;
 
                     if (TakenRecords != null && TakenRecords.Count > 0)

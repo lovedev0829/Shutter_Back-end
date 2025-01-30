@@ -20,6 +20,7 @@ using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json.Linq;
 using System.Text.RegularExpressions;
 using System.Linq.Expressions;
+using NCalc;
 
 namespace ShutterManagement.Business.Services
 {
@@ -54,6 +55,8 @@ namespace ShutterManagement.Business.Services
         private readonly IRegion region;
         private readonly ITaxExemption taxExemption;
         private readonly IDiscountService discountservice;
+        private readonly ISubtenantProductMarkup subtenantProductMarkup;
+        private readonly ITenantBrandingService tenantBrandingService;
         List<Guid> expressionList = new List<Guid>();
 
         public EstimateService(ShutterDBContext context,
@@ -80,7 +83,8 @@ namespace ShutterManagement.Business.Services
             IHttpContextAccessor _httpContextAccessor,
             IOption optionService,
             ITaxRate taxRate,
-            IRegion region,ITaxExemption taxExemption, IDiscountService discountservice
+            IRegion region,ITaxExemption taxExemption, IDiscountService discountservice,
+            ISubtenantProductMarkup subtenantProductMarkup,ITenantBrandingService tenantBrandingService
             )
         {
             _context = context;
@@ -111,6 +115,8 @@ namespace ShutterManagement.Business.Services
             this.region = region;
             this.taxExemption = taxExemption;
             this.discountservice = discountservice;
+            this.subtenantProductMarkup = subtenantProductMarkup;
+            this.tenantBrandingService = tenantBrandingService;
         }
 
         public async Task<IResponseVm<string>> ActiveInActiveEstimate(Guid EstimateId)
@@ -313,7 +319,7 @@ namespace ShutterManagement.Business.Services
                 }
 
                 // Validate if the estimate already exists
-                var isEstimateExists = await ValidateEstimateExists(model.EstimateName, (Guid)model.JobId, Guid.Empty);
+                var isEstimateExists = await ValidateEstimateExists(model.EstimateName.Trim(), (Guid)model.JobId, Guid.Empty);
                 if (isEstimateExists)
                 {
                     responseVm.Message = "Estimates Name " + AppConstant.AlreadyExists;
@@ -358,7 +364,35 @@ namespace ShutterManagement.Business.Services
             // Always return the response after completing the operation
             return responseVm;
         }
+        public async Task<IResponseVm<string>> ValidateExpression(ValidateExpression model)
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+            try
+            {
+                string formula = model.Expression ?? "";
 
+                var validate = CalculateExpression(formula, model);
+                if (validate.HasErrors())
+                {
+                    responseVm.Message = "There is some issue in Expression.";
+                    return responseVm;
+                }
+                var res = validate.Evaluate();
+                responseVm.IsSuccess = true;
+                responseVm.Message = "Expression is correct. You can add this expression now.";
+                responseVm.Data = Convert.ToDecimal(res).ToString("0.000") ?? "";
+
+            }
+            catch (EvaluationException ex)
+            {
+                responseVm.Message = "Expression error: " + ex.Message;
+            }
+            catch (Exception ex)
+            {
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+            }
+            return responseVm;
+        }
         public async Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> BuildEstimate(Guid[] windowProductIds, bool IsBreakdown)
         {
             IResponseVm<List<WindowProdcutDetailsForEstimate>> responseVm = new ResponseVm<List<WindowProdcutDetailsForEstimate>>();
@@ -385,9 +419,10 @@ namespace ShutterManagement.Business.Services
                     
                     if (data.IsSuccess)
                     {
+                      //  var ComponentPriceWithoutAdditionalCostwithSubtenantMarkup = 0.0M;
                         //calculate price
-                        var price = await CalculateEstimate(data.Data);
-                        data.Data.ForEach(x => x.TotalPrice = Convert.ToDecimal(price.ToString("0.00")));
+                        var ComponentPriceWithoutAdditionalCost = await CalculateEstimate(data.Data);
+                        data.Data.ForEach(x => x.TotalPrice = Convert.ToDecimal(ComponentPriceWithoutAdditionalCost.ToString("0.000")));
                         WindowProductData.AddRange(data.Data);
                         responseVm.IsSuccess = true;
                     }
@@ -471,7 +506,88 @@ namespace ShutterManagement.Business.Services
             return IsTaxApplied;
         }
 
-       
+        private async Task<decimal> CalculateEstimate(List<WindowProdcutDetailsForEstimate> data)
+        {
+            decimal ComponentSubTotal = 0.00M;
+
+            foreach (var item in data)
+            {
+                var formula = item.ExpressionFormulae ?? "";
+
+                // Define an expression with a nudget and a custom function
+                var expression = CalculateExpression(formula,item);
+                var res = expression.Evaluate();
+                var ComponentPrice = Convert.ToDecimal(Convert.ToDecimal(res).ToString("0.000"));
+                item.AdditionalCost = Convert.ToDecimal(item.OptionsPrice.Sum().ToString("0.000"));
+                //finalSubTotal = (decimal)item.AdditionalCost + finalSubTotal;
+                var ComponentPriceWithoutMarkup = ComponentPrice;
+                var ComponentPriceWithMarkup = (ComponentPriceWithoutMarkup * (100 + item.MarkupPercentage)) / 100;
+                var ComponentPriceWithProductMarkup = (ComponentPriceWithMarkup * (100 + item.Markup)) / 100;
+                var IsSubtenants = (await tenantService.GetAll()).Where
+                   (t => t.TenantId == AppConstant.LoggedInTenantId && (t.ParentTenantId != null || !string.IsNullOrEmpty(t.ParentTenantId.ToString()))
+                   && t.IsActive == true && t.IsDelete == false)
+                 .FirstOrDefault();
+                if (IsSubtenants != null)
+                {
+                        var productMarkup = subtenantProductMarkup.GetAllQuerable().Where(x => x.ProductId == item.ProductId).Select(x => x.Markup).FirstOrDefault();
+                        if (productMarkup != null && productMarkup > 0)
+                        {
+                        ComponentPriceWithProductMarkup = (decimal)(ComponentPriceWithProductMarkup * (100 + productMarkup)) / 100;
+                        }
+                        else
+                        {
+                        var globalmarkup = tenantBrandingService.GetAllQuerable().Where(x => x.Id == IsSubtenants.BrandingInfo).Select(x => x.Markup).FirstOrDefault();
+                        ComponentPriceWithProductMarkup = (decimal)(ComponentPriceWithProductMarkup * (100 + (globalmarkup ?? 0.00m))) / 100;
+                        }
+                }
+                item.Price = ComponentPriceWithProductMarkup;
+                ComponentSubTotal += (decimal)ComponentPriceWithProductMarkup;
+            }
+            return ComponentSubTotal;
+        }
+
+        public NCalc.Expression CalculateExpression(string formula, dynamic values)
+        {
+            // check placeholders
+            string pattern = @"{{.*?}}";
+            var matches = Regex.Matches(formula ?? "", pattern);
+            if (matches != null && matches.Count() > 0)
+            {
+                foreach (Match match in matches)
+                {
+                    var property = match.Value.Replace("{{", "").Replace("}}", "");
+                    var val = GetProperty.GetColumnValue(values, property);
+                    if (val == null)
+                    {
+                        string[] info = property.Split("__");
+                        if (info != null && info.Length > 0 && info.Length == 3)
+                        {
+                            if (info[0] == "Material")
+                            {
+                                val = materialService.GetAllQuerable().Where(x => x.ProductType.ToString() == info[1] && x.MaterialName == info[2] && x.IsActive == true && (x.TenantId == AppConstant.LoggedInTenantId || x.TenantId.ToString() == AppConstant.LoggedInParentTenantId)).Select(x => x.UnitCost).FirstOrDefault();
+                                if (GetProperty.GetColumnValue(values, "WasteFactor") != null)
+                                {
+                                    val = (val * (100 + values.WasteFactor ?? 0) / 100);
+                                }
+                            }
+                            else
+                            {
+                                val = 0;
+                            }
+                        }
+                    }
+                    //calculate Waste factor
+                    
+
+                    // Set parameters
+                    formula = formula?.Replace(match.Value, Convert.ToDecimal(val).ToString());
+                    //expression.Parameters[match.Value] = Convert.ToDecimal(val);
+                }
+            }
+
+            var expression = new NCalc.Expression(formula);
+            return expression;
+        }
 
         public async Task<IResponseVm<string>> Update_Estimate(UpdatetEstimate model)
         {
@@ -861,6 +977,7 @@ namespace ShutterManagement.Business.Services
                     (string.IsNullOrWhiteSpace(filter.SearchValue) ||
                     ((x.Notes ?? "").Contains(filter.SearchValue)
                      || (x.JobId.ToString().ToLower() ?? "").Contains(filter.SearchValue)
+                     || (x.jobDetails?.ContactId?.ToString().ToLower() ?? "").Contains(filter.CustomerId)
                      || (x.Status ?? "").Contains(filter.SearchValue)
                      || (x.EstimateId.ToString()).Contains(filter.SearchValue)
                      || (x.EstimateCode ?? "").Contains(filter.SearchValue)
@@ -883,6 +1000,7 @@ namespace ShutterManagement.Business.Services
                                join j3 in dbContext.TblAddresses on j1.AddressId equals j3.AddressId
                                join j4 in dbContext.MstJobTypes on j1.JobType equals j4.Id
                                join j5 in dbContext.TblUsers on j1.AssignedPersonnel equals j5.Id
+                               join j6 in dbContext.TblContacts on j1.ContactId equals j6.ContactId
                                where j1.TenantId == AppConstant.LoggedInTenantId && j1.IsDelete == false && j1.JobId == e.JobId
                                select new JobDetails
                                {
@@ -893,7 +1011,8 @@ namespace ShutterManagement.Business.Services
                                    AssignedPersonnel = j5.FirstName + " " + j5.LastName,
                                    Address = j3.StreetAddress + " " + j3.City + " " + j3.State + " " + j3.ZipCode,
                                    AddressLabel = j3.Label,
-                                   ScheduleTime = j1.ScheduledDate
+                                   ScheduleTime = j1.ScheduledDate,
+                                   ContactId=j6.ContactId
                                }).FirstOrDefault();
 
             e.jobDetails = jobdetails1;
@@ -1050,16 +1169,15 @@ namespace ShutterManagement.Business.Services
             Guid? taxRateId = null;
             Guid? discountId = null;
             var windowproductdetails = await BuildEstimate(model.WindowProductId, false);
-                if (windowproductdetails.Data != null && windowproductdetails.Data.Any())
-                {
+            if (windowproductdetails.Data != null && windowproductdetails.Data.Any())
+            {
                 additionalCost = (decimal)windowproductdetails.Data.Sum(x => x.AdditionalCost);
-
-                subtotal = (decimal)windowproductdetails.Data.Sum(x => x.TotalPrice); 
+                subtotal = (decimal)windowproductdetails.Data.Sum(x => x.TotalPrice);
                 SumofSubtotalandAdditionalCost = subtotal + additionalCost;
-                }
+            }
             if (string.IsNullOrEmpty((model.taxRateId).ToString()) && string.IsNullOrEmpty(model.DiscountCoupon))
             {
-                  grandtotal = SumofSubtotalandAdditionalCost;
+                grandtotal = SumofSubtotalandAdditionalCost;
             }
             else
             {
@@ -1081,11 +1199,14 @@ namespace ShutterManagement.Business.Services
                 }
                 grandtotal = await CalculateGrandTotal(discountId, SumofSubtotalandAdditionalCost, taxRateId) ?? 0m;
             }
+
+           
+            string EstimationCode = EstimationUniqueName().Result.Data; 
             TblEstimate createEstimate = new TblEstimate
             {
                 EstimateId = Guid.NewGuid(),
-                EstimateName = model.EstimateName,
-                EstimateCode = GenerateUniqueId.GenerateUniqueIds(ModuleName.Estimation, AppConstant.LoggedInCompanyCode),
+                EstimateName = model.EstimateName.Trim(),
+                EstimateCode = EstimationCode,
                 Notes = model.Notes,
                 DiscountAmount = model.Discount,
                 DiscountCoupon = model.DiscountCoupon,
@@ -1175,7 +1296,7 @@ namespace ShutterManagement.Business.Services
             }
 
             // Calculate tax based on subtotal, additional cost, and discount
-            decimal taxApplied = (decimal)((subtotal  - discount) * (taxRate1 / 100));
+            decimal taxApplied = (decimal)((subtotal  - discount) * taxRate1) / 100;
             return taxApplied;
         }
 
@@ -1449,6 +1570,29 @@ namespace ShutterManagement.Business.Services
         }
 
 
+        //GenerateEstimationUniqueName
+        public async Task<IResponseVm<string>> EstimationUniqueName()
+        {
+            IResponseVm<string> res = new ResponseVm<string>();
+            try
+            {
+
+               var EstimationCount = GetAllQuerable().OrderByDescending(p => p.CreatedAt)
+                  .Where(c => c.TenantId == AppConstant.LoggedInTenantId && c.CreatedAt.Value.Date == DateTime.Today.Date)
+                  .ToList().Count();
+                EstimationCount += 1; 
+                
+                var EstimationCode = GenerateUniqueId.GenerateUniqueIds(ModuleName.Estimation, AppConstant.LoggedInCompanyCode, EstimationCount);
+                res.IsSuccess = true;
+                res.Data = EstimationCode;
+                res.Message = "Estimation Code Created";
+            }
+            catch (Exception ex)
+            {
+                res.Message = ex.Message;   
+            }
+            return res;
+        }
         #endregion
 
 

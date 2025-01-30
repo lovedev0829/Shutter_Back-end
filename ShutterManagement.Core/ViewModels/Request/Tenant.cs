@@ -5,6 +5,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Newtonsoft.Json.Serialization;
 
 namespace ShutterManagement.Core.ViewModels.Request
 {
@@ -47,6 +48,8 @@ namespace ShutterManagement.Core.ViewModels.Request
         [MaxLength(10)]
         [RegularExpression(@"^\d{10}$", ErrorMessage = "Phone number must be exactly 10 digits.")]
         public string? PhoneNumber { get; set; }
+
+        [DefaultValue("")]
         public string? Logo { get; set; }
 
         [DefaultValue("#1d7e8b")]
@@ -119,9 +122,12 @@ namespace ShutterManagement.Core.ViewModels.Request
         [DefaultValue("")]
 
         public string? ZipCode { get; set; }
-        //[Required]
-        //[DefaultValue("")]
-        //[MinLength(8), MaxLength(12)]
-        //public string? Password { get; set; }
+
+        [DefaultValue("")]
+       // [MinLength(4),MaxLength(4)]
+        public string? InvoicePrefix { get; set; }
+
+        //[DefaultValue(0)]
+        //public decimal? Markup { get; set; }
     }
 }

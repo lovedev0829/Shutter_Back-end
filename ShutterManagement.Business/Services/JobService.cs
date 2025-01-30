@@ -75,7 +75,10 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.TenantNotFound;
                     return responseVm;
                 }
-                var generateUnique = GenerateUniqueId.GenerateUniqueIds(ModuleName.Job, AppConstant.LoggedInCompanyCode);
+                int Version = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt)
+                      .Select(p => (p.JobUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries).Length == 3 ? Convert.ToInt32(p.JobUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries)[2]) : 0)).FirstOrDefault();
+                Version += 1;
+                var generateUnique = GenerateUniqueId.GenerateUniqueIds(ModuleName.Job, AppConstant.LoggedInCompanyCode, Version);
                 bool IsAddressExist = await address.AnyAsync(x => x.AddressId == model.AddressId && x.ContactId == model.ContactId
                 && x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false);
 
@@ -180,14 +183,15 @@ namespace ShutterManagement.Business.Services
                                    join t4 in _context.TblUsers on t2.AssignedPersonnel equals t4.Id
                                    join t5 in _context.MstJobStatuses on t2.JobStatus equals t5.JobStatusId
                                    join t6 in _context.TblContacts on t2.ContactId equals t6.ContactId
-                                   where t2.TenantId == AppConstant.LoggedInTenantId && t2.IsDelete == false
+                                   where t2.TenantId == AppConstant.LoggedInTenantId && t2.IsDelete == false && t6.IsActive == true && t6.IsDelete == false
                                    select new GetAllJobsdetails
                                    {
                                        IsActive = t2.IsActive,
                                        JobId = t2.JobId,
                                        JobName = t2.JobName,
                                        ContactId = t2.ContactId,
-                                       ContactName = t6.Name,
+                                       ContactFirstName = t6.FirstName,
+                                       ContactLasttName = t6.LastName,
                                        AddressId = t2.AddressId,
                                        JobType = t3.Id,
                                        JobTypeName = t3.JobTypeName,
@@ -217,13 +221,16 @@ namespace ShutterManagement.Business.Services
                                         (x.JobStatus.ToString() == filter.SearchValue) ||
                                         (x.AddressId.ToString() == filter.SearchValue)
                                         || (x.JobName ?? "").ToLower().Contains(filter.SearchValue)
-                                        || (x.ContactName ?? "").ToLower().Contains(filter.SearchValue)
+                                        || (x.ContactFirstName ?? "").ToLower().Contains(filter.SearchValue)
+                                        || (x.ContactLasttName ?? "").ToLower().Contains(filter.SearchValue)
+                                        || ((x.ContactFirstName??"" )+ " " + (x.ContactLasttName??"") ?? "").ToLower().Contains(filter.SearchValue)
                                         || (x.JobType.ToString() ?? "").ToLower().Contains(filter.SearchValue)
                                         || (x.JobTypeName ?? "").ToLower().Contains(filter.SearchValue)
                                         || (x.AssignedPersonnelName ?? "").ToLower().Contains(filter.SearchValue)
                                         || (x.JobStatus.ToString() ?? "").ToLower().Contains(filter.SearchValue)
+                                        || (x.JobStatusName?.ToLower()?? "").ToLower().Contains(filter.SearchValue)
                                         || (x.AssignedPersonnel.ToString() ?? "").ToLower().Contains(filter.SearchValue)
-                                        || (x.Notes.ToString() ?? "").ToLower().Contains(filter.SearchValue)
+                                        || (x.Notes ?? "").ToLower().Contains(filter.SearchValue)
                                         || (x.Label ?? "").ToLower().Contains(filter.SearchValue)
                                         || (x.StreetAddress ?? "").ToLower().Contains(filter.SearchValue)
                                         || (x.State ?? "").ToLower().Contains(filter.SearchValue)
@@ -332,14 +339,15 @@ namespace ShutterManagement.Business.Services
                                          join p2 in _context.TblTenants on t2.TenantId equals p2.TenantId
                                          join t5 in _context.MstJobStatuses on t2.JobStatus equals t5.JobStatusId
                                          join t6 in _context.TblContacts on t2.ContactId equals t6.ContactId
-                                         where t2.TenantId == AppConstant.LoggedInTenantId || subTenantlist.Contains((Guid)t2.TenantId)
+                                         where t6.IsDelete == false && t6.IsActive == true && t2.TenantId == AppConstant.LoggedInTenantId || subTenantlist.Contains((Guid)t2.TenantId)
                                          select new GetAllJobsSubtenant_tenant
                                          {
                                              IsActive = t2.IsActive,
                                              JobId = t2.JobId,
                                              JobName = t2.JobName,
                                              ContactId = t2.ContactId,
-                                             ContactName = t6.Name,
+                                             ContactFirstName = t6.FirstName,
+                                             ContactLastName = t6.LastName,
                                              ContactEmail = t6.Email,
                                              ContactPhone = t6.PhoneNumber,
                                              AddressId = t2.AddressId,
@@ -374,6 +382,7 @@ namespace ShutterManagement.Business.Services
                             (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
                             (string.IsNullOrEmpty(filter.JobStatus) ? true : (filter.JobStatus == x.JobStatus.ToString())) &&
                             (string.IsNullOrEmpty(filter.Address) ? true : (filter.Address == x.AddressId.ToString())) &&
+                            (string.IsNullOrEmpty(filter.CustomerId) ? true : (filter.CustomerId == x.ContactId.ToString())) &&
                             (string.IsNullOrEmpty(filter.TenantId) ? true : (Guid.Parse(filter.TenantId) == x.TenantId)) &&
                             (string.IsNullOrEmpty(filter.SearchValue) ? true :
                                 (x.JobId.ToString() == filter.SearchValue) ||
@@ -381,10 +390,14 @@ namespace ShutterManagement.Business.Services
                                 (x.JobStatus.ToString() == filter.SearchValue) ||
                                 (x.AddressId.ToString() == filter.SearchValue)
                                 || (x.JobName ?? "").ToLower().Contains(filter.SearchValue)
-                                || (x.ContactName ?? "").ToLower().Contains(filter.SearchValue)
+                                || (x.ContactFirstName ?? "").ToLower().Contains(filter.SearchValue)
+                                || (x.ContactLastName ?? "").ToLower().Contains(filter.SearchValue)
+                                || (x.ContactPhone ?? "").Contains(filter.SearchValue)
+                                || (x.ContactEmail ?? "").ToLower().Contains(filter.SearchValue)
                                 || (x.JobType.ToString() ?? "").ToLower().Contains(filter.SearchValue)
                                 || (x.JobTypeName ?? "").ToLower().Contains(filter.SearchValue)
                                 || (x.AssignedPersonnelName ?? "").ToLower().Contains(filter.SearchValue)
+                                || (x.CreatedbyUsername ?? "").ToLower().Contains(filter.SearchValue)
                                 || (x.JobStatus.ToString() ?? "").ToLower().Contains(filter.SearchValue)
                                 || (x.AssignedPersonnel.ToString() ?? "").ToLower().Contains(filter.SearchValue)
                                 || (x.Notes.ToString() ?? "").ToLower().Contains(filter.SearchValue)

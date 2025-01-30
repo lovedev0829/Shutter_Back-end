@@ -46,6 +46,15 @@ namespace ShutterManagement.Controllers
             return Ok(res);
         }
 
+        [HttpPost]
+        [Route("Validate")]
+        [Authorize(Roles = "ExpressionAdd")]
+        public async Task<IActionResult> ValidateExpression(ValidateExpression Expression)
+        {
+            var result = await _EstimateService.ValidateExpression(Expression);
+            return Ok(result);
+        }
+
         [HttpPost("BuildEstimate")]
         [Authorize(Roles = "EstimateAdd")]
         public async Task<IActionResult> BuildEstimate(BuildEstimate buildEstimate)

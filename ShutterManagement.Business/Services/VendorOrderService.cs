@@ -334,7 +334,8 @@ namespace ShutterManagement.Business.Services
                                             VendorOrderId = vo.VendorOrderId,
                                             VendorId = vo.VendorId,
                                             JobId = vo.JobId,
-                                            Vendorname = v.VendorName ?? "",
+                                            FirstName = v.FirstName ?? "",
+                                            LastName = v.LastName ?? "",
                                             JobName = j.JobName ?? "",
                                             OrderNumber = vo.OrderNumber ?? "",
                                             OrderDate = vo.OrderDate,
@@ -381,7 +382,9 @@ namespace ShutterManagement.Business.Services
                             (x.JobId.ToString() == filter.SearchValue) ||
                             (x.OrderNumber?.ToLower() ?? "").Contains(filter.SearchValue.Trim()) ||
                             (x.JobName?.ToLower() ?? "").Contains(filter.SearchValue.Trim()) ||
-                            (x.Vendorname?.ToLower() ?? "").Contains(filter.SearchValue.Trim()) ||
+                            ((x.FirstName.ToLower() + " " + x.LastName.ToLower()) ?? "").Contains(filter.SearchValue) ||
+                            (x.FirstName.ToLower() ?? "").Contains(filter.SearchValue) ||
+                            (x.LastName.ToLower() ?? "").Contains(filter.SearchValue) ||
                             (x.OrderDate.ToString() ?? "").Contains(filter.SearchValue.Trim()) ||
                             (x.VendorOrderItems.Any(item => item.MaterialId.ToString().Contains(filter.SearchValue))))
                     )

@@ -31,5 +31,11 @@ public partial class TblTenantBrandingInfo
 
     public string? ZipCode { get; set; }
 
+    public string? InvoicePrefix { get; set; }
+
+    public decimal? Markup { get; set; }
+
+    public decimal? Discount { get; set; }
+
     public virtual ICollection<TblTenant> TblTenants { get; set; } = new List<TblTenant>();
 }

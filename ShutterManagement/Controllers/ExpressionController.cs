@@ -63,16 +63,6 @@ namespace ShutterManagement.Controllers
             var result = await expression.Get_AllExpression(filter);
             return Ok(result);
         }
-        [HttpPost]
-        [Route("Validate")]
-        [Authorize(Roles = "ExpressionAdd")]
-        public async Task<IActionResult> ValidateExpression(ValidateExpression Expression)
-        {
-            var result = await expression.ValidateExpression(Expression);
-            return Ok(result);
-        }
-
-
 
     }
 }

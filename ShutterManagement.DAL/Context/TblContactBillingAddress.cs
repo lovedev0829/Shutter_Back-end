@@ -31,5 +31,9 @@ public partial class TblContactBillingAddress
 
     public string? StreetAddress { get; set; }
 
+    public string? FirstName { get; set; }
+
+    public string? LastName { get; set; }
+
     public virtual TblContact? Contact { get; set; }
 }

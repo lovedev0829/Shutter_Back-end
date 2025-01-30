@@ -52,6 +52,7 @@ namespace ShutterManagement.Controllers
         private readonly ITaxRate taxService;
         private readonly IEstimateService estimateService;
         private readonly IEstimationBreakdownService estimationBreakdownService;
+        private readonly ILocationService locationService;
         private readonly IDashboard dashboard;
 
         public CommonController(IMasterCreate masterCreate, 
@@ -64,6 +65,8 @@ namespace ShutterManagement.Controllers
             IAddress address, IOption option, IProductService productService,
             IUnitofMeasurementService unitofMeasurementService, IRoleService roleService, IRegion region, IContactService contactService,
             IMstContactType contactType, IJobService jobService,IExpressionService expression ,IInvoiceService invoiceService,
+            ITaxRate taxService,IEstimateService estimateService,
+            IEstimationBreakdownService estimationBreakdownService, ILocationService locationService)
             ITaxRate taxService,IEstimateService estimateService,IEstimationBreakdownService estimationBreakdownService,IDashboard dashboard)
         {
             this.masterCreate = masterCreate;
@@ -104,6 +107,7 @@ namespace ShutterManagement.Controllers
             this.taxService = taxService;
             this.estimateService = estimateService;
             this.estimationBreakdownService = estimationBreakdownService;
+            this.locationService = locationService;
             this.dashboard = dashboard;
         }
 
@@ -273,7 +277,7 @@ namespace ShutterManagement.Controllers
 
         [HttpGet]
         [Route("GetAllExpressionChip")]
-        public async Task<IActionResult> GetAllExpressionChip(string Product, string? ProductType, string Option = "")
+        public async Task<IActionResult> GetAllExpressionChip(string? Product, string? ProductType, string Option = "")
         {
             var res = await componentPriceService.GetAllComponentsChip(Product,ProductType, Option);
             return Ok(res);
@@ -332,6 +336,17 @@ namespace ShutterManagement.Controllers
             return Ok(productList);
 
         }
+
+        [HttpGet]
+        [Route("EstimationUniquename")]
+        public async Task<IActionResult> EstimationCode()
+        {
+            var EstimationCode = await estimateService.EstimationUniqueName();
+            return Ok(EstimationCode);
+
+        }
+
+
 
         //[HttpGet]
         //[Route("ContactEstimationProductCompoentBreakdown")]
@@ -518,11 +533,11 @@ namespace ShutterManagement.Controllers
 
         [HttpGet]
         [Route("GetAllProduct")]
-        public async Task<IActionResult> GetAllProduct(string ProductTypeId)
+        public async Task<IActionResult> GetAllProduct(string? ProductTypeId)
         {
-            var res = await productService.GetAll_Product(filter);
-            res.Data = res.Data?.Where(x => x.IsActive == true && x.ProductType == ProductTypeId).ToList();
-            return Ok(res);
+           var res = await productService.GetAll_Product(filter);
+           res.Data = res.Data?.Where(x => x.IsActive == true && x.ProductType == ProductTypeId).ToList();
+           return Ok(res);
         }
 
         [HttpGet]
@@ -639,7 +654,7 @@ namespace ShutterManagement.Controllers
 
         [HttpGet]
         [Route("GetAllEstimate")]
-        public async Task<IActionResult> GetAllEstimate(string? JobId)
+        public async Task<IActionResult> GetAllEstimate(string? JobId )
         {
             filter.Status = 1;
             filter.SearchValue=JobId?.ToLower();
@@ -647,6 +662,35 @@ namespace ShutterManagement.Controllers
             return Ok(res);
         }
 
+        [HttpPost]
+        [Route("CreateLocation")]
+        public async Task<IActionResult> CreateLocation(CreateLocation mode)
+        {
+            var res = await locationService.Create_Location(mode);
+            return Ok(res);
+
+        }
+
+        [HttpGet]
+        [Route("GeltallLocation")]
+        public async Task<IActionResult> GetallLocation()
+        {
+            var res = await locationService.GetAll_Location();
+            return Ok(res);
+
+        }
+
+
+        [HttpGet]
+        [Route("GetAllEstimateContact")]
+        public async Task<IActionResult> GetAllEstimateContact(string? ContactId)
+        {
+            filter.Status = 1;
+            filter.CustomerId = ContactId?.ToLower();
+            var res = await estimateService.GetAll_Estimate(filter);
+            res.Data = res.Data?.Where(x => x.jobDetails?.ContactId?.ToString().ToLower() == ContactId.ToLower()).ToList();
+            return Ok(res);
+        }
         [HttpGet]
         [Route("GetAllJobDetails")]
         public async Task<IActionResult> GetAllJobDetails()

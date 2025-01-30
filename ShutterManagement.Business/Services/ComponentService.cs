@@ -144,7 +144,7 @@ namespace ShutterManagement.Business.Services
                     {
                         IsComponentExists.ComponentName = model.ComponentName?.Trim();
                         IsComponentExists.ProductType = model.ProductType;
-                        IsComponentExists.PricingExpression = model.PricingExpression;
+                        //IsComponentExists.PricingExpression = model.PricingExpression;
                         IsComponentExists.MarkupPercentage = model.MarkupPercentage;
                         IsComponentExists.Notes = model.Notes;
                         IsComponentExists.UpdatedAt = DateTime.Now;
@@ -360,7 +360,7 @@ namespace ShutterManagement.Business.Services
         private List<ComponentListVm> GetComponentList()
         {
             var componentList = GetAllQuerable()
-                .Where(c => c.TenantId == AppConstant.LoggedInTenantId && c.IsDelete == false)
+                .Where(c => c.TenantId == AppConstant.LoggedInTenantId && c.IsDelete == false).OrderByDescending(x=> x.CreatedAt)
                 .Select(c => new ComponentListVm
                 {
                     ComponentId = c.ComponentId,
@@ -379,7 +379,8 @@ namespace ShutterManagement.Business.Services
                 var productTypeDetail = GetProductTypeDetail(item.ProductType ?? "");
                 var expression = GetExpression(item.PricingExpression ?? "");
                 item.ExpressionName = expression?.ExpressionName;
-                item.ExpressionFormulae = expression?.ExpressionFormulae;
+                item.ExpressionFormulae = expression?.DisplayArray;
+                //item.displayArray = expression?.DisplayArray;
                 item.ProductType = productTypeDetail?.ProductId.ToString().ToLower();
                 item.ProductTypeName = productTypeDetail?.ProductName;
 

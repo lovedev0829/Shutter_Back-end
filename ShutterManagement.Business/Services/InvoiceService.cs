@@ -148,7 +148,10 @@ namespace ShutterManagement.Business.Services
                 //    return responseVm;
                 //}
 
-                var InvoiceNumberUniquNumber = GenerateUniqueId.GenerateUniqueIds(ModuleName.Invoice, AppConstant.LoggedInCompanyCode);
+                int Version = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt)
+               .Select(p => (p.InvoiceNumber.Split("-", StringSplitOptions.RemoveEmptyEntries).Length == 3 ? Convert.ToInt32(p.InvoiceNumber.Split("-", StringSplitOptions.RemoveEmptyEntries)[2]) : 0)).FirstOrDefault();
+                Version += 1;
+                var InvoiceNumberUniquNumber = GenerateUniqueId.GenerateUniqueIds(ModuleName.Invoice, AppConstant.LoggedInCompanyCode, Version);     //   var InvoiceNumberUniquNumber = GenerateUniqueId.GenerateUniqueIds(ModuleName.Invoice, AppConstant.LoggedInCompanyCode);
                 TblInvoice tblInvoice = new TblInvoice
                 {
                     InvoiceId = Guid.NewGuid(),
@@ -327,7 +330,8 @@ namespace ShutterManagement.Business.Services
                                          DueDate = i.DueDate,
                                          Status = i.Status ?? "",
                                          IsActive = i.IsActive,
-                                         ContactName = c.Name ,
+                                         ContactFirstName = c.FirstName ,
+                                         ContactLastName = c.LastName,
                                          EstimateName=d.EstimateName,
                                      }).ToList();
 
@@ -339,7 +343,9 @@ namespace ShutterManagement.Business.Services
                         (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
                         ((string.IsNullOrEmpty(filter.SearchValue) ? true :
                             (x.InvoiceNumber.ToString().ToLower().Contains(filter.SearchValue.Trim()) ||
-                            (x.ContactName?.ToString().ToLower() == filter.SearchValue.Trim())) ||
+                            (x.ContactFirstName?.ToString().ToLower() == filter.SearchValue.Trim())) ||
+                            (x.ContactLastName?.ToString().ToLower() == filter.SearchValue.Trim()) ||
+                            ((x.ContactFirstName + x.ContactLastName)?.ToString().ToLower() == filter.SearchValue.Trim()) ||
                             (x.Status.ToLower().Contains(filter.SearchValue.Trim())) ||
                             (x.InvoiceId.ToString() == filter.SearchValue.Trim())) ||
                             (x.JobId.ToString() == filter.SearchValue.Trim()))).ToList();
@@ -537,7 +543,7 @@ namespace ShutterManagement.Business.Services
 
                 var invoiceData = new InvoiceDataModel
                 {
-                    CustomerName = customerDetails?.Name ?? "",
+                    CustomerName = customerDetails?.FirstName ?? "" + customerDetails?.LastName ?? "",
                     PreparedBy = userDetails?.FirstName+" "+ userDetails?.LastName,
                     CustomerId = customerDetails?.ContactUniqueId ?? "",
                     CustomerCity = customerDetails?.billingAddressVm?.City ?? "",
@@ -764,7 +770,8 @@ namespace ShutterManagement.Business.Services
                                      DueDate = i.DueDate,
                                      Status = i.Status ?? "",
                                      IsActive = i.IsActive,
-                                     ContactName = c.Name
+                                     ContactFirstName = c.FirstName,
+                                     ContactLastName = c.LastName
                                  }).ToList();
 
             filter.SearchValue = filter.SearchValue?.Trim().ToLower();
@@ -775,7 +782,8 @@ namespace ShutterManagement.Business.Services
                     (
                         string.IsNullOrEmpty(filter.SearchValue) ||
                         x.InvoiceNumber.ToString().ToLower().Contains(filter.SearchValue) ||
-                        (x.ContactName?.ToLower() == filter.SearchValue) ||
+                        (x.ContactFirstName?.ToLower() == filter.SearchValue) ||
+                        x.ContactLastName?.ToLower() == filter.SearchValue ||
                         x.Status.ToLower().Contains(filter.SearchValue) ||
                         x.InvoiceId.ToString() == filter.SearchValue ||
                         x.JobId.ToString() == filter.SearchValue
