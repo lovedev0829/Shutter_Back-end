@@ -514,7 +514,11 @@ namespace ShutterManagement.Business.Services
                 item.Price = Convert.ToDecimal(Convert.ToDecimal(res).ToString("0.000"));
                 item.AdditionalCost = Convert.ToDecimal(item.OptionsPrice.Sum().ToString("0.000"));
                 //finalSubTotal = (decimal)item.AdditionalCost + finalSubTotal;
-                ComponentSubTotal += (decimal)item.Price;
+                var ComponentSubTotalWithoutMarkup = item.Price;
+                var ComponentSubTotalWithMarkup = (ComponentSubTotalWithoutMarkup * (100 + item.MarkupPercentage)) / 100;
+                var ComponentSubTotalWithProductMarkup = (ComponentSubTotalWithMarkup * (100 + item.Markup)) / 100;
+
+                ComponentSubTotal += (decimal)ComponentSubTotalWithProductMarkup;
             }
             return ComponentSubTotal;
         }
