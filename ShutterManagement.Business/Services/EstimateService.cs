@@ -55,6 +55,8 @@ namespace ShutterManagement.Business.Services
         private readonly IRegion region;
         private readonly ITaxExemption taxExemption;
         private readonly IDiscountService discountservice;
+        private readonly ISubtenantProductMarkup subtenantProductMarkup;
+        private readonly ITenantBrandingService tenantBrandingService;
         List<Guid> expressionList = new List<Guid>();
 
         public EstimateService(BtprojecShuttermanagementDevContext context,
@@ -81,7 +83,8 @@ namespace ShutterManagement.Business.Services
             IHttpContextAccessor _httpContextAccessor,
             IOption optionService,
             ITaxRate taxRate,
-            IRegion region,ITaxExemption taxExemption, IDiscountService discountservice
+            IRegion region,ITaxExemption taxExemption, IDiscountService discountservice,
+            ISubtenantProductMarkup subtenantProductMarkup,ITenantBrandingService tenantBrandingService
             )
         {
             _context = context;
@@ -112,6 +115,8 @@ namespace ShutterManagement.Business.Services
             this.region = region;
             this.taxExemption = taxExemption;
             this.discountservice = discountservice;
+            this.subtenantProductMarkup = subtenantProductMarkup;
+            this.tenantBrandingService = tenantBrandingService;
         }
 
         public async Task<IResponseVm<string>> ActiveInActiveEstimate(Guid EstimateId)
@@ -414,6 +419,7 @@ namespace ShutterManagement.Business.Services
                     
                     if (data.IsSuccess)
                     {
+                      //  var ComponentPriceWithoutAdditionalCostwithSubtenantMarkup = 0.0M;
                         //calculate price
                         var ComponentPriceWithoutAdditionalCost = await CalculateEstimate(data.Data);
                         data.Data.ForEach(x => x.TotalPrice = Convert.ToDecimal(ComponentPriceWithoutAdditionalCost.ToString("0.000")));
@@ -511,14 +517,31 @@ namespace ShutterManagement.Business.Services
                 // Define an expression with a nudget and a custom function
                 var expression = CalculateExpression(formula,item);
                 var res = expression.Evaluate();
-                item.Price = Convert.ToDecimal(Convert.ToDecimal(res).ToString("0.000"));
+                var ComponentPrice = Convert.ToDecimal(Convert.ToDecimal(res).ToString("0.000"));
                 item.AdditionalCost = Convert.ToDecimal(item.OptionsPrice.Sum().ToString("0.000"));
                 //finalSubTotal = (decimal)item.AdditionalCost + finalSubTotal;
-                var ComponentSubTotalWithoutMarkup = item.Price;
-                var ComponentSubTotalWithMarkup = (ComponentSubTotalWithoutMarkup * (100 + item.MarkupPercentage)) / 100;
-                var ComponentSubTotalWithProductMarkup = (ComponentSubTotalWithMarkup * (100 + item.Markup)) / 100;
-
-                ComponentSubTotal += (decimal)ComponentSubTotalWithProductMarkup;
+                var ComponentPriceWithoutMarkup = ComponentPrice;
+                var ComponentPriceWithMarkup = (ComponentPriceWithoutMarkup * (100 + item.MarkupPercentage)) / 100;
+                var ComponentPriceWithProductMarkup = (ComponentPriceWithMarkup * (100 + item.Markup)) / 100;
+                var IsSubtenants = (await tenantService.GetAll()).Where
+                   (t => t.TenantId == AppConstant.LoggedInTenantId && (t.ParentTenantId != null || !string.IsNullOrEmpty(t.ParentTenantId.ToString()))
+                   && t.IsActive == true && t.IsDelete == false)
+                 .FirstOrDefault();
+                if (IsSubtenants != null)
+                {
+                        var productMarkup = subtenantProductMarkup.GetAllQuerable().Where(x => x.ProductId == item.ProductId).Select(x => x.Markup).FirstOrDefault();
+                        if (productMarkup != null && productMarkup > 0)
+                        {
+                        ComponentPriceWithProductMarkup = (decimal)(ComponentPriceWithProductMarkup * (100 + productMarkup)) / 100;
+                        }
+                        else
+                        {
+                        var globalmarkup = tenantBrandingService.GetAllQuerable().Where(x => x.Id == IsSubtenants.BrandingInfo).Select(x => x.Markup).FirstOrDefault();
+                        ComponentPriceWithProductMarkup = (decimal)(ComponentPriceWithProductMarkup * (100 + (globalmarkup ?? 0.00m))) / 100;
+                        }
+                }
+                item.Price = ComponentPriceWithProductMarkup;
+                ComponentSubTotal += (decimal)ComponentPriceWithProductMarkup;
             }
             return ComponentSubTotal;
         }
