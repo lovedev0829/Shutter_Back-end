@@ -997,6 +997,7 @@ namespace ShutterManagement.Business.Services
 
             var jobdetails1 = (from j1 in dbContext.TblJobs
                                join j2 in dbContext.TblEstimates on j1.JobId equals j2.JobId
+                               join con in dbContext.TblContacts on j1.ContactId equals con.ContactId
                                join j3 in dbContext.TblAddresses on j1.AddressId equals j3.AddressId
                                join j4 in dbContext.MstJobTypes on j1.JobType equals j4.Id
                                join j5 in dbContext.TblUsers on j1.AssignedPersonnel equals j5.Id
@@ -1007,6 +1008,7 @@ namespace ShutterManagement.Business.Services
                                    JobName = j1.JobName,
                                    JobNotes = j1.Notes,
                                    JobType = j4.JobTypeName,
+                                   ContactName = con.Name,
                                    JobStatus = j1.JobStatus.ToString().ToLower(),
                                    AssignedPersonnel = j5.FirstName + " " + j5.LastName,
                                    Address = j3.StreetAddress + " " + j3.City + " " + j3.State + " " + j3.ZipCode,
