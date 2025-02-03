@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 
 namespace ShutterManagement.Business.Services
 {
-    public class LocationService : BaseRepository<BtprojecShuttermanagementDevContext, TblLocation>, ILocationService
+    public class LocationService : BaseRepository<ShutterDBContext, TblLocation>, ILocationService
     {
         private readonly ITenantService tenantService;
 

@@ -1,14 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 
 namespace ShutterManagement.DAL.Context;
 
 public partial class ShutterDBContext : DbContext
 {
-    private readonly IConfiguration _configuration;
-
     public ShutterDBContext()
     {
     }
@@ -18,17 +15,6 @@ public partial class ShutterDBContext : DbContext
     {
     }
 
-   
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-        if (!optionsBuilder.IsConfigured)
-        {
-            // Retrieve the connection string from appsettings.json
-            var connectionString = "Server=103.93.16.117;Database=btprojec_shuttermanagement_uat;user id=btprojec_admin;password=Bwy0w65ixN*bsE9wy;Integrated Security=false;TrustServerCertificate=true;";
-            //var connectionString = _configuration.GetConnectionString("DefaultConnection");
-            optionsBuilder.UseSqlServer(connectionString);
-        }
-    }
     public virtual DbSet<MstComponentPrice> MstComponentPrices { get; set; }
 
     public virtual DbSet<MstContactType> MstContactTypes { get; set; }
@@ -152,6 +138,10 @@ public partial class ShutterDBContext : DbContext
     public virtual DbSet<TblWindowProduct> TblWindowProducts { get; set; }
 
     public virtual DbSet<WindowOption> WindowOptions { get; set; }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+        => optionsBuilder.UseSqlServer("Server=103.93.16.117;Database=btprojec_shuttermanagement_dev;user id=btprojec_admin;password=Bwy0w65ixN*bsE9wy;Integrated Security=false;TrustServerCertificate=true;");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -1415,6 +1405,9 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.Email).HasMaxLength(200);
             entity.Property(e => e.InvoicePrefix).HasMaxLength(20);
             entity.Property(e => e.Markup).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.MarkupPer)
+                .HasDefaultValue(0m)
+                .HasColumnType("decimal(10, 2)");
             entity.Property(e => e.PhoneNumber).HasMaxLength(100);
             entity.Property(e => e.PrimaryColor).HasMaxLength(20);
             entity.Property(e => e.SecondaryColor).HasMaxLength(20);

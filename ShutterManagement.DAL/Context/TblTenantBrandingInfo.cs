@@ -37,5 +37,7 @@ public partial class TblTenantBrandingInfo
 
     public decimal? Discount { get; set; }
 
+    public decimal? MarkupPer { get; set; }
+
     public virtual ICollection<TblTenant> TblTenants { get; set; } = new List<TblTenant>();
 }

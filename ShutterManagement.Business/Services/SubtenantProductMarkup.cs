@@ -14,14 +14,14 @@ using ShutterManagement.Core.Common;
 
 namespace ShutterManagement.Business.Services
 {
-    public class SubtenantProductMarkup : BaseRepository<BtprojecShuttermanagementDevContext, TblSubtenantProductMarkup> , ISubtenantProductMarkup 
+    public class SubtenantProductMarkup : BaseRepository<ShutterDBContext, TblSubtenantProductMarkup> , ISubtenantProductMarkup 
     {
-        private readonly BtprojecShuttermanagementDevContext _context;
+        private readonly ShutterDBContext _context;
         private readonly ClaimsProperty claimsProperty;
         private readonly ITenantService tenantService;
         private readonly IProductService productService;
 
-        public SubtenantProductMarkup(BtprojecShuttermanagementDevContext context, ClaimsProperty claimsProperty,ITenantService tenantService,IProductService productService)
+        public SubtenantProductMarkup(ShutterDBContext context, ClaimsProperty claimsProperty,ITenantService tenantService,IProductService productService)
         {
             _context = context;
             this.claimsProperty = claimsProperty;

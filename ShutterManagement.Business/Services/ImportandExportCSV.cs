@@ -1067,7 +1067,7 @@ namespace ShutterManagement.Business.Services
 
                 foreach (var report in filteredInvoices)
                 {
-                    var line = $"{report.InvoiceNumber},{report.ContactName},{report.IssueDate}," +
+                    var line = $"{report.InvoiceNumber},{report.ContactFirstName},{report.IssueDate}," +
                                $"{report.DueDate},{report.BalanceDue},{report.TotalAmount}";
 
                     csvBuilder.AppendLine(line);
@@ -1110,7 +1110,7 @@ namespace ShutterManagement.Business.Services
                                      DueDate = i.DueDate,
                                      Status = i.Status ?? "",
                                      IsActive = i.IsActive,
-                                     ContactName = c.Name
+                                     ContactFirstName = c.Name
                                  }).ToList();
 
             filter.SearchValue = filter.SearchValue?.Trim().ToLower();
@@ -1121,7 +1121,9 @@ namespace ShutterManagement.Business.Services
                     (
                         string.IsNullOrEmpty(filter.SearchValue) ||
                         x.InvoiceNumber.ToString().ToLower().Contains(filter.SearchValue) ||
-                        (x.ContactName?.ToLower() == filter.SearchValue) ||
+                        (x.ContactFirstName?.ToLower() == filter.SearchValue) ||
+                        (x.ContactLastName?.ToLower() == filter.SearchValue) ||
+                        (x.ContactFirstName + " " + x.ContactLastName?.ToLower() == filter.SearchValue) ||
                         x.Status.ToLower().Contains(filter.SearchValue) ||
                         x.InvoiceId.ToString() == filter.SearchValue ||
                         x.JobId.ToString() == filter.SearchValue
@@ -1176,7 +1178,7 @@ namespace ShutterManagement.Business.Services
                 csvBuilder.AppendLine("EstimateId,OrderNumber,ContactName,OrderDate,ConfirmedDate,TotalAmount");
                 foreach (var report in orderReportData.Data)
                 {
-                    var line = $"{report.EstimateCode??""},{report.OrderNumber??""},{report.jobDetails.ContactName??""}," +
+                    var line = $"{report.EstimateCode??""},{report.OrderNumber??""},{report.jobDetails.ContactFirstName ?? ""},{report.jobDetails.ContactLastName ?? ""}," +
                                $"{report.CreatedDate},{report.CreatedDate},{report.GrandTotal}";
                     csvBuilder.AppendLine(line);
                 }

@@ -824,60 +824,6 @@ namespace ShutterManagement.Business.Services
 
         #region private methods
 
-        private async Task<decimal> CalculateEstimate(List<WindowProdcutDetailsForEstimate> data)
-        {
-            decimal finalSubTotal = 0.00M;
-
-            foreach (var item in data)
-            {
-                var formula = item.ExpressionFormulae;
-
-                // Define an expression with a nudget and a custom function
-
-                // check placeholders
-                string pattern = @"{{.*?}}";
-                var matches = Regex.Matches(formula ?? "", pattern);
-                if (matches != null && matches.Count() > 0)
-                {
-                    foreach (Match match in matches)
-                    {
-                        var property = match.Value.Replace("{{", "").Replace("}}", "");
-                        var val = GetProperty.GetColumnValue(item, property);
-                        if (val == null)
-                        {
-                            string[] info = property.Split("__");
-                            if (info != null && info.Length > 0 && info.Length == 3)
-                            {
-                                if (info[0] == "Material")
-                                {
-                                    if ((bool)item.IsRated)
-                                    {
-                                        val = materialService.GetAllQuerable().Where(x => x.ProductType.ToString() == info[1] && x.MaterialName == info[2] && x.IsActive == true && (x.TenantId == AppConstant.LoggedInTenantId || x.TenantId.ToString() == AppConstant.LoggedInParentTenantId)).Select(x => x.UnitCost).FirstOrDefault() ?? 0.0M;
-                                    }
-                                    else
-                                    {
-                                        val = materialService.GetAllQuerable().Where(x => x.ProductType.ToString() == info[1] && x.MaterialName == info[2] && x.IsActive == true && (x.TenantId == AppConstant.LoggedInTenantId || x.TenantId.ToString() == AppConstant.LoggedInParentTenantId)).Select(x => x.NonRatedUnitCost).FirstOrDefault() ?? 0.0M;
-
-                                    }
-                                }
-                            }
-                        }
-                        // Set parameters
-                        formula = formula?.Replace(match.Value, Convert.ToDecimal(val).ToString());
-                        //expression.Parameters[match.Value] = Convert.ToDecimal(val);
-                    }
-                }
-                var expression = new NCalc.Expression(formula);
-                var res = expression.Evaluate();
-                item.Price = Convert.ToDecimal(res);
-                item.AdditionalCost = item.OptionsPrice.Sum();
-                finalSubTotal = (decimal)item.AdditionalCost + finalSubTotal;
-                finalSubTotal += Convert.ToDecimal(res);
-
-            }
-            return finalSubTotal;
-        }
-
         private async Task<List<TblEstimate>> FetchEstimates(Pagination filter)
         {
             if (string.IsNullOrEmpty(filter.TenantId))

@@ -15,10 +15,10 @@ namespace ShutterManagement.Business.Services
 {
     public class ProductTypeService : BaseRepository<ShutterDBContext, MstProductType>, IMstProductType
     {
-        private readonly BtprojecShuttermanagementDevContext _context;
+        private readonly ShutterDBContext _context;
         private readonly ITenantService tenantService;
 
-        public ProductTypeService(BtprojecShuttermanagementDevContext context, ITenantService tenantService)
+        public ProductTypeService(ShutterDBContext context, ITenantService tenantService)
         {
             _context = context;
             this.tenantService = tenantService;

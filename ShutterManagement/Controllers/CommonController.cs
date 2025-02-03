@@ -66,8 +66,8 @@ namespace ShutterManagement.Controllers
             IUnitofMeasurementService unitofMeasurementService, IRoleService roleService, IRegion region, IContactService contactService,
             IMstContactType contactType, IJobService jobService,IExpressionService expression ,IInvoiceService invoiceService,
             ITaxRate taxService,IEstimateService estimateService,
-            IEstimationBreakdownService estimationBreakdownService, ILocationService locationService)
-            ITaxRate taxService,IEstimateService estimateService,IEstimationBreakdownService estimationBreakdownService,IDashboard dashboard)
+            IEstimationBreakdownService estimationBreakdownService, ILocationService locationService,
+           IDashboard dashboard)
         {
             this.masterCreate = masterCreate;
             this.fileUpload = fileUpload;
