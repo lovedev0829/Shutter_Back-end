@@ -43,6 +43,12 @@ namespace ShutterManagement.Core
         public static string InvalidCred { get; set; } = "Invalid Credentials";
         public static string InactivationMsg { get; set; } = "Inactivated Successfully";
         public static string FetchSuccessMsg { get; set; } = "Data fetched Successfully";
+        public static string InProductionImg { get; set; } = "/image/d-icon-1.svg";
+        public static string NoOfContactsImg { get; set; } = "/image/d-icon-4.svg";
+        public static string EstimateRevenueImg { get; set; } = "/image/d-icon-2.svg";
+        public static string InProductionIcon { get; set; } = "/image/d-icon-1.svg";
+        public static string AwardedIcon { get; set; } = "/image/d-icon-3.svg";
+
         public static string InvalidGuid { get; set; } = "Invalid Data Id";
         public static string LoginSuccessMessgae { get; set; } = "User loggedin successfully.";
         public static string NoUserFound { get; set; } = "No user found";

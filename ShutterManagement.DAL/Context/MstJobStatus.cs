@@ -13,5 +13,7 @@ public partial class MstJobStatus
 
     public bool? IsActive { get; set; }
 
+    public string? Icon { get; set; }
+
     public virtual ICollection<TblJob> TblJobs { get; set; } = new List<TblJob>();
 }

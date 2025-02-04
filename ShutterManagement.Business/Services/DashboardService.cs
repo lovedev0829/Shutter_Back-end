@@ -8,6 +8,7 @@ using ShutterManagement.Services;
 using System;
 using System.Collections.Generic;
 using System.Data.Entity;
+using System.Globalization;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -33,10 +34,10 @@ namespace ShutterManagement.Business.Services
         /// Retrieves all dashboard data for the logged-in tenant, including job status counts.
         /// </summary>
         /// <returns>A response object containing the dashboard data or an error message.</returns>
-        public async Task<IResponseVm<DashBoardVm>> GetallDashBoardData()
+        public async Task<IResponseVm<List<StatusCountVm>>> GetallDashBoardData()
         {
 
-            IResponseVm<DashBoardVm> responseVm = new ResponseVm<DashBoardVm>();
+            IResponseVm<List<StatusCountVm>> responseVm = new ResponseVm<List<StatusCountVm>>();
 
             try
             {
@@ -50,31 +51,52 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.TenantNotFound; 
                     return responseVm;
                 }
+                var Data = new List<StatusCountVm>();
 
-                var statusCounts =  (from status in dbContext.MstJobStatuses 
-                                          join job in dbContext.TblJobs 
-                                          on status.JobStatusId  equals job.JobStatus into jobGroup 
-                                          select new StatusCountVm
-                                          {
-                                              StatusName = status.JobStatusName,     
-                                              TotalAwardedJobs = jobGroup.Count(j => j.TenantId == AppConstant.LoggedInTenantId)    
-                                          }).ToList();
+                var statusCounts = dbContext.MstJobStatuses
+                            .GroupJoin(dbContext.TblJobs,
+                                m => m.JobStatusId,
+                                j => j.JobStatus,
+                                (m, jobGroup) => new
+                                {
+                                    m.JobStatusName,
+                                    Count = jobGroup.Count(),
+                                    Icon = m.Icon,
+                                    TenantId = jobGroup.Select(x=>x.TenantId).ToArray()
+                                })
+                            .ToList();
 
+                Data = statusCounts.Where(x=>x.JobStatusName == "Inproduction" || x.JobStatusName == "Awarded").Select(x => new StatusCountVm
+                {
+                    Label = x.JobStatusName.Replace("Inproduction", "In Production").Replace("Awarded", "Awarded Jobs"),
+                    Image = x.Icon,
+                    Count = x.TenantId.Where(x => x == AppConstant.LoggedInTenantId).Count().ToString(),
+                }).ToList();
+
+                
                 var contactsCount =  (from c in dbContext.TblContacts
                                            where c.IsDelete ==false && c.TenantId == AppConstant.LoggedInTenantId 
                                            select c).Count();
+                StatusCountVm contactVm = new StatusCountVm
+                {
+                    Label = "No. Of Contacts",
+                    Count = contactsCount.ToString(),
+                    Image = AppConstant.NoOfContactsImg
+                };
+                Data.Add(contactVm);
 
-                var totalEstimateRevenue =  (from est in dbContext.TblEstimates
+                decimal? totalEstimateRevenue =  (from est in dbContext.TblEstimates
                                                   where est.Status == "GenerateOrder" && est.IsDelete==false &&  est.TenantId == AppConstant.LoggedInTenantId
                                              select est.GrandTotal).Sum();
 
-                responseVm.Data = new DashBoardVm
+                StatusCountVm estVm = new StatusCountVm
                 {
-                    StatusCounts = statusCounts,
-                     ContactsCount = contactsCount,
-                     TotalEstimateRevenue = totalEstimateRevenue
+                    Label = "Estimate Revenue",
+                    Count = "$"+totalEstimateRevenue,
+                    Image = AppConstant.EstimateRevenueImg
                 };
-
+                Data.Add(estVm);
+                responseVm.Data = Data;
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.FetchSuccessMsg; 
             }

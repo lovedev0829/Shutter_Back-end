@@ -12,7 +12,7 @@ namespace ShutterManagement.Business.Interfaces
 {
     public interface IDashboard :IGenericRepository<TblJob>
     {
-        Task<IResponseVm<DashBoardVm>> GetallDashBoardData();
+        Task<IResponseVm<List<StatusCountVm>>> GetallDashBoardData();
 
     }
 }
