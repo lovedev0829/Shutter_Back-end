@@ -16,9 +16,13 @@ namespace ShutterManagement.Core
         public static string JwtAudience = string.Empty;
         public static string JwtExpiryTime = string.Empty;
         public static bool IsAdminRolesShow = false;
-
+        public static string SMTPServer { get; set; } = string.Empty;
+        public static string SMTPPort { get; set; } = string.Empty;
+        public static string SMTPUsername { get; set; } = string.Empty;
+        public static string SMTPPassword { get; set; } = string.Empty;
 
         //Error Message//
+
         public static string FileVirtualPath { get; set; } = "";
         public static string FileUploadPath { get; set; } = "";
         public static string ExternalError { get; set; } = "Something went wrong. ";
@@ -79,5 +83,11 @@ namespace ShutterManagement.Core
 
         public const string NumericError = "Only Numerical values are allowed.";
         public const string SKUError = "Invlaid SKU format.";
+
+
+        //Email Subject and Content
+
+        public static string Sub_ResetPassword = "Password Reset successfully";
+        public static string Con_ResetPassword = "Your Password has Reset successfully";
     }
 }
