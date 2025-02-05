@@ -1063,11 +1063,11 @@ namespace ShutterManagement.Business.Services
 
 
                 var csvBuilder = new StringBuilder();
-                csvBuilder.AppendLine("InvoiceNumber,ContactName,IssueDate,DueDate,BalanceDue,TotalAmount");
+                csvBuilder.AppendLine("InvoiceNumber,ContactFirstName,ContactLastName,IssueDate,DueDate,BalanceDue,TotalAmount");
 
                 foreach (var report in filteredInvoices)
                 {
-                    var line = $"{report.InvoiceNumber},{report.ContactFirstName},{report.IssueDate}," +
+                    var line = $"{report.InvoiceNumber},{report.ContactFirstName},{report.ContactLastName},{report.IssueDate}," +
                                $"{report.DueDate},{report.BalanceDue},{report.TotalAmount}";
 
                     csvBuilder.AppendLine(line);
@@ -1110,7 +1110,8 @@ namespace ShutterManagement.Business.Services
                                      DueDate = i.DueDate,
                                      Status = i.Status ?? "",
                                      IsActive = i.IsActive,
-                                     ContactFirstName = c.Name
+                                     ContactFirstName = c.FirstName,
+                                     ContactLastName = c.LastName
                                  }).ToList();
 
             filter.SearchValue = filter.SearchValue?.Trim().ToLower();

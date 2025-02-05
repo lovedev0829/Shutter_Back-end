@@ -44,6 +44,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         public string? ProductType { get; set; } = "";
         [DefaultValue("")]
         public string? JobStatus { get; set; } = "";
+        public string? JobId { get; set; } = "";
 
         [DefaultValue("")]
         public string? Address { get; set; } = "";
