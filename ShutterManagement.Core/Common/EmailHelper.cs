@@ -8,32 +8,79 @@ using System.Text;
 using System.Threading.Tasks;
 using ShutterManagement.Core.ViewModels.Request;
 using System.Net.Security;
+using static System.Net.Mime.MediaTypeNames;
+using System.Net.Mail;
+using ShutterManagement.Core.ViewModels;
 
 namespace ShutterManagement.Core.Common
 {
-    public class EmailHelper
+    public static class EmailHelper
     {
-
-        public void SendMail(SendEmail sendEmail)
+        public static IResponseVm<string> ResetPassword(string Email)
         {
-            string smtpServer = "mail.btprojects.in"; // Replace with your domain's SMTP server (e.g., mail.yourdomain.com)
-            int smtpPort = 465;  // For TLS. Use 465 for SSL.
-            string smtpUser = "shutter@btprojects.in";  // Your full email address
-            string smtpPassword = "ne716Bau@sllYzr7N";  // The password you created for the email account
+            SendEmail vm = new SendEmail
+            {
+                ToEmail = Email,
+                Subject = AppConstant.Sub_ResetPassword,
+                Body = AppConstant.Con_ResetPassword,
+            };
+            var result = SendMail(vm);
+            return result;
+        }
+
+        public static IResponseVm<string> ForgotPassword(string Email, string content)
+        {
+            SendEmail vm = new SendEmail
+            {
+                ToEmail = Email,
+                Subject = AppConstant.Sub_ResetPassword,
+                Body =  content,
+            };
+            var result = SendMail(vm);
+            return result;
+        }
+
+        public static IResponseVm<string> SendMail(SendEmail sendEmail)
+        {
+            IResponseVm<string> res = new ResponseVm<string>();
+            string smtpServer = AppConstant.SMTPServer; // Replace with your domain's SMTP server (e.g., mail.yourdomain.com)
+            int smtpPort = Convert.ToInt32(AppConstant.SMTPPort);  // For TLS. Use 465 for SSL.
+            string smtpUser = AppConstant.SMTPUsername;  // Your full email address
+            string smtpPassword = AppConstant.SMTPPassword;  // The password you created for the email account
 
             var emailMessage = new MimeMessage();
             emailMessage.From.Add(new MailboxAddress("Shutter Management", smtpUser));
             emailMessage.To.Add(new MailboxAddress("Recipient", sendEmail.ToEmail));
             emailMessage.Subject = sendEmail.Subject;
 
+            var multipart = new MimeKit.Multipart("mixed");
+
+            // Add the text part
             var body = new TextPart("plain")
             {
                 Text = sendEmail.Body
             };
+            multipart.Add(body);
 
-            emailMessage.Body = body;
+            // Attach files if available
+            if (emailMessage.Attachments != null && emailMessage.Attachments.Count() > 0)
+            {
+                foreach (var attach in sendEmail.Attachments)
+                {
+                    var attachment = new MimePart(attach.MediaType)
+                    {
+                        Content = new MimeContent(attach.Stream),
+                        ContentDisposition = new ContentDisposition(ContentDisposition.Attachment),
+                        ContentTransferEncoding = ContentEncoding.Base64,
+                        FileName = attach.FileName
+                    };
+                    multipart.Add(attachment);
+                }
+            }
 
-            using (var smtpClient = new SmtpClient())
+            // Set the email body
+            emailMessage.Body = multipart;
+            using (var smtpClient = new MailKit.Net.Smtp.SmtpClient())
             {
                 try
                 {
@@ -42,55 +89,17 @@ namespace ShutterManagement.Core.Common
                     smtpClient.Authenticate(smtpUser, smtpPassword);
                     smtpClient.Send(emailMessage);
                     smtpClient.Disconnect(true);
-                    Console.WriteLine("Email sent successfully.");
+                    res.IsSuccess = true;
+                    res.Message = AppConstant.SuccessMsg;
+
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Error sending email: {ex.Message}");
+                    res.Message = AppConstant.ExceptionError + ex.Message;
                 }
             }
+            return res;
         }
 
-        //public void SendMail(SendEmail sendEmail)
-        //    {
-
-        //        // SMTP server settings for HostingRaja
-        //        string smtpServer = "mail.btprojects.in"; // Replace with your domain's SMTP server (e.g., mail.yourdomain.com)
-        //        int smtpPort = 465;  // For TLS. Use 465 for SSL.
-        //        string smtpUser = "shutter@btprojects.in";  // Your full email address
-        //        string smtpPassword = "ne716Bau@sllYzr7N";  // The password you created for the email account
-
-        //        // Creating a new SmtpClient instance
-        //        SmtpClient smtpClient = new SmtpClient(smtpServer)
-        //        {
-        //            Port = smtpPort,
-        //            Credentials = new NetworkCredential(smtpUser, smtpPassword),
-        //            EnableSsl = true // Use SSL/TLS
-        //        };
-
-        //        // Creating the email message
-        //        MailMessage mailMessage = new MailMessage
-        //        {
-        //            From = new MailAddress(smtpUser),
-        //            Subject = sendEmail.Subject,
-        //            Body = sendEmail.Body,
-        //            IsBodyHtml = true // Set to true if you're sending HTML content
-        //        };
-
-        //        // Add recipient email address
-        //        mailMessage.To.Add(sendEmail.ToEmail);  // Replace with the recipient's email address
-
-        //        // Try to send the email
-        //        try
-        //        {
-        //            smtpClient.Send(mailMessage);
-        //            Console.WriteLine("Email sent successfully.");
-        //        }
-        //        catch (Exception ex)
-        //        {
-        //            Console.WriteLine($"Failed to send email. Error: {ex.Message}");
-        //        }
-        //        // SMTP Server configuration
-        //    }
     }
 }

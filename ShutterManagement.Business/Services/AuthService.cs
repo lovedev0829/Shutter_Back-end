@@ -374,23 +374,13 @@ namespace ShutterManagement.Services
                 user.Token = token;
                 user.ModifiedAt = DateTime.Now;
                 await Update(user);
-
-                var emailHelper = new EmailHelper();
-                var emailToSend = new SendEmail
-                {
-                    ToEmail = user.Email,
-                    Subject = "Reset Your Password",
-                    Body = $"Please reset your password using the following link: {resetLink}"
-                };
-                emailHelper.SendMail(emailToSend);
-
+                var content = $"Please reset your password using the following link: {resetLink}";
+                EmailHelper.ForgotPassword(user.Email, content);
                 result.IsSuccess = true;
-                result.Data = resetLink;
                 result.Message = AppConstant.ForgotPasswordSuccess;
             }
             catch (Exception ex)
             {
-                result.IsSuccess = false;
                 result.Message = $"{AppConstant.ExceptionError} {ex.Message}";
             }
 
@@ -463,7 +453,8 @@ namespace ShutterManagement.Services
                         IsUserTokenExists.ModifiedAt = DateTime.Now;
                         IsUserTokenExists.Pwd = AesEncryptionHelper.Encrypt(verifyPassword.Password);
                         await Update(IsUserTokenExists);
-                        result.IsSuccess = true;
+
+                        EmailHelper.ResetPassword(IsUserTokenExists.Email);
                         result.Message = AppConstant.PasswordChangeMessage;
                     }
                     else

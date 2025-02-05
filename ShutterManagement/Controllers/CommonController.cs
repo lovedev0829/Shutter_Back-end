@@ -249,12 +249,13 @@ namespace ShutterManagement.Controllers
             return Ok(result);
         }
 
-        [HttpPost]
-        [Route("SendEmail")]
-        public void SendMail(SendEmail sendEmail)
-        {
-            emailHelper.SendMail(sendEmail);
-        }
+        //[AllowAnonymous]
+        //[HttpPost]
+        //[Route("SendEmail")]
+        //public void SendMail(SendEmail sendEmail)
+        //{
+        //    emailHelper.SendMail(sendEmail);
+        //}
 
         [HttpPost]
         [Route("GetAllJobs")]

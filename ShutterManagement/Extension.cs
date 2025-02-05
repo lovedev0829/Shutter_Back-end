@@ -13,6 +13,10 @@ namespace ShutterManagement
             AppConstant.JwtAudience = Configuration["Jwt:Audience"] ?? "";
             AppConstant.JwtExpiryTime = Configuration["Jwt:ExpireTimeOut"] ?? "";
             AppConstant.UIBaseURL = Configuration["UIBaseURL"] ?? "";
+            AppConstant.SMTPServer = Configuration["SMTPDetails:SMTPServer"] ?? "";
+            AppConstant.SMTPPort = Configuration["SMTPDetails:SMTPPort"] ?? "";
+            AppConstant.SMTPPassword = Configuration["SMTPDetails:SMTPPassword"] ?? "";
+            AppConstant.SMTPUsername = Configuration["SMTPDetails:SMTPUsername"] ?? "";
             //AppConstant.IsAdminRolesShow = Convert.ToBoolean(Configuration["IsAdminRolesShow"] ?? "false");
         }
     }
