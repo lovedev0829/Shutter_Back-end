@@ -33,7 +33,7 @@ namespace ShutterManagement.Core.Common
             SendEmail vm = new SendEmail
             {
                 ToEmail = Email,
-                Subject = AppConstant.Sub_ResetPassword,
+                Subject = AppConstant.Sub_ForgotPassword,
                 Body =  content,
             };
             var result = SendMail(vm);
@@ -56,7 +56,7 @@ namespace ShutterManagement.Core.Common
             var multipart = new MimeKit.Multipart("mixed");
 
             // Add the text part
-            var body = new TextPart("plain")
+            var body = new TextPart("html")
             {
                 Text = sendEmail.Body
             };
@@ -90,6 +90,7 @@ namespace ShutterManagement.Core.Common
                     smtpClient.Send(emailMessage);
                     smtpClient.Disconnect(true);
                     res.IsSuccess = true;
+                    
                     res.Message = AppConstant.SuccessMsg;
 
                 }

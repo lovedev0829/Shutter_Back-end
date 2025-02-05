@@ -370,11 +370,11 @@ namespace ShutterManagement.Services
                     return result;
                 }
 
-                string resetLink = $"/reset-password/{forgetPassword.Code}/{token}";
+                string resetLink = $"{AppConstant.UIBaseURL}/reset-password/{forgetPassword.Code}/{token}";
                 user.Token = token;
                 user.ModifiedAt = DateTime.Now;
                 await Update(user);
-                var content = $"Please reset your password using the following link: {resetLink}";
+                var content = $"Please reset your password using the following link: <a href='{resetLink}'>Reset Password</a>";
                 EmailHelper.ForgotPassword(user.Email, content);
                 result.IsSuccess = true;
                 result.Message = AppConstant.ForgotPasswordSuccess;

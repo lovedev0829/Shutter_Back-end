@@ -20,6 +20,8 @@ namespace ShutterManagement.Core
         public static string SMTPPort { get; set; } = string.Empty;
         public static string SMTPUsername { get; set; } = string.Empty;
         public static string SMTPPassword { get; set; } = string.Empty;
+        public static string UISitePath = string.Empty;
+
 
         //Error Message//
 
@@ -88,6 +90,7 @@ namespace ShutterManagement.Core
         //Email Subject and Content
 
         public static string Sub_ResetPassword = "Password Reset successfully";
+        public static string Sub_ForgotPassword = "Forgot Password";
         public static string Con_ResetPassword = "Your Password has Reset successfully";
     }
 }

@@ -47,7 +47,6 @@ namespace ShutterManagement.Business.Services
         private readonly ITenantService tenantService;
         private readonly ClaimsProperty claimsProperty;
         private readonly IMstProductType productType;
-        private readonly EmailHelper emailHelper;
         private string Message = "";
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IOption optionService;
@@ -79,7 +78,6 @@ namespace ShutterManagement.Business.Services
             IProductService productService,
             ITenantService tenantService, ClaimsProperty claimsProperty,
             IMstProductType productType,
-            EmailHelper emailHelper,
             IHttpContextAccessor _httpContextAccessor,
             IOption optionService,
             ITaxRate taxRate,
@@ -108,7 +106,6 @@ namespace ShutterManagement.Business.Services
             this.tenantService = tenantService;
             this.claimsProperty = claimsProperty;
             this.productType = productType;
-            this.emailHelper = emailHelper;
             this._httpContextAccessor = _httpContextAccessor;
             this.optionService = optionService;
             this.taxRate = taxRate;

@@ -33,7 +33,6 @@ namespace ShutterManagement.Controllers
         private readonly IComponentService componentService;
         private readonly IMstProductType mstProductType;
         private readonly IAddress address;
-        private readonly EmailHelper emailHelper;
         private readonly IUserService userService;
         private readonly IJobStatusService jobStatusService;
         private readonly IJobTypeService jobTypeService;
@@ -58,7 +57,7 @@ namespace ShutterManagement.Controllers
         public CommonController(IMasterCreate masterCreate, 
             FileUploadHelper fileUpload, ClaimsProperty claimsProperty,
             IJobTitleService jobTitleService, IMaterial material, IVendorService vendorService
-            , EmailHelper emailHelper, IUserService userService, IJobStatusService jobStatusService,
+            , IUserService userService, IJobStatusService jobStatusService,
             IJobTypeService jobTypeService, IDiscountService discountService,
             IComponentPriceService componentPriceService,
             IComponentService componentService, IMstProductType mstProductType,
@@ -87,7 +86,6 @@ namespace ShutterManagement.Controllers
             this.vendorService = vendorService;
             this.componentService = componentService;
             this.address = address;
-            this.emailHelper = emailHelper;
             this.userService = userService;
             this.jobStatusService = jobStatusService;
             this.jobTypeService = jobTypeService;

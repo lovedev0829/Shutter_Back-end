@@ -87,13 +87,11 @@ builder.Services.AddAuthentication(options =>
     
 });
 
-
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
 builder.Services.AddScoped<DataServices>();
-builder.Services.AddScoped<EmailHelper>();
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 builder.Services.AddScoped<ClaimsProperty>();
 builder.Services.AddScoped<FileUploadHelper>();
