@@ -917,6 +917,7 @@ namespace ShutterManagement.Business.Services
                 .Where(x =>
                     (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) && 
                     (string.IsNullOrEmpty(filter.JobStatus.ToLower()) ? true : x.jobDetails.JobStatus.ToLower() == filter.JobStatus.ToLower()) &&
+                    (string.IsNullOrEmpty(filter.JobId?.ToLower()) ? true : x.JobId?.ToString().ToLower() == filter.JobId.ToLower()) &&
                     (string.IsNullOrWhiteSpace(filter.SearchValue) ||
                     ((x.Notes ?? "").Contains(filter.SearchValue)
                      || (x.JobId.ToString().ToLower() ?? "").Contains(filter.SearchValue)
