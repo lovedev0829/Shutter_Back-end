@@ -1224,10 +1224,10 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
                 var csvBuilder = new StringBuilder();
-                csvBuilder.AppendLine("EstimationCode,JobCode,ContactName,TaxAmount");
+                csvBuilder.AppendLine("EstimationCode,JobCode,FirstName,LastName,TaxAmount");
                 foreach (var report in orderReportData.Data)
                 {
-                    var line = $"{report.EstimateCode ?? ""},{report.jobDetails?.JobUniqueId ?? ""},{report.jobDetails?.ContactName ?? ""}," +
+                    var line = $"{report.EstimateCode ?? ""},{report.jobDetails?.JobUniqueId ?? ""},{report.jobDetails?.FirstName ?? ""},{report.jobDetails?.FirstName ?? ""}," +
                                $"{report.Tax}";
                     csvBuilder.AppendLine(line);
                 }

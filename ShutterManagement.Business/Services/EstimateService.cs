@@ -878,6 +878,10 @@ namespace ShutterManagement.Business.Services
                   .Where(x => x.Id == estimate.CreatedBy && x.IsDelete == false)
                   .FirstOrDefault();
                 e.CreatedBy = Userdetails.FirstName + " " + Userdetails.LastName;
+
+                e.jobDetails.FirstName = Userdetails.FirstName;
+                e.jobDetails.LastName = Userdetails.LastName;
+
                 var Tenant = dbContext.TblTenants.Where(e => e.TenantId == estimate.TenantId && e.IsDelete == false).FirstOrDefault();
                 var tenantdetails = dbContext.TblTenantBrandingInfos
                  .Where(tb => tb.Id == Tenant.BrandingInfo)
@@ -948,9 +952,11 @@ namespace ShutterManagement.Business.Services
                                select new JobDetails
                                {
                                    JobName = j1.JobName,
+                                   JobUniqueId = j1.JobUniqueId,
                                    JobNotes = j1.Notes,
                                    JobType = j4.JobTypeName,
-                                   ContactName = con.Name,
+                                   FirstName = con.FirstName,
+                                   LastName = con.LastName,
                                    JobStatus = j1.JobStatus.ToString().ToLower(),
                                    AssignedPersonnel = j5.FirstName + " " + j5.LastName,
                                    Address = j3.StreetAddress + " " + j3.City + " " + j3.State + " " + j3.ZipCode,
