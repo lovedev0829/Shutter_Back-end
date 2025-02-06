@@ -950,6 +950,7 @@ namespace ShutterManagement.Business.Services
                                select new JobDetails
                                {
                                    JobName = j1.JobName,
+                                   JobUniqueId = j1.JobUniqueId,
                                    JobNotes = j1.Notes,
                                    JobType = j4.JobTypeName,
                                    ContactName = con.Name,
