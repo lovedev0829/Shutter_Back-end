@@ -492,14 +492,12 @@ namespace ShutterManagement.Business.Services
                 .Where(x => x.JobId == JobId && x.IsDelete == false)
                 .Select(pt => pt.ContactId)
                 .FirstOrDefault();
-
             if (Jobdetail == Guid.Empty)
             {
                 return false;
             }
-
-            bool IsTaxApplied = await taxExemption.AnyAsync(x => x.ContactId == Jobdetail && x.IsDelete == false);
-
+            bool IsTaxApplied = await taxExemption.AnyAsync(x => x.ContactId.ToString().ToLower() == Jobdetail.ToString().ToLower() && x.IsDelete == false && 
+            x.EffectiveDate <= DateTime.Now && x.ExpiryDate >= DateTime.Now);
             return IsTaxApplied;
         }
 
