@@ -21,6 +21,7 @@ using Newtonsoft.Json.Linq;
 using System.Text.RegularExpressions;
 using System.Linq.Expressions;
 using NCalc;
+using Antlr.Runtime;
 
 namespace ShutterManagement.Business.Services
 {
@@ -286,8 +287,13 @@ namespace ShutterManagement.Business.Services
                         {
                             ToEmail = contactEmail,
                         };
-                        //emailHelper.SendMail(sendEmail);
+                        EmailHelper.SendMail(sendEmail);
+                       
                     }
+
+                    
+
+
                 }
 
                 responseVm.IsSuccess = true;

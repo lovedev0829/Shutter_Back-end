@@ -53,6 +53,14 @@ namespace ShutterManagement.Core.Common
         Fixed
     }
 
+    public enum EstimateDocumentType
+    {
+        [EnumMember(Value = "ForEmail")]
+        ForEmail,
+        [EnumMember(Value = "DownloadPDF")]
+        DownloadPDF
+    }
+
 
     public enum ModuleName
     {

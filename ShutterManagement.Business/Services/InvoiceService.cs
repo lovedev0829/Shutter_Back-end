@@ -484,7 +484,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var isTenantValid = await tenantService.AnyAsync(x =>
-                    x.TenantId == AppConstant.LoggedInTenantId && x.IsActive==true && x.IsDelete==false);
+                    x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
                 if (!isTenantValid)
                 {
                     responseVm.IsSuccess = false;
@@ -496,7 +496,7 @@ namespace ShutterManagement.Business.Services
                 var invoiceTemplate = dbContext.TblTemplates.FirstOrDefault(c =>
                     c.TemplateId == templateId &&
                     c.TenantId == AppConstant.LoggedInTenantId &&
-                    c.IsDelete==false);
+                    c.IsDelete == false);
 
                 if (invoiceTemplate == null)
                 {
@@ -506,7 +506,7 @@ namespace ShutterManagement.Business.Services
                 }
 
                 var customerDetails = (await contactService.GetAll_Contact(filter))
-                    .Data.FirstOrDefault(x => x.ContactId == model.ContactId && x.IsActive==true);
+                    .Data.FirstOrDefault(x => x.ContactId == model.ContactId && x.IsActive == true);
 
                 var tenantDetails = tenantService.GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true).FirstOrDefault();
                 if (tenantDetails == null)
@@ -517,18 +517,20 @@ namespace ShutterManagement.Business.Services
                 }
                 var tenantInfoDetails = tenantBrandingService.GetAllQuerable().Where(x => x.Id == tenantDetails.BrandingInfo && x.IsActive == true).FirstOrDefault();
 
-               
+
 
                 var estimationDetails = dbContext.TblEstimates.FirstOrDefault(c =>
                     c.EstimateId == model.EstimationId &&
                     c.TenantId == AppConstant.LoggedInTenantId &&
-                    c.IsDelete==false);
+                    c.IsDelete == false);
                 if (estimationDetails == null)
                 {
                     responseVm.IsSuccess = false;
                     responseVm.Message = $"EstimationDetails " + AppConstant.NoDataFound;
                     return responseVm;
                 }
+
+
 
                 var userDetails = dbContext.TblUsers.FirstOrDefault(c =>
                    c.Id == estimationDetails.CreatedBy &&
@@ -539,12 +541,12 @@ namespace ShutterManagement.Business.Services
 
                 var productList = estimationRecord.Data
                     .FirstOrDefault(x => x.IsActive == true)
-                    ?.EstimateProductList?? new List<EstimateProductList>();
+                    ?.EstimateProductList ?? new List<EstimateProductList>();
 
                 var invoiceData = new InvoiceDataModel
                 {
                     CustomerName = customerDetails?.FirstName ?? "" + customerDetails?.LastName ?? "",
-                    PreparedBy = userDetails?.FirstName+" "+ userDetails?.LastName,
+                    PreparedBy = userDetails?.FirstName + " " + userDetails?.LastName,
                     CustomerId = customerDetails?.ContactUniqueId ?? "",
                     CustomerCity = customerDetails?.billingAddressVm?.City ?? "",
                     CustomerState = customerDetails?.billingAddressVm?.State ?? "",
@@ -554,7 +556,7 @@ namespace ShutterManagement.Business.Services
                     CompanyCity = tenantInfoDetails?.City ?? "",
                     CompanyCountry = tenantInfoDetails?.Country ?? "",
                     CompanyZipCode = tenantInfoDetails?.ZipCode ?? "",
-                    CustomerStreetAddress= customerDetails?.billingAddressVm?.StreetAddress ?? "",
+                    CustomerStreetAddress = customerDetails?.billingAddressVm?.StreetAddress ?? "",
                     MobilePhone = customerDetails?.PhoneNumber ?? "",
                     TenantCompanyName = tenantInfoDetails?.CompanyName ?? "",
                     Logo = tenantInfoDetails?.Logo ?? "",
@@ -589,12 +591,61 @@ namespace ShutterManagement.Business.Services
                 }
                 var pdfBase64 = Convert.ToBase64String(pdfBytes);
 
-                responseVm.IsSuccess = true;
-                responseVm.Message = AppConstant.InvoiceDownloadSuccessMsg;
-                responseVm.Data = pdfBase64;
 
-               File.Delete(savePath);
-            }
+                if (model.DocumentType == EstimateDocumentType.ForEmail)
+                {
+                    var IsEstimateExists = dbContext.TblEstimates
+                        .Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId && x.EstimateId == model.EstimationId)
+                        .OrderByDescending(x => x.CreatedAt)
+                        .FirstOrDefault();
+
+                    if (IsEstimateExists == null)
+                    {
+                        responseVm.Message = "Estimate " + AppConstant.NoDataFound;
+                        return responseVm;
+                    }
+
+                    IsEstimateExists.Status = EnumValue.GetEnumValue(Estimation.PendingForApproval);
+                    IsEstimateExists.UpdatedAt = DateTime.Now;
+                    IsEstimateExists.ModifiedBy = AppConstant.LoggedInUserID;
+                    await estimateService.Update(IsEstimateExists);
+
+                    string approvalEmailLink = $"{AppConstant.UIBaseURL}contacts/estimate/preview/{IsEstimateExists?.EstimateId}";
+
+                    var emailBody = $@"
+                        <p>Please find your invoice attached.</p>
+                        <p>You can approve your estimate by clicking the following link:</p>
+                        <p><a href='{approvalEmailLink}'>Click hear.</a></p>";
+
+                    var emailAttachment = new EmailAttachment
+                    {
+                        FileName = $"{estimationDetails.EstimateCode}.pdf",
+                        Stream = new MemoryStream(pdfBytes),
+                        MediaType = "application/pdf"
+                    };
+
+                    var emailSent = EmailHelper.SendEmailWithAttachment(
+                        customerDetails.Email,
+                        "Estimate Approval Link and PDF",
+                        emailBody,
+                        new List<EmailAttachment> { emailAttachment }
+                    );
+
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = "Email Send SuccessFully.";
+                    File.Delete(savePath);
+
+                }
+                else
+                {
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = AppConstant.InvoiceDownloadSuccessMsg;
+                    responseVm.Data = pdfBase64;
+
+                    File.Delete(savePath);
+                }
+
+                }
             catch (Exception ex)
             {
                 responseVm.IsSuccess = false;
