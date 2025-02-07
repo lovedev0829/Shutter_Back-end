@@ -14,7 +14,7 @@ namespace ShutterManagement.Core.ViewModels.Request
 
         public string? Body { get; set; }
 
-        public bool? IsReaded { get; set; }
+        public bool? IsReaded { get; set; } = false;
 
         public DateTime? CreatedDate { get; set; }
 
