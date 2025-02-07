@@ -613,9 +613,32 @@ namespace ShutterManagement.Business.Services
                     string approvalEmailLink = $"{AppConstant.UIBaseURL}contacts/estimate/preview/{IsEstimateExists?.EstimateId}";
 
                     var emailBody = $@"
-                        <p>Please find your invoice attached.</p>
-                        <p>You can approve your estimate by clicking the following link:</p>
-                        <p><a href='{approvalEmailLink}'>Click hear.</a></p>";
+    <div style='font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px;'>
+        <p><strong>Dear Valued Customer,</strong></p>
+
+        <p>Please find your invoice attached for your reference.</p>
+
+        <p><strong>You can approve  your estimate by clicking the link below:</strong></p>
+
+        <p>
+            <a href='{approvalEmailLink}' 
+               style='display: inline-block; background-color: #007bff; color: #ffffff; padding: 10px 20px; 
+                      text-decoration: none; font-weight: bold; border-radius: 5px;'>
+                Approval Estimate
+            </a>
+        </p>
+
+        <p><strong>Thank you for your business!</strong></p>
+
+        <p>Best regards,</p>
+        <p><strong>{tenantInfoDetails?.CompanyName}</strong></p>
+
+        <p>
+            <img src='{tenantInfoDetails?.Logo}' alt='Company Logo' height='50px' 
+                 style='margin-top: 10px; display: block;'>
+        </p>
+    </div>";
+
 
                     var emailAttachment = new EmailAttachment
                     {
@@ -636,7 +659,7 @@ namespace ShutterManagement.Business.Services
                     File.Delete(savePath);
 
                 }
-                else
+                else if(model.DocumentType == EstimateDocumentType.DownloadPDF)
                 {
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.InvoiceDownloadSuccessMsg;

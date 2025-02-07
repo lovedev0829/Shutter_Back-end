@@ -743,7 +743,7 @@ namespace ShutterManagement.Business.Services
 
                 Pagination filterValue = new Pagination
                 {
-                    SearchValue = EstimateId.ToString()
+                    EstimationId = EstimateId.ToString()
                 };
 
                 var estimateListFiltered = await GetAll_Estimate(filterValue);
@@ -928,6 +928,7 @@ namespace ShutterManagement.Business.Services
                     (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) && 
                     (string.IsNullOrEmpty(filter.JobStatus.ToLower()) ? true : x.jobDetails.JobStatus.ToLower() == filter.JobStatus.ToLower()) &&
                     (string.IsNullOrEmpty(filter.JobId?.ToLower()) ? true : x.JobId?.ToString().ToLower() == filter.JobId.ToLower()) &&
+                    (string.IsNullOrEmpty(filter.EstimationId?.ToLower()) ? true : x.EstimateId.ToString().ToLower() == filter.EstimationId.ToLower()) &&
                     (string.IsNullOrWhiteSpace(filter.SearchValue) ||
                     ((x.Notes ?? "").Contains(filter.SearchValue)
                      || (x.JobId.ToString().ToLower() ?? "").Contains(filter.SearchValue)
