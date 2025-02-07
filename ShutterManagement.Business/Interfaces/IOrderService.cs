@@ -8,10 +8,11 @@ using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.Core.ViewModels.Response;
 using ShutterManagement.Core.ViewModels;
 using ShutterManagement.DAL.Context;
+using ShutterManagement.Interfaces;
 
 namespace ShutterManagement.Business.Interfaces
 {
-    public interface IOrderService
+    public interface IOrderService : IGenericRepository<TblOrder>
     {
         Task<IResponseVm<string>> Create_Order_From_Estimate(Guid EstimateId, bool fromEstimate = false, UpdateOrder updateOrder = null);
         Task<IResponseVm<string>> Update_Order(UpdateOrder model);

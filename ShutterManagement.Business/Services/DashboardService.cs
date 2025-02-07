@@ -54,7 +54,7 @@ namespace ShutterManagement.Business.Services
                 var Data = new List<StatusCountVm>();
 
                 var statusCounts = dbContext.MstJobStatuses
-                            .GroupJoin(dbContext.TblJobs.Where(j => j.TenantId == AppConstant.LoggedInTenantId),
+                            .GroupJoin(dbContext.TblJobs.Where(j => j.TenantId == AppConstant.LoggedInTenantId && j.IsDelete==false),
                                 m => m.JobStatusId,
                                 j => j.JobStatus,
                                 (m, jobGroup) => new
