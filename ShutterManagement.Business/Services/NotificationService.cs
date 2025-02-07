@@ -53,7 +53,7 @@ namespace ShutterManagement.Business.Services
                 var notification = GetAllQuerable().Where(x => x.Id == Id && x.UserId == AppConstant.LoggedInUserID).FirstOrDefault();
                 if (notification != null)
                 {
-                    notification.IsReaded = !notification.IsReaded;
+                    notification.IsReaded = true;
                     var res = await Update(notification);
                     responseVm.IsSuccess = true;
                     responseVm.Message += AppConstant.UpdateSuccessMsg;
