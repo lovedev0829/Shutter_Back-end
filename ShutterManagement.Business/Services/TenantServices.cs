@@ -27,9 +27,10 @@ namespace ShutterManagement.Business.Services
         private readonly ITenantBrandingService tenantBrandingService;
         private readonly ClaimsProperty claimsProperty;
         private readonly IUserService userService;
+        private readonly INotificationService notification;
 
         public TenantServices(DataServices dataServices, IMapper mapper, ITenantBrandingService tenantBrandingService
-            , ClaimsProperty claimsProperty, IUserService userService
+            , ClaimsProperty claimsProperty, IUserService userService,INotificationService notification
             )
         {
             this.dataServices = dataServices;
@@ -37,6 +38,7 @@ namespace ShutterManagement.Business.Services
             this.tenantBrandingService = tenantBrandingService;
             this.claimsProperty = claimsProperty;
             this.userService = userService;
+            this.notification = notification;
         }
 
         public async Task<IResponseVm<string>> TenantCreate(CreateTenant model)
@@ -101,10 +103,29 @@ namespace ShutterManagement.Business.Services
                 };
 
                 await dataServices.CallSP("sp_TenantCRUD", null, sqlParameters);
-
                 var AddedTenant = GetAllQuerable().Where(x => x.FirstName == model.FirstName && x.Code == model.Code).FirstOrDefault();
+                CreateNotification notification1 = new CreateNotification()
+                {
+                    UserId = AppConstant.LoggedInUserID,
+                    Subject = Enum.GetName(typeof(NotificationModule), NotificationModule.Tenant),
+                    Body = "Tenant " + AppConstant.Create_Notification,
+                    CreatedDate = DateTime.Now,
+                    IsReaded = true
+                };
+
+                var result = await notification.CreateNotification(notification1);
                 if (AddedTenant != null)
                 {
+                    CreateNotification notification2 = new CreateNotification()
+                    {
+                        UserId = AddedTenant.TenantId,
+                        Subject = Enum.GetName(typeof(NotificationModule), NotificationModule.Tenant),
+                        Body =  $"{AppConstant.Welcome_Notification} {AddedTenant.FirstName} {AddedTenant.LastName}!",
+                        CreatedDate = DateTime.Now,
+                        IsReaded = true
+                    };
+
+                    var result2 = await notification.CreateNotification(notification2);
                     string[] defaultRoleArray = ["Tenant Admin", "Sales", "Installer"];
                     var DefaultRoles = dbContext.TblRoles.Where(x => x.IsShow == true && x.IsActive == true && x.IsDelete == false
                     && defaultRoleArray.Contains(x.RoleName)).ToList();
@@ -139,10 +160,8 @@ namespace ShutterManagement.Business.Services
                         }
                     }
                 }
-
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.InsertSuccessMsg;
-
             }
             catch (Exception ex)
             {

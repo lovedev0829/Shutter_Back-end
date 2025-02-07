@@ -57,6 +57,7 @@ namespace ShutterManagement.Business.Services
         private readonly IDiscountService discountservice;
         private readonly ISubtenantProductMarkup subtenantProductMarkup;
         private readonly ITenantBrandingService tenantBrandingService;
+        private readonly INotificationService notification;
         List<Guid> expressionList = new List<Guid>();
 
         public EstimateService(ShutterDBContext context,
@@ -83,7 +84,7 @@ namespace ShutterManagement.Business.Services
             IOption optionService,
             ITaxRate taxRate,
             IRegion region,ITaxExemption taxExemption, IDiscountService discountservice,
-            ISubtenantProductMarkup subtenantProductMarkup,ITenantBrandingService tenantBrandingService
+            ISubtenantProductMarkup subtenantProductMarkup,ITenantBrandingService tenantBrandingService, INotificationService notification
             )
         {
             _context = context;
@@ -115,6 +116,7 @@ namespace ShutterManagement.Business.Services
             this.discountservice = discountservice;
             this.subtenantProductMarkup = subtenantProductMarkup;
             this.tenantBrandingService = tenantBrandingService;
+            this.notification = notification;
         }
 
         public async Task<IResponseVm<string>> ActiveInActiveEstimate(Guid EstimateId)
@@ -349,6 +351,16 @@ namespace ShutterManagement.Business.Services
                     //var TotalPrice = await CalculateEstimate(createEstimate.EstimateId);
                     //createEstimate.TotalPrice = TotalPrice;
                     //await Update(createEstimate);
+                    CreateNotification notification1 = new CreateNotification()
+                    {
+                        UserId = AppConstant.LoggedInUserID,
+                        Subject = Enum.GetName(typeof(NotificationModule), NotificationModule.Estimate),
+                        Body = "Estimate " + AppConstant.Create_Notification,
+                        CreatedDate = DateTime.Now,
+                        IsReaded = true
+                    };
+
+                    var result = await notification.CreateNotification(notification1);
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.InsertSuccessMsg;
                     FileLogger.Log("Estimate created and all related data added successfully.");
@@ -498,14 +510,12 @@ namespace ShutterManagement.Business.Services
                 .Where(x => x.JobId == JobId && x.IsDelete == false)
                 .Select(pt => pt.ContactId)
                 .FirstOrDefault();
-
             if (Jobdetail == Guid.Empty)
             {
                 return false;
             }
-
-            bool IsTaxApplied = await taxExemption.AnyAsync(x => x.ContactId == Jobdetail && x.IsDelete == false);
-
+            bool IsTaxApplied = await taxExemption.AnyAsync(x => x.ContactId.ToString().ToLower() == Jobdetail.ToString().ToLower() && x.IsDelete == false && 
+            x.EffectiveDate <= DateTime.Now && x.ExpiryDate >= DateTime.Now);
             return IsTaxApplied;
         }
 
@@ -800,6 +810,17 @@ namespace ShutterManagement.Business.Services
                 {
                     EstimationStatus.Status = EnumValue.GetEnumValue(NewEstimationStatus);
                     await Update(EstimationStatus);
+
+                    CreateNotification notification1 = new CreateNotification()
+                    {
+                        UserId = AppConstant.LoggedInUserID,
+                        Subject = Enum.GetName(typeof(NotificationModule), NotificationModule.Estimate),
+                        Body = "Estimate " + AppConstant.UpdateStatus_Notification,
+                        CreatedDate = DateTime.Now,
+                        IsReaded = true
+                    };
+
+                    var result = await notification.CreateNotification(notification1);
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.UpdateSuccessMsg;
                     responseVm.Data = EnumValue.GetEnumValue(NewEstimationStatus);

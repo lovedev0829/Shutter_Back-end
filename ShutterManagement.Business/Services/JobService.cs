@@ -18,14 +18,16 @@ namespace ShutterManagement.Business.Services
         private readonly ClaimsProperty claimsProperty;
         private readonly IAddress address;
         private readonly ITenantService tenantService;
+        private readonly INotificationService notification;
 
         public JobService(ShutterDBContext context, ClaimsProperty claimsProperty, IAddress address,
-            ITenantService tenantService)
+            ITenantService tenantService,INotificationService notification)
         {
             _context = context;
             this.claimsProperty = claimsProperty;
             this.address = address;
             this.tenantService = tenantService;
+            this.notification = notification;
         }
         public async Task<IResponseVm<string>> ActiveInactive(string JobId)
         {
@@ -113,6 +115,15 @@ namespace ShutterManagement.Business.Services
                     var res = await Add(job);
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.InsertSuccessMsg;
+                    CreateNotification notification1 = new CreateNotification()
+                    {
+                        UserId = AppConstant.LoggedInUserID,
+                        Subject = Enum.GetName(typeof(NotificationModule), NotificationModule.Job),
+                        Body = "Job " + AppConstant.Create_Notification,
+                        CreatedDate = DateTime.Now,
+                        IsReaded = true
+                    };
+                    var result = await notification.CreateNotification(notification1);
                 }
                 else
                 {
@@ -453,11 +464,22 @@ namespace ShutterManagement.Business.Services
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.UpdateSuccessMsg;
                 }
-
-                else
+                CreateNotification notification1 = new CreateNotification()
                 {
-                    responseVm.Message = AppConstant.NoDataFound;
-                }
+                    UserId = AppConstant.LoggedInUserID,
+                    Subject = Enum.GetName(typeof(NotificationModule), NotificationModule.Job),
+                    Body = "Job " + AppConstant.UpdateStatus_Notification,
+                    CreatedDate = DateTime.Now,
+                    IsReaded = true
+                };
+
+                var result = await notification.CreateNotification(notification1);
+
+
+                //else
+                //{
+                //    responseVm.Message = AppConstant.NoDataFound;
+                //}
 
             }
             catch (Exception ex)

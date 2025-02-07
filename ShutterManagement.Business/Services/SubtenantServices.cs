@@ -26,15 +26,17 @@ namespace ShutterManagement.Business.Services
         private readonly IUserService userService;
         private readonly ClaimsProperty claimsProperty;
         private readonly ITenantBrandingService tenantBrandingService;
+        private readonly INotificationService notification;
 
         public SubtenantServices(DataServices dataServices, IUserService userService
-            , ClaimsProperty claimsProperty, ITenantBrandingService tenantBrandingService
+            , ClaimsProperty claimsProperty, ITenantBrandingService tenantBrandingService,INotificationService notification
             )
         {
             this.dataServices = dataServices;
             this.userService = userService;
             this.claimsProperty = claimsProperty;
             this.tenantBrandingService = tenantBrandingService;
+            this.notification = notification;
         }
 
         public async Task<IResponseVm<string>> SubTenantCreate(CreateTenant model)
@@ -126,11 +128,31 @@ namespace ShutterManagement.Business.Services
                     };
 
                 await dataServices.CallSP("sp_TenantCRUD", null, sqlParameters);
+                CreateNotification notification1 = new CreateNotification()
+                {
+                    UserId = AppConstant.LoggedInUserID,
+                    Subject = Enum.GetName(typeof(NotificationModule), NotificationModule.Tenant),
+                    Body = "Tenant " + AppConstant.Create_Notification,
+                    CreatedDate = DateTime.Now,
+                    IsReaded = true
+                };
 
+                var result = await notification.CreateNotification(notification1);
+               
                 var AddedTenant = GetAllQuerable().Where(x => x.FirstName == model.FirstName && x.Code == model.Code).FirstOrDefault();
                 if (AddedTenant != null)
                 {
-                    string[] defaultRoleArray = ["SubTenant Admin", "Sales", "Installer"];
+                        CreateNotification notification2 = new CreateNotification()
+                        {
+                            UserId = AddedTenant.TenantId,
+                            Subject = Enum.GetName(typeof(NotificationModule), NotificationModule.Tenant),
+                            Body = $"{AppConstant.Welcome_Notification} {AddedTenant.FirstName} {AddedTenant.LastName}!",
+                            CreatedDate = DateTime.Now,
+                            IsReaded = true
+                        };
+
+                        var result2 = await notification.CreateNotification(notification2);
+                        string[] defaultRoleArray = ["SubTenant Admin", "Sales", "Installer"];
                     var DefaultRoles = dbContext.TblRoles.Where(x => x.IsShow == true && x.IsActive == true && x.IsDelete == false
                     && defaultRoleArray.Contains(x.RoleName)).ToList();
                     foreach (var item in DefaultRoles)

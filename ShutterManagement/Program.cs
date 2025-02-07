@@ -159,6 +159,7 @@ builder.Services.AddScoped<IDashboard, DashboardService>();
 builder.Services.AddScoped<IEstimationBreakdownService,EstimationBreakdownService>();
 builder.Services.AddScoped<ILocationService, LocationService>();
 builder.Services.AddScoped<ISubtenantProductMarkup, SubtenantProductMarkup>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddSingleton(typeof(IConverter), new SynchronizedConverter(new PdfTools()));
 
 

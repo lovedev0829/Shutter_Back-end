@@ -30,15 +30,17 @@ namespace ShutterManagement.Services
         private readonly IConfiguration _config;
         private readonly ITenantService tenantService;
         private readonly ITenantBrandingService tenantBrandingService;
+        private readonly INotificationService notification;
 
         public AuthService(DataServices dataServices, IMapper mapper, IConfiguration config,
-            ITenantService tenantService, ITenantBrandingService tenantBrandingService)
+            ITenantService tenantService, ITenantBrandingService tenantBrandingService,INotificationService notification)
         {
             this.dataServices = dataServices;
             this.mapper = mapper;
             _config = config;
             this.tenantService = tenantService;
             this.tenantBrandingService = tenantBrandingService;
+            this.notification = notification;
         }
         public async Task<IResponseVm<UserLoginDetails>> LoginAsync(LoginDetailVM user)
         {
@@ -271,6 +273,16 @@ namespace ShutterManagement.Services
                         var res = await Update(UpdateUserDetails);
                         result.IsSuccess = true;
                         result.Message = AppConstant.UpdateSuccessMsg;
+
+                        CreateNotification notification2 = new CreateNotification()
+                        {
+                            UserId = AppConstant.LoggedInUserID,
+                            Subject = Enum.GetName(typeof(NotificationModule), NotificationModule.Tenant),
+                            Body = $"Tenant profile {AppConstant.Update_Notification}",
+                            CreatedDate = DateTime.Now,
+                            IsReaded = true
+                        };
+                        var result1 = notification.CreateNotification(notification2);
                     }
                     else
                     {
@@ -374,10 +386,21 @@ namespace ShutterManagement.Services
                 user.Token = token;
                 user.ModifiedAt = DateTime.Now;
                 await Update(user);
+
                 var content = $"Please reset your password using the following link: <a href='{resetLink}'>Reset Password</a>";
                 EmailHelper.ForgotPassword(user.Email, content);
                 result.IsSuccess = true;
                 result.Message = AppConstant.ForgotPasswordSuccess;
+
+                CreateNotification notification2 = new CreateNotification()
+                {
+                    UserId = AppConstant.LoggedInUserID,
+                    Subject = Enum.GetName(typeof(NotificationModule), NotificationModule.Tenant),
+                    Body = $"Tenant password {AppConstant.Update_Notification}",
+                    CreatedDate = DateTime.Now,
+                    IsReaded = true
+                };
+                var result1 = notification.CreateNotification(notification2);
             }
             catch (Exception ex)
             {

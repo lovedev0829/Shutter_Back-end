@@ -53,6 +53,7 @@ namespace ShutterManagement.Controllers
         private readonly IEstimationBreakdownService estimationBreakdownService;
         private readonly ILocationService locationService;
         private readonly IDashboard dashboard;
+        private readonly INotificationService notification;
 
         public CommonController(IMasterCreate masterCreate, 
             FileUploadHelper fileUpload, ClaimsProperty claimsProperty,
@@ -66,7 +67,7 @@ namespace ShutterManagement.Controllers
             IMstContactType contactType, IJobService jobService,IExpressionService expression ,IInvoiceService invoiceService,
             ITaxRate taxService,IEstimateService estimateService,
             IEstimationBreakdownService estimationBreakdownService, ILocationService locationService,
-           IDashboard dashboard)
+           IDashboard dashboard,INotificationService notification)
         {
             this.masterCreate = masterCreate;
             this.fileUpload = fileUpload;
@@ -107,6 +108,7 @@ namespace ShutterManagement.Controllers
             this.estimationBreakdownService = estimationBreakdownService;
             this.locationService = locationService;
             this.dashboard = dashboard;
+            this.notification = notification;
         }
 
 
@@ -698,6 +700,22 @@ namespace ShutterManagement.Controllers
             filter.TenantId = AppConstant.LoggedInTenantId.ToString();
             var res = await jobService.GetAllJobsTenant_SubTenant(filter);
             return Ok(res);
+        }
+
+        [HttpPost]
+        [Route("UpdateNotification")]
+        public async Task<IActionResult> UpdateNotification(Guid Id)
+        {
+            var result = await notification.UpdateNotification(Id);
+            return Ok(result);
+        }
+
+        [HttpGet]
+        [Route("GetAllNotification")]
+        public async Task<IActionResult> GetAllNotication()
+        {
+            var result = await notification.GetAllNotifications();
+            return Ok(result);
         }
 
     }
