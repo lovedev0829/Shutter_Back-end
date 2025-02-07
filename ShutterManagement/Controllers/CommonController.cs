@@ -658,7 +658,7 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> GetAllEstimate(string? JobId )
         {
             filter.Status = 1;
-            filter.SearchValue=JobId?.ToLower();
+            filter.JobId=JobId?.ToLower();
             var res = await estimateService.GetAll_Estimate(filter);
             return Ok(res);
         }

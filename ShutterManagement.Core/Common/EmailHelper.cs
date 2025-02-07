@@ -40,6 +40,29 @@ namespace ShutterManagement.Core.Common
             return result;
         }
 
+        public static bool SendEmailWithAttachment(string toEmail, string subject, string body, List<EmailAttachment> attachments = null)
+        {
+            try
+            {
+                var sendEmail = new SendEmail
+                {
+                    ToEmail = toEmail,
+                    Subject = subject,
+                    Body = body,
+                    Attachments = attachments ?? new List<EmailAttachment>()
+                };
+
+                var emailResult = SendMail(sendEmail);
+
+                return emailResult.IsSuccess;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Email sending failed: {ex.Message}");
+                return false;
+            }
+        }
+
         public static IResponseVm<string> SendMail(SendEmail sendEmail)
         {
             IResponseVm<string> res = new ResponseVm<string>();
@@ -63,7 +86,7 @@ namespace ShutterManagement.Core.Common
             multipart.Add(body);
 
             // Attach files if available
-            if (emailMessage.Attachments != null && emailMessage.Attachments.Count() > 0)
+            if (sendEmail.Attachments != null && sendEmail.Attachments.Count() > 0)
             {
                 foreach (var attach in sendEmail.Attachments)
                 {

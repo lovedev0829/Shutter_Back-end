@@ -1,4 +1,5 @@
 ﻿using CsvHelper.Configuration.Attributes;
+using ShutterManagement.Core.Common;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -11,6 +12,9 @@ namespace ShutterManagement.Core.ViewModels.Request
 {
     public class GenerateInvoiceModel
     {
+        [Required]
+        //[DefaultValue(2)]
+        public EstimateDocumentType DocumentType { get; set; }
         public Guid? TemplateId { get; set; } = Guid.Parse("DFBD5BD7-D9F9-4E41-8B48-375B3BA79610");
         [Required]
         public Guid? ContactId { get; set; }
