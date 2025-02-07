@@ -102,6 +102,19 @@ namespace ShutterManagement.Core.Common
         Approved
     }
 
+    public enum NotificationModule
+    {
+        [EnumMember(Value = "Job")]
+        Job,
+        [EnumMember(Value = "Contact")]
+        Contact,        
+        [EnumMember(Value = "Estimate")]
+        Estimate,  
+        [EnumMember(Value = "Tenant")]
+        Tenant,   
+        [EnumMember(Value = "User")]
+        User
+    }
     public static class EnumValue
     {
         public static string GetEnumValue<T>(T enumValue) where T : Enum

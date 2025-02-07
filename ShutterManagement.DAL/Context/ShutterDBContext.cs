@@ -83,6 +83,8 @@ public partial class ShutterDBContext : DbContext
 
     public virtual DbSet<TblMeasurement> TblMeasurements { get; set; }
 
+    public virtual DbSet<TblNotification> TblNotifications { get; set; }
+
     public virtual DbSet<TblOption> TblOptions { get; set; }
 
     public virtual DbSet<TblOptionsType> TblOptionsTypes { get; set; }
@@ -957,6 +959,20 @@ public partial class ShutterDBContext : DbContext
             entity.HasOne(d => d.Address).WithMany(p => p.TblMeasurements)
                 .HasForeignKey(d => d.AddressId)
                 .HasConstraintName("FK__TblMeasur__Addre__662B2B3B");
+        });
+
+        modelBuilder.Entity<TblNotification>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__TblNotif__3214EC07D937EA1B");
+
+            entity.ToTable("TblNotification");
+
+            entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.Createdate).HasColumnType("datetime");
+
+            entity.HasOne(d => d.User).WithMany(p => p.TblNotifications)
+                .HasForeignKey(d => d.UserId)
+                .HasConstraintName("FK__TblNotifi__UserI__76D69450");
         });
 
         modelBuilder.Entity<TblOption>(entity =>

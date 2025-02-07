@@ -31,7 +31,6 @@ namespace ShutterManagement.Business.Services
 
         public async Task<IResponseVm<string>> ActiveInActive(Guid VendorOrderId)
         {
-
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {

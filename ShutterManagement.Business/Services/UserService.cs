@@ -25,16 +25,18 @@ namespace ShutterManagement.Services
         private readonly ClaimsProperty claimsProperty;
         private readonly IUserRoleService userRoleService;
         private readonly IMapper mapper;
+        private readonly INotificationService notification;
 
         public UserService(DataServices dataServices, IRoleService roleService
             , ClaimsProperty claimsProperty, IUserRoleService userRoleService
-            , IMapper mapper)
+            , IMapper mapper,INotificationService notification)
         {
             _dataServices = dataServices;
             this.roleService = roleService;
             this.claimsProperty = claimsProperty;
             this.userRoleService = userRoleService;
             this.mapper = mapper;
+            this.notification = notification;
         }
 
         public async Task<IResponseVm<string>> Create(CreateUser UserDetails)
@@ -75,7 +77,15 @@ namespace ShutterManagement.Services
                     return result;
                 }
 
-
+                CreateNotification notification2 = new CreateNotification()
+                {
+                    UserId = AppConstant.LoggedInUserID,
+                    Subject = Enum.GetName(typeof(NotificationModule), NotificationModule.User),
+                    Body = $"Tenant {AppConstant.Create_Notification}",
+                    CreatedDate = DateTime.Now,
+                    IsReaded = true
+                };
+                var result1 = notification.CreateNotification(notification2);
                 bool IsRoleExists = await roleService.AnyAsync(x => x.Id == UserDetails.RoleId
                 && x.IsShow == false && x.IsActive == true && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
                 if (IsRoleExists)
