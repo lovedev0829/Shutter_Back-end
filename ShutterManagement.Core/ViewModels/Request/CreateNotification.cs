@@ -19,5 +19,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         public DateTime? CreatedDate { get; set; }
 
         public  string? Url { get; set; }
+        public  string? Type { get; set; }
+        public  Guid? TypeId { get; set; }
     }
 }

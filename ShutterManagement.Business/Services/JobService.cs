@@ -119,9 +119,10 @@ namespace ShutterManagement.Business.Services
                     {
                         UserId = AppConstant.LoggedInUserID,
                         Subject = Enum.GetName(typeof(NotificationModule), NotificationModule.Job),
-                        Body = "Job " + AppConstant.Create_Notification,
+                        Body = $"{job.JobName} {AppConstant.Create_Notification}",
                         CreatedDate = DateTime.Now,
-                        IsReaded = true
+                        Type = Enum.GetName(typeof(NotificationModule), NotificationModule.Job),
+                        TypeId = job.JobId,
                     };
                     var result = await notification.CreateNotification(notification1);
                 }
@@ -468,9 +469,10 @@ namespace ShutterManagement.Business.Services
                 {
                     UserId = AppConstant.LoggedInUserID,
                     Subject = Enum.GetName(typeof(NotificationModule), NotificationModule.Job),
-                    Body = "Job " + AppConstant.UpdateStatus_Notification,
+                    Body = $"{IsJobExist.JobName} {AppConstant.UpdateStatus_Notification}",
                     CreatedDate = DateTime.Now,
-                    IsReaded = true
+                    Type = Enum.GetName(typeof(NotificationModule), NotificationModule.Job),
+                    TypeId = IsJobExist.JobId,
                 };
 
                 var result = await notification.CreateNotification(notification1);

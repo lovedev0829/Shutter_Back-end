@@ -108,21 +108,26 @@ namespace ShutterManagement.Business.Services
                 {
                     UserId = AppConstant.LoggedInUserID,
                     Subject = Enum.GetName(typeof(NotificationModule), NotificationModule.Tenant),
-                    Body = "Tenant " + AppConstant.Create_Notification,
+                    Body = $"{AddedTenant.FirstName} {AddedTenant.LastName} Tenant {AppConstant.Create_Notification}",
                     CreatedDate = DateTime.Now,
-                    IsReaded = true
+                    Type = Enum.GetName(typeof(NotificationModule), NotificationModule.Tenant),
+                    TypeId = AddedTenant.TenantId
                 };
 
                 var result = await notification.CreateNotification(notification1);
                 if (AddedTenant != null)
                 {
+                    var UserId = userService.GetAllQuerable().Where(x => x.TenantId == AddedTenant.TenantId && x.IsDelete == false).
+                       Select(x => x.Id).FirstOrDefault();
                     CreateNotification notification2 = new CreateNotification()
                     {
-                        UserId = AddedTenant.TenantId,
+                        UserId = UserId,
                         Subject = Enum.GetName(typeof(NotificationModule), NotificationModule.Tenant),
                         Body =  $"{AppConstant.Welcome_Notification} {AddedTenant.FirstName} {AddedTenant.LastName}!",
                         CreatedDate = DateTime.Now,
-                        IsReaded = true
+                        Type = Enum.GetName(typeof(NotificationModule), NotificationModule.Tenant),
+                        TypeId = AddedTenant.TenantId
+
                     };
 
                     var result2 = await notification.CreateNotification(notification2);

@@ -128,27 +128,32 @@ namespace ShutterManagement.Business.Services
                     };
 
                 await dataServices.CallSP("sp_TenantCRUD", null, sqlParameters);
+             
+               
+                var AddedTenant = GetAllQuerable().Where(x => x.FirstName == model.FirstName && x.Code == model.Code).FirstOrDefault();
                 CreateNotification notification1 = new CreateNotification()
                 {
                     UserId = AppConstant.LoggedInUserID,
-                    Subject = Enum.GetName(typeof(NotificationModule), NotificationModule.Tenant),
-                    Body = "Tenant " + AppConstant.Create_Notification,
+                    Subject = Enum.GetName(typeof(NotificationModule), NotificationModule.SubTenant),
+                    Body = $"{AddedTenant.FirstName} {AddedTenant.LastName}({AddedTenant.Code}) Partner {AppConstant.Create_Notification}",
                     CreatedDate = DateTime.Now,
-                    IsReaded = true
+                    Type = Enum.GetName(typeof(NotificationModule), NotificationModule.SubTenant),
+                    TypeId = AddedTenant.TenantId,
                 };
-
                 var result = await notification.CreateNotification(notification1);
-               
-                var AddedTenant = GetAllQuerable().Where(x => x.FirstName == model.FirstName && x.Code == model.Code).FirstOrDefault();
                 if (AddedTenant != null)
                 {
+                    var UserId = userService.GetAllQuerable().Where(x => x.TenantId == AddedTenant.TenantId && x.IsDelete == false).
+                        Select(x => x.Id).FirstOrDefault();
                         CreateNotification notification2 = new CreateNotification()
                         {
-                            UserId = AddedTenant.TenantId,
-                            Subject = Enum.GetName(typeof(NotificationModule), NotificationModule.Tenant),
-                            Body = $"{AppConstant.Welcome_Notification} {AddedTenant.FirstName} {AddedTenant.LastName}!",
+                            UserId = UserId,
+                            Subject = Enum.GetName(typeof(NotificationModule), NotificationModule.SubTenant),
+                            Body = $"{AppConstant.Welcome_Notification} {AddedTenant.FirstName}({AddedTenant.Code}) {AddedTenant.LastName}!",
                             CreatedDate = DateTime.Now,
-                            IsReaded = true
+                            Type = Enum.GetName(typeof(NotificationModule), NotificationModule.SubTenant),
+                            TypeId = AddedTenant.TenantId,   
+
                         };
 
                         var result2 = await notification.CreateNotification(notification2);

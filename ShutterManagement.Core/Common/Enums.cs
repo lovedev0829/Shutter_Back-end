@@ -123,7 +123,9 @@ namespace ShutterManagement.Core.Common
         [EnumMember(Value = "Estimate")]
         Estimate,  
         [EnumMember(Value = "Tenant")]
-        Tenant,   
+        Tenant,
+        [EnumMember(Value = "Partner")]
+        SubTenant,   
         [EnumMember(Value = "User")]
         User
     }
