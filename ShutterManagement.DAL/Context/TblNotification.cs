@@ -17,7 +17,9 @@ public partial class TblNotification
 
     public bool? IsReaded { get; set; }
 
-    public string? Url { get; set; }
+    public string? Type { get; set; }
+
+    public Guid? TypeId { get; set; }
 
     public virtual TblUser? User { get; set; }
 }

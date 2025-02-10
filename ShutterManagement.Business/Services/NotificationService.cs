@@ -32,7 +32,8 @@ namespace ShutterManagement.Business.Services
                     Body = model.Body,
                     Createdate = DateTime.Now,
                     IsReaded = model.IsReaded,
-                    Url = model.Url,
+                    Type = model.Type,  
+                    TypeId = model.TypeId,
                 };
                 var res = await Add(notification);
                 responseVm.IsSuccess = true;
@@ -71,13 +72,15 @@ namespace ShutterManagement.Business.Services
             IResponseVm<List<GetAllNotification>> responseVm = new ResponseVm<List<GetAllNotification>>(); 
             try
             {
-                var  notification = GetAllQuerable().Where(x => x.UserId == AppConstant.LoggedInUserID).Select(pt => new GetAllNotification
+                var  notification = GetAllQuerable().Where(x => x.UserId == AppConstant.LoggedInUserID).OrderByDescending(pt=> pt.Createdate).Select(pt => new GetAllNotification
                 {
                     Id = pt.Id,
                     Subject = pt.Subject,
                     Body = pt.Body,
                     CreatedDate = pt.Createdate,
                     IsReaded = pt.IsReaded,
+                    Type = pt.Type,
+                    TypeId = pt.TypeId.ToString(),
                     UserId = pt.UserId,
                 }).ToList();
                

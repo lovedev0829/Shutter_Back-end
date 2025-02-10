@@ -16,6 +16,8 @@ namespace ShutterManagement.Core.ViewModels.Response
 
         public  DateTime? CreatedDate { get; set; }
 
+        public string? Type { get; set; }
+        public string? TypeId { get; set; }
         public Guid? UserId { get; set; }
             
     }

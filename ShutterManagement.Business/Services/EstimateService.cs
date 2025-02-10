@@ -810,14 +810,15 @@ namespace ShutterManagement.Business.Services
                 {
                     EstimationStatus.Status = EnumValue.GetEnumValue(NewEstimationStatus);
                     await Update(EstimationStatus);
-
+                    var EstimateName = GetAllQuerable().Where(x => x.EstimateId == EstimationId && x.IsDelete == false).FirstOrDefault();
                     CreateNotification notification1 = new CreateNotification()
                     {
                         UserId = AppConstant.LoggedInUserID,
                         Subject = Enum.GetName(typeof(NotificationModule), NotificationModule.Estimate),
-                        Body = "Estimate " + AppConstant.UpdateStatus_Notification,
+                        Body = $"{EstimateName} {AppConstant.UpdateStatus_Notification}",
                         CreatedDate = DateTime.Now,
-                        IsReaded = true
+                        Type = Enum.GetName(typeof(NotificationModule), NotificationModule.Estimate),
+                        TypeId = EstimationId
                     };
 
                     var result = await notification.CreateNotification(notification1);
