@@ -22,6 +22,7 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 using System.Text;
 using ShutterManagement.Core.Common;
 using Microsoft.Extensions.Primitives;
+using MailKit.Search;
 
 namespace ShutterManagement.Business.Services
 {
@@ -36,11 +37,12 @@ namespace ShutterManagement.Business.Services
         private readonly ITenantBrandingService tenantBrandingService;
         private readonly IUserService userService;
         private readonly IJobService jobService;
+        private readonly IOrderService orderService;
         public Pagination filter = new Pagination();
 
         public InvoiceService(ITenantService tenantService, IInvoicePaymentService invoicePaymentService,
             IHostEnvironment environment, IConverter converter ,IContactService contactService 
-            ,IEstimateService estimateService, ITenantBrandingService tenantBrandingService,IUserService userService ,IJobService jobService)
+            ,IEstimateService estimateService, ITenantBrandingService tenantBrandingService,IUserService userService ,IJobService jobService,IOrderService orderService)
         {
             this.tenantService = tenantService;
             this.invoicePaymentService = invoicePaymentService;
@@ -51,6 +53,7 @@ namespace ShutterManagement.Business.Services
             this.tenantBrandingService = tenantBrandingService;
             this.userService = userService;
             this.jobService = jobService;
+            this.orderService = orderService;
         }
 
         #region Create  update ActiveInActive Delete Getall
@@ -537,6 +540,11 @@ namespace ShutterManagement.Business.Services
                    c.TenantId == AppConstant.LoggedInTenantId &&
                    c.IsDelete == false);
 
+                var orderDetails = dbContext.TblOrders.FirstOrDefault(c =>
+                   c.OrderId == model.OrderId &&
+                   c.TenantId == AppConstant.LoggedInTenantId &&
+                   c.IsDelete == false);
+
                 var estimationRecord = await estimateService.ViewEachEstimation(model.EstimationId);
 
                 var productList = estimationRecord.Data
@@ -568,6 +576,7 @@ namespace ShutterManagement.Business.Services
                     EmailAddress = customerDetails?.Email ?? "",
                     Terms = estimationDetails?.TermsCondition ?? "",
                     Note = estimationDetails?.Notes ?? "",
+                    OrderId = orderDetails?.OrderName ?? "",
                     ProductListHtml = GenerateProductListHtml(productList)
                 };
 
@@ -613,30 +622,31 @@ namespace ShutterManagement.Business.Services
                     string approvalEmailLink = $"{AppConstant.UIBaseURL}contacts/estimate/preview/{IsEstimateExists?.EstimateId}";
 
                     var emailBody = $@"
-    <div style='font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px;'>
-        <p><strong>Dear Valued Customer,</strong></p>
+     <div style='font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px;'>
+        <p><strong>Dear {customerDetails?.FirstName+" "+ customerDetails?.LastName},</strong></p>
 
         <p>Please find your invoice attached for your reference.</p>
 
-        <p><strong>You can approve  your estimate by clicking the link below:</strong></p>
+        <p><strong>You can approve  your estimate - {estimationDetails?.EstimateCode}by clicking the link below:</strong></p>
 
         <p>
-            <a href='{approvalEmailLink}' 
-               style='display: inline-block; background-color: #007bff; color: #ffffff; padding: 10px 20px; 
-                      text-decoration: none; font-weight: bold; border-radius: 5px;'>
+            <a href='{approvalEmailLink}'>
                 Approval Estimate
             </a>
         </p>
 
         <p><strong>Thank you for your business!</strong></p>
 
-        <p>Best regards,</p>
-        <p><strong>{tenantInfoDetails?.CompanyName}</strong></p>
+        
+        
 
         <p>
             <img src='{tenantInfoDetails?.Logo}' alt='Company Logo' height='50px' 
                  style='margin-top: 10px; display: block;'>
         </p>
+<p>Best regards,</p>
+<p><strong>{tenantInfoDetails?.CompanyName}</strong></p>
+<p>Shutter Management and Estimation System</p>
     </div>";
 
 
@@ -657,6 +667,74 @@ namespace ShutterManagement.Business.Services
                     responseVm.IsSuccess = true;
                     responseVm.Message = "Email Send SuccessFully.";
                     File.Delete(savePath);
+
+                }
+                else if(model.DocumentType==EstimateDocumentType.OrderForEmail)
+                {
+                    var IsOrderExists =  (await orderService.GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId &&
+                    x.OrderId== model.OrderId && x.Status != EnumValue.GetEnumValue(Estimation.Approved)).
+                    OrderByDescending(x => x.CreatedAt).FirstOrDefault();
+                    if (IsOrderExists == null)
+                    {
+                        responseVm.Message = "Estimate " + AppConstant.NoDataFound;
+                        return responseVm;
+                    }
+                    
+                    IsOrderExists.Status = EnumValue.GetEnumValue(Estimation.PendingForApproval);
+                    IsOrderExists.UpdatedAt = DateTime.Now;
+                    IsOrderExists.ModifiedBy = AppConstant.LoggedInUserID;
+                    await orderService.Update(IsOrderExists);
+
+                    string approvalOrderEmailLink = $"{AppConstant.UIBaseURL}contacts/order/preview/{IsOrderExists?.OrderId}";
+
+                    var emailBody = $@"
+     <div style='font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px;'>
+        <p><strong>Dear {customerDetails?.FirstName + " " + customerDetails?.LastName},</strong></p>
+
+        <p>Please find your invoice attached for your reference.</p>
+
+        <p>You can approve  your Order - {IsOrderExists?.OrderName} by clicking the link below:</p>
+
+        <p>
+            <a href='{approvalOrderEmailLink}'>
+               Order Approval link. 
+            </a>
+        </p>
+
+        <p><strong>Thank you for your business!</strong></p>
+
+       
+        
+
+        <p>
+            <img src='{tenantInfoDetails?.Logo}' alt='Company Logo' height='100px' 
+                 style='margin-top: 10px; display: block;'>
+        </p>
+        <p>Best regards,</p>
+        <p><strong>{tenantInfoDetails?.CompanyName}</strong></p>
+        <p>Shutter Management and Estimation System</p>
+    </div>";
+
+
+                    var emailAttachment = new EmailAttachment
+                    {
+                        FileName = $"{IsOrderExists?.OrderName}.pdf",
+                        Stream = new MemoryStream(pdfBytes),
+                        MediaType = "application/pdf"
+                    };
+
+                    var emailSent = EmailHelper.SendEmailWithAttachment(
+                        customerDetails.Email,
+                        "Order Approval Link and PDF",
+                        emailBody,
+                        new List<EmailAttachment> { emailAttachment }
+                    );
+
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = "Email Send SuccessFully.";
+                    File.Delete(savePath);
+
+
 
                 }
                 else if(model.DocumentType == EstimateDocumentType.DownloadPDF)
@@ -727,7 +805,8 @@ namespace ShutterManagement.Business.Services
                 .Replace("{{emailaddress}}", data.EmailAddress ?? "")
                 .Replace("{{productlist}}", data.ProductListHtml ?? "")
                 .Replace("{{terms}}", data.Terms ?? "")
-                .Replace("{{note}}", data.Note ?? "");
+                .Replace("{{note}}", data.Note ?? "")
+                .Replace("{{orderid}}", data.OrderId ?? "");
         }
 
         public byte[] GenerateInvoicePdf(string htmlContent)
