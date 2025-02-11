@@ -56,7 +56,8 @@ namespace ShutterManagement.Controllers
         }
 
         [HttpPost("BuildEstimate")]
-        [Authorize(Roles = "EstimateAdd")]
+       // [Authorize(Roles = "EstimateAdd")]
+        [AllowAnonymous]
         public async Task<IActionResult> BuildEstimate(BuildEstimate buildEstimate)
         {
             var res = await _EstimateService.BuildEstimate(buildEstimate.WindowProductIds, buildEstimate.IsBreakDown,buildEstimate.EstimateId, buildEstimate.IsView);
