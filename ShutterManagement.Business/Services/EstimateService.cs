@@ -437,7 +437,7 @@ namespace ShutterManagement.Business.Services
                       //  var ComponentPriceWithoutAdditionalCostwithSubtenantMarkup = 0.0M;
                         //calculate price
                         var ComponentPriceWithoutAdditionalCost = await CalculateEstimate(data.Data);
-                        data.Data.ForEach(x => x.TotalPrice = Convert.ToDecimal(ComponentPriceWithoutAdditionalCost.ToString("0.000")));
+                        data.Data.ForEach(x => x.TotalPrice = Convert.ToDecimal(ComponentPriceWithoutAdditionalCost.ToString("0.0000")));
                         WindowProductData.AddRange(data.Data);
                         responseVm.IsSuccess = true;
                     }
@@ -530,8 +530,8 @@ namespace ShutterManagement.Business.Services
                 // Define an expression with a nudget and a custom function
                 var expression = CalculateExpression(formula,item);
                 var res = expression.Evaluate();
-                var ComponentPrice = Convert.ToDecimal(Convert.ToDecimal(res).ToString("0.000"));
-                item.AdditionalCost = Convert.ToDecimal(item.OptionsPrice.Sum().ToString("0.000"));
+                var ComponentPrice = Convert.ToDecimal(res);
+                item.AdditionalCost = Convert.ToDecimal(item.OptionsPrice.Sum());
                 //finalSubTotal = (decimal)item.AdditionalCost + finalSubTotal;
                 var ComponentPriceWithoutMarkup = ComponentPrice;
                 var ComponentPriceWithMarkup = (ComponentPriceWithoutMarkup * (100 + item.MarkupPercentage)) / 100;
@@ -542,19 +542,19 @@ namespace ShutterManagement.Business.Services
                  .FirstOrDefault();
                 if (IsSubtenants != null)
                 {
-                        var productMarkup = subtenantProductMarkup.GetAllQuerable().Where(x => x.ProductId == item.ProductId).Select(x => x.Markup).FirstOrDefault();
-                        if (productMarkup != null && productMarkup > 0)
-                        {
+                    var productMarkup = subtenantProductMarkup.GetAllQuerable().Where(x => x.ProductId == item.ProductId).Select(x => x.Markup).FirstOrDefault();
+                    if (productMarkup != null && productMarkup > 0)
+                    {
                         ComponentPriceWithProductMarkup = (decimal)(ComponentPriceWithProductMarkup * (100 + productMarkup)) / 100;
-                        }
-                        else
-                        {
+                    }
+                    else
+                    {
                         var globalmarkup = tenantBrandingService.GetAllQuerable().Where(x => x.Id == IsSubtenants.BrandingInfo).Select(x => x.Markup).FirstOrDefault();
                         ComponentPriceWithProductMarkup = (decimal)(ComponentPriceWithProductMarkup * (100 + (globalmarkup ?? 0.00m))) / 100;
-                        }
+                    }
                 }
-                item.Price = ComponentPriceWithProductMarkup;
-                ComponentSubTotal += (decimal)ComponentPriceWithProductMarkup;
+                item.Price = Convert.ToDecimal(Convert.ToDecimal(ComponentPriceWithProductMarkup).ToString("0.0000")); 
+                ComponentSubTotal += Convert.ToDecimal(Convert.ToDecimal(ComponentPriceWithProductMarkup).ToString("0.0000"));
             }
             return ComponentSubTotal;
         }
@@ -577,7 +577,8 @@ namespace ShutterManagement.Business.Services
                         {
                             if (info[0] == "Material")
                             {
-                                val = materialService.GetAllQuerable().Where(x => x.ProductType.ToString() == info[1] && x.MaterialName == info[2] && x.IsActive == true && (x.TenantId == AppConstant.LoggedInTenantId || x.TenantId.ToString() == AppConstant.LoggedInParentTenantId)).Select(x => x.UnitCost).FirstOrDefault();
+                                bool IsRated = GetProperty.GetColumnValue(values, "IsRated") != null ? values.IsRated : true;
+                                val = materialService.GetAllQuerable().Where(x => x.ProductType.ToString() == info[1] && x.MaterialName == info[2] &&    x.IsActive == true && (x.TenantId == AppConstant.LoggedInTenantId || x.TenantId.ToString() == AppConstant.LoggedInParentTenantId)).Select(x => (IsRated ? x.UnitCost : x.NonRatedUnitCost)).FirstOrDefault();
                                 if (GetProperty.GetColumnValue(values, "WasteFactor") != null)
                                 {
                                     val = (val * (100 + values.WasteFactor ?? 0) / 100);
