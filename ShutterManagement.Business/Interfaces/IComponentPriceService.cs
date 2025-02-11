@@ -14,5 +14,6 @@ namespace ShutterManagement.Business.Interfaces
     {
         Task<IResponseVm<dynamic>> GetAllComponentsChip(string? Product, string? ProductType, string? Option = "");
         Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> GetProductData(Guid WindowProductId);
+        Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> GetProductDataForView(Guid WindowProductId, string EstimateId);
     }
 }
