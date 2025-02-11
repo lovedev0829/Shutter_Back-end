@@ -16,6 +16,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? Label { get; set; }
         public string? Count { get; set; }
         public string? Image { get; set; }
+        public string? Url { get; set; }
     }
 
 }

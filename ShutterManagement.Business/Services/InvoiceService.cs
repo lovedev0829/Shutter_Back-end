@@ -507,6 +507,7 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.NoDataFound;
                     return responseVm;
                 }
+               
 
                 var customerDetails = (await contactService.GetAll_Contact(filter))
                     .Data.FirstOrDefault(x => x.ContactId == model.ContactId && x.IsActive == true);
@@ -685,7 +686,7 @@ namespace ShutterManagement.Business.Services
                     IsOrderExists.ModifiedBy = AppConstant.LoggedInUserID;
                     await orderService.Update(IsOrderExists);
 
-                    string approvalOrderEmailLink = $"{AppConstant.UIBaseURL}contacts/order/preview/{IsOrderExists?.OrderId}";
+                   // string approvalOrderEmailLink = $"{AppConstant.UIBaseURL}contacts/order/preview/{IsOrderExists?.OrderId}";
 
                     var emailBody = $@"
      <div style='font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px;'>
@@ -696,7 +697,7 @@ namespace ShutterManagement.Business.Services
         <p>You can approve  your Order - {IsOrderExists?.OrderName} by clicking the link below:</p>
 
         <p>
-            <a href='{approvalOrderEmailLink}'>
+            <a href='{AppConstant.UIBaseURL}contacts/order/preview/{IsOrderExists?.OrderId}'>
                Order Approval link. 
             </a>
         </p>
@@ -822,25 +823,25 @@ namespace ShutterManagement.Business.Services
                     var htmlContentforInvoice = ReplaceTemplatePlaceholders(invoiceTemplate.TemplateValue, invoiceData);
 
                     // Generate Invoice PDF
-                    var pdfBytesInvoice = GenerateInvoicePdf(htmlContent);
+                    var pdfBytesInvoice = GenerateInvoicePdf(htmlContentforInvoice);
 
                     // Save the invoice PDF
                     var tenantIdInvoice = AppConstant.LoggedInTenantId.ToString();
                     var rootPathInvoice = Path.Combine(AppConstant.FileUploadPath, tenantId);
-                    if (!Directory.Exists(rootPath))
+                    if (!Directory.Exists(rootPathInvoice))
                     {
-                        Directory.CreateDirectory(rootPath);
+                        Directory.CreateDirectory(rootPathInvoice);
                     }
 
                     var InvoicefileName = $"Invoice_{Guid.NewGuid()}.pdf";
-                    var InvicesavePath = Path.Combine(rootPath, fileName);
+                    var InvicesavePath = Path.Combine(rootPathInvoice, InvoicefileName);
 
-                    await using (var stream = new FileStream(savePath, FileMode.Create))
+                    await using (var stream = new FileStream(InvicesavePath, FileMode.Create))
                     {
-                        await stream.WriteAsync(pdfBytes, 0, pdfBytes.Length);
+                        await stream.WriteAsync(pdfBytesInvoice, 0, pdfBytesInvoice.Length);
                     }
 
-                    var InvoicepdfBase64 = Convert.ToBase64String(pdfBytes);
+                    var InvoicepdfBase64 = Convert.ToBase64String(pdfBytesInvoice);
 
                     // Generate Invoice Payment Link
                     // string paymentLink = $"{AppConstant.UIBaseURL}contacts/invoice/payment/{invoiceDetails?.InvoiceId}";
@@ -893,7 +894,7 @@ namespace ShutterManagement.Business.Services
                     var emailAttachment = new EmailAttachment
                     {
                         FileName = $"{invoiceDetails?.InvoiceNumber}.pdf",
-                        Stream = new MemoryStream(pdfBytes),
+                        Stream = new MemoryStream(pdfBytesInvoice),
                         MediaType = "application/pdf"
                     };
 
@@ -908,10 +909,6 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = "Invoice email sent successfully.";
                     File.Delete(savePath);
                 }
-
-
-
-
 
                 else if (model.DocumentType == EstimateDocumentType.DownloadPDF)
                 {
