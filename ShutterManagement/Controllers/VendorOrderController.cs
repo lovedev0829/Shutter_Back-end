@@ -77,6 +77,16 @@ namespace ShutterManagement.Controllers
             return Ok(res);
         }
 
+        [HttpPost]
+        [Route("VendorOrderInvoice")]
+        [Authorize(Roles = "VendorOrderAdd")]
+        public async Task<IActionResult> VendorOrderInvoiceSendToEmail(GenerateInvoiceForVendorOrder model)
+        {
+            var res = await vendorOrderService.SendInvoiceAttachmentVendorOrder(model);
+            return Ok(res);
+        }
+
+
 
     }
 }
