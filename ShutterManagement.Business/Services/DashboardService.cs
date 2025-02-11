@@ -60,6 +60,7 @@ namespace ShutterManagement.Business.Services
                                 (m, jobGroup) => new
                                 {
                                     m.JobStatusName,
+                                    m.JobStatusId,
                                     Count = jobGroup.Count(),
                                     Icon = m.Icon,
                                     TenantId = jobGroup.Select(x=>x.TenantId).ToArray()
@@ -71,6 +72,7 @@ namespace ShutterManagement.Business.Services
                     Label = x.JobStatusName.Replace("Inproduction", "In Production").Replace("Awarded", "Awarded Jobs"),
                     Image = x.Icon,
                     Count = x.TenantId.Where(x => x == AppConstant.LoggedInTenantId).Count().ToString(),
+                    Url=$"/job/{x.JobStatusId}"
                 }).ToList();
 
                 
@@ -81,7 +83,8 @@ namespace ShutterManagement.Business.Services
                 {
                     Label = "No. Of Contacts",
                     Count = contactsCount.ToString(),
-                    Image = AppConstant.NoOfContactsImg
+                    Image = AppConstant.NoOfContactsImg,
+                    Url= "/contacts"
                 };
                 Data.Add(contactVm);
 
@@ -93,7 +96,8 @@ namespace ShutterManagement.Business.Services
                 {
                     Label = "Estimate Revenue",
                     Count = "$"+totalEstimateRevenue,
-                    Image = AppConstant.EstimateRevenueImg
+                    Image = AppConstant.EstimateRevenueImg,
+                    Url= "/order"
                 };
                 Data.Add(estVm);
                 responseVm.Data = Data;

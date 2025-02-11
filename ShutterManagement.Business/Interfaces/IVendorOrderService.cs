@@ -20,5 +20,6 @@ namespace ShutterManagement.Business.Interfaces
         Task<IResponseVm<string>> Delete_VendorOrder(Guid? vendorOrderId);
         Task<IResponseVm<string>> ActiveInActive(Guid Id);
         Task<IResponseVm<List<VendorOrderListVm>>> GetAll_VendorOrder(Pagination filter);
+        Task<IResponseVm<string>> SendInvoiceAttachmentVendorOrder(GenerateInvoiceForVendorOrder model);
     }
 }

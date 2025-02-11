@@ -560,8 +560,8 @@ namespace ShutterManagement.Business.Services
                 // Define an expression with a nudget and a custom function
                 var expression = CalculateExpression(formula,item);
                 var res = expression.Evaluate();
-                var ComponentPrice = Convert.ToDecimal(Convert.ToDecimal(res).ToString("0.000"));
-                item.AdditionalCost = Convert.ToDecimal(item.OptionsPrice.Sum().ToString("0.000"));
+                var ComponentPrice = Convert.ToDecimal(res);
+                item.AdditionalCost = Convert.ToDecimal(item.OptionsPrice.Sum());
                 //finalSubTotal = (decimal)item.AdditionalCost + finalSubTotal;
                 var ComponentPriceWithoutMarkup = ComponentPrice;
                 var ComponentPriceWithMarkup = (ComponentPriceWithoutMarkup * (100 + item.MarkupPercentage)) / 100;
@@ -572,19 +572,19 @@ namespace ShutterManagement.Business.Services
                  .FirstOrDefault();
                 if (IsSubtenants != null)
                 {
-                        var productMarkup = subtenantProductMarkup.GetAllQuerable().Where(x => x.ProductId == item.ProductId).Select(x => x.Markup).FirstOrDefault();
-                        if (productMarkup != null && productMarkup > 0)
-                        {
+                    var productMarkup = subtenantProductMarkup.GetAllQuerable().Where(x => x.ProductId == item.ProductId).Select(x => x.Markup).FirstOrDefault();
+                    if (productMarkup != null && productMarkup > 0)
+                    {
                         ComponentPriceWithProductMarkup = (decimal)(ComponentPriceWithProductMarkup * (100 + productMarkup)) / 100;
-                        }
-                        else
-                        {
+                    }
+                    else
+                    {
                         var globalmarkup = tenantBrandingService.GetAllQuerable().Where(x => x.Id == IsSubtenants.BrandingInfo).Select(x => x.Markup).FirstOrDefault();
                         ComponentPriceWithProductMarkup = (decimal)(ComponentPriceWithProductMarkup * (100 + (globalmarkup ?? 0.00m))) / 100;
-                        }
+                    }
                 }
-                item.Price = ComponentPriceWithProductMarkup;
-                ComponentSubTotal += (decimal)ComponentPriceWithProductMarkup;
+                item.Price = Convert.ToDecimal(Convert.ToDecimal(ComponentPriceWithProductMarkup).ToString("0.0000")); 
+                ComponentSubTotal += Convert.ToDecimal(Convert.ToDecimal(ComponentPriceWithProductMarkup).ToString("0.0000"));
             }
             return ComponentSubTotal;
         }

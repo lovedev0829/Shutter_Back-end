@@ -1,4 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using DinkToPdf;
+using DinkToPdf.Contracts;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core;
 using ShutterManagement.Core.Common;
@@ -10,6 +13,7 @@ using ShutterManagement.Services;
 using System;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace ShutterManagement.Business.Services
@@ -19,14 +23,25 @@ namespace ShutterManagement.Business.Services
         private readonly ITenantService _tenantService;
         private readonly IMaterial materialService;
         private readonly IVendorItemService vendorItemService;
+        private readonly IVendorService vendorService;
+        private readonly ITenantBrandingService tenantBrandingService;
+        private readonly IJobService jobService;
+        private readonly IConverter converter;
+
         public ClaimsProperty ClaimsProperty { get; }
 
-        public VendorOrderService(ITenantService tenantService, IMaterial materialService, ClaimsProperty claimsProperty, IVendorItemService vendorItemService)
+        public VendorOrderService(ITenantService tenantService, IMaterial materialService, ClaimsProperty claimsProperty,
+            IVendorItemService vendorItemService ,IVendorService vendorService,
+            ITenantBrandingService tenantBrandingService,IJobService jobService, IConverter converter)
         {
             _tenantService = tenantService;
             this.materialService = materialService;
             ClaimsProperty = claimsProperty;
             this.vendorItemService = vendorItemService;
+            this.vendorService = vendorService;
+            this.tenantBrandingService = tenantBrandingService;
+            this.jobService = jobService;
+            this.converter = converter;
         }
 
         public async Task<IResponseVm<string>> ActiveInActive(Guid VendorOrderId)
@@ -539,6 +554,270 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
+        public async Task<IResponseVm<string>> SendInvoiceAttachmentVendorOrder(GenerateInvoiceForVendorOrder model)
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+
+            try
+            {
+                // Validate Tenant
+                var isTenantValid = await _tenantService.AnyAsync(x =>
+                    x.TenantId == AppConstant.LoggedInTenantId && x.IsActive==true && x.IsDelete==false);
+
+                if (!isTenantValid)
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = AppConstant.AccessDenied;
+                    return responseVm;
+                }
+
+                // Fetch Tenant Details
+                var tenantDetails =  _tenantService.GetAllQuerable()
+                    .FirstOrDefault(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete==false);
+
+                if (tenantDetails == null)
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = $"Tenant {AppConstant.NoDataFound}";
+                    return responseVm;
+                }
+
+                var tenantInfoDetails =  tenantBrandingService.GetAllQuerable()
+                    .FirstOrDefault(x => x.Id == tenantDetails.BrandingInfo && x.IsActive == true);
+
+                // Fetch Invoice Template
+                Guid templateId = Guid.Parse("2D30573D-6753-4B04-935A-8CC1DE65D409");
+                var invoiceTemplate =  dbContext.TblTemplates
+                    .FirstOrDefault(c => c.TemplateId == templateId &&
+                                              c.TenantId == AppConstant.LoggedInTenantId &&
+                                              c.IsDelete==false);
+
+                if (invoiceTemplate == null)
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = AppConstant.NoDataFound;
+                    return responseVm;
+                }
+
+                // Fetch Vendor Details
+                var vendorDetails =  vendorService.GetAllQuerable()
+                    .FirstOrDefault(x => x.TenantId == AppConstant.LoggedInTenantId &&
+                                              x.VendorId == model.VendorId &&
+                                              x.IsDelete == false);
+
+                if (vendorDetails == null)
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = $"Vendor {AppConstant.NoDataFound}";
+                    return responseVm;
+                }
+
+                // Fetch Order Details
+                var orderDetails =  GetAllQuerable()
+                    .FirstOrDefault(x => x.VendorOrderId == model.VendorOrderId && x.IsDelete == false);
+
+                if (orderDetails == null)
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = $"OrderDetails {AppConstant.NoDataFound}";
+                    return responseVm;
+                }
+
+                // Fetch Job Details
+                var jobDetails =  jobService.GetAllQuerable()
+                    .FirstOrDefault(x => x.JobId == orderDetails.JobId && x.IsDelete == false);
+
+                // Fetch User Details
+                var userDetails =  dbContext.TblUsers
+                    .FirstOrDefault(c => c.Id == orderDetails.CreatedBy &&
+                                              c.TenantId == AppConstant.LoggedInTenantId &&
+                                              c.IsDelete==false);
+
+                var materialList = await materialService.GetAllQuerable()
+                    .Select(z => new { z.RawMaterialId, z.MaterialName })
+                    .ToListAsync(); 
+
+                // Fetch Vendor Order Items
+                var vendorOrderItems = await vendorItemService.GetAllQuerable()
+                    .Where(x => x.VendorOrderId == model.VendorOrderId && x.IsDelete==false)
+                    .ToListAsync(); 
+
+                // Map Vendor Order Items with Material Names
+                var mappedVendorOrderItems = vendorOrderItems.Select(x => new VendorOrderItemModel
+                {
+                    MaterialName = materialList
+                        .FirstOrDefault(m => m.RawMaterialId == x.MaterialId)?.MaterialName ?? "Unknown Material",
+                    Quantity = x.Quantity,
+                    UnitPrice = x.UnitPrice,
+                    TotalPrice = x.Quantity * x.UnitPrice
+                }).ToList();
+
+
+
+                // Build Vendor Order Template Data
+                var vendorOrderData = new VendorOrderTemplateModel
+                {
+                    VendorId = vendorDetails.VendorCode ?? "",
+                    VendorName = vendorDetails.VendorName?.Trim() ?? "",
+                    JobName = jobDetails?.JobName ?? "N/A",
+                    StreetAddress = vendorDetails.StreetAddress ?? "",
+                    VendorCity = vendorDetails.City ?? "",
+                    VendorState = vendorDetails.State ?? "",
+                    VendorZipCode = vendorDetails.ZipCode ?? "",
+                    MobilePhone = vendorDetails.PhoneNumber ?? "",
+                    EmailAddress = vendorDetails.Email ?? "",
+
+                    OrderNo = orderDetails.OrderNumber ?? "",
+                    OrderDate = orderDetails.OrderDate.ToString(),
+                    ExpectedDeliveryDate = orderDetails.ExpectedDeliveryDate.ToString()??"",
+                    ActualDeliveryDate = orderDetails.ActualDeliveryDate.ToString()??"",
+                    VendorOrderStatus = orderDetails.Status ?? "",
+                    TotalAmount = orderDetails.TotalCost,
+                    Notes = orderDetails.Notes ?? "",
+
+                    TenantCompanyName = tenantInfoDetails?.CompanyName ?? "",
+                    CompanyStreetAddress = tenantInfoDetails?.StreetAddress ?? "",
+                    CompanyCity = tenantInfoDetails?.City ?? "",
+                    CompanyCountry = tenantInfoDetails?.Country ?? "",
+                    CompanyZipCode = tenantInfoDetails?.ZipCode ?? "",
+
+                    IssueDate = orderDetails.CreatedAt.ToString(),
+                    CreatedBy = $"{userDetails?.FirstName} {userDetails?.LastName}".Trim(),
+                    Logo = tenantInfoDetails?.Logo ?? "",
+
+                    VendorOrderItems = GenerateProductListHtml(mappedVendorOrderItems)
+                };
+
+                // Generate HTML from Template
+                var htmlContent = ReplaceTemplatePlaceholders(invoiceTemplate.TemplateValue, vendorOrderData);
+
+                // Generate PDF
+                var pdfBytes = GenerateInvoicePdf(htmlContent);
+
+                // Save PDF to Disk
+                var tenantId = AppConstant.LoggedInTenantId.ToString();
+                var rootPath = Path.Combine(AppConstant.FileUploadPath, tenantId);
+                if (!Directory.Exists(rootPath))
+                {
+                    Directory.CreateDirectory(rootPath);
+                }
+
+                var fileName = $"Invoice_{Guid.NewGuid()}.pdf";
+                var savePath = Path.Combine(rootPath, fileName);
+
+                await using (var stream = new FileStream(savePath, FileMode.Create))
+                {
+                    await stream.WriteAsync(pdfBytes, 0, pdfBytes.Length);
+                }
+
+                // Prepare and Send Email
+                var emailBody = $@"
+ <div style='font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px;'>
+    <p><strong>Dear {vendorDetails?.FirstName} {vendorDetails?.LastName},</strong></p>
+    <p>Please find your Order invoice attached for your reference.</p>
+   
+    <p><strong>Thank you for your business!</strong></p>
+    <p><img src='{tenantInfoDetails?.Logo}' alt='Company Logo' height='100px' 
+             style='margin-top: 10px; display: block;'></p>
+    <p>Best regards,</p>
+    <p><strong>{tenantInfoDetails?.CompanyName}</strong></p>
+    <p>Shutter Management and Estimation System</p>
+</div>";
+
+                var emailAttachment = new EmailAttachment
+                {
+                    FileName = $"{orderDetails.OrderNumber}.pdf",
+                    Stream = new MemoryStream(pdfBytes),
+                    MediaType = "application/pdf"
+                };
+
+                var emailSent = EmailHelper.SendEmailWithAttachment(
+                    vendorDetails?.Email,
+                    "Your Order Invoice ",
+                    emailBody,
+                    new List<EmailAttachment> { emailAttachment }
+                );
+
+                responseVm.IsSuccess = true;
+                responseVm.Message = "Email Sent Successfully.";
+                File.Delete(savePath);
+            }
+            catch (Exception ex)
+            {
+                responseVm.IsSuccess = false;
+                responseVm.Message = $"Error: {ex.Message}";
+            }
+
+            return responseVm;
+        }
+
+
+        private string GenerateProductListHtml(List<VendorOrderItemModel> items)
+        {
+            var itemslist = new StringBuilder();
+            int i = 0;
+            foreach (var product in items)
+            {
+                itemslist.Append($@"
+    <tr style='background-color: #efefef;'>
+        <td style='text-align: center; padding: 5px 5px;'>{++i}</td>
+        <td style='text-align: center; padding: 5px 5px;'>{product.MaterialName}</td>
+        <td style='text-align: center; padding: 5px 5px;'>{product.Quantity}</td>
+        <td style='text-align: center; padding: 5px 5px;'>{product.UnitPrice}</td>
+        <td style='text-align: center; padding: 5px 5px;'>{product.TotalPrice}</td>
+    </tr>");
+            }
+
+            return $"<tbody>{itemslist}</tbody>";
+        }
+
+        private string ReplaceTemplatePlaceholders(string template, VendorOrderTemplateModel data)
+        {
+            return template
+                .Replace("{{tenantCompanyName}}", data.TenantCompanyName ?? "")
+                .Replace("{{companystreetaddress}}", data.CompanyStreetAddress ?? "")
+                .Replace("{{companycity}}", data.CompanyCity ?? "")
+                .Replace("{{companycountry}}", data.CompanyCountry ?? "")
+                .Replace("{{companyzipcode}}", data.CompanyZipCode ?? "")
+                .Replace("{{issuedate}}", Convert.ToDateTime(data.IssueDate).ToString("MM-dd-yyyy") ?? "")
+                .Replace("{{createdby}}", data.CreatedBy ?? "")
+                .Replace("{{vendorid}}", data.VendorId ?? "")
+                .Replace("{{orderno}}", data.OrderNo ?? "")
+                .Replace("{{vendorname}}", data.VendorName ?? "")
+                .Replace("{{jobname}}", data.JobName ?? "")
+                .Replace("{{orderdate}}", Convert.ToDateTime(data.OrderDate).ToString("MM-dd-yyyy") ?? "")
+                .Replace("{{expecteddeliverydate}}", Convert.ToDateTime(data.ExpectedDeliveryDate).ToString("MM-dd-yyyy") ?? "")
+                .Replace("{{actualdeliverydate}}", Convert.ToDateTime(data.ActualDeliveryDate).ToString("MM-dd-yyyy") ?? "")
+                .Replace("{{vendorOrderStatus}}", data.VendorOrderStatus ?? "")
+                .Replace("{{totalamount}}", data.TotalAmount.ToString() ?? "0.00")
+                .Replace("{{balancedue}}", data.BalanceDue.ToString() ?? "0.00")
+                .Replace("{{note}}", data.Notes ?? "")
+                .Replace("{{status}}", data.VendorOrderStatus ?? "")
+                .Replace("{{mobilephone}}", data.MobilePhone ?? "")
+                .Replace("{{emailaddress}}", data.EmailAddress ?? "")
+                .Replace("{{streetaddress}}", data.StreetAddress ?? "")
+                .Replace("{{vendorcity}}", data.VendorCity ?? "")
+                .Replace("{{vendorstate}}", data.VendorState ?? "")
+                .Replace("{{vendorzipcode}}", data.VendorZipCode ?? "")
+                .Replace("{{paymentlist}}", data.VendorOrderItems ?? "")
+                .Replace("{{logo}}", data.Logo ?? "");
+        }
+
+        public byte[] GenerateInvoicePdf(string htmlContent)
+        {
+            var pdfDocument = new HtmlToPdfDocument
+            {
+                GlobalSettings = new GlobalSettings
+                {
+                    ColorMode = DinkToPdf.ColorMode.Color,
+                    Orientation = Orientation.Portrait,
+                    PaperSize = DinkToPdf.PaperKind.A4
+                },
+                Objects = { new ObjectSettings { HtmlContent = htmlContent } }
+            };
+
+            return converter.Convert(pdfDocument);
+        }
 
 
     }

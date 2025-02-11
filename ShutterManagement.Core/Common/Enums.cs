@@ -60,7 +60,9 @@ namespace ShutterManagement.Core.Common
         [EnumMember(Value = "DownloadPDF")]
         DownloadPDF,
         [EnumMember(Value = "OrderForEmail")]
-        OrderForEmail
+        OrderForEmail,
+        [EnumMember(Value = "InvoicePaymentForEmail")]
+        InvoicePaymentForEmail
     }
 
 

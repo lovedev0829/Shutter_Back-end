@@ -507,6 +507,7 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.NoDataFound;
                     return responseVm;
                 }
+               
 
                 var customerDetails = (await contactService.GetAll_Contact(filter))
                     .Data.FirstOrDefault(x => x.ContactId == model.ContactId && x.IsActive == true);
@@ -685,7 +686,7 @@ namespace ShutterManagement.Business.Services
                     IsOrderExists.ModifiedBy = AppConstant.LoggedInUserID;
                     await orderService.Update(IsOrderExists);
 
-                    string approvalOrderEmailLink = $"{AppConstant.UIBaseURL}contacts/order/preview/{IsOrderExists?.OrderId}";
+                   // string approvalOrderEmailLink = $"{AppConstant.UIBaseURL}contacts/order/preview/{IsOrderExists?.OrderId}";
 
                     var emailBody = $@"
      <div style='font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px;'>
@@ -696,7 +697,7 @@ namespace ShutterManagement.Business.Services
         <p>You can approve  your Order - {IsOrderExists?.OrderName} by clicking the link below:</p>
 
         <p>
-            <a href='{approvalOrderEmailLink}'>
+            <a href='{AppConstant.UIBaseURL}contacts/order/preview/{IsOrderExists?.OrderId}'>
                Order Approval link. 
             </a>
         </p>
@@ -737,7 +738,179 @@ namespace ShutterManagement.Business.Services
 
 
                 }
-                else if(model.DocumentType == EstimateDocumentType.DownloadPDF)
+
+                else if (model.DocumentType == EstimateDocumentType.InvoicePaymentForEmail)
+                {
+                    Guid? invoiceTemplateId = Guid.Parse("E9E279C4-1F54-476B-BCDF-778BD1634894");
+
+                    var invoiceForEmailTemplate = dbContext.TblTemplates.FirstOrDefault(c =>
+                        c.TemplateId == invoiceTemplateId &&
+                        c.TenantId == AppConstant.LoggedInTenantId &&
+                        c.IsDelete == false);
+
+                   
+
+                    if (invoiceForEmailTemplate == null)
+                    {
+                        responseVm.IsSuccess = false;
+                        responseVm.Message = "Invoice Template " + AppConstant.NoDataFound;
+                        return responseVm;
+                    }
+
+                    var paymentDetails = dbContext.TblInvoicePayments
+                        .FirstOrDefault(x => x.InvoiceId == model.InvoiceId &&
+                                             x.IsDelete == false);
+
+                    if (paymentDetails == null)
+                    {
+                        responseVm.Message = "Payment " + AppConstant.NoDataFound;
+                        return responseVm;
+                    }
+
+                    var invoiceDetails = dbContext.TblInvoices
+                        .FirstOrDefault(x => x.InvoiceId == model.InvoiceId &&
+                                             x.TenantId == AppConstant.LoggedInTenantId &&
+                                             x.IsDelete == false);
+
+                   
+
+                    if (invoiceDetails == null)
+                    {
+                        responseVm.Message = "Invoice " + AppConstant.NoDataFound;
+                        return responseVm;
+                    }
+                    
+                    var paymentList = dbContext.TblInvoicePayments
+                        .Where(x => x.InvoiceId == model.InvoiceId && x.IsActive == true)
+                        .Select(p => new InvoicePayment
+                        {
+                            Notes = p.Notes,
+                            InvoiceAmount = p.InvoiceAmount,
+
+                        })
+                        .ToList();
+
+                    var invoiceDataModel = new InvoiceDataModel
+                    {
+                        CustomerName = customerDetails?.FirstName + " " + customerDetails?.LastName,
+                        PreparedBy = userDetails?.FirstName + " " + userDetails?.LastName,
+                        CustomerId = customerDetails?.ContactUniqueId ?? "",
+                        CustomerCity = customerDetails?.billingAddressVm?.City ?? "",
+                        CustomerState = customerDetails?.billingAddressVm?.State ?? "",
+                        CustomerZipCode = customerDetails?.billingAddressVm?.ZipCode ?? "",
+                        HomePhone = customerDetails?.billingAddressVm?.PhoneNumber ?? "",
+                        CompanyStreetAddress = tenantInfoDetails?.StreetAddress ?? "",
+                        CompanyCity = tenantInfoDetails?.City ?? "",
+                        CompanyCountry = tenantInfoDetails?.Country ?? "",
+                        CompanyZipCode = tenantInfoDetails?.ZipCode ?? "",
+                        CustomerStreetAddress = customerDetails?.billingAddressVm?.StreetAddress ?? "",
+                        MobilePhone = customerDetails?.PhoneNumber ?? "",
+                        TenantCompanyName = tenantInfoDetails?.CompanyName ?? "",
+                        Logo = tenantInfoDetails?.Logo ?? "",
+                        EstimationDate = Convert.ToDateTime(invoiceDetails?.CreatedAt).ToString("MM-dd-yyyy") ?? "",
+                        CreatedBy = invoiceDetails?.CreatedBy.ToString() ?? "",
+                        EstimationSubtotal = invoiceDetails?.TotalAmount.ToString() ?? "", 
+                        EstimationGrandTotal = invoiceDetails?.BalanceDue.ToString() ?? "", 
+                        EstimationId = invoiceDetails?.InvoiceNumber.ToString() ?? "",
+                        EmailAddress = customerDetails?.Email ?? "",
+                        Terms = estimationDetails?.TermsCondition ?? "",
+                        Note = estimationDetails?.Notes ?? "",
+                        OrderId = orderDetails?.OrderName ?? "",
+                        ProductListHtml = GenerateInvoicetListHtml(paymentList) 
+                    };
+
+                    // Replace placeholders in Invoice Template
+                    var htmlContentforInvoice = ReplaceTemplatePlaceholders(invoiceTemplate.TemplateValue, invoiceData);
+
+                    // Generate Invoice PDF
+                    var pdfBytesInvoice = GenerateInvoicePdf(htmlContentforInvoice);
+
+                    // Save the invoice PDF
+                    var tenantIdInvoice = AppConstant.LoggedInTenantId.ToString();
+                    var rootPathInvoice = Path.Combine(AppConstant.FileUploadPath, tenantId);
+                    if (!Directory.Exists(rootPathInvoice))
+                    {
+                        Directory.CreateDirectory(rootPathInvoice);
+                    }
+
+                    var InvoicefileName = $"Invoice_{Guid.NewGuid()}.pdf";
+                    var InvicesavePath = Path.Combine(rootPathInvoice, InvoicefileName);
+
+                    await using (var stream = new FileStream(InvicesavePath, FileMode.Create))
+                    {
+                        await stream.WriteAsync(pdfBytesInvoice, 0, pdfBytesInvoice.Length);
+                    }
+
+                    var InvoicepdfBase64 = Convert.ToBase64String(pdfBytesInvoice);
+
+                    // Generate Invoice Payment Link
+                    // string paymentLink = $"{AppConstant.UIBaseURL}contacts/invoice/payment/{invoiceDetails?.InvoiceId}";
+
+                    // Construct Invoice Email Body
+
+
+
+                    var emailBody = $@"
+<div style='max-width: 600px; margin: auto; background: #fff; border-radius: 8px; box-shadow: 0px 0px 10px rgba(0,0,0,0.1); padding: 20px; font-family: Arial, sans-serif; color: #333;'>
+
+    <!-- Header -->
+    <div style='background: #007bff; color: #fff; text-align: center; padding: 15px; border-radius: 8px 8px 0 0;'>
+        <h2 style='margin: 0; font-size: 20px;'>Invoice Details</h2>
+    </div>
+
+    <!-- Content -->
+    <div style='padding: 20px;'>
+        <p style='font-size: 16px; margin: 10px 0;'><strong>Dear {customerDetails?.FirstName + " " + customerDetails?.LastName},</strong></p>
+        <p style='font-size: 14px; margin: 10px 0;'>Please find your invoice attached for your reference.</p>
+
+        <!-- Invoice Details -->
+        <div style='background: #e9ecef; padding: 15px; border-radius: 5px; margin: 15px 0;'>
+            <p style='margin: 5px 0; font-size: 14px;'><strong>Total Amount:</strong> {invoiceDetails?.TotalAmount}</p>
+            <p style='margin: 5px 0; font-size: 14px;'><strong>Due Amount:</strong> {invoiceDetails?.BalanceDue}</p>
+        </div>
+
+        <!-- Payment Link -->
+        <p style='font-size: 14px; margin: 15px 0;'>You can make the payment for your invoice <strong>{invoiceDetails?.InvoiceNumber}</strong> by clicking the link below:</p>
+        <div style='text-align: center; margin: 20px 0;'>
+            <a  style='background: #28a745; color: #fff; padding: 12px 20px; text-decoration: none; font-size: 14px; border-radius: 5px; display: inline-block;'>Pay Now</a>
+        </div>
+
+        <hr style='border: 0; height: 1px; background: #ddd; margin: 20px 0;'>
+
+        <!-- Footer -->
+        <p style='font-size: 14px; text-align: center;'>Thank you for your business!</p>
+
+        <div style='text-align: center; margin: 15px 0;'>
+            <img src='{tenantInfoDetails?.Logo}' alt='Company Logo' style='height: 50px;'>
+        </div>
+
+        <p style='text-align: center; font-size: 14px;'><strong>Best regards,</strong></p>
+        <p style='text-align: center; font-size: 14px;'><strong>{tenantInfoDetails?.CompanyName}</strong></p>
+        <p style='text-align: center; font-size: 14px;'>Shutter Management and Estimation System</p>
+    </div>
+</div>";
+
+
+                    var emailAttachment = new EmailAttachment
+                    {
+                        FileName = $"{invoiceDetails?.InvoiceNumber}.pdf",
+                        Stream = new MemoryStream(pdfBytesInvoice),
+                        MediaType = "application/pdf"
+                    };
+
+                    var emailSent = EmailHelper.SendEmailWithAttachment(
+                        customerDetails.Email,
+                        "Invoice Payment Link and PDF",
+                        emailBody,
+                        new List<EmailAttachment> { emailAttachment }
+                    );
+
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = "Invoice email sent successfully.";
+                    File.Delete(savePath);
+                }
+
+                else if (model.DocumentType == EstimateDocumentType.DownloadPDF)
                 {
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.InvoiceDownloadSuccessMsg;
@@ -780,6 +953,27 @@ namespace ShutterManagement.Business.Services
             return $"<tbody>{productListHtml}</tbody>";
         }
 
+
+        private string GenerateInvoicetListHtml(List<InvoicePayment> payments)
+        {
+            var paymentsListHtml = new StringBuilder();
+            int i = 0;
+            foreach (var payment in payments)
+            {
+                paymentsListHtml.Append($@"
+    <tr style='background-color: #efefef;'>
+        <td style='text-align: center; padding: 5px 5px;'>{++i}</td>
+        <td style='text-align: center; padding: 5px 5px;'>{payment.Notes}</td>
+        <td style='text-align: center; padding: 5px 5px;'>{payment.InvoiceAmount}</td>
+       
+    </tr>");
+            }
+
+            return $"<tbody>{paymentsListHtml}</tbody>";
+        }
+
+
+
         private string ReplaceTemplatePlaceholders(string template, InvoiceDataModel data) 
         {
             return template
@@ -806,7 +1000,8 @@ namespace ShutterManagement.Business.Services
                 .Replace("{{productlist}}", data.ProductListHtml ?? "")
                 .Replace("{{terms}}", data.Terms ?? "")
                 .Replace("{{note}}", data.Note ?? "")
-                .Replace("{{orderid}}", data.OrderId ?? "");
+                .Replace("{{orderid}}", data.OrderId ?? "")
+                .Replace("{{invoiceno}}", data.InvoiceNo ?? "");
         }
 
         public byte[] GenerateInvoicePdf(string htmlContent)
