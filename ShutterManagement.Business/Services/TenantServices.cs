@@ -165,6 +165,25 @@ namespace ShutterManagement.Business.Services
                         }
                     }
                 }
+
+                var Templateid = Guid.Parse("1916A280-109F-4829-8A70-0AFA94146A5F").ToString().ToLower();
+
+                
+                WelcomeEmailModel welcomemodel = new WelcomeEmailModel
+                {
+                    Name = model.FirstName + " " + model.LastName ?? "",
+                    UserName = model.Email ?? "",
+                    Password = model.Password ?? "",
+                    CompanyName = model?.CompanyName ?? "",
+                    Logo = model?.Logo ?? "",
+                    loginUrl = $"{AppConstant.UIBaseURL}{model?.Code}"
+
+                };
+
+                var WelcomeTemplate = dbContext.TblTemplates.Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false && x.TemplateId.ToString().ToLower() == Templateid).FirstOrDefault();
+                var emailContent = ReplaceTemplatePlaceholders(WelcomeTemplate?.TemplateValue, welcomemodel);
+                EmailHelper.WelcomeEmail(model.Email, emailContent);
+
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.InsertSuccessMsg;
             }
@@ -432,5 +451,22 @@ namespace ShutterManagement.Business.Services
             return responseVm;
 
         }
+
+
+        public string ReplaceTemplatePlaceholders(string template, WelcomeEmailModel model)
+        {
+            if (string.IsNullOrEmpty(template) || model == null)
+                return template;
+
+            return template
+                .Replace("{{companyname}}", model.CompanyName ?? "")
+                .Replace("{{username}}", model.UserName ?? "")
+                .Replace("{{password}}", model.Password??"") 
+                .Replace("{{logo}}", model.Logo ?? "")
+                .Replace("{{loginurl}}", model.loginUrl ?? "")
+                .Replace("{{name}}", model.Name ?? "");
+        }
+
+
     }
 }

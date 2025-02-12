@@ -658,7 +658,7 @@ namespace ShutterManagement.Business.Services
                 var vendorOrderData = new VendorOrderTemplateModel
                 {
                     VendorId = vendorDetails.VendorCode ?? "",
-                    VendorName = vendorDetails.VendorName?.Trim() ?? "",
+                    VendorName = vendorDetails.FirstName +" "+vendorDetails.LastName??"",
                     JobName = jobDetails?.JobName ?? "N/A",
                     StreetAddress = vendorDetails.StreetAddress ?? "",
                     VendorCity = vendorDetails.City ?? "",

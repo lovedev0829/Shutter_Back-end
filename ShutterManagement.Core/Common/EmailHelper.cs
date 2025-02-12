@@ -40,6 +40,18 @@ namespace ShutterManagement.Core.Common
             return result;
         }
 
+        public static IResponseVm<string> WelcomeEmail(string Email, string content)
+        {
+            SendEmail vm = new SendEmail
+            {
+                ToEmail = Email,
+                Subject = AppConstant.Sub_WelcomeEmail,
+                Body = content,
+            };
+            var result = SendMail(vm);
+            return result;
+        }
+
         public static bool SendEmailWithAttachment(string toEmail, string subject, string body, List<EmailAttachment> attachments = null)
         {
             try
