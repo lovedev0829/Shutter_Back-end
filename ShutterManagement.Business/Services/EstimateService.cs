@@ -343,7 +343,7 @@ namespace ShutterManagement.Business.Services
                 if (createEstimate.EstimateId != Guid.Empty)
                 {
                     // Process window products and components
-                    await ProcessWindowProducts(createEstimate.WindowProdcutDetailsForEstimate, (Guid)createEstimate.EstimateId);
+                    await ProcessWindowProducts(model.WindowProductId.ToList(),createEstimate.WindowProdcutDetailsForEstimate, (Guid)createEstimate.EstimateId);
                     if (!string.IsNullOrEmpty(Message))
                     {
                         responseVm.Message = Message;
@@ -433,7 +433,7 @@ namespace ShutterManagement.Business.Services
                     {
                         item.IsTaxApplied = await IsTaxApplied((Guid)item.JobId);
                     }
-
+                    responseVm.IsSuccess = true;
                     responseVm.Data = data1;
                     responseVm.TotalRecords = data1.Count;
                     return responseVm;
@@ -748,7 +748,7 @@ namespace ShutterManagement.Business.Services
                 FileLogger.Log("Old related records deactivated successfully.");
 
                 // Process new window products and components
-                await ProcessWindowProducts(model.WindowProdcutDetails, estimate.EstimateId);
+                await ProcessWindowProducts(model.WindowProductId.ToList(), windowproductdetails.Data, estimate.EstimateId);
                 if (!string.IsNullOrEmpty(Message))
                 {
                     responseVm.Message = Message;
@@ -1323,12 +1323,12 @@ namespace ShutterManagement.Business.Services
         }
 
 
-        private async Task ProcessWindowProducts(List<WindowProdcutDetailsForEstimate> windowProdcutDetailsForEstimates, Guid estimateId)
+        private async Task ProcessWindowProducts(List<Guid> windowProductIds,List<WindowProdcutDetailsForEstimate> windowProdcutDetailsForEstimates, Guid estimateId)
         {
             FileLogger.Log("Processing window products...");
-            foreach (var product in windowProdcutDetailsForEstimates)
+            foreach (var product in windowProductIds)
             {
-                var windowProductData = (await windowProductService.GetAll()).Where(x => x.WindowProductId == product.WindowProdcutId && x.IsDelete == false).FirstOrDefault();
+                var windowProductData = (await windowProductService.GetAll()).Where(x => x.WindowProductId == product && x.IsDelete == false).FirstOrDefault();
                 if (windowProductData == null)
                 {
                     Message = "Window Product " + AppConstant.NoDataFound;
@@ -1348,11 +1348,8 @@ namespace ShutterManagement.Business.Services
                 {
                     return;
                 }
-                if(product.Price == null)
-                {
-                    product.Price = 0.0m;
-                }
-                await AddComponentsToEstimate((Guid)windowProductData.ProductId, estimateId,(decimal)product.Price);
+                
+                await AddComponentsToEstimate((Guid)windowProductData.ProductId, estimateId, windowProdcutDetailsForEstimates);
                 if (!string.IsNullOrEmpty(Message))
                 {
                     return;
@@ -1428,7 +1425,7 @@ namespace ShutterManagement.Business.Services
             await estimateWindowProductService.Add(tblEstimateWindowProduct);
         }
 
-        private async Task AddComponentsToEstimate(Guid productId, Guid estimateId, decimal Price)
+        private async Task AddComponentsToEstimate(Guid productId, Guid estimateId, List<WindowProdcutDetailsForEstimate> windowProdcutDetailsForEstimates)
         {
             FileLogger.Log($"Adding components for product {productId} to estimate...");
             var productComponentData = (await productComponentService.GetAll()).Where(x => x.ProductId == productId && x.IsDelete == false).ToList();
@@ -1446,7 +1443,8 @@ namespace ShutterManagement.Business.Services
                     return; // Return early if component data not found
                 }
                 //expressionList.Add(Guid.Parse(componentData.PricingExpression ?? ""));
-                await AddComponentToEstimateWindow(componentData, (Guid)component.ProductId, estimateId,Price);
+                var componentPrice = windowProdcutDetailsForEstimates.Where(x => x.ComponentId == component.ComponentId).Select(x=>x.Price).FirstOrDefault();
+                await AddComponentToEstimateWindow(componentData, (Guid)component.ProductId, estimateId, componentPrice ?? 0.0m);
                 await AddComponentMaterialsToEstimate(componentData.ComponentId, estimateId);
                 if (!string.IsNullOrEmpty(Message))
                 {
