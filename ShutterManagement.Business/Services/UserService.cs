@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Azure;
 using Microsoft.Data.SqlClient;
 using ShutterManagement.Business;
 using ShutterManagement.Business.Interfaces;
@@ -26,10 +27,11 @@ namespace ShutterManagement.Services
         private readonly IUserRoleService userRoleService;
         private readonly IMapper mapper;
         private readonly INotificationService notification;
+        private readonly ITenantBrandingService tenantBrandingService;
 
         public UserService(DataServices dataServices, IRoleService roleService
             , ClaimsProperty claimsProperty, IUserRoleService userRoleService
-            , IMapper mapper,INotificationService notification)
+            , IMapper mapper,INotificationService notification,ITenantBrandingService tenantBrandingService)
         {
             _dataServices = dataServices;
             this.roleService = roleService;
@@ -37,6 +39,7 @@ namespace ShutterManagement.Services
             this.userRoleService = userRoleService;
             this.mapper = mapper;
             this.notification = notification;
+            this.tenantBrandingService = tenantBrandingService;
         }
 
         public async Task<IResponseVm<string>> Create(CreateUser UserDetails)
@@ -122,7 +125,28 @@ namespace ShutterManagement.Services
                         };
                         await userRoleService.Add(userRole);
 
+                        var Templateid = Guid.Parse("1916A280-109F-4829-8A70-0AFA94146A5F").ToString().ToLower();
+                        var Tenantcode = dbContext.TblTenants.Where(x => x.IsDelete == false && x.TenantId==AppConstant.LoggedInTenantId).FirstOrDefault();
+                       
+                       
+                        var tenantInfoDetails = tenantBrandingService.GetAllQuerable().Where(x => x.Id == Tenantcode.BrandingInfo && x.IsActive == true).FirstOrDefault();
 
+
+                        WelcomeEmailModel welcomemodel = new WelcomeEmailModel
+                        {
+                            Name = UserDetails.FirstName + " " + UserDetails.LastName ?? "",
+                            UserName = UserDetails.Email ?? "",
+                            Password = UserDetails.Password ?? "",
+                            CompanyName = Tenantcode?.Code ?? "",
+                            Logo = tenantInfoDetails?.Logo ?? "",
+                            loginUrl = $"{AppConstant.UIBaseURL}{Tenantcode?.Code ?? ""}" ??"",
+                            color = tenantInfoDetails?.PrimaryColor ?? ""
+
+                        };
+
+                        var WelcomeTemplate = dbContext.TblTemplates.Where(x => x.IsDelete == false && x.TemplateId.ToString().ToLower() == Templateid).FirstOrDefault();
+                        var emailContent = EmailHelper.ReplacePlaceholdersForlWelcomeEmail(WelcomeTemplate?.TemplateValue, welcomemodel);
+                        EmailHelper.WelcomeEmail(UserDetails.Email, emailContent);
 
                         result.IsSuccess = true;
                         result.Message = AppConstant.InsertSuccessMsg;
