@@ -176,12 +176,13 @@ namespace ShutterManagement.Business.Services
                     Password = model.Password ?? "",
                     CompanyName = model?.CompanyName ?? "",
                     Logo = model?.Logo ?? "",
-                    loginUrl = $"{AppConstant.UIBaseURL}{model?.Code}"
+                    loginUrl = $"{AppConstant.UIBaseURL}{model?.Code}",
+                    color=model?.PrimaryColor??""
 
                 };
 
-                var WelcomeTemplate = dbContext.TblTemplates.Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false && x.TemplateId.ToString().ToLower() == Templateid).FirstOrDefault();
-                var emailContent = ReplaceTemplatePlaceholders(WelcomeTemplate?.TemplateValue, welcomemodel);
+                var WelcomeTemplate = dbContext.TblTemplates.Where(x =>  x.IsDelete == false && x.TemplateId.ToString().ToLower() == Templateid).FirstOrDefault();
+                var emailContent = EmailHelper.ReplacePlaceholdersForlWelcomeEmail(WelcomeTemplate?.TemplateValue, welcomemodel);
                 EmailHelper.WelcomeEmail(model.Email, emailContent);
 
                 responseVm.IsSuccess = true;
@@ -453,19 +454,7 @@ namespace ShutterManagement.Business.Services
         }
 
 
-        public string ReplaceTemplatePlaceholders(string template, WelcomeEmailModel model)
-        {
-            if (string.IsNullOrEmpty(template) || model == null)
-                return template;
-
-            return template
-                .Replace("{{companyname}}", model.CompanyName ?? "")
-                .Replace("{{username}}", model.UserName ?? "")
-                .Replace("{{password}}", model.Password??"") 
-                .Replace("{{logo}}", model.Logo ?? "")
-                .Replace("{{loginurl}}", model.loginUrl ?? "")
-                .Replace("{{name}}", model.Name ?? "");
-        }
+       
 
 
     }

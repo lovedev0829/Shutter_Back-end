@@ -192,6 +192,26 @@ namespace ShutterManagement.Business.Services
                     }
                 }
 
+                var Templateid = Guid.Parse("1916A280-109F-4829-8A70-0AFA94146A5F").ToString().ToLower();
+                var Tenantcode =  dbContext.TblTenants.Where(x => x.IsDelete == false).FirstOrDefault();
+
+
+                WelcomeEmailModel welcomemodel = new WelcomeEmailModel
+                {
+                    Name = model.FirstName + " " + model.LastName ?? "",
+                    UserName = model.Email ?? "",
+                    Password = model.Password ?? "",
+                    CompanyName = model?.CompanyName ?? "",
+                    Logo = model?.Logo ?? "",
+                    loginUrl = $"{AppConstant.UIBaseURL}{Tenantcode?.Code}"??"",
+                    color = model?.PrimaryColor ?? ""
+
+                };
+
+                var WelcomeTemplate = dbContext.TblTemplates.Where(x => x.IsDelete == false && x.TemplateId.ToString().ToLower() == Templateid).FirstOrDefault();
+                var emailContent = EmailHelper.ReplacePlaceholdersForlWelcomeEmail(WelcomeTemplate?.TemplateValue, welcomemodel);
+                EmailHelper.WelcomeEmail(model.Email, emailContent);
+
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.InsertSuccessMsg;
 

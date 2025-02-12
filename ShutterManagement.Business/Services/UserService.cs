@@ -121,6 +121,9 @@ namespace ShutterManagement.Services
                             IsDelete = false
                         };
                         await userRoleService.Add(userRole);
+
+
+
                         result.IsSuccess = true;
                         result.Message = AppConstant.InsertSuccessMsg;
                     }

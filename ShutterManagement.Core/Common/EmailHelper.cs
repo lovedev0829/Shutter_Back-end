@@ -51,6 +51,20 @@ namespace ShutterManagement.Core.Common
             var result = SendMail(vm);
             return result;
         }
+        public static string ReplacePlaceholdersForlWelcomeEmail(string template, WelcomeEmailModel model)
+        {
+            if (string.IsNullOrEmpty(template) || model == null)
+                return template;
+
+            return template
+                .Replace("{{companyname}}", model.CompanyName ?? "")
+                .Replace("{{username}}", model.UserName ?? "")
+                .Replace("{{password}}", model.Password ?? "")
+                .Replace("{{logo}}", model.Logo ?? "")
+                .Replace("{{loginurl}}", model.loginUrl ?? "")
+                .Replace("{{name}}", model.Name ?? "")
+                .Replace("{{color}}", model.color ?? "");
+        }
 
         public static bool SendEmailWithAttachment(string toEmail, string subject, string body, List<EmailAttachment> attachments = null)
         {
