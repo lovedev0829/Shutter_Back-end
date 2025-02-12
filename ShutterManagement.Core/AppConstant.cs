@@ -91,6 +91,7 @@ namespace ShutterManagement.Core
 
         public static string Sub_ResetPassword = "Password Reset successfully";
         public static string Sub_ForgotPassword = "Forgot Password";
+        public static string Sub_WelcomeEmail = "Welcome Email";
         public static string Con_ResetPassword = "Your Password has Reset successfully";
 
         // Notification Message
