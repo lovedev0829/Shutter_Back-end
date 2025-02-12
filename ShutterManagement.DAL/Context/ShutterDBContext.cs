@@ -562,12 +562,15 @@ public partial class ShutterDBContext : DbContext
 
             entity.Property(e => e.EstWindowId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.ArchHeight).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.BuildHeight).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.BuildWidth).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.Height).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
+            entity.Property(e => e.IsRated).HasDefaultValue(false);
             entity.Property(e => e.Label).HasMaxLength(100);
             entity.Property(e => e.Quantity).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.UpdatedAt)

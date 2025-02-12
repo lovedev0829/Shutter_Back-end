@@ -339,11 +339,11 @@ namespace ShutterManagement.Business.Services
                 }
 
                 // Create and add the estimate
-                TblEstimate createEstimate = await CreateEstimateRecord(model);
+                EstimateComponent createEstimate = await CreateEstimateRecord(model);
                 if (createEstimate.EstimateId != Guid.Empty)
                 {
                     // Process window products and components
-                    await ProcessWindowProducts(model.WindowProductId.ToList(), createEstimate.EstimateId);
+                    await ProcessWindowProducts(createEstimate.WindowProdcutDetailsForEstimate, (Guid)createEstimate.EstimateId);
                     if (!string.IsNullOrEmpty(Message))
                     {
                         responseVm.Message = Message;
@@ -409,8 +409,6 @@ namespace ShutterManagement.Business.Services
             }
             return responseVm;
         }
-
-
 
         public async Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> BuildEstimate(Guid[] windowProductIds, bool IsBreakdown, string EstimateId = "", bool IsView=false)
         {
@@ -750,7 +748,7 @@ namespace ShutterManagement.Business.Services
                 FileLogger.Log("Old related records deactivated successfully.");
 
                 // Process new window products and components
-                await ProcessWindowProducts(model.WindowProductId.ToList(), estimate.EstimateId);
+                await ProcessWindowProducts(model.WindowProdcutDetails, estimate.EstimateId);
                 if (!string.IsNullOrEmpty(Message))
                 {
                     responseVm.Message = Message;
@@ -1180,7 +1178,7 @@ namespace ShutterManagement.Business.Services
             return false;
         }
 
-        private async Task<TblEstimate> CreateEstimateRecord(CreateEstimate model)
+        private async Task<EstimateComponent> CreateEstimateRecord(CreateEstimate model)
         {
             FileLogger.Log("Creating new estimate...");
 
@@ -1190,7 +1188,7 @@ namespace ShutterManagement.Business.Services
             decimal additionalCost = 0m;
             Guid? taxRateId = null;
             Guid? discountId = null;
-            var windowproductdetails = await BuildEstimate(model.WindowProductId, false);
+            var windowproductdetails = await BuildEstimate(model.WindowProductId, true);
             if (windowproductdetails.Data != null && windowproductdetails.Data.Any())
             {
                 additionalCost = (decimal)windowproductdetails.Data.Sum(x => x.AdditionalCost);
@@ -1246,9 +1244,11 @@ namespace ShutterManagement.Business.Services
                 AdditionalCost = additionalCost,
                 Status = EnumValue.GetEnumValue(Estimation.New),
             };
-
             var res = await Add(createEstimate);
-            return res;
+            EstimateComponent estimateComponent = new EstimateComponent();
+            estimateComponent.EstimateId = createEstimate.EstimateId;
+            estimateComponent.WindowProdcutDetailsForEstimate = windowproductdetails.Data;
+            return estimateComponent;
         }
 
         public async Task<decimal?> CalculateGrandTotal(Guid? discountId, decimal subtotal, Guid? taxId)
@@ -1323,12 +1323,12 @@ namespace ShutterManagement.Business.Services
         }
 
 
-        private async Task ProcessWindowProducts(List<Guid> windowProductIds, Guid estimateId)
+        private async Task ProcessWindowProducts(List<WindowProdcutDetailsForEstimate> windowProdcutDetailsForEstimates, Guid estimateId)
         {
             FileLogger.Log("Processing window products...");
-            foreach (var product in windowProductIds)
+            foreach (var product in windowProdcutDetailsForEstimates)
             {
-                var windowProductData = (await windowProductService.GetAll()).Where(x => x.WindowProductId == product && x.IsDelete == false).FirstOrDefault();
+                var windowProductData = (await windowProductService.GetAll()).Where(x => x.WindowProductId == product.WindowProdcutId && x.IsDelete == false).FirstOrDefault();
                 if (windowProductData == null)
                 {
                     Message = "Window Product " + AppConstant.NoDataFound;
@@ -1348,7 +1348,11 @@ namespace ShutterManagement.Business.Services
                 {
                     return;
                 }
-                await AddComponentsToEstimate((Guid)windowProductData.ProductId, estimateId);
+                if(product.Price == null)
+                {
+                    product.Price = 0.0m;
+                }
+                await AddComponentsToEstimate((Guid)windowProductData.ProductId, estimateId,(decimal)product.Price);
                 if (!string.IsNullOrEmpty(Message))
                 {
                     return;
@@ -1376,6 +1380,9 @@ namespace ShutterManagement.Business.Services
                 Width = windowData.Width,
                 Quantity = windowData.Quantity,
                 Notes = windowData.Notes,
+                BuildHeight = windowProductData.BuildHeight,
+                BuildWidth = windowProductData.BuildWidth,
+                IsRated = windowData.IsRated,
             };
 
             await estimateWindowService.Add(tblEstimateWindow);
@@ -1421,7 +1428,7 @@ namespace ShutterManagement.Business.Services
             await estimateWindowProductService.Add(tblEstimateWindowProduct);
         }
 
-        private async Task AddComponentsToEstimate(Guid productId, Guid estimateId)
+        private async Task AddComponentsToEstimate(Guid productId, Guid estimateId, decimal Price)
         {
             FileLogger.Log($"Adding components for product {productId} to estimate...");
             var productComponentData = (await productComponentService.GetAll()).Where(x => x.ProductId == productId && x.IsDelete == false).ToList();
@@ -1439,7 +1446,7 @@ namespace ShutterManagement.Business.Services
                     return; // Return early if component data not found
                 }
                 //expressionList.Add(Guid.Parse(componentData.PricingExpression ?? ""));
-                await AddComponentToEstimateWindow(componentData, (Guid)component.ProductId, estimateId);
+                await AddComponentToEstimateWindow(componentData, (Guid)component.ProductId, estimateId,Price);
                 await AddComponentMaterialsToEstimate(componentData.ComponentId, estimateId);
                 if (!string.IsNullOrEmpty(Message))
                 {
@@ -1448,7 +1455,7 @@ namespace ShutterManagement.Business.Services
             }
         }
 
-        private async Task AddComponentToEstimateWindow(TblComponent componentData, Guid ProductId, Guid estimateId)
+        private async Task AddComponentToEstimateWindow(TblComponent componentData, Guid ProductId, Guid estimateId , decimal Price)
         {
             FileLogger.Log($"Adding component {componentData.ComponentName} to estimate...");
             var PricingExpressionId = dbContext.TblProductComponents.Where(x => x.ComponentId ==
@@ -1477,6 +1484,7 @@ namespace ShutterManagement.Business.Services
                 TenantId = AppConstant.LoggedInTenantId,
                 Wastefactor = Wastefactor,
                 ProductTypeName = ProductName,
+                ComponentPrice = Price,
                 
             };
 
