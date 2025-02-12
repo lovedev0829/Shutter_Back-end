@@ -693,7 +693,7 @@ namespace ShutterManagement.Business.Services
                 decimal grandtotal = 0.0M;
                 Guid? taxRateId = null;
                 Guid? discountId = null;
-                var windowproductdetails = await BuildEstimate(model.WindowProductId, false);
+                var windowproductdetails = await BuildEstimate(model.WindowProductId, true);
                 if (windowproductdetails.Data != null && windowproductdetails.Data.Any())
                 {
                     additionalCost = (decimal)windowproductdetails.Data.Sum(x => x.AdditionalCost);
@@ -856,7 +856,7 @@ namespace ShutterManagement.Business.Services
                     responseVm.Data = EnumValue.GetEnumValue(NewEstimationStatus);
                     if(responseVm.IsSuccess)
                     {
-                        var EstimateName = GetAllQuerable().Where(x => x.EstimateId == EstimationId && x.IsDelete == false).FirstOrDefault();
+                        var EstimateName = GetAllQuerable().Where(x => x.EstimateId == EstimationId && x.IsDelete == false).Select(x=> x.EstimateName).FirstOrDefault();
                         CreateNotification notification1 = new CreateNotification()
                         {
                             UserId = AppConstant.LoggedInUserID,
@@ -1447,7 +1447,7 @@ namespace ShutterManagement.Business.Services
                     return; // Return early if component data not found
                 }
                 //expressionList.Add(Guid.Parse(componentData.PricingExpression ?? ""));
-                var componentPrice = windowProdcutDetailsForEstimates.Where(x => x.ComponentId == component.ComponentId).Select(x=>x.Price).FirstOrDefault();
+                var componentPrice = windowProdcutDetailsForEstimates.Where(x => x.ComponentId == component.ComponentId).Select(x=>x.Price).FirstOrDefault();   
                 await AddComponentToEstimateWindow(componentData, (Guid)component.ProductId, estimateId, componentPrice ?? 0.0m);
                 await AddComponentMaterialsToEstimate(componentData.ComponentId, estimateId);
                 if (!string.IsNullOrEmpty(Message))

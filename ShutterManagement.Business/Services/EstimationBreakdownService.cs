@@ -10,6 +10,7 @@ using ShutterManagement.Core.ViewModels;
 using ShutterManagement.Core.SPModel;
 using ShutterManagement.Core;
 using static ShutterManagement.Business.Services.ReportServices;
+using System.ComponentModel;
 
 namespace ShutterManagement.Business.Services
 {
@@ -18,13 +19,17 @@ namespace ShutterManagement.Business.Services
         private readonly IContactService contactService;
         private readonly IJobService jobService;
         private readonly IEstimateService estimateService;
-      //  private readonly Pagination pagination;
-       
-        public EstimationBreakdownService(IContactService contactService, IJobService jobService, IEstimateService estimateService)
+        private readonly IEstimateWindowProductService estimateWindowProductService;
+
+        //  private readonly Pagination pagination;
+
+        public EstimationBreakdownService(IContactService contactService, IJobService jobService, 
+            IEstimateService estimateService,IEstimateWindowProductService estimateWindowProductService)
         {
             this.contactService = contactService;
             this.jobService = jobService;
             this.estimateService = estimateService;
+            this.estimateWindowProductService = estimateWindowProductService;
         }
 
         public async Task<IResponseVm<List<ContactsList>>> GetDistinctActiveContacts(Pagination filter)
@@ -169,10 +174,15 @@ namespace ShutterManagement.Business.Services
             IResponseVm<List<WindowProdcutDetailsForEstimate>> responseVm = new ResponseVm<List<WindowProdcutDetailsForEstimate>>();
             try
             {
-                var res = await estimateService.GetAll_Estimate(new Pagination { SearchValue = EstimationId.ToString() });
-                var windowProductIds = res.Data.FirstOrDefault()?.WindowProductId;
+               // var res = await estimateService.GetAll_Estimate(new Pagination { SearchValue = EstimationId.ToString()});
+                Guid[] windowProductIds = estimateWindowProductService.GetAllQuerable()
+     .Where(x => x.EstimateId == EstimationId)
+     .Select(x => x.WindowProductId)
+     .Where(id => id.HasValue)  
+     .Select(id => id.Value)   
+     .ToArray();
 
-                var estimateResponse = await estimateService.BuildEstimate(windowProductIds, true);
+                var estimateResponse = await estimateService.BuildEstimate(windowProductIds, true, EstimationId.ToString(), true);
 
                 if (!string.IsNullOrEmpty(WindowProductId))
                 {

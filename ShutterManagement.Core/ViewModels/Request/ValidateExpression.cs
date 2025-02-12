@@ -12,5 +12,6 @@ namespace ShutterManagement.Core.ViewModels.Request
         public string? BuildWidth { get; set; }
         public string? BuildHeight { get; set; }
         public string? Quantity { get; set; }
+        public bool? IsView { get; set; } = false;
     }
 }
