@@ -820,7 +820,7 @@ namespace ShutterManagement.Business.Services
                     };
 
                     // Replace placeholders in Invoice Template
-                    var htmlContentforInvoice = ReplaceTemplatePlaceholders(invoiceTemplate.TemplateValue, invoiceData);
+                    var htmlContentforInvoice = ReplaceTemplatePlaceholders(invoiceForEmailTemplate.TemplateValue, invoiceData);
 
                     // Generate Invoice PDF
                     var pdfBytesInvoice = GenerateInvoicePdf(htmlContentforInvoice);
