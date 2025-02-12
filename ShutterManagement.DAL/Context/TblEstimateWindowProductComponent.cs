@@ -37,6 +37,12 @@ public partial class TblEstimateWindowProductComponent
 
     public Guid? ProductId { get; set; }
 
+    public decimal? Wastefactor { get; set; }
+
+    public string? ProductTypeName { get; set; }
+
+    public decimal? ComponentPrice { get; set; }
+
     public virtual TblEstimate Estimate { get; set; } = null!;
 
     public virtual TblTenant? Tenant { get; set; }

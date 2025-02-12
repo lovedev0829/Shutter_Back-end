@@ -645,6 +645,7 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.EstimateWindowProductComponentId).ValueGeneratedNever();
             entity.Property(e => e.ComponentId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.ComponentName).HasMaxLength(255);
+            entity.Property(e => e.ComponentPrice).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
@@ -652,9 +653,11 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.ProductType)
                 .HasMaxLength(50)
                 .IsUnicode(false);
+            entity.Property(e => e.ProductTypeName).HasMaxLength(50);
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
+            entity.Property(e => e.Wastefactor).HasColumnType("decimal(10, 2)");
 
             entity.HasOne(d => d.Estimate).WithMany(p => p.TblEstimateWindowProductComponents)
                 .HasForeignKey(d => d.EstimateId)

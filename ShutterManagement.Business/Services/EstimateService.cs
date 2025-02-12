@@ -22,6 +22,7 @@ using System.Text.RegularExpressions;
 using System.Linq.Expressions;
 using NCalc;
 using Antlr.Runtime;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace ShutterManagement.Business.Services
 {
@@ -408,7 +409,10 @@ namespace ShutterManagement.Business.Services
             }
             return responseVm;
         }
-        public async Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> BuildEstimate(Guid[] windowProductIds, bool IsBreakdown)
+
+
+
+        public async Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> BuildEstimate(Guid[] windowProductIds, bool IsBreakdown, string EstimateId = "", bool IsView=false)
         {
             IResponseVm<List<WindowProdcutDetailsForEstimate>> responseVm = new ResponseVm<List<WindowProdcutDetailsForEstimate>>();
             FileLogger.Log("Start: Calculate Estimate price...");
@@ -417,83 +421,107 @@ namespace ShutterManagement.Business.Services
             {
                 var WindowProductData = new List<WindowProdcutDetailsForEstimate>();
                 // Validate tenant existence
-                var isTenantExists = await ValidateTenantExists();
-                if (!isTenantExists)
+                if (IsView)
                 {
-                    responseVm.Message = AppConstant.TenantNotFound;
-                    return responseVm; // Return early if tenant is not found
-                }
-                if (windowProductIds == null || windowProductIds.Length == 0)
-                {
-                    responseVm.Message = "Incorrect data.";
+                    var data1 = new List<WindowProdcutDetailsForEstimate>();
+                    foreach (var windowProductId in windowProductIds)
+                    {
+                        var productData = await componentPriceService.GetProductDataForView(windowProductId, EstimateId);
+                        data1.AddRange(productData.Data);
+                    }
+
+                    // Set tax for each item in data1
+                    foreach (var item in data1)
+                    {
+                        item.IsTaxApplied = await IsTaxApplied((Guid)item.JobId);
+                    }
+
+                    responseVm.Data = data1;
+                    responseVm.TotalRecords = data1.Count;
                     return responseVm;
                 }
-                foreach (var windowProductId in windowProductIds)
-                {
-                    var data = await componentPriceService.GetProductData(windowProductId);
-                    
-                    if (data.IsSuccess)
-                    {
-                      //  var ComponentPriceWithoutAdditionalCostwithSubtenantMarkup = 0.0M;
-                        //calculate price
-                        var ComponentPriceWithoutAdditionalCost = await CalculateEstimate(data.Data);
-                        data.Data.ForEach(x => x.TotalPrice = Convert.ToDecimal(ComponentPriceWithoutAdditionalCost.ToString("0.0000")));
-                        WindowProductData.AddRange(data.Data);
-                        responseVm.IsSuccess = true;
-                    }
-                }
-                if (!IsBreakdown)
-                {
-                    // Use a loop to await IstaxApplied asynchronously for each item
-                    var forProduct = new List<WindowProdcutDetailsForEstimate>();
 
-                    foreach (var item in WindowProductData)
-                    {
-                        var isTaxApplied = await IsTaxApplied((Guid)item.JobId); 
-                        forProduct.Add(new WindowProdcutDetailsForEstimate
-                        {
-                            // Window Properties
-                            WindowId = item.WindowId,
-                            AddressId = item.AddressId,
-                            Label = item.Label,
-                            Width = item.Width,
-                            Height = item.Height,
-                            ArchHeight = item.ArchHeight,
-                            Quantity = item.Quantity,
-                            JobId = item.JobId,
-                            Options = item.Options,
-                            OptionsPrice = item.OptionsPrice,
-                            WindowProdcutId = item.WindowProdcutId,
-                            ProductId = item.ProductId,
-                            BuildWidth = item.BuildWidth,
-                            BuildHeight = item.BuildHeight,
-                            ProductName = item.ProductName,
-                            ProductWidth = item.Width,
-                            ProductHeight = item.Height,
-                            ProductArchHeight = item.ArchHeight,
-                            Area = item.Area,
-                            Length = item.Length,
-                            AdditionalCost = item.AdditionalCost,
-                            AdditionalWidth = item.AdditionalWidth,
-                            Markup = item.Markup,
-                            ProductTypeName = item.ProductName,
-                            TotalPrice = item.TotalPrice,
-                            IsTaxApplied = isTaxApplied
-                        });
-                    }
-
-                    responseVm.Data = forProduct.DistinctBy(x => x.WindowProdcutId).ToList();
-                    responseVm.TotalRecords = WindowProductData.Count;
-
-                }
                 else
                 {
-                    foreach (var item in WindowProductData)
+                    var isTenantExists = await ValidateTenantExists();
+                    if (!isTenantExists)
                     {
-                        item.IsTaxApplied = await IsTaxApplied((Guid)item.JobId); 
+                        responseVm.Message = AppConstant.TenantNotFound;
+                        return responseVm; // Return early if tenant is not found
                     }
-                    responseVm.Data = WindowProductData;
-                    responseVm.TotalRecords = WindowProductData.Count;
+                    if (windowProductIds == null || windowProductIds.Length == 0)
+                    {
+                        responseVm.Message = "Incorrect data.";
+                        return responseVm;
+                    }
+                    foreach (var windowProductId in windowProductIds)
+                    {
+
+                        var data = await componentPriceService.GetProductData(windowProductId);
+
+                        if (data.IsSuccess)
+                        {
+                            //  var ComponentPriceWithoutAdditionalCostwithSubtenantMarkup = 0.0M;
+                            //calculate price
+                            var ComponentPriceWithoutAdditionalCost = await CalculateEstimate(data.Data);
+                            data.Data.ForEach(x => x.TotalPrice = Convert.ToDecimal(ComponentPriceWithoutAdditionalCost.ToString("0.000")));
+                            WindowProductData.AddRange(data.Data);
+                            responseVm.IsSuccess = true;
+                        }
+                    }
+                    if (!IsBreakdown)
+                    {
+                        // Use a loop to await IstaxApplied asynchronously for each item
+                        var forProduct = new List<WindowProdcutDetailsForEstimate>();
+
+                        foreach (var item in WindowProductData)
+                        {
+                            var isTaxApplied = await IsTaxApplied((Guid)item.JobId);
+                            forProduct.Add(new WindowProdcutDetailsForEstimate
+                            {
+                                // Window Properties
+                                WindowId = item.WindowId,
+                                AddressId = item.AddressId,
+                                Label = item.Label,
+                                Width = item.Width,
+                                Height = item.Height,
+                                ArchHeight = item.ArchHeight,
+                                Quantity = item.Quantity,
+                                JobId = item.JobId,
+                                Options = item.Options,
+                                OptionsPrice = item.OptionsPrice,
+                                WindowProdcutId = item.WindowProdcutId,
+                                ProductId = item.ProductId,
+                                BuildWidth = item.BuildWidth,
+                                BuildHeight = item.BuildHeight,
+                                ProductName = item.ProductName,
+                                ProductWidth = item.Width,
+                                ProductHeight = item.Height,
+                                ProductArchHeight = item.ArchHeight,
+                                Area = item.Area,
+                                Length = item.Length,
+                                AdditionalCost = item.AdditionalCost,
+                                AdditionalWidth = item.AdditionalWidth,
+                                Markup = item.Markup,
+                                ProductTypeName = item.ProductName,
+                                TotalPrice = item.TotalPrice,
+                                IsTaxApplied = isTaxApplied
+                            });
+                        }
+
+                        responseVm.Data = forProduct.DistinctBy(x => x.WindowProdcutId).ToList();
+                        responseVm.TotalRecords = WindowProductData.Count;
+
+                    }
+                    else
+                    {
+                        foreach (var item in WindowProductData)
+                        {
+                            item.IsTaxApplied = await IsTaxApplied((Guid)item.JobId);
+                        }
+                        responseVm.Data = WindowProductData;
+                        responseVm.TotalRecords = WindowProductData.Count;
+                    }
                 }
             }
             catch (Exception ex)
@@ -501,9 +529,11 @@ namespace ShutterManagement.Business.Services
                 FileLogger.Log($"Error occurred: {ex.Message}");
                 responseVm.Message = AppConstant.ExceptionError + ex.Message;
             }
+        
 
             return responseVm;
         }
+
         public async Task<bool> IsTaxApplied(Guid JobId)
         {
             var Jobdetail = jobService.GetAllQuerable()
@@ -572,21 +602,32 @@ namespace ShutterManagement.Business.Services
                     var val = GetProperty.GetColumnValue(values, property);
                     if (val == null)
                     {
-                        string[] info = property.Split("__");
-                        if (info != null && info.Length > 0 && info.Length == 3)
+                        if (values.IsView)
                         {
-                            if (info[0] == "Material")
+                            val = values.UnitCost;
+                            if (GetProperty.GetColumnValue(values, "WasteFactor") != null)
                             {
-                                bool IsRated = GetProperty.GetColumnValue(values, "IsRated") != null ? values.IsRated : true;
-                                val = materialService.GetAllQuerable().Where(x => x.ProductType.ToString() == info[1] && x.MaterialName == info[2] &&    x.IsActive == true && (x.TenantId == AppConstant.LoggedInTenantId || x.TenantId.ToString() == AppConstant.LoggedInParentTenantId)).Select(x => (IsRated ? x.UnitCost : x.NonRatedUnitCost)).FirstOrDefault();
-                                if (GetProperty.GetColumnValue(values, "WasteFactor") != null)
-                                {
-                                    val = (val * (100 + values.WasteFactor ?? 0) / 100);
-                                }
+                                val = (val * (100 + values.WasteFactor ?? 0) / 100);
                             }
-                            else
+                        }
+                        else
+                        {
+
+                            string[] info = property.Split("__");
+                            if (info != null && info.Length > 0 && info.Length == 3)
                             {
-                                val = 0;
+                                if (info[0] == "Material")
+                                {
+                                    val = materialService.GetAllQuerable().Where(x => x.ProductType.ToString() == info[1] && x.MaterialName == info[2] && x.IsActive == true && (x.TenantId == AppConstant.LoggedInTenantId || x.TenantId.ToString() == AppConstant.LoggedInParentTenantId)).Select(x => x.UnitCost).FirstOrDefault();
+                                    if (GetProperty.GetColumnValue(values, "WasteFactor") != null)
+                                    {
+                                        val = (val * (100 + values.WasteFactor ?? 0) / 100);
+                                    }
+                                }
+                                else
+                                {
+                                    val = 0;
+                                }
                             }
                         }
                     }
@@ -756,7 +797,6 @@ namespace ShutterManagement.Business.Services
                 {
                     EstimationId = EstimateId.ToString()
                 };
-
                 var estimateListFiltered = await GetAll_Estimate(filterValue);
 
                 if (estimateListFiltered != null && estimateListFiltered.TotalRecords > 0 && estimateListFiltered.Data.Any())
@@ -1411,6 +1451,14 @@ namespace ShutterManagement.Business.Services
         private async Task AddComponentToEstimateWindow(TblComponent componentData, Guid ProductId, Guid estimateId)
         {
             FileLogger.Log($"Adding component {componentData.ComponentName} to estimate...");
+            var PricingExpressionId = dbContext.TblProductComponents.Where(x => x.ComponentId ==
+            componentData.ComponentId && x.IsDelete == false).Select(x => x.PricingExpression).FirstOrDefault();
+            var ExpressionFormulae = dbContext.TblExpressions.Where(x => x.Id.ToString() == PricingExpressionId)
+                .Select(x => x.ExpressionFormulae).FirstOrDefault();
+            var Wastefactor = dbContext.TblComponentMaterials.Where(x => x.ComponentId ==
+            componentData.ComponentId && x.IsDelete == false).Select(x => x.WasteFactor).FirstOrDefault();
+            var ProductName = productType.GetAllQuerable().Where(x => x.ProductId.ToString() == componentData.ProductType
+            && x.IsDelete == false).Select(x => x.ProductName).FirstOrDefault();
             TblEstimateWindowProductComponent tblEstimateWindowProductComponent = new TblEstimateWindowProductComponent
             {
                 EstimateWindowProductComponentId = Guid.NewGuid(),
@@ -1425,8 +1473,11 @@ namespace ShutterManagement.Business.Services
                 MarkupPercentage = componentData.MarkupPercentage,
                 Notes = componentData.Notes,
                 ProductType = componentData.ProductType,
-                PricingExpression = componentData.PricingExpression,
+                PricingExpression = ExpressionFormulae,
                 TenantId = AppConstant.LoggedInTenantId,
+                Wastefactor = Wastefactor,
+                ProductTypeName = ProductName,
+                
             };
 
             await estimateWindowProductComponentService.Add(tblEstimateWindowProductComponent);

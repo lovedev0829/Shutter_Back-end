@@ -19,7 +19,7 @@ namespace ShutterManagement.Business.Interfaces
         Task<IResponseVm<string>> ActiveInActiveEstimate(Guid EstimateId);
         Task<IResponseVm<string>> DeleteEstimate(Guid EstimateId);
         Task<IResponseVm<string>> ValidateExpression(ValidateExpression model);
-        Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> BuildEstimate(Guid[] windowProductIds, bool IsBreakDown);
+        Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> BuildEstimate(Guid[] windowProductIds, bool IsBreakDown,string EstimateId = "", bool IsView = false);
         Task<IResponseVm<List<EstimateList>>> GetAll_Estimate(Pagination filter);
         Task<IResponseVm<string>> SendForApproval(Guid EstimateId);
         Task<IResponseVm<List<EstimateList>>> ViewEachEstimation(Guid EstimateId);
