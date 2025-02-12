@@ -137,7 +137,7 @@ namespace ShutterManagement.Services
                             Name = UserDetails.FirstName + " " + UserDetails.LastName ?? "",
                             UserName = UserDetails.Email ?? "",
                             Password = UserDetails.Password ?? "",
-                            CompanyName = Tenantcode?.Code ?? "",
+                            CompanyName = tenantInfoDetails?.CompanyName ?? "",
                             Logo = tenantInfoDetails?.Logo ?? "",
                             loginUrl = $"{AppConstant.UIBaseURL}{Tenantcode?.Code ?? ""}" ??"",
                             color = tenantInfoDetails?.PrimaryColor ?? ""
