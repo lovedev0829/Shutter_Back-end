@@ -9,6 +9,8 @@ namespace ShutterManagement.Core.ViewModels.Response
     public class WindowProdcutDetailsForEstimate
     {// Window Properties
         public bool IsView { get; set; } = false;
+
+       
         public Guid WindowId { get; set; }
         public Guid? AddressId { get; set; }
         public string? Label { get; set; }

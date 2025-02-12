@@ -1,4 +1,5 @@
 ﻿using CsvHelper.Configuration.Attributes;
+using ShutterManagement.Core.ViewModels.Response;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -16,5 +17,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         public Guid EstimateId { get; set; }
 
         public bool? IsTaxApplied { get; set; } = false;
+
+        public List<WindowProdcutDetailsForEstimate> WindowProdcutDetails { get; set; }
     }
 }

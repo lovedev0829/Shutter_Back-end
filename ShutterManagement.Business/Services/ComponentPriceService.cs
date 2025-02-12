@@ -8,6 +8,7 @@ using ShutterManagement.DAL.Context;
 using ShutterManagement.Services;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -101,14 +102,22 @@ namespace ShutterManagement.Business.Services
                   && productComponentmat.IsActive == true && productComponentmat.IsDelete == false
                   select new WindowProdcutDetailsForEstimate
                   {
-                      JobId = estimate.JobId,
+                      WindowId = (Guid)estimatewindow.WindowId,
+                      AddressId = estimatewindow.AddressId,
+                      Label = estimatewindow.Label,
+                      Width = estimatewindow.Width,
+                      Height = estimatewindow.Height,
+                      ArchHeight = estimatewindow.ArchHeight,
+                      Quantity = estimatewindow.Quantity,
+                      JobId =  estimate.JobId,
+                      IsRated = estimatewindow.IsRated,
+                      TotalPrice = estimate.TotalPrice,
                       // WindowProduct Properties
                       WindowProdcutId = estwindowProduct.WindowProductId,
-                      // ProductId = windowProduct.ProductId,
-                      BuildWidth = estimatewindow.Width,
-                      BuildHeight = estimatewindow.Height,
-                      AdditionalCost = estimate.AdditionalCost,
-                      Quantity = estimatewindow.Quantity,
+                      ProductId = estwindowProduct.ProductId,
+                      BuildWidth = estimatewindow.BuildWidth,
+                      BuildHeight = estimatewindow.BuildHeight,
+
                       // Product Properties
                       ProductName = estwindowProduct.ProductName,
                       ProductWidth = estwindowProduct.Width,
@@ -124,13 +133,13 @@ namespace ShutterManagement.Business.Services
 
                       // ProductComponent Properties
                       ComponentId = estwinprocomp.ComponentId,
-                      // ComponentQuantity = productComponent.Quantity,
+                      //    ComponentQuantity = estwinprocomp.Quantity,
 
                       // Component Properties
                       ComponentName = estwinprocomp.ComponentName,
                       MarkupPercentage = estwinprocomp.MarkupPercentage,
                       PricingExpression = estwinprocomp.PricingExpression,
-                      Price = estwinprocomp.ComponentPrice,
+                    //  Price =   estwinprocomp.Price,
 
                       // Expression Properties
                       ExpressionFormulae = estwinprocomp.PricingExpression,
@@ -222,6 +231,7 @@ namespace ShutterManagement.Business.Services
                       Quantity = window.Quantity,
                       JobId = window.JobId,
                       IsRated = window.IsRated,
+
 
                       // WindowProduct Properties
                       WindowProdcutId = windowProduct.WindowProductId,

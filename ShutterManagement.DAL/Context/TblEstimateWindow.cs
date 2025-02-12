@@ -41,6 +41,12 @@ public partial class TblEstimateWindow
 
     public Guid? WindowId { get; set; }
 
+    public bool? IsRated { get; set; }
+
+    public decimal? BuildWidth { get; set; }
+
+    public decimal? BuildHeight { get; set; }
+
     public virtual TblAddress? Address { get; set; }
 
     public virtual TblEstimate Estimate { get; set; } = null!;
