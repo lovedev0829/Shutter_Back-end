@@ -9,6 +9,7 @@ using ShutterManagement.Services;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Data.Entity.Core;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -139,7 +140,7 @@ namespace ShutterManagement.Business.Services
                       ComponentName = estwinprocomp.ComponentName,
                       MarkupPercentage = estwinprocomp.MarkupPercentage,
                       PricingExpression = estwinprocomp.PricingExpression,
-                    //  Price =   estwinprocomp.Price,
+                      Price =  estwinprocomp.ComponentPrice,
 
                       // Expression Properties
                       ExpressionFormulae = estwinprocomp.PricingExpression,
@@ -148,7 +149,7 @@ namespace ShutterManagement.Business.Services
                       RawMaterialId = productComponentmat.RawMaterialId,
                       // MaterialQuantity = componentMaterial.Quantity,
                       WasteFactor = estwinprocomp.Wastefactor,
-
+                      AdditionalCost = estimate.AdditionalCost,
                       // Material Properties
                       MaterialName = productComponentmat.MaterialName,
                       UnitCost = productComponentmat.UnitCost,

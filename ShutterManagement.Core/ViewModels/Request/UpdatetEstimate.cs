@@ -18,6 +18,5 @@ namespace ShutterManagement.Core.ViewModels.Request
 
         public bool? IsTaxApplied { get; set; } = false;
 
-        public List<WindowProdcutDetailsForEstimate> WindowProdcutDetails { get; set; }
     }
 }
