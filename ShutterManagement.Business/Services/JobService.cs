@@ -115,16 +115,19 @@ namespace ShutterManagement.Business.Services
                     var res = await Add(job);
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.InsertSuccessMsg;
-                    CreateNotification notification1 = new CreateNotification()
+                    if (responseVm.IsSuccess)
                     {
-                        UserId = AppConstant.LoggedInUserID,
-                        Subject = Enum.GetName(typeof(NotificationModule), NotificationModule.Job),
-                        Body = $"{job.JobName} {AppConstant.Create_Notification}",
-                        CreatedDate = DateTime.Now,
-                        Type = Enum.GetName(typeof(NotificationModule), NotificationModule.Job),
-                        TypeId = job.JobId,
-                    };
-                    var result = await notification.CreateNotification(notification1);
+                        CreateNotification notification1 = new CreateNotification()
+                        {
+                            UserId = AppConstant.LoggedInUserID,
+                            Subject = Enum.GetName(typeof(NotificationModule), NotificationModule.Job),
+                            Body = $"{job.JobName} {AppConstant.Create_Notification}",
+                            CreatedDate = DateTime.Now,
+                            Type = Enum.GetName(typeof(NotificationModule), NotificationModule.Job),
+                            TypeId = job.JobId,
+                        };
+                        var result = await notification.CreateNotification(notification1);
+                    }
                 }
                 else
                 {
@@ -465,18 +468,20 @@ namespace ShutterManagement.Business.Services
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.UpdateSuccessMsg;
                 }
-                CreateNotification notification1 = new CreateNotification()
+                if (responseVm.IsSuccess)
                 {
-                    UserId = AppConstant.LoggedInUserID,
-                    Subject = Enum.GetName(typeof(NotificationModule), NotificationModule.Job),
-                    Body = $"{IsJobExist.JobName} {AppConstant.UpdateStatus_Notification}",
-                    CreatedDate = DateTime.Now,
-                    Type = Enum.GetName(typeof(NotificationModule), NotificationModule.Job),
-                    TypeId = IsJobExist.JobId,
-                };
+                    CreateNotification notification1 = new CreateNotification()
+                    {
+                        UserId = AppConstant.LoggedInUserID,
+                        Subject = Enum.GetName(typeof(NotificationModule), NotificationModule.Job),
+                        Body = $"{IsJobExist.JobName} {AppConstant.UpdateStatus_Notification}",
+                        CreatedDate = DateTime.Now,
+                        Type = Enum.GetName(typeof(NotificationModule), NotificationModule.Job),
+                        TypeId = IsJobExist.JobId,
+                    };
 
-                var result = await notification.CreateNotification(notification1);
-
+                    var result = await notification.CreateNotification(notification1);
+                }
 
                 //else
                 //{

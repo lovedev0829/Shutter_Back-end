@@ -129,20 +129,21 @@ namespace ShutterManagement.Business.Services
 
                 await dataServices.CallSP("sp_TenantCRUD", null, sqlParameters);
              
-               
                 var AddedTenant = GetAllQuerable().Where(x => x.FirstName == model.FirstName && x.Code == model.Code).FirstOrDefault();
-                CreateNotification notification1 = new CreateNotification()
-                {
-                    UserId = AppConstant.LoggedInUserID,
-                    Subject = Enum.GetName(typeof(NotificationModule), NotificationModule.SubTenant),
-                    Body = $"{AddedTenant.FirstName} {AddedTenant.LastName}({AddedTenant.Code}) Partner {AppConstant.Create_Notification}",
-                    CreatedDate = DateTime.Now,
-                    Type = Enum.GetName(typeof(NotificationModule), NotificationModule.SubTenant),
-                    TypeId = AddedTenant.TenantId,
-                };
-                var result = await notification.CreateNotification(notification1);
+             
                 if (AddedTenant != null)
                 {
+                    CreateNotification notification1 = new CreateNotification()
+                    {
+                        UserId = AppConstant.LoggedInUserID,
+                        Subject = Enum.GetName(typeof(NotificationModule), NotificationModule.SubTenant),
+                        Body = $"{AddedTenant.FirstName} {AddedTenant.LastName}({AddedTenant.Code}) Partner {AppConstant.Create_Notification}",
+                        CreatedDate = DateTime.Now,
+                        Type = Enum.GetName(typeof(NotificationModule), NotificationModule.SubTenant),
+                        TypeId = AddedTenant.TenantId,
+                    };
+                    var result = await notification.CreateNotification(notification1);
+
                     var UserId = userService.GetAllQuerable().Where(x => x.TenantId == AddedTenant.TenantId && x.IsDelete == false).
                         Select(x => x.Id).FirstOrDefault();
                         CreateNotification notification2 = new CreateNotification()

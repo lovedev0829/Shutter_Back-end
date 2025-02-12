@@ -848,23 +848,27 @@ namespace ShutterManagement.Business.Services
                 if (CanChangeStatus(currentStatus, NewEstimationStatus))
                 {
                     EstimationStatus.Status = EnumValue.GetEnumValue(NewEstimationStatus);
-                    await Update(EstimationStatus);
-                    var EstimateName = GetAllQuerable().Where(x => x.EstimateId == EstimationId && x.IsDelete == false).FirstOrDefault();
-                    CreateNotification notification1 = new CreateNotification()
-                    {
-                        UserId = AppConstant.LoggedInUserID,
-                        Subject = Enum.GetName(typeof(NotificationModule), NotificationModule.Estimate),
-                        Body = $"{EstimateName} {AppConstant.UpdateStatus_Notification}",
-                        CreatedDate = DateTime.Now,
-                        Type = Enum.GetName(typeof(NotificationModule), NotificationModule.Estimate),
-                        TypeId = EstimationId
-                    };
-
-                    var result = await notification.CreateNotification(notification1);
+                    var res = await Update(EstimationStatus);
+                   
+                    
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.UpdateSuccessMsg;
                     responseVm.Data = EnumValue.GetEnumValue(NewEstimationStatus);
+                    if(responseVm.IsSuccess)
+                    {
+                        var EstimateName = GetAllQuerable().Where(x => x.EstimateId == EstimationId && x.IsDelete == false).FirstOrDefault();
+                        CreateNotification notification1 = new CreateNotification()
+                        {
+                            UserId = AppConstant.LoggedInUserID,
+                            Subject = Enum.GetName(typeof(NotificationModule), NotificationModule.Estimate),
+                            Body = $"{EstimateName} {AppConstant.UpdateStatus_Notification}",
+                            CreatedDate = DateTime.Now,
+                            Type = Enum.GetName(typeof(NotificationModule), NotificationModule.Estimate),
+                            TypeId = EstimationId
+                        };
 
+                        var result = await notification.CreateNotification(notification1);
+                    }
                     // Log and record the status change in history
                     await EstimationChangeHistory(EstimationId, NewEstimationStatus);
                     FileLogger.Log($"Estimation status changed successfully to {NewEstimationStatus} for EstimationId: {EstimationId}");
