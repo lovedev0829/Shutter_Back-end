@@ -745,7 +745,6 @@ namespace ShutterManagement.Business.Services
 
                     var invoiceForEmailTemplate = dbContext.TblTemplates.FirstOrDefault(c =>
                         c.TemplateId == invoiceTemplateId &&
-                        c.TenantId == AppConstant.LoggedInTenantId &&
                         c.IsDelete == false);
 
                    
@@ -790,6 +789,17 @@ namespace ShutterManagement.Business.Services
                         })
                         .ToList();
 
+                    var estimationDetail = dbContext.TblEstimates.FirstOrDefault(c =>
+                   c.EstimateId == model.EstimationId &&
+                   c.TenantId == AppConstant.LoggedInTenantId &&
+                   c.IsDelete == false);
+                    if (estimationDetail == null)
+                    {
+                        responseVm.IsSuccess = false;
+                        responseVm.Message = $"EstimationDetails " + AppConstant.NoDataFound;
+                        return responseVm;
+                    }
+
                     var invoiceDataModel = new InvoiceDataModel
                     {
                         CustomerName = customerDetails?.FirstName + " " + customerDetails?.LastName,
@@ -811,17 +821,20 @@ namespace ShutterManagement.Business.Services
                         CreatedBy = invoiceDetails?.CreatedBy.ToString() ?? "",
                         EstimationSubtotal = invoiceDetails?.TotalAmount.ToString() ?? "", 
                         EstimationGrandTotal = invoiceDetails?.BalanceDue.ToString() ?? "", 
-                        EstimationId = invoiceDetails?.InvoiceNumber.ToString() ?? "",
+                        EstimationId = estimationDetail?.EstimateCode?.ToString() ?? "",
                         EmailAddress = customerDetails?.Email ?? "",
                         Terms = estimationDetails?.TermsCondition ?? "",
                         Note = estimationDetails?.Notes ?? "",
                         OrderId = orderDetails?.OrderName ?? "",
+                        TotalAmount = invoiceDetails?.TotalAmount.ToString() ?? "",
+                        DueAmount = invoiceDetails?.BalanceDue.ToString() ?? "",
+                        InvoiceNo = invoiceDetails?.InvoiceNumber?.ToString() ?? "",
                         IssueDate = Convert.ToDateTime(invoiceDetails?.IssueDate).ToString("MM-dd-yyyy") ?? "",
                         PaymentList = GenerateInvoicetListHtml(paymentList) 
                     };
 
                     // Replace placeholders in Invoice Template
-                    var htmlContentforInvoice = ReplaceTemplatePlaceholders(invoiceForEmailTemplate.TemplateValue, invoiceData);
+                    var htmlContentforInvoice = ReplaceTemplatePlaceholders(invoiceForEmailTemplate.TemplateValue, invoiceDataModel);
 
                     // Generate Invoice PDF
                     var pdfBytesInvoice = GenerateInvoicePdf(htmlContentforInvoice);
@@ -908,7 +921,7 @@ namespace ShutterManagement.Business.Services
 
                     responseVm.IsSuccess = true;
                     responseVm.Message = "Invoice email sent successfully.";
-                    File.Delete(savePath);
+                    File.Delete(InvicesavePath);
                 }
 
                 else if (model.DocumentType == EstimateDocumentType.DownloadPDF)
@@ -1004,6 +1017,8 @@ namespace ShutterManagement.Business.Services
                 .Replace("{{note}}", data.Note ?? "")
                 .Replace("{{orderid}}", data.OrderId ?? "")
                 .Replace("{{issuedate}}", data.IssueDate ?? "")
+                .Replace("{{totalamount}}", data.TotalAmount ?? "")
+                .Replace("{{balancedue}}", data.DueAmount ?? "")
                 .Replace("{{invoiceno}}", data.InvoiceNo ?? "");
         }
 
