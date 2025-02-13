@@ -27,7 +27,7 @@ namespace ShutterManagement.Business.Services
             {
                 TblNotification notification = new TblNotification()
                 {
-                    Id = new Guid(),
+                    Id = Guid.NewGuid(),
                     UserId = model.UserId,
                     Subject = model.Subject,
                     Body = model.Body,

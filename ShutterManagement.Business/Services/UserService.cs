@@ -108,9 +108,11 @@ namespace ShutterManagement.Services
                         {
                             UserId = AppConstant.LoggedInUserID,
                             Subject = Enum.GetName(typeof(NotificationModule), NotificationModule.User),
-                            Body = $"Tenant {AppConstant.Create_Notification}",
+                            Body = $"{tblUser.FirstName} {tblUser.LastName} {AppConstant.Create_Notification}",
                             CreatedDate = DateTime.Now,
-                            IsReaded = true
+                            IsReaded = true,
+                            Type = Enum.GetName(typeof(NotificationModule),NotificationModule.User),
+                            TypeId = tblUser.Id,
                         };
                         var result1 = notification.CreateNotification(notification2);
                         TblUserRole userRole = new TblUserRole
