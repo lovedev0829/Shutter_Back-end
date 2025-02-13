@@ -79,16 +79,6 @@ namespace ShutterManagement.Services
                     result.Message = "Email " + AppConstant.AlreadyExists;
                     return result;
                 }
-
-                CreateNotification notification2 = new CreateNotification()
-                {
-                    UserId = AppConstant.LoggedInUserID,
-                    Subject = Enum.GetName(typeof(NotificationModule), NotificationModule.User),
-                    Body = $"Tenant {AppConstant.Create_Notification}",
-                    CreatedDate = DateTime.Now,
-                    IsReaded = true
-                };
-                var result1 = notification.CreateNotification(notification2);
                 bool IsRoleExists = await roleService.AnyAsync(x => x.Id == UserDetails.RoleId
                 && x.IsShow == false && x.IsActive == true && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
                 if (IsRoleExists)
@@ -114,6 +104,15 @@ namespace ShutterManagement.Services
                     var res = await Add(tblUser);
                     if (res.Id != Guid.Empty)
                     {
+                        CreateNotification notification2 = new CreateNotification()
+                        {
+                            UserId = AppConstant.LoggedInUserID,
+                            Subject = Enum.GetName(typeof(NotificationModule), NotificationModule.User),
+                            Body = $"Tenant {AppConstant.Create_Notification}",
+                            CreatedDate = DateTime.Now,
+                            IsReaded = true
+                        };
+                        var result1 = notification.CreateNotification(notification2);
                         TblUserRole userRole = new TblUserRole
                         {
                             UserId = res.Id,

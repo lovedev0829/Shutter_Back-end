@@ -20,6 +20,4 @@ public partial class TblNotification
     public string? Type { get; set; }
 
     public Guid? TypeId { get; set; }
-
-    public virtual TblUser? User { get; set; }
 }

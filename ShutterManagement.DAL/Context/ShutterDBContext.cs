@@ -969,16 +969,12 @@ public partial class ShutterDBContext : DbContext
 
         modelBuilder.Entity<TblNotification>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__TblNotif__3214EC07D937EA1B");
+            entity.HasKey(e => e.Id).HasName("PK__TblNotif__3214EC0706DB6A2E");
 
-            entity.ToTable("TblNotification");
+            entity.ToTable("TblNotification", "dbo");
 
-            entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.Id).ValueGeneratedNever();
             entity.Property(e => e.Createdate).HasColumnType("datetime");
-
-            entity.HasOne(d => d.User).WithMany(p => p.TblNotifications)
-                .HasForeignKey(d => d.UserId)
-                .HasConstraintName("FK__TblNotifi__UserI__76D69450");
         });
 
         modelBuilder.Entity<TblOption>(entity =>
