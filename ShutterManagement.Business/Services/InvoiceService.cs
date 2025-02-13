@@ -817,7 +817,7 @@ namespace ShutterManagement.Business.Services
                         Note = estimationDetails?.Notes ?? "",
                         OrderId = orderDetails?.OrderName ?? "",
                         IssueDate = Convert.ToDateTime(invoiceDetails?.IssueDate).ToString("MM-dd-yyyy") ?? "",
-                        ProductListHtml = GenerateInvoicetListHtml(paymentList) 
+                        PaymentList = GenerateInvoicetListHtml(paymentList) 
                     };
 
                     // Replace placeholders in Invoice Template
@@ -828,7 +828,7 @@ namespace ShutterManagement.Business.Services
 
                     // Save the invoice PDF
                     var tenantIdInvoice = AppConstant.LoggedInTenantId.ToString();
-                    var rootPathInvoice = Path.Combine(AppConstant.FileUploadPath, tenantId);
+                    var rootPathInvoice = Path.Combine(AppConstant.FileUploadPath, tenantIdInvoice);
                     if (!Directory.Exists(rootPathInvoice))
                     {
                         Directory.CreateDirectory(rootPathInvoice);
@@ -999,7 +999,7 @@ namespace ShutterManagement.Business.Services
                 .Replace("{{estimationId}}", data.EstimationId ?? "")
                 .Replace("{{emailaddress}}", data.EmailAddress ?? "")
                 .Replace("{{productlist}}", data.ProductListHtml ?? "")
-                .Replace("{{paymentlist}}", data.ProductListHtml ?? "")
+                .Replace("{{paymentlist}}", data.PaymentList ?? "")
                 .Replace("{{terms}}", data.Terms ?? "")
                 .Replace("{{note}}", data.Note ?? "")
                 .Replace("{{orderid}}", data.OrderId ?? "")
@@ -1022,6 +1022,8 @@ namespace ShutterManagement.Business.Services
 
             return converter.Convert(pdfDocument);
         }
+
+
 
         public async Task<IResponseVm<List<InvoiceVM>>> InvoiceReport(Pagination filter, ReportFilterType type)
         {
