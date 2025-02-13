@@ -1015,7 +1015,7 @@ namespace ShutterManagement.Business.Services
                 .Replace("{{paymentlist}}", data.PaymentList ?? "")
                 .Replace("{{terms}}", data.Terms ?? "")
                 .Replace("{{note}}", data.Note ?? "")
-                .Replace("{{orderid}}", data.OrderId ?? "")
+                .Replace("{{orderid}}", $"Order ID : "+data.OrderId ?? "")
                 .Replace("{{issuedate}}", data.IssueDate ?? "")
                 .Replace("{{totalamount}}", data.TotalAmount ?? "")
                 .Replace("{{balancedue}}", data.DueAmount ?? "")
