@@ -30,9 +30,11 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? EstimationId { get; set; }
         public string? EmailAddress { get; set; }
         public string? ProductListHtml { get; set; }
+        public string? PaymentList { get; set; }
         public string? Terms { get; set; }
         public string? Note { get; set; }
         public string? OrderId { get; set; }
         public string? InvoiceNo { get; set; }
+        public string? IssueDate { get; set; }
     }
 }
