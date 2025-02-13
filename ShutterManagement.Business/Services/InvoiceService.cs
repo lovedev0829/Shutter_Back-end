@@ -816,6 +816,7 @@ namespace ShutterManagement.Business.Services
                         Terms = estimationDetails?.TermsCondition ?? "",
                         Note = estimationDetails?.Notes ?? "",
                         OrderId = orderDetails?.OrderName ?? "",
+                        IssueDate = Convert.ToDateTime(invoiceDetails?.IssueDate).ToString("MM-dd-yyyy") ?? "",
                         ProductListHtml = GenerateInvoicetListHtml(paymentList) 
                     };
 
@@ -998,9 +999,11 @@ namespace ShutterManagement.Business.Services
                 .Replace("{{estimationId}}", data.EstimationId ?? "")
                 .Replace("{{emailaddress}}", data.EmailAddress ?? "")
                 .Replace("{{productlist}}", data.ProductListHtml ?? "")
+                .Replace("{{paymentlist}}", data.ProductListHtml ?? "")
                 .Replace("{{terms}}", data.Terms ?? "")
                 .Replace("{{note}}", data.Note ?? "")
                 .Replace("{{orderid}}", data.OrderId ?? "")
+                .Replace("{{issuedate}}", data.IssueDate ?? "")
                 .Replace("{{invoiceno}}", data.InvoiceNo ?? "");
         }
 
