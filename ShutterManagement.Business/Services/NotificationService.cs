@@ -27,12 +27,13 @@ namespace ShutterManagement.Business.Services
             {
                 TblNotification notification = new TblNotification()
                 {
+                    Id = Guid.NewGuid(),
                     UserId = model.UserId,
                     Subject = model.Subject,
                     Body = model.Body,
                     Createdate = DateTime.Now,
                     IsReaded = model.IsReaded,
-                    Type = model.Type,  
+                    Type = model.Type,
                     TypeId = model.TypeId,
                 };
                 var res = await Add(notification);

@@ -265,8 +265,6 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-
-
                 var IsEstimateExists = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId && x.EstimateId == EstimateId).
                     OrderByDescending(x => x.CreatedAt).FirstOrDefault();
                 if (IsEstimateExists == null)
@@ -293,10 +291,6 @@ namespace ShutterManagement.Business.Services
                         EmailHelper.SendMail(sendEmail);
                        
                     }
-
-                    
-
-
                 }
 
                 responseVm.IsSuccess = true;
@@ -1611,7 +1605,6 @@ namespace ShutterManagement.Business.Services
                     .Where(es => es.EstimateId == EstimationId && es.IsDelete == false && es.IsActive == true)
                     .FirstOrDefault();
         }
-
 
         //GenerateEstimationUniqueName
         public async Task<IResponseVm<string>> EstimationUniqueName()

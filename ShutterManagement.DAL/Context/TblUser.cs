@@ -47,8 +47,6 @@ public partial class TblUser
 
     public virtual ICollection<TblJobSchedule> TblJobSchedules { get; set; } = new List<TblJobSchedule>();
 
-    public virtual ICollection<TblNotification> TblNotifications { get; set; } = new List<TblNotification>();
-
     public virtual ICollection<TblUserRole> TblUserRoles { get; set; } = new List<TblUserRole>();
 
     public virtual TblTenant? Tenant { get; set; }

@@ -146,7 +146,7 @@ namespace ShutterManagement.Business.Services
                     decimal grandtotal = 0m;
                     Guid? taxRateId = null;
                     Guid? discountId = null;
-                    var windowproductdetails = await estimateService.BuildEstimate(updateOrder.WindowProductId, false);
+                    var windowproductdetails = await estimateService.BuildEstimate(updateOrder.WindowProductId, false,updateOrder.EstimateId.ToString(),true);
                     if (windowproductdetails.Data != null && windowproductdetails.Data.Any())
                     {
                         additionalCost = (decimal)windowproductdetails.Data.Sum(x => x.AdditionalCost);
@@ -389,7 +389,7 @@ namespace ShutterManagement.Business.Services
                             decimal grandtotal = 0.0M;
                             Guid? taxRateId = null;
                             Guid? discountId = null;
-                            var windowproductdetails = await estimateService.BuildEstimate(model.WindowProductId, false);
+                            var windowproductdetails = await estimateService.BuildEstimate(model.WindowProductId, false,model.EstimateId.ToString(),true);
                             if (windowproductdetails.Data != null && windowproductdetails.Data.Any())
                             {
                                 additionalCost = (decimal)windowproductdetails.Data.Sum(x => x.AdditionalCost);
