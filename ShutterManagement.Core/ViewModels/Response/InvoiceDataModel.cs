@@ -36,5 +36,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? OrderId { get; set; }
         public string? InvoiceNo { get; set; }
         public string? IssueDate { get; set; }
+        public string? TotalAmount { get; set; }
+        public string? DueAmount { get; set; }
     }
 }
