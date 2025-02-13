@@ -110,7 +110,6 @@ namespace ShutterManagement.Services
                             Subject = Enum.GetName(typeof(NotificationModule), NotificationModule.User),
                             Body = $"{tblUser.FirstName} {tblUser.LastName} {AppConstant.Create_Notification}",
                             CreatedDate = DateTime.Now,
-                            IsReaded = true,
                             Type = Enum.GetName(typeof(NotificationModule),NotificationModule.User),
                             TypeId = tblUser.Id,
                         };
