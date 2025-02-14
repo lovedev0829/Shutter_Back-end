@@ -38,8 +38,6 @@ namespace ShutterManagement.Business.Services
                                  IsActive = x.IsActive
                              }).ToList();
 
-
-
                 var TakenRecords = FilterRecords
                         .Skip((filter.PageNo - 1) * filter.RecordPerPage)
                         .Take(filter.RecordPerPage)

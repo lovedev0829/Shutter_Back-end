@@ -106,7 +106,7 @@ namespace ShutterManagement.Services
                     {
                         CreateNotification notification2 = new CreateNotification()
                         {
-                            UserId = AppConstant.LoggedInUserID,
+                            UserId = tblUser.Id,
                             Subject = Enum.GetName(typeof(NotificationModule), NotificationModule.User),
                             Body = $"{tblUser.FirstName} {tblUser.LastName} {AppConstant.Create_Notification}",
                             CreatedDate = DateTime.Now,
@@ -114,6 +114,16 @@ namespace ShutterManagement.Services
                             TypeId = tblUser.Id,
                         };
                         var result1 = notification.CreateNotification(notification2);
+                        CreateNotification notification3 = new CreateNotification()
+                        {
+                            UserId = AppConstant.LoggedInUserID,
+                            Subject = Enum.GetName(typeof(NotificationModule), NotificationModule.User),
+                            Body = $"{tblUser.FirstName} {tblUser.LastName} {AppConstant.Create_Notification}",
+                            CreatedDate = DateTime.Now,
+                            Type = Enum.GetName(typeof(NotificationModule), NotificationModule.User),
+                            TypeId = AppConstant.LoggedInUserID,
+                        };
+                        var result3 = notification.CreateNotification(notification3);
                         TblUserRole userRole = new TblUserRole
                         {
                             UserId = res.Id,
