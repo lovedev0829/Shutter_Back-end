@@ -27,18 +27,18 @@ builder.Services.AddDbContext<ShutterDBContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
     sqlOptions => sqlOptions.CommandTimeout(60)));
 
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowedCorsPolicy",
-        builder => builder
-            //.SetIsOriginAllowedToAllowWildcardSubdomains()
-            //.WithOrigins("http://localhost:4200", "https://localhost:90", "https://*.sentridocs.com", "http://*.sentridocs.com")
-            .AllowAnyOrigin()
-            .AllowAnyHeader()
-            .AllowAnyMethod()
-        //.AllowCredentials()
-        );
-});
+//builder.Services.AddCors(options =>
+//{
+//    options.AddPolicy("AllowedCorsPolicy",
+//        builder => builder
+//            //.SetIsOriginAllowedToAllowWildcardSubdomains()
+//            //.WithOrigins("http://localhost:4200", "https://localhost:90", "https://*.sentridocs.com", "http://*.sentridocs.com")
+//            .AllowAnyOrigin()
+//            .AllowAnyHeader()
+//            .AllowAnyMethod()
+//        //.AllowCredentials()
+//        );
+//});
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo { Title = "Shutter Management API", Version = "v1" });
@@ -199,7 +199,7 @@ else
         EnableDirectoryBrowsing = false
     });
 }
-app.UseCors("AllowedCorsPolicy");
+//app.UseCors("AllowedCorsPolicy");
 app.UseSwagger();
 
 app.UseSwaggerUI();
