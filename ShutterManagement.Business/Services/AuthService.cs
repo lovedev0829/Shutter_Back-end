@@ -109,13 +109,13 @@ namespace ShutterManagement.Services
                     claims.AddClaim(new Claim(ClaimTypes.Role, item.PermissionName));
                 }
 
-                claims.AddClaim(new Claim("UserId", UserDetails[0].UserId.ToString()));
+                claims.AddClaim(new Claim("UserId", UserDetails[0].UserId.ToString().ToUpper()));
                 claims.AddClaim(new Claim("Username", UserDetails[0].Username ?? ""));
                 claims.AddClaim(new Claim(ClaimTypes.Name, UserDetails[0].FirstName + " " + UserDetails[0].MiddleName + " " + UserDetails[0].LastName));
                 claims.AddClaim(new Claim(ClaimTypes.Email, UserDetails[0].Email ?? ""));
                 claims.AddClaim(new Claim("Phone", UserDetails[0].Phone ?? ""));
-                claims.AddClaim(new Claim("TenantId", UserDetails[0].TenantId.ToString() ?? ""));
-                claims.AddClaim(new Claim("ParentTenantId", UserDetails[0].ParentTenantId.ToString() ?? ""));
+                claims.AddClaim(new Claim("TenantId", UserDetails[0].TenantId.ToString().ToUpper() ?? ""));
+                claims.AddClaim(new Claim("ParentTenantId", UserDetails[0].ParentTenantId.ToString().ToUpper() ?? ""));
                 claims.AddClaim(new Claim("CompanyCode", user.CompanyCode));
                 claims.AddClaim(new Claim("CompanyName", UserDetails[0].CompanyName));
 

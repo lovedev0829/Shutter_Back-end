@@ -588,9 +588,7 @@ namespace ShutterManagement.Business.Services
                 // Fetch Invoice Template
                 Guid templateId = Guid.Parse("2D30573D-6753-4B04-935A-8CC1DE65D409");
                 var invoiceTemplate =  dbContext.TblTemplates
-                    .FirstOrDefault(c => c.TemplateId == templateId &&
-                                              c.TenantId == AppConstant.LoggedInTenantId &&
-                                              c.IsDelete==false);
+                    .FirstOrDefault(c => c.TemplateId == templateId && c.IsDelete==false);
 
                 if (invoiceTemplate == null)
                 {
