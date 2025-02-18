@@ -147,7 +147,7 @@ public partial class ShutterDBContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.HasDefaultSchema("btprojec_admin");
+        modelBuilder.HasDefaultSchema("dbo");
 
         modelBuilder.Entity<MstComponentPrice>(entity =>
         {
@@ -717,7 +717,7 @@ public partial class ShutterDBContext : DbContext
         {
             entity.HasKey(e => e.Id).HasName("PK__TblExpre__3214EC071EF09971");
 
-            entity.ToTable("TblExpression");
+            entity.ToTable("TblExpression","dbo");
 
             entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
