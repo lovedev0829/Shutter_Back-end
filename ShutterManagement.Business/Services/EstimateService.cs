@@ -352,7 +352,6 @@ namespace ShutterManagement.Business.Services
                         Subject = Enum.GetName(typeof(NotificationModule), NotificationModule.Estimate),
                         Body = "Estimate " + AppConstant.Create_Notification,
                         CreatedDate = DateTime.Now,
-                        IsReaded = true
                     };
 
                     var result = await notification.CreateNotification(notification1);
