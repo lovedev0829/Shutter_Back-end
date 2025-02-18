@@ -461,10 +461,10 @@ namespace ShutterManagement.Business.Services
                 .SelectMany(
                     x => x.windowOptions.Where(x=>x.IsDelete == false).DefaultIfEmpty(),
                     (x, wop) => new { x.w, x.wp, wop })
-                .Join(dbContext.TblOptionsTypes,
-                    x => x.wop.OptionTypeId,
-                    op => op.OptionTypeId,
-                    (x, op) => new { x.w, x.wp, x.wop, op })
+                //.Join(dbContext.TblOptionsTypes,
+                //    x => x.wop.OptionTypeId,
+                //    op => op.OptionTypeId,
+                //    (x, op) => new { x.w, x.wp, x.wop, op })
                 .GroupBy(x => x.w.WindowId)
                 .Select(g => new WindowsList
                 {
@@ -495,8 +495,8 @@ namespace ShutterManagement.Business.Services
                             {
                                 WindowProductId = o.wp.WindowProductId,
                                 OptionTypeId = o.wop.OptionTypeId.ToString(),
-                                OptionName = o.op.OptionType,
-                                AdditionalCost = o.op.AdditionalCost.GetValueOrDefault(),
+                                //OptionName = o.op.OptionType,
+                                //AdditionalCost = o.op.AdditionalCost.GetValueOrDefault(),
                             }).ToList()
                         }).ToList()
                 }).ToList();
