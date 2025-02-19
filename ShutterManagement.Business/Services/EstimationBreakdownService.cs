@@ -176,11 +176,11 @@ namespace ShutterManagement.Business.Services
             {
                // var res = await estimateService.GetAll_Estimate(new Pagination { SearchValue = EstimationId.ToString()});
                 Guid[] windowProductIds = estimateWindowProductService.GetAllQuerable()
-     .Where(x => x.EstimateId == EstimationId)
-     .Select(x => x.WindowProductId)
-     .Where(id => id.HasValue)  
-     .Select(id => id.Value)   
-     .ToArray();
+                    .Where(x => x.EstimateId == EstimationId)
+                    .Select(x => x.WindowProductId)
+                    .Where(id => id.HasValue)  
+                    .Select(id => id.Value)   
+                    .ToArray();
 
                 var estimateResponse = await estimateService.BuildEstimate(windowProductIds, true, EstimationId.ToString(), true);
 

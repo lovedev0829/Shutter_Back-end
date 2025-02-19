@@ -35,7 +35,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         public Guid? ProductId { get; set; }
         [Required(ErrorMessage = "Please select a product type")]
         public Guid? ProductTypeId { get; set; }
-        public List<Guid> OptionTypeId { get; set; } = new List<Guid>();
+        public List<string>? OptionTypeId { get; set; } = new List<string>();
         [Required(ErrorMessage = "Product width is required")]
         public decimal? BuildWidth { get; set; }
         [Required(ErrorMessage = "Product height is required")]
