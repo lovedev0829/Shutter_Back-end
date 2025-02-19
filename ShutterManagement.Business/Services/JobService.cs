@@ -438,7 +438,7 @@ namespace ShutterManagement.Business.Services
                                          join p2 in _context.TblTenants on t2.TenantId equals p2.TenantId
                                          join t5 in _context.MstJobStatuses on t2.JobStatus equals t5.JobStatusId
                                          join t6 in _context.TblContacts on t2.ContactId equals t6.ContactId
-                                         where t6.IsDelete == false && t6.IsActive == true && t2.TenantId == AppConstant.LoggedInTenantId || subTenantlist.Contains((Guid)t2.TenantId)
+                                         where t6.IsDelete == false && t6.IsActive == true && t2.IsActive == true && t2.IsDelete == false && t2.TenantId == AppConstant.LoggedInTenantId || subTenantlist.Contains((Guid)t2.TenantId)
                                          select new GetAllJobsSubtenant_tenant
                                          {
                                              IsActive = t2.IsActive,
