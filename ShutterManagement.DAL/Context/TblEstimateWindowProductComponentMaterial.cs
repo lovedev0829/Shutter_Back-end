@@ -47,6 +47,8 @@ public partial class TblEstimateWindowProductComponentMaterial
 
     public Guid? ComponentId { get; set; }
 
+    public Guid? WindowId { get; set; }
+
     public virtual TblEstimate Estimate { get; set; } = null!;
 
     public virtual MstProductType? ProductTypeNavigation { get; set; }

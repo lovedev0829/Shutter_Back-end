@@ -26,7 +26,7 @@ namespace ShutterManagement.Business.Services
             this.optionService = optionService;
             this.materialService = materialService;
         }
-        public async Task<IResponseVm<dynamic>> GetAllComponentsChip(string? Product,string? ProductType, string? Option)
+        public async Task<IResponseVm<dynamic>> GetAllComponentsChip(string? Product, string? ProductType, string? Option)
         {
             IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
             try
@@ -53,7 +53,8 @@ namespace ShutterManagement.Business.Services
                     });
                     ChipData.AddRange(MaterialData);
                 }
-                if (!string.IsNullOrEmpty(Option)) {
+                if (!string.IsNullOrEmpty(Option))
+                {
                     filter.SearchValue = Option;
                 }
                 //var Options = await optionService.GetAll_Option(filter);
@@ -92,10 +93,14 @@ namespace ShutterManagement.Business.Services
                 var query =
                  (from estimate in dbContext.TblEstimates
                   join estimatewindow in dbContext.TblEstimateWindows on estimate.EstimateId equals estimatewindow.EstimateId
-                  join estwindowProduct in dbContext.TblEstimateWindowProducts on estimatewindow.EstimateId equals estwindowProduct.EstimateId where estimatewindow.WindowId == estimatewindow.WindowId
-                  join estwinprocomp in dbContext.TblEstimateWindowProductComponents on estwindowProduct.ProductId equals estwinprocomp.ProductId where estimatewindow.EstimateId == estwinprocomp.EstimateId
-                  join productComponentmat in dbContext.TblEstimateWindowProductComponentMaterials on estwinprocomp.ComponentId equals productComponentmat.ComponentId where estimatewindow.EstimateId == productComponentmat.EstimateId
-                  where estwindowProduct.WindowProductId  == WindowProductId && estimate.EstimateId.ToString() == EstimateID
+                  where estimate.EstimateId.ToString() == EstimateID
+                  join estwindowProduct in dbContext.TblEstimateWindowProducts on estimatewindow.WindowId equals estwindowProduct.WindowId
+                  where estimatewindow.EstimateId.ToString() == EstimateID
+                  join estwinprocomp in dbContext.TblEstimateWindowProductComponents on estwindowProduct.ProductId equals estwinprocomp.ProductId
+                  where estwinprocomp.EstimateId.ToString() == EstimateID  && estwindowProduct.WindowId == estwinprocomp.WindowId
+                  join productComponentmat in dbContext.TblEstimateWindowProductComponentMaterials on estwinprocomp.ComponentId equals productComponentmat.ComponentId
+                  where productComponentmat.EstimateId.ToString() == EstimateID && estwindowProduct.WindowId == estwinprocomp.WindowId
+                  where estwindowProduct.WindowProductId == WindowProductId
                   && estimate.IsActive == true && estimate.IsDelete == false
                   && estimatewindow.IsActive == true && estimatewindow.IsDelete == false
                   && estwindowProduct.IsActive == true && estwindowProduct.IsDelete == false
@@ -110,7 +115,7 @@ namespace ShutterManagement.Business.Services
                       Height = estimatewindow.Height,
                       ArchHeight = estimatewindow.ArchHeight,
                       Quantity = estimatewindow.Quantity,
-                      JobId =  estimate.JobId,
+                      JobId = estimate.JobId,
                       IsRated = estimatewindow.IsRated,
                       TotalPrice = estimate.TotalPrice,
                       // WindowProduct Properties
@@ -140,7 +145,7 @@ namespace ShutterManagement.Business.Services
                       ComponentName = estwinprocomp.ComponentName,
                       MarkupPercentage = estwinprocomp.MarkupPercentage,
                       PricingExpression = estwinprocomp.PricingExpression,
-                      Price =  estwinprocomp.ComponentPrice,
+                      Price = estwinprocomp.ComponentPrice,
 
                       // Expression Properties
                       ExpressionFormulae = estwinprocomp.PricingExpression,
@@ -160,23 +165,24 @@ namespace ShutterManagement.Business.Services
                       IsCutSheet = productComponentmat.IsCutSheet
                   }).ToList();
 
-                //if (query != null && query.Count > 0)
-                //{
-                //    foreach (var item in query.DistinctBy(x => x.ProductId))
-                //    {
-                //        var Options = (from windowOption in dbContext.WindowOptions
-                //                       join optionType in dbContext.TblOptionsTypes on windowOption.OptionTypeId equals optionType.OptionTypeId
-                //                       join options in dbContext.TblOptions on optionType.OptionId equals options.OptionId
-                //                       where windowOption.WindowProductId == item.WindowProdcutId
-                //                       select new
-                //                       {
-                //                           OptionTypeId = optionType.OptionTypeId,
-                //                           OptionTypeName = Convert.ToString(options.OptionName + " - " + optionType.OptionType),
-                //                           OptionPrice = optionType.AdditionalCost ?? 0m
-                //                       }).ToList();
-                //        item.Options = Options.Select(x => x.OptionTypeName).ToArray();
-                //        item.OptionsPrice = Options.Select(x => x.OptionPrice).ToArray();
-                //    }
+                if (query != null && query.Count > 0)
+                {
+                    foreach (var item in query.DistinctBy(x => x.ProductId))
+                    {
+                        var Options = (from windowOption in dbContext.WindowOptions
+                                       join optionType in dbContext.TblOptionsTypes on windowOption.OptionTypeId equals optionType.OptionTypeId
+                                       join options in dbContext.TblOptions on optionType.OptionId equals options.OptionId
+                                       where windowOption.WindowProductId == item.WindowProdcutId
+                                       select new
+                                       {
+                                           OptionTypeId = optionType.OptionTypeId,
+                                           OptionTypeName = Convert.ToString(options.OptionName + " - " + optionType.OptionType),
+                                           OptionPrice = optionType.AdditionalCost ?? 0m
+                                       }).ToList();
+                        item.Options = Options.Select(x => x.OptionTypeName).ToArray();
+                        item.OptionsPrice = Options.Select(x => x.OptionPrice).ToArray();
+                    }
+                }
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.FetchSuccessMsg;
                 responseVm.Data = query;
@@ -271,18 +277,18 @@ namespace ShutterManagement.Business.Services
                       MaterialQuantity = componentMaterial.Quantity,
                       WasteFactor = componentMaterial.WasteFactor,
 
-                     // Material Properties
-                     MaterialName = material.MaterialName,
-                     UnitCost = material.UnitCost,
-                     Non_Rated_UnitCost = material.NonRatedUnitCost,
-                     UnitOfMeasurement = material.UnitOfMeasurement,
-                     StockQuantity = material.StockQuantity,
-                     ReorderLevel = material.ReorderLevel,
-                     IsCutSheet = material.IsCutSheet
-                 }).ToList();
+                      // Material Properties
+                      MaterialName = material.MaterialName,
+                      UnitCost = material.UnitCost,
+                      Non_Rated_UnitCost = material.NonRatedUnitCost,
+                      UnitOfMeasurement = material.UnitOfMeasurement,
+                      StockQuantity = material.StockQuantity,
+                      ReorderLevel = material.ReorderLevel,
+                      IsCutSheet = material.IsCutSheet
+                  }).ToList();
                 if (query != null && query.Count > 0)
                 {
-                    foreach (var item in query.DistinctBy(x=>x.ProductId))
+                    foreach (var item in query.DistinctBy(x => x.ProductId))
                     {
                         var Options = (from windowOption in dbContext.WindowOptions
                                        join optionType in dbContext.TblOptionsTypes on windowOption.OptionTypeId equals optionType.OptionTypeId

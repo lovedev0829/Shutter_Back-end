@@ -204,21 +204,25 @@ namespace ShutterManagement.Business.Services
                         {
                             foreach (var optionId in items.OptionTypeId)
                             {
-                                WindowOption windowOption = new WindowOption
+                                Guid.TryParse(optionId, out var optionTypeId);
+                                if (optionTypeId != Guid.Empty)
                                 {
-                                    WindowoptionId = Guid.NewGuid(),
-                                    OptionTypeId = optionId,
-                                    WindowProductId = windowProduct.WindowProductId,
-                                    WindowId = window.WindowId,
-                                    IsActive = true,
-                                    IsDelete = false,
-                                    CreatedBy = AppConstant.LoggedInUserID,
-                                    TenantId = AppConstant.LoggedInTenantId,
-                                    AdditionalCost = items.AdditionalCost
-                                };
+                                    WindowOption windowOption = new WindowOption
+                                    {
+                                        WindowoptionId = Guid.NewGuid(),
+                                        OptionTypeId = optionTypeId,
+                                        WindowProductId = windowProduct.WindowProductId,
+                                        WindowId = window.WindowId,
+                                        IsActive = true,
+                                        IsDelete = false,
+                                        CreatedBy = AppConstant.LoggedInUserID,
+                                        TenantId = AppConstant.LoggedInTenantId,
+                                        AdditionalCost = items.AdditionalCost
+                                    };
 
-                                await windowOptionService.Add(windowOption);
-                                FileLogger.Log($"New window option added with ID: {windowOption.WindowoptionId}");
+                                    await windowOptionService.Add(windowOption);
+                                    FileLogger.Log($"New window option added with ID: {windowOption.WindowoptionId}");
+                                }
                             }
                         }
                     }
@@ -646,20 +650,24 @@ namespace ShutterManagement.Business.Services
             {
                 foreach (var optionId in product.OptionTypeId)
                 {
-                    var newOption = new WindowOption
+                    Guid.TryParse(optionId, out var optionTypeId);
+                    if (optionTypeId != Guid.Empty)
                     {
-                        WindowoptionId = Guid.NewGuid(),
-                        OptionTypeId = optionId,
-                        WindowProductId = newProduct.WindowProductId,
-                        WindowId = windowId,
-                        CreatedBy = AppConstant.LoggedInUserID,
-                        TenantId = AppConstant.LoggedInTenantId,
-                        IsActive = true,
-                        IsDelete = false,
-                        AdditionalCost = product.AdditionalCost
-                    };
+                        var newOption = new WindowOption
+                        {
+                            WindowoptionId = Guid.NewGuid(),
+                            OptionTypeId = optionTypeId,
+                            WindowProductId = newProduct.WindowProductId,
+                            WindowId = windowId,
+                            CreatedBy = AppConstant.LoggedInUserID,
+                            TenantId = AppConstant.LoggedInTenantId,
+                            IsActive = true,
+                            IsDelete = false,
+                            AdditionalCost = product.AdditionalCost
+                        };
 
-                    await windowOptionService.Add(newOption);
+                        await windowOptionService.Add(newOption);
+                    }
                 }
             }
         }

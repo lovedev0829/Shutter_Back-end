@@ -84,8 +84,8 @@ namespace ShutterManagement.Business.Services
             IHttpContextAccessor _httpContextAccessor,
             IOption optionService,
             ITaxRate taxRate,
-            IRegion region,ITaxExemption taxExemption, IDiscountService discountservice,
-            ISubtenantProductMarkup subtenantProductMarkup,ITenantBrandingService tenantBrandingService, INotificationService notification
+            IRegion region, ITaxExemption taxExemption, IDiscountService discountservice,
+            ISubtenantProductMarkup subtenantProductMarkup, ITenantBrandingService tenantBrandingService, INotificationService notification
             )
         {
             _context = context;
@@ -289,7 +289,7 @@ namespace ShutterManagement.Business.Services
                             ToEmail = contactEmail,
                         };
                         EmailHelper.SendMail(sendEmail);
-                       
+
                     }
                 }
 
@@ -337,7 +337,7 @@ namespace ShutterManagement.Business.Services
                 if (createEstimate.EstimateId != Guid.Empty)
                 {
                     // Process window products and components
-                    await ProcessWindowProducts(model.WindowProductId.ToList(),createEstimate.WindowProdcutDetailsForEstimate, (Guid)createEstimate.EstimateId);
+                    await ProcessWindowProducts(model.WindowProductId.ToList(), createEstimate.WindowProdcutDetailsForEstimate, (Guid)createEstimate.EstimateId);
                     if (!string.IsNullOrEmpty(Message))
                     {
                         responseVm.Message = Message;
@@ -404,7 +404,7 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        public async Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> BuildEstimate(Guid[] windowProductIds, bool IsBreakdown, string EstimateId = "", bool IsView=false)
+        public async Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> BuildEstimate(Guid[] windowProductIds, bool IsBreakdown, string EstimateId = "", bool IsView = false)
         {
             IResponseVm<List<WindowProdcutDetailsForEstimate>> responseVm = new ResponseVm<List<WindowProdcutDetailsForEstimate>>();
             FileLogger.Log("Start: Calculate Estimate price...");
@@ -521,24 +521,32 @@ namespace ShutterManagement.Business.Services
                 FileLogger.Log($"Error occurred: {ex.Message}");
                 responseVm.Message = AppConstant.ExceptionError + ex.Message;
             }
-        
+
 
             return responseVm;
         }
 
         public async Task<bool> IsTaxApplied(Guid JobId)
         {
-            var Jobdetail = jobService.GetAllQuerable()
-                .Where(x => x.JobId == JobId && x.IsDelete == false)
-                .Select(pt => pt.ContactId)
-                .FirstOrDefault();
-            if (Jobdetail == Guid.Empty)
+            try
             {
-                return false;
+                var Jobdetail = jobService.GetAllQuerable()
+                    .Where(x => x.JobId == JobId && x.IsDelete == false)
+                    .Select(pt => pt.ContactId)
+                    .FirstOrDefault();
+                if (Jobdetail == Guid.Empty)
+                {
+                    return true;
+                }
+                bool IsTaxApplied = await taxExemption.AnyAsync(x => x.ContactId.ToString().ToLower() == Jobdetail.ToString().ToLower() && x.IsDelete == false &&
+                x.EffectiveDate <= DateTime.Now && x.ExpiryDate >= DateTime.Now);
+                return IsTaxApplied;
             }
-            bool IsTaxApplied = await taxExemption.AnyAsync(x => x.ContactId.ToString().ToLower() == Jobdetail.ToString().ToLower() && x.IsDelete == false && 
-            x.EffectiveDate <= DateTime.Now && x.ExpiryDate >= DateTime.Now);
-            return IsTaxApplied;
+            catch (Exception ex)
+            {
+                FileLogger.Log($"Error occurred tax Applied: {ex.Message}");
+                return true;
+            }
         }
 
         private async Task<decimal> CalculateEstimate(List<WindowProdcutDetailsForEstimate> data)
@@ -550,7 +558,7 @@ namespace ShutterManagement.Business.Services
                 var formula = item.ExpressionFormulae ?? "";
 
                 // Define an expression with a nudget and a custom function
-                var expression = CalculateExpression(formula,item);
+                var expression = CalculateExpression(formula, item);
                 var res = expression.Evaluate();
                 var ComponentPrice = Convert.ToDecimal(res);
                 item.AdditionalCost = Convert.ToDecimal(item.OptionsPrice.Sum());
@@ -575,7 +583,7 @@ namespace ShutterManagement.Business.Services
                         ComponentPriceWithProductMarkup = (decimal)(ComponentPriceWithProductMarkup * (100 + (globalmarkup ?? 0.00m))) / 100;
                     }
                 }
-                item.Price = Convert.ToDecimal(Convert.ToDecimal(ComponentPriceWithProductMarkup).ToString("0.0000")); 
+                item.Price = Convert.ToDecimal(Convert.ToDecimal(ComponentPriceWithProductMarkup).ToString("0.0000"));
                 ComponentSubTotal += Convert.ToDecimal(Convert.ToDecimal(ComponentPriceWithProductMarkup).ToString("0.0000"));
             }
             return ComponentSubTotal;
@@ -848,14 +856,14 @@ namespace ShutterManagement.Business.Services
                 {
                     EstimationStatus.Status = EnumValue.GetEnumValue(NewEstimationStatus);
                     var res = await Update(EstimationStatus);
-                   
-                    
+
+
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.UpdateSuccessMsg;
                     responseVm.Data = EnumValue.GetEnumValue(NewEstimationStatus);
-                    if(responseVm.IsSuccess)
+                    if (responseVm.IsSuccess)
                     {
-                        var EstimateName = GetAllQuerable().Where(x => x.EstimateId == EstimationId && x.IsDelete == false).Select(x=> x.EstimateName).FirstOrDefault();
+                        var EstimateName = GetAllQuerable().Where(x => x.EstimateId == EstimationId && x.IsDelete == false).Select(x => x.EstimateName).FirstOrDefault();
                         CreateNotification notification1 = new CreateNotification()
                         {
                             UserId = AppConstant.LoggedInUserID,
@@ -940,7 +948,7 @@ namespace ShutterManagement.Business.Services
                     EstimateName = estimate.EstimateName,
                     EstimateCode = estimate.EstimateCode,
                     SubTotal = estimate.TotalPrice,
-                    additionalCost = estimate.AdditionalCost,   
+                    additionalCost = estimate.AdditionalCost,
                     GrandTotal = estimate.GrandTotal,
                     Notes = estimate.Notes,
                     Tax = estimate.TaxAmount,
@@ -989,7 +997,7 @@ namespace ShutterManagement.Business.Services
             // Filter records based on search value and status
             var filteredRecords = estimateList
                 .Where(x =>
-                    (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) && 
+                    (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
                     (string.IsNullOrEmpty(filter.JobStatus.ToLower()) ? true : x.jobDetails.JobStatus.ToLower() == filter.JobStatus.ToLower()) &&
                     (string.IsNullOrEmpty(filter.JobId?.ToLower()) ? true : x.JobId?.ToString().ToLower() == filter.JobId.ToLower()) &&
                     (string.IsNullOrEmpty(filter.EstimationId?.ToLower()) ? true : x.EstimateId.ToString().ToLower() == filter.EstimationId.ToLower()) &&
@@ -1035,7 +1043,7 @@ namespace ShutterManagement.Business.Services
                                    Address = j3.StreetAddress + " " + j3.City + " " + j3.State + " " + j3.ZipCode,
                                    AddressLabel = j3.Label,
                                    ScheduleTime = j1.ScheduledDate,
-                                   ContactId=j6.ContactId
+                                   ContactId = j6.ContactId
                                }).FirstOrDefault();
 
             e.jobDetails = jobdetails1;
@@ -1044,71 +1052,78 @@ namespace ShutterManagement.Business.Services
 
         private async void AddEstimateProducts(TblEstimate estimate, EstimateList e)
         {
-            var productList = estimateWindowProductService.GetAllQuerable()
-                .Where(x => x.EstimateId == estimate.EstimateId && x.IsDelete == false)
-                .Select(x => new
-                {
-                    x.EstimateWindowProductId,
-                    x.ProductId,
-                    x.ProductName,
-                    x.ProductType,
-                    x.Width,
-                    x.Height,
-                    x.ArchHeight,
-                    x.Color,
-                    x.Notes,
-                    x.WindowId,
-                    x.WindowProductId,
-                    x.Price
-                }).ToList();
-
-            e.WindowProductId = productList.Select(p => (Guid)p.WindowProductId).ToArray();
-            foreach (var p in productList)
+            try
             {
-               
-                var Options = (from windowOption in dbContext.WindowOptions
-                               join optionType in dbContext.TblOptionsTypes on windowOption.OptionTypeId equals optionType.OptionTypeId
-                               join options in dbContext.TblOptions on optionType.OptionId equals options.OptionId
-                               where windowOption.WindowProductId == p.WindowProductId
-                               select new
-                               {
-                                   OptionName = Convert.ToString(options.OptionName + " - " + optionType.OptionType)
-                               }).ToList();
-                var WindowDetails = estimateWindowService.GetAllQuerable()
+                var productList = estimateWindowProductService.GetAllQuerable()
                     .Where(x => x.EstimateId == estimate.EstimateId && x.IsDelete == false)
-                    .ToList();
-                var WindowQty_Label = windowService.GetAllQuerable()
-                        .Where(w => w.WindowId == p.WindowId && w.IsDelete == false)
-                        .FirstOrDefault();
-                EstimateProductList estimateProduct = new EstimateProductList
-                {
-                    EstimateWindowProductId = p.EstimateWindowProductId,
-                    Label = WindowQty_Label.Label,
-                    WindowQty = WindowQty_Label.Quantity,
-                    ProductType = p.ProductType,
-                    ProductTypeName = productType.GetAllQuerable()
-                        .Where(pt => pt.ProductId.ToString() == p.ProductType && pt.IsDelete == false)
-                        .Select(pt => pt.ProductName)
-                        .FirstOrDefault(),
-                    Width = p.Width,
-                    Height = p.Height,
-                    ArchHeight = p.ArchHeight,
-                    ProductName = p.ProductName,
-                    WindowProductId = p.WindowProductId,
-                    TotalPrice = p.Price,
-                    Options = Options.Select(x=>x.OptionName).ToArray(),
-                    EstimateWindowDetails = WindowDetails.Where(x => x.WindowId == p.WindowId).Select(x => new EstimateWindowList
+                    .Select(x => new
                     {
-                        ArchHeight = x.ArchHeight,
-                        Height = x.Height,
-                        Width = x.Width
-                    }).FirstOrDefault()
+                        x.EstimateWindowProductId,
+                        x.ProductId,
+                        x.ProductName,
+                        x.ProductType,
+                        x.Width,
+                        x.Height,
+                        x.ArchHeight,
+                        x.Color,
+                        x.Notes,
+                        x.WindowId,
+                        x.WindowProductId,
+                        x.Price
+                    }).ToList();
 
-                };
-                e.EstimateProductList.Add(estimateProduct);
+                e.WindowProductId = productList.Select(p => (Guid)p.WindowProductId).ToArray();
+                foreach (var p in productList)
+                {
+
+                    var Options = (from windowOption in dbContext.WindowOptions
+                                   join optionType in dbContext.TblOptionsTypes on windowOption.OptionTypeId equals optionType.OptionTypeId
+                                   join options in dbContext.TblOptions on optionType.OptionId equals options.OptionId
+                                   where windowOption.WindowProductId == p.WindowProductId
+                                   select new
+                                   {
+                                       OptionName = Convert.ToString(options.OptionName + " - " + optionType.OptionType)
+                                   }).ToList();
+                    var WindowDetails = estimateWindowService.GetAllQuerable()
+                        .Where(x => x.EstimateId == estimate.EstimateId && x.IsDelete == false)
+                        .ToList();
+                    var WindowQty_Label = windowService.GetAllQuerable()
+                            .Where(w => w.WindowId == p.WindowId && w.IsDelete == false)
+                            .FirstOrDefault();
+                    EstimateProductList estimateProduct = new EstimateProductList
+                    {
+                        EstimateWindowProductId = p.EstimateWindowProductId,
+                        Label = WindowQty_Label.Label,
+                        WindowQty = WindowQty_Label.Quantity,
+                        ProductType = p.ProductType,
+                        ProductTypeName = productType.GetAllQuerable()
+                            .Where(pt => pt.ProductId.ToString() == p.ProductType && pt.IsDelete == false)
+                            .Select(pt => pt.ProductName)
+                            .FirstOrDefault(),
+                        Width = p.Width,
+                        Height = p.Height,
+                        ArchHeight = p.ArchHeight,
+                        ProductName = p.ProductName,
+                        WindowProductId = p.WindowProductId,
+                        TotalPrice = p.Price,
+                        Options = Options.Select(x => x.OptionName).ToArray(),
+                        EstimateWindowDetails = WindowDetails.Where(x => x.WindowId == p.WindowId).Select(x => new EstimateWindowList
+                        {
+                            ArchHeight = x.ArchHeight,
+                            Height = x.Height,
+                            Width = x.Width
+                        }).FirstOrDefault()
+
+                    };
+                    e.EstimateProductList.Add(estimateProduct);
+                }
+                AddJobDetails(e);
+                e.IsTaxApplied = await IsTaxApplied((Guid)e.JobId);
             }
-            AddJobDetails(e);
-            e.IsTaxApplied = await IsTaxApplied((Guid)e.JobId);
+            catch (Exception ex)
+            {
+                FileLogger.Log($"Error occurred Add Estimate Product: {ex.Message}");
+            }
         }
 
         private async Task<bool> ValidateTenantExists()
@@ -1194,8 +1209,8 @@ namespace ShutterManagement.Business.Services
             var windowproductdetails = await BuildEstimate(model.WindowProductId, true);
             if (windowproductdetails.Data != null && windowproductdetails.Data.Any())
             {
-                additionalCost = (decimal)windowproductdetails.Data.Sum(x => x.AdditionalCost);
-                subtotal = (decimal)windowproductdetails.Data.Sum(x => x.TotalPrice);
+                additionalCost = (decimal)windowproductdetails.Data.DistinctBy(x => x.WindowProdcutId).Sum(x => x.AdditionalCost);
+                subtotal = (decimal)windowproductdetails.Data.DistinctBy(x => x.WindowProdcutId).Sum(x => x.TotalPrice);
                 SumofSubtotalandAdditionalCost = subtotal + additionalCost;
             }
             if (string.IsNullOrEmpty((model.taxRateId).ToString()) && string.IsNullOrEmpty(model.DiscountCoupon))
@@ -1223,8 +1238,8 @@ namespace ShutterManagement.Business.Services
                 grandtotal = await CalculateGrandTotal(discountId, SumofSubtotalandAdditionalCost, taxRateId) ?? 0m;
             }
 
-           
-            string EstimationCode = EstimationUniqueName().Result.Data; 
+
+            string EstimationCode = EstimationUniqueName().Result.Data;
             TblEstimate createEstimate = new TblEstimate
             {
                 EstimateId = Guid.NewGuid(),
@@ -1269,7 +1284,7 @@ namespace ShutterManagement.Business.Services
                 {
                     // For "Fixed" discount type
                     discount = discountdetails.FixedAmount > subtotal
-                        ? subtotal 
+                        ? subtotal
                         : discountdetails.FixedAmount;
                 }
                 else if (discountdetails.DiscountType == EnumValue.GetEnumValue(DiscountType.Percentage))
@@ -1310,7 +1325,7 @@ namespace ShutterManagement.Business.Services
             }
 
             // Fetch the tax rate based on taxId
-            var taxRate1 =  taxRate.GetAllQuerable()
+            var taxRate1 = taxRate.GetAllQuerable()
                 .Where(x => x.TaxRateId == taxId && x.IsDelete == false)
                 .Select(x => x.Rate)
                 .FirstOrDefault();
@@ -1321,12 +1336,12 @@ namespace ShutterManagement.Business.Services
             }
 
             // Calculate tax based on subtotal, additional cost, and discount
-            decimal taxApplied = (decimal)((subtotal  - discount) * taxRate1) / 100;
+            decimal taxApplied = (decimal)((subtotal - discount) * taxRate1) / 100;
             return taxApplied;
         }
 
 
-        private async Task ProcessWindowProducts(List<Guid> windowProductIds,List<WindowProdcutDetailsForEstimate> windowProdcutDetailsForEstimates, Guid estimateId)
+        private async Task ProcessWindowProducts(List<Guid> windowProductIds, List<WindowProdcutDetailsForEstimate> windowProdcutDetailsForEstimates, Guid estimateId)
         {
             FileLogger.Log("Processing window products...");
             foreach (var product in windowProductIds)
@@ -1351,8 +1366,8 @@ namespace ShutterManagement.Business.Services
                 {
                     return;
                 }
-                
-                await AddComponentsToEstimate((Guid)windowProductData.ProductId, estimateId, windowProdcutDetailsForEstimates);
+
+                await AddComponentsToEstimate((Guid)windowProductData.ProductId,(Guid)windowProductData.WindowId, estimateId, windowProdcutDetailsForEstimates);
                 if (!string.IsNullOrEmpty(Message))
                 {
                     return;
@@ -1409,7 +1424,7 @@ namespace ShutterManagement.Business.Services
                 Notes = productData.Notes,
                 IsDelete = false,
                 IsActive = true,
-                Price = (buildEstimate.Data.FirstOrDefault() != null ? buildEstimate.Data.FirstOrDefault().TotalPrice : 0.00M ) ,
+                Price = (buildEstimate.Data.FirstOrDefault() != null ? buildEstimate.Data.FirstOrDefault().TotalPrice : 0.00M),
                 CreatedAt = DateTime.Now,
                 CreatedBy = AppConstant.LoggedInUserID,
                 ArchHeight = productData.ArchHeight,
@@ -1428,7 +1443,7 @@ namespace ShutterManagement.Business.Services
             await estimateWindowProductService.Add(tblEstimateWindowProduct);
         }
 
-        private async Task AddComponentsToEstimate(Guid productId, Guid estimateId, List<WindowProdcutDetailsForEstimate> windowProdcutDetailsForEstimates)
+        private async Task AddComponentsToEstimate(Guid productId,Guid WindowId, Guid estimateId, List<WindowProdcutDetailsForEstimate> windowProdcutDetailsForEstimates)
         {
             FileLogger.Log($"Adding components for product {productId} to estimate...");
             var productComponentData = (await productComponentService.GetAll()).Where(x => x.ProductId == productId && x.IsDelete == false).ToList();
@@ -1446,9 +1461,9 @@ namespace ShutterManagement.Business.Services
                     return; // Return early if component data not found
                 }
                 //expressionList.Add(Guid.Parse(componentData.PricingExpression ?? ""));
-                var componentPrice = windowProdcutDetailsForEstimates.Where(x => x.ComponentId == component.ComponentId).Select(x=>x.Price).FirstOrDefault();   
-                await AddComponentToEstimateWindow(componentData, (Guid)component.ProductId, estimateId, componentPrice ?? 0.0m);
-                await AddComponentMaterialsToEstimate(componentData.ComponentId, estimateId);
+                var componentPrice = windowProdcutDetailsForEstimates.Where(x => x.ComponentId == component.ComponentId).Select(x => x.Price).FirstOrDefault();
+                await AddComponentToEstimateWindow(componentData,WindowId, (Guid)component.ProductId, estimateId, componentPrice ?? 0.0m);
+                await AddComponentMaterialsToEstimate(componentData.ComponentId, estimateId,WindowId);
                 if (!string.IsNullOrEmpty(Message))
                 {
                     return;
@@ -1456,7 +1471,7 @@ namespace ShutterManagement.Business.Services
             }
         }
 
-        private async Task AddComponentToEstimateWindow(TblComponent componentData, Guid ProductId, Guid estimateId , decimal Price)
+        private async Task AddComponentToEstimateWindow(TblComponent componentData,Guid WindowId, Guid ProductId, Guid estimateId, decimal Price)
         {
             FileLogger.Log($"Adding component {componentData.ComponentName} to estimate...");
             var PricingExpressionId = dbContext.TblProductComponents.Where(x => x.ComponentId ==
@@ -1486,13 +1501,13 @@ namespace ShutterManagement.Business.Services
                 Wastefactor = Wastefactor,
                 ProductTypeName = ProductName,
                 ComponentPrice = Price,
-                
+                WindowId = WindowId,
             };
 
             await estimateWindowProductComponentService.Add(tblEstimateWindowProductComponent);
         }
 
-        private async Task AddComponentMaterialsToEstimate(Guid componentId, Guid estimateId)
+        private async Task AddComponentMaterialsToEstimate(Guid componentId, Guid estimateId,Guid WindowId)
         {
             FileLogger.Log($"Adding materials for component {componentId} to estimate...");
             var componentMaterialData = (await componentMaterialService.GetAll()).Where(x => x.ComponentId == componentId && x.IsDelete == false).ToList();
@@ -1511,12 +1526,12 @@ namespace ShutterManagement.Business.Services
                     return; // Return early if material data not found
                 }
 
-                await AddMaterialToEstimate(materialData, (Guid)material.ComponentId, estimateId);
+                await AddMaterialToEstimate(materialData, (Guid)material.ComponentId, estimateId,WindowId);
 
             }
         }
 
-        private async Task AddMaterialToEstimate(TblRawMaterial materialData, Guid ComponentId, Guid estimateId)
+        private async Task AddMaterialToEstimate(TblRawMaterial materialData, Guid ComponentId, Guid estimateId,Guid WindowId)
         {
             FileLogger.Log($"Adding material {materialData.MaterialName} to estimate...");
             TblEstimateWindowProductComponentMaterial tblEstimateWindowProductComponentMaterial = new TblEstimateWindowProductComponentMaterial
@@ -1540,6 +1555,7 @@ namespace ShutterManagement.Business.Services
                 UnitOfMeasurement = materialData.UnitOfMeasurement,
                 VendorId = materialData.VendorId,
                 RawMaterialId = materialData.RawMaterialId,
+                WindowId = WindowId
             };
 
             await estimateWindowProductComponentMaterialService.Add(tblEstimateWindowProductComponentMaterial);
@@ -1618,11 +1634,11 @@ namespace ShutterManagement.Business.Services
             try
             {
 
-               var EstimationCount = GetAllQuerable().OrderByDescending(p => p.CreatedAt)
-                  .Where(c => c.TenantId == AppConstant.LoggedInTenantId && c.CreatedAt.Value.Date == DateTime.Today.Date)
-                  .ToList().Count();
-                EstimationCount += 1; 
-                
+                var EstimationCount = GetAllQuerable().OrderByDescending(p => p.CreatedAt)
+                   .Where(c => c.TenantId == AppConstant.LoggedInTenantId && c.CreatedAt.Value.Date == DateTime.Today.Date)
+                   .ToList().Count();
+                EstimationCount += 1;
+
                 var EstimationCode = GenerateUniqueId.GenerateUniqueIds(ModuleName.Estimation, AppConstant.LoggedInCompanyCode, EstimationCount);
                 res.IsSuccess = true;
                 res.Data = EstimationCode;
@@ -1630,7 +1646,7 @@ namespace ShutterManagement.Business.Services
             }
             catch (Exception ex)
             {
-                res.Message = ex.Message;   
+                res.Message = ex.Message;
             }
             return res;
         }

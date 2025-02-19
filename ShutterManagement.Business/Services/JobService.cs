@@ -164,6 +164,8 @@ namespace ShutterManagement.Business.Services
                     IsJobExist.UpdatedAt = DateTime.Now;
                     IsJobExist.ModifiedBy = AppConstant.LoggedInUserID;
                     var res = await Update(IsJobExist);
+
+                    AllModuleDeleted(Guid.Parse(JobId));
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.DeleteSuccessMsg;
                 }
@@ -181,6 +183,88 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
+        public async Task<IResponseVm<string>> AllModuleDeleted(Guid JobId)
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+            try
+            {
+                var WindowExists = dbContext.TblWindows.Where(x => x.JobId == JobId && x.IsDelete == false).ToList();
+                if (WindowExists != null)
+                {
+                    foreach(var item in WindowExists)
+                    {
+                        item.IsDelete = true;
+                        item.IsActive = false;
+                        item.UpdatedAt = DateTime.Now;
+                        item.ModifiedBy = AppConstant.LoggedInUserID;
+
+                        dbContext.TblWindows.Update(item);
+                        dbContext.SaveChanges();
+                    }
+                }
+                var EstimateExists = dbContext.TblEstimates.Where(x=> x.JobId == JobId && x.IsDelete == false).ToList();
+                if(EstimateExists != null)
+                {
+                    foreach(var item in EstimateExists)
+                    {
+                        item.IsDelete = true;
+                        item.IsActive = false;
+                        item.UpdatedAt = DateTime.Now;
+                        item.ModifiedBy = AppConstant.LoggedInUserID;
+
+                        dbContext.TblEstimates.Update(item);
+                        dbContext.SaveChanges();
+                    }
+                }
+                var OrderExists = dbContext.TblOrders.Where(x => x.JobId == JobId && x.IsDelete == false).ToList();
+                if (OrderExists != null)
+                {
+                    foreach (var item in OrderExists)
+                    {
+                        item.IsDelete = true;
+                        item.IsActive = false;
+                        item.UpdatedAt = DateTime.Now;
+                        item.ModifiedBy = AppConstant.LoggedInUserID;
+
+                        dbContext.TblOrders.Update(item);
+                        dbContext.SaveChanges();
+                    }
+                }
+                var InvoiceExists = dbContext.TblInvoices.Where(x => x.JobId == JobId && x.IsDelete == false).ToList();
+                if (InvoiceExists != null)
+                {
+                    foreach (var item in InvoiceExists)
+                    {
+                        item.IsDelete = true;
+                        item.IsActive = false;
+                        item.UpdatedAt = DateTime.Now;
+                        item.ModifiedBy = AppConstant.LoggedInUserID;
+
+                        dbContext.TblInvoices.Update(item);
+                        dbContext.SaveChanges();
+                    }
+                }
+                var InvoicePaymentExists = dbContext.TblEstimates.Where(x => x.JobId == JobId && x.IsDelete == false).ToList();
+                if (EstimateExists != null)
+                {
+                    foreach (var item in EstimateExists)
+                    {
+                        item.IsDelete = true;
+                        item.IsActive = false;
+                        item.UpdatedAt = DateTime.Now;
+                        item.ModifiedBy = AppConstant.LoggedInUserID;
+
+                        dbContext.TblEstimates.Update(item);
+                        dbContext.SaveChanges();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+            }
+            return responseVm;
+        }
         public async Task<IResponseVm<List<GetAllJobsdetails>>> GetAll(Pagination filter)
         {
 

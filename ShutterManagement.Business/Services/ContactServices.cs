@@ -443,6 +443,19 @@ namespace ShutterManagement.Business.Services
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.DeleteSuccessMsg;
 
+                var jobExist = dbContext.TblJobs.Where(x => x.ContactId == ContactId && x.IsDelete == false).ToList();
+                if(jobExist != null)
+                {
+                    foreach(var item in jobExist)
+                    {
+                        item.IsActive = false;
+                        item.IsDelete = true;
+                        item.UpdatedAt = DateTime.Now;
+                        item.ModifiedBy = AppConstant.LoggedInUserID;
+                        dbContext.TblJobs.Update(item);
+                        dbContext.SaveChanges();
+                    }
+                }
             }
             catch (Exception ex)
             {
