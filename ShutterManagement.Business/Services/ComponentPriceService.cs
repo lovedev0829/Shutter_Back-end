@@ -93,13 +93,13 @@ namespace ShutterManagement.Business.Services
                 var query =
                  (from estimate in dbContext.TblEstimates
                   join estimatewindow in dbContext.TblEstimateWindows on estimate.EstimateId equals estimatewindow.EstimateId
-                  where estimate.EstimateId.ToString() == EstimateID
-                  join estwindowProduct in dbContext.TblEstimateWindowProducts on estimatewindow.WindowId equals estwindowProduct.WindowId
                   where estimatewindow.EstimateId.ToString() == EstimateID
+                  join estwindowProduct in dbContext.TblEstimateWindowProducts on estimatewindow.WindowId equals estwindowProduct.WindowId
+                  where estwindowProduct.EstimateId.ToString() == EstimateID
                   join estwinprocomp in dbContext.TblEstimateWindowProductComponents on estwindowProduct.ProductId equals estwinprocomp.ProductId
                   where estwinprocomp.EstimateId.ToString() == EstimateID  && estwindowProduct.WindowId == estwinprocomp.WindowId
                   join productComponentmat in dbContext.TblEstimateWindowProductComponentMaterials on estwinprocomp.ComponentId equals productComponentmat.ComponentId
-                  where productComponentmat.EstimateId.ToString() == EstimateID && estwindowProduct.WindowId == estwinprocomp.WindowId
+                  where productComponentmat.EstimateId.ToString() == EstimateID && estwinprocomp.WindowId == productComponentmat.WindowId
                   where estwindowProduct.WindowProductId == WindowProductId
                   && estimate.IsActive == true && estimate.IsDelete == false
                   && estimatewindow.IsActive == true && estimatewindow.IsDelete == false
