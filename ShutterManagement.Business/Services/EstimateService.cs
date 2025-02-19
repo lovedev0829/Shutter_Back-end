@@ -346,12 +346,16 @@ namespace ShutterManagement.Business.Services
                     //var TotalPrice = await CalculateEstimate(createEstimate.EstimateId);
                     //createEstimate.TotalPrice = TotalPrice;
                     //await Update(createEstimate);
+
                     CreateNotification notification1 = new CreateNotification()
                     {
                         UserId = AppConstant.LoggedInUserID,
                         Subject = Enum.GetName(typeof(NotificationModule), NotificationModule.Estimate),
                         Body = "Estimate " + AppConstant.Create_Notification,
                         CreatedDate = DateTime.Now,
+                        Type = NotificationModule.Estimate.ToString(),
+                        TypeId = createEstimate.EstimateId
+
                     };
 
                     var result = await notification.CreateNotification(notification1);
