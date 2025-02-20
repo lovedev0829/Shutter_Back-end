@@ -131,30 +131,47 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        public async Task<IResponseVm<List<ProductTypeList>>> GetAll_ProductType()
+        public async Task<IResponseVm<List<ProductTypeList>>> GetAll_ProductType(Pagination filter)
         {
             IResponseVm<List<ProductTypeList>> responseVm = new ResponseVm<List<ProductTypeList>>();
             try
             {
-                var ProductTypeList = (await GetAll()).Where(x => x.IsDelete == false).ToList();
+                var productTypeQuery = (await GetAll()).Where(x => x.IsDelete == false);
 
-                    responseVm.Data = ProductTypeList.Select(x => new ProductTypeList
+                filter.SearchValue = filter.SearchValue?.Trim().ToLower();
+                var filteredProductTypes = productTypeQuery
+                    .Where(x =>
+                        (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
+                        (string.IsNullOrEmpty(filter.SearchValue) 
+                        ||x.ProductName.ToLower().Contains(filter.SearchValue) 
+                        ||x.ProductId.ToString().ToLower().Contains(filter.SearchValue))
+                    )
+                    .Select(x => new ProductTypeList
                     {
                         ProductId = x.ProductId,
                         ProductName = x.ProductName,
                         IsActive = x.IsActive,
-                    }).ToList();
-                    responseVm.IsSuccess = true;
-                    responseVm.Message = AppConstant.FetchSuccessMsg;
-                    responseVm.TotalRecords = ProductTypeList.Count;
+                    })
+                    .ToList();
 
+                var paginatedProductTypes = filteredProductTypes
+                    .Skip((filter.PageNo - 1) * filter.RecordPerPage)
+                    .Take(filter.RecordPerPage)
+                    .ToList();
+
+                responseVm.IsSuccess = true;
+                responseVm.Data = paginatedProductTypes;
+                responseVm.TotalRecords = filteredProductTypes.Count;
+                responseVm.Message = AppConstant.FetchSuccessMsg;
             }
             catch (Exception ex)
             {
+                responseVm.IsSuccess = false;
                 responseVm.Message = AppConstant.ExceptionError + ex.Message;
             }
             return responseVm;
-         }
+        }
+
 
         public async Task<IResponseVm<string>> Update_ProductType(UpdateProductType model)
         {

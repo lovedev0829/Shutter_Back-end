@@ -45,5 +45,13 @@ namespace ShutterManagement.Controllers
             return Ok(res);
         }
 
+        [HttpPost]
+        [Route("GetAll")]
+        public async Task<IActionResult> GetAllProductType(Pagination filter)
+        {
+            var res = await mstProductType.GetAll_ProductType(filter);
+            return Ok(res);
+        }
+
     }
 }

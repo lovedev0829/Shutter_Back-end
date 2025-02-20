@@ -218,7 +218,7 @@ namespace ShutterManagement.Controllers
         [Route("GetAllProductType")]
         public async Task<IActionResult> GetAllProductType()
         {
-            var res = await mstProductType.GetAll_ProductType();
+            var res = await mstProductType.GetAll_ProductType(filter);
             res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
             return Ok(res);
         }
