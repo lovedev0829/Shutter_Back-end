@@ -74,10 +74,22 @@ namespace ShutterManagement.Business.Services
                     responseVm.IsSuccess = false;
                     return responseVm;
                 }
+
+                bool defaultExists = GetAllQuerable().Any(x => (x.IsDefault ?? false) && x.IsDelete==false);
+
+                if ((model.IsDefault ?? false) && defaultExists)
+                {
+                    responseVm.Message = "Only one default product type is allowed.";
+                    responseVm.IsSuccess = false;
+                    return responseVm;
+                }
+
+
                 var productData = new MstProductType
                 {
                     ProductId = Guid.NewGuid(),
                     ProductName = model.ProductName,
+                    IsDefault = model.IsDefault,
                     IsActive = true,
                     IsDelete = false,
                     CreatedAt = DateTime.Now,
@@ -150,6 +162,7 @@ namespace ShutterManagement.Business.Services
                     {
                         ProductId = x.ProductId,
                         ProductName = x.ProductName,
+                         IsDefault= x.IsDefault,
                         IsActive = x.IsActive,
                     })
                     .ToList();
@@ -183,9 +196,20 @@ namespace ShutterManagement.Business.Services
                       .Where(c => c.ProductId == model.ProductId
                                   && c.IsDelete == false)
                       .FirstOrDefault();
+
+                bool defaultExists = GetAllQuerable().Any(x => (x.IsDefault ?? false) && x.IsDelete == false);
+
+                if ((model.IsDefault ?? false) && defaultExists)
+                {
+                    responseVm.Message = "Only one default product type is allowed.";
+                    responseVm.IsSuccess = false;
+                    return responseVm;
+                }
+
                 if (IsProductTypeExists != null)
                 {
                     IsProductTypeExists.ProductName = model.ProductName;
+                    IsProductTypeExists.IsDefault = model.IsDefault;
                     IsProductTypeExists.UpdatedAt = DateTime.Now;
                     IsProductTypeExists.ModifiedBy = AppConstant.LoggedInUserID;
 
