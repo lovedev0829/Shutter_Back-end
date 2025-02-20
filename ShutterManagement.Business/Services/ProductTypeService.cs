@@ -136,7 +136,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<List<ProductTypeList>> responseVm = new ResponseVm<List<ProductTypeList>>();
             try
             {
-                var productTypeQuery = (await GetAll()).Where(x => x.IsDelete == false);
+                var productTypeQuery = (await GetAll()).Where(x => x.IsDelete == false).OrderByDescending(x=>x.CreatedAt);
 
                 filter.SearchValue = filter.SearchValue?.Trim().ToLower();
                 var filteredProductTypes = productTypeQuery
