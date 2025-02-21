@@ -59,6 +59,7 @@ namespace ShutterManagement.Business.Services
         private readonly ISubtenantProductMarkup subtenantProductMarkup;
         private readonly ITenantBrandingService tenantBrandingService;
         private readonly INotificationService notification;
+        private readonly IMstProductType mstProductType;
         List<Guid> expressionList = new List<Guid>();
 
         public EstimateService(ShutterDBContext context,
@@ -86,6 +87,7 @@ namespace ShutterManagement.Business.Services
             ITaxRate taxRate,
             IRegion region, ITaxExemption taxExemption, IDiscountService discountservice,
             ISubtenantProductMarkup subtenantProductMarkup, ITenantBrandingService tenantBrandingService, INotificationService notification
+            ,IMstProductType mstProductType
             )
         {
             _context = context;
@@ -118,6 +120,7 @@ namespace ShutterManagement.Business.Services
             this.subtenantProductMarkup = subtenantProductMarkup;
             this.tenantBrandingService = tenantBrandingService;
             this.notification = notification;
+            this.mstProductType = mstProductType;
         }
 
         public async Task<IResponseVm<string>> ActiveInActiveEstimate(Guid EstimateId)
@@ -1072,7 +1075,8 @@ namespace ShutterManagement.Business.Services
                         x.Notes,
                         x.WindowId,
                         x.WindowProductId,
-                        x.Price
+                        x.Price,
+                        x.ProductTypeName
                     }).ToList();
 
                 e.WindowProductId = productList.Select(p => (Guid)p.WindowProductId).ToArray();
@@ -1099,14 +1103,11 @@ namespace ShutterManagement.Business.Services
                         Label = WindowQty_Label.Label,
                         WindowQty = WindowQty_Label.Quantity,
                         ProductType = p.ProductType,
-                        ProductTypeName = productType.GetAllQuerable()
-                            .Where(pt => pt.ProductId.ToString() == p.ProductType && pt.IsDelete == false)
-                            .Select(pt => pt.ProductName)
-                            .FirstOrDefault(),
                         Width = p.Width,
                         Height = p.Height,
                         ArchHeight = p.ArchHeight,
                         ProductName = p.ProductName,
+                        ProductTypeName = p.ProductTypeName,
                         WindowProductId = p.WindowProductId,
                         TotalPrice = p.Price,
                         Options = Options.Select(x => x.OptionName).ToArray(),
@@ -1415,6 +1416,7 @@ namespace ShutterManagement.Business.Services
                 Message = "Product " + AppConstant.NoDataFound;
                 return; // Return early if product data not found
             }
+            var ProductTypeName = mstProductType.GetAllQuerable().Where(x => x.ProductId.ToString() == productData.ProductType).Select(x => x.ProductName).FirstOrDefault();
             Guid[] arr = { windowProductData.WindowProductId };
             var buildEstimate = await BuildEstimate(arr, false);
             TblEstimateWindowProduct tblEstimateWindowProduct = new TblEstimateWindowProduct
@@ -1440,7 +1442,8 @@ namespace ShutterManagement.Business.Services
                 TenantId = AppConstant.LoggedInTenantId,
                 ProductId = productData.ProductId,
                 EstimateWindowProductId = Guid.NewGuid(),
-                WindowProductId = windowProductData.WindowProductId
+                WindowProductId = windowProductData.WindowProductId,
+                ProductTypeName = ProductTypeName
             };
 
             await estimateWindowProductService.Add(tblEstimateWindowProduct);
