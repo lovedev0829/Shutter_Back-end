@@ -15,5 +15,5 @@ public partial class TblGhlconfiguration
 
     public string? BaseAddress { get; set; }
 
-    public string? TenantId { get; set; }
+    public Guid? TenantId { get; set; }
 }
