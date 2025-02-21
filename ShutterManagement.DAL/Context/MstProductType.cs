@@ -21,6 +21,10 @@ public partial class MstProductType
 
     public DateTime? CreatedAt { get; set; }
 
+    public bool? IsDefault { get; set; }
+
+    public Guid? TenantId { get; set; }
+
     public virtual ICollection<TblEstimateWindowProductComponentMaterial> TblEstimateWindowProductComponentMaterials { get; set; } = new List<TblEstimateWindowProductComponentMaterial>();
 
     public virtual ICollection<TblExpression> TblExpressions { get; set; } = new List<TblExpression>();
