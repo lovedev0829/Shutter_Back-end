@@ -41,7 +41,13 @@ namespace ShutterManagement.Business.Services
                           .Where(c => c.ProductId == ProductId
                                       && c.IsDelete == false)
                           .FirstOrDefault();
-                    if (IsProductTypeExists != null)
+                var ProductTypeExistInProduct = dbContext.TblRawMaterials.Where(x => x.ProductType == IsProductTypeExists.ProductId).FirstOrDefault();
+                if (ProductTypeExistInProduct != null)
+                {
+                    responseVm.Message = "It can't be deleted. ProductType Exist in Product.";
+                    return responseVm;
+                }
+                if (IsProductTypeExists != null)
                     {
                         IsProductTypeExists.IsActive = !IsProductTypeExists.IsActive;
                         IsProductTypeExists.UpdatedAt = DateTime.Now;
@@ -141,11 +147,18 @@ namespace ShutterManagement.Business.Services
                     responseVm.IsSuccess = false;
                     return responseVm;
                 }
+               
 
-                    var IsProductTypeExists = GetAllQuerable()
+                var IsProductTypeExists = GetAllQuerable()
                       .Where(c => c.ProductId == ProductId
                                   && c.IsDelete == false)
                       .FirstOrDefault();
+                var ProductTypeExistInProduct = dbContext.TblRawMaterials.Where(x => x.ProductType == IsProductTypeExists.ProductId).FirstOrDefault();
+                if (ProductTypeExistInProduct != null)
+                {
+                    responseVm.Message = "It can't be deleted. ProductType Exist in Product.";
+                    return responseVm;
+                }
                 if (IsProductTypeExists != null)
                 {
                     IsProductTypeExists.IsDelete = true;
@@ -175,7 +188,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<List<ProductTypeList>> responseVm = new ResponseVm<List<ProductTypeList>>();
             try
             {
-                var productTypeQuery = (await GetAll()).Where(p => p.IsDelete == false && (p.TenantId == AppConstant.LoggedInTenantId || p.TenantId.ToString() == AppConstant.LoggedInParentTenantId)).OrderByDescending(x=>x.CreatedAt);
+                var productTypeQuery = (await GetAll()).Where(p => p.IsDelete == false  && p.TenantId != null  && (p.TenantId == AppConstant.LoggedInTenantId || p.TenantId.ToString() == AppConstant.LoggedInParentTenantId)).OrderByDescending(x=>x.CreatedAt);
 
                 filter.SearchValue = filter.SearchValue?.Trim().ToLower();
                 var filteredProductTypes = productTypeQuery

@@ -55,6 +55,8 @@ public partial class TblEstimateWindowProduct
 
     public string? Options { get; set; }
 
+    public string? ProductTypeName { get; set; }
+
     public virtual TblEstimate Estimate { get; set; } = null!;
 
     public virtual TblTenant? Tenant { get; set; }
