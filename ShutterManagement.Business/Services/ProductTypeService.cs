@@ -29,8 +29,15 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                
-                    var IsProductTypeExists = GetAllQuerable()
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
+                if (!IsTenant)
+                {
+                    responseVm.Message = "Tenant not found";
+                    responseVm.IsSuccess = false;
+                    return responseVm;
+                }
+
+                var IsProductTypeExists = GetAllQuerable()
                           .Where(c => c.ProductId == ProductId
                                       && c.IsDelete == false)
                           .FirstOrDefault();
@@ -65,6 +72,7 @@ namespace ShutterManagement.Business.Services
 
             try
             {
+
                 var existingProductType = GetAllQuerable()
                     .FirstOrDefault(x => x.ProductName == model.ProductName && x.IsDelete==false);
 
@@ -83,22 +91,34 @@ namespace ShutterManagement.Business.Services
                     responseVm.IsSuccess = false;
                     return responseVm;
                 }
-
-
-                var productData = new MstProductType
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
+                if (IsTenant)
                 {
-                    ProductId = Guid.NewGuid(),
-                    ProductName = model.ProductName,
-                    IsDefault = model.IsDefault,
-                    IsActive = true,
-                    IsDelete = false,
-                    CreatedAt = DateTime.Now,
-                    CreatedBy = AppConstant.LoggedInTenantId,
-                };
+                    var productData = new MstProductType
+                    {
+                        ProductId = Guid.NewGuid(),
+                        ProductName = model.ProductName,
+                        IsDefault = model.IsDefault,
+                        IsActive = true,
+                        IsDelete = false,
+                        CreatedAt = DateTime.Now,
+                        TenantId = AppConstant.LoggedInTenantId,
+                        CreatedBy = AppConstant.LoggedInUserID,
+                    };
 
-                var result =  Add(productData);
-                responseVm.Message = AppConstant.InsertSuccessMsg;
-                responseVm.IsSuccess = true;
+                    var result = Add(productData);
+                    responseVm.Message = AppConstant.InsertSuccessMsg;
+                    responseVm.IsSuccess = true;
+
+                }
+                else
+                {
+                    responseVm.Message = "Tenant not found";
+                    responseVm.IsSuccess = false;
+                    return responseVm;
+                }
+
+               
             }
             catch (Exception ex)
             {
@@ -114,8 +134,15 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
+                if (!IsTenant)
+                {
+                    responseVm.Message = "Tenant not found";
+                    responseVm.IsSuccess = false;
+                    return responseVm;
+                }
 
-                var IsProductTypeExists = GetAllQuerable()
+                    var IsProductTypeExists = GetAllQuerable()
                       .Where(c => c.ProductId == ProductId
                                   && c.IsDelete == false)
                       .FirstOrDefault();
@@ -148,7 +175,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<List<ProductTypeList>> responseVm = new ResponseVm<List<ProductTypeList>>();
             try
             {
-                var productTypeQuery = (await GetAll()).Where(x => x.IsDelete == false).OrderByDescending(x=>x.CreatedAt);
+                var productTypeQuery = (await GetAll()).Where(p => p.IsDelete == false && (p.TenantId == AppConstant.LoggedInTenantId || p.TenantId.ToString() == AppConstant.LoggedInParentTenantId)).OrderByDescending(x=>x.CreatedAt);
 
                 filter.SearchValue = filter.SearchValue?.Trim().ToLower();
                 var filteredProductTypes = productTypeQuery
@@ -191,6 +218,13 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
+                if (!IsTenant)
+                {
+                    responseVm.Message = "Tenant not found.";
+                    responseVm.IsSuccess = false;
+                    return responseVm;
+                }
 
                 var IsProductTypeExists = GetAllQuerable()
                       .Where(c => c.ProductId == model.ProductId

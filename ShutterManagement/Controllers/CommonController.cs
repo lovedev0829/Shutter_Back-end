@@ -172,7 +172,7 @@ namespace ShutterManagement.Controllers
         [Route("GetAllJobType")]
         public async Task<IActionResult> GetAllJobType()
         {
-            var res = await jobTypeService.GetAll(filter);
+            var res = await jobTypeService.GetAllJobType(filter);
             res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
             return Ok(res);
         }

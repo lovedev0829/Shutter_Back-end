@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core.ViewModels.Request;
@@ -17,6 +18,7 @@ namespace ShutterManagement.Controllers
         }
         [HttpPost]
         [Route("Create")]
+        [Authorize(Roles = "ProductTypeAdd")]
         public async Task<IActionResult> Create_ProductType([FromBody] CreateProductType model)
         {
             var res = await mstProductType.Create_ProductType(model);
@@ -25,6 +27,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("Update")]
+        [Authorize(Roles = "ProductTypeEdit")]
         public async Task<IActionResult> Update_ProductType(UpdateProductType model)
         {
             var res = await mstProductType.Update_ProductType(model);
@@ -32,6 +35,7 @@ namespace ShutterManagement.Controllers
         }
         [HttpPost]
         [Route("ActiveInActive")]
+        [Authorize(Roles = "ProductTypeEdit")]
         public async Task<IActionResult> ActiveInActive(Guid? ProductTypeId)
         {
             var res = await mstProductType.ActiveInActive(ProductTypeId);
@@ -39,6 +43,7 @@ namespace ShutterManagement.Controllers
         }
         [HttpPost]
         [Route("Delete")]
+        [Authorize(Roles = "ProductTypeDelete")]
         public async Task<IActionResult> DeleteProductType(Guid? ProductTypeId)
         {
             var res = await mstProductType.DeleteProductType(ProductTypeId);
@@ -47,6 +52,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("GetAll")]
+        [Authorize(Roles = "ProductTypeView")]
         public async Task<IActionResult> GetAllProductType(Pagination filter)
         {
             var res = await mstProductType.GetAll_ProductType(filter);
