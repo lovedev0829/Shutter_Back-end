@@ -19,7 +19,7 @@ namespace ShutterManagement.Business.Services
         private readonly ITenantService tenantService;
         private readonly IMaterial material;
 
-        public ProductTypeService(ShutterDBContext context, ITenantService tenantService ,IMaterial material)
+        public ProductTypeService(ShutterDBContext context, ITenantService tenantService ,IMaterial material )
         {
             _context = context;
             this.tenantService = tenantService;
@@ -173,6 +173,19 @@ namespace ShutterManagement.Business.Services
                 if (isProductTypeUsedInMaterial != null)
                 {
                     responseVm.Message = "This Product Type is used in another material and cannot be deleted.";
+                    responseVm.IsSuccess = false;
+                    return responseVm;
+                }
+
+
+                bool isProductTypeUsed =
+                    dbContext.TblProducts.Any(p => p.ProductType == ProductTypeId.ToString() && p.IsDelete == false) ||
+                    material.Any(m => m.ProductType == ProductTypeId && m.IsDelete == false);
+                   
+
+                if (isProductTypeUsed)
+                {
+                    responseVm.Message = "This Product Type is used in another entity (Product, Material) and cannot be deleted.";
                     responseVm.IsSuccess = false;
                     return responseVm;
                 }

@@ -112,6 +112,18 @@ namespace ShutterManagement.Business.Services
                                     x.IsDelete == false)
                         .FirstOrDefault();
 
+                    bool isProductUsed =
+                  dbContext.TblEstimateWindowProducts.Any(p => p.ProductId == Id && p.IsDelete == false);
+
+
+
+                    if (isProductUsed)
+                    {
+                        responseVm.Message = "This Product is used in another entity (Estimate) and cannot be deleted.";
+                        responseVm.IsSuccess = false;
+                        return responseVm;
+                    }
+
                     if (productcomponent != null)
                     {
                         productcomponent.IsActive = false;
