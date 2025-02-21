@@ -74,7 +74,7 @@ namespace ShutterManagement.Business.Services
             {
 
                 var existingProductType = GetAllQuerable()
-                    .FirstOrDefault(x => x.ProductName == model.ProductName && x.IsDelete==false);
+                    .FirstOrDefault(x => x.ProductName == model.ProductName && x.IsDelete==false && x.TenantId==AppConstant.LoggedInTenantId);
 
                 if (existingProductType != null)
                 {
@@ -83,7 +83,7 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-                bool defaultExists = GetAllQuerable().Any(x => (x.IsDefault ?? false) && x.IsDelete==false);
+                bool defaultExists = GetAllQuerable().Any(x => (x.IsDefault ?? false) && x.IsDelete==false && x.TenantId == AppConstant.LoggedInTenantId);
 
                 if ((model.IsDefault ?? false) && defaultExists)
                 {
@@ -228,10 +228,10 @@ namespace ShutterManagement.Business.Services
 
                 var IsProductTypeExists = GetAllQuerable()
                       .Where(c => c.ProductId == model.ProductId
-                                  && c.IsDelete == false)
+                                  && c.IsDelete == false && c.TenantId == AppConstant.LoggedInTenantId)
                       .FirstOrDefault();
 
-                bool defaultExists = GetAllQuerable().Any(x => (x.IsDefault ?? false) && x.IsDelete == false);
+                bool defaultExists = GetAllQuerable().Any(x => (x.IsDefault ?? false) && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
 
                 if ((model.IsDefault ?? false) && defaultExists)
                 {
