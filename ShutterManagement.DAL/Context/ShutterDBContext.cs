@@ -1100,6 +1100,7 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.ProductType)
                 .HasMaxLength(50)
                 .IsUnicode(false);
+            entity.Property(e => e.ProductTypeName).HasMaxLength(50);
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
             entity.Property(e => e.Version).HasMaxLength(3);
             entity.Property(e => e.Width).HasColumnType("decimal(10, 2)");
