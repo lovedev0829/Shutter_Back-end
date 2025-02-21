@@ -233,6 +233,18 @@ namespace ShutterManagement.Business.Services
                                       && c.TenantId == AppConstant.LoggedInTenantId
                                       && c.IsDelete == false)
                           .FirstOrDefault();
+
+                    bool isComponenteUsed =
+                   dbContext.TblEstimateWindowProductComponents.Any(p => p.ComponentId == Id && p.IsDelete == false);
+                  
+
+
+                    if (isComponenteUsed)
+                    {
+                        responseVm.Message = "This Component is used in another entity (Estimate,) and cannot be deleted.";
+                        responseVm.IsSuccess = false;
+                        return responseVm;
+                    }
                     var IsComponentInProduct = await productService.AnyAsync(x => x.ComponentId == Id && x.IsActive == true && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
                     if (!IsComponentInProduct)
                     {

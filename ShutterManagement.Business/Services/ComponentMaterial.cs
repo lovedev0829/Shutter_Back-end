@@ -115,6 +115,8 @@ namespace ShutterManagement.Business.Services
                                     x.IsDelete == false)
                         .FirstOrDefault();
 
+
+
                     if (componentMaterial != null)
                     {
                         componentMaterial.IsActive = false;

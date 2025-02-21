@@ -206,6 +206,16 @@ namespace ShutterManagement.Business.Services
                                       && c.IsDelete == false && c.IsActive==true
                                       )
                           .FirstOrDefault();
+
+                    bool isMaterialUsed =
+                   dbContext.TblComponentMaterials.Any(p => p.RawMaterialId == Id && p.IsDelete == false);
+                    if (isMaterialUsed)
+                    {
+                        responseVm.Message = "This Material is used in another entity (Component) and cannot be deleted.";
+                        responseVm.IsSuccess = false;
+                        return responseVm;
+                    }
+
                     var IsMaterialExistInComponent = componentMaterial.AnyAsync(x => x.RawMaterialId == Id && x.IsActive == true && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
                     if (IsMaterialExistInComponent != null)
                     {
