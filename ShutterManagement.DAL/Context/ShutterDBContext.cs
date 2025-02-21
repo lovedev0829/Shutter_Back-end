@@ -624,6 +624,7 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.ProductType)
                 .HasMaxLength(50)
                 .IsUnicode(false);
+            entity.Property(e => e.ProductTypeName).HasMaxLength(50);
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
