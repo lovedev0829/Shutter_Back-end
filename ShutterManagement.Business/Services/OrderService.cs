@@ -956,7 +956,8 @@ namespace ShutterManagement.Business.Services
                     x.Notes,
                     x.WindowId,
                     x.WindowProductId,
-                    x.Price
+                    x.Price,
+                    x.ProductTypeName,
                 }).ToList();
 
             e.WindowProductId = productList.Select(p => (Guid)p.WindowProductId).ToArray();
@@ -985,10 +986,7 @@ namespace ShutterManagement.Business.Services
                     Label = WindowQty_Label.Label,
                     WindowQty = WindowQty_Label.Quantity,
                     ProductType = p.ProductType,
-                    ProductTypeName = productType.GetAllQuerable()
-                        .Where(pt => pt.ProductId.ToString() == p.ProductType && pt.IsDelete == false)
-                        .Select(pt => pt.ProductName)
-                        .FirstOrDefault(),
+                    ProductTypeName = p.ProductTypeName,
                     Width = p.Width,
                     Height = p.Height,
                     ArchHeight = p.ArchHeight,
@@ -1080,6 +1078,7 @@ namespace ShutterManagement.Business.Services
                 return;
             }
 
+            var productTypeName = estimateWindowProduct.GetAllQuerable().Where(x => x.EstimateId == estimateId).Select(x => x.ProductTypeName).FirstOrDefault();
             TblOrderWindowProduct tblOrderWindowProduct = new TblOrderWindowProduct
             {
                 OrderWindowProductId = Guid.NewGuid(),
@@ -1105,7 +1104,8 @@ namespace ShutterManagement.Business.Services
                 TenantId = AppConstant.LoggedInTenantId,
                 ProductId = productData.ProductId,
                 Price = estimatePrice,
-                WindowProductId = windowProductData.WindowProductId
+                WindowProductId = windowProductData.WindowProductId,
+                ProductTypeName = productTypeName
             };
 
             await orderWindowProductService.Add(tblOrderWindowProduct);

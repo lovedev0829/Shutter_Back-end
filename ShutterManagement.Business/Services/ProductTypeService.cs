@@ -43,7 +43,13 @@ namespace ShutterManagement.Business.Services
                           .Where(c => c.ProductId == ProductId
                                       && c.IsDelete == false)
                           .FirstOrDefault();
-                    if (IsProductTypeExists != null)
+                var ProductTypeExistInProduct = dbContext.TblRawMaterials.Where(x => x.ProductType == IsProductTypeExists.ProductId).FirstOrDefault();
+                if (ProductTypeExistInProduct != null)
+                {
+                    responseVm.Message = "It can't be deleted. ProductType Exist in Product.";
+                    return responseVm;
+                }
+                if (IsProductTypeExists != null)
                     {
                         IsProductTypeExists.IsActive = !IsProductTypeExists.IsActive;
                         IsProductTypeExists.UpdatedAt = DateTime.Now;
