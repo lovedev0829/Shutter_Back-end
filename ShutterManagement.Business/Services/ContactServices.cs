@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Text;
+using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core;
 using ShutterManagement.Core.Common;
@@ -189,6 +191,15 @@ namespace ShutterManagement.Business.Services
                                 IsDelete = false,
                             };
                             await taxExemptionService.Add(taxExemption1);
+
+                        }
+
+
+                        var ghlResponse = await SyncWithGHL(res, model);
+                        if (!ghlResponse.IsSuccess)
+                        {
+                            responseVm.Message = "Contact sync with GHL failed: " + ghlResponse.Message;
+                            return responseVm;
                         }
                         responseVm.IsSuccess = true;
                         responseVm.Message = AppConstant.InsertSuccessMsg;
@@ -638,6 +649,67 @@ namespace ShutterManagement.Business.Services
             }
             return responseVm;
         }
+
+        public async Task<IResponseVm<string>> SyncWithGHL(TblContact contact, Sp_Contact model)
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+            try
+            {
+                // Retrieve the GhlSettings from configuration (assuming this is part of your app settings)
+                var ghlSettings = new
+                {
+                    ApiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2NhdGlvbl9pZCI6IlBUbklDTU4wbUtyMDNrekpRcVBRIiwidmVyc2lvbiI6MSwiaWF0IjoxNzI0MDcwNDM3MTYzLCJzdWIiOiJkOGhlWkl2dEliZDVPcGhGdXNmYiJ9.yRrmWRgUC5VtrhKMsE4JsLjpwROYvvQnwoYu5JbVQWU", // Your GHL API Key
+                    PipelineId = "CFoi90n88zrDhMFP8R2I", // Pipeline ID
+                    StageId = "51740389-e764-4f93-9ff3-5c6b5c046ef1", // Stage ID
+                    BaseAddress = "https://rest.gohighlevel.com/v1/" // Base URL
+                };
+
+                // Prepare the GHL API payload
+                var ghlPayload = new
+                {
+                    first_name = model.FirstName,
+                    last_name = model.LastName,
+                    email = model.Email,
+                    phone = model.PhoneNumber,
+                    website = model.Website,
+                    notes = model.Notes,
+                    referral = model.Referral,
+                    pipeline_id = ghlSettings.PipelineId,
+                    stage_id = ghlSettings.StageId,
+                    custom_fields = new { /* Add custom fields if needed */ }
+                };
+
+                // GHL API URL for creating or updating a contact
+                string ghlUrl = $"{ghlSettings.BaseAddress}contacts/";
+                var client = new HttpClient();
+
+                // Add the authorization header using the API key
+                client.DefaultRequestHeaders.Add("Authorization", $"Bearer {ghlSettings.ApiKey}");
+
+                // Convert payload to JSON and send the POST request
+                var content = new StringContent(JsonConvert.SerializeObject(ghlPayload), Encoding.UTF8, "application/json");
+                var response = await client.PostAsync(ghlUrl, content);
+                var responseContent = await response.Content.ReadAsStringAsync();
+
+                // Check the response status
+                if (response.IsSuccessStatusCode)
+                {
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = "Contact successfully synced with GHL.";
+                }
+                else
+                {
+                    responseVm.Message = "Failed to sync with GHL: " + responseContent;
+                }
+            }
+            catch (Exception ex)
+            {
+                responseVm.Message = "Error syncing with GHL: " + ex.Message;
+            }
+
+            return responseVm;
+        }
+
 
     }
 }
