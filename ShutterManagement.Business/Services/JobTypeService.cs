@@ -27,7 +27,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 
-                var JobTypeList = (await GetAll()).Where(p => p.IsActive == true && p.IsDelete == false && (p.TenantId == AppConstant.LoggedInTenantId || p.TenantId.ToString() == AppConstant.LoggedInParentTenantId)).OrderByDescending(x=>x.CreatedAt).ToList();
+                var JobTypeList = (await GetAll()).Where(p => p.IsDelete == false && (p.TenantId == AppConstant.LoggedInTenantId || p.TenantId.ToString() == AppConstant.LoggedInParentTenantId)).OrderByDescending(x=>x.CreatedAt).ToList();
 
 
                 filter.SearchValue = filter.SearchValue?.Trim().ToLower();
@@ -89,7 +89,7 @@ namespace ShutterManagement.Business.Services
 
                 var IsProductTypeExists = GetAllQuerable()
                       .Where(c => c.Id == JobTypeId
-                                  && c.IsDelete == false)
+                                  && c.IsDelete == false  && c.TenantId == AppConstant.LoggedInTenantId)
                       .FirstOrDefault();
                 if (IsProductTypeExists != null)
                 {
@@ -130,7 +130,7 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
                 var existingProductType = GetAllQuerable()
-                    .FirstOrDefault(x => x.JobTypeName == model.JobTypeName && x.IsDelete == false);
+                    .FirstOrDefault(x => x.JobTypeName == model.JobTypeName && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
 
                 if (existingProductType != null)
                 {
@@ -224,7 +224,7 @@ namespace ShutterManagement.Business.Services
 
                 var IsProductTypeExists = GetAllQuerable()
                       .Where(c => c.Id == model.JobTypeId
-                                  && c.IsDelete == false)
+                                  && c.IsDelete == false && c.TenantId == AppConstant.LoggedInTenantId)
                       .FirstOrDefault();
 
                
