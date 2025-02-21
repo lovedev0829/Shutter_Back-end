@@ -27,7 +27,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 
-                var JobTypeList = (await GetAll()).Where(p => p.IsDelete == false && (p.TenantId == AppConstant.LoggedInTenantId || p.TenantId.ToString() == AppConstant.LoggedInParentTenantId)).OrderByDescending(x=>x.CreatedAt).ToList();
+                var JobTypeList = (await GetAll()).Where(p => p.IsDelete == false && p.TenantId != null && (p.TenantId == AppConstant.LoggedInTenantId || p.TenantId.ToString() == AppConstant.LoggedInParentTenantId)).OrderByDescending(x=>x.CreatedAt).ToList();
 
 
                 filter.SearchValue = filter.SearchValue?.Trim().ToLower();
