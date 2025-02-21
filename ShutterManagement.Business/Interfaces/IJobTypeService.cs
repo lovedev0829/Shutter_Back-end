@@ -13,6 +13,11 @@ namespace ShutterManagement.Business.Interfaces
 {
     public interface IJobTypeService : IGenericRepository<MstJobType>
     {
-        Task<IResponseVm<List<JobTypeList>>> GetAll(Pagination filter);
+        Task<IResponseVm<List<JobTypeList>>> GetAllJobType(Pagination filter);
+
+        Task<IResponseVm<string>> Create_JobType(CreateJobType model);
+        Task<IResponseVm<string>> Update_JobType(UpdateJobType model);
+        Task<IResponseVm<string>> ActiveInActive(Guid? JobTypeId);
+        Task<IResponseVm<string>> DeleteJobType(Guid? JobTypeId);
     }
 }

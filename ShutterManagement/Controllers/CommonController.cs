@@ -174,7 +174,7 @@ namespace ShutterManagement.Controllers
         [Route("GetAllJobType")]
         public async Task<IActionResult> GetAllJobType()
         {
-            var res = await jobTypeService.GetAll(filter);
+            var res = await jobTypeService.GetAllJobType(filter);
             res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
             return Ok(res);
         }
@@ -220,7 +220,7 @@ namespace ShutterManagement.Controllers
         [Route("GetAllProductType")]
         public async Task<IActionResult> GetAllProductType()
         {
-            var res = await mstProductType.GetAll_ProductType();
+            var res = await mstProductType.GetAll_ProductType(filter);
             res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
             return Ok(res);
         }

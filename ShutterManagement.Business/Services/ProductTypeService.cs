@@ -29,8 +29,15 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                
-                    var IsProductTypeExists = GetAllQuerable()
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
+                if (!IsTenant)
+                {
+                    responseVm.Message = "Tenant not found";
+                    responseVm.IsSuccess = false;
+                    return responseVm;
+                }
+
+                var IsProductTypeExists = GetAllQuerable()
                           .Where(c => c.ProductId == ProductId
                                       && c.IsDelete == false)
                           .FirstOrDefault();
@@ -65,6 +72,7 @@ namespace ShutterManagement.Business.Services
 
             try
             {
+
                 var existingProductType = GetAllQuerable()
                     .FirstOrDefault(x => x.ProductName == model.ProductName && x.IsDelete==false);
 
@@ -74,19 +82,43 @@ namespace ShutterManagement.Business.Services
                     responseVm.IsSuccess = false;
                     return responseVm;
                 }
-                var productData = new MstProductType
-                {
-                    ProductId = Guid.NewGuid(),
-                    ProductName = model.ProductName,
-                    IsActive = true,
-                    IsDelete = false,
-                    CreatedAt = DateTime.Now,
-                    CreatedBy = AppConstant.LoggedInTenantId,
-                };
 
-                var result =  Add(productData);
-                responseVm.Message = AppConstant.InsertSuccessMsg;
-                responseVm.IsSuccess = true;
+                bool defaultExists = GetAllQuerable().Any(x => (x.IsDefault ?? false) && x.IsDelete==false);
+
+                if ((model.IsDefault ?? false) && defaultExists)
+                {
+                    responseVm.Message = "Only one default product type is allowed.";
+                    responseVm.IsSuccess = false;
+                    return responseVm;
+                }
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
+                if (IsTenant)
+                {
+                    var productData = new MstProductType
+                    {
+                        ProductId = Guid.NewGuid(),
+                        ProductName = model.ProductName,
+                        IsDefault = model.IsDefault,
+                        IsActive = true,
+                        IsDelete = false,
+                        CreatedAt = DateTime.Now,
+                        TenantId = AppConstant.LoggedInTenantId,
+                        CreatedBy = AppConstant.LoggedInUserID,
+                    };
+
+                    var result = Add(productData);
+                    responseVm.Message = AppConstant.InsertSuccessMsg;
+                    responseVm.IsSuccess = true;
+
+                }
+                else
+                {
+                    responseVm.Message = "Tenant not found";
+                    responseVm.IsSuccess = false;
+                    return responseVm;
+                }
+
+               
             }
             catch (Exception ex)
             {
@@ -102,8 +134,15 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
+                if (!IsTenant)
+                {
+                    responseVm.Message = "Tenant not found";
+                    responseVm.IsSuccess = false;
+                    return responseVm;
+                }
 
-                var IsProductTypeExists = GetAllQuerable()
+                    var IsProductTypeExists = GetAllQuerable()
                       .Where(c => c.ProductId == ProductId
                                   && c.IsDelete == false)
                       .FirstOrDefault();
@@ -131,44 +170,80 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        public async Task<IResponseVm<List<ProductTypeList>>> GetAll_ProductType()
+        public async Task<IResponseVm<List<ProductTypeList>>> GetAll_ProductType(Pagination filter)
         {
             IResponseVm<List<ProductTypeList>> responseVm = new ResponseVm<List<ProductTypeList>>();
             try
             {
-                var ProductTypeList = (await GetAll()).Where(x => x.IsDelete == false).ToList();
+                var productTypeQuery = (await GetAll()).Where(p => p.IsDelete == false && (p.TenantId == AppConstant.LoggedInTenantId || p.TenantId.ToString() == AppConstant.LoggedInParentTenantId)).OrderByDescending(x=>x.CreatedAt);
 
-                    responseVm.Data = ProductTypeList.Select(x => new ProductTypeList
+                filter.SearchValue = filter.SearchValue?.Trim().ToLower();
+                var filteredProductTypes = productTypeQuery
+                    .Where(x =>
+                        (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
+                        (string.IsNullOrEmpty(filter.SearchValue) 
+                        ||x.ProductName.ToLower().Contains(filter.SearchValue) 
+                        ||x.ProductId.ToString().ToLower().Contains(filter.SearchValue))
+                    )
+                    .Select(x => new ProductTypeList
                     {
                         ProductId = x.ProductId,
                         ProductName = x.ProductName,
+                         IsDefault= x.IsDefault,
                         IsActive = x.IsActive,
-                    }).ToList();
-                    responseVm.IsSuccess = true;
-                    responseVm.Message = AppConstant.FetchSuccessMsg;
-                    responseVm.TotalRecords = ProductTypeList.Count;
+                    })
+                    .ToList();
 
+                var paginatedProductTypes = filteredProductTypes
+                    .Skip((filter.PageNo - 1) * filter.RecordPerPage)
+                    .Take(filter.RecordPerPage)
+                    .ToList();
+
+                responseVm.IsSuccess = true;
+                responseVm.Data = paginatedProductTypes;
+                responseVm.TotalRecords = filteredProductTypes.Count;
+                responseVm.Message = AppConstant.FetchSuccessMsg;
             }
             catch (Exception ex)
             {
+                responseVm.IsSuccess = false;
                 responseVm.Message = AppConstant.ExceptionError + ex.Message;
             }
             return responseVm;
-         }
+        }
+
 
         public async Task<IResponseVm<string>> Update_ProductType(UpdateProductType model)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
+                if (!IsTenant)
+                {
+                    responseVm.Message = "Tenant not found.";
+                    responseVm.IsSuccess = false;
+                    return responseVm;
+                }
 
                 var IsProductTypeExists = GetAllQuerable()
                       .Where(c => c.ProductId == model.ProductId
                                   && c.IsDelete == false)
                       .FirstOrDefault();
+
+                bool defaultExists = GetAllQuerable().Any(x => (x.IsDefault ?? false) && x.IsDelete == false);
+
+                if ((model.IsDefault ?? false) && defaultExists)
+                {
+                    responseVm.Message = "Only one default product type is allowed.";
+                    responseVm.IsSuccess = false;
+                    return responseVm;
+                }
+
                 if (IsProductTypeExists != null)
                 {
                     IsProductTypeExists.ProductName = model.ProductName;
+                    IsProductTypeExists.IsDefault = model.IsDefault;
                     IsProductTypeExists.UpdatedAt = DateTime.Now;
                     IsProductTypeExists.ModifiedBy = AppConstant.LoggedInUserID;
 

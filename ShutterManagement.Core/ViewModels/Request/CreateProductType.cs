@@ -9,5 +9,6 @@ namespace ShutterManagement.Core.ViewModels.Request
     public class CreateProductType
     {
         public string? ProductName { get; set; }
+        public bool? IsDefault { get; set; }
     }
 }

@@ -13,7 +13,7 @@ namespace ShutterManagement.Business.Interfaces
 {
     public interface IMstProductType : IGenericRepository<MstProductType>
     {
-        Task<IResponseVm<List<ProductTypeList>>> GetAll_ProductType();
+        Task<IResponseVm<List<ProductTypeList>>> GetAll_ProductType(Pagination fillter);
 
         Task<IResponseVm<string>> Create_ProductType(CreateProductType model);
         Task<IResponseVm<string>> Update_ProductType(UpdateProductType model);
