@@ -65,6 +65,8 @@ public partial class ShutterDBContext : DbContext
 
     public virtual DbSet<TblExpression> TblExpressions { get; set; }
 
+    public virtual DbSet<TblGhlconfiguration> TblGhlconfigurations { get; set; }
+
     public virtual DbSet<TblInvoice> TblInvoices { get; set; }
 
     public virtual DbSet<TblInvoicePayment> TblInvoicePayments { get; set; }
@@ -204,12 +206,14 @@ public partial class ShutterDBContext : DbContext
 
         modelBuilder.Entity<MstJobType>(entity =>
         {
-            entity
-                .HasNoKey()
-                .ToTable("MstJobType", "dbo");
+            entity.HasKey(e => e.Id).HasName("PK__MstJobTy__3214EC0740773D67");
+
+            entity.ToTable("MstJobType", "dbo");
 
             entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
             entity.Property(e => e.JobTypeName).HasMaxLength(128);
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
         });
 
         modelBuilder.Entity<MstModule>(entity =>
@@ -727,6 +731,16 @@ public partial class ShutterDBContext : DbContext
             entity.HasOne(d => d.ProductTypeNavigation).WithMany(p => p.TblExpressions)
                 .HasForeignKey(d => d.ProductType)
                 .HasConstraintName("FK__TblExpres__Produ__353DDB1D");
+        });
+
+        modelBuilder.Entity<TblGhlconfiguration>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__TblGHLCo__3214EC074F1C0B7E");
+
+            entity.ToTable("TblGHLConfiguration", "dbo");
+
+            entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.Apikey).HasColumnName("APIkey");
         });
 
         modelBuilder.Entity<TblInvoice>(entity =>

@@ -54,6 +54,7 @@ namespace ShutterManagement.Controllers
         private readonly ILocationService locationService;
         private readonly IDashboard dashboard;
         private readonly INotificationService notification;
+        private readonly IGHLConfiguration gHLConfiguration;
 
         public CommonController(IMasterCreate masterCreate, 
             FileUploadHelper fileUpload, ClaimsProperty claimsProperty,
@@ -67,7 +68,7 @@ namespace ShutterManagement.Controllers
             IMstContactType contactType, IJobService jobService,IExpressionService expression ,IInvoiceService invoiceService,
             ITaxRate taxService,IEstimateService estimateService,
             IEstimationBreakdownService estimationBreakdownService, ILocationService locationService,
-           IDashboard dashboard,INotificationService notification)
+           IDashboard dashboard, INotificationService notification, IGHLConfiguration gHLConfiguration)
         {
             this.masterCreate = masterCreate;
             this.fileUpload = fileUpload;
@@ -109,6 +110,7 @@ namespace ShutterManagement.Controllers
             this.locationService = locationService;
             this.dashboard = dashboard;
             this.notification = notification;
+            this.gHLConfiguration = gHLConfiguration;
         }
 
 
@@ -172,7 +174,7 @@ namespace ShutterManagement.Controllers
         [Route("GetAllJobType")]
         public async Task<IActionResult> GetAllJobType()
         {
-            var res = await jobTypeService.GetAll(filter);
+            var res = await jobTypeService.GetAllJobType(filter);
             res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
             return Ok(res);
         }
@@ -218,7 +220,7 @@ namespace ShutterManagement.Controllers
         [Route("GetAllProductType")]
         public async Task<IActionResult> GetAllProductType()
         {
-            var res = await mstProductType.GetAll_ProductType();
+            var res = await mstProductType.GetAll_ProductType(filter);
             res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
             return Ok(res);
         }
@@ -718,5 +720,21 @@ namespace ShutterManagement.Controllers
             return Ok(result);
         }
 
+        [HttpGet]
+        [Route("GetGHLConfiguration")]
+        public async Task<IActionResult> GetGHLConfiguration()
+        {
+            var res = await gHLConfiguration.GetAll();
+            return Ok(res);
+        }
+
+        [HttpPost]
+        [Route("AddGHLConfiguration")]
+
+        public async Task<IActionResult> AddGHLConfiguration(GHLConfiguration gHLConfiguration1)
+        {
+            var res = await gHLConfiguration.GHLConfiguration(gHLConfiguration1);
+            return Ok(res);
+        }
     }
 }

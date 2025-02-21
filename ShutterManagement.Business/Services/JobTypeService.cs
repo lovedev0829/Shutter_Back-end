@@ -15,12 +15,19 @@ namespace ShutterManagement.Business.Services
 {
     public class JobTypeService : BaseRepository<ShutterDBContext, MstJobType>, IJobTypeService
     {
-        public async Task<IResponseVm<List<JobTypeList>>> GetAll(Pagination filter)
+        private readonly ITenantService tenantService;
+
+        public JobTypeService(ITenantService tenantService)
+        {
+            this.tenantService = tenantService;
+        }
+        public async Task<IResponseVm<List<JobTypeList>>> GetAllJobType(Pagination filter)
         {
             IResponseVm<List<JobTypeList>> responseVm = new ResponseVm<List<JobTypeList>>();
             try
             {
-                var JobTypeList = (await GetAll()).Where(x => x.IsActive == true && x.IsDelete == false).ToList();
+                
+                var JobTypeList = (await GetAll()).Where(p => p.IsDelete == false && (p.TenantId == AppConstant.LoggedInTenantId || p.TenantId.ToString() == AppConstant.LoggedInParentTenantId)).OrderByDescending(x=>x.CreatedAt).ToList();
 
 
                 filter.SearchValue = filter.SearchValue?.Trim().ToLower();
@@ -49,7 +56,7 @@ namespace ShutterManagement.Business.Services
                 if (TakenRecords != null && TakenRecords.Count > 0)
                 {
                     responseVm.Data = TakenRecords.ToList();
-                    responseVm.Message = AppConstant.UpdateSuccessMsg;
+                    responseVm.Message = AppConstant.FetchSuccessMsg;
                     responseVm.TotalRecords = FilterRecords.Count;
                 }
                 else
@@ -63,6 +70,184 @@ namespace ShutterManagement.Business.Services
                 responseVm.Message = AppConstant.ExceptionError + ex.Message;
             }
 
+            return responseVm;
+        }
+
+
+        public async Task<IResponseVm<string>> ActiveInActive(Guid? JobTypeId)
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+            try
+            {
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
+                if (!IsTenant)
+                {
+                    responseVm.Message = "Tenant not found";
+                    responseVm.IsSuccess = false;
+                    return responseVm;
+                }
+
+                var IsProductTypeExists = GetAllQuerable()
+                      .Where(c => c.Id == JobTypeId
+                                  && c.IsDelete == false  && c.TenantId == AppConstant.LoggedInTenantId)
+                      .FirstOrDefault();
+                if (IsProductTypeExists != null)
+                {
+                    IsProductTypeExists.IsActive = !IsProductTypeExists.IsActive;
+                    IsProductTypeExists.UpdatedAt = DateTime.Now;
+                    IsProductTypeExists.ModifiedBy = AppConstant.LoggedInUserID;
+
+                    var res = Update(IsProductTypeExists);
+
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = AppConstant.UpdateSuccessMsg;
+                }
+                else
+                {
+                    responseVm.Message = $"{AppConstant.NoDataFound}";
+                    responseVm.IsSuccess = false;
+                    return responseVm;
+                }
+            }
+            catch (Exception ex)
+            {
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+            }
+            return responseVm;
+        }
+
+        public async Task<IResponseVm<string>> Create_JobType(CreateJobType model)
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+
+            try
+            {
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
+                if (!IsTenant)
+                {
+                    responseVm.Message = "Tenant not found";
+                    responseVm.IsSuccess = false;
+                    return responseVm;
+                }
+                var existingProductType = GetAllQuerable()
+                    .FirstOrDefault(x => x.JobTypeName == model.JobTypeName && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
+
+                if (existingProductType != null)
+                {
+                    responseVm.Message = $"ProductTypeName {AppConstant.AlreadyExists}";
+                    responseVm.IsSuccess = false;
+                    return responseVm;
+                }
+
+               
+
+
+                var productData = new MstJobType
+                {
+                    Id = Guid.NewGuid(),
+                    JobTypeName = model.JobTypeName,
+                    IsActive = true,
+                    IsDelete = false,
+                    CreatedAt = DateTime.Now,
+                    TenantId = AppConstant.LoggedInTenantId,
+                    CreatedBy = AppConstant.LoggedInUserID,
+                };
+
+                var result = Add(productData);
+                responseVm.Message = AppConstant.InsertSuccessMsg;
+                responseVm.IsSuccess = true;
+            }
+            catch (Exception ex)
+            {
+                responseVm.Message = $"{AppConstant.ExceptionError} {ex.Message}";
+                responseVm.IsSuccess = false;
+            }
+
+            return responseVm;
+        }
+
+        public async Task<IResponseVm<string>> DeleteJobType(Guid? JobTypeId)
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+            try
+            {
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
+                if (!IsTenant)
+                {
+                    responseVm.Message = "Tenant not found";
+                    responseVm.IsSuccess = false;
+                    return responseVm;
+                }
+
+                var IsProductTypeExists = GetAllQuerable()
+                      .Where(c => c.Id == JobTypeId
+                                  && c.IsDelete == false)
+                      .FirstOrDefault();
+                if (IsProductTypeExists != null)
+                {
+                    IsProductTypeExists.IsDelete = true;
+                    IsProductTypeExists.IsActive = false;
+                    IsProductTypeExists.UpdatedAt = DateTime.Now;
+                    IsProductTypeExists.ModifiedBy = AppConstant.LoggedInUserID;
+
+                    var res = Update(IsProductTypeExists);
+
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = AppConstant.UpdateSuccessMsg;
+                }
+                else
+                {
+                    responseVm.Message = $"{AppConstant.NoDataFound}";
+                }
+            }
+            catch (Exception ex)
+            {
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+            }
+            return responseVm;
+        }
+
+
+        public async Task<IResponseVm<string>> Update_JobType(UpdateJobType model)
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+            try
+            {
+
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
+                if (!IsTenant)
+                {
+                    responseVm.Message = "Tenant not found";
+                    responseVm.IsSuccess = false;
+                    return responseVm;
+                }
+
+                var IsProductTypeExists = GetAllQuerable()
+                      .Where(c => c.Id == model.JobTypeId
+                                  && c.IsDelete == false && c.TenantId == AppConstant.LoggedInTenantId)
+                      .FirstOrDefault();
+
+               
+
+                if (IsProductTypeExists != null)
+                {
+                    IsProductTypeExists.JobTypeName = model.JobTypeName;
+                    IsProductTypeExists.UpdatedAt = DateTime.Now;
+                    IsProductTypeExists.ModifiedBy = AppConstant.LoggedInUserID;
+                    var res = Update(IsProductTypeExists);
+
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = AppConstant.UpdateSuccessMsg;
+                }
+                else
+                {
+                    responseVm.Message = $"{AppConstant.NoDataFound}";
+                }
+            }
+            catch (Exception ex)
+            {
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+            }
             return responseVm;
         }
 
