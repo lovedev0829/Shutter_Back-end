@@ -1008,7 +1008,7 @@ namespace ShutterManagement.Business.Services
                 .Replace("{{tenantCompanyName}}", data.TenantCompanyName ?? "")
                 .Replace("{{logo}}", data.Logo ?? "")
                 .Replace("{{estimationdate}}", data.EstimationDate ?? "")
-                .Replace("{{createdby}}", data.PreparedBy?? "")
+                .Replace("{{createdby}}", data.PreparedBy ?? "")
                 .Replace("{{estimationsubtotal}}", data.EstimationSubtotal ?? "")
                 .Replace("{{estimationgrandtotal}}", data.EstimationGrandTotal ?? "")
                 .Replace("{{estimationId}}", data.EstimationId ?? "")
@@ -1021,7 +1021,10 @@ namespace ShutterManagement.Business.Services
                 .Replace("{{issuedate}}", data.IssueDate ?? "")
                 .Replace("{{totalamount}}", data.TotalAmount ?? "")
                 .Replace("{{balancedue}}", data.DueAmount ?? "")
-                .Replace("{{invoiceno}}", data.InvoiceNo ?? "");
+                .Replace("{{invoiceno}}", data.InvoiceNo ?? "")
+                .Replace("{{additionalcost}}", data.Additionalcost ?? "")
+                .Replace("{{discount}}", data.Discount ?? "")
+                .Replace("{{taxes}}", data.Taxes ?? "");
         }
 
         public byte[] GenerateInvoicePdf(string htmlContent)
