@@ -577,6 +577,9 @@ namespace ShutterManagement.Business.Services
                     Terms = estimationDetails?.TermsCondition ?? "",
                     Note = estimationDetails?.Notes ?? "",
                     OrderId = orderDetails?.OrderName ?? "",
+                    Taxes = estimationDetails?.TaxAmount.ToString() ?? "",
+                    Discount = estimationDetails?.DiscountAmount.ToString() ?? "",
+                    Additionalcost = estimationDetails?.AdditionalCost.ToString() ?? "",
                     ProductListHtml = GenerateProductListHtml(productList)
                 };
 
