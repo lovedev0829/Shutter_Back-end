@@ -17,6 +17,7 @@ using ShutterManagement.Core.Common;
 using Microsoft.Extensions.FileProviders;
 using DinkToPdf.Contracts;
 using DinkToPdf;
+using ShutterManagement.Stripe;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -165,7 +166,10 @@ builder.Services.AddSingleton(typeof(IConverter), new SynchronizedConverter(new 
 
 
 
+builder.Services.Configure<StripeSettings>(builder.Configuration.GetSection("Stripe"));
 
+// Register the StripeService as a singleton
+builder.Services.AddSingleton<StripeService>();
 
 
 var app = builder.Build();

@@ -26,44 +26,51 @@ namespace ShutterManagement.Business.Services
             IResponseVm<List<JobTypeList>> responseVm = new ResponseVm<List<JobTypeList>>();
             try
             {
-                
-                var JobTypeList = (await GetAll()).Where(p => p.IsDelete == false && p.TenantId != null && (p.TenantId == AppConstant.LoggedInTenantId || p.TenantId.ToString() == AppConstant.LoggedInParentTenantId)).OrderByDescending(x=>x.CreatedAt).ToList();
-
-
-                filter.SearchValue = filter.SearchValue?.Trim().ToLower();
-                var FilterRecords = JobTypeList
-                          .Where(x =>
-                          (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
-                          (string.IsNullOrEmpty(filter.SearchValue) ? true :
-                             (x.Id.ToString() == filter.SearchValue) ||
-                             (x.JobTypeName ?? "").ToLower().Contains(filter.SearchValue)
-                            )
-                         ).Select(x => new JobTypeList
-                         {
-                             JobTypeId = x.Id,
-                             JobTypeName = x.JobTypeName,
-                             IsActive = x.IsActive
-                         }).ToList();
-
-
-
-                var TakenRecords = FilterRecords
-                        .Skip((filter.PageNo - 1) * filter.RecordPerPage)
-                        .Take(filter.RecordPerPage)
-                        .ToList();
-                responseVm.IsSuccess = true;
-
-                if (TakenRecords != null && TakenRecords.Count > 0)
+               var isTenantValid = await tenantService.AnyAsync(x =>
+               x.TenantId == AppConstant.LoggedInTenantId &&
+               //  x.ParentTenantId == null &&
+               x.IsDelete == false &&
+               x.IsActive == true);
+                if (isTenantValid)
                 {
-                    responseVm.Data = TakenRecords.ToList();
-                    responseVm.Message = AppConstant.FetchSuccessMsg;
-                    responseVm.TotalRecords = FilterRecords.Count;
-                }
-                else
-                {
-                    responseVm.Message = AppConstant.NoDataFound;
-                }
 
+                    var JobTypeList = (await GetAll()).Where(p => p.IsDelete == false && (p.TenantId.ToString().ToUpper() == AppConstant.LoggedInTenantId.ToString().ToUpper() || p.TenantId.ToString().ToUpper() == AppConstant.LoggedInParentTenantId.ToUpper())).OrderByDescending(x => x.CreatedAt).ToList();
+
+
+                    filter.SearchValue = filter.SearchValue?.Trim().ToLower();
+                    var FilterRecords = JobTypeList
+                              .Where(x =>
+                              (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
+                              (string.IsNullOrEmpty(filter.SearchValue) ? true :
+                                 (x.Id.ToString() == filter.SearchValue) ||
+                                 (x.JobTypeName ?? "").ToLower().Contains(filter.SearchValue)
+                                )
+                             ).Select(x => new JobTypeList
+                             {
+                                 JobTypeId = x.Id,
+                                 JobTypeName = x.JobTypeName,
+                                 IsActive = x.IsActive
+                             }).ToList();
+
+
+
+                    var TakenRecords = FilterRecords
+                            .Skip((filter.PageNo - 1) * filter.RecordPerPage)
+                            .Take(filter.RecordPerPage)
+                            .ToList();
+                    responseVm.IsSuccess = true;
+
+                    if (TakenRecords != null && TakenRecords.Count > 0)
+                    {
+                        responseVm.Data = TakenRecords.ToList();
+                        responseVm.Message = AppConstant.FetchSuccessMsg;
+                        responseVm.TotalRecords = FilterRecords.Count;
+                    }
+                    else
+                    {
+                        responseVm.Message = AppConstant.NoDataFound;
+                    }
+                }
             }
             catch (Exception ex)
             {
