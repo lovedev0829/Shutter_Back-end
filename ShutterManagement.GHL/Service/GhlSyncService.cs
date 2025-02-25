@@ -3,16 +3,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using ShutterManagement.Services;
 
 namespace ShutterManagement.GHL.Service
 {
     public class GhlSyncService
     {
         private readonly IGhlApiClient _ghlApiClient;
-        private readonly IDatabaseService _databaseService;
+        private readonly CustomerService _databaseService;
         private readonly ILogger<GhlSyncService> _logger;
 
-        public GhlSyncService(IGhlApiClient ghlApiClient, IDatabaseService databaseService, ILogger<GhlSyncService> logger)
+        public GhlSyncService(IGhlApiClient ghlApiClient, CustomerService databaseService, ILogger<GhlSyncService> logger)
         {
             _ghlApiClient = ghlApiClient ?? throw new ArgumentNullException(nameof(ghlApiClient));
             _databaseService = databaseService ?? throw new ArgumentNullException(nameof(databaseService));

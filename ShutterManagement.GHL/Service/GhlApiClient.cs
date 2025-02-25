@@ -4,10 +4,11 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using ShutterManagement.Core.SPModel;
 using System.Runtime;
+using ShutterManagement.GHL.Service;
 public interface IGhlApiClient
 {
-    Task<List<Sp_Contact>> GetContactsAsync();
-    Task<bool> CreateContactAsync(Sp_Contact contact);
+    Task<List<Customer>> GetContactsAsync();
+    Task<bool> CreateContactAsync(Customer contact);
 }
 
 public class GhlApiClient : IGhlApiClient
@@ -23,7 +24,7 @@ public class GhlApiClient : IGhlApiClient
         _ghlSettings = options.Value;
     }
 
-    public async Task<List<Sp_Contact>> GetContactsAsync()
+    public async Task<List<Customer>> GetContactsAsync()
     {
         try
         {
@@ -35,7 +36,7 @@ public class GhlApiClient : IGhlApiClient
             var jsonResponse = await response.Content.ReadAsStringAsync();
             var contactResponse = JsonConvert.DeserializeObject<GhlContactResponse>(jsonResponse);
 
-            return contactResponse?.Contacts ?? new List<Sp_Contact>();
+            return contactResponse?.Contacts ?? new List<Customer>();
         }
         catch (Exception ex)
         {
@@ -44,7 +45,7 @@ public class GhlApiClient : IGhlApiClient
         }
     }
 
-    public async Task<bool> CreateContactAsync(Sp_Contact contact)
+    public async Task<bool> CreateContactAsync(Customer contact)
     {
         try
         {
@@ -55,7 +56,7 @@ public class GhlApiClient : IGhlApiClient
                 firstName = contact.FirstName,
                 lastName = contact.LastName,
                 email = contact.Email,
-                phone = contact.PhoneNumber,
+                phone = contact.MobilePh,
             };
 
             var contactJson = JsonConvert.SerializeObject(contactData);
@@ -81,13 +82,9 @@ public class GhlApiClient : IGhlApiClient
             _logger.LogError(ex, "Error creating contact in GHL.");
             return false;
         }
-
-
-
-
     }
 
-    public async Task<bool> CreateOpportunityInGhl(Contact contact, string contactId)
+    public async Task<bool> CreateOpportunityInGhl(Customer contact, string contactId)
     {
         //var pipelineId = "CFoi90n88zrDhMFP8R2I";  // Your actual pipeline ID
         // var stageId = "51740389-e764-4f93-9ff3-5c6b5c046ef1";  // Your actual stage ID
@@ -99,7 +96,7 @@ public class GhlApiClient : IGhlApiClient
             stageId = _ghlSettings.StageId,
             contactId = contactId,
             email = contact.Email,
-            phone = contact.Phone,
+            phone = contact.MobilePh,
             name = $"{contact.FirstName} {contact.LastName}",
         };
 
