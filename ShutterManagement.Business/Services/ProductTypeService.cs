@@ -226,34 +226,42 @@ namespace ShutterManagement.Business.Services
             IResponseVm<List<ProductTypeList>> responseVm = new ResponseVm<List<ProductTypeList>>();
             try
             {
-                var productTypeQuery = (await GetAll()).Where(p => p.IsDelete == false  && p.TenantId != null  && (p.TenantId == AppConstant.LoggedInTenantId || p.TenantId.ToString() == AppConstant.LoggedInParentTenantId)).OrderByDescending(x=>x.CreatedAt);
+                var isTenantValid = await tenantService.AnyAsync(x =>
+               x.TenantId == AppConstant.LoggedInTenantId &&
+               //  x.ParentTenantId == null &&
+               x.IsDelete == false &&
+               x.IsActive == true);
+                if (isTenantValid)
+                {
+                    var productTypeQuery = (await GetAll()).Where(p => p.IsDelete == false && (p.TenantId.ToString().ToUpper() == AppConstant.LoggedInTenantId.ToString().ToUpper() || p.TenantId.ToString().ToUpper() == AppConstant.LoggedInParentTenantId.ToUpper())).OrderByDescending(x => x.CreatedAt);
 
-                filter.SearchValue = filter.SearchValue?.Trim().ToLower();
-                var filteredProductTypes = productTypeQuery
-                    .Where(x =>
-                        (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
-                        (string.IsNullOrEmpty(filter.SearchValue) 
-                        ||x.ProductName.ToLower().Contains(filter.SearchValue) 
-                        ||x.ProductId.ToString().ToLower().Contains(filter.SearchValue))
-                    )
-                    .Select(x => new ProductTypeList
-                    {
-                        ProductId = x.ProductId,
-                        ProductName = x.ProductName,
-                         IsDefault= x.IsDefault,
-                        IsActive = x.IsActive,
-                    })
-                    .ToList();
+                    filter.SearchValue = filter.SearchValue?.Trim().ToLower();
+                    var filteredProductTypes = productTypeQuery
+                        .Where(x =>
+                            (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
+                            (string.IsNullOrEmpty(filter.SearchValue)
+                            || x.ProductName.ToLower().Contains(filter.SearchValue)
+                            || x.ProductId.ToString().ToLower().Contains(filter.SearchValue))
+                        )
+                        .Select(x => new ProductTypeList
+                        {
+                            ProductId = x.ProductId,
+                            ProductName = x.ProductName,
+                            IsDefault = x.IsDefault,
+                            IsActive = x.IsActive,
+                        })
+                        .ToList();
 
-                var paginatedProductTypes = filteredProductTypes
-                    .Skip((filter.PageNo - 1) * filter.RecordPerPage)
-                    .Take(filter.RecordPerPage)
-                    .ToList();
+                    var paginatedProductTypes = filteredProductTypes
+                        .Skip((filter.PageNo - 1) * filter.RecordPerPage)
+                        .Take(filter.RecordPerPage)
+                        .ToList();
 
-                responseVm.IsSuccess = true;
-                responseVm.Data = paginatedProductTypes;
-                responseVm.TotalRecords = filteredProductTypes.Count;
-                responseVm.Message = AppConstant.FetchSuccessMsg;
+                    responseVm.IsSuccess = true;
+                    responseVm.Data = paginatedProductTypes;
+                    responseVm.TotalRecords = filteredProductTypes.Count;
+                    responseVm.Message = AppConstant.FetchSuccessMsg;
+                }
             }
             catch (Exception ex)
             {
