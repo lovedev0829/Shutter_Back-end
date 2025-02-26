@@ -80,7 +80,6 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-
         public async Task<IResponseVm<string>> ActiveInActive(Guid? JobTypeId)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
