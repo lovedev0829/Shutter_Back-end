@@ -358,7 +358,7 @@ namespace ShutterManagement.Services
                 if (verifyCode == null)
                 {
                     result.IsSuccess = false;
-                    result.Message = "InvalidCode";
+                    result.Message = "Code does not Exist.";
                     return result;
                 }
 
@@ -370,7 +370,7 @@ namespace ShutterManagement.Services
                 if (!isRelateToTenant)
                 {
                     result.IsSuccess = false;
-                    result.Message = "InvalidTenantRelation";
+                    result.Message = "User does not Exist.";
                     return result;
                 }
 
@@ -378,7 +378,7 @@ namespace ShutterManagement.Services
                 if (string.IsNullOrEmpty(token))
                 {
                     result.IsSuccess = false;
-                    result.Message = "TokenGenerationFailed";
+                    result.Message = "TokenGeneration getting Failed.";
                     return result;
                 }
 
@@ -418,11 +418,11 @@ namespace ShutterManagement.Services
             var securitykey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(AppConstant.JWTSecretKey));
             var credentials = new SigningCredentials(securitykey, SecurityAlgorithms.HmacSha256);
             var claims = new List<Claim>
-     {
+        {
           new Claim("UserId",UserId.ToString()),
           new Claim("EmailId",Email.ToString()),
           new Claim("ExpiredOn",PasswordExpiry.ToString())
-     };
+         };
             var token = new JwtSecurityToken(AppConstant.JwtIssuer, AppConstant.JwtAudience, claims,
                          expires: PasswordExpiry, signingCredentials: credentials);
 
