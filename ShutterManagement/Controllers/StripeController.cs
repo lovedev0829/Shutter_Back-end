@@ -21,6 +21,15 @@ namespace ShutterManagement.Controllers
             var checkoutUrl = stripeService.CreateCheckoutSession(request);
             return Ok(new { checkoutUrl });
         }
+
+        [HttpPost]
+        public async Task<IActionResult> HandleWebhook()
+        {
+           
+                await stripeService.HandleStripeWebhook(HttpContext.Request);
+                return Ok(); 
+            }
+           
     }
 }
 

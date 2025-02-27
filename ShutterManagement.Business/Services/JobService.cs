@@ -244,18 +244,21 @@ namespace ShutterManagement.Business.Services
                         dbContext.SaveChanges();
                     }
                 }
-                var InvoicePaymentExists = dbContext.TblEstimates.Where(x => x.JobId == JobId && x.IsDelete == false).ToList();
-                if (EstimateExists != null)
+                foreach (var items in InvoiceExists)
                 {
-                    foreach (var item in EstimateExists)
+                    var InvoicePaymentExists = dbContext.TblInvoicePayments.Where(x => x.InvoiceId == items.InvoiceId && x.IsDelete == false).ToList();
+                    if (InvoicePaymentExists != null)
                     {
-                        item.IsDelete = true;
-                        item.IsActive = false;
-                        item.UpdatedAt = DateTime.Now;
-                        item.ModifiedBy = AppConstant.LoggedInUserID;
+                        foreach (var item in InvoicePaymentExists)
+                        {
+                            item.IsDelete = true;
+                            item.IsActive = false;
+                            item.UpdatedAt = DateTime.Now;
+                            item.ModifiedBy = AppConstant.LoggedInUserID;
 
-                        dbContext.TblEstimates.Update(item);
-                        dbContext.SaveChanges();
+                            dbContext.TblInvoicePayments.Update(item);
+                            dbContext.SaveChanges();
+                        }
                     }
                 }
             }

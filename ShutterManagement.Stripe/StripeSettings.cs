@@ -12,6 +12,8 @@ namespace ShutterManagement.Stripe
         public string PublishableKey { get; set; }
         public string successUrl { get; set; }
         public string cancelUrl { get; set; }
+        public string WebhookSecret { get; set; }
+
 
     }
 }
