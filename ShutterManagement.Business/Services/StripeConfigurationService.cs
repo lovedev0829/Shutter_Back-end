@@ -78,10 +78,10 @@ namespace ShutterManagement.Business.Services
                 responseVm.Data = new StripeConfigurationVm
                 {
                     //Id = StripeConfigurationVm.Id,
-                    SecretKey = StripeConfigurationVm.SecretKey,
-                    PublishableKey = StripeConfigurationVm.PublishableKey,
-                    successUrl = StripeConfigurationVm.SuccessUrl,
-                    cancelUrl = StripeConfigurationVm.CancelUrl,
+                    SecretKey = StripeConfigurationVm?.SecretKey??"",
+                    PublishableKey = StripeConfigurationVm?.PublishableKey??"",
+                    successUrl = StripeConfigurationVm?.SuccessUrl ?? "",
+                    cancelUrl = StripeConfigurationVm?.CancelUrl??"",
                 };
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.FetchSuccessMsg;
