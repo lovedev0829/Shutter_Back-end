@@ -348,7 +348,7 @@ namespace ShutterManagement.Services
                 if (user == null)
                 {
                     result.IsSuccess = false;
-                    result.Message = AppConstant.NoDataFound;
+                    result.Message = AppConstant.UserNotExist;
                     return result;
                 }
 
@@ -370,7 +370,7 @@ namespace ShutterManagement.Services
                 if (!isRelateToTenant)
                 {
                     result.IsSuccess = false;
-                    result.Message = "User does not Exist.";
+                    result.Message = AppConstant.UserNotExist;
                     return result;
                 }
 

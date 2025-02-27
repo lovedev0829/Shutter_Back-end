@@ -113,6 +113,8 @@ public partial class ShutterDBContext : DbContext
 
     public virtual DbSet<TblRolesPermission> TblRolesPermissions { get; set; }
 
+    public virtual DbSet<TblStripeConfiguration> TblStripeConfigurations { get; set; }
+
     public virtual DbSet<TblSubtenantProductMarkup> TblSubtenantProductMarkups { get; set; }
 
     public virtual DbSet<TblTaxExemption> TblTaxExemptions { get; set; }
@@ -1304,6 +1306,21 @@ public partial class ShutterDBContext : DbContext
             entity.HasOne(d => d.Role).WithMany(p => p.TblRolesPermissions)
                 .HasForeignKey(d => d.RoleId)
                 .HasConstraintName("FK__TblRoles___RoleI__2DB1C7EE");
+        });
+
+        modelBuilder.Entity<TblStripeConfiguration>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__TblStrip__3213E83F14DD4311");
+
+            entity.ToTable("TblStripeConfiguration", "dbo");
+
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("(newid())")
+                .HasColumnName("id");
+            entity.Property(e => e.CancelUrl).HasColumnName("cancelUrl");
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.SuccessUrl).HasColumnName("successUrl");
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
         });
 
         modelBuilder.Entity<TblSubtenantProductMarkup>(entity =>

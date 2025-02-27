@@ -55,6 +55,7 @@ namespace ShutterManagement.Controllers
         private readonly IDashboard dashboard;
         private readonly INotificationService notification;
         private readonly IGHLConfiguration gHLConfiguration;
+        private readonly IStripeConfiguration stripeConfiguration;
 
         public CommonController(IMasterCreate masterCreate, 
             FileUploadHelper fileUpload, ClaimsProperty claimsProperty,
@@ -68,7 +69,7 @@ namespace ShutterManagement.Controllers
             IMstContactType contactType, IJobService jobService,IExpressionService expression ,IInvoiceService invoiceService,
             ITaxRate taxService,IEstimateService estimateService,
             IEstimationBreakdownService estimationBreakdownService, ILocationService locationService,
-           IDashboard dashboard, INotificationService notification, IGHLConfiguration gHLConfiguration)
+           IDashboard dashboard, INotificationService notification, IGHLConfiguration gHLConfiguration,IStripeConfiguration stripeConfiguration)
         {
             this.masterCreate = masterCreate;
             this.fileUpload = fileUpload;
@@ -111,6 +112,7 @@ namespace ShutterManagement.Controllers
             this.dashboard = dashboard;
             this.notification = notification;
             this.gHLConfiguration = gHLConfiguration;
+            this.stripeConfiguration = stripeConfiguration;
         }
 
 
@@ -734,6 +736,42 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> AddGHLConfiguration(GHLConfiguration gHLConfiguration1)
         {
             var res = await gHLConfiguration.GHLConfiguration(gHLConfiguration1);
+            return Ok(res);
+        }
+
+        [HttpPost]
+        [Route("AddStripeConfiguration")]
+
+        public async Task<IActionResult> AddStripeConfiguration(CreateStripeConfiguration model)
+        {
+            var res = await stripeConfiguration.Create_StripeConfiguration(model);
+            return Ok(res);
+        }
+
+        [HttpPost]
+        [Route("UpdateStripeConfiguration")]
+
+        public async Task<IActionResult> UpdateStripeConfiguration(UpdateStripeConfiguration model)
+        {
+            var res = await stripeConfiguration.Update_StripeConfiguration(model);
+            return Ok(res);
+        }
+
+        [HttpPost]
+        [Route("DeleteStripeConfiguration")]
+
+        public async Task<IActionResult> DeleteStripeConfiguration(Guid? Id)
+        {
+            var res = await stripeConfiguration.DeleteStripeConfiguration(Id);
+            return Ok(res);
+        }
+
+        [HttpGet]
+        [Route("GetStripeConfiguration")]
+
+        public async Task<IActionResult> GetStripeConfiguration()
+        {
+            var res = await stripeConfiguration.GetAll_StripeConfiguration(filter);
             return Ok(res);
         }
     }
