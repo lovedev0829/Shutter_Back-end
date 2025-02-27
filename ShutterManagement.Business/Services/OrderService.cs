@@ -1175,7 +1175,6 @@ namespace ShutterManagement.Business.Services
             }
         }
 
-
         private async Task AddMaterialToOrder(TblRawMaterial materialData, Guid estimateId, Guid OrderId, string Version)
         {
             FileLogger.Log($"Adding material {materialData.MaterialName} to order...");
