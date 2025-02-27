@@ -191,7 +191,7 @@ namespace ShutterManagement.Business.Services
                 var WindowExists = dbContext.TblWindows.Where(x => x.JobId == JobId && x.IsDelete == false).ToList();
                 if (WindowExists != null)
                 {
-                    foreach(var item in WindowExists)
+                    foreach (var item in WindowExists)
                     {
                         item.IsDelete = true;
                         item.IsActive = false;
@@ -202,10 +202,10 @@ namespace ShutterManagement.Business.Services
                         dbContext.SaveChanges();
                     }
                 }
-                var EstimateExists = dbContext.TblEstimates.Where(x=> x.JobId == JobId && x.IsDelete == false).ToList();
-                if(EstimateExists != null)
+                var EstimateExists = dbContext.TblEstimates.Where(x => x.JobId == JobId && x.IsDelete == false).ToList();
+                if (EstimateExists != null)
                 {
-                    foreach(var item in EstimateExists)
+                    foreach (var item in EstimateExists)
                     {
                         item.IsDelete = true;
                         item.IsActive = false;
@@ -244,18 +244,21 @@ namespace ShutterManagement.Business.Services
                         dbContext.SaveChanges();
                     }
                 }
-                var InvoicePaymentExists = dbContext.TblEstimates.Where(x => x.JobId == JobId && x.IsDelete == false).ToList();
-                if (EstimateExists != null)
+                foreach (var items in InvoiceExists)
                 {
-                    foreach (var item in EstimateExists)
+                    var InvoicePaymentExists = dbContext.TblInvoicePayments.Where(x => x.InvoiceId == items.InvoiceId && x.IsDelete == false).ToList();
+                    if (InvoicePaymentExists != null)
                     {
-                        item.IsDelete = true;
-                        item.IsActive = false;
-                        item.UpdatedAt = DateTime.Now;
-                        item.ModifiedBy = AppConstant.LoggedInUserID;
+                        foreach (var item in InvoicePaymentExists)
+                        {
+                            item.IsDelete = true;
+                            item.IsActive = false;
+                            item.UpdatedAt = DateTime.Now;
+                            item.ModifiedBy = AppConstant.LoggedInUserID;
 
-                        dbContext.TblEstimates.Update(item);
-                        dbContext.SaveChanges();
+                            dbContext.TblInvoicePayments.Update(item);
+                            dbContext.SaveChanges();
+                        }
                     }
                 }
             }
