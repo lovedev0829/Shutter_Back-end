@@ -1128,7 +1128,7 @@ namespace ShutterManagement.Business.Services
             var invoicesQuery = (from i in GetAllQuerable()
                                  join j in dbContext.TblJobs on i.JobId equals j.JobId
                                  join c in dbContext.TblContacts on j.ContactId equals c.ContactId
-                                 where i.IsDelete == false
+                                 where i.IsDelete == false && i.TenantId == AppConstant.LoggedInTenantId
                                  orderby i.CreatedAt descending
                                  select new InvoiceVM
                                  {
@@ -1144,7 +1144,8 @@ namespace ShutterManagement.Business.Services
                                      Status = i.Status ?? "",
                                      IsActive = i.IsActive,
                                      ContactFirstName = c.FirstName,
-                                     ContactLastName = c.LastName
+                                     ContactLastName = c.LastName,
+                                     TenantId=i.TenantId
                                  }).ToList();
 
             filter.SearchValue = filter.SearchValue?.Trim().ToLower();

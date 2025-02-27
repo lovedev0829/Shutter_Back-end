@@ -18,6 +18,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? ContactFirstName { get; set; }
         public string? ContactLastName { get; set; }
         public string? EstimateName { get; set; }
+        public Guid? TenantId { get; set; }
         public bool? IsActive { get; set; }
 
         public List<InvoicePaymentVM> InvoicePayment { get; set; } = new List<InvoicePaymentVM>();

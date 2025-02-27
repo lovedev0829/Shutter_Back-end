@@ -722,57 +722,5 @@ namespace ShutterManagement.Controllers
             return Ok(result);
         }
 
-        [HttpGet]
-        [Route("GetGHLConfiguration")]
-        public async Task<IActionResult> GetGHLConfiguration()
-        {
-            var res = await gHLConfiguration.GetAll();
-            return Ok(res);
-        }
-
-        [HttpPost]
-        [Route("AddGHLConfiguration")]
-
-        public async Task<IActionResult> AddGHLConfiguration(GHLConfiguration gHLConfiguration1)
-        {
-            var res = await gHLConfiguration.GHLConfiguration(gHLConfiguration1);
-            return Ok(res);
-        }
-
-        [HttpPost]
-        [Route("AddStripeConfiguration")]
-
-        public async Task<IActionResult> AddStripeConfiguration(CreateStripeConfiguration model)
-        {
-            var res = await stripeConfiguration.Create_StripeConfiguration(model);
-            return Ok(res);
-        }
-
-        [HttpPost]
-        [Route("UpdateStripeConfiguration")]
-
-        public async Task<IActionResult> UpdateStripeConfiguration(UpdateStripeConfiguration model)
-        {
-            var res = await stripeConfiguration.Update_StripeConfiguration(model);
-            return Ok(res);
-        }
-
-        [HttpPost]
-        [Route("DeleteStripeConfiguration")]
-
-        public async Task<IActionResult> DeleteStripeConfiguration(Guid? Id)
-        {
-            var res = await stripeConfiguration.DeleteStripeConfiguration(Id);
-            return Ok(res);
-        }
-
-        [HttpGet]
-        [Route("GetStripeConfiguration")]
-
-        public async Task<IActionResult> GetStripeConfiguration()
-        {
-            var res = await stripeConfiguration.GetAll_StripeConfiguration(filter);
-            return Ok(res);
-        }
     }
 }

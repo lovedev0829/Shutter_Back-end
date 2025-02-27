@@ -24,183 +24,78 @@ namespace ShutterManagement.Business.Services
                 this.claimsProperty = claimsProperty;
         }
 
-            public async Task<IResponseVm<string>> Create_StripeConfiguration(CreateStripeConfiguration model)
+
+
+        public async Task<IResponseVm<string>> Create_OrUpdate_StripeConfiguration(CreateStripeConfiguration StripeConfiguration)
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+            try
             {
-                IResponseVm<string> responseVm = new ResponseVm<string>();
-
-                try
+                var IsStripeConfigurationTenantExist = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
+                if (IsStripeConfigurationTenantExist != null)
                 {
-                    var isTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false && x.IsActive == true);
-                    if (!isTenant)
-                    {
-                        responseVm.Message = "Tenant not found";
-                        responseVm.IsSuccess = false;
-                        return responseVm;
-                    }
+                    IsStripeConfigurationTenantExist.SecretKey = StripeConfiguration.SecretKey;
+                    IsStripeConfigurationTenantExist.PublishableKey = StripeConfiguration.PublishableKey;
+                    IsStripeConfigurationTenantExist.SuccessUrl = StripeConfiguration.successUrl;
+                    IsStripeConfigurationTenantExist.CancelUrl = StripeConfiguration.cancelUrl;
+                    IsStripeConfigurationTenantExist.ModifiedBy = AppConstant.LoggedInUserID;
 
-                    var stripeData = new TblStripeConfiguration
-                    {
-                        Id = Guid.NewGuid(),
-                        SecretKey = model.SecretKey,
-                        PublishableKey = model.PublishableKey,
-                        CancelUrl = model.cancelUrl,
-                        SuccessUrl = model.successUrl,
-                        IsDelete = false,
-                        IsActive = true,
-                        CreatedAt = DateTime.Now,
-                        TenantId = AppConstant.LoggedInTenantId,
-                        CreatedBy = AppConstant.LoggedInUserID,
-                    };
 
-                    var result = Add(stripeData);
-
-                    responseVm.Message = AppConstant.InsertSuccessMsg;
+                    var res = await Update(IsStripeConfigurationTenantExist);
                     responseVm.IsSuccess = true;
-                }
-                catch (Exception ex)
-                {
-                    responseVm.Message = $"{AppConstant.ExceptionError} {ex.Message}";
-                    responseVm.IsSuccess = false;
-                }
-
-                return responseVm;
-            }
-
-            public async Task<IResponseVm<string>> DeleteStripeConfiguration(Guid? id)
-            {
-                IResponseVm<string> responseVm = new ResponseVm<string>();
-
-                try
-                {
-                    if (id == null)
-                    {
-                        responseVm.Message = "Invalid Stripe Configuration ID";
-                        responseVm.IsSuccess = false;
-                        return responseVm;
-                    }
-
-                    var stripeConfig = GetAllQuerable().Where(x => x.Id == id && x.IsActive==true && x.IsDelete==false && x.TenantId==AppConstant.LoggedInTenantId).FirstOrDefault() ;
-                    if (stripeConfig == null)
-                    {
-                        responseVm.Message = "Stripe Configuration not found";
-                        responseVm.IsSuccess = false;
-                        return responseVm;
-                    }
-
-                    stripeConfig.IsDelete = true;
-                    stripeConfig.IsActive = false;
-                    stripeConfig.UpdatedAt = DateTime.Now;
-                    stripeConfig.ModifiedBy = AppConstant.LoggedInUserID;
-
-                    await Update(stripeConfig);
-
-                    responseVm.Message = AppConstant.DeleteSuccessMsg;
-                    responseVm.IsSuccess = true;
-                }
-                catch (Exception ex)
-                {
-                    responseVm.Message = $"{AppConstant.ExceptionError} {ex.Message}";
-                    responseVm.IsSuccess = false;
-                }
-
-                return responseVm;
-            }
-
-            public async Task<IResponseVm<List<StripeConfigurationVm>>> GetAll_StripeConfiguration(Pagination filter)
-            {
-                IResponseVm<List<StripeConfigurationVm>> responseVm = new ResponseVm<List<StripeConfigurationVm>>();
-
-                try
-                {
-                    var isTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false && x.IsActive == true);
-
-                    if (isTenant)
-                    {
-                        var stripeList = (from stripe in dbContext.TblStripeConfigurations.OrderByDescending(x => x.CreatedAt)
-                                          where stripe.TenantId == AppConstant.LoggedInTenantId && stripe.IsDelete==false
-                                          select new StripeConfigurationVm
-                                          {
-                                              Id = stripe.Id,
-                                              SecretKey = stripe.SecretKey,
-                                              PublishableKey = stripe.PublishableKey,
-                                              cancelUrl = stripe.CancelUrl,
-                                              successUrl = stripe.SuccessUrl,
-                                              IsActive = stripe.IsActive,
-                                          }).ToList();
-
-                        filter.SearchValue = filter.SearchValue?.Trim().ToLower();
-
-                        var filteredRecords = stripeList
-                            .Where(x =>
-                                (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
-                                (string.IsNullOrEmpty(filter.SearchValue) ? true :
-                                    x.Id.ToString().Contains(filter.SearchValue) ||
-                                    (x.SecretKey ?? "").ToLower().Contains(filter.SearchValue) ||
-                                    (x.PublishableKey ?? "").ToLower().Contains(filter.SearchValue) ||
-                                    (x.cancelUrl ?? "").ToLower().Contains(filter.SearchValue) ||
-                                    (x.successUrl ?? "").ToLower().Contains(filter.SearchValue))
-                            ).ToList();
-
-                        var takenRecords = filteredRecords
-                            .Skip((filter.PageNo - 1) * filter.RecordPerPage)
-                            .Take(filter.RecordPerPage)
-                            .ToList();
-
-                        responseVm.Data = takenRecords;
-                        responseVm.TotalRecords = filteredRecords.Count;
-                        responseVm.IsSuccess = true;
-                        responseVm.Message = AppConstant.FetchSuccessMsg;
-                    }
-                    else
-                    {
-                        responseVm.Message = AppConstant.AccessDenied;
-                        responseVm.IsSuccess = false;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    responseVm.Message = $"{AppConstant.ExceptionError} {ex.Message}";
-                    responseVm.IsSuccess = false;
-                }
-
-                return responseVm;
-            }
-
-
-            public async Task<IResponseVm<string>> Update_StripeConfiguration(UpdateStripeConfiguration model)
-            {
-                IResponseVm<string> responseVm = new ResponseVm<string>();
-
-                try
-                {
-                var stripeConfig = GetAllQuerable().Where(x => x.Id == model.Id && x.IsActive == true && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
-                if (stripeConfig == null)
-                {
-                    responseVm.Message = "Stripe Configuration not found";
-                    responseVm.IsSuccess = false;
-                    return responseVm;
-                }
-
-                    stripeConfig.SecretKey = model.SecretKey;
-                    stripeConfig.PublishableKey = model.PublishableKey;
-                    stripeConfig.CancelUrl = model.cancelUrl;
-                    stripeConfig.SuccessUrl = model.successUrl;
-                    stripeConfig.UpdatedAt = DateTime.Now;
-                    stripeConfig.ModifiedBy = AppConstant.LoggedInUserID;
-
-                    await  Update(stripeConfig);
-
                     responseVm.Message = AppConstant.UpdateSuccessMsg;
-                    responseVm.IsSuccess = true;
                 }
-                catch (Exception ex)
+                else
                 {
-                    responseVm.Message = $"{AppConstant.ExceptionError} {ex.Message}";
-                    responseVm.IsSuccess = false;
+                    TblStripeConfiguration tblstripeconfiguration = new TblStripeConfiguration()
+                    {
+                        SecretKey = StripeConfiguration.SecretKey,
+                        PublishableKey = StripeConfiguration.PublishableKey,
+                        SuccessUrl = StripeConfiguration.successUrl,
+                        CancelUrl = StripeConfiguration.cancelUrl,
+                        TenantId = AppConstant.LoggedInTenantId,
+                        CreatedAt = DateTime.Now,
+                    };
+                    var res1 = await Add(tblstripeconfiguration);
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = AppConstant.InsertSuccessMsg;
                 }
-
-                return responseVm;
             }
+            catch (Exception ex)
+            {
+                responseVm.Message += ex.Message;
+            }
+            return responseVm;
+        }
+
+
+        public async Task<IResponseVm<StripeConfigurationVm>> GetAll_StripeConfiguration()
+        {
+            IResponseVm<StripeConfigurationVm> responseVm = new ResponseVm<StripeConfigurationVm>();
+            try
+            {
+                var StripeConfigurationVm = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
+                responseVm.Data = new StripeConfigurationVm
+                {
+                    //Id = StripeConfigurationVm.Id,
+                    SecretKey = StripeConfigurationVm.SecretKey,
+                    PublishableKey = StripeConfigurationVm.PublishableKey,
+                    successUrl = StripeConfigurationVm.SuccessUrl,
+                    cancelUrl = StripeConfigurationVm.CancelUrl,
+                };
+                responseVm.IsSuccess = true;
+                responseVm.Message = AppConstant.FetchSuccessMsg;
+
+            }
+            catch (Exception ex)
+            {
+                responseVm.Message += ex.Message;
+            }
+            return responseVm;
+
+        }
+
+
         }
     }
 
