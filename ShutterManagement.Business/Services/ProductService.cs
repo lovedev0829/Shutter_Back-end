@@ -336,8 +336,6 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-
-
         public async Task<IResponseVm<string>> Update_Product(UpdateProduct model)
         {
 

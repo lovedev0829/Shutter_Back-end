@@ -32,8 +32,6 @@ namespace ShutterManagement.Business.Services
             this.contactService = contactService;
         }
 
-
-
         public async Task<IResponseVm<string>> Create_Address(CreateAddress model)
         {
 
