@@ -512,8 +512,6 @@ public partial class ShutterDBContext : DbContext
 
             entity.ToTable("TblEstimate", "dbo");
 
-            entity.HasIndex(e => e.EstimateCode, "UQ__TblEstim__1918B63A8F60ED37").IsUnique();
-
             entity.Property(e => e.EstimateId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.AdditionalCost).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.CreatedAt)
