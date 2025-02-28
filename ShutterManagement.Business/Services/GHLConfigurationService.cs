@@ -70,10 +70,10 @@ namespace ShutterManagement.Business.Services
                 var gHLConfiguration = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
                 responseVm.Data = new GetGHLConfiguration
                 {
-                   APIkey = gHLConfiguration.Apikey,
-                   BaseAddress = gHLConfiguration.BaseAddress,
-                   StageId = gHLConfiguration.StageId,
-                   PipelineId = gHLConfiguration.PipelineId,
+                   APIkey = gHLConfiguration?.Apikey??"",
+                   BaseAddress = gHLConfiguration?.BaseAddress??"",
+                   StageId = gHLConfiguration?.StageId??"",
+                   PipelineId = gHLConfiguration?.PipelineId ?? "",
                 };
                 responseVm.IsSuccess = true;
                 responseVm.Message= AppConstant.FetchSuccessMsg;

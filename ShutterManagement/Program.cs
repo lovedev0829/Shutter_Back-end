@@ -161,6 +161,7 @@ builder.Services.AddScoped<ILocationService, LocationService>();
 builder.Services.AddScoped<ISubtenantProductMarkup, SubtenantProductMarkup>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IGHLConfiguration, GHLConfigurationService>();
+builder.Services.AddScoped<IStripeConfiguration, StripeConfigurationService>();
 builder.Services.AddSingleton(typeof(IConverter), new SynchronizedConverter(new PdfTools()));
 
 
