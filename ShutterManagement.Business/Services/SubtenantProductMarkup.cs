@@ -41,24 +41,40 @@ namespace ShutterManagement.Business.Services
                     var isproductExists = GetAllQuerable().Where(x => x.ProductId.ToString().ToLower() == model.ProductId.ToString().ToLower() && x.Isdelete == false && x.IsActive == true).FirstOrDefault();
                     if(isproductExists != null)
                     {
-                        responseVm.Message = "Product" + AppConstant.AlreadyExists;
-                        return responseVm;
-                    }
-                    var markup = new TblSubtenantProductMarkup
-                    {
-                        ProductId = model.ProductId,
-                        Markup = model.Markup,
-                        TenantId = AppConstant.LoggedInTenantId,
-                        ParentTenantId = Guid.Parse(AppConstant.LoggedInParentTenantId),
-                        IsActive = true,
-                        Isdelete = false,
-                        CreatedAt = DateTime.Now,
-                        CreatedBy = AppConstant.LoggedInUserID,
-                    };
 
-                    var res = await Add(markup);
-                    responseVm.IsSuccess = true;
-                    responseVm.Message = AppConstant.InsertSuccessMsg;
+                        isproductExists.ProductId = model.ProductId;
+                        isproductExists.Markup = model.Markup;
+                        isproductExists.TenantId = AppConstant.LoggedInTenantId;
+                        isproductExists.ParentTenantId = Guid.Parse(AppConstant.LoggedInParentTenantId);
+                        isproductExists.IsActive = true;
+                        isproductExists.Isdelete = false;
+                        isproductExists.CreatedAt = DateTime.Now;
+                        isproductExists.CreatedBy = AppConstant.LoggedInUserID;
+                       
+
+                        var res = await Update(isproductExists);
+                        responseVm.IsSuccess = true;
+                        responseVm.Message = AppConstant.UpdateSuccessMsg;
+                    }
+                    else
+                    {
+                        var markup = new TblSubtenantProductMarkup
+                        {
+                            ProductId = model.ProductId,
+                            Markup = model.Markup,
+                            TenantId = AppConstant.LoggedInTenantId,
+                            ParentTenantId = Guid.Parse(AppConstant.LoggedInParentTenantId),
+                            IsActive = true,
+                            Isdelete = false,
+                            CreatedAt = DateTime.Now,
+                            CreatedBy = AppConstant.LoggedInUserID,
+                        };
+
+                        var res = await Add(markup);
+                        responseVm.IsSuccess = true;
+                        responseVm.Message = AppConstant.InsertSuccessMsg;
+                    }
+                    
                 }
                 else
                 {
