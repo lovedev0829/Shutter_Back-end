@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace ShutterManagement.Core.ViewModels.Response
 {
-    public class ContactsList
+    public class ContactsList : AdditionalProperty
     {
         public Guid? ContactId { get; set; }
         public string ContactType { get; set; } = string.Empty;

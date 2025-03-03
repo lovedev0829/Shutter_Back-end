@@ -543,14 +543,15 @@ namespace ShutterManagement.Business.Services
         }
 
 
-        public async Task<IResponseVm<List<ContactsList>>> GetAll_Contact(Pagination filter)
+        public async Task<IResponseVm<List<ContactsList>>> GetAll_Contact(Pagination filter,bool Role)
         {
             IResponseVm<List<ContactsList>> responseVm = new ResponseVm<List<ContactsList>>();
             try
             {
+                var IsSubtenants = false;
                 var Contacts = new List<TblContact>();
                 List<ContactsList> ContactList = new List<ContactsList>();
-                if (filter.TenantId != "")
+                if (filter.TenantId != "" && Role)
                 {
                     var IsRealtedTenant = tenantService.GetAllQuerable().Where(x => x.TenantId.ToString() == filter.TenantId && x.ParentTenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
                     if (IsRealtedTenant == null)
@@ -561,6 +562,7 @@ namespace ShutterManagement.Business.Services
                     else
                     {
                         Contacts = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId.ToString() == filter.TenantId).OrderByDescending(x => x.CreatedAt).ToList();
+                        IsSubtenants = true;
                     }
                 }
                 else
@@ -588,7 +590,8 @@ namespace ShutterManagement.Business.Services
                         IsBillingAddressSameAsAddress = contact.IsBillingAddressSameAsAddress,
                         IsActive = contact.IsActive,
                         IsArchive = contact.IsArchive,
-                        CreatedAt = contact.CreatedAt
+                        CreatedAt = contact.CreatedAt,
+                        IsSubtenant = IsSubtenants,
                     };
                     contacts.billingAddressVm = dbContext.TblAddresses
                         .Where(x => x.AddressId == contact.PrimaryAddress

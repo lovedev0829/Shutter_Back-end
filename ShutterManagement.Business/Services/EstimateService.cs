@@ -23,6 +23,7 @@ using System.Linq.Expressions;
 using NCalc;
 using Antlr.Runtime;
 using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.Security.Cryptography;
 
 namespace ShutterManagement.Business.Services
 {

@@ -42,7 +42,7 @@ namespace ShutterManagement.Core
         public static string UpdateSuccessMsg { get; set; } = "Data Updated Successfully";
         public static string UploadSuccessMsg { get; set; } = "File Upload Successfully";
         public static string DeleteSuccessMsg { get; set; } = "Data Deleted Successfully";
-        public static string NoDataFound { get; set; } = "Data not found.";
+        public static string NoDataFound { get; set; } = "Data does not Exist.";
         public static string AlreadyExists { get; set; } = "Data already exists!";
         public static string CodeAlreadyExists { get; set; } = "Code already exists!";
         public static string IncorrectDetails { get; set; } = "Incorrect details";

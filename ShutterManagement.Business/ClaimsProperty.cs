@@ -28,6 +28,14 @@ namespace ShutterManagement.Business
             }
             
         }
+
+
+        public string GetRoles()
+        {
+            var roles = httpContext.HttpContext.User.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
+            return string.Join(", ", roles);
+        }
+
         public Guid GetUserId()
         {
             var claim = httpContext.HttpContext.User.Claims.First(c => c.Type == "UserId");
