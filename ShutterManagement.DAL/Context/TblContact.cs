@@ -49,6 +49,10 @@ public partial class TblContact
 
     public Guid? PrimaryAddress { get; set; }
 
+    public DateTime? LastSync { get; set; }
+
+    public string? GhlcontactId { get; set; }
+
     public virtual ICollection<TblAddress> TblAddresses { get; set; } = new List<TblAddress>();
 
     public virtual ICollection<TblContactBillingAddress> TblContactBillingAddresses { get; set; } = new List<TblContactBillingAddress>();

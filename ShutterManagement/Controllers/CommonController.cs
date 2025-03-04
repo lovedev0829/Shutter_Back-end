@@ -15,6 +15,9 @@ using System.ComponentModel;
 using ShutterManagement.DAL.Context;
 using ShutterManagement.Business.Services;
 using ShutterManagement.Core.ViewModels.Response;
+using GHLConfiguration_Demo;
+using System.Text.Json.Serialization;
+using System.Text.Json;
 
 namespace ShutterManagement.Controllers
 {
@@ -56,6 +59,7 @@ namespace ShutterManagement.Controllers
         private readonly INotificationService notification;
         private readonly IGHLConfiguration gHLConfiguration;
         private readonly IStripeConfiguration stripeConfiguration;
+        private readonly GhlService ghlService;
 
         public CommonController(IMasterCreate masterCreate, 
             FileUploadHelper fileUpload, ClaimsProperty claimsProperty,
@@ -69,7 +73,7 @@ namespace ShutterManagement.Controllers
             IMstContactType contactType, IJobService jobService,IExpressionService expression ,IInvoiceService invoiceService,
             ITaxRate taxService,IEstimateService estimateService,
             IEstimationBreakdownService estimationBreakdownService, ILocationService locationService,
-           IDashboard dashboard, INotificationService notification, IGHLConfiguration gHLConfiguration,IStripeConfiguration stripeConfiguration)
+           IDashboard dashboard, INotificationService notification, IGHLConfiguration gHLConfiguration,IStripeConfiguration stripeConfiguration, GhlService ghlService)
         {
             this.masterCreate = masterCreate;
             this.fileUpload = fileUpload;
@@ -113,6 +117,7 @@ namespace ShutterManagement.Controllers
             this.notification = notification;
             this.gHLConfiguration = gHLConfiguration;
             this.stripeConfiguration = stripeConfiguration;
+            this.ghlService = ghlService;
         }
 
 
@@ -721,6 +726,38 @@ namespace ShutterManagement.Controllers
             var result = await notification.GetAllNotifications();
             return Ok(result);
         }
+
+
+        [HttpGet]
+        [Route("SaveStageGHLToDB")]
+        public async Task<IActionResult> GetPipeline()
+        {
+            var pipelineData = await ghlService.GetAndSaveDefaultPipelineAndStage();
+
+            if (pipelineData == null)
+            {
+                return NotFound("Pipeline not found");
+            }
+
+            var options = new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+                WriteIndented = true
+            };
+
+            var json = JsonSerializer.Serialize(pipelineData, options);
+            return Ok(json);
+        }
+
+        [HttpGet]
+        [Route("GetAllStages")]
+        public async Task<IActionResult> GetStages()
+        {
+            var result = await ghlService.GetGHLStages();
+            return Ok(result);
+        }
+
 
     }
 }

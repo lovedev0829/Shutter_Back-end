@@ -102,5 +102,13 @@ namespace ShutterManagement.Core
         public static string UpdateStatus_Notification = "Status Changed.";
         public static string Update_Notification = "Updated.";
         public static string Welcome_Notification = "Welcome";
+
+        //GHL Configuration
+
+        public static string GHL_APIKey = "";
+        public static string GHL_BaseAddress = "";
+        public static string GHL_PipelineId = "";
+        public static string GHL_StageId = "";
+
     }
 }

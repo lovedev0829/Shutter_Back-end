@@ -31,9 +31,10 @@ namespace ShutterManagement.Services
         private readonly ITenantService tenantService;
         private readonly ITenantBrandingService tenantBrandingService;
         private readonly INotificationService notification;
+        private readonly IGHLConfiguration gHLConfiguration;
 
         public AuthService(DataServices dataServices, IMapper mapper, IConfiguration config,
-            ITenantService tenantService, ITenantBrandingService tenantBrandingService,INotificationService notification)
+            ITenantService tenantService, ITenantBrandingService tenantBrandingService,INotificationService notification,IGHLConfiguration gHLConfiguration)
         {
             this.dataServices = dataServices;
             this.mapper = mapper;
@@ -41,6 +42,7 @@ namespace ShutterManagement.Services
             this.tenantService = tenantService;
             this.tenantBrandingService = tenantBrandingService;
             this.notification = notification;
+            this.gHLConfiguration = gHLConfiguration;
         }
         public async Task<IResponseVm<UserLoginDetails>> LoginAsync(LoginDetailVM user)
         {
@@ -90,6 +92,8 @@ namespace ShutterManagement.Services
 
             if (UserDetails.Count > 0)
             {
+                
+
                 var UserRole = await dataServices.CallSPtoRead<UserRoles>("Sp_GetLoggedinUserRoles", reader =>
                 {
                     return new UserRoles
@@ -118,6 +122,15 @@ namespace ShutterManagement.Services
                 claims.AddClaim(new Claim("ParentTenantId", UserDetails[0].ParentTenantId.ToString().ToUpper() ?? ""));
                 claims.AddClaim(new Claim("CompanyCode", user.CompanyCode));
                 claims.AddClaim(new Claim("CompanyName", UserDetails[0].CompanyName));
+
+                //// Store GHL Credentials in Claims
+                //claims.AddClaim(new Claim("GHL_APIKey", GHLres.APIkey ?? ""));
+                //claims.AddClaim(new Claim("GHL_BaseAddress", GHLres.BaseAddress ?? ""));
+                //claims.AddClaim(new Claim("GHL_PipelineId", GHLres.PipelineId ?? ""));
+                //claims.AddClaim(new Claim("GHL_StageId", GHLres.StageId ?? ""));
+                // Fetch GHL Configuration (Ensure to await the method)
+                
+               
 
                 var tokenHandler = new JwtSecurityTokenHandler();
                 var key = Encoding.UTF8.GetBytes(AppConstant.JWTSecretKey);
@@ -150,6 +163,18 @@ namespace ShutterManagement.Services
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.LoginSuccessMessgae;
                 responseVm.TotalRecords = 1;
+
+
+                    var GHLresResponse = await gHLConfiguration.GetGHLConfiguration();
+                    var GHLres = GHLresResponse?.Data ?? new GetGHLConfiguration();
+                    if (GHLres != null)
+                    {
+                        AppConstant.GHL_APIKey = GHLres.APIkey ?? "";
+                        AppConstant.GHL_BaseAddress = GHLres.BaseAddress ?? "";
+                        AppConstant.GHL_PipelineId = GHLres.PipelineId ?? "";
+                        AppConstant.GHL_StageId = GHLres.StageId ?? "";
+                    }
+                
             }
             else
             {

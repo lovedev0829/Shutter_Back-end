@@ -17,6 +17,9 @@ using ShutterManagement.Core.Common;
 using Microsoft.Extensions.FileProviders;
 using DinkToPdf.Contracts;
 using DinkToPdf;
+using GHLConfiguration_Demo;
+using System.Text.Json.Serialization;
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -87,7 +90,14 @@ builder.Services.AddAuthentication(options =>
     
 });
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+        options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+        options.JsonSerializerOptions.WriteIndented = true;
+    });
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
@@ -162,8 +172,10 @@ builder.Services.AddScoped<ISubtenantProductMarkup, SubtenantProductMarkup>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IGHLConfiguration, GHLConfigurationService>();
 builder.Services.AddScoped<IStripeConfiguration, StripeConfigurationService>();
+// Add services to the DI container
+builder.Services.AddHttpClient<GhlService>(); // Register HttpClient for GhlService
+builder.Services.AddScoped<GhlService>(); // Register GhlService as a scoped dependency
 builder.Services.AddSingleton(typeof(IConverter), new SynchronizedConverter(new PdfTools()));
-
 
 
 

@@ -9,6 +9,8 @@ using ShutterManagement.DAL.Context;
 using ShutterManagement.Services;
 using Microsoft.EntityFrameworkCore;
 using static ShutterManagement.Core.ViewModels.Response.GetAllJobsSubtenant_tenant;
+using GHLConfiguration_Demo;
+using System.Security.Cryptography.X509Certificates;
 
 namespace ShutterManagement.Business.Services
 {
@@ -19,15 +21,17 @@ namespace ShutterManagement.Business.Services
         private readonly IAddress address;
         private readonly ITenantService tenantService;
         private readonly INotificationService notification;
+        private readonly GhlService ghlService;
 
         public JobService(ShutterDBContext context, ClaimsProperty claimsProperty, IAddress address,
-            ITenantService tenantService,INotificationService notification)
+            ITenantService tenantService,INotificationService notification,GhlService ghlService)
         {
             _context = context;
             this.claimsProperty = claimsProperty;
             this.address = address;
             this.tenantService = tenantService;
             this.notification = notification;
+            this.ghlService = ghlService;
         }
         public async Task<IResponseVm<string>> ActiveInactive(string JobId)
         {
@@ -92,6 +96,7 @@ namespace ShutterManagement.Business.Services
                 }
                 if (IsAddressExist)
                 {
+                    var stage = _context.TblGhlStages.Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.GhlStageId== model.GHL_StageId.ToString()).FirstOrDefault();
                     var jobStatus = _context.MstJobStatuses.Where(s => s.JobStatusName == "Pending" && s.IsActive == true).FirstOrDefault();
                     string arrayString = string.Join(", ", model.AttachmentsAny);
                     TblJob job = new TblJob
@@ -106,6 +111,8 @@ namespace ShutterManagement.Business.Services
                         Notes = model.Notes.Trim(),
                         AttachmentAny = arrayString,
                         JobUniqueId = generateUnique,
+                        GhlStageId = model.GHL_StageId,
+                        GhlStageName = stage?.GhlStageName?.Trim()??"",
                         TenantId = AppConstant.LoggedInTenantId,
                         IsActive = true,
                         IsDelete = false,
@@ -117,6 +124,7 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.InsertSuccessMsg;
                     if (responseVm.IsSuccess)
                     {
+                        //await ghlService.CreateOpportunityAsync(model.ContactId.ToString(), model.JobName, model.Notes);
                         CreateNotification notification1 = new CreateNotification()
                         {
                             UserId = AppConstant.LoggedInUserID,
@@ -278,6 +286,7 @@ namespace ShutterManagement.Business.Services
 
                 if (IsTenant)
                 {
+                    
 
                     var JobList = (from t2 in _context.TblJobs.OrderByDescending(x => x.CreatedAt)
                                    join t1 in _context.TblAddresses on t2.AddressId equals t1.AddressId
@@ -310,6 +319,8 @@ namespace ShutterManagement.Business.Services
                                        State = t1.State,
                                        ZipCode = t1.ZipCode,
                                        JobUniqueCode = t2.JobUniqueId,
+                                       GHL_StageId = t2.GhlStageId,
+                                       GHL_StageName = t2.GhlStageName??"",
                                    }).ToList();
                     filter.SearchValue = filter.SearchValue?.Trim().ToLower();
                     var FilterRecords = JobList
@@ -324,6 +335,7 @@ namespace ShutterManagement.Business.Services
                                         (x.AddressId.ToString() == filter.SearchValue)
                                         || (x.JobName ?? "").ToLower().Contains(filter.SearchValue)
                                         || (x.ContactFirstName ?? "").ToLower().Contains(filter.SearchValue)
+                                        || (x.GHL_StageName ?? "").ToLower().Contains(filter.SearchValue)
                                         || (x.ContactLasttName ?? "").ToLower().Contains(filter.SearchValue)
                                         || ((x.ContactFirstName??"" )+ " " + (x.ContactLasttName??"") ?? "").ToLower().Contains(filter.SearchValue)
                                         || (x.JobType.ToString() ?? "").ToLower().Contains(filter.SearchValue)
@@ -387,6 +399,8 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = "Job Name " + AppConstant.AlreadyExists;
                     return responseVm;
                 }
+                var stage = _context.TblGhlStages.Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.GhlStageId == model.GHL_StageId.ToString()).FirstOrDefault();
+
                 if (IsJobExist != null)
                 {
                     string arrayString = string.Join(", ", model.AttachmentsAny);
@@ -396,6 +410,8 @@ namespace ShutterManagement.Business.Services
                     IsJobExist.ScheduledDate = model.ScheduledDate;
                     IsJobExist.JobStatus = model.JobStatus;
                     IsJobExist.Notes = model.Notes.Trim();
+                    IsJobExist.GhlStageId = model.GHL_StageId;
+                    IsJobExist.GhlStageName = stage?.GhlStageName?.Trim()??"";
                     IsJobExist.AttachmentAny = arrayString;
                     IsJobExist.UpdatedAt = DateTime.Now;
                     IsJobExist.ModifiedBy = AppConstant.LoggedInUserID;
