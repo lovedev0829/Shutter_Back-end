@@ -22,6 +22,7 @@
   <ItemGroup>
     <ProjectReference Include="..\ShutterManagement.Core\ShutterManagement.Core.csproj" />
     <ProjectReference Include="..\ShutterManagement.DAL\ShutterManagement.DAL.csproj" />
+    <ProjectReference Include="..\ShutterManagement.GHL\ShutterManagement.GHL.csproj" />
   </ItemGroup>
 
 </Project>

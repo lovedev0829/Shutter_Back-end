@@ -43,6 +43,8 @@ public partial class TblEstimateWindowProductComponent
 
     public decimal? ComponentPrice { get; set; }
 
+    public Guid? WindowId { get; set; }
+
     public virtual TblEstimate Estimate { get; set; } = null!;
 
     public virtual TblTenant? Tenant { get; set; }

@@ -10,6 +10,8 @@ using ShutterManagement.Core.ViewModels;
 using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.Core.ViewModels.Response;
 using ShutterManagement.DAL.Context;
+using ShutterManagement.GHL;
+using ShutterManagement.GHL.Service;
 using ShutterManagement.Services;
 
 namespace ShutterManagement.Business.Services
@@ -21,15 +23,18 @@ namespace ShutterManagement.Business.Services
         private readonly ITenantService tenantService;
         private readonly ITaxExemption taxExemptionService;
         private readonly ClaimsProperty claimsProperty;
+        private readonly GhlService ghlService;
 
         public ContactServices(ShutterDBContext context, IContactBillingService billingService,
-            ITenantService tenantService, ITaxExemption taxExemptionService, ClaimsProperty claimsProperty)
+            ITenantService tenantService, ITaxExemption taxExemptionService,
+            ClaimsProperty claimsProperty,GhlService ghlService)
         {
             _context = context;
             this.billingService = billingService;
             this.tenantService = tenantService;
             this.taxExemptionService = taxExemptionService;
             this.claimsProperty = claimsProperty;
+            this.ghlService = ghlService;
         }
 
         public async Task<IResponseVm<string>> GetContactByEmailOrPhone(string email, string phone)
@@ -85,6 +90,7 @@ namespace ShutterManagement.Business.Services
                         .Where(c => (c.Email == model.Email || c.PhoneNumber == model.PhoneNumber)
                         && c.TenantId == AppConstant.LoggedInTenantId
                         && c.IsDelete == false).ToList();
+                    
                     if (IsContactExists.Count > 0)
                     {
                         responseVm.Message = $"Email {model.Email} or Phone {model.PhoneNumber} " + AppConstant.AlreadyExists;
@@ -174,8 +180,6 @@ namespace ShutterManagement.Business.Services
                             dbContext.SaveChanges();
                             res.PrimaryAddress = address.AddressId;
                             await Update(res);
-
-
                         }
                         if (!model.IsTaxExemption)
                         {
@@ -191,9 +195,7 @@ namespace ShutterManagement.Business.Services
                                 IsDelete = false,
                             };
                             await taxExemptionService.Add(taxExemption1);
-
                         }
-
 
                         var ghlResponse = await SyncWithGHL(res, model);
                         if (!ghlResponse.IsSuccess)
@@ -343,6 +345,20 @@ namespace ShutterManagement.Business.Services
                                 await taxExemptionService.Add(taxExemption1);
                             }
                         }
+                        var ghlContactAdd = new GhlContactAdd
+                        {
+                            Id = contact.ContactId.ToString() ?? string.Empty,
+                            FirstName = model.FirstName ?? string.Empty,
+                            LastName = model.LastName ?? string.Empty,
+                            Email = model.Email ?? string.Empty,
+                            Phone = model.PhoneNumber ?? string.Empty,
+                            Notes = model.Notes ?? string.Empty,
+                            ContactType = model.ContactType ?? string.Empty,
+                            Website = model.Website ?? string.Empty,
+                            Referral = model.Referral ?? string.Empty
+                        };
+                        var ghlResponse = await ghlService.UpdateContactAsync(contact.GhlcontactId, ghlContactAdd);
+
                         responseVm.IsSuccess = true;
                         responseVm.Message = AppConstant.UpdateSuccessMsg;
                     }
@@ -658,61 +674,44 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                // Retrieve the GhlSettings from configuration (assuming this is part of your app settings)
-                var ghlSettings = new
-                {
-                    ApiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2NhdGlvbl9pZCI6IlBUbklDTU4wbUtyMDNrekpRcVBRIiwidmVyc2lvbiI6MSwiaWF0IjoxNzI0MDcwNDM3MTYzLCJzdWIiOiJkOGhlWkl2dEliZDVPcGhGdXNmYiJ9.yRrmWRgUC5VtrhKMsE4JsLjpwROYvvQnwoYu5JbVQWU", // Your GHL API Key
-                    PipelineId = "CFoi90n88zrDhMFP8R2I", // Pipeline ID
-                    StageId = "51740389-e764-4f93-9ff3-5c6b5c046ef1", // Stage ID
-                    BaseAddress = "https://rest.gohighlevel.com/v1/" // Base URL
+                var ghlResponse = false;
+                var ghlContactAdd = new GhlContactAdd
+                { 
+                    Id = contact.ContactId.ToString() ?? string.Empty,
+                    FirstName = model.FirstName ?? string.Empty,  
+                    LastName = model.LastName ?? string.Empty,   
+                    Email = model.Email ?? string.Empty,           
+                    Phone = model.PhoneNumber ?? string.Empty,    
+                    Notes = model.Notes ?? string.Empty,           
+                    ContactType = model.ContactType ?? string.Empty,  
+                    Website = model.Website ?? string.Empty,       
+                    Referral = model.Referral ?? string.Empty      
                 };
 
-                // Prepare the GHL API payload
-                var ghlPayload = new
+                if (contact.GhlcontactId == null)
                 {
-                    first_name = model.FirstName,
-                    last_name = model.LastName,
-                    email = model.Email,
-                    phone = model.PhoneNumber,
-                    website = model.Website,
-                    notes = model.Notes,
-                    referral = model.Referral,
-                    pipeline_id = ghlSettings.PipelineId,
-                    stage_id = ghlSettings.StageId,
-                    custom_fields = new { /* Add custom fields if needed */ }
-                };
-
-                // GHL API URL for creating or updating a contact
-                string ghlUrl = $"{ghlSettings.BaseAddress}contacts/";
-                var client = new HttpClient();
-
-                // Add the authorization header using the API key
-                client.DefaultRequestHeaders.Add("Authorization", $"Bearer {ghlSettings.ApiKey}");
-
-                // Convert payload to JSON and send the POST request
-                var content = new StringContent(JsonConvert.SerializeObject(ghlPayload), Encoding.UTF8, "application/json");
-                var response = await client.PostAsync(ghlUrl, content);
-                var responseContent = await response.Content.ReadAsStringAsync();
-
-                // Check the response status
-                if (response.IsSuccessStatusCode)
-                {
-                    responseVm.IsSuccess = true;
-                    responseVm.Message = "Contact successfully synced with GHL.";
+                   ghlResponse =await ghlService.CreateContactAsync(ghlContactAdd);
                 }
                 else
                 {
-                    responseVm.Message = "Failed to sync with GHL: " + responseContent;
+                    ghlResponse = await ghlService.UpdateContactAsync(contact.GhlcontactId,ghlContactAdd);
+                }
+                if (ghlResponse != null)
+                {
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = "Contact synced successfully with GHL.";
+                }
+                else
+                {
+                    responseVm.Message = "Contact sync with GHL failed.";
                 }
             }
             catch (Exception ex)
             {
                 responseVm.Message = "Error syncing with GHL: " + ex.Message;
             }
-
             return responseVm;
         }
-
 
     }
 }
