@@ -17,9 +17,9 @@ using ShutterManagement.Core.Common;
 using Microsoft.Extensions.FileProviders;
 using DinkToPdf.Contracts;
 using DinkToPdf;
-using GHLConfiguration_Demo;
 using System.Text.Json.Serialization;
 using System.Text.Json;
+using ShutterManagement.GHL.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 

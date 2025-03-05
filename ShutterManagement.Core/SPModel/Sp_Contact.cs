@@ -57,6 +57,9 @@ namespace ShutterManagement.Core.SPModel
 
         [DefaultValue("")]
         public string? Referral { get; set; }
+        public string? GHLContactId { get; set; }
+        public DateTime? lastAsync { get; set; }
+        public string? locationId { get; set; }
 
         public bool IsBillingAddressSameAsAddress { get; set; } = false;
         public BillingAddressVm? BillingAddressVm { get; set; }

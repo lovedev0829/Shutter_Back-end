@@ -9,8 +9,8 @@ using ShutterManagement.DAL.Context;
 using ShutterManagement.Services;
 using Microsoft.EntityFrameworkCore;
 using static ShutterManagement.Core.ViewModels.Response.GetAllJobsSubtenant_tenant;
-using GHLConfiguration_Demo;
 using System.Security.Cryptography.X509Certificates;
+using ShutterManagement.GHL.Services;
 
 namespace ShutterManagement.Business.Services
 {
@@ -24,7 +24,7 @@ namespace ShutterManagement.Business.Services
         private readonly GhlService ghlService;
 
         public JobService(ShutterDBContext context, ClaimsProperty claimsProperty, IAddress address,
-            ITenantService tenantService,INotificationService notification,GhlService ghlService)
+            ITenantService tenantService,INotificationService notification, GhlService ghlService)
         {
             _context = context;
             this.claimsProperty = claimsProperty;
@@ -124,7 +124,7 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.InsertSuccessMsg;
                     if (responseVm.IsSuccess)
                     {
-                        //await ghlService.CreateOpportunityAsync(model.ContactId.ToString(), model.JobName, model.Notes);
+                        await ghlService.CreateOpportunityInGhl(model.ContactId, model.JobName, model.Notes);
                         CreateNotification notification1 = new CreateNotification()
                         {
                             UserId = AppConstant.LoggedInUserID,

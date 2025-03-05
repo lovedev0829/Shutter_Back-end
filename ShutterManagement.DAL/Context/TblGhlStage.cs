@@ -24,4 +24,6 @@ public partial class TblGhlStage
     public Guid? ModifiedBy { get; set; }
 
     public Guid Id { get; set; }
+
+    public DateTime? CreatedAt { get; set; }
 }

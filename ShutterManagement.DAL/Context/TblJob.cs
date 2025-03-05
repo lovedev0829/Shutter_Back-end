@@ -45,6 +45,10 @@ public partial class TblJob
 
     public string? GhlStageName { get; set; }
 
+    public string? GhlContactId { get; set; }
+
+    public string? GhlOpportunityId { get; set; }
+
     public virtual TblAddress? Address { get; set; }
 
     public virtual TblContact? Contact { get; set; }

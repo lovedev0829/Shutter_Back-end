@@ -15,9 +15,10 @@ using System.ComponentModel;
 using ShutterManagement.DAL.Context;
 using ShutterManagement.Business.Services;
 using ShutterManagement.Core.ViewModels.Response;
-using GHLConfiguration_Demo;
 using System.Text.Json.Serialization;
 using System.Text.Json;
+using ShutterManagement.GHL.Services;
+using ShutterManagment.GHL.ViewModel.Response;
 
 namespace ShutterManagement.Controllers
 {
@@ -279,7 +280,7 @@ namespace ShutterManagement.Controllers
         [Route("GetAllContacts")]
         public async Task<IActionResult> GetAllContact()
         {
-            var res = await contactService.GetAll_Contact(filter);
+            var res = await contactService.GetAll_Contact(filter,false);
             res.Data = res.Data?.Where(x => x.IsActive == true && x.IsArchive==false).ToList();
             return Ok(res);
         }
@@ -729,6 +730,14 @@ namespace ShutterManagement.Controllers
 
 
         [HttpGet]
+        [Route("GetAllGHLContact")]
+        public async Task<IActionResult> GetAllGHLContact()
+        {
+            var result = await ghlService.GetContactsAsync();
+            return Ok(result);
+        }
+
+        [HttpGet]
         [Route("SaveStageGHLToDB")]
         public async Task<IActionResult> GetPipeline()
         {
@@ -757,6 +766,24 @@ namespace ShutterManagement.Controllers
             var result = await ghlService.GetGHLStages();
             return Ok(result);
         }
+
+
+        [HttpGet]
+        [Route("GetOpportunity")]
+        public async Task<IActionResult> GetOpportunity()
+        {
+            var result = await ghlService.GetOpportunitiesFromGhl();
+            return Ok(result);
+        }
+
+        [HttpPost("HandleOpportunityWebhook")]
+        [AllowAnonymous]
+        public async Task<IActionResult> HandleOpportunityWebhook([FromBody] GhlOpportunityWebhookModel webhookData)
+        {
+            var response = await ghlService.ProcessGhlOpportunityWebhook(webhookData);
+            return response.IsSuccess ? Ok(response) : BadRequest(response);
+        }
+
 
 
     }

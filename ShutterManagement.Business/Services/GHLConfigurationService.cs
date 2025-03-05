@@ -32,7 +32,7 @@ namespace ShutterManagement.Business.Services
                 if(IsGHLConfigurationTenantExist != null)
                 {
                     IsGHLConfigurationTenantExist.Apikey = gHLConfiguration.APIkey;
-                    IsGHLConfigurationTenantExist.StageId = gHLConfiguration.StageId;
+                    //IsGHLConfigurationTenantExist. = gHLConfiguration.StageId;
                     IsGHLConfigurationTenantExist.PipelineId = gHLConfiguration.PipelineId;
                     IsGHLConfigurationTenantExist.BaseAddress = gHLConfiguration.BaseAddress;
 
@@ -46,7 +46,7 @@ namespace ShutterManagement.Business.Services
                     {
                         PipelineId = gHLConfiguration.PipelineId,
                         BaseAddress = gHLConfiguration.BaseAddress,
-                        StageId = gHLConfiguration.StageId,
+                       // StageId = gHLConfiguration.StageId,
                         Apikey = gHLConfiguration.APIkey,
                         TenantId = AppConstant.LoggedInTenantId,
                     };
@@ -72,7 +72,7 @@ namespace ShutterManagement.Business.Services
                 {
                    APIkey = gHLConfiguration?.Apikey??"",
                    BaseAddress = gHLConfiguration?.BaseAddress??"",
-                   StageId = gHLConfiguration?.StageId??"",
+                  // StageId = gHLConfiguration?.StageId??"",
                    PipelineId = gHLConfiguration?.PipelineId ?? "",
                 };
                 responseVm.IsSuccess = true;

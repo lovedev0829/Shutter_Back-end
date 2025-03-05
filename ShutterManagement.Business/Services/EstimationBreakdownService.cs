@@ -37,7 +37,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<List<ContactsList>> responseVm = new ResponseVm<List<ContactsList>>();
             try
             {
-                var res = await contactService.GetAll_Contact(filter);
+                var res = await contactService.GetAll_Contact(filter, false);
                 if (res?.Data != null)
                 {
                     var activeContacts = res.Data.Where(x => x.IsActive == true).ToList();
@@ -66,7 +66,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<List<ContactBreakdown>> responseVm = new ResponseVm<List<ContactBreakdown>>();
             try
             {
-                var res = await contactService.GetAll_Contact(filter);
+                var res = await contactService.GetAll_Contact(filter, false);
                 if (res?.Data != null)
                 {
                     var activeContacts = res.Data.Where(x => x.IsActive == true).ToList();

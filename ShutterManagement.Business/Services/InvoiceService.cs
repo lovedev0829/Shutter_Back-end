@@ -508,7 +508,7 @@ namespace ShutterManagement.Business.Services
                 }
                
 
-                var customerDetails = (await contactService.GetAll_Contact(filter))
+                var customerDetails = (await contactService.GetAll_Contact(filter,false))
                     .Data.FirstOrDefault(x => x.ContactId == model.ContactId && x.IsActive == true);
 
                 var tenantDetails = tenantService.GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true).FirstOrDefault();

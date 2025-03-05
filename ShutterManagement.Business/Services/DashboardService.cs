@@ -30,6 +30,8 @@ namespace ShutterManagement.Business.Services
             this.address = address;
             this.tenantService = tenantService;
         }
+
+
         /// <summary>
         /// Retrieves all dashboard data for the logged-in tenant, including job status counts.
         /// </summary>
@@ -69,7 +71,7 @@ namespace ShutterManagement.Business.Services
 
                 Data = statusCounts.Where(x=>x.JobStatusName == "Lost" || x.JobStatusName == "Won").Select(x => new StatusCountVm
                 {
-                    Label = x.JobStatusName.Replace("Lost", "In Won").Replace("Won", "Won Jobs"),
+                    Label = x.JobStatusName.Replace("Lost", "In Lost").Replace("Won", "Won Jobs"),
                     Image = x.Icon,
                     Count = x.TenantId.Where(x => x == AppConstant.LoggedInTenantId).Count().ToString(),
                     Url=$"/job/{x.JobStatusId}"

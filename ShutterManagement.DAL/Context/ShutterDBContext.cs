@@ -747,6 +747,7 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.Id)
                 .HasDefaultValueSql("(newid())")
                 .HasColumnName("id");
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
             entity.Property(e => e.GhlLastSync)
                 .HasColumnType("datetime")
                 .HasColumnName("GHL_lastSync");
@@ -835,6 +836,12 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
+            entity.Property(e => e.GhlContactId)
+                .HasMaxLength(100)
+                .HasColumnName("GHL_ContactId");
+            entity.Property(e => e.GhlOpportunityId)
+                .HasMaxLength(100)
+                .HasColumnName("GHL_OpportunityId");
             entity.Property(e => e.GhlStageId).HasColumnName("GHL_StageId");
             entity.Property(e => e.GhlStageName)
                 .HasMaxLength(100)
