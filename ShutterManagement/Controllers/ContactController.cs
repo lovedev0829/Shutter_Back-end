@@ -101,7 +101,7 @@ namespace ShutterManagement.Controllers
             contactData.TryGetProperty("phone", out var phoneProp);
             contactData.TryGetProperty("dateAdded", out var dateAddedProp);
             contactData.TryGetProperty("locationId", out var locationId);
-            contactData.TryGetProperty("id", out var id);
+            contactData.TryGetProperty("Id", out var ghlContactId);
 
             DateTime? dateAdded = null;
             if (dateAddedProp.ValueKind != JsonValueKind.Null)
@@ -115,64 +115,98 @@ namespace ShutterManagement.Controllers
                     dateAdded = null;
                 }
             }
-            string locationIdValue = locationId.ValueKind != JsonValueKind.Null ? locationId.GetString() ?? string.Empty : string.Empty;
-            string ghlContactIdValue = id.ValueKind != JsonValueKind.Null ? id.GetString() ?? string.Empty : string.Empty;
+
+            string typeValue = typeProp.ValueKind == JsonValueKind.String ? typeProp.GetString() : string.Empty;
+            string firstNameValue = firstNameProp.ValueKind == JsonValueKind.String ? firstNameProp.GetString() : string.Empty;
+            string lastNameValue = lastNameProp.ValueKind == JsonValueKind.String ? lastNameProp.GetString() : string.Empty;
+            string emailValue = emailProp.ValueKind == JsonValueKind.String ? emailProp.GetString() : string.Empty;
+            string phoneValue = phoneProp.ValueKind == JsonValueKind.String ? phoneProp.GetString() : string.Empty;
+
+            string locationIdValue = locationId.ValueKind == JsonValueKind.String ? locationId.GetString() : string.Empty;
+            string ghlContactIdValue = ghlContactId.ValueKind == JsonValueKind.String ? ghlContactId.GetString() : string.Empty;
+
             var contact = new Sp_Contact
             {
-                ContactType = typeProp.ValueKind != JsonValueKind.Null ? typeProp.GetString() ?? string.Empty : string.Empty,
-                FirstName = firstNameProp.ValueKind != JsonValueKind.Null ? firstNameProp.GetString() ?? string.Empty : string.Empty,
-                LastName = lastNameProp.ValueKind != JsonValueKind.Null ? lastNameProp.GetString() ?? string.Empty : string.Empty,
-                Email = emailProp.ValueKind != JsonValueKind.Null ? emailProp.GetString() ?? string.Empty : string.Empty,
-                PhoneNumber = phoneProp.ValueKind != JsonValueKind.Null ? phoneProp.GetString() ?? string.Empty : string.Empty,
+                ContactType = typeValue,
+                FirstName = firstNameValue,
+                LastName = lastNameValue,
+                Email = emailValue,
+                PhoneNumber = phoneValue,
                 lastAsync = dateAdded,
                 locationId = locationIdValue,
                 GHLContactId = ghlContactIdValue
             };
+
             var res = await _contactService.Create_Contact(contact);
             return Ok(res);
         }
+
 
         [HttpPost("UpdateContactFromGHL")]
         [AllowAnonymous]
         public async Task<IActionResult> UpdateContactFromGHL([FromBody] JsonElement contactData)
         {
-            contactData.TryGetProperty("type", out var typeProp);
-            contactData.TryGetProperty("firstName", out var firstNameProp);
-            contactData.TryGetProperty("lastName", out var lastNameProp);
-            contactData.TryGetProperty("email", out var emailProp);
-            contactData.TryGetProperty("phone", out var phoneProp);
-            contactData.TryGetProperty("dateUpdated", out var dateUpdatedProp);
-            contactData.TryGetProperty("locationId", out var locationId);
-            contactData.TryGetProperty("id", out var id);
+            string type = string.Empty, firstName = string.Empty, lastName = string.Empty,
+                   email = string.Empty, phone = string.Empty, locationIdValue = string.Empty,
+                   ghlContactIdValue = string.Empty;
+            DateTime? dateUpdated = null;
 
-            DateTime? dateAdded = null;
-            if (dateUpdatedProp.ValueKind != JsonValueKind.Null)
+            if (contactData.TryGetProperty("type", out var typeProp) && typeProp.ValueKind == JsonValueKind.String)
             {
-                if (DateTime.TryParse(dateUpdatedProp.GetString(), out var parsedDate))
+                type = typeProp.GetString();
+            }
+
+            if (contactData.TryGetProperty("firstName", out var firstNameProp) && firstNameProp.ValueKind == JsonValueKind.String)
+            {
+                firstName = firstNameProp.GetString();
+            }
+
+            if (contactData.TryGetProperty("lastName", out var lastNameProp) && lastNameProp.ValueKind == JsonValueKind.String)
+            {
+                lastName = lastNameProp.GetString();
+            }
+
+            if (contactData.TryGetProperty("email", out var emailProp) && emailProp.ValueKind == JsonValueKind.String)
+            {
+                email = emailProp.GetString();
+            }
+
+            if (contactData.TryGetProperty("phone", out var phoneProp) && phoneProp.ValueKind == JsonValueKind.String)
+            {
+                phone = phoneProp.GetString();
+            }
+
+            if (contactData.TryGetProperty("dateUpdated", out var dateUpdatedProp) && dateUpdatedProp.ValueKind == JsonValueKind.String)
+            {
+                DateTime parsedDate;
+                if (DateTime.TryParse(dateUpdatedProp.GetString(), out parsedDate))
                 {
-                    dateAdded = parsedDate;
-                }
-                else
-                {
-                    dateAdded = null;
+                    dateUpdated = parsedDate;
                 }
             }
-            string locationIdValue = locationId.ValueKind != JsonValueKind.Null ? locationId.GetString() ?? string.Empty : string.Empty;
-            string ghlContactIdValue = id.ValueKind != JsonValueKind.Null ? id.GetString() ?? string.Empty : string.Empty;
+            if (contactData.TryGetProperty("locationId", out var locationIdProp) && locationIdProp.ValueKind == JsonValueKind.String)
+            {
+                locationIdValue = locationIdProp.GetString();
+            }
+            if (contactData.TryGetProperty("id", out var idProp) && idProp.ValueKind == JsonValueKind.String)
+            {
+                ghlContactIdValue = idProp.GetString();
+            }
             var contact = new UpdateContact
             {
-                ContactType = typeProp.ValueKind != JsonValueKind.Null ? typeProp.GetString() ?? string.Empty : string.Empty,
-                FirstName = firstNameProp.ValueKind != JsonValueKind.Null ? firstNameProp.GetString() ?? string.Empty : string.Empty,
-                LastName = lastNameProp.ValueKind != JsonValueKind.Null ? lastNameProp.GetString() ?? string.Empty : string.Empty,
-                Email = emailProp.ValueKind != JsonValueKind.Null ? emailProp.GetString() ?? string.Empty : string.Empty,
-                PhoneNumber = phoneProp.ValueKind != JsonValueKind.Null ? phoneProp.GetString() ?? string.Empty : string.Empty,
-                lastAsync = dateAdded,
+                ContactType = type,
+                FirstName = firstName,
+                LastName = lastName,
+                Email = email,
+                PhoneNumber = phone,
+                lastAsync = dateUpdated,
                 locationId = locationIdValue,
                 GHLContactId = ghlContactIdValue
             };
             var res = await _contactService.Update_Contact(contact);
             return Ok(res);
         }
+
     }
 }
 
