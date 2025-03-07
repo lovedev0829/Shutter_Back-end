@@ -47,7 +47,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         public Guid? GHL_StageId { get; set; }
         public string? GHL_StageName { get; set; }
         public string? locationId { get; set; }
-        public string? jobStatus { get; set; }
+        public string? GHL_jobstatus { get; set; }
        // public string? GHL_StageName { get; set; }
         public string[]? AttachmentsAny { get; set; } = [];
         public DateTime? lastasync { get; set; }
