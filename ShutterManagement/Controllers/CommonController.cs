@@ -356,15 +356,7 @@ namespace ShutterManagement.Controllers
             return Ok(EstimationCode);
 
         }
-        [HttpGet]
-        [Route("GHLContact")]
-        [AllowAnonymous]
-        public async Task<IActionResult> GHLContact()
-        {
-            var res = await ghlService.GetContactsAsync();
-            return Ok(res);
-        }
-
+    
 
         //[HttpGet]
         //[Route("ContactEstimationProductCompoentBreakdown")]

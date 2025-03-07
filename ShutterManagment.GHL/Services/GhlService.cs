@@ -30,6 +30,7 @@ namespace ShutterManagement.GHL.Services
         {
             _httpClient = httpClient;
             this.dBContext = dBContext;
+            _httpClient.BaseAddress = new Uri(BaseUrl);
             httpContextAccessor = _httpContextAccessor;
         }
 
@@ -213,13 +214,14 @@ namespace ShutterManagement.GHL.Services
                     firstName = contact.FirstName,
                     lastName = contact.LastName,
                     email = contact.Email,
-                    phone = contact.Phone
+                    phone = contact.Phone,
                 };
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetApiKey());
                 var contactJson = JsonConvert.SerializeObject(contactData);
                 var content = new StringContent(contactJson, Encoding.UTF8, "application/json");
 
                 var response = await _httpClient.PostAsync("contacts", content);
+                var body = response.Content;
                 if (!response.IsSuccessStatusCode)
                 {
                     return false;

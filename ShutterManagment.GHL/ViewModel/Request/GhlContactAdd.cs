@@ -17,5 +17,6 @@ namespace ShutterManagment.GHL.ViewModel.Request
         public string ContactType { get; set; }
         public string Website { get; set; }
         public string Referral { get; set; }
+        public string? GHLContactId { get; set; }
     }
 }

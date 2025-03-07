@@ -162,8 +162,9 @@ namespace ShutterManagement.Business.Services
                     {
                         res.LastSync = model.lastAsync;
                         res.GhlcontactId = model.GHLContactId;
+                        await Update(res);
                     }
-                    await Update(res);
+                   
                     if (res.ContactId != Guid.Empty)
                     {
                         if (!model.IsBillingAddressSameAsAddress)
@@ -313,8 +314,9 @@ namespace ShutterManagement.Business.Services
                             contact.IsBillingAddressSameAsAddress = model.IsBillingAddressSameAsAddress;
                             contact.ModifiedBy = TenantId;
                             contact.UpdatedAt = DateTime.Now;
-                            contact.LastSync = model.lastAsync;
-                            await Update(contact);
+                           
+                            await Update(contact); responseVm.IsSuccess = true;
+                            responseVm.Message = AppConstant.UpdateSuccessMsg;
                         }
                         else
                         {
@@ -453,21 +455,21 @@ namespace ShutterManagement.Business.Services
                                 }
                             }
                         }
-
-                        var ghlContactAdd = new GhlContactAdd
+                        var ghlContactAdd = new Sp_Contact
                         {
-                            Id = contact1.ContactId.ToString() ?? string.Empty,
+                            //Id = contact1.GhlcontactId.ToString() ?? string.Empty,
                             FirstName = model.FirstName ?? string.Empty,
                             LastName = model.LastName ?? string.Empty,
                             Email = model.Email ?? string.Empty,
-                            Phone = model.PhoneNumber ?? string.Empty,
+                            PhoneNumber = model.PhoneNumber ?? string.Empty,
                             Notes = model.Notes ?? string.Empty,
                             ContactType = model.ContactType ?? string.Empty,
                             Website = model.Website ?? string.Empty,
-                            Referral = model.Referral ?? string.Empty
+                            Referral = model.Referral ?? string.Empty,
+                            GHLContactId = model.GHLContactId ?? string.Empty
                         };
 
-                        var ghlResponse = await ghlService.UpdateContactAsync(contact1.GhlcontactId, ghlContactAdd);
+                        var ghlResponse = await SyncWithGHL(contact1, ghlContactAdd);
 
                         responseVm.IsSuccess = true;
                         responseVm.Message = AppConstant.UpdateSuccessMsg;
@@ -794,8 +796,9 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
+               
                 var ghlResponse = false;
-                var ghlContactAdd = new GhlContactAdd
+               var ghlContactAdd = new GhlContactAdd
                 {
                     Id = contact.ContactId.ToString() ?? string.Empty,
                     FirstName = model.FirstName ?? string.Empty,
@@ -811,6 +814,7 @@ namespace ShutterManagement.Business.Services
                 if (contact.GhlcontactId == null)
                 {
                     ghlResponse = await ghlService.CreateContactAsync(ghlContactAdd);
+
                 }
                 else
                 {

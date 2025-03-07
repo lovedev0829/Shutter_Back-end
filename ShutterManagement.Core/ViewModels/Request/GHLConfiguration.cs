@@ -14,7 +14,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         [Required]
         public string? PipelineId { get; set; }
         [Required]
-        public string? StageId { get; set; }
+        public string? LocationId { get; set; }
         [Required]
         public string? BaseAddress { get; set; }
     }

@@ -4,13 +4,17 @@ using Microsoft.AspNetCore.Mvc;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Business.Services;
 using ShutterManagement.Core;
+using ShutterManagement.Core.Common;
 using ShutterManagement.Core.SPModel;
 using ShutterManagement.Core.ViewModels;
 using ShutterManagement.Core.ViewModels.Request;
+using ShutterManagement.GHL.Services;
+using ShutterManagment.GHL.ViewModel.Request;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace ShutterManagement.Controllers
@@ -20,10 +24,12 @@ namespace ShutterManagement.Controllers
     public class ContactController : ControllerBase
     {
         private readonly IContactService _contactService;
+        private readonly GhlService ghlService;
 
-        public ContactController(IContactService contactService)
+        public ContactController(IContactService contactService,GhlService ghlService)
         {
             _contactService = contactService;
+            this.ghlService = ghlService;
         }
 
         [HttpPost("GetAll")]
@@ -90,118 +96,62 @@ namespace ShutterManagement.Controllers
             return Ok(res);
         }
 
-        [HttpPost("ContactFromGHL")]
+
+        [HttpGet]
+        [Route("GHLContact")]
         [AllowAnonymous]
-        public async Task<IActionResult> ContactFromGHL([FromBody] JsonElement contactData)
+        public async Task<IActionResult> GHLContact()
         {
-            contactData.TryGetProperty("type", out var typeProp);
-            contactData.TryGetProperty("firstName", out var firstNameProp);
-            contactData.TryGetProperty("lastName", out var lastNameProp);
-            contactData.TryGetProperty("email", out var emailProp);
-            contactData.TryGetProperty("phone", out var phoneProp);
-            contactData.TryGetProperty("dateAdded", out var dateAddedProp);
-            contactData.TryGetProperty("locationId", out var locationId);
-            contactData.TryGetProperty("Id", out var ghlContactId);
-
-            DateTime? dateAdded = null;
-            if (dateAddedProp.ValueKind != JsonValueKind.Null)
-            {
-                if (DateTime.TryParse(dateAddedProp.GetString(), out var parsedDate))
-                {
-                    dateAdded = parsedDate;
-                }
-                else
-                {
-                    dateAdded = null;
-                }
-            }
-
-            string typeValue = typeProp.ValueKind == JsonValueKind.String ? typeProp.GetString() : string.Empty;
-            string firstNameValue = firstNameProp.ValueKind == JsonValueKind.String ? firstNameProp.GetString() : string.Empty;
-            string lastNameValue = lastNameProp.ValueKind == JsonValueKind.String ? lastNameProp.GetString() : string.Empty;
-            string emailValue = emailProp.ValueKind == JsonValueKind.String ? emailProp.GetString() : string.Empty;
-            string phoneValue = phoneProp.ValueKind == JsonValueKind.String ? phoneProp.GetString() : string.Empty;
-
-            string locationIdValue = locationId.ValueKind == JsonValueKind.String ? locationId.GetString() : string.Empty;
-            string ghlContactIdValue = ghlContactId.ValueKind == JsonValueKind.String ? ghlContactId.GetString() : string.Empty;
-
-            var contact = new Sp_Contact
-            {
-                ContactType = typeValue,
-                FirstName = firstNameValue,
-                LastName = lastNameValue,
-                Email = emailValue,
-                PhoneNumber = phoneValue,
-                lastAsync = dateAdded,
-                locationId = locationIdValue,
-                GHLContactId = ghlContactIdValue
-            };
-
-            var res = await _contactService.Create_Contact(contact);
+            var res = await ghlService.GetContactsAsync();
             return Ok(res);
         }
 
 
+        [HttpPost("ContactFromGHL")]
+        [AllowAnonymous]
+        public async Task<IActionResult> ContactFromGHL(GHLContactTrigger contactData)
+        {
+            var contact = new Sp_Contact
+            {
+                ContactType = contactData.contact_type,
+                FirstName = contactData.first_name,
+                LastName = contactData.last_name,
+                Email = contactData.email,
+                PhoneNumber = contactData.phone,
+                locationId = contactData.location.id,
+                GHLContactId = contactData.contact_id,
+                lastAsync = DateTime.Now,
+            };
+
+            try
+            {
+                var res = await _contactService.Create_Contact(contact);
+                return Ok(res);
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Log("Error while creating contact: {ExceptionMessage}", ex.Message);
+                return StatusCode(500, $"Internal server error by application: {ex.Message}");
+            }
+        }
+
+
+
+
         [HttpPost("UpdateContactFromGHL")]
         [AllowAnonymous]
-        public async Task<IActionResult> UpdateContactFromGHL([FromBody] JsonElement contactData)
+        public async Task<IActionResult> UpdateContactFromGHL(GHLContactTrigger contactData)
         {
-            string type = string.Empty, firstName = string.Empty, lastName = string.Empty,
-                   email = string.Empty, phone = string.Empty, locationIdValue = string.Empty,
-                   ghlContactIdValue = string.Empty;
-            DateTime? dateUpdated = null;
-
-            if (contactData.TryGetProperty("type", out var typeProp) && typeProp.ValueKind == JsonValueKind.String)
-            {
-                type = typeProp.GetString();
-            }
-
-            if (contactData.TryGetProperty("firstName", out var firstNameProp) && firstNameProp.ValueKind == JsonValueKind.String)
-            {
-                firstName = firstNameProp.GetString();
-            }
-
-            if (contactData.TryGetProperty("lastName", out var lastNameProp) && lastNameProp.ValueKind == JsonValueKind.String)
-            {
-                lastName = lastNameProp.GetString();
-            }
-
-            if (contactData.TryGetProperty("email", out var emailProp) && emailProp.ValueKind == JsonValueKind.String)
-            {
-                email = emailProp.GetString();
-            }
-
-            if (contactData.TryGetProperty("phone", out var phoneProp) && phoneProp.ValueKind == JsonValueKind.String)
-            {
-                phone = phoneProp.GetString();
-            }
-
-            if (contactData.TryGetProperty("dateUpdated", out var dateUpdatedProp) && dateUpdatedProp.ValueKind == JsonValueKind.String)
-            {
-                DateTime parsedDate;
-                if (DateTime.TryParse(dateUpdatedProp.GetString(), out parsedDate))
-                {
-                    dateUpdated = parsedDate;
-                }
-            }
-            if (contactData.TryGetProperty("locationId", out var locationIdProp) && locationIdProp.ValueKind == JsonValueKind.String)
-            {
-                locationIdValue = locationIdProp.GetString();
-            }
-            if (contactData.TryGetProperty("id", out var idProp) && idProp.ValueKind == JsonValueKind.String)
-            {
-                ghlContactIdValue = idProp.GetString();
-            }
             var contact = new UpdateContact
             {
-                ContactType = type,
-                FirstName = firstName,
-                LastName = lastName,
-                Email = email,
-                PhoneNumber = phone,
-                lastAsync = dateUpdated,
-                locationId = locationIdValue,
-                GHLContactId = ghlContactIdValue
+                ContactType = contactData.contact_type,
+                FirstName = contactData.first_name,
+                LastName = contactData.last_name,
+                Email = contactData.email,
+                PhoneNumber = contactData.phone,
+                locationId = contactData.location.id,
+                GHLContactId = contactData.contact_id,
+                lastAsync = DateTime.Now,
             };
             var res = await _contactService.Update_Contact(contact);
             return Ok(res);
