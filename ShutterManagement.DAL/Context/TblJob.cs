@@ -49,6 +49,8 @@ public partial class TblJob
 
     public string? GhlOpportunityId { get; set; }
 
+    public DateTime? LastAsync { get; set; }
+
     public virtual TblAddress? Address { get; set; }
 
     public virtual TblContact? Contact { get; set; }

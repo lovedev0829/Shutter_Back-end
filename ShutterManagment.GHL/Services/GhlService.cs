@@ -87,24 +87,31 @@ namespace ShutterManagement.GHL.Services
                 if (targetPipeline?.Stages == null || !targetPipeline.Stages.Any())
                 {
                     responseVm.IsSuccess = false;
-                    responseVm.Message = "Target pipeline not found or has no stages.";
+                    responseVm.Message = "Target pipeline has no stages.";
                     return responseVm;
                 }
 
                 var existingStages = dBContext.TblGhlStages
                     .Where(x => x.GhlPipelineId == targetPipeline.Id)
                     .ToList();
+
                 var existingStagesDict = existingStages.ToDictionary(x => x.GhlStageId, x => x);
 
                 List<TblGhlStage> stagesToUpdate = new();
                 List<TblGhlStage> stagesToInsert = new();
 
-                foreach (var stage in targetPipeline.Stages)
+                // Sort the pipeline stages by name (or another field if required)
+                var orderedStages = targetPipeline.Stages.OrderBy(s => s.Name).ToList();
+
+                for (int i = 0; i < orderedStages.Count; i++)
                 {
+                    var stage = orderedStages[i];
+
                     if (existingStagesDict.TryGetValue(stage.Id, out var existingStage))
                     {
                         existingStage.GhlStageName = stage.Name;
                         existingStage.GhlPipelineName = targetPipeline.Name;
+                        existingStage.StageOrder = i + 1; // Assigning order for sequential storage
                         existingStage.GhlLastSync = DateTime.Now;
                         existingStage.UpdatedAt = DateTime.Now;
                         existingStage.ModifiedBy = AppConstant.LoggedInTenantId;
@@ -120,6 +127,7 @@ namespace ShutterManagement.GHL.Services
                             GhlStageId = stage.Id,
                             GhlStageName = stage.Name,
                             GhlPipelineName = targetPipeline.Name,
+                            StageOrder = i + 1, // Assigning order for new records
                             GhlLastSync = DateTime.Now,
                             CreatedAt = DateTime.Now,
                             TenantId = AppConstant.LoggedInTenantId,
@@ -128,6 +136,7 @@ namespace ShutterManagement.GHL.Services
                         });
                     }
                 }
+
                 if (stagesToUpdate.Any())
                 {
                     dBContext.TblGhlStages.UpdateRange(stagesToUpdate);
@@ -137,10 +146,12 @@ namespace ShutterManagement.GHL.Services
                 {
                     await dBContext.TblGhlStages.AddRangeAsync(stagesToInsert);
                 }
+
                 await dBContext.SaveChangesAsync();
 
                 responseVm.IsSuccess = true;
-                responseVm.Message = "All stages Synced successfully.";
+                responseVm.Message = "All stages synced sequentially.";
+
             }
             catch (Exception ex)
             {
@@ -151,13 +162,14 @@ namespace ShutterManagement.GHL.Services
             return responseVm;
         }
 
+
         public async Task<IResponseVm<List<PipelineAndStage>>> GetGHLStages()
         {
             IResponseVm<List<PipelineAndStage>> responseVm = new ResponseVm<List<PipelineAndStage>>();
             try
             {
                 var gHLStages = dBContext.TblGhlStages
-                    .Where(x => x.TenantId == AppConstant.LoggedInTenantId).OrderByDescending(x=>x.CreatedAt)
+                    .Where(x => x.TenantId == AppConstant.LoggedInTenantId).OrderBy(x=>x.StageOrder)
                     .ToList();
 
                 var stageList = new List<PipelineAndStage>();
