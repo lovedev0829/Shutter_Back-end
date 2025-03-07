@@ -16,6 +16,7 @@ using ShutterManagement.GHL;
 using ShutterManagement.GHL.Services;
 using ShutterManagement.Services;
 using ShutterManagment.GHL.ViewModel.Request;
+using ShutterManagment.GHL.ViewModel.Response;
 
 namespace ShutterManagement.Business.Services
 {
@@ -797,7 +798,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                
-                var ghlResponse = false;
+                var ghlResponse = new GhlContactVM();
                var ghlContactAdd = new GhlContactAdd
                 {
                     Id = contact.ContactId.ToString() ?? string.Empty,
@@ -814,6 +815,16 @@ namespace ShutterManagement.Business.Services
                 if (contact.GhlcontactId == null)
                 {
                     ghlResponse = await ghlService.CreateContactAsync(ghlContactAdd);
+                    if(ghlResponse != null)
+                    {
+                        var contactexist = GetAllQuerable().Where(x => x.ContactId == contact.ContactId && x.IsDelete == false).FirstOrDefault();
+                        if (contactexist != null)
+                        {
+                            contactexist.GhlcontactId = ghlResponse.Id;
+                            contactexist.LastSync = DateTime.Now;
+                        }
+                        var res = Update(contactexist);
+                    }
 
                 }
                 else

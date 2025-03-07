@@ -176,7 +176,7 @@ namespace ShutterManagement.GHL.Services
             return result?.Contacts ?? new List<GhlContactVM>();
         }
 
-        public async Task<bool> CreateContactAsync(GhlContactAdd contact)
+        public async Task<GhlContactVM> CreateContactAsync(GhlContactAdd contact)
         {
             try
             {
@@ -195,7 +195,7 @@ namespace ShutterManagement.GHL.Services
                 var body = response.Content;
                 if (!response.IsSuccessStatusCode)
                 {
-                    return false;
+                    return null;
                 }
                 response.EnsureSuccessStatusCode();
                 var result1 = GetClientIpAddress();
@@ -203,21 +203,21 @@ namespace ShutterManagement.GHL.Services
                 var jsonResponse = await response.Content.ReadAsStringAsync();
                 var contactResponse = JsonConvert.DeserializeObject<GhlContactVM>(jsonResponse);
 
-                return true;
+                return contactResponse;
             }
             catch (Exception ex)
             {
-                return false;
+                return null;
             }
         }
 
-        public async Task<bool> UpdateContactAsync(string contactId, GhlContactAdd contact)
+        public async Task<GhlContactVM> UpdateContactAsync(string contactId, GhlContactAdd contact)
         {
             try
             {
                 if (string.IsNullOrEmpty(contactId) || contact == null)
                 {
-                    return false;
+                    return null;
                 }
 
                 var contactData = new
@@ -236,7 +236,7 @@ namespace ShutterManagement.GHL.Services
                 if (!response.IsSuccessStatusCode)
                 {
                     Console.WriteLine($"Failed to update contact. Status code: {response.StatusCode}");
-                    return false;
+                    return null;
                 }
 
                 response.EnsureSuccessStatusCode();
@@ -244,12 +244,12 @@ namespace ShutterManagement.GHL.Services
                 var jsonResponse = await response.Content.ReadAsStringAsync();
                 var contactResponse = JsonConvert.DeserializeObject<GhlContactVM>(jsonResponse);
 
-                return true;
+                return contactResponse;
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error updating contact: {ex.Message}");
-                return false;
+                return null;
             }
         }
 
