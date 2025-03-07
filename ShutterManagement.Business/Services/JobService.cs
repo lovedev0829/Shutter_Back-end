@@ -631,12 +631,21 @@ namespace ShutterManagement.Business.Services
 
                 if (IsTenant)
                 {
-                    var JobList = (from t2 in _context.TblJobs.OrderByDescending(x => x.CreatedAt)
-                                   join t1 in _context.TblAddresses on t2.AddressId equals t1.AddressId
-                                   join t3 in _context.MstJobTypes on t2.JobType equals t3.Id
-                                   join t4 in _context.TblUsers on t2.AssignedPersonnel equals t4.Id
-                                   join t5 in _context.MstJobStatuses on t2.JobStatus equals t5.JobStatusId
-                                   join t6 in _context.TblContacts on t2.ContactId equals t6.ContactId
+                    var JobList = (from t2 in _context.TblJobs
+                                   join t1 in _context.TblAddresses on t2.AddressId equals t1.AddressId into addr
+                                   from t1 in addr.DefaultIfEmpty()
+                                   join t3 in _context.MstJobTypes on t2.JobType equals t3.Id into jobType
+                                   from t3 in jobType.DefaultIfEmpty()
+                                   join t4 in _context.TblUsers on t2.AssignedPersonnel equals t4.Id into assignedUser
+                                   from t4 in assignedUser.DefaultIfEmpty()
+                                   join p1 in _context.TblUsers on t2.CreatedBy equals p1.Id into createdUser
+                                   from p1 in createdUser.DefaultIfEmpty()
+                                   join p2 in _context.TblTenants on t2.TenantId equals p2.TenantId into tenant
+                                   from p2 in tenant.DefaultIfEmpty()
+                                   join t5 in _context.MstJobStatuses on t2.JobStatus equals t5.JobStatusId into jobStatus
+                                   from t5 in jobStatus.DefaultIfEmpty()
+                                   join t6 in _context.TblContacts on t2.ContactId equals t6.ContactId into contact
+                                   from t6 in contact.DefaultIfEmpty()
                                    where t2.TenantId == AppConstant.LoggedInTenantId && t2.IsDelete == false && t6.IsActive == true && t6.IsDelete == false
                                    select new GetAllJobsdetails
                                    {
