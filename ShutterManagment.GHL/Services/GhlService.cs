@@ -4,8 +4,10 @@ using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using Org.BouncyCastle.Asn1.X509.Qualified;
 using ShutterManagement.Core;
+using ShutterManagement.Core.Common;
 using ShutterManagement.Core.SPModel;
 using ShutterManagement.Core.ViewModels;
+using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.Core.ViewModels.Response;
 using ShutterManagement.DAL.Context;
 using ShutterManagment.GHL.ViewModel.Request;
@@ -33,9 +35,9 @@ namespace ShutterManagement.GHL.Services
         }
 
         #region Start pipeLine and Stages Related Methods 
-        public async Task<IResponseVm<string>> GetAndSaveDefaultPipelineAndStage()
+
+        public async Task<PipelineResponse> GetAllPipelinesWithStagesAsync()
         {
-            IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
                 var requestUrl = $"{BaseUrl}pipelines/";
@@ -46,6 +48,22 @@ namespace ShutterManagement.GHL.Services
                 string jsonResponse = await response.Content.ReadAsStringAsync();
                 var pipelineResponse = System.Text.Json.JsonSerializer.Deserialize<PipelineResponse>(jsonResponse);
 
+                return pipelineResponse ?? new PipelineResponse { Pipelines = new List<Pipeline>() };
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error fetching pipelines: {ex.Message}");
+                return new PipelineResponse { Pipelines = new List<Pipeline>() };
+            }
+        }
+
+        public async Task<IResponseVm<string>> GetAndSaveDefaultPipelineAndStage()
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+            try
+            {
+                var pipelineResponse = await GetAllPipelinesWithStagesAsync();
+
                 if (pipelineResponse?.Pipelines == null || !pipelineResponse.Pipelines.Any())
                 {
                     responseVm.IsSuccess = false;
@@ -53,7 +71,17 @@ namespace ShutterManagement.GHL.Services
                     return responseVm;
                 }
 
-                var targetPipeline = pipelineResponse.Pipelines.FirstOrDefault(p => p.Id == "CFoi90n88zrDhMFP8R2I");
+                string userProvidedPipelineNameOrId = "TestPipeline";
+
+                var targetPipeline = pipelineResponse.Pipelines
+                    .FirstOrDefault(p => p.Id.Contains(userProvidedPipelineNameOrId) || p.Name.Contains(userProvidedPipelineNameOrId));
+
+                if (targetPipeline == null)
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = "Target pipeline not found.";
+                    return responseVm;
+                }
 
                 if (targetPipeline?.Stages == null || !targetPipeline.Stages.Any())
                 {
@@ -75,6 +103,7 @@ namespace ShutterManagement.GHL.Services
                     if (existingStagesDict.TryGetValue(stage.Id, out var existingStage))
                     {
                         existingStage.GhlStageName = stage.Name;
+                        existingStage.GhlPipelineName = targetPipeline.Name;
                         existingStage.GhlLastSync = DateTime.Now;
                         existingStage.UpdatedAt = DateTime.Now;
                         existingStage.ModifiedBy = AppConstant.LoggedInTenantId;
@@ -89,12 +118,12 @@ namespace ShutterManagement.GHL.Services
                             GhlPipelineId = targetPipeline.Id,
                             GhlStageId = stage.Id,
                             GhlStageName = stage.Name,
+                            GhlPipelineName = targetPipeline.Name,
                             GhlLastSync = DateTime.Now,
                             CreatedAt = DateTime.Now,
                             TenantId = AppConstant.LoggedInTenantId,
                             CreatedBy = AppConstant.LoggedInUserID,
                             IsActive = true,
-                            ModifiedBy = AppConstant.LoggedInUserID
                         });
                     }
                 }
@@ -110,7 +139,7 @@ namespace ShutterManagement.GHL.Services
                 await dBContext.SaveChangesAsync();
 
                 responseVm.IsSuccess = true;
-                responseVm.Message = "All pipeline stages updated or inserted successfully.";
+                responseVm.Message = "All stages Synced successfully.";
             }
             catch (Exception ex)
             {
@@ -266,7 +295,7 @@ namespace ShutterManagement.GHL.Services
 
         #region Start Opportunity Related Methods
 
-        public async Task<IResponseVm<string>> CreateOpportunityInGhl(Guid? contactId, string jobName, string notes)
+        public async Task<IResponseVm<string>> CreateOpportunityInGhl(TblJob job)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
             
@@ -278,17 +307,19 @@ namespace ShutterManagement.GHL.Services
                 responseVm.Message = "No available pipeline stage found.";
                 return responseVm;
             }
+            var IsContactExists = dBContext.TblContacts.Where(c => c.ContactId == job.ContactId && c.IsDelete == false).FirstOrDefault();
+
             var opportunityData = new
             {
-                title = jobName,
+                title = job.JobName,
                 status = "open",
-                stageId = stage.GhlStageId,
-                email="am@gmail.com",
-                phone= "+1202-555-0196",
+                stageId = job.GhlStageId,
+                email= IsContactExists?.Email,
+                phone= IsContactExists?.PhoneNumber,
                 monetaryValue= 122.22,
                 source= "public hh",
-                name="Amit Kumar",
-                companyName="Brain",
+                name= IsContactExists?.FirstName +""+IsContactExists?.LastName,
+                companyName="Brain Technosys PVT LTd",
                
             };
 
@@ -298,7 +329,6 @@ namespace ShutterManagement.GHL.Services
                 var endpoint = $"{BaseUrl}pipelines/{stage.GhlPipelineId}/opportunities/";
                 var opportunityJson = JsonConvert.SerializeObject(opportunityData);
                 var content = new StringContent(opportunityJson, Encoding.UTF8, "application/json");
-
                 var response = await _httpClient.PostAsync(endpoint, content);
 
                 if (!response.IsSuccessStatusCode)
@@ -321,51 +351,7 @@ namespace ShutterManagement.GHL.Services
             return responseVm;
         }
 
-        // handle Webhook for opportunity creation or updation
-        public async Task<IResponseVm<string>> ProcessGhlOpportunityWebhook(GhlOpportunityWebhookModel webhookData)
-        {
-            IResponseVm<string> responseVm = new ResponseVm<string>();
-
-            if (webhookData?.Opportunity == null)
-            {
-                responseVm.IsSuccess = false;
-                responseVm.Message = "Invalid webhook data.";
-                return responseVm;
-            }
-
-            var ghlOpportunity = webhookData.Opportunity;
-            var existingJob = dBContext.TblJobs.FirstOrDefault(j => j.GhlOpportunityId == ghlOpportunity.Id);
-
-            if (existingJob != null)
-            {
-                
-                existingJob.JobName = ghlOpportunity.Title;
-                existingJob.Notes = ghlOpportunity.Description;
-                //existingJob.status = ghlOpportunity.Status;
-                existingJob.UpdatedAt = DateTime.UtcNow;
-            }
-            else
-            {
-                
-                var newJob = new TblJob
-                {
-                    JobId = Guid.NewGuid(),
-                    JobName = ghlOpportunity.Title,
-                    Notes = ghlOpportunity.Description,
-                    //JobStatus = ghlOpportunity.Status,
-                    GhlOpportunityId = ghlOpportunity.Id,
-                    CreatedAt = DateTime.UtcNow
-                };
-
-                 dBContext.TblJobs.Add(newJob);
-            }
-
-            responseVm.IsSuccess = true;
-            responseVm.Message = "Job successfully synced with GHL opportunity.";
-            return responseVm;
-        }
-
-
+      
         public async Task<IResponseVm<List<Opportunity>>> GetOpportunitiesFromGhl()
         {
             IResponseVm<List<Opportunity>> responseVm = new ResponseVm<List<Opportunity>>();

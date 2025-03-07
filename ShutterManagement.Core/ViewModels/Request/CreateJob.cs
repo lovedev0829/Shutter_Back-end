@@ -41,6 +41,9 @@ namespace ShutterManagement.Core.ViewModels.Request
         [DefaultValue("")]
       
         public string? Notes { get; set; }
+        public string? GHL_ContactId { get; set; }
+
+        public string? GhlOpportunityId { get; set; }
         public Guid? GHL_StageId { get; set; }
        // public string? GHL_StageName { get; set; }
         public string[]? AttachmentsAny { get; set; } = [];

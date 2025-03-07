@@ -775,13 +775,21 @@ namespace ShutterManagement.Controllers
             return Ok(result);
         }
 
-        [HttpPost("HandleOpportunityWebhook")]
-        [AllowAnonymous]
-        public async Task<IActionResult> HandleOpportunityWebhook([FromBody] GhlOpportunityWebhookModel webhookData)
+        [HttpGet]
+        [Route("SyncOpportunity")]
+        public async Task<IActionResult> SyncOpportunity()
         {
-            var response = await ghlService.ProcessGhlOpportunityWebhook(webhookData);
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+            var result = await jobService.SyncOpportunitiesFromGhl();
+            return Ok(result);
         }
+
+        //[HttpPost("HandleOpportunityWebhook")]
+        //[AllowAnonymous]
+        //public async Task<IActionResult> HandleOpportunityWebhook([FromBody] GhlOpportunityWebhookModel webhookData)
+        //{
+        //    var response = await jobser.ProcessGhlOpportunityWebhook(webhookData);
+        //    return response.IsSuccess ? Ok(response) : BadRequest(response);
+        //}
 
 
 

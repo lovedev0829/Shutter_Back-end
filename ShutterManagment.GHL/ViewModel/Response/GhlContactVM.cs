@@ -106,19 +106,19 @@ namespace ShutterManagment.GHL.ViewModel.Response
     public class Opportunity
     {
         [JsonProperty("id")]
-        public string Id { get; set; }
+        public string OpportunityId { get; set; }
 
         [JsonProperty("name")]
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         [JsonProperty("monetaryValue")]
         public decimal MonetaryValue { get; set; }
 
         [JsonProperty("pipelineId")]
-        public string PipelineId { get; set; }
+        public string? PipelineId { get; set; }
 
         [JsonProperty("pipelineStageId")]
-        public string PipelineStageId { get; set; }
+        public string? PipelineStageId { get; set; }
 
         [JsonProperty("status")]
         public string Status { get; set; }

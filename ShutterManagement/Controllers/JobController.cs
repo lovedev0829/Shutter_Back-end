@@ -34,7 +34,7 @@ namespace ShutterManagement.Controllers
         [Authorize(Roles = "JobEdit")]
         public async Task<IActionResult> Update([FromBody] UpdateJob model)
         {
-            var result = await jobService.Update(model);
+            var result = await jobService.UpdateJob(model);
             return Ok(result);
         }
 

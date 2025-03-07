@@ -752,6 +752,10 @@ public partial class ShutterDBContext : DbContext
                 .HasColumnType("datetime")
                 .HasColumnName("GHL_lastSync");
             entity.Property(e => e.GhlPipelineId).HasColumnName("GHL_PipelineId");
+            entity.Property(e => e.GhlPipelineName)
+                .HasMaxLength(100)
+                .IsUnicode(false)
+                .HasColumnName("GHL_PipelineName");
             entity.Property(e => e.GhlStageId).HasColumnName("GHL_StageId");
             entity.Property(e => e.GhlStageName).HasColumnName("GHL_StageName");
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
