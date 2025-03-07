@@ -299,6 +299,7 @@ namespace ShutterManagement.Business.Services
                 if (string.IsNullOrEmpty(job.GhlOpportunityId))
                 {
                     responseVm.Message = "No associated GHL Opportunity ID found.";
+                    FileLogger.Log($"Error in UpdateOpportunityInGhl: {job.GhlOpportunityId}");
                     return responseVm;
                 }
 
@@ -316,7 +317,7 @@ namespace ShutterManagement.Business.Services
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetApiKey());
 
                 var content = new StringContent(JsonConvert.SerializeObject(ghlOpportunityModel), Encoding.UTF8, "application/json");
-                var url = $"https://rest.gohighlevel.com/v1/opportunities/{job.GhlOpportunityId}";
+                var url = $"{BaseUrl}opportunities/{job.GhlOpportunityId}";
 
                 var response = await client.PutAsync(url, content);
                 var responseBody = await response.Content.ReadAsStringAsync();
@@ -325,6 +326,7 @@ namespace ShutterManagement.Business.Services
                 {
                     responseVm.IsSuccess = false;
                     responseVm.Message = $"GHL Update Failed: {response.StatusCode}, Details: {responseBody}";
+                    FileLogger.Log($"Error in UpdateOpportunityInGhl: {response.StatusCode}, Details: {responseBody}");
                     return responseVm;
                 }
 
@@ -712,7 +714,7 @@ namespace ShutterManagement.Business.Services
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.UpdateSuccessMsg;
                 }
-                if (!string.IsNullOrEmpty(IsJobExist.GhlOpportunityId))
+                else if (!string.IsNullOrEmpty(IsJobExist.GhlOpportunityId))
                 {
                     var ghlUpdateResponse = await UpdateOpportunityInGhl(IsJobExist);
                     FileLogger.Log($"GHL Sync: Job updated in GHL - {ghlUpdateResponse.Message}");
@@ -720,12 +722,14 @@ namespace ShutterManagement.Business.Services
 
                 else
                 {
+                    responseVm.IsSuccess = false;
                     responseVm.Message = AppConstant.NoDataFound;
                 }
 
             }
             catch (Exception ex)
             {
+                responseVm.IsSuccess = false;
                 responseVm.Message = AppConstant.ExceptionError + ex.Message;
             }
             return responseVm;
