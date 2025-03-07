@@ -2,8 +2,13 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using ShutterManagement.Business.Interfaces;
+using ShutterManagement.Business.Services;
+using ShutterManagement.Core.Common;
+using ShutterManagement.Core.SPModel;
 using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.Core.ViewModels.Response;
+using ShutterManagment.GHL.ViewModel.Request;
+using ShutterManagment.GHL.ViewModel.Response;
 using System.Net;
 
 namespace ShutterManagement.Controllers
@@ -13,10 +18,12 @@ namespace ShutterManagement.Controllers
     public class JobController : ControllerBase
     {
         private readonly IJobService jobService;
+        private readonly IContactService contactService;
 
-        public JobController(IJobService jobService)
+        public JobController(IJobService jobService,IContactService contactService)
         {
             this.jobService = jobService;
+            this.contactService = contactService;
         }
 
 
@@ -74,6 +81,38 @@ namespace ShutterManagement.Controllers
             return Ok(result);
         }
 
+        [HttpPost("OpportunityFromGHL")]
+        [AllowAnonymous]
+        public async Task<IActionResult> OpportunityFromGHL(GHLOpportunityTrigger opportunityTrigger)
+        {
+            try
+            {
+                var res = await jobService.OpportunityFromGHL(opportunityTrigger);
+                return Ok(res);
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Log("Error while creating contact: {ExceptionMessage}", ex.Message);
+                return StatusCode(500, $"Internal server error by application: {ex.Message}");
+            }
+        }
+
+
+        [HttpPost("UpdateOpportunityFromGHL")]
+        [AllowAnonymous]
+        public async Task<IActionResult> UpdateOpporunityFromGHL(GHLOpportunityTrigger opportunityData)
+        {
+            try
+            {
+                var res = await jobService.UpdateOpportunityFromGHL(opportunityData);
+                return Ok(res);
+            }
+            catch(Exception ex)
+            {
+                FileLogger.Log("Error while creating opportunity: {ExceptionMessage}", ex.Message);
+                return StatusCode(500, $"Internal server error by application: {ex.Message}");
+            }
+        }
 
     }
 }
