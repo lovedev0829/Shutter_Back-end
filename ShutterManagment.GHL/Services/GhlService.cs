@@ -391,7 +391,7 @@ namespace ShutterManagement.GHL.Services
                 using var client = new HttpClient();
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetApiKey());
 
-                var url = "https://rest.gohighlevel.com/v1/pipelines/CFoi90n88zrDhMFP8R2I/opportunities/";
+                var url = $"{BaseUrl}pipelines/CFoi90n88zrDhMFP8R2I/opportunities/";
                 var request = new HttpRequestMessage(HttpMethod.Get, url);
 
                 var response = await client.SendAsync(request);
