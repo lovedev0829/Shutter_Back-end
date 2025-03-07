@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using ShutterManagement.DAL.Context;
 using ShutterManagement.Interfaces;
 using ShutterManagment.GHL.ViewModel.Response;
+using ShutterManagment.GHL.ViewModel.Request;
 
 namespace ShutterManagement.Business.Interfaces
 {
@@ -25,5 +26,7 @@ namespace ShutterManagement.Business.Interfaces
         Task<IResponseVm<List<GetAllJobsSubtenant_tenant>>> GetAllJobsTenant_SubTenant(Pagination filter);
 
         Task<IResponseVm<List<Opportunity>>> SyncOpportunitiesFromGhl();
+        Task<IResponseVm<string>> UpdateOpportunityFromGHL(GHLOpportunityTrigger opportunitydata);
+        Task<IResponseVm<string>> OpportunityFromGHL(GHLOpportunityTrigger opportunitydata);
     }
 }
