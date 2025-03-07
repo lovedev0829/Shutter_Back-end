@@ -10,7 +10,7 @@ namespace ShutterManagement.Core.ViewModels.Response
     {
         public string? APIkey { get; set; }
         public string? PipelineId { get; set; }
-        public string? StageId { get; set; }
+        public string? LocationId { get; set; }
         public string? BaseAddress { get; set; }
     }
 }

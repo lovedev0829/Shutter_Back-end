@@ -172,7 +172,7 @@ namespace ShutterManagement.Services
                         AppConstant.GHL_APIKey = GHLres.APIkey ?? "";
                         AppConstant.GHL_BaseAddress = GHLres.BaseAddress ?? "";
                         AppConstant.GHL_PipelineId = GHLres.PipelineId ?? "";
-                        AppConstant.GHL_StageId = GHLres.StageId ?? "";
+                        AppConstant.GHL_StageId = GHLres.LocationId ?? "";
                     }
                 
             }
