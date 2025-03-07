@@ -384,7 +384,7 @@ namespace ShutterManagement.Business.Services
                 if (IsAddressExist)
                 {
                     var stage = _context.TblGhlStages.Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.GhlStageId== model.GHL_StageId.ToString()).FirstOrDefault();
-                    var jobStatus = _context.MstJobStatuses.Where(s => s.JobStatusName == "Pending" && s.IsActive == true).FirstOrDefault();
+                    var jobStatus = _context.MstJobStatuses.Where(s => s.JobStatusName == "Open" && s.IsActive == true).FirstOrDefault();
                     string arrayString = string.Join(", ", model.AttachmentsAny);
                     TblJob job = new TblJob
                     {
