@@ -16,6 +16,7 @@ using System.Net.Http.Headers;
 using System.Numerics;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace ShutterManagement.GHL.Services
 {
@@ -318,9 +319,8 @@ namespace ShutterManagement.GHL.Services
                 phone= IsContactExists?.PhoneNumber,
                 monetaryValue= 122.22,
                 source= "public hh",
-                name= IsContactExists?.FirstName +""+IsContactExists?.LastName,
+                name= IsContactExists?.FirstName +" "+IsContactExists?.LastName,
                 companyName="Brain Technosys PVT LTd",
-               
             };
 
             try
@@ -330,12 +330,30 @@ namespace ShutterManagement.GHL.Services
                 var opportunityJson = JsonConvert.SerializeObject(opportunityData);
                 var content = new StringContent(opportunityJson, Encoding.UTF8, "application/json");
                 var response = await _httpClient.PostAsync(endpoint, content);
-
+                var json = await response.Content.ReadAsStringAsync();
                 if (!response.IsSuccessStatusCode)
                 {
                     responseVm.IsSuccess = false;
                     responseVm.Message = $"Error creating opportunity: {response.StatusCode}";
                     return responseVm;
+                }
+
+                // Deserialize response to fetch created opportunityId and contactId
+                var result = JsonConvert.DeserializeObject<OpportunityResponse>(json);
+                if (result == null || string.IsNullOrEmpty(result.OpportunityId))
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = "Failed to retrieve opportunity details from response.";
+                    return responseVm;
+                }
+
+                // Fetch the existing job and update GhlOpportunityId and GhlContactId
+                var existingJob = await dBContext.TblJobs.FindAsync(job.JobId);
+                if (existingJob != null)
+                {
+                    existingJob.GhlOpportunityId = result.OpportunityId;
+                    existingJob.GhlContactId = result.Contact.ContactId; 
+                    await dBContext.SaveChangesAsync();
                 }
 
                 responseVm.IsSuccess = true;
@@ -387,6 +405,37 @@ namespace ShutterManagement.GHL.Services
 
             return responseVm;
         }
+
+        public class OpportunityResponse
+        {
+            [JsonProperty("id")]
+            public string OpportunityId { get; set; }
+
+            [JsonProperty("contact")]
+            public ContactInfo Contact { get; set; }
+        }
+
+        public class ContactInfo
+        {
+            [JsonProperty("id")]
+            public string ContactId { get; set; }
+
+            [JsonProperty("name")]
+            public string Name { get; set; }
+
+            [JsonProperty("companyName")]
+            public string CompanyName { get; set; }
+
+            [JsonProperty("email")]
+            public string Email { get; set; }
+
+            [JsonProperty("phone")]
+            public string Phone { get; set; }
+
+            [JsonProperty("tags")]
+            public List<string> Tags { get; set; }
+        }
+
 
 
 

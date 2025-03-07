@@ -305,19 +305,25 @@ namespace ShutterManagement.Business.Services
 
                 var ghlOpportunityModel = new
                 {
+                    title = job.JobName,
                     id = job.GhlOpportunityId,
                     name = job.JobName,
                     stageId = job.GhlStageId,
                     status = "open",
                     notes = job.Notes,
-                    
+                    email = job.Contact?.Email,
+                    phone = job.Contact?.PhoneNumber,
+                    monetaryValue = 122.22,
+                    source = "public hh",
+                    companyName = "Brain Technosys PVT LTd",
+
                 };
 
                 using var client = new HttpClient();
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetApiKey());
 
                 var content = new StringContent(JsonConvert.SerializeObject(ghlOpportunityModel), Encoding.UTF8, "application/json");
-                var url = $"{BaseUrl}opportunities/{job.GhlOpportunityId}";
+                var url = $"{BaseUrl}pipelines/CFoi90n88zrDhMFP8R2I/opportunities/{job.GhlOpportunityId}";
 
                 var response = await client.PutAsync(url, content);
                 var responseBody = await response.Content.ReadAsStringAsync();
@@ -332,6 +338,7 @@ namespace ShutterManagement.Business.Services
 
                 responseVm.IsSuccess = true;
                 responseVm.Message = "Opportunity successfully updated in GHL.";
+                FileLogger.Log($"Opportunity successfully updated in GHL.: {job.GhlOpportunityId}, Details:");
             }
             catch (Exception ex)
             {
@@ -714,7 +721,7 @@ namespace ShutterManagement.Business.Services
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.UpdateSuccessMsg;
                 }
-                else if (!string.IsNullOrEmpty(IsJobExist.GhlOpportunityId))
+                if (responseVm.IsSuccess && IsJobExist?.GhlOpportunityId!=null)
                 {
                     var ghlUpdateResponse = await UpdateOpportunityInGhl(IsJobExist);
                     FileLogger.Log($"GHL Sync: Job updated in GHL - {ghlUpdateResponse.Message}");
