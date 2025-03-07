@@ -28,4 +28,6 @@ public partial class TblGhlStage
     public DateTime? CreatedAt { get; set; }
 
     public string? GhlPipelineName { get; set; }
+
+    public int? StageOrder { get; set; }
 }

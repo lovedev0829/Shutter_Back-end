@@ -303,24 +303,31 @@ namespace ShutterManagement.Business.Services
                 if (string.IsNullOrEmpty(job.GhlOpportunityId))
                 {
                     responseVm.Message = "No associated GHL Opportunity ID found.";
+                    FileLogger.Log($"Error in UpdateOpportunityInGhl: {job.GhlOpportunityId}");
                     return responseVm;
                 }
 
                 var ghlOpportunityModel = new
                 {
+                    title = job.JobName,
                     id = job.GhlOpportunityId,
                     name = job.JobName,
                     stageId = job.GhlStageId,
                     status = "open",
                     notes = job.Notes,
-                    
+                    email = job.Contact?.Email,
+                    phone = job.Contact?.PhoneNumber,
+                    monetaryValue = 122.22,
+                    source = "public hh",
+                    companyName = "Brain Technosys PVT LTd",
+
                 };
 
                 using var client = new HttpClient();
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetApiKey());
 
                 var content = new StringContent(JsonConvert.SerializeObject(ghlOpportunityModel), Encoding.UTF8, "application/json");
-                var url = $"https://rest.gohighlevel.com/v1/opportunities/{job.GhlOpportunityId}";
+                var url = $"{BaseUrl}pipelines/CFoi90n88zrDhMFP8R2I/opportunities/{job.GhlOpportunityId}";
 
                 var response = await client.PutAsync(url, content);
                 var responseBody = await response.Content.ReadAsStringAsync();
@@ -329,11 +336,13 @@ namespace ShutterManagement.Business.Services
                 {
                     responseVm.IsSuccess = false;
                     responseVm.Message = $"GHL Update Failed: {response.StatusCode}, Details: {responseBody}";
+                    FileLogger.Log($"Error in UpdateOpportunityInGhl: {response.StatusCode}, Details: {responseBody}");
                     return responseVm;
                 }
 
                 responseVm.IsSuccess = true;
                 responseVm.Message = "Opportunity successfully updated in GHL.";
+                FileLogger.Log($"Opportunity successfully updated in GHL.: {job.GhlOpportunityId}, Details:");
             }
             catch (Exception ex)
             {
@@ -785,26 +794,23 @@ namespace ShutterManagement.Business.Services
                     var res = await Update(IsJobExist);
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.UpdateSuccessMsg;
-
-                    if (!string.IsNullOrEmpty(IsJobExist.GhlOpportunityId))
-                    {
-                        var ghlUpdateResponse = await UpdateOpportunityInGhl(IsJobExist);
-                        FileLogger.Log($"GHL Sync: Job updated in GHL - {ghlUpdateResponse.Message}");
-                    }
-                    else
-                    {
-                        var ghlUpdateResponse = await ghlService.CreateOpportunityInGhl(IsJobExist);
-                        FileLogger.Log($"GHL Sync: Job updated in GHL - {ghlUpdateResponse.Message}");
-                    }
                 }
+                if (responseVm.IsSuccess && IsJobExist?.GhlOpportunityId!=null)
+                {
+                    var ghlUpdateResponse = await UpdateOpportunityInGhl(IsJobExist);
+                    FileLogger.Log($"GHL Sync: Job updated in GHL - {ghlUpdateResponse.Message}");
+                }
+
                 else
                 {
+                    responseVm.IsSuccess = false;
                     responseVm.Message = AppConstant.NoDataFound;
                 }
 
             }
             catch (Exception ex)
             {
+                responseVm.IsSuccess = false;
                 responseVm.Message = AppConstant.ExceptionError + ex.Message;
             }
             return responseVm;
@@ -825,15 +831,22 @@ namespace ShutterManagement.Business.Services
 
                 if (IsTenant)
                 {
-                    var JobList = await (from t2 in _context.TblJobs.OrderByDescending(x => x.CreatedAt)
-                                         join t1 in _context.TblAddresses on t2.AddressId equals t1.AddressId
-                                         join t3 in _context.MstJobTypes on t2.JobType equals t3.Id
-                                         join t4 in _context.TblUsers on t2.AssignedPersonnel equals t4.Id
-                                         join p1 in _context.TblUsers on t2.CreatedBy equals p1.Id
-                                         join p2 in _context.TblTenants on t2.TenantId equals p2.TenantId
-                                         join t5 in _context.MstJobStatuses on t2.JobStatus equals t5.JobStatusId
-                                         join t6 in _context.TblContacts on t2.ContactId equals t6.ContactId
-                                         where t6.IsDelete == false && t6.IsActive == true && t2.IsActive == true && t2.IsDelete == false && t2.TenantId == AppConstant.LoggedInTenantId || subTenantlist.Contains((Guid)t2.TenantId)
+                    var JobList = (from t2 in _context.TblJobs
+                                  join t1 in _context.TblAddresses on t2.AddressId equals t1.AddressId into addr
+                                  from t1 in addr.DefaultIfEmpty() 
+                                  join t3 in _context.MstJobTypes on t2.JobType equals t3.Id into jobType
+                                  from t3 in jobType.DefaultIfEmpty()
+                                  join t4 in _context.TblUsers on t2.AssignedPersonnel equals t4.Id into assignedUser
+                                  from t4 in assignedUser.DefaultIfEmpty()
+                                  join p1 in _context.TblUsers on t2.CreatedBy equals p1.Id into createdUser
+                                  from p1 in createdUser.DefaultIfEmpty()
+                                  join p2 in _context.TblTenants on t2.TenantId equals p2.TenantId into tenant
+                                  from p2 in tenant.DefaultIfEmpty()
+                                  join t5 in _context.MstJobStatuses on t2.JobStatus equals t5.JobStatusId into jobStatus
+                                  from t5 in jobStatus.DefaultIfEmpty()
+                                  join t6 in _context.TblContacts on t2.ContactId equals t6.ContactId into contact
+                                  from t6 in contact.DefaultIfEmpty()
+                                  where t6.IsDelete == false && t6.IsActive == true && t2.IsActive == true && t2.IsDelete == false && t2.TenantId == AppConstant.LoggedInTenantId || subTenantlist.Contains((Guid)t2.TenantId)
                                          select new GetAllJobsSubtenant_tenant
                                          {
                                              IsActive = t2.IsActive,
@@ -866,7 +879,7 @@ namespace ShutterManagement.Business.Services
                                              TenantId = t2.TenantId,
                                              CreatedAt = t2.CreatedAt,
                                              UpdatedAt = t2.UpdatedAt,
-                                         }).ToListAsync();
+                                         }).ToList();
 
                    
                     filter.SearchValue = filter.SearchValue?.Trim().ToLower();

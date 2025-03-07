@@ -16,6 +16,7 @@ using System.Net.Http.Headers;
 using System.Numerics;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace ShutterManagement.GHL.Services
 {
@@ -86,24 +87,31 @@ namespace ShutterManagement.GHL.Services
                 if (targetPipeline?.Stages == null || !targetPipeline.Stages.Any())
                 {
                     responseVm.IsSuccess = false;
-                    responseVm.Message = "Target pipeline not found or has no stages.";
+                    responseVm.Message = "Target pipeline has no stages.";
                     return responseVm;
                 }
 
                 var existingStages = dBContext.TblGhlStages
                     .Where(x => x.GhlPipelineId == targetPipeline.Id)
                     .ToList();
+
                 var existingStagesDict = existingStages.ToDictionary(x => x.GhlStageId, x => x);
 
                 List<TblGhlStage> stagesToUpdate = new();
                 List<TblGhlStage> stagesToInsert = new();
 
-                foreach (var stage in targetPipeline.Stages)
+                // Sort the pipeline stages by name (or another field if required)
+                var orderedStages = targetPipeline.Stages.OrderBy(s => s.Name).ToList();
+
+                for (int i = 0; i < orderedStages.Count; i++)
                 {
+                    var stage = orderedStages[i];
+
                     if (existingStagesDict.TryGetValue(stage.Id, out var existingStage))
                     {
                         existingStage.GhlStageName = stage.Name;
                         existingStage.GhlPipelineName = targetPipeline.Name;
+                        existingStage.StageOrder = i + 1; // Assigning order for sequential storage
                         existingStage.GhlLastSync = DateTime.Now;
                         existingStage.UpdatedAt = DateTime.Now;
                         existingStage.ModifiedBy = AppConstant.LoggedInTenantId;
@@ -119,6 +127,7 @@ namespace ShutterManagement.GHL.Services
                             GhlStageId = stage.Id,
                             GhlStageName = stage.Name,
                             GhlPipelineName = targetPipeline.Name,
+                            StageOrder = i + 1, // Assigning order for new records
                             GhlLastSync = DateTime.Now,
                             CreatedAt = DateTime.Now,
                             TenantId = AppConstant.LoggedInTenantId,
@@ -127,6 +136,7 @@ namespace ShutterManagement.GHL.Services
                         });
                     }
                 }
+
                 if (stagesToUpdate.Any())
                 {
                     dBContext.TblGhlStages.UpdateRange(stagesToUpdate);
@@ -136,10 +146,12 @@ namespace ShutterManagement.GHL.Services
                 {
                     await dBContext.TblGhlStages.AddRangeAsync(stagesToInsert);
                 }
+
                 await dBContext.SaveChangesAsync();
 
                 responseVm.IsSuccess = true;
-                responseVm.Message = "All stages Synced successfully.";
+                responseVm.Message = "All stages synced sequentially.";
+
             }
             catch (Exception ex)
             {
@@ -150,13 +162,14 @@ namespace ShutterManagement.GHL.Services
             return responseVm;
         }
 
+
         public async Task<IResponseVm<List<PipelineAndStage>>> GetGHLStages()
         {
             IResponseVm<List<PipelineAndStage>> responseVm = new ResponseVm<List<PipelineAndStage>>();
             try
             {
                 var gHLStages = dBContext.TblGhlStages
-                    .Where(x => x.TenantId == AppConstant.LoggedInTenantId).OrderByDescending(x=>x.CreatedAt)
+                    .Where(x => x.TenantId == AppConstant.LoggedInTenantId).OrderBy(x=>x.StageOrder)
                     .ToList();
 
                 var stageList = new List<PipelineAndStage>();
@@ -318,9 +331,8 @@ namespace ShutterManagement.GHL.Services
                 phone= IsContactExists?.PhoneNumber,
                 monetaryValue= 122.22,
                 source= "public hh",
-                name= IsContactExists?.FirstName +""+IsContactExists?.LastName,
+                name= IsContactExists?.FirstName +" "+IsContactExists?.LastName,
                 companyName="Brain Technosys PVT LTd",
-               
             };
 
             try
@@ -330,12 +342,30 @@ namespace ShutterManagement.GHL.Services
                 var opportunityJson = JsonConvert.SerializeObject(opportunityData);
                 var content = new StringContent(opportunityJson, Encoding.UTF8, "application/json");
                 var response = await _httpClient.PostAsync(endpoint, content);
-
+                var json = await response.Content.ReadAsStringAsync();
                 if (!response.IsSuccessStatusCode)
                 {
                     responseVm.IsSuccess = false;
                     responseVm.Message = $"Error creating opportunity: {response.StatusCode}";
                     return responseVm;
+                }
+
+                // Deserialize response to fetch created opportunityId and contactId
+                var result = JsonConvert.DeserializeObject<OpportunityResponse>(json);
+                if (result == null || string.IsNullOrEmpty(result.OpportunityId))
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = "Failed to retrieve opportunity details from response.";
+                    return responseVm;
+                }
+
+                // Fetch the existing job and update GhlOpportunityId and GhlContactId
+                var existingJob = await dBContext.TblJobs.FindAsync(job.JobId);
+                if (existingJob != null)
+                {
+                    existingJob.GhlOpportunityId = result.OpportunityId;
+                    existingJob.GhlContactId = result.Contact.ContactId; 
+                    await dBContext.SaveChangesAsync();
                 }
 
                 responseVm.IsSuccess = true;
@@ -387,6 +417,37 @@ namespace ShutterManagement.GHL.Services
 
             return responseVm;
         }
+
+        public class OpportunityResponse
+        {
+            [JsonProperty("id")]
+            public string OpportunityId { get; set; }
+
+            [JsonProperty("contact")]
+            public ContactInfo Contact { get; set; }
+        }
+
+        public class ContactInfo
+        {
+            [JsonProperty("id")]
+            public string ContactId { get; set; }
+
+            [JsonProperty("name")]
+            public string Name { get; set; }
+
+            [JsonProperty("companyName")]
+            public string CompanyName { get; set; }
+
+            [JsonProperty("email")]
+            public string Email { get; set; }
+
+            [JsonProperty("phone")]
+            public string Phone { get; set; }
+
+            [JsonProperty("tags")]
+            public List<string> Tags { get; set; }
+        }
+
 
 
 
