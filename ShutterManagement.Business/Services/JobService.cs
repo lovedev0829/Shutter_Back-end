@@ -748,7 +748,7 @@ namespace ShutterManagement.Business.Services
 
                 if (IsTenant)
                 {
-                    var JobList = await (from t2 in _context.TblJobs.OrderByDescending(x => x.CreatedAt)
+                    var JobList =  (from t2 in _context.TblJobs.OrderByDescending(x => x.CreatedAt)
                                          join t1 in _context.TblAddresses on t2.AddressId equals t1.AddressId
                                          join t3 in _context.MstJobTypes on t2.JobType equals t3.Id
                                          join t4 in _context.TblUsers on t2.AssignedPersonnel equals t4.Id
@@ -789,7 +789,7 @@ namespace ShutterManagement.Business.Services
                                              TenantId = t2.TenantId,
                                              CreatedAt = t2.CreatedAt,
                                              UpdatedAt = t2.UpdatedAt,
-                                         }).ToListAsync();
+                                         }).ToList();
 
                    
                     filter.SearchValue = filter.SearchValue?.Trim().ToLower();
