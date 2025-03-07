@@ -15,6 +15,9 @@ using System.ComponentModel;
 using ShutterManagement.DAL.Context;
 using ShutterManagement.Business.Services;
 using ShutterManagement.Core.ViewModels.Response;
+using ShutterManagement;
+using ShutterManagement.GHL.Service;
+using ShutterManagement.GHL;
 
 namespace ShutterManagement.Controllers
 {
@@ -54,8 +57,7 @@ namespace ShutterManagement.Controllers
         private readonly ILocationService locationService;
         private readonly IDashboard dashboard;
         private readonly INotificationService notification;
-        private readonly IGHLConfiguration gHLConfiguration;
-        private readonly IStripeConfiguration stripeConfiguration;
+        private readonly GhlService ghlService;
 
         public CommonController(IMasterCreate masterCreate, 
             FileUploadHelper fileUpload, ClaimsProperty claimsProperty,
@@ -69,7 +71,7 @@ namespace ShutterManagement.Controllers
             IMstContactType contactType, IJobService jobService,IExpressionService expression ,IInvoiceService invoiceService,
             ITaxRate taxService,IEstimateService estimateService,
             IEstimationBreakdownService estimationBreakdownService, ILocationService locationService,
-           IDashboard dashboard, INotificationService notification, IGHLConfiguration gHLConfiguration,IStripeConfiguration stripeConfiguration)
+           IDashboard dashboard,INotificationService notification, GhlService ghlService)
         {
             this.masterCreate = masterCreate;
             this.fileUpload = fileUpload;
@@ -111,8 +113,7 @@ namespace ShutterManagement.Controllers
             this.locationService = locationService;
             this.dashboard = dashboard;
             this.notification = notification;
-            this.gHLConfiguration = gHLConfiguration;
-            this.stripeConfiguration = stripeConfiguration;
+            this.ghlService = ghlService;
         }
 
 
@@ -236,8 +237,19 @@ namespace ShutterManagement.Controllers
             return Ok(res);
         }
 
+        [HttpGet]
+        [Route("GHLContact")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GHLContact()
+        {
+            var res = await ghlService.GetContactsAsync();
+            return Ok(res);
+        }
 
-        
+     
+
+  
+
         //public IActionResult Dashboard()
         //{
         //    var res = new ResponseVm<string>();

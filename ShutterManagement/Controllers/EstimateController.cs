@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using ShutterManagement.Business.Interfaces;
+using ShutterManagement.Business.Services;
 using ShutterManagement.Core.Common;
 using ShutterManagement.Core.SPModel;
 using ShutterManagement.Core.ViewModels.Request;
@@ -13,10 +14,12 @@ namespace ShutterManagement.Controllers
     public class EstimateController : ControllerBase
     {
         private readonly IEstimateService _EstimateService;
+        private readonly GhlOpportunityService ghlOpportunityService;
 
-        public EstimateController(IEstimateService EstimateService)
+        public EstimateController(IEstimateService EstimateService,GhlOpportunityService ghlOpportunityService)
         {
             _EstimateService = EstimateService;
+            this.ghlOpportunityService = ghlOpportunityService;
         }
 
         [HttpPost("GetAll")]
@@ -34,6 +37,11 @@ namespace ShutterManagement.Controllers
         {
 
             var res = await _EstimateService.Create_Estimate(model);
+            if (res != null)
+            {
+                var opportunityRes = await ghlOpportunityService.CreateOpportunityFromEstimateAsync(model);
+                return Ok(new { Estimate = res, OpportunityResponse = opportunityRes });
+            }
             return Ok(res);
         }
 

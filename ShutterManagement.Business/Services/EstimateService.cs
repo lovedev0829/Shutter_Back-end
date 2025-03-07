@@ -23,6 +23,7 @@ using System.Linq.Expressions;
 using NCalc;
 using Antlr.Runtime;
 using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.Security.Cryptography;
 
 namespace ShutterManagement.Business.Services
 {
@@ -356,9 +357,6 @@ namespace ShutterManagement.Business.Services
                         Subject = Enum.GetName(typeof(NotificationModule), NotificationModule.Estimate),
                         Body = "Estimate " + AppConstant.Create_Notification,
                         CreatedDate = DateTime.Now,
-                        Type = NotificationModule.Estimate.ToString(),
-                        TypeId = createEstimate.EstimateId
-
                     };
 
                     var result = await notification.CreateNotification(notification1);

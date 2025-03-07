@@ -24,15 +24,15 @@ namespace ShutterManagement.Controllers
         }
 
         [HttpPost("GetAll")]
-        [Authorize(Roles = "ContactView")]
+        [Authorize(Roles = "ContactView,PartnerContactView")]
         public async Task<IActionResult> GetAllContacts(Pagination filter)
         {
-            var res = await _contactService.GetAll_Contact(filter);
+            bool isInContactViewRole = HttpContext.User.IsInRole("PartnerContactView");
+            var res = await _contactService.GetAll_Contact(filter, isInContactViewRole);
             res.Data = res.Data?.Where(x => x.IsArchive == false).ToList();
-
             return Ok(res);
-
         }
+
 
         [HttpPost("Create")]
         [Authorize(Roles = "ContactAdd")]

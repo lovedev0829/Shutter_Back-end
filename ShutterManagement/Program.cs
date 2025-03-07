@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Business.Services;
+//sing ShutterManagement.GHL;
 using ShutterManagement.DAL.Context;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -17,6 +18,9 @@ using ShutterManagement.Core.Common;
 using Microsoft.Extensions.FileProviders;
 using DinkToPdf.Contracts;
 using DinkToPdf;
+using Microsoft.Extensions.Options;
+using System.Runtime;
+using ShutterManagement.GHL.Service;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -87,6 +91,17 @@ builder.Services.AddAuthentication(options =>
     
 });
 
+//// GHL API Settings Configuration
+//builder.Services.Configure<GhlSettings>(builder.Configuration.GetSection("GhlSettings"));
+//builder.Services.AddHttpClient<IGhlApiClient, GhlApiClient>((sp, client) =>
+//{
+//    var ghlSettings = sp.GetRequiredService<IOptions<GhlSettings>>().Value;
+//    client.BaseAddress = new Uri(ghlSettings.BaseAddress);
+//    client.DefaultRequestHeaders.Authorization =
+//        new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", ghlSettings.ApiKey);
+//});
+
+// Add GhlSyncService to DI container
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -160,8 +175,9 @@ builder.Services.AddScoped<IEstimationBreakdownService,EstimationBreakdownServic
 builder.Services.AddScoped<ILocationService, LocationService>();
 builder.Services.AddScoped<ISubtenantProductMarkup, SubtenantProductMarkup>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
-builder.Services.AddScoped<IGHLConfiguration, GHLConfigurationService>();
-builder.Services.AddScoped<IStripeConfiguration, StripeConfigurationService>();
+builder.Services.AddHttpClient<GhlOpportunityService>();
+builder.Services.AddSingleton<GhlService>();
+builder.Services.AddSingleton<GHLAsyncService>();
 builder.Services.AddSingleton(typeof(IConverter), new SynchronizedConverter(new PdfTools()));
 
 

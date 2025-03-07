@@ -65,6 +65,8 @@ public partial class ShutterDBContext : DbContext
 
     public virtual DbSet<TblExpression> TblExpressions { get; set; }
 
+    public virtual DbSet<TblGhlStage> TblGhlStages { get; set; }
+
     public virtual DbSet<TblGhlconfiguration> TblGhlconfigurations { get; set; }
 
     public virtual DbSet<TblInvoice> TblInvoices { get; set; }
@@ -411,11 +413,13 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.FirstName)
                 .HasMaxLength(50)
                 .IsUnicode(false);
+            entity.Property(e => e.GhlcontactId).HasColumnName("GHLContactId");
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
             entity.Property(e => e.LastName)
                 .HasMaxLength(50)
                 .IsUnicode(false);
+            entity.Property(e => e.LastSync).HasColumnType("datetime");
             entity.Property(e => e.Name).HasMaxLength(255);
             entity.Property(e => e.PhoneNumber).HasMaxLength(50);
             entity.Property(e => e.Referral).HasMaxLength(100);
@@ -511,8 +515,6 @@ public partial class ShutterDBContext : DbContext
             entity.HasKey(e => e.EstimateId).HasName("PK__TblEstim__ABEBF4B51ABC6B71");
 
             entity.ToTable("TblEstimate", "dbo");
-
-            entity.HasIndex(e => e.EstimateCode, "UQ__TblEstim__1918B63A8F60ED37").IsUnique();
 
             entity.Property(e => e.EstimateId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.AdditionalCost).HasColumnType("decimal(10, 2)");
@@ -736,6 +738,24 @@ public partial class ShutterDBContext : DbContext
                 .HasConstraintName("FK__TblExpres__Produ__353DDB1D");
         });
 
+        modelBuilder.Entity<TblGhlStage>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__tblGHL_S__3213E83FA5D504FE");
+
+            entity.ToTable("tblGHL_Stage", "dbo");
+
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("(newid())")
+                .HasColumnName("id");
+            entity.Property(e => e.GhlLastSync)
+                .HasColumnType("datetime")
+                .HasColumnName("GHL_lastSync");
+            entity.Property(e => e.GhlPipelineId).HasColumnName("GHL_PipelineId");
+            entity.Property(e => e.GhlStageId).HasColumnName("GHL_StageId");
+            entity.Property(e => e.GhlStageName).HasColumnName("GHL_StageName");
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+        });
+
         modelBuilder.Entity<TblGhlconfiguration>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK__TblGHLCo__3214EC074F1C0B7E");
@@ -815,6 +835,11 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
+            entity.Property(e => e.GhlStageId).HasColumnName("GHL_StageId");
+            entity.Property(e => e.GhlStageName)
+                .HasMaxLength(100)
+                .IsUnicode(false)
+                .HasColumnName("GHL_StageName");
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
             entity.Property(e => e.JobName).HasMaxLength(250);

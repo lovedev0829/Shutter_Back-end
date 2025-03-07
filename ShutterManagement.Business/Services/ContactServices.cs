@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Text;
+using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core;
 using ShutterManagement.Core.Common;
@@ -8,6 +10,8 @@ using ShutterManagement.Core.ViewModels;
 using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.Core.ViewModels.Response;
 using ShutterManagement.DAL.Context;
+using ShutterManagement.GHL;
+using ShutterManagement.GHL.Service;
 using ShutterManagement.Services;
 
 namespace ShutterManagement.Business.Services
@@ -19,15 +23,18 @@ namespace ShutterManagement.Business.Services
         private readonly ITenantService tenantService;
         private readonly ITaxExemption taxExemptionService;
         private readonly ClaimsProperty claimsProperty;
+        private readonly GhlService ghlService;
 
         public ContactServices(ShutterDBContext context, IContactBillingService billingService,
-            ITenantService tenantService, ITaxExemption taxExemptionService, ClaimsProperty claimsProperty)
+            ITenantService tenantService, ITaxExemption taxExemptionService,
+            ClaimsProperty claimsProperty,GhlService ghlService)
         {
             _context = context;
             this.billingService = billingService;
             this.tenantService = tenantService;
             this.taxExemptionService = taxExemptionService;
             this.claimsProperty = claimsProperty;
+            this.ghlService = ghlService;
         }
 
         public async Task<IResponseVm<string>> GetContactByEmailOrPhone(string email, string phone)
@@ -83,6 +90,7 @@ namespace ShutterManagement.Business.Services
                         .Where(c => (c.Email == model.Email || c.PhoneNumber == model.PhoneNumber)
                         && c.TenantId == AppConstant.LoggedInTenantId
                         && c.IsDelete == false).ToList();
+                    
                     if (IsContactExists.Count > 0)
                     {
                         responseVm.Message = $"Email {model.Email} or Phone {model.PhoneNumber} " + AppConstant.AlreadyExists;
@@ -172,8 +180,6 @@ namespace ShutterManagement.Business.Services
                             dbContext.SaveChanges();
                             res.PrimaryAddress = address.AddressId;
                             await Update(res);
-
-
                         }
                         if (!model.IsTaxExemption)
                         {
@@ -189,6 +195,13 @@ namespace ShutterManagement.Business.Services
                                 IsDelete = false,
                             };
                             await taxExemptionService.Add(taxExemption1);
+                        }
+
+                        var ghlResponse = await SyncWithGHL(res, model);
+                        if (!ghlResponse.IsSuccess)
+                        {
+                            responseVm.Message = "Contact sync with GHL failed: " + ghlResponse.Message;
+                            return responseVm;
                         }
                         responseVm.IsSuccess = true;
                         responseVm.Message = AppConstant.InsertSuccessMsg;
@@ -332,6 +345,20 @@ namespace ShutterManagement.Business.Services
                                 await taxExemptionService.Add(taxExemption1);
                             }
                         }
+                        var ghlContactAdd = new GhlContactAdd
+                        {
+                            Id = contact.ContactId.ToString() ?? string.Empty,
+                            FirstName = model.FirstName ?? string.Empty,
+                            LastName = model.LastName ?? string.Empty,
+                            Email = model.Email ?? string.Empty,
+                            Phone = model.PhoneNumber ?? string.Empty,
+                            Notes = model.Notes ?? string.Empty,
+                            ContactType = model.ContactType ?? string.Empty,
+                            Website = model.Website ?? string.Empty,
+                            Referral = model.Referral ?? string.Empty
+                        };
+                        var ghlResponse = await ghlService.UpdateContactAsync(contact.GhlcontactId, ghlContactAdd);
+
                         responseVm.IsSuccess = true;
                         responseVm.Message = AppConstant.UpdateSuccessMsg;
                     }
@@ -545,14 +572,15 @@ namespace ShutterManagement.Business.Services
         }
 
 
-        public async Task<IResponseVm<List<ContactsList>>> GetAll_Contact(Pagination filter)
+        public async Task<IResponseVm<List<ContactsList>>> GetAll_Contact(Pagination filter,bool Role)
         {
             IResponseVm<List<ContactsList>> responseVm = new ResponseVm<List<ContactsList>>();
             try
             {
+                var IsSubtenants = false;
                 var Contacts = new List<TblContact>();
                 List<ContactsList> ContactList = new List<ContactsList>();
-                if (filter.TenantId != "")
+                if (filter.TenantId != "" && Role)
                 {
                     var IsRealtedTenant = tenantService.GetAllQuerable().Where(x => x.TenantId.ToString() == filter.TenantId && x.ParentTenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
                     if (IsRealtedTenant == null)
@@ -563,6 +591,7 @@ namespace ShutterManagement.Business.Services
                     else
                     {
                         Contacts = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId.ToString() == filter.TenantId).OrderByDescending(x => x.CreatedAt).ToList();
+                        IsSubtenants = true;
                     }
                 }
                 else
@@ -590,7 +619,8 @@ namespace ShutterManagement.Business.Services
                         IsBillingAddressSameAsAddress = contact.IsBillingAddressSameAsAddress,
                         IsActive = contact.IsActive,
                         IsArchive = contact.IsArchive,
-                        CreatedAt = contact.CreatedAt
+                        CreatedAt = contact.CreatedAt,
+                        IsSubtenant = IsSubtenants,
                     };
                     contacts.billingAddressVm = dbContext.TblAddresses
                         .Where(x => x.AddressId == contact.PrimaryAddress
@@ -648,6 +678,50 @@ namespace ShutterManagement.Business.Services
             catch (Exception ex)
             {
                 responseVm.Message = AppConstant.ExceptionError + ex.Message;
+            }
+            return responseVm;
+        }
+
+        public async Task<IResponseVm<string>> SyncWithGHL(TblContact contact, Sp_Contact model)
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+            try
+            {
+                var ghlResponse = false;
+                var ghlContactAdd = new GhlContactAdd
+                { 
+                    Id = contact.ContactId.ToString() ?? string.Empty,
+                    FirstName = model.FirstName ?? string.Empty,  
+                    LastName = model.LastName ?? string.Empty,   
+                    Email = model.Email ?? string.Empty,           
+                    Phone = model.PhoneNumber ?? string.Empty,    
+                    Notes = model.Notes ?? string.Empty,           
+                    ContactType = model.ContactType ?? string.Empty,  
+                    Website = model.Website ?? string.Empty,       
+                    Referral = model.Referral ?? string.Empty      
+                };
+
+                if (contact.GhlcontactId == null)
+                {
+                   ghlResponse =await ghlService.CreateContactAsync(ghlContactAdd);
+                }
+                else
+                {
+                    ghlResponse = await ghlService.UpdateContactAsync(contact.GhlcontactId,ghlContactAdd);
+                }
+                if (ghlResponse != null)
+                {
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = "Contact synced successfully with GHL.";
+                }
+                else
+                {
+                    responseVm.Message = "Contact sync with GHL failed.";
+                }
+            }
+            catch (Exception ex)
+            {
+                responseVm.Message = "Error syncing with GHL: " + ex.Message;
             }
             return responseVm;
         }
