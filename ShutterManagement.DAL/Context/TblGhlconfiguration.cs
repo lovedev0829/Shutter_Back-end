@@ -16,4 +16,6 @@ public partial class TblGhlconfiguration
     public Guid? TenantId { get; set; }
 
     public string? LocationId { get; set; }
+
+    public DateTime? LastSync { get; set; }
 }
