@@ -21,6 +21,7 @@ using System.Net.Http;
 using Microsoft.AspNetCore.Mvc;
 using ShutterManagment.GHL.ViewModel.Request;
 using System.Diagnostics.Contracts;
+using Org.BouncyCastle.Asn1.X509.Qualified;
 
 namespace ShutterManagement.Business.Services
 {
@@ -321,18 +322,16 @@ namespace ShutterManagement.Business.Services
 
                 var ghlOpportunityModel = new
                 {
-                    title = job.JobName,
-                    id = job.GhlOpportunityId,
-                    name = job.JobName,
-                    stageId = job.GhlStageId,
-                    status = "Open",
-                    notes = job.Notes??"NA",
-                    email = contactData?.Email,
-                    phone = contactData?.PhoneNumber,
-                    monetaryValue = 122.22,
-                    source = "public hh",
-                    companyName = "Brain Technosys PVT LTd",
-
+                    title= job.JobName,
+                    status= jobstatusname,
+                    stageId=job.GhlStageId,
+                    email= contactData?.Email,
+                    phone= contactData?.PhoneNumber,
+                    monetaryValue=122.22,
+                    source="public hh",
+                    contactId= contactData?.GhlcontactId,
+                    name= contactData?.FirstName+" "+ contactData?.LastName,
+                    companyName="Brain Technosys PVT LTd",
                 };
 
                 using var client = new HttpClient();
