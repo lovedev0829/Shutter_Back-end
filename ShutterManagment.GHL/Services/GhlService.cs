@@ -35,7 +35,7 @@ namespace ShutterManagement.GHL.Services
             httpContextAccessor = _httpContextAccessor;
         }
 
-        #region Start pipeLine and Stages Related Methods 
+        #region Start pipeLine and Stages Related Methods
 
         public async Task<PipelineResponse> GetAllPipelinesWithStagesAsync()
         {

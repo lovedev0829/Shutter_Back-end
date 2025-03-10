@@ -345,7 +345,7 @@ namespace ShutterManagement.Business.Services
                     .FirstOrDefault(p => p.GhlPipelineId.Contains(userProvidedPipelineNameOrId) || p.GhlPipelineName.Contains(userProvidedPipelineNameOrId));
 
                 var content = new StringContent(JsonConvert.SerializeObject(ghlOpportunityModel), Encoding.UTF8, "application/json");
-                var url = $"{BaseUrl}pipelines/{targetPipeline.Id}/opportunities/{job.GhlOpportunityId}";
+                var url = $"{BaseUrl}pipelines/{targetPipeline.GhlPipelineId}/opportunities/{job.GhlOpportunityId}";
                  
                 var response = await client.PutAsync(url, content);
                 var responseBody = await response.Content.ReadAsStringAsync();
@@ -374,7 +374,7 @@ namespace ShutterManagement.Business.Services
 
         public async Task<List<GhlContactVM>> GetContactsAsync()
         {
-            var requestUrl = $"https://rest.gohighlevel.com/v1/contacts/";
+            var requestUrl = $"{BaseUrl}contacts/";
             using var client = new HttpClient();
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetApiKey());
             var response = await client.GetAsync(requestUrl);
