@@ -309,6 +309,7 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
                 var jobstatusname = dbContext.MstJobStatuses.Where(x => x.JobStatusId == job.JobStatus).Select(x => x.JobStatusName).FirstOrDefault();
+                var contactData = dbContext.TblContacts.Where(x => x.GhlcontactId == job.GhlContactId).FirstOrDefault();
 
                 if (jobstatusname==null)
                 {
@@ -326,8 +327,8 @@ namespace ShutterManagement.Business.Services
                     stageId = job.GhlStageId,
                     status = jobstatusname??"",
                     notes = job.Notes,
-                    email = job.Contact?.Email,
-                    phone = job.Contact?.PhoneNumber,
+                    email = contactData?.Email,
+                    phone = contactData?.PhoneNumber,
                     monetaryValue = 122.22,
                     source = "public hh",
                     companyName = "Brain Technosys PVT LTd",
