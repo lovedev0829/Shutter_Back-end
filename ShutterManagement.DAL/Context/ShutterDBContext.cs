@@ -769,6 +769,9 @@ public partial class ShutterDBContext : DbContext
 
             entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
             entity.Property(e => e.Apikey).HasColumnName("APIkey");
+            entity.Property(e => e.LastSync)
+                .HasColumnType("datetime")
+                .HasColumnName("lastSync");
         });
 
         modelBuilder.Entity<TblInvoice>(entity =>

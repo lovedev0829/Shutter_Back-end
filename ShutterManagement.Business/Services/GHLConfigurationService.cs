@@ -49,6 +49,7 @@ namespace ShutterManagement.Business.Services
                         LocationId = gHLConfiguration.LocationId,
                         Apikey = gHLConfiguration.APIkey,
                         TenantId = AppConstant.LoggedInTenantId,
+                        LastSync = DateTime.Now,
                     };
                     var res1 = await Add(tblGhlconfiguration);
                     responseVm.IsSuccess = true;
@@ -74,6 +75,7 @@ namespace ShutterManagement.Business.Services
                    BaseAddress = gHLConfiguration?.BaseAddress??"",
                    LocationId = gHLConfiguration?.LocationId??"",
                    PipelineId = gHLConfiguration?.PipelineId ?? "",
+                   LastSync = gHLConfiguration?.LastSync ?? DateTime.Now,
                 };
                 responseVm.IsSuccess = true;
                 responseVm.Message= AppConstant.FetchSuccessMsg;

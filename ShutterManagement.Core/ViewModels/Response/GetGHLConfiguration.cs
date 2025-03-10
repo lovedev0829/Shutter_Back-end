@@ -12,5 +12,6 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? PipelineId { get; set; }
         public string? LocationId { get; set; }
         public string? BaseAddress { get; set; }
+        public DateTime? LastSync { get; set; }
     }
 }
