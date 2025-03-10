@@ -254,7 +254,7 @@ namespace ShutterManagement.GHL.Services
 
         }
 
-        public async Task<GhlContactVM> UpdateContactAsync(string contactId, GhlContactAdd contact)
+        public async Task<GhlContactSingleResponse> UpdateContactAsync(string contactId, GhlContactAdd contact)
         {
             try
             {
@@ -285,7 +285,7 @@ namespace ShutterManagement.GHL.Services
                 response.EnsureSuccessStatusCode();
 
                 var jsonResponse = await response.Content.ReadAsStringAsync();
-                var contactResponse = JsonConvert.DeserializeObject<GhlContactVM>(jsonResponse);
+                var contactResponse = JsonConvert.DeserializeObject<GhlContactSingleResponse>(jsonResponse);
 
                 return contactResponse;
             }

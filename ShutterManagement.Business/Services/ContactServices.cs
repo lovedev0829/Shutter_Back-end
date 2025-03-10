@@ -864,7 +864,7 @@ namespace ShutterManagement.Business.Services
                 }
                 else
                 {
-                  //  ghlResponse = await ghlService.UpdateContactAsync(contact.GhlcontactId, ghlContactAdd);
+                    ghlResponse = await ghlService.UpdateContactAsync(contact.GhlcontactId, ghlContactAdd);
                 }
                 if (ghlResponse != null)
                 {
