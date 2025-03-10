@@ -303,8 +303,18 @@ namespace ShutterManagement.Business.Services
             {
                 if (string.IsNullOrEmpty(job.GhlOpportunityId))
                 {
+                    responseVm.IsSuccess = false;
                     responseVm.Message = "No associated GHL Opportunity ID found.";
                     FileLogger.Log($"Error in UpdateOpportunityInGhl: {job.GhlOpportunityId}");
+                    return responseVm;
+                }
+                var jobstatusname = dbContext.MstJobStatuses.Where(x => x.JobStatusId == job.JobStatus).Select(x => x.JobStatusName).FirstOrDefault();
+
+                if (jobstatusname==null)
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = "No job status name  found";
+                    FileLogger.Log($"Error in UpdateOpportunityInGhl No job status name  found: {job.JobName}");
                     return responseVm;
                 }
 
@@ -314,7 +324,7 @@ namespace ShutterManagement.Business.Services
                     id = job.GhlOpportunityId,
                     name = job.JobName,
                     stageId = job.GhlStageId,
-                    status = "open",
+                    status = jobstatusname??"",
                     notes = job.Notes,
                     email = job.Contact?.Email,
                     phone = job.Contact?.PhoneNumber,
@@ -1041,6 +1051,11 @@ namespace ShutterManagement.Business.Services
                 }
                 if (responseVm.IsSuccess)
                 {
+                    if (IsJobExist?.GhlOpportunityId != null)
+                    {
+                        var ghlUpdateResponse = await UpdateOpportunityInGhl(IsJobExist);
+                        FileLogger.Log($"GHL Sync: Job updated in GHL - {ghlUpdateResponse.Message}");
+                    }
                     CreateNotification notification1 = new CreateNotification()
                     {
                         UserId = AppConstant.LoggedInUserID,
