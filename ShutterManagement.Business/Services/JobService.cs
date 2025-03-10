@@ -322,8 +322,10 @@ namespace ShutterManagement.Business.Services
 
                 var ghlOpportunityModel = new
                 {
+
+
                     title= job.JobName,
-                    status= jobstatusname,
+                    status= jobstatusname.ToLower()??"",
                     stageId=job.GhlStageId,
                     email= contactData?.Email,
                     phone= contactData?.PhoneNumber,
@@ -339,7 +341,7 @@ namespace ShutterManagement.Business.Services
 
                 var content = new StringContent(JsonConvert.SerializeObject(ghlOpportunityModel), Encoding.UTF8, "application/json");
                 var url = $"{BaseUrl}pipelines/CFoi90n88zrDhMFP8R2I/opportunities/{job.GhlOpportunityId}";
-
+                 
                 var response = await client.PutAsync(url, content);
                 var responseBody = await response.Content.ReadAsStringAsync();
 
