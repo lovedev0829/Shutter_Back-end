@@ -356,7 +356,8 @@ namespace ShutterManagement.Controllers
             return Ok(EstimationCode);
 
         }
-    
+
+
 
         //[HttpGet]
         //[Route("ContactEstimationProductCompoentBreakdown")]
@@ -776,8 +777,8 @@ namespace ShutterManagement.Controllers
         }
 
         [HttpGet]
-        [Route("SyncOpportunity")]
-        public async Task<IActionResult> SyncOpportunity()
+        [Route("ghlsync")]
+        public async Task<IActionResult> GHLSync()
         {
             var result = await jobService.SyncOpportunitiesFromGhl();
             return Ok(result);

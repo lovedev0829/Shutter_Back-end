@@ -214,8 +214,8 @@ namespace ShutterManagement.Business.Services
                     var stage = res?.Data.FirstOrDefault();
 
                     var contacts = await GetContactsAsync();
-                    var contact = contacts.FirstOrDefault(c => c.Id == opportunity.Contact?.Id);
-                    var dbcontact = _context.TblContacts.Where(x => x.GhlcontactId == contact.Id).FirstOrDefault();
+                    var contact = contacts.FirstOrDefault(c => c.id == opportunity.Contact?.Id);
+                    var dbcontact = _context.TblContacts.Where(x => x.GhlcontactId == contact.id).FirstOrDefault();
                     if(dbcontact==null)
                     {
                         responseVm.IsSuccess = false;

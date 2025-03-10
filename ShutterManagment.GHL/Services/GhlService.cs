@@ -218,7 +218,7 @@ namespace ShutterManagement.GHL.Services
             return result?.Contacts ?? new List<GhlContactVM>();
         }
 
-        public async Task<GhlContactVM> CreateContactAsync(GhlContactAdd contact)
+        public async Task<GhlContactSingleResponse> CreateContactAsync(GhlContactAdd contact)
         {
             try
             {
@@ -243,7 +243,7 @@ namespace ShutterManagement.GHL.Services
                 var result1 = GetClientIpAddress();
 
                 var jsonResponse = await response.Content.ReadAsStringAsync();
-                var contactResponse = JsonConvert.DeserializeObject<GhlContactVM>(jsonResponse);
+                var contactResponse = JsonConvert.DeserializeObject <GhlContactSingleResponse>(jsonResponse);
 
                 return contactResponse;
             }
@@ -251,6 +251,7 @@ namespace ShutterManagement.GHL.Services
             {
                 return null;
             }
+
         }
 
         public async Task<GhlContactVM> UpdateContactAsync(string contactId, GhlContactAdd contact)

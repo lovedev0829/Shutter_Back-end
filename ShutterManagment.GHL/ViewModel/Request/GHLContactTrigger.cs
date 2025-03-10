@@ -55,7 +55,7 @@ namespace ShutterManagment.GHL.ViewModel.Request
         public Location? location { get; set; }
         public Workflow? workflow { get; set; }
         public TriggerData? triggerData { get; set; }
-        public Contact contact { get; set; }
+        public Contact? contact { get; set; }
         public AttributionSource? attributionSource { get; set; }
         public CustomData? customData { get; set; }
     }

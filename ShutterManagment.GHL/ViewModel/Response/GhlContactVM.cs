@@ -10,88 +10,39 @@ namespace ShutterManagment.GHL.ViewModel.Response
 {
     public class GhlContactVM
     {
-        [JsonPropertyName("id")]
-        public string Id { get; set; }
 
-        [JsonPropertyName("locationId")]
-        public string LocationId { get; set; }
+            
+        public string id { get; set; }
 
-        [JsonPropertyName("contactName")]
-        public string ContactName { get; set; }
+        public string locationId { get; set; }
 
-        [JsonPropertyName("firstName")]
-        public string FirstName { get; set; }
+        public string fullNameLowerCase { get; set; }
 
-        [JsonPropertyName("lastName")]
-        public string LastName { get; set; }
+        public string firstName { get; set; }
 
-        [JsonPropertyName("companyName")]
-        public string CompanyName { get; set; }
+        public string lastName { get; set; }
 
-        [JsonPropertyName("email")]
-        public string Email { get; set; }
 
-        [JsonPropertyName("phone")]
-        public string Phone { get; set; }
+        public string email { get; set; }
 
-        [JsonPropertyName("dnd")]
-        public bool Dnd { get; set; }
+        public string phone { get; set; }
 
-        [JsonPropertyName("type")]
-        public string Type { get; set; }
+     
+        public string type { get; set; }
 
-        [JsonPropertyName("source")]
-        public string Source { get; set; }
 
-        [JsonPropertyName("assignedTo")]
-        public string AssignedTo { get; set; }
+        public DateTime dateAdded { get; set; }
 
-        [JsonPropertyName("city")]
-        public string City { get; set; }
-
-        [JsonPropertyName("state")]
-        public string State { get; set; }
-
-        [JsonPropertyName("postalCode")]
-        public string PostalCode { get; set; }
-
-        [JsonPropertyName("address1")]
-        public string Address1 { get; set; }
-
-        [JsonPropertyName("dateAdded")]
-        public DateTime DateAdded { get; set; }
-
-        [JsonPropertyName("dateUpdated")]
-        public DateTime DateUpdated { get; set; }
-
-        [JsonPropertyName("dateOfBirth")]
-        public DateTime? DateOfBirth { get; set; }
-
-        [JsonPropertyName("tags")]
-        public List<string> Tags { get; set; }
-
-        [JsonPropertyName("country")]
-        public string Country { get; set; }
-
-        [JsonPropertyName("website")]
-        public string Website { get; set; }
-
-        [JsonPropertyName("timezone")]
-        public string Timezone { get; set; }
-
-        [JsonPropertyName("JobType")]
-        public string JobType { get; set; }
-
-        [JsonPropertyName("lastActivity")]
-        public long LastActivity { get; set; }
-
-        [JsonPropertyName("customField")]
-        public List<object> CustomField { get; set; }
     }
     public class GhlContactResponse
     {
         [JsonPropertyName("contacts")]
         public List<GhlContactVM> Contacts { get; set; }
+    }
+
+    public class GhlContactSingleResponse
+    {
+        public GhlContactVM Contact { get; set; }
     }
 
     public class GhlOpportunitiesResponse
@@ -168,5 +119,6 @@ namespace ShutterManagment.GHL.ViewModel.Response
         [JsonProperty("startAfterId")]
         public string StartAfterId { get; set; }
     }
+
 
 }
