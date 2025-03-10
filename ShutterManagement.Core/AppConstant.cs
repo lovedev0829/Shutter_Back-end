@@ -105,10 +105,10 @@ namespace ShutterManagement.Core
 
         //GHL Configuration
 
-        public static string GHL_APIKey = "";
-        public static string GHL_BaseAddress = "";
-        public static string GHL_PipelineId = "";
-        public static string GHL_StageId = "";
+        public static string GHL_APIKey { get; set; } = "";
+        public static string GHL_BaseAddress { get; set; } = "";
+        public static string GHL_PipelineId { get; set; } = "";
+        public static string GHL_StageId { get; set; } = "";
 
     }
 }

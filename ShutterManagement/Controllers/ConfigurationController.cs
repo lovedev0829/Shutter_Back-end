@@ -21,12 +21,13 @@ namespace ShutterManagement.Controllers
         [HttpGet]
         [Route("GetGHLConfiguration")]
         [Authorize(Roles = "GHLView")]
-
         public async Task<IActionResult> GetGHLConfiguration()
         {
-            var res = await gHLConfiguration.GetGHLConfiguration();
+            Guid? tenantId = Guid.Empty; 
+            var res = await gHLConfiguration.GetGHLConfiguration(tenantId);
             return Ok(res);
         }
+
 
         [HttpPost]
         [Route("AddGHLConfiguration")]

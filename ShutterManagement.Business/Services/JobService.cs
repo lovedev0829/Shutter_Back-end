@@ -34,7 +34,7 @@ namespace ShutterManagement.Business.Services
         private readonly INotificationService notification;
         private readonly GhlService ghlService;
         private readonly IContactService contact;
-        private const string BaseUrl = "https://rest.gohighlevel.com/v1/";
+        private  string BaseUrl = AppConstant.GHL_BaseAddress;
 
         public JobService(ShutterDBContext context, ClaimsProperty claimsProperty, IAddress address,
             ITenantService tenantService,INotificationService notification, GhlService ghlService,IContactService contact)
@@ -50,7 +50,7 @@ namespace ShutterManagement.Business.Services
 
         private static string GetApiKey()
         {
-            return "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2NhdGlvbl9pZCI6IlBUbklDTU4wbUtyMDNrekpRcVBRIiwidmVyc2lvbiI6MSwiaWF0IjoxNzI0MDcwNDM3MTYzLCJzdWIiOiJkOGhlWkl2dEliZDVPcGhGdXNmYiJ9.yRrmWRgUC5VtrhKMsE4JsLjpwROYvvQnwoYu5JbVQWU"; // Replace with a secure method to fetch the API key
+            return AppConstant.GHL_APIKey; // Replace with a secure method to fetch the API key
         }
         public async Task<IResponseVm<string>> ActiveInactive(string JobId)
         {
@@ -178,7 +178,7 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-                string userProvidedPipelineNameOrId = "TestPipeline"; 
+                string userProvidedPipelineNameOrId = AppConstant.GHL_PipelineId; 
 
                 var targetPipeline = pipelineResponse.Pipelines
                     .FirstOrDefault(p => p.Id.Contains(userProvidedPipelineNameOrId) || p.Name.Contains(userProvidedPipelineNameOrId));
@@ -339,8 +339,13 @@ namespace ShutterManagement.Business.Services
                 using var client = new HttpClient();
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetApiKey());
 
+                string userProvidedPipelineNameOrId = AppConstant.GHL_PipelineId;
+
+                var targetPipeline = dbContext.TblGhlStages
+                    .FirstOrDefault(p => p.GhlPipelineId.Contains(userProvidedPipelineNameOrId) || p.GhlPipelineName.Contains(userProvidedPipelineNameOrId));
+
                 var content = new StringContent(JsonConvert.SerializeObject(ghlOpportunityModel), Encoding.UTF8, "application/json");
-                var url = $"{BaseUrl}pipelines/CFoi90n88zrDhMFP8R2I/opportunities/{job.GhlOpportunityId}";
+                var url = $"{BaseUrl}pipelines/{targetPipeline.Id}/opportunities/{job.GhlOpportunityId}";
                  
                 var response = await client.PutAsync(url, content);
                 var responseBody = await response.Content.ReadAsStringAsync();

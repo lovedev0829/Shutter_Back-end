@@ -25,7 +25,7 @@ namespace ShutterManagement.GHL.Services
         private readonly HttpClient _httpClient;
         private readonly ShutterDBContext dBContext;
         private readonly IHttpContextAccessor httpContextAccessor;
-        private const string BaseUrl = "https://rest.gohighlevel.com/v1/";
+        private string BaseUrl = AppConstant.GHL_BaseAddress;
 
         public GhlService(HttpClient httpClient, ShutterDBContext dBContext, IHttpContextAccessor _httpContextAccessor)
         {
@@ -42,7 +42,7 @@ namespace ShutterManagement.GHL.Services
             try
             {
                 var requestUrl = $"{BaseUrl}pipelines/";
-                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetApiKey());
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_APIKey);
                 HttpResponseMessage response = await _httpClient.GetAsync(requestUrl);
                 response.EnsureSuccessStatusCode();
 
@@ -72,7 +72,7 @@ namespace ShutterManagement.GHL.Services
                     return responseVm;
                 }
 
-                string userProvidedPipelineNameOrId = "TestPipeline";
+                string userProvidedPipelineNameOrId = AppConstant.GHL_PipelineId;
 
                 var targetPipeline = pipelineResponse.Pipelines
                     .FirstOrDefault(p => p.Id.Contains(userProvidedPipelineNameOrId) || p.Name.Contains(userProvidedPipelineNameOrId));
@@ -199,7 +199,7 @@ namespace ShutterManagement.GHL.Services
 
         private static string GetApiKey()
         {
-            return "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2NhdGlvbl9pZCI6IlBUbklDTU4wbUtyMDNrekpRcVBRIiwidmVyc2lvbiI6MSwiaWF0IjoxNzI0MDcwNDM3MTYzLCJzdWIiOiJkOGhlWkl2dEliZDVPcGhGdXNmYiJ9.yRrmWRgUC5VtrhKMsE4JsLjpwROYvvQnwoYu5JbVQWU"; // Replace with a secure method to fetch the API key
+            return AppConstant.GHL_APIKey; // Replace with a secure method to fetch the API key
         }
 
         #endregion Start pipeLine and Stages Related Methods 
@@ -392,7 +392,21 @@ namespace ShutterManagement.GHL.Services
                 using var client = new HttpClient();
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetApiKey());
 
-                var url = $"{BaseUrl}pipelines/CFoi90n88zrDhMFP8R2I/opportunities/";
+                var pipelineResponse = await GetAllPipelinesWithStagesAsync();
+
+                if (pipelineResponse?.Pipelines == null || !pipelineResponse.Pipelines.Any())
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = "No pipelines found.";
+                    return responseVm;
+                }
+
+                string userProvidedPipelineNameOrId = AppConstant.GHL_PipelineId;
+
+                var targetPipeline = pipelineResponse.Pipelines
+                    .FirstOrDefault(p => p.Id.Contains(userProvidedPipelineNameOrId) || p.Name.Contains(userProvidedPipelineNameOrId));
+
+                var url = $"{BaseUrl}pipelines/{targetPipeline?.Id}/opportunities/";
                 var request = new HttpRequestMessage(HttpMethod.Get, url);
 
                 var response = await client.SendAsync(request);

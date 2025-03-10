@@ -165,7 +165,7 @@ namespace ShutterManagement.Services
                 responseVm.TotalRecords = 1;
 
 
-                    var GHLresResponse = await gHLConfiguration.GetGHLConfiguration();
+                    var GHLresResponse = await gHLConfiguration.GetGHLConfiguration(UserDetails[0].TenantId);
                     var GHLres = GHLresResponse?.Data ?? new GetGHLConfiguration();
                     if (GHLres != null)
                     {
