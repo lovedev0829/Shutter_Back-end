@@ -31,7 +31,7 @@ namespace ShutterManagement.Business.Services
         private readonly ClaimsProperty claimsProperty;
         private readonly GhlService ghlService;
 
-        public ContactServices(ShutterDBContext context, IContactBillingService billingService,IAuthService authService,
+        public ContactServices(ShutterDBContext context, IContactBillingService billingService, IAuthService authService,
             ITenantService tenantService, ITaxExemption taxExemptionService,
             ClaimsProperty claimsProperty, GhlService ghlService)
         {
@@ -101,15 +101,11 @@ namespace ShutterManagement.Business.Services
                 if (model.locationId != null)
                 {
                     authService.GetGHLConfiguration(model.locationId);
-                    TenantId = (Guid)dbContext.TblGhlconfigurations
-                   .Where(x => x.LocationId == model.locationId)
-                   .Select(x => x.TenantId)
-                   .FirstOrDefault();
+                    TenantId = (Guid)AppConstant.LoggedInTenantId;
 
                     if (TenantId != null)
                     {
                         IsTenantExists = true;
-                        model.IsBillingAddressSameAsAddress = true;
                         model.IsTaxExemption = true;
                     }
                 }
@@ -128,7 +124,7 @@ namespace ShutterManagement.Business.Services
 
                     if (IsContactExists.Count > 0)
                     {
-                        if(model.GHLContactId != null)
+                        if (model.GHLContactId != null)
                         {
                             var ghlContactAdd = new UpdateContact
                             {
@@ -194,7 +190,7 @@ namespace ShutterManagement.Business.Services
                         res.GhlcontactId = model.GHLContactId;
                         await Update(res);
                     }
-                   
+
                     if (res.ContactId != Guid.Empty)
                     {
                         if (!model.IsBillingAddressSameAsAddress)
@@ -233,7 +229,7 @@ namespace ShutterManagement.Business.Services
                                 CreatedAt = DateTime.Now,
                                 IsActive = true,
                                 IsDelete = false,
-                                TenantId = AppConstant.LoggedInTenantId,
+                                TenantId = TenantId,
                                 CreatedBy = AppConstant.LoggedInUserID
                             };
                             await dbContext.TblAddresses.AddAsync(address);
@@ -306,7 +302,6 @@ namespace ShutterManagement.Business.Services
                     if (TenantId != Guid.Empty)
                     {
                         IsTenantExists = true;
-                        model.IsBillingAddressSameAsAddress = true;
                         model.IsTaxExemption = true;
                     }
                 }
@@ -325,7 +320,7 @@ namespace ShutterManagement.Business.Services
 
                         var IsContactExists = GetAllQuerable()
                             .Where(c => (c.Email == model.Email || c.PhoneNumber == model.PhoneNumber)
-                                        && c.TenantId == TenantId && c.IsDelete == false )
+                                        && c.TenantId == TenantId && c.IsDelete == false)
                             .ToList();
 
                         //if (IsContactExists.Count > 0)
@@ -348,7 +343,7 @@ namespace ShutterManagement.Business.Services
                             contact.IsBillingAddressSameAsAddress = model.IsBillingAddressSameAsAddress;
                             contact.ModifiedBy = TenantId;
                             contact.UpdatedAt = DateTime.Now;
-                           
+
                             await Update(contact); responseVm.IsSuccess = true;
                             responseVm.Message = AppConstant.UpdateSuccessMsg;
                         }
@@ -446,7 +441,8 @@ namespace ShutterManagement.Business.Services
                                         StreetAddress = model.BillingAddressVm?.StreetAddress,
                                         CreatedAt = DateTime.Now,
                                         IsActive = true,
-                                        IsDelete = false
+                                        IsDelete = false,
+                                        TenantId = TenantId,
                                     };
 
                                     dbContext.TblAddresses.Add(CreateContactBillingAddress);
@@ -831,9 +827,9 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-               
+
                 var ghlResponse = new GhlContactSingleResponse();
-               var ghlContactAdd = new GhlContactAdd
+                var ghlContactAdd = new GhlContactAdd
                 {
                     Id = contact.ContactId.ToString() ?? string.Empty,
                     FirstName = model.FirstName ?? string.Empty,
@@ -849,7 +845,7 @@ namespace ShutterManagement.Business.Services
                 if (contact.GhlcontactId == null)
                 {
                     ghlResponse = await ghlService.CreateContactAsync(ghlContactAdd);
-                    if(ghlResponse != null)
+                    if (ghlResponse != null)
                     {
                         var contactExist = (await GetById(contact.ContactId));
 
@@ -884,20 +880,96 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        //public void GetGHLConfiguration(string locationId)
-        //{
-        //    var details = dbContext.TblGhlconfigurations
-        //           .Where(x => x.LocationId.ToLower() == locationId.ToLower())
-        //           .FirstOrDefault();
-        //    if(details != null)
-        //    {
-        //        AppConstant.GHL_BaseAddress = details.BaseAddress;
-        //        AppConstant.GHL_APIKey = details.Apikey;
-        //        AppConstant.GHL_PipelineId = details.PipelineId;
-        //        AppConstant.GHL_StageId = details.LocationId;
-        //        AppConstant.LoggedInTenantId = details.TenantId;
-        //    }
-        //}
+        public async Task<IResponseVm<string>> ContactFromGHL(GHLContactTrigger contactData)
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+            {
+                try
+                {
+                    var contact = new Sp_Contact
+                    {
+                        ContactType = contactData.contact_type,
+                        FirstName = contactData.first_name,
+                        LastName = contactData.last_name,
+                        Email = contactData.email,
+                        PhoneNumber = contactData.phone,
+                        locationId = contactData.location.id,
+                        GHLContactId = contactData.contact_id,
+                        lastAsync = DateTime.Now,
+                    };
+                    if (contactData.location != null)
+                    {
+                        contact.BillingAddressVm = new BillingAddressVm
+                        {
+                            BillingFirstName = contactData.first_name,
+                            BillingLastName = contactData.last_name,
+                            FirstName = contactData.first_name,
+                            LastName = contactData.last_name,
+                            Email = contactData.email,
+                            PhoneNumber = contactData.phone,
+                            City = contactData.location.city,
+                            State = contactData.location.state,
+                            ZipCode = contactData.location.postalCode,
+                            StreetAddress = contactData.location.address
+                        };
+                    }
+                    var res = await Create_Contact(contact);
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = AppConstant.InsertSuccessMsg;
+                }
+                catch (Exception ex)
+                {
+                    FileLogger.Log("Error while creating contact: {ExceptionMessage}", ex.Message);
+                    responseVm.Message += ex.ToString();
+                }
+                return responseVm;
+            }
+        }
+        public async Task<IResponseVm<string>> UpdateContactFromGHL(GHLContactTrigger contactData)
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+            {
+                try
+                {
+                    var contact = new UpdateContact
+                    {
+                        ContactType = contactData.contact_type,
+                        FirstName = contactData.first_name,
+                        LastName = contactData.last_name,
+                        Email = contactData.email,
+                        PhoneNumber = contactData.phone,
+                        locationId = contactData.location.id,
+                        GHLContactId = contactData.contact_id,
+                        lastAsync = DateTime.Now,
+                    };
+                    if (contactData.location != null)
+                    {
+                        contact.BillingAddressVm = new BillingAddressVm
+                        {
+                            BillingFirstName = contactData.first_name,
+                            BillingLastName = contactData.last_name,
+                            FirstName = contactData.first_name,
+                            LastName = contactData.last_name,
+                            Email = contactData.email,
+                            PhoneNumber = contactData.phone,
+                            City = contactData.location.city,
+                            State = contactData.location.state,
+                            ZipCode = contactData.location.postalCode,
+                            StreetAddress = contactData.location.address
+                        };
+                    }
+                    var res = await Update_Contact(contact);
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = AppConstant.InsertSuccessMsg;
+                }
+                catch (Exception ex)
+                {
+                    FileLogger.Log("Error while creating contact: {ExceptionMessage}", ex.Message);
+                    responseVm.Message += ex.ToString();
+                }
+                return responseVm;
+            }
 
+        }
     }
 }
