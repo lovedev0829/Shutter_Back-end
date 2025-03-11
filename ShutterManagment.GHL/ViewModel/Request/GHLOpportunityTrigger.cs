@@ -9,12 +9,12 @@ namespace ShutterManagment.GHL.ViewModel.Request
     public class GHLOpportunityTrigger : GHLContactTrigger
     {
         
-        public string opportunity_name { get; set; }
-        public string status { get; set; }
-        public string pipleline_stage { get; set; }
-        public string pipeline_id { get; set; }
-        public string id { get; set; }
-        public string pipeline_name { get; set; }
+        public string? opportunity_name { get; set; }
+        public string? status { get; set; }
+        public string? pipleline_stage { get; set; }
+        public string? pipeline_id { get; set; }
+        public string? id { get; set; }
+        public string? pipeline_name { get; set; }
         
     }
 

@@ -22,5 +22,6 @@ namespace ShutterManagement.Business.Interfaces
         Task<IResponseVm<string>> DeleteContact(Guid ContactId);
         //Task<IResponseVm<string>> GetAllArchiveContacts();
         Task<IResponseVm<string>> ArchiveContacts(ArchiveUser archiveModel);
+       // void GetGHLConfiguration(string locationId);
     }
 }

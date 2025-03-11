@@ -44,11 +44,11 @@ namespace ShutterManagment.GHL.ViewModel.Request
         public string contact_id { get; set; }
         public string first_name { get; set; }
         public string last_name { get; set; }
-        public string full_name { get; set; }
+        public string? full_name { get; set; }
         public string email { get; set; }
-        public string phone { get; set; }
+        public string? phone { get; set; }
         public string? tags { get; set; }
-        public DateTime date_created { get; set; }
+        public DateTime? date_created { get; set; }
         public string? company_name { get; set; }
         public string? full_address { get; set; }
         public string contact_type { get; set; }

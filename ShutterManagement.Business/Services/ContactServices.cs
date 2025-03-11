@@ -25,17 +25,19 @@ namespace ShutterManagement.Business.Services
     {
         private readonly ShutterDBContext _context;
         private readonly IContactBillingService billingService;
+        private readonly IAuthService authService;
         private readonly ITenantService tenantService;
         private readonly ITaxExemption taxExemptionService;
         private readonly ClaimsProperty claimsProperty;
         private readonly GhlService ghlService;
 
-        public ContactServices(ShutterDBContext context, IContactBillingService billingService,
+        public ContactServices(ShutterDBContext context, IContactBillingService billingService,IAuthService authService,
             ITenantService tenantService, ITaxExemption taxExemptionService,
             ClaimsProperty claimsProperty, GhlService ghlService)
         {
             _context = context;
             this.billingService = billingService;
+            this.authService = authService;
             this.tenantService = tenantService;
             this.taxExemptionService = taxExemptionService;
             this.claimsProperty = claimsProperty;
@@ -98,6 +100,7 @@ namespace ShutterManagement.Business.Services
                 }
                 if (model.locationId != null)
                 {
+                    authService.GetGHLConfiguration(model.locationId);
                     TenantId = (Guid)dbContext.TblGhlconfigurations
                    .Where(x => x.LocationId == model.locationId)
                    .Select(x => x.TenantId)
@@ -297,10 +300,8 @@ namespace ShutterManagement.Business.Services
                 }
                 if (model.locationId != null)
                 {
-                    TenantId = (Guid)dbContext.TblGhlconfigurations
-                        .Where(x => x.LocationId == model.locationId)
-                        .Select(x => x.TenantId)
-                        .FirstOrDefault();
+                    authService.GetGHLConfiguration(model.locationId);
+                    TenantId = (Guid)AppConstant.LoggedInTenantId;
 
                     if (TenantId != Guid.Empty)
                     {
@@ -882,6 +883,21 @@ namespace ShutterManagement.Business.Services
             }
             return responseVm;
         }
+
+        //public void GetGHLConfiguration(string locationId)
+        //{
+        //    var details = dbContext.TblGhlconfigurations
+        //           .Where(x => x.LocationId.ToLower() == locationId.ToLower())
+        //           .FirstOrDefault();
+        //    if(details != null)
+        //    {
+        //        AppConstant.GHL_BaseAddress = details.BaseAddress;
+        //        AppConstant.GHL_APIKey = details.Apikey;
+        //        AppConstant.GHL_PipelineId = details.PipelineId;
+        //        AppConstant.GHL_StageId = details.LocationId;
+        //        AppConstant.LoggedInTenantId = details.TenantId;
+        //    }
+        //}
 
     }
 }

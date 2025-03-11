@@ -31,7 +31,7 @@ namespace ShutterManagement.GHL.Services
         {
             _httpClient = httpClient;
             this.dBContext = dBContext;
-            _httpClient.BaseAddress = new Uri(BaseUrl);
+            //_httpClient.BaseAddress = new Uri(BaseUrl);
             httpContextAccessor = _httpContextAccessor;
         }
 
@@ -199,7 +199,7 @@ namespace ShutterManagement.GHL.Services
 
         private static string GetApiKey()
         {
-            return AppConstant.GHL_APIKey; // Replace with a secure method to fetch the API key
+            return AppConstant.GHL_APIKey; 
         }
 
         #endregion Start pipeLine and Stages Related Methods 
@@ -207,9 +207,10 @@ namespace ShutterManagement.GHL.Services
         #region Start Contact Related Methods
         public async Task<List<GhlContactVM>> GetContactsAsync()
         {
+            using var httpClient = new HttpClient();
             var requestUrl = $"{BaseUrl}contacts/";
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetApiKey());
-            var response = await _httpClient.GetAsync(requestUrl);
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetApiKey());
+            var response = await httpClient.GetAsync(requestUrl);
             response.EnsureSuccessStatusCode();
 
             var json = await response.Content.ReadAsStringAsync();
@@ -222,6 +223,7 @@ namespace ShutterManagement.GHL.Services
         {
             try
             {
+                using var httpClient = new HttpClient();
                 var contactData = new
                 {
                     firstName = contact.FirstName,
@@ -233,7 +235,7 @@ namespace ShutterManagement.GHL.Services
                 var contactJson = JsonConvert.SerializeObject(contactData);
                 var content = new StringContent(contactJson, Encoding.UTF8, "application/json");
 
-                var response = await _httpClient.PostAsync("contacts", content);
+                var response = await httpClient.PostAsync("contacts", content);
                 var body = response.Content;
                 if (!response.IsSuccessStatusCode)
                 {
@@ -258,6 +260,7 @@ namespace ShutterManagement.GHL.Services
         {
             try
             {
+                using var httpClient = new HttpClient();
                 if (string.IsNullOrEmpty(contactId) || contact == null)
                 {
                     return null;
@@ -274,7 +277,7 @@ namespace ShutterManagement.GHL.Services
                 var contactJson = JsonConvert.SerializeObject(contactData);
                 var content = new StringContent(contactJson, Encoding.UTF8, "application/json");
 
-                var response = await _httpClient.PutAsync($"contacts/{contactId}", content);
+                var response = await httpClient.PutAsync($"contacts/{contactId}", content);
 
                 if (!response.IsSuccessStatusCode)
                 {

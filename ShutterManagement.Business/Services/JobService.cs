@@ -34,10 +34,11 @@ namespace ShutterManagement.Business.Services
         private readonly INotificationService notification;
         private readonly GhlService ghlService;
         private readonly IContactService contact;
+        private readonly IAuthService authService;
         private  string BaseUrl = AppConstant.GHL_BaseAddress;
 
         public JobService(ShutterDBContext context, ClaimsProperty claimsProperty, IAddress address,
-            ITenantService tenantService,INotificationService notification, GhlService ghlService,IContactService contact)
+            ITenantService tenantService,INotificationService notification, GhlService ghlService,IContactService contact,IAuthService authService)
         {
             _context = context;
             this.claimsProperty = claimsProperty;
@@ -46,6 +47,7 @@ namespace ShutterManagement.Business.Services
             this.notification = notification;
             this.ghlService = ghlService;
             this.contact = contact;
+            this.authService = authService;
         }
 
         private static string GetApiKey()
@@ -400,10 +402,8 @@ namespace ShutterManagement.Business.Services
                 var jobStatus = Guid.Empty;
                 if (model.locationId != null)
                 {
-                    TenantId = (Guid)dbContext.TblGhlconfigurations
-                   .Where(x => x.LocationId == model.locationId)
-                   .Select(x => x.TenantId)
-                   .FirstOrDefault();
+                    authService.GetGHLConfiguration(model.locationId);
+                    TenantId = (Guid)AppConstant.LoggedInTenantId;
 
                     if (TenantId != null)
                     {
@@ -758,10 +758,8 @@ namespace ShutterManagement.Business.Services
                 var jobStatus = Guid.Empty;
                 if (model.locationId != null)
                 {
-                    TenantId = (Guid)dbContext.TblGhlconfigurations
-                   .Where(x => x.LocationId == model.locationId)
-                   .Select(x => x.TenantId)
-                   .FirstOrDefault();
+                    authService.GetGHLConfiguration(model.locationId);
+                    TenantId = (Guid)AppConstant.LoggedInTenantId;
 
                     if (TenantId != null)
                     {
@@ -1038,6 +1036,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
+
                 bool IsTenantvalid = await tenantService.AnyAsync(x => x.IsActive == true && x.IsDelete == false
                 && x.TenantId == AppConstant.LoggedInTenantId);
                 if (!IsTenantvalid)
@@ -1096,12 +1095,12 @@ namespace ShutterManagement.Business.Services
                 try 
                 { 
                 var addressId = Guid.Empty;
-                var contact1 = Guid.Empty;
+                var contact1 = new TblContact();
                 if (opportunitydata != null)
                 {
                     contact1 = contact.GetAllQuerable().Where(x => x.GhlcontactId == opportunitydata.contact_id && x.IsDelete == false)
-                         .Select(x => x.ContactId).FirstOrDefault();
-                    addressId = address.GetAllQuerable().Where(x => x.ContactId == contact1).Select(x => x.AddressId).FirstOrDefault();
+                         .FirstOrDefault();
+                    addressId = (Guid)contact1.PrimaryAddress;
                 }
                 Guid jobtype = Guid.Parse("34623376-9CE3-4C9B-A538-2D3129B1A6B2");
                 var stageId = dbContext.TblGhlStages.Where(x => x.GhlStageName.ToLower() == opportunitydata.pipleline_stage.ToLower()).
@@ -1109,7 +1108,7 @@ namespace ShutterManagement.Business.Services
                 var jobstatus = dbContext.MstJobStatuses.Where(x => x.JobStatusName.ToLower() == opportunitydata.status.ToLower()).Select(x=> x.JobStatusId).FirstOrDefault();
                 var job = new CreateJob
                 {
-                    ContactId = contact1,
+                    ContactId = contact1.ContactId,
                     AddressId = addressId,
                     JobName = opportunitydata.opportunity_name,
                     JobType = jobtype,
@@ -1142,12 +1141,12 @@ namespace ShutterManagement.Business.Services
                 try
                 {
                     var addressId = Guid.Empty;
-                    var contact1 = Guid.Empty;
+                    var contact1 = new TblContact();
                     if (opportunitydata != null)
                     {
-                        contact1 = contact.GetAllQuerable().Where(x => x.GhlcontactId == opportunitydata.contact_id && x.IsDelete == false)
-                             .Select(x => x.ContactId).FirstOrDefault();
-                        addressId = address.GetAllQuerable().Where(x => x.ContactId == contact1).Select(x => x.AddressId).FirstOrDefault();
+                        contact1 = contact.GetAllQuerable().Where(x => x.GhlcontactId == opportunitydata.contact_id && x.IsDelete == false).
+                             FirstOrDefault();
+                        addressId = (Guid)contact1.PrimaryAddress;
                     }
                     Guid jobtype = Guid.Parse("34623376-9CE3-4C9B-A538-2D3129B1A6B2");
                     var stageId = dbContext.TblGhlStages.Where(x => x.GhlStageName.ToLower() == opportunitydata.pipleline_stage.ToLower()).
@@ -1155,7 +1154,7 @@ namespace ShutterManagement.Business.Services
                     var jobstatus = dbContext.MstJobStatuses.Where(x => x.JobStatusName.ToLower() == opportunitydata.status.ToLower()).Select(x => x.JobStatusId).FirstOrDefault();
                     var job = new UpdateJob
                     {
-                        ContactId = contact1,
+                        ContactId = contact1.ContactId,
                         AddressId = addressId,
                         JobName = opportunitydata.opportunity_name,
                         JobType = jobtype,
