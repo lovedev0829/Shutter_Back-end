@@ -175,7 +175,7 @@ namespace ShutterManagement.GHL.Services
             try
             {
                 var config = await dBContext.TblGhlconfigurations
-                                             .FirstOrDefaultAsync(c => c.Id == AppConstant.LoggedInTenantId);
+                                             .FirstOrDefaultAsync(c => c.TenantId == AppConstant.LoggedInTenantId);
 
                 if (config == null)
                 {
