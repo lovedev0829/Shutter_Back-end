@@ -164,7 +164,7 @@ namespace ShutterManagement.Services
                 responseVm.Message = AppConstant.LoginSuccessMessgae;
                 responseVm.TotalRecords = 1;
 
-               GetGHLConfiguration(UserDetails[0].TenantId.ToString());
+                await gHLConfiguration.GetGHLConfiguration(UserDetails[0].TenantId.ToString());
             }
             else
             {
@@ -513,20 +513,7 @@ namespace ShutterManagement.Services
             return result;
         }
 
-        public void GetGHLConfiguration(string Id)
-        {
-            var details = dbContext.TblGhlconfigurations
-                   .Where(x => x.LocationId == Id || x.TenantId.ToString().ToLower() == Id.ToLower())
-                   .FirstOrDefault();
-            if (details != null)
-            {
-                AppConstant.GHL_BaseAddress = details.BaseAddress;
-                AppConstant.GHL_APIKey = details.Apikey;
-                AppConstant.GHL_PipelineId = details.PipelineId;
-                AppConstant.GHL_StageId = details.LocationId;
-                AppConstant.LoggedInTenantId = details.TenantId;
-            }
-        }
+        
     }
 }
 

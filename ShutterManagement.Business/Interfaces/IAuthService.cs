@@ -15,6 +15,5 @@ namespace ShutterManagement.Services
         Task<IResponseVm<UserResponse>> ProfileGetById();
         Task<IResponseVm<string>> ForgetPassword(ForgetPassword forgetPassword);
         Task<IResponseVm<string>> VerifyForgetPassword(VerifyPassword verifyPassword);
-        void GetGHLConfiguration(string Id);
     }
 }

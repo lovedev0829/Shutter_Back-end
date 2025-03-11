@@ -23,6 +23,22 @@ namespace ShutterManagement.Business.Services
             this.claimsProperty = claimsProperty;
         }
 
+        public async Task GetGHLConfiguration(string Id)
+        {
+
+            var details = GetAllQuerable()
+                   .Where(x => x.LocationId == Id || x.TenantId.ToString().ToLower() == Id.ToLower())
+                   .FirstOrDefault();
+            if (details != null)
+            {
+                AppConstant.GHL_BaseAddress = details.BaseAddress;
+                AppConstant.GHL_APIKey = details.Apikey;
+                AppConstant.GHL_PipelineId = details.PipelineId;
+                AppConstant.GHL_StageId = details.LocationId;
+                AppConstant.LoggedInTenantId = details.TenantId;
+            }
+        }
+
         public async Task<IResponseVm<string>> GHLConfiguration(GHLConfiguration gHLConfiguration)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();

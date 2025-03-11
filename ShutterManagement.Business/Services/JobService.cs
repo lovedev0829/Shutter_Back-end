@@ -32,22 +32,22 @@ namespace ShutterManagement.Business.Services
         private readonly IAddress address;
         private readonly ITenantService tenantService;
         private readonly INotificationService notification;
+        private readonly IGHLConfiguration gHLConfiguration;
         private readonly GhlService ghlService;
         private readonly IContactService contact;
-        private readonly IAuthService authService;
         private  string BaseUrl = AppConstant.GHL_BaseAddress;
 
         public JobService(ShutterDBContext context, ClaimsProperty claimsProperty, IAddress address,
-            ITenantService tenantService,INotificationService notification, GhlService ghlService,IContactService contact,IAuthService authService)
+            ITenantService tenantService,INotificationService notification, IGHLConfiguration gHLConfiguration, GhlService ghlService,IContactService contact)
         {
             _context = context;
             this.claimsProperty = claimsProperty;
             this.address = address;
             this.tenantService = tenantService;
             this.notification = notification;
+            this.gHLConfiguration = gHLConfiguration;
             this.ghlService = ghlService;
             this.contact = contact;
-            this.authService = authService;
         }
 
         private static string GetApiKey()
@@ -519,7 +519,7 @@ namespace ShutterManagement.Business.Services
                 var jobStatus = Guid.Empty;
                 if (model.locationId != null)
                 {
-                    authService.GetGHLConfiguration(model.locationId);
+                    await gHLConfiguration.GetGHLConfiguration(model.locationId);
                     TenantId = (Guid)AppConstant.LoggedInTenantId;
 
                     if (TenantId != null)
@@ -603,7 +603,7 @@ namespace ShutterManagement.Business.Services
                             res.GhlOpportunityId = model.GhlOpportunityId;
                             res.ContactId = model.ContactId;
                             res.LastAsync = DateTime.Now;
-                            Update(res);
+                            await Update(res);
                         }
                             CreateNotification notification1 = new CreateNotification()
                             {
@@ -875,7 +875,7 @@ namespace ShutterManagement.Business.Services
                 var jobStatus = Guid.Empty;
                 if (model.locationId != null)
                 {
-                    authService.GetGHLConfiguration(model.locationId);
+                    await gHLConfiguration.GetGHLConfiguration(model.locationId);
                     TenantId = (Guid)AppConstant.LoggedInTenantId;
 
                     if (TenantId != null)
@@ -1177,7 +1177,7 @@ namespace ShutterManagement.Business.Services
                 {
                     if (IsJobExist?.GhlOpportunityId != null)
                     {
-                        authService.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
+                        await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
                         var ghlUpdateResponse = await UpdateOpportunityInGhl(IsJobExist);
                         FileLogger.Log($"GHL Sync: Job updated in GHL - {ghlUpdateResponse.Message}");
                     }

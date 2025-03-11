@@ -25,23 +25,23 @@ namespace ShutterManagement.Business.Services
     {
         private readonly ShutterDBContext _context;
         private readonly IContactBillingService billingService;
-        private readonly IAuthService authService;
         private readonly ITenantService tenantService;
         private readonly ITaxExemption taxExemptionService;
         private readonly ClaimsProperty claimsProperty;
         private readonly GhlService ghlService;
+        private readonly IGHLConfiguration gHLConfigurationService;
 
-        public ContactServices(ShutterDBContext context, IContactBillingService billingService, IAuthService authService,
+        public ContactServices(ShutterDBContext context, IContactBillingService billingService,
             ITenantService tenantService, ITaxExemption taxExemptionService,
-            ClaimsProperty claimsProperty, GhlService ghlService)
+            ClaimsProperty claimsProperty, GhlService ghlService,IGHLConfiguration gHLConfigurationService)
         {
             _context = context;
             this.billingService = billingService;
-            this.authService = authService;
             this.tenantService = tenantService;
             this.taxExemptionService = taxExemptionService;
             this.claimsProperty = claimsProperty;
             this.ghlService = ghlService;
+            this.gHLConfigurationService = gHLConfigurationService;
         }
 
         public async Task<IResponseVm<string>> GetContactByEmailOrPhone(string email, string phone)
@@ -98,11 +98,12 @@ namespace ShutterManagement.Business.Services
                                         ? model.PhoneNumber
                                         : "+1" + model.PhoneNumber.TrimStart('+');
                 }
+                FileLogger.Log($"Location id fetched {model.locationId}");
                 if (model.locationId != null)
                 {
-                    authService.GetGHLConfiguration(model.locationId);
+                    await gHLConfigurationService.GetGHLConfiguration(model.locationId);
                     TenantId = (Guid)AppConstant.LoggedInTenantId;
-
+                    FileLogger.Log($"Location id fetched {model.locationId}");
                     if (TenantId != null)
                     {
                         IsTenantExists = true;
@@ -113,6 +114,7 @@ namespace ShutterManagement.Business.Services
                 {
                     IsTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
                     TenantId = (Guid)AppConstant.LoggedInTenantId;
+                    FileLogger.Log($"Tenant Id id fetched {TenantId}");
                 }
 
                 if (IsTenantExists)
@@ -254,7 +256,7 @@ namespace ShutterManagement.Business.Services
                         }
                         if (model.GHLContactId == null)
                         {
-                            authService.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
+                            await gHLConfigurationService.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
                             var ghlResponse = await SyncWithGHL(res, model);
                             if (!ghlResponse.IsSuccess)
                             {
@@ -297,7 +299,7 @@ namespace ShutterManagement.Business.Services
                 }
                 if (model.locationId != null)
                 {
-                    authService.GetGHLConfiguration(model.locationId);
+                    await gHLConfigurationService.GetGHLConfiguration(model.locationId);
                     TenantId = (Guid)AppConstant.LoggedInTenantId;
 
                     if (TenantId != Guid.Empty)
@@ -500,7 +502,7 @@ namespace ShutterManagement.Business.Services
                             Referral = model.Referral ?? string.Empty,
                             GHLContactId = model.GHLContactId ?? string.Empty,
                         };
-                        authService.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
+                        await gHLConfigurationService.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
                         var ghlResponse = await SyncWithGHL(contact1, ghlContactAdd);
 
                         responseVm.IsSuccess = true;
@@ -845,7 +847,7 @@ namespace ShutterManagement.Business.Services
 
                 if (contact.GhlcontactId == null)
                 {
-                    authService.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
+                    await gHLConfigurationService.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
                     ghlResponse = await ghlService.CreateContactAsync(ghlContactAdd);
                     if (ghlResponse != null)
                     {
@@ -863,7 +865,7 @@ namespace ShutterManagement.Business.Services
                 }
                 else
                 {
-                    authService.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
+                    await gHLConfigurationService.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
                     ghlResponse = await ghlService.UpdateContactAsync(contact.GhlcontactId, ghlContactAdd);
                 }
                 if (ghlResponse != null)
@@ -916,7 +918,7 @@ namespace ShutterManagement.Business.Services
                             StreetAddress = contactData.location.address
                         };
                     }
-                    authService.GetGHLConfiguration(contact.locationId);
+                    await gHLConfigurationService.GetGHLConfiguration(contact.locationId);
                     var res = await Create_Contact(contact);
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.InsertSuccessMsg;
@@ -962,7 +964,7 @@ namespace ShutterManagement.Business.Services
                             StreetAddress = contactData.location.address
                         };
                     }
-                    authService.GetGHLConfiguration(contact.locationId);
+                    await gHLConfigurationService.GetGHLConfiguration(contact.locationId);
                     var res = await Update_Contact(contact);
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.InsertSuccessMsg;

@@ -16,5 +16,7 @@ namespace ShutterManagement.Business.Interfaces
         Task<IResponseVm<string>> GHLConfiguration(GHLConfiguration gHLConfiguration);
 
         Task<IResponseVm<GetGHLConfiguration>> GetGHLConfiguration();
+
+        Task GetGHLConfiguration(string Id);
     }
 }
