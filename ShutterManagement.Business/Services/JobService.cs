@@ -223,6 +223,8 @@ namespace ShutterManagement.Business.Services
                     var res = await GetGHLStages();
                     var stage = res?.Data.Where(x=>x.GhlStageId==opportunity.PipelineStageId).FirstOrDefault();
 
+                    
+
                     var contacts = await GetContactsAsync();
                     var contact = contacts.FirstOrDefault(c => c.id == opportunity.Contact?.Id);
                     var dbcontact = _context.TblContacts.Where(x => x.GhlcontactId == contact.id).FirstOrDefault();

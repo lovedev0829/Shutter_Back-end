@@ -148,6 +148,15 @@ namespace ShutterManagement.GHL.Services
 
                 await dBContext.SaveChangesAsync();
 
+                var isUpdated = await UpdateLastSyncConfigurationAsync();
+
+                if (!isUpdated)
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = "Error: Configuration not found or update failed.";
+                    return responseVm;
+                }
+
                 responseVm.IsSuccess = true;
                 responseVm.Message = "All stages synced sequentially.";
 
@@ -160,6 +169,32 @@ namespace ShutterManagement.GHL.Services
 
             return responseVm;
         }
+
+        public async Task<bool> UpdateLastSyncConfigurationAsync()
+        {
+            try
+            {
+                var config = await dBContext.TblGhlconfigurations
+                                             .FirstOrDefaultAsync(c => c.Id == AppConstant.LoggedInTenantId);
+
+                if (config == null)
+                {
+                    return false; 
+                }
+
+                config.LastSync = DateTime.Now;  
+                await dBContext.SaveChangesAsync(); 
+
+                return true; 
+            }
+            catch (Exception ex)
+            {
+               
+                FileLogger.Log($"Error updating LastSync: {ex.Message}");
+                return false; 
+            }
+        }
+
 
 
         public async Task<IResponseVm<List<PipelineAndStage>>> GetGHLStages()
