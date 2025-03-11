@@ -168,6 +168,7 @@ namespace ShutterManagement.Business.Services
 
             try
             {
+                FileLogger.Log($"Starting SyncOpportunitiesFromGhl process.");
                 using var client = new HttpClient();
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetApiKey());
 
@@ -175,6 +176,7 @@ namespace ShutterManagement.Business.Services
 
                 if (pipelineResponse?.Pipelines == null || !pipelineResponse.Pipelines.Any())
                 {
+                    FileLogger.Log("No pipelines found in GHL.");
                     responseVm.IsSuccess = false;
                     responseVm.Message = "No pipelines found.";
                     return responseVm;
@@ -188,10 +190,13 @@ namespace ShutterManagement.Business.Services
 
                 if (targetPipeline == null)
                 {
+                    FileLogger.Log($"Target pipeline '{userProvidedPipelineNameOrId}' not found.");
                     responseVm.IsSuccess = false;
                     responseVm.Message = "Target pipeline not found.";
                     return responseVm;
                 }
+
+                FileLogger.Log($"Fetching opportunities from pipeline ID: {targetPipeline.Id}");
 
                 var url = $"{BaseUrl}pipelines/{targetPipeline.Id}/opportunities/";
                 var response = await client.GetAsync(url);
@@ -199,6 +204,7 @@ namespace ShutterManagement.Business.Services
 
                 if (!response.IsSuccessStatusCode)
                 {
+                    FileLogger.Log($"Error fetching opportunities. StatusCode: {response.StatusCode}, Response: {responseBody}");
                     responseVm.IsSuccess = false;
                     responseVm.Message = $"Error: {response.StatusCode}, Details: {responseBody}";
                     return responseVm;
@@ -206,9 +212,10 @@ namespace ShutterManagement.Business.Services
 
                 var ghlResponse = JsonConvert.DeserializeObject<GhlOpportunitiesResponse>(responseBody);
                 var opportunities = ghlResponse?.Opportunities ?? new List<Opportunity>();
-
+                FileLogger.Log($"Fetched {opportunities.Count} opportunities from GHL.");
                 foreach (var opportunity in opportunities)
                 {
+                    FileLogger.Log($"Processing opportunity ID: {opportunity.OpportunityId}, Name: {opportunity.Name}");
                     var existingJob =  GetAllQuerable()
                         .Where(x => x.GhlOpportunityId == opportunity.OpportunityId).FirstOrDefault();
 
@@ -216,12 +223,15 @@ namespace ShutterManagement.Business.Services
                     var res = await GetGHLStages();
                     var stage = res?.Data.Where(x=>x.GhlStageId==opportunity.PipelineStageId).FirstOrDefault();
 
+                    
+
                     var contacts = await GetContactsAsync();
                     var contact = contacts.FirstOrDefault(c => c.id == opportunity.Contact?.Id);
                     var dbcontact = _context.TblContacts.Where(x => x.GhlcontactId == contact.id).FirstOrDefault();
                     var jobstatusId = _context.MstJobStatuses.Where(x => x.JobStatusName == opportunity.Status).Select(x => x.JobStatusId).FirstOrDefault();
                     if(dbcontact==null)
                     {
+                        FileLogger.Log($"Contact not found for GHL Contact ID: {contact?.id}");
                         responseVm.IsSuccess = false;
                         responseVm.Message = "Contact Not Found related GHl Contact id";
                         return responseVm;
@@ -229,6 +239,8 @@ namespace ShutterManagement.Business.Services
 
                     if (existingJob != null)
                     {
+                        FileLogger.Log($"Updating existing job: {existingJob.JobId} for opportunity ID: {opportunity.OpportunityId}");
+
                         // Update existing job
                         existingJob.JobName = opportunity.Name;
                         existingJob.JobStatus = jobstatusId;
@@ -242,6 +254,7 @@ namespace ShutterManagement.Business.Services
                     }
                     else
                     {
+                        FileLogger.Log($"Creating new job for opportunity ID: {opportunity.OpportunityId}");
                         var createJobModel = new CreateJob
                         {
                             ContactId= dbcontact?.ContactId,
@@ -259,13 +272,14 @@ namespace ShutterManagement.Business.Services
                         await Create(createJobModel);
                     }
                 }
-
+                FileLogger.Log("Synchronization completed successfully.");
                 responseVm.Data = opportunities;
                 responseVm.IsSuccess = true;
                 responseVm.Message = "Synchronization completed successfully.";
             }
             catch (Exception ex)
             {
+                FileLogger.Log($"Exception occurred in SyncOpportunitiesFromGhl: {ex.Message}");
                 responseVm.IsSuccess = false;
                 responseVm.Message = $"Exception occurred: {ex.Message}";
             }

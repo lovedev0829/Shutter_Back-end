@@ -784,22 +784,19 @@ namespace ShutterManagement.Controllers
             var pipelineResult = await ghlService.GetAndSaveDefaultPipelineAndStage();
             var opportunityResult = await jobService.SyncOpportunitiesFromGhl();
 
-            var result = new
+            bool isSuccess = pipelineResult.IsSuccess && opportunityResult.IsSuccess;
+            string message = isSuccess ? "Synchronization completed successfully." :
+                                         $"Pipeline: {pipelineResult.Message}, Opportunities: {opportunityResult.Message}";
+
+            var response = new
             {
-                pipeline = pipelineResult,
-                opportunities = opportunityResult
+                IsSuccess = isSuccess,
+                Message = message
             };
 
-            var options = new JsonSerializerOptions
-            {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-                WriteIndented = true
-            };
-
-            var json = JsonSerializer.Serialize(result, options);
-            return Ok(json);
+            return Ok(response);
         }
+
 
 
 
