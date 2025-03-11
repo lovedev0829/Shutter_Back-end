@@ -254,6 +254,7 @@ namespace ShutterManagement.Business.Services
                         }
                         if (model.GHLContactId == null)
                         {
+                            authService.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
                             var ghlResponse = await SyncWithGHL(res, model);
                             if (!ghlResponse.IsSuccess)
                             {
@@ -499,7 +500,7 @@ namespace ShutterManagement.Business.Services
                             Referral = model.Referral ?? string.Empty,
                             GHLContactId = model.GHLContactId ?? string.Empty,
                         };
-
+                        authService.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
                         var ghlResponse = await SyncWithGHL(contact1, ghlContactAdd);
 
                         responseVm.IsSuccess = true;
@@ -844,6 +845,7 @@ namespace ShutterManagement.Business.Services
 
                 if (contact.GhlcontactId == null)
                 {
+                    authService.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
                     ghlResponse = await ghlService.CreateContactAsync(ghlContactAdd);
                     if (ghlResponse != null)
                     {
@@ -861,6 +863,7 @@ namespace ShutterManagement.Business.Services
                 }
                 else
                 {
+                    authService.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
                     ghlResponse = await ghlService.UpdateContactAsync(contact.GhlcontactId, ghlContactAdd);
                 }
                 if (ghlResponse != null)
@@ -913,6 +916,7 @@ namespace ShutterManagement.Business.Services
                             StreetAddress = contactData.location.address
                         };
                     }
+                    authService.GetGHLConfiguration(contact.locationId);
                     var res = await Create_Contact(contact);
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.InsertSuccessMsg;
@@ -958,6 +962,7 @@ namespace ShutterManagement.Business.Services
                             StreetAddress = contactData.location.address
                         };
                     }
+                    authService.GetGHLConfiguration(contact.locationId);
                     var res = await Update_Contact(contact);
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.InsertSuccessMsg;

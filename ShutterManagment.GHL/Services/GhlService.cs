@@ -31,7 +31,6 @@ namespace ShutterManagement.GHL.Services
         {
             _httpClient = httpClient;
             this.dBContext = dBContext;
-            //_httpClient.BaseAddress = new Uri(BaseUrl);
             httpContextAccessor = _httpContextAccessor;
         }
 
@@ -241,6 +240,7 @@ namespace ShutterManagement.GHL.Services
         #region Start Contact Related Methods
         public async Task<List<GhlContactVM>> GetContactsAsync()
         {
+            
             using var httpClient = new HttpClient();
             var requestUrl = $"{BaseUrl}contacts/";
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetApiKey());
@@ -265,61 +265,20 @@ namespace ShutterManagement.GHL.Services
                     email = contact.Email,
                     phone = contact.Phone,
                 };
-                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetApiKey());
+
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetApiKey());
                 var contactJson = JsonConvert.SerializeObject(contactData);
                 var content = new StringContent(contactJson, Encoding.UTF8, "application/json");
 
-                var response = await httpClient.PostAsync("contacts", content);
-                var body = response.Content;
-                if (!response.IsSuccessStatusCode)
-                {
-                    return null;
-                }
-                response.EnsureSuccessStatusCode();
-                var result1 = GetClientIpAddress();
+                var url = $"{BaseUrl}contacts/"; 
 
-                var jsonResponse = await response.Content.ReadAsStringAsync();
-                var contactResponse = JsonConvert.DeserializeObject <GhlContactSingleResponse>(jsonResponse);
-
-                return contactResponse;
-            }
-            catch (Exception ex)
-            {
-                return null;
-            }
-
-        }
-
-        public async Task<GhlContactSingleResponse> UpdateContactAsync(string contactId, GhlContactAdd contact)
-        {
-            try
-            {
-                using var httpClient = new HttpClient();
-                if (string.IsNullOrEmpty(contactId) || contact == null)
-                {
-                    return null;
-                }
-
-                var contactData = new
-                {
-                    firstName = contact.FirstName,
-                    lastName = contact.LastName,
-                    email = contact.Email,
-                    phone = contact.Phone
-                };
-                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetApiKey());
-                var contactJson = JsonConvert.SerializeObject(contactData);
-                var content = new StringContent(contactJson, Encoding.UTF8, "application/json");
-
-                var response = await httpClient.PutAsync($"contacts/{contactId}", content);
+                var response = await httpClient.PostAsync(url, content);
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    Console.WriteLine($"Failed to update contact. Status code: {response.StatusCode}");
+                    FileLogger.Log($"Error: {response.StatusCode} - {await response.Content.ReadAsStringAsync()}");
                     return null;
                 }
-
-                response.EnsureSuccessStatusCode();
 
                 var jsonResponse = await response.Content.ReadAsStringAsync();
                 var contactResponse = JsonConvert.DeserializeObject<GhlContactSingleResponse>(jsonResponse);
@@ -328,10 +287,55 @@ namespace ShutterManagement.GHL.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error updating contact: {ex.Message}");
+                FileLogger.Log($"Exception in CreateContactAsync: {ex.Message}");
                 return null;
             }
         }
+
+
+        public async Task<GhlContactSingleResponse> UpdateContactAsync(string contactId, GhlContactAdd contact)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(contactId) || contact == null)
+                {
+                    return null;
+                }
+                using var httpClient = new HttpClient();
+                var contactData = new
+                {
+                    firstName = contact.FirstName,
+                    lastName = contact.LastName,
+                    email = contact.Email,
+                    phone = contact.Phone
+                };
+
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetApiKey());
+                var contactJson = JsonConvert.SerializeObject(contactData);
+                var content = new StringContent(contactJson, Encoding.UTF8, "application/json");
+
+                var url = $"{BaseUrl}contacts/{contactId}"; 
+
+                var response = await httpClient.PutAsync(url, content);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                   FileLogger.Log($"Failed to update contact. Status code: {response.StatusCode}");
+                    return null;
+                }
+
+                var jsonResponse = await response.Content.ReadAsStringAsync();
+                var contactResponse = JsonConvert.DeserializeObject<GhlContactSingleResponse>(jsonResponse);
+
+                return contactResponse;
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Log($"Error updating contact: {ex.Message}");
+                return null;
+            }
+        }
+
 
 
         public string GetClientIpAddress()
