@@ -31,7 +31,7 @@ namespace ShutterManagement.Business.Services
         private readonly ClaimsProperty claimsProperty;
         private readonly GhlService ghlService;
 
-        public ContactServices(ShutterDBContext context, IContactBillingService billingService,IAuthService authService,
+        public ContactServices(ShutterDBContext context, IContactBillingService billingService, IAuthService authService,
             ITenantService tenantService, ITaxExemption taxExemptionService,
             ClaimsProperty claimsProperty, GhlService ghlService)
         {
@@ -124,7 +124,7 @@ namespace ShutterManagement.Business.Services
 
                     if (IsContactExists.Count > 0)
                     {
-                        if(model.GHLContactId != null)
+                        if (model.GHLContactId != null)
                         {
                             var ghlContactAdd = new UpdateContact
                             {
@@ -190,7 +190,7 @@ namespace ShutterManagement.Business.Services
                         res.GhlcontactId = model.GHLContactId;
                         await Update(res);
                     }
-                   
+
                     if (res.ContactId != Guid.Empty)
                     {
                         if (!model.IsBillingAddressSameAsAddress)
@@ -320,7 +320,7 @@ namespace ShutterManagement.Business.Services
 
                         var IsContactExists = GetAllQuerable()
                             .Where(c => (c.Email == model.Email || c.PhoneNumber == model.PhoneNumber)
-                                        && c.TenantId == TenantId && c.IsDelete == false )
+                                        && c.TenantId == TenantId && c.IsDelete == false)
                             .ToList();
 
                         //if (IsContactExists.Count > 0)
@@ -343,7 +343,7 @@ namespace ShutterManagement.Business.Services
                             contact.IsBillingAddressSameAsAddress = model.IsBillingAddressSameAsAddress;
                             contact.ModifiedBy = TenantId;
                             contact.UpdatedAt = DateTime.Now;
-                           
+
                             await Update(contact); responseVm.IsSuccess = true;
                             responseVm.Message = AppConstant.UpdateSuccessMsg;
                         }
@@ -827,9 +827,9 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-               
+
                 var ghlResponse = new GhlContactSingleResponse();
-               var ghlContactAdd = new GhlContactAdd
+                var ghlContactAdd = new GhlContactAdd
                 {
                     Id = contact.ContactId.ToString() ?? string.Empty,
                     FirstName = model.FirstName ?? string.Empty,
@@ -845,7 +845,7 @@ namespace ShutterManagement.Business.Services
                 if (contact.GhlcontactId == null)
                 {
                     ghlResponse = await ghlService.CreateContactAsync(ghlContactAdd);
-                    if(ghlResponse != null)
+                    if (ghlResponse != null)
                     {
                         var contactExist = (await GetById(contact.ContactId));
 
@@ -971,4 +971,5 @@ namespace ShutterManagement.Business.Services
             }
 
         }
+    }
 }

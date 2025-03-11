@@ -863,12 +863,12 @@ namespace ShutterManagement.Business.Services
                         IsJobExist.AssignedPersonnel = model.AssignedPersonnel;
                         IsJobExist.ScheduledDate = model.ScheduledDate;
                         IsJobExist.JobStatus = jobStatus;
-                        IsJobExist.Notes = model.Notes.Trim();
+                        IsJobExist.Notes = model.Notes ?? "";
                         IsJobExist.GhlStageId = model.GHL_StageId;
                         IsJobExist.GhlStageName = stage?.GhlStageName?.Trim() ?? "";
                         IsJobExist.AttachmentAny = arrayString;
                         IsJobExist.UpdatedAt = DateTime.Now;
-                        IsJobExist.ModifiedBy = AppConstant.LoggedInUserID;
+                        IsJobExist.ModifiedBy = AppConstant.LoggedInUserID ?? Guid.Empty;
                         var res = await Update(IsJobExist);
                         responseVm.IsSuccess = true;
                         responseVm.Message = AppConstant.UpdateSuccessMsg;
