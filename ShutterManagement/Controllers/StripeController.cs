@@ -23,51 +23,48 @@ namespace ShutterManagement.Controllers
             return Ok(new { checkoutUrl });
         }
 
+        //[HttpPost]
+        //public async Task<IActionResult> HandleWebhook()
+        //{
+        //   await stripeService.HandleStripeWebhook(HttpContext.Request);
+        //   return Ok(); 
+        //}
+
         [HttpPost]
-        public async Task<IActionResult> HandleWebhook()
+        public async Task<IActionResult> Index()
         {
-           await stripeService.HandleStripeWebhook(HttpContext.Request);
-           return Ok(); 
-        }
+            var json = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();
 
-
-            [HttpPost("Webhook")]
-            public async Task<IActionResult> IndexWebhook()
+            try
             {
-                var json = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();
+                var stripeEvent = EventUtility.ParseEvent(json);
 
-                try
+                // Handle the event
+                // If on SDK version < 46, use class Events instead of EventTypes
+                if (stripeEvent.Type == EventTypes.PaymentIntentSucceeded)
                 {
-                    var stripeEvent = EventUtility.ParseEvent(json);
+                    var paymentIntent = stripeEvent.Data.Object as PaymentIntent;
+                    Console.WriteLine("PaymentIntent was successful!");
+                }
+                else if (stripeEvent.Type == EventTypes.PaymentMethodAttached)
+                {
+                    var paymentMethod = stripeEvent.Data.Object as PaymentMethod;
+                    Console.WriteLine("PaymentMethod was attached to a Customer!");
+                }
+                // ... handle other event types
+                else
+                {
+                    Console.WriteLine("Unhandled event type: {0}", stripeEvent.Type);
+                }
 
-                    // Handle the event
-                    // If on SDK version < 46, use class Events instead of EventTypes
-                    if (stripeEvent.Type == EventTypes.PaymentIntentSucceeded)
-                    {
-                        var paymentIntent = stripeEvent.Data.Object as PaymentIntent;
-                        // Then define and call a method to handle the successful payment intent.
-                        // handlePaymentIntentSucceeded(paymentIntent);
-                    }
-                    else if (stripeEvent.Type == EventTypes.PaymentMethodAttached)
-                    {
-                        var paymentMethod = stripeEvent.Data.Object as PaymentMethod;
-                        // Then define and call a method to handle the successful attachment of a PaymentMethod.
-                        // handlePaymentMethodAttached(paymentMethod);
-                    }
-                    // ... handle other event types
-                    else
-                    {
-                        // Unexpected event type
-                        Console.WriteLine("Unhandled event type: {0}", stripeEvent.Type);
-                    }
-                    return Ok();
-                }
-                catch (StripeException e)
-                {
-                    return BadRequest();
-                }
+                return Ok();
+            }
+            catch (StripeException)
+            {
+                return BadRequest();
             }
         }
+    }
     }
 
 
