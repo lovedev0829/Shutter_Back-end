@@ -847,6 +847,7 @@ namespace ShutterManagement.Business.Services
 
                         if (responseVm.IsSuccess && IsJobExist?.GhlOpportunityId != null)
                         {
+                            authService.GetGHLConfiguration(model.locationId);
                             var ghlUpdateResponse = await UpdateOpportunityInGhl(IsJobExist);
                             FileLogger.Log($"GHL Sync: Job updated in GHL - {ghlUpdateResponse.Message}");
                         }
@@ -1082,6 +1083,7 @@ namespace ShutterManagement.Business.Services
                 {
                     if (IsJobExist?.GhlOpportunityId != null)
                     {
+                        authService.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
                         var ghlUpdateResponse = await UpdateOpportunityInGhl(IsJobExist);
                         FileLogger.Log($"GHL Sync: Job updated in GHL - {ghlUpdateResponse.Message}");
                     }
