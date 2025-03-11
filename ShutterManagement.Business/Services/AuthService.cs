@@ -524,6 +524,7 @@ namespace ShutterManagement.Services
                 AppConstant.GHL_APIKey = details.Apikey;
                 AppConstant.GHL_PipelineId = details.PipelineId;
                 AppConstant.GHL_StageId = details.LocationId;
+                AppConstant.LoggedInTenantId = details.TenantId;
             }
         }
     }

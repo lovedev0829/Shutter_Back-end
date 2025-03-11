@@ -12,6 +12,7 @@ using ShutterManagement.GHL.Services;
 using ShutterManagment.GHL.ViewModel.Request;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -111,21 +112,10 @@ namespace ShutterManagement.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> ContactFromGHL(GHLContactTrigger contactData)
         {
-            var contact = new Sp_Contact
-            {
-                ContactType = contactData.contact_type,
-                FirstName = contactData.first_name,
-                LastName = contactData.last_name,
-                Email = contactData.email,
-                PhoneNumber = contactData.phone,
-                locationId = contactData.location.id,
-                GHLContactId = contactData.contact_id,
-                lastAsync = DateTime.Now,
-            };
-
             try
             {
-                var res = await _contactService.Create_Contact(contact);
+                var res = await _contactService.ContactFromGHL(contactData);
+                FileLogger.Log("Contact saved", res.Message);
                 return Ok(res);
             }
             catch (Exception ex)
@@ -135,26 +125,21 @@ namespace ShutterManagement.Controllers
             }
         }
 
-
-
-
         [HttpPost("UpdateContactFromGHL")]
         [AllowAnonymous]
         public async Task<IActionResult> UpdateContactFromGHL(GHLContactTrigger contactData)
         {
-            var contact = new UpdateContact
+            try
             {
-                ContactType = contactData.contact_type,
-                FirstName = contactData.first_name,
-                LastName = contactData.last_name,
-                Email = contactData.email,
-                PhoneNumber = contactData.phone,
-                locationId = contactData.location.id,
-                GHLContactId = contactData.contact_id,
-                lastAsync = DateTime.Now,
-            };
-            var res = await _contactService.Update_Contact(contact);
-            return Ok(res);
+                var res = await _contactService.UpdateContactFromGHL(contactData);
+                FileLogger.Log("Contact updated", res.Message);
+                return Ok(res);
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Log("Error while creating contact: {ExceptionMessage}", ex.Message);
+                return StatusCode(500, $"Internal server error by application: {ex.Message}");
+            }
         }
 
     }

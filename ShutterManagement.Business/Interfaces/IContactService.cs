@@ -4,6 +4,7 @@ using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.Core.ViewModels.Response;
 using ShutterManagement.DAL.Context;
 using ShutterManagement.Interfaces;
+using ShutterManagment.GHL.ViewModel.Request;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,6 +23,7 @@ namespace ShutterManagement.Business.Interfaces
         Task<IResponseVm<string>> DeleteContact(Guid ContactId);
         //Task<IResponseVm<string>> GetAllArchiveContacts();
         Task<IResponseVm<string>> ArchiveContacts(ArchiveUser archiveModel);
-       // void GetGHLConfiguration(string locationId);
+        Task<IResponseVm<string>> ContactFromGHL(GHLContactTrigger contactData);
+        Task<IResponseVm<string>> UpdateContactFromGHL(GHLContactTrigger contactData);
     }
 }
