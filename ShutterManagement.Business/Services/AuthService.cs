@@ -164,7 +164,7 @@ namespace ShutterManagement.Services
                 responseVm.Message = AppConstant.LoginSuccessMessgae;
                 responseVm.TotalRecords = 1;
 
-                GetGHLConfiguration(UserDetails[0].TenantId.ToString());
+               GetGHLConfiguration(UserDetails[0].TenantId.ToString());
             }
             else
             {
