@@ -63,12 +63,12 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        public async  Task<IResponseVm<GetGHLConfiguration>> GetGHLConfiguration(Guid? tenantId)
+        public async  Task<IResponseVm<GetGHLConfiguration>> GetGHLConfiguration()
         {
             IResponseVm<GetGHLConfiguration> responseVm = new ResponseVm<GetGHLConfiguration>();
             try
             {
-                var gHLConfiguration = GetAllQuerable().Where(x => x.TenantId == tenantId).FirstOrDefault();
+                var gHLConfiguration = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
                 responseVm.Data = new GetGHLConfiguration
                 {
                    APIkey = gHLConfiguration?.Apikey??"",

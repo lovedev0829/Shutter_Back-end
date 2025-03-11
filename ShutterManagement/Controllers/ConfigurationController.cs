@@ -23,8 +23,7 @@ namespace ShutterManagement.Controllers
         [Authorize(Roles = "GHLView")]
         public async Task<IActionResult> GetGHLConfiguration()
         {
-            Guid? tenantId = Guid.Empty; 
-            var res = await gHLConfiguration.GetGHLConfiguration(tenantId);
+            var res = await gHLConfiguration.GetGHLConfiguration();
             return Ok(res);
         }
 
