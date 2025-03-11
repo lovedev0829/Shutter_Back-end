@@ -776,13 +776,40 @@ namespace ShutterManagement.Controllers
             return Ok(result);
         }
 
+
         [HttpGet]
         [Route("ghlsync")]
-        public async Task<IActionResult> GHLSync()
+        public async Task<IActionResult> SyncAllData()
         {
-            var result = await jobService.SyncOpportunitiesFromGhl();
-            return Ok(result);
+            var pipelineResult = await ghlService.GetAndSaveDefaultPipelineAndStage();
+            var opportunityResult = await jobService.SyncOpportunitiesFromGhl();
+
+            var result = new
+            {
+                pipeline = pipelineResult,
+                opportunities = opportunityResult
+            };
+
+            var options = new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+                WriteIndented = true
+            };
+
+            var json = JsonSerializer.Serialize(result, options);
+            return Ok(json);
         }
+
+
+
+        //[HttpGet]
+        //[Route("ghlsync")]
+        //public async Task<IActionResult> GHLSync()
+        //{
+        //    var result = await jobService.SyncOpportunitiesFromGhl();
+        //    return Ok(result);
+        //}
 
         //[HttpPost("HandleOpportunityWebhook")]
         //[AllowAnonymous]

@@ -214,11 +214,12 @@ namespace ShutterManagement.Business.Services
 
                     // Fetch job status dynamically from DB based on GHL stage
                     var res = await GetGHLStages();
-                    var stage = res?.Data.FirstOrDefault();
+                    var stage = res?.Data.Where(x=>x.GhlStageId==opportunity.PipelineStageId).FirstOrDefault();
 
                     var contacts = await GetContactsAsync();
                     var contact = contacts.FirstOrDefault(c => c.id == opportunity.Contact?.Id);
                     var dbcontact = _context.TblContacts.Where(x => x.GhlcontactId == contact.id).FirstOrDefault();
+                    var jobstatusId = _context.MstJobStatuses.Where(x => x.JobStatusName == opportunity.Status).Select(x => x.JobStatusId).FirstOrDefault();
                     if(dbcontact==null)
                     {
                         responseVm.IsSuccess = false;
@@ -230,8 +231,13 @@ namespace ShutterManagement.Business.Services
                     {
                         // Update existing job
                         existingJob.JobName = opportunity.Name;
+                        existingJob.JobStatus = jobstatusId;
+                        existingJob.GhlContactId = contact?.id;
+                        existingJob.ContactId = dbcontact.ContactId;
+                        existingJob.GhlStageName = stage?.GhlStageName;
                         existingJob.GhlStageId = Guid.Parse(opportunity.PipelineStageId);
                         existingJob.UpdatedAt = DateTime.Now;
+                        existingJob.LastAsync = DateTime.Now;
                         await Update(existingJob);
                     }
                     else
@@ -241,8 +247,11 @@ namespace ShutterManagement.Business.Services
                             ContactId= dbcontact?.ContactId,
                             GHL_ContactId = opportunity.Contact?.Id,  
                             GhlOpportunityId= opportunity.OpportunityId,  
+                            AddressId= dbcontact?.PrimaryAddress,  
+                            GHL_StageName= stage?.GhlStageName,  
                             JobName = opportunity.Name?.Trim(),
-                            ScheduledDate = DateTime.Now, 
+                            ScheduledDate = DateTime.Now,
+                            lastasync= DateTime.Now,
                             Notes = "Synced from GHL",
                             GHL_StageId = Guid.Parse(opportunity.PipelineStageId),
                             

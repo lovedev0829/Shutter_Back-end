@@ -115,7 +115,6 @@ namespace ShutterManagement.GHL.Services
                         existingStage.GhlLastSync = DateTime.Now;
                         existingStage.UpdatedAt = DateTime.Now;
                         existingStage.ModifiedBy = AppConstant.LoggedInTenantId;
-
                         stagesToUpdate.Add(existingStage);
                     }
                     else
