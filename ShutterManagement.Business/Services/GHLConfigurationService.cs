@@ -30,11 +30,7 @@ namespace ShutterManagement.Business.Services
             var details = GetAllQuerable()
                    .Where(x => x.LocationId == Id || x.TenantId.ToString().ToLower() == Id.ToLower())
                    .FirstOrDefault();
-            FileLogger.Log("details BaseUrl", details.BaseAddress);
-            FileLogger.Log("details GHL_APIKey", details.Apikey);
-            FileLogger.Log("details GHL_PipelineId", details.PipelineId);
-            FileLogger.Log("details GHL_Locationd", details.LocationId);
-            FileLogger.Log("details LoggedInTenantId", details.TenantId);
+            FileLogger.Log("details GHl: ", details);
             if (details != null)
             {
                 AppConstant.GHL_BaseAddress = details.BaseAddress;

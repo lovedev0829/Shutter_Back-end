@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 
 namespace ShutterManagement.Core.Common
 {
@@ -15,7 +16,8 @@ namespace ShutterManagement.Core.Common
             string logMessage = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} : {message}";
             if (objects != null && objects.Length > 0)
             {
-                logMessage += objects.ToArray();
+                string serializedObjects = JsonConvert.SerializeObject(objects, Formatting.Indented);
+                logMessage += $"\nData: {serializedObjects}";
             }
 
             // Append the log message to the file

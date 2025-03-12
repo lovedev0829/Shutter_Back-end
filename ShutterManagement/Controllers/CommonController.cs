@@ -795,7 +795,6 @@ namespace ShutterManagement.Controllers
                 IsSuccess = isSuccess,
                 Message = message
             };
-
             return Ok(response);
         }
 
