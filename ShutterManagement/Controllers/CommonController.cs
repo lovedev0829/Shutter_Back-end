@@ -74,7 +74,8 @@ namespace ShutterManagement.Controllers
             IMstContactType contactType, IJobService jobService,IExpressionService expression ,IInvoiceService invoiceService,
             ITaxRate taxService,IEstimateService estimateService,
             IEstimationBreakdownService estimationBreakdownService, ILocationService locationService,
-           IDashboard dashboard, INotificationService notification, IGHLConfiguration gHLConfiguration,IStripeConfiguration stripeConfiguration, GhlService ghlService)
+           IDashboard dashboard, INotificationService notification, IGHLConfiguration gHLConfiguration,IStripeConfiguration stripeConfiguration,
+           GhlService ghlService)
         {
             this.masterCreate = masterCreate;
             this.fileUpload = fileUpload;
@@ -781,13 +782,14 @@ namespace ShutterManagement.Controllers
         [Route("ghlsync")]
         public async Task<IActionResult> SyncAllData()
         {
+            await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
             var pipelineResult = await ghlService.GetAndSaveDefaultPipelineAndStage();
+            var contact = await contactService.ContactSync();
             var opportunityResult = await jobService.SyncOpportunitiesFromGhl();
 
             bool isSuccess = pipelineResult.IsSuccess && opportunityResult.IsSuccess;
             string message = isSuccess ? "Synchronization completed successfully." :
                                          $"Pipeline: {pipelineResult.Message}, Opportunities: {opportunityResult.Message}";
-
             var response = new
             {
                 IsSuccess = isSuccess,
@@ -796,8 +798,6 @@ namespace ShutterManagement.Controllers
 
             return Ok(response);
         }
-
-
 
 
         //[HttpGet]

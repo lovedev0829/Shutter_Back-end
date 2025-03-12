@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core;
+using ShutterManagement.Core.Common;
 using ShutterManagement.Core.ViewModels;
 using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.Core.ViewModels.Response;
@@ -29,12 +30,17 @@ namespace ShutterManagement.Business.Services
             var details = GetAllQuerable()
                    .Where(x => x.LocationId == Id || x.TenantId.ToString().ToLower() == Id.ToLower())
                    .FirstOrDefault();
+            FileLogger.Log("details BaseUrl", details.BaseAddress);
+            FileLogger.Log("details GHL_APIKey", details.Apikey);
+            FileLogger.Log("details GHL_PipelineId", details.PipelineId);
+            FileLogger.Log("details GHL_Locationd", details.LocationId);
+            FileLogger.Log("details LoggedInTenantId", details.TenantId);
             if (details != null)
             {
                 AppConstant.GHL_BaseAddress = details.BaseAddress;
                 AppConstant.GHL_APIKey = details.Apikey;
                 AppConstant.GHL_PipelineId = details.PipelineId;
-                AppConstant.GHL_StageId = details.LocationId;
+                AppConstant.GHL_Locationd = details.LocationId;
                 AppConstant.LoggedInTenantId = details.TenantId;
             }
         }

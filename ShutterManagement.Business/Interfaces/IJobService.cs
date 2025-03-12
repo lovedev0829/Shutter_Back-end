@@ -28,5 +28,7 @@ namespace ShutterManagement.Business.Interfaces
         Task<IResponseVm<List<Opportunity>>> SyncOpportunitiesFromGhl();
         Task<IResponseVm<string>> UpdateOpportunityFromGHL(GHLOpportunityTrigger opportunitydata);
         Task<IResponseVm<string>> OpportunityFromGHL(GHLOpportunityTrigger opportunitydata);
+
+        //Task<IResponseVm<string>> GetAndSaveContactsAsync();
     }
 }

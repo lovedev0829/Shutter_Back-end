@@ -26,11 +26,13 @@ namespace ShutterManagement.Controllers
     {
         private readonly IContactService _contactService;
         private readonly GhlService ghlService;
+        private readonly IGHLConfiguration gHLConfiguration;
 
-        public ContactController(IContactService contactService,GhlService ghlService)
+        public ContactController(IContactService contactService,GhlService ghlService,IGHLConfiguration gHLConfiguration)
         {
             _contactService = contactService;
             this.ghlService = ghlService;
+            this.gHLConfiguration = gHLConfiguration;
         }
 
         [HttpPost("GetAll")]
@@ -98,11 +100,11 @@ namespace ShutterManagement.Controllers
         }
 
 
-        [HttpGet]
-        [Route("GHLContact")]
-        [AllowAnonymous]
+        [HttpGet("GHLContact")]
+        [Authorize]
         public async Task<IActionResult> GHLContact()
         {
+            await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
             var res = await ghlService.GetContactsAsync();
             return Ok(res);
         }

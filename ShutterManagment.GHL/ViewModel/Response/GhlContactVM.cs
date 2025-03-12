@@ -32,6 +32,7 @@ namespace ShutterManagment.GHL.ViewModel.Response
 
 
         public DateTime dateAdded { get; set; }
+        public DateTime dateUpdated { get; set; }
 
     }
     public class GhlContactResponse
@@ -85,6 +86,9 @@ namespace ShutterManagment.GHL.ViewModel.Response
 
         [JsonProperty("contact")]
         public Contact Contact { get; set; }
+
+        [JsonProperty("locationId")]
+        public string locationId { get; set; }
     }
 
     public class Contact

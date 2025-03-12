@@ -62,6 +62,7 @@ namespace ShutterManagement.GHL.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
+
                 var pipelineResponse = await GetAllPipelinesWithStagesAsync();
 
                 if (pipelineResponse?.Pipelines == null || !pipelineResponse.Pipelines.Any())
@@ -100,7 +101,8 @@ namespace ShutterManagement.GHL.Services
                 List<TblGhlStage> stagesToInsert = new();
 
                 // Sort the pipeline stages by name (or another field if required)
-                var orderedStages = targetPipeline.Stages.OrderBy(s => s.Name).ToList();
+                var orderedStages = targetPipeline.Stages;
+                //var orderedStages = targetPipeline.Stages.OrderBy(s => s.Name).ToList();
 
                 for (int i = 0; i < orderedStages.Count; i++)
                 {
@@ -193,8 +195,6 @@ namespace ShutterManagement.GHL.Services
                 return false; 
             }
         }
-
-
 
         public async Task<IResponseVm<List<PipelineAndStage>>> GetGHLStages()
         {
@@ -335,8 +335,6 @@ namespace ShutterManagement.GHL.Services
                 return null;
             }
         }
-
-
 
         public string GetClientIpAddress()
         {
