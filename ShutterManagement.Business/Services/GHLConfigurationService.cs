@@ -26,6 +26,7 @@ namespace ShutterManagement.Business.Services
 
         public async Task GetGHLConfiguration(string Id)
         {
+            FileLogger.Log("details GHl ID: ", Id);
 
             var details = GetAllQuerable()
                    .Where(x => x.LocationId == Id || x.TenantId.ToString().ToLower() == Id.ToLower())

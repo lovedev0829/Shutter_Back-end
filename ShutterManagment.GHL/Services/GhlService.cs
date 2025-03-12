@@ -25,13 +25,17 @@ namespace ShutterManagement.GHL.Services
         private readonly HttpClient _httpClient;
         private readonly ShutterDBContext dBContext;
         private readonly IHttpContextAccessor httpContextAccessor;
-        private string BaseUrl = AppConstant.GHL_BaseAddress;
+        private string BaseUrl = string.Empty;
 
         public GhlService(HttpClient httpClient, ShutterDBContext dBContext, IHttpContextAccessor _httpContextAccessor)
         {
             _httpClient = httpClient;
             this.dBContext = dBContext;
             httpContextAccessor = _httpContextAccessor;
+            BaseUrl = AppConstant.GHL_BaseAddress;
+            FileLogger.Log($"Base Address from Constr: {AppConstant.GHL_BaseAddress}");
+            FileLogger.Log($"Base Address from Constr Base: {BaseUrl}");
+
         }
 
         #region Start pipeLine and Stages Related Methods
@@ -40,7 +44,7 @@ namespace ShutterManagement.GHL.Services
         {
             try
             {
-                var requestUrl = $"{BaseUrl}pipelines/";
+                var requestUrl = $"{AppConstant.GHL_BaseAddress}pipelines/";
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_APIKey);
                 HttpResponseMessage response = await _httpClient.GetAsync(requestUrl);
                 response.EnsureSuccessStatusCode();
@@ -242,7 +246,7 @@ namespace ShutterManagement.GHL.Services
         {
             
             using var httpClient = new HttpClient();
-            var requestUrl = $"{BaseUrl}contacts/";
+            var requestUrl = $"{AppConstant.GHL_BaseAddress}contacts/";
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetApiKey());
             var response = await httpClient.GetAsync(requestUrl);
             response.EnsureSuccessStatusCode();
@@ -257,6 +261,8 @@ namespace ShutterManagement.GHL.Services
         {
             try
             {
+                FileLogger.Log($"Base Address from CRete contact: {AppConstant.GHL_BaseAddress}");
+
                 using var httpClient = new HttpClient();
                 var contactData = new
                 {
@@ -270,7 +276,7 @@ namespace ShutterManagement.GHL.Services
                 var contactJson = JsonConvert.SerializeObject(contactData);
                 var content = new StringContent(contactJson, Encoding.UTF8, "application/json");
 
-                var url = $"{BaseUrl}contacts/"; 
+                var url = $"{AppConstant.GHL_BaseAddress}contacts/"; 
 
                 var response = await httpClient.PostAsync(url, content);
 
@@ -314,7 +320,7 @@ namespace ShutterManagement.GHL.Services
                 var contactJson = JsonConvert.SerializeObject(contactData);
                 var content = new StringContent(contactJson, Encoding.UTF8, "application/json");
 
-                var url = $"{BaseUrl}contacts/{contactId}"; 
+                var url = $"{AppConstant.GHL_BaseAddress}contacts/{contactId}"; 
 
                 var response = await httpClient.PutAsync(url, content);
 
@@ -378,7 +384,7 @@ namespace ShutterManagement.GHL.Services
             try
             {
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetApiKey());
-                var endpoint = $"{BaseUrl}pipelines/{stage.GhlPipelineId}/opportunities/";
+                var endpoint = $"{AppConstant.GHL_BaseAddress}pipelines/{stage.GhlPipelineId}/opportunities/";
                 var opportunityJson = JsonConvert.SerializeObject(opportunityData);
                 var content = new StringContent(opportunityJson, Encoding.UTF8, "application/json");
                 var response = await _httpClient.PostAsync(endpoint, content);
@@ -445,7 +451,7 @@ namespace ShutterManagement.GHL.Services
                 var targetPipeline = pipelineResponse.Pipelines
                     .FirstOrDefault(p => p.Id.Contains(userProvidedPipelineNameOrId) || p.Name.Contains(userProvidedPipelineNameOrId));
 
-                var url = $"{BaseUrl}pipelines/{targetPipeline?.Id}/opportunities/";
+                var url = $"{AppConstant.GHL_BaseAddress}pipelines/{targetPipeline?.Id}/opportunities/";
                 var request = new HttpRequestMessage(HttpMethod.Get, url);
 
                 var response = await client.SendAsync(request);
