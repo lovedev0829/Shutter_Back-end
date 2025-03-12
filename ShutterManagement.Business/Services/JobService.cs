@@ -324,7 +324,7 @@ namespace ShutterManagement.Business.Services
 
                 FileLogger.Log($"Fetching opportunities from pipeline ID: {targetPipeline.Id}");
 
-                var url = $"{BaseUrl}pipelines/{targetPipeline.Id}/opportunities/";
+                var url = $"{AppConstant.GHL_BaseAddress}pipelines/{targetPipeline.Id}/opportunities/";
                 var response = await client.GetAsync(url);
                 string responseBody = await response.Content.ReadAsStringAsync();
 

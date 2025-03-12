@@ -1031,7 +1031,7 @@ namespace ShutterManagement.Business.Services
                                 GHLContactId = existingContact.GhlcontactId ?? ""
                             };
                             FileLogger.Log("Updating Contact in application(GhlContactId).", existingContact.GhlcontactId);
-                            var res = await ghlService.UpdateContactAsync(ghlUpdatecontact.Id, ghlUpdatecontact);
+                            var res = await ghlService.UpdateContactAsync(ghlUpdatecontact.GHLContactId, ghlUpdatecontact);
                             if(res.Contact == null)
                             { FileLogger.Log("Exception occurred Updating Contact in application.", res); }
                         }
