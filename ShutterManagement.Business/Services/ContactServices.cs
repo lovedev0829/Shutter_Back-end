@@ -119,6 +119,7 @@ namespace ShutterManagement.Business.Services
 
                 if (IsTenantExists)
                 {
+                    await gHLConfigurationService.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
                     var IsContactExists = GetAllQuerable()
                         .Where(c => (c.Email == model.Email || c.PhoneNumber == model.PhoneNumber)
                         && c.TenantId == TenantId
@@ -256,7 +257,6 @@ namespace ShutterManagement.Business.Services
                         }
                         if (model.GHLContactId == null)
                         {
-                            await gHLConfigurationService.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
                             var ghlResponse = await SyncWithGHL(res, model);
                             if (!ghlResponse.IsSuccess)
                             {
@@ -316,6 +316,7 @@ namespace ShutterManagement.Business.Services
 
                 if (IsTenantExists)
                 {
+                    await gHLConfigurationService.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
                     if (model.GHLContactId != null)
                     {
                         var contact = (await GetAll()).Where
@@ -502,7 +503,6 @@ namespace ShutterManagement.Business.Services
                             Referral = model.Referral ?? string.Empty,
                             GHLContactId = model.GHLContactId ?? string.Empty,
                         };
-                        await gHLConfigurationService.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
                         var ghlResponse = await SyncWithGHL(contact1, ghlContactAdd);
 
                         responseVm.IsSuccess = true;
