@@ -51,7 +51,6 @@ namespace ShutterManagement.Controllers
                     var paymentMethod = stripeEvent.Data.Object as PaymentMethod;
                     Console.WriteLine("PaymentMethod was attached to a Customer!");
                 }
-                // ... handle other event types
                 else
                 {
                     Console.WriteLine("Unhandled event type: {0}", stripeEvent.Type);
