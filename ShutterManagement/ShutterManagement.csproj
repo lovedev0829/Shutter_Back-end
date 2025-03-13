@@ -14,7 +14,9 @@
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.10" />
     <PackageReference Include="Microsoft.AspNetCore.Hosting" Version="2.2.7" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="9.0.2" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="Stripe.net" Version="47.4.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
   </ItemGroup>
 
@@ -22,6 +24,7 @@
     <ProjectReference Include="..\ShutterManagement.Business\ShutterManagement.Business.csproj" />
     <ProjectReference Include="..\ShutterManagement.Core\ShutterManagement.Core.csproj" />
     <ProjectReference Include="..\ShutterManagment.GHL\ShutterManagment.GHL.csproj" />
+    <ProjectReference Include="..\ShutterManagement.Stripe\ShutterManagement.Stripe.csproj" />
   </ItemGroup>
 
   <ItemGroup>

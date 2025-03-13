@@ -859,8 +859,8 @@ namespace ShutterManagement.Business.Services
                 e.primarycolor = tenantdetails.PrimaryColor;
                 e.CompanyName = tenantdetails.CompanyName;
                 var taxdetails = taxRate.GetAllQuerable()
-    .Where(x => x.TaxRateId == order.TaxId && x.IsDelete == false)
-    .FirstOrDefault();
+                   .Where(x => x.TaxRateId == order.TaxId && x.IsDelete == false)
+                   .FirstOrDefault();
 
                 if (taxdetails != null)
                 {

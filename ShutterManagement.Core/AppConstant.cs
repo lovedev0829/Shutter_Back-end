@@ -25,6 +25,7 @@ namespace ShutterManagement.Core
 
         //Error Message//
 
+       
         public static string FileVirtualPath { get; set; } = "";
         public static string FileUploadPath { get; set; } = "";
         public static string ExternalError { get; set; } = "Something went wrong. ";
