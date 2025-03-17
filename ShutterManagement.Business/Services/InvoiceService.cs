@@ -23,6 +23,10 @@ using System.Text;
 using ShutterManagement.Core.Common;
 using Microsoft.Extensions.Primitives;
 using MailKit.Search;
+using Microsoft.Extensions.Options;
+using ShutterManagement.Stripe;
+using Microsoft.Extensions.Logging;
+using Stripe;
 
 namespace ShutterManagement.Business.Services
 {
@@ -39,10 +43,12 @@ namespace ShutterManagement.Business.Services
         private readonly IJobService jobService;
         private readonly IOrderService orderService;
         public Pagination filter = new Pagination();
+        private readonly StripeService _stripeService;
 
         public InvoiceService(ITenantService tenantService, IInvoicePaymentService invoicePaymentService,
             IHostEnvironment environment, IConverter converter ,IContactService contactService 
-            ,IEstimateService estimateService, ITenantBrandingService tenantBrandingService,IUserService userService ,IJobService jobService,IOrderService orderService)
+            ,IEstimateService estimateService, ITenantBrandingService tenantBrandingService,IUserService userService 
+            ,IJobService jobService,IOrderService orderService,StripeService stripeService)
         {
             this.tenantService = tenantService;
             this.invoicePaymentService = invoicePaymentService;
@@ -54,6 +60,7 @@ namespace ShutterManagement.Business.Services
             this.userService = userService;
             this.jobService = jobService;
             this.orderService = orderService;
+            _stripeService = stripeService;
         }
 
         #region Create  update ActiveInActive Delete Getall
@@ -669,7 +676,7 @@ namespace ShutterManagement.Business.Services
 
                     responseVm.IsSuccess = true;
                     responseVm.Message = "Email Send SuccessFully.";
-                    File.Delete(savePath);
+                    System.IO.File.Delete(savePath);
 
                 }
                 else if(model.DocumentType==EstimateDocumentType.OrderForEmail)
@@ -735,7 +742,7 @@ namespace ShutterManagement.Business.Services
 
                     responseVm.IsSuccess = true;
                     responseVm.Message = "Email Send SuccessFully.";
-                    File.Delete(savePath);
+                    System.IO.File.Delete(savePath);
 
 
 
@@ -864,6 +871,18 @@ namespace ShutterManagement.Business.Services
 
                     // Construct Invoice Email Body
 
+                    // Generate Stripe Payment Link
+
+                    // Generate Stripe Payment Link
+                    var paymentRequest = new PaymentRequest
+                    {
+                        CustomerEmail = customerDetails.Email,
+                        ProductName = $"Invoice Payment - {invoiceDetails?.InvoiceNumber}",
+                        Amount = (long)(invoiceDetails?.BalanceDue * 100), // Convert to cents
+                        Quantity = 1,
+                    };
+
+                    string paymentLink = _stripeService.CreateCheckoutSession(paymentRequest);
 
 
                     var emailBody = $@"
@@ -888,7 +907,7 @@ namespace ShutterManagement.Business.Services
         <!-- Payment Link -->
         <p style='font-size: 14px; margin: 15px 0;'>You can make the payment for your invoice <strong>{invoiceDetails?.InvoiceNumber}</strong> by clicking the link below:</p>
         <div style='text-align: center; margin: 20px 0;'>
-            <a  style='background: #28a745; color: #fff; padding: 12px 20px; text-decoration: none; font-size: 14px; border-radius: 5px; display: inline-block;'>Pay Now</a>
+            <a href='{paymentLink}' style='background: #28a745; color: #fff; padding: 12px 20px; text-decoration: none; font-size: 14px; border-radius: 5px; display: inline-block;'>Pay Now</a>
         </div>
 
         <hr style='border: 0; height: 1px; background: #ddd; margin: 20px 0;'>
@@ -923,7 +942,7 @@ namespace ShutterManagement.Business.Services
 
                     responseVm.IsSuccess = true;
                     responseVm.Message = "Invoice email sent successfully.";
-                    File.Delete(InvicesavePath);
+                    System.IO.File.Delete(InvicesavePath);
                 }
 
                 else if (model.DocumentType == EstimateDocumentType.DownloadPDF)
@@ -932,7 +951,7 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.InvoiceDownloadSuccessMsg;
                     responseVm.Data = pdfBase64;
 
-                    File.Delete(savePath);
+                    System.IO.File.Delete(savePath);
                 }
 
                 }

@@ -63,6 +63,21 @@ namespace ShutterManagement.Controllers
                 return BadRequest();
             }
         }
+
+
+        [HttpPost("webhook")]
+        public async Task<IActionResult> StripeWebhook()
+        {
+            try
+            {
+                await stripeService.HandleStripeWebhook(HttpContext.Request);
+                return Ok(); // Acknowledge receipt of the webhook
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest($"⚠️ Webhook Error: {ex.Message}");
+            }
+        }
     }
     }
 

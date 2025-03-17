@@ -781,7 +781,7 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        public async Task<IResponseVm<List<EstimateList>>> ViewEachEstimation(Guid EstimateId)
+        public async Task<IResponseVm<List<EstimateList>>> ViewEachEstimation(Guid? EstimateId)
         {
             IResponseVm<List<EstimateList>> responseVm = new ResponseVm<List<EstimateList>>();
             try

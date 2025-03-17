@@ -12,6 +12,9 @@ using System.Text;
 using System.Threading.Tasks;
 using ShutterManagement.Core.Common;
 using System.Drawing;
+using ShutterManagement.Stripe;
+using Stripe;
+using System.Xml.Linq;
 
 namespace ShutterManagement.Business.Services
 {
@@ -20,11 +23,14 @@ namespace ShutterManagement.Business.Services
     {
         private readonly ITenantService tenantService;
         private readonly IInvoiceService invoiceService;
+        private readonly StripeService stripeService;
 
-        public PaymentsService(ITenantService tenantService ,IInvoiceService invoiceService)
+        public PaymentsService(ITenantService tenantService ,IInvoiceService invoiceService 
+            ,StripeService stripeService)
         {
             this.tenantService = tenantService;
             this.invoiceService = invoiceService;
+            this.stripeService = stripeService;
         }
 
         #region Active_InActive_Payment
@@ -81,7 +87,7 @@ namespace ShutterManagement.Business.Services
 
         #region CreatePayment
         public async Task<IResponseVm<string>> CreatePayment(CreatePayments model)
-        {
+      {
             IResponseVm<string> responseVm = new ResponseVm<string>();
 
             using var transaction = await dbContext.Database.BeginTransactionAsync();
@@ -96,6 +102,7 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.TenantNotFound;
                     return responseVm;
                 }
+
                 var isTransactionExists = await AnyAsync(x =>
                     x.TransactionId == model.TransactionId && x.IsDelete == false && x.IsActive==true && x.TenantId == AppConstant.LoggedInTenantId);
 
@@ -128,6 +135,15 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = "Please enter an amount equal to or less than balance due.";
                     return responseVm;
                 }
+
+                // ✅ Check if Payment is Already Completed (Stripe Webhook Might Have Updated It)
+                var existingPayment =  GetAllQuerable().Where(x => x.TransactionId == model.TransactionId && x.IsActive == true).FirstOrDefault();
+                if (existingPayment != null && existingPayment.Status == "Paid")
+                {
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = "Payment already completed.";
+                    return responseVm;
+                }
                 TblPayment tblPayments = new TblPayment
                 {
                     PaymentId = Guid.NewGuid(),
@@ -154,7 +170,22 @@ namespace ShutterManagement.Business.Services
                     await transaction.RollbackAsync();
                     return responseVm;
                 }
-                
+                if (model.PaymentStatus == PaymentStatus.Unpaid)
+                {
+                    var invoivedetail = dbContext.TblInvoices.Where(x => x.InvoiceId == model.InvoiceId).FirstOrDefault();
+                    var job = dbContext.TblJobs.Where(x => x.JobId == invoivedetail.JobId).FirstOrDefault();
+                    var contactdetails = dbContext.TblContacts.Where(x => x.ContactId == job.ContactId).FirstOrDefault();
+                    var GenerateInvoiceModel = new GenerateInvoiceModel
+                    {
+                        InvoiceId = model.InvoiceId,
+                        DocumentType = EstimateDocumentType.InvoicePaymentForEmail,
+                        EstimationId = invoice.EstimateId,
+                        ContactId = contactdetails.ContactId,
+                        
+                    };
+                    var res = invoiceService.SendInvoiceAttachment(GenerateInvoiceModel);
+                }
+
                 if (model.PaymentStatus == PaymentStatus.Paid)
                 {
                     invoice.PaidAmount += model.Amount ?? 0;
@@ -163,6 +194,7 @@ namespace ShutterManagement.Business.Services
                     invoice.UpdatedAt = DateTime.Now;
                     invoice.ModifiedBy = AppConstant.LoggedInUserID;
                     await invoiceService.Update(invoice);
+
                 }
                 await transaction.CommitAsync();
                 responseVm.IsSuccess = true;
