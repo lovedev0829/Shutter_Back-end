@@ -26,7 +26,6 @@ using MailKit.Search;
 using Microsoft.Extensions.Options;
 using ShutterManagement.Stripe;
 using Microsoft.Extensions.Logging;
-using Stripe;
 
 namespace ShutterManagement.Business.Services
 {
@@ -676,7 +675,7 @@ namespace ShutterManagement.Business.Services
 
                     responseVm.IsSuccess = true;
                     responseVm.Message = "Email Send SuccessFully.";
-                    System.IO.File.Delete(savePath);
+                    File.Delete(savePath);
 
                 }
                 else if(model.DocumentType==EstimateDocumentType.OrderForEmail)
@@ -742,7 +741,7 @@ namespace ShutterManagement.Business.Services
 
                     responseVm.IsSuccess = true;
                     responseVm.Message = "Email Send SuccessFully.";
-                    System.IO.File.Delete(savePath);
+                    File.Delete(savePath);
 
 
 
@@ -942,7 +941,8 @@ namespace ShutterManagement.Business.Services
 
                     responseVm.IsSuccess = true;
                     responseVm.Message = "Invoice email sent successfully.";
-                    System.IO.File.Delete(InvicesavePath);
+                    FileLogger.Log($"Invoice File Path for payment {InvicesavePath}");
+                   // File.Delete(InvicesavePath);
                 }
 
                 else if (model.DocumentType == EstimateDocumentType.DownloadPDF)
@@ -1007,7 +1007,7 @@ namespace ShutterManagement.Business.Services
             return $"<tbody>{paymentsListHtml}</tbody>";
         }
 
-
+         
 
         private string ReplaceTemplatePlaceholders(string template, InvoiceDataModel data) 
         {

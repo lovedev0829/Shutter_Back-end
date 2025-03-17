@@ -20,11 +20,25 @@ namespace ShutterManagement.Core.Common
                 logMessage += $"\nData: {serializedObjects}";
             }
 
+            try
+            {
+                using (var fileStream = new FileStream(logFilePath, FileMode.OpenOrCreate, FileAccess.Write, FileShare.ReadWrite))
+                {
+                    using (var writer = new StreamWriter(fileStream, Encoding.UTF8))
+                    {
+                        writer.WriteLine(logMessage + Environment.NewLine);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+
+            }
             // Append the log message to the file
-            File.AppendAllText(logFilePath, logMessage + Environment.NewLine);
+            //File.AppendAllText(logFilePath, );
 
             // Optional: Write to console as well
-           // Console.WriteLine(logMessage);
+            // Console.WriteLine(logMessage);
         }
     }
 }
