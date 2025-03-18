@@ -798,6 +798,14 @@ namespace ShutterManagement.Controllers
             return Ok(response);
         }
 
+        [HttpGet]
+        [Route("EstimateAmmount")]
+        public async Task<IActionResult> EstimateAmmount(Guid? EstimateId)
+        {
+            var result = await estimateService.GetEstimateAmmount(EstimateId);
+            return Ok(result);
+        }
+
 
         //[HttpGet]
         //[Route("ghlsync")]

@@ -11,6 +11,12 @@
     <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.2" />
     <PackageReference Include="Microsoft.Extensions.Options" Version="9.0.2" />
     <PackageReference Include="Stripe.net" Version="47.4.0" />
+    <PackageReference Include="System.Configuration.ConfigurationManager" Version="9.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ShutterManagement.Core\ShutterManagement.Core.csproj" />
+    <ProjectReference Include="..\ShutterManagement.DAL\ShutterManagement.DAL.csproj" />
   </ItemGroup>
 
 </Project>

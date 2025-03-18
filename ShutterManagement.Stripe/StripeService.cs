@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using Stripe;
 using Stripe.Checkout;
 using Microsoft.AspNetCore.Http;
+using ShutterManagement.Core;
 
 namespace ShutterManagement.Stripe
 {
@@ -98,6 +99,13 @@ namespace ShutterManagement.Stripe
                 Mode = "payment",
                 SuccessUrl = _stripeSettings.successUrl,
                 CancelUrl = _stripeSettings.cancelUrl,
+                Metadata = new Dictionary<string, string>
+            {
+                { "db_InvoiceId", request?.InvoiceId??"" },
+                 { "db_TenantId",AppConstant.LoggedInTenantId.ToString()??""},
+                    { "db_PaymentId",request?.PaymentId??""}
+
+            }
             };
 
             var session = sessionService.Create(sessionOptions);

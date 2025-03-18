@@ -12,7 +12,8 @@ namespace ShutterManagement.Stripe
         public long Quantity { get; set; }
         public string ProductName { get; set; }
         public string CustomerEmail { get; set; }
-        //public string ProductName { get; set; }
+        public string? InvoiceId { get; set; }
+        public string? PaymentId { get; set; }
 
     }
 }

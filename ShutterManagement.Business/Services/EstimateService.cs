@@ -1656,6 +1656,86 @@ namespace ShutterManagement.Business.Services
             }
             return res;
         }
+
+        public async Task<IResponseVm<Dictionary<string, decimal>>> GetEstimateAmmount(Guid? EstimateId)
+        {
+            IResponseVm<Dictionary<string, decimal>> responseVm = new ResponseVm<Dictionary<string, decimal>>();
+
+            try
+            {
+                if (EstimateId == null || EstimateId == Guid.Empty)
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = "Invalid Estimate ID.";
+                    return responseVm;
+                }
+                var estimate = dbContext.TblOrders
+                .Where(e => e.EstimateId == EstimateId && e.IsDelete == false && e.Status == EnumValue.GetEnumValue(Estimation.Approved))
+                .OrderByDescending(e => e.Version)
+                .ThenByDescending(e => e.CreatedAt)
+                .FirstOrDefault();
+
+                FileLogger.Log($"Fetched Live order ammoutn {estimate}");
+
+                if (estimate == null)
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = "No approved estimate found.";
+                    return responseVm;
+                }
+
+                decimal estimateAmount = estimate.GrandTotal ?? 0;
+
+                var invoice =  dbContext.TblInvoices
+                    .Where(x => x.EstimateId == EstimateId && x.IsActive == true && x.IsDelete == false)
+                    .FirstOrDefault();
+
+                decimal totalPayments = 0;
+
+                if (invoice != null)
+                {
+                    totalPayments =  dbContext.TblPayments
+                        .Where(x => x.InvoiceId == invoice.InvoiceId && x.IsActive == true && x.IsDelete == false)
+                        .Sum(x => x.Amount ?? 0);
+
+                    decimal? remainingBalance = invoice.TotalAmount - totalPayments;
+
+                    responseVm.IsSuccess = true;
+                    responseVm.Data = new Dictionary<string, decimal> { { "OrderAmount", remainingBalance.Value } };
+                    responseVm.Message = remainingBalance > 0
+                        ? $"Approved estimate found. Remaining balance: {remainingBalance:C}"
+                        : "Approved estimate is fully paid.";
+                    return responseVm;
+                }
+                if (totalPayments == 0)
+                {
+                    decimal halfAmount = estimateAmount / 2;
+
+                    responseVm.IsSuccess = true;
+                    responseVm.Data = new Dictionary<string, decimal> { { "OrderAmount", halfAmount } }; 
+                    responseVm.Message = $"No invoice and no payments found. Returning 50% of estimate: {halfAmount:C}";
+                    FileLogger.Log($"No invoice and no payments found. Returning 50% of estimate: {halfAmount:C}");
+                    return responseVm;
+                }
+                responseVm.IsSuccess = true;
+                responseVm.Data = new Dictionary<string, decimal> { { "OrderAmount", estimateAmount } };
+                FileLogger.Log($"Approved estimate found but no invoice. Returning full approved amount: {estimateAmount:C}");
+                responseVm.Message = $"Approved estimate found but no invoice. Returning full approved amount: {estimateAmount:C}";
+            }
+            catch (Exception ex)
+            {
+                responseVm.IsSuccess = false;
+                responseVm.Message = "Error fetching estimate amount: " + ex.Message;
+            }
+
+            return responseVm;
+        }
+
+
+
+
+
+
         #endregion
 
 

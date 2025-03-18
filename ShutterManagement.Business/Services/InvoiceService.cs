@@ -594,7 +594,9 @@ namespace ShutterManagement.Business.Services
                 var pdfBytes = GenerateInvoicePdf(htmlContent);
 
                 var tenantId = AppConstant.LoggedInTenantId.ToString();
+            
                 var rootPath = Path.Combine(AppConstant.FileUploadPath, tenantId);
+                FileLogger.Log($"Invoice File Path for payment {rootPath}");
                 if (!Directory.Exists(rootPath))
                 {
                     Directory.CreateDirectory(rootPath);
@@ -608,6 +610,8 @@ namespace ShutterManagement.Business.Services
                     await stream.WriteAsync(pdfBytes, 0, pdfBytes.Length);
                 }
                 var pdfBase64 = Convert.ToBase64String(pdfBytes);
+
+
 
 
                 if (model.DocumentType == EstimateDocumentType.ForEmail)
@@ -879,6 +883,8 @@ namespace ShutterManagement.Business.Services
                         ProductName = $"Invoice Payment - {invoiceDetails?.InvoiceNumber}",
                         Amount = (long)(invoiceDetails?.BalanceDue * 100), // Convert to cents
                         Quantity = 1,
+                        InvoiceId = invoiceDetails?.InvoiceId.ToString(),
+                        PaymentId = paymentDetails?.InvoicePaymentId.ToString(),
                     };
 
                     string paymentLink = _stripeService.CreateCheckoutSession(paymentRequest);
@@ -942,7 +948,7 @@ namespace ShutterManagement.Business.Services
                     responseVm.IsSuccess = true;
                     responseVm.Message = "Invoice email sent successfully.";
                     FileLogger.Log($"Invoice File Path for payment {InvicesavePath}");
-                   // File.Delete(InvicesavePath);
+                    File.Delete(InvicesavePath);
                 }
 
                 else if (model.DocumentType == EstimateDocumentType.DownloadPDF)

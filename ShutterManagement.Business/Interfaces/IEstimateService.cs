@@ -30,5 +30,6 @@ namespace ShutterManagement.Business.Interfaces
         Task<IResponseVm<string>> EstimationUniqueName();
 
         //Task<IResponseVm<List<EstimationBreakdown>>> EstimationBreakdown(Guid windowProductId);
+        Task<IResponseVm<Dictionary<string, decimal>>> GetEstimateAmmount(Guid? EstimateId);
     }
 }
