@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using ShutterManagement.Business.Interfaces;
+using ShutterManagement.Business.Services;
 using ShutterManagement.Core.Common;
 using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.DAL.Context;
@@ -74,83 +75,111 @@ namespace ShutterManagement.Controllers
             }
         }
 
-
         [HttpPost("webhook")]
         public async Task<IActionResult> StripeWebhook()
         {
-            var json = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();
-            var stripeEvent = EventUtility.ParseEvent(json);
-
-            // Log the webhook event
-            FileLogger.Log($"Stripe Webhook Response: {json}");
-
-            if (stripeEvent.Type == "checkout.session.completed")
+            try
             {
-                var session = stripeEvent.Data.Object as Session;
-                if (session != null && session.Metadata.ContainsKey("tblInvoiceId") && session.Metadata.ContainsKey("tblPaymentId"))
+                var json = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();
+                var stripeEvent = EventUtility.ParseEvent(json);
+
+                // Log the webhook event
+                FileLogger.Log($"Stripe Webhook Response: {json}");
+
+                if (stripeEvent.Type == "checkout.session.completed")
                 {
-                    string invoiceId = session.Metadata["tblInvoiceId"];
-                    string paymentId = session.Metadata["tblPaymentId"];
-
-                    FileLogger.Log($"Invoice {invoiceId} and Payment {paymentId} received from Stripe Webhook.");
-
-                    // Fetch Payment record
-                    var payment = dBContext.TblPayments
-                        .FirstOrDefault(p => p.PaymentId.ToString() == paymentId && p.IsActive == true && p.IsDelete == false);
-
-                    FileLogger.Log($"DB Payment Details: {payment}");
-
-                    if (payment != null)
+                    var session = stripeEvent.Data.Object as Session;
+                    if (session != null &&
+                        session.Metadata.ContainsKey("db_PaymentId") &&
+                        session.Metadata.ContainsKey("db_InvoiceId") &&
+                        session.Metadata.ContainsKey("db_TenantId"))
                     {
-                        // Prepare UpdatePayment model
-                        var updatePayment = new UpdatePayments
-                        {
-                            PaymentId = payment.PaymentId,
-                            TransactionId = session.PaymentIntentId, // Stripe transaction ID
-                            PaymentDate = DateTime.Now,
-                            PaymentMethod = "Stripe",
-                            Amount = payment.Amount,
-                            Notes = "Payment completed via Stripe.",
-                            PaymentStatus = PaymentStatus.Paid
-                        };
+                        string paymentId = session.Metadata["db_PaymentId"];
+                        string invoiceId = session.Metadata["db_InvoiceId"];
+                        string tenantId = session.Metadata["db_TenantId"];
+                        decimal? paymentAmount = session.AmountTotal / 100m;
+                        string stripeTransactionId = session.PaymentIntentId ?? "N/A";
+                        string paymentMethod = session.PaymentMethodTypes?.FirstOrDefault() ?? "Stripe";
+                        DateTime paymentDate = session.Created;
+                        FileLogger.Log($"Processing Stripe payment. PaymentId: {paymentId}, InvoiceId: {invoiceId}");
+                        FileLogger.Log($"Stripe Amount: {paymentAmount}");
 
-                        // Update the payment and invoice
-                        var updateResponse = await paymentsService.UpdatePayment(updatePayment);
+                        var existingPayment = dBContext.TblPayments
+                            .FirstOrDefault(p => p.PaymentId == Guid.Parse(paymentId) && p.InvoiceId == Guid.Parse(invoiceId));
 
-                        if (!updateResponse.IsSuccess)
+                        FileLogger.Log($"Existing Payment in DB: {existingPayment?.PaymentId}");
+
+                        if (existingPayment != null)
                         {
-                            FileLogger.Log($"Error updating payment: {updateResponse.Message}");
-                            return BadRequest(updateResponse.Message);
+                            var updatePaymentRequest = new UpdatePayments
+                            {
+                                PaymentId = existingPayment.PaymentId,
+                                PaymentDate = paymentDate,
+                                Amount = paymentAmount ?? 0m,
+                                PaymentStatus = PaymentStatus.Paid,
+                                PaymentMethod = paymentMethod,
+                                TransactionId = stripeTransactionId,
+                                Notes = "Stripe Payment Updated via Webhook",
+                            };
+
+                            var updateResponse = await paymentsService.UpdatePayment(updatePaymentRequest);
+
+                            if (updateResponse.IsSuccess)
+                            {
+                                FileLogger.Log($"Existing Payment Updated Successfully. PaymentId: {existingPayment.PaymentId}");
+                            }
+                            else
+                            {
+                                FileLogger.Log($"Error updating payment: {updateResponse.Message}");
+                            }
+                        }
+                        else
+                        {
+                            FileLogger.Log($"No existing payment found for PaymentId: {paymentId}, InvoiceId: {invoiceId}");
                         }
 
-                        // ✅ Save Payment Info to TblStripePayment
-                        var stripePayment = new
+                        var stripePayment = new TblStripePayment
                         {
                             Id = Guid.NewGuid(),
-                            PaymentId = payment.PaymentId.ToString(),
-                            PaymentAmount = payment.Amount,
-                            PaymentMethod = "Stripe",
-                            PaymentDate = DateTime.Now,
-                            PaymentStatus = "Paid",
-                            TenantId = payment.TenantId,
+                            PaymentId = paymentId,
+                            PaymentAmount = paymentAmount ?? 0m,
+                            PaymentMethod = paymentMethod,
+                            PaymentDate = paymentDate,
+                            PaymentStatus = "paid",
+                            TenantId = Guid.Parse(tenantId),
                             CreatedDate = DateTime.Now,
-                            ModeifiedAt = DateTime.Now
+                            WebhookResponse = json,
+                            StripeEventType = stripeEvent.Type,
+                            InvoiceId = Guid.Parse(invoiceId),
                         };
 
-                        //dBContext.TblStripePayment.Add(stripePayment);
+                        dBContext.TblStripePayments.Add(stripePayment);
                         await dBContext.SaveChangesAsync();
 
-                        FileLogger.Log($"Invoice {invoiceId} marked as Paid and Stripe payment details saved.");
+                        FileLogger.Log($"Stripe webhook details saved. PaymentId: {paymentId}");
+
+                        return Ok(new { message = "Webhook processed successfully." });
                     }
                     else
                     {
-                        FileLogger.Log($"Payment ID {paymentId} not found in database.");
+                        FileLogger.Log("Error: Stripe metadata missing required keys.");
+                        return BadRequest(new { message = "Invalid metadata received from Stripe." });
                     }
                 }
-            }
 
-            return Ok();
+                return Ok(new { message = "Unhandled Stripe event type." });
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Log($"Exception in Stripe Webhook: {ex.Message} | StackTrace: {ex.StackTrace}");
+                return StatusCode(500, new { message = "Internal Server Error. Please check logs for details." });
+            }
         }
+
+
+
+
+
 
 
 

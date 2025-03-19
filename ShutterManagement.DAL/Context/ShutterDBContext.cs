@@ -117,6 +117,8 @@ public partial class ShutterDBContext : DbContext
 
     public virtual DbSet<TblStripeConfiguration> TblStripeConfigurations { get; set; }
 
+    public virtual DbSet<TblStripePayment> TblStripePayments { get; set; }
+
     public virtual DbSet<TblSubtenantProductMarkup> TblSubtenantProductMarkups { get; set; }
 
     public virtual DbSet<TblTaxExemption> TblTaxExemptions { get; set; }
@@ -1361,6 +1363,20 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
             entity.Property(e => e.SuccessUrl).HasColumnName("successUrl");
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+        });
+
+        modelBuilder.Entity<TblStripePayment>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__TblStrip__3214EC07FE6CDD49");
+
+            entity.ToTable("TblStripePayment", "dbo");
+
+            entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.CreatedDate).HasColumnType("datetime");
+            entity.Property(e => e.ModeifiedAt).HasColumnType("datetime");
+            entity.Property(e => e.PaymentAmount).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.PaymentDate).HasColumnType("datetime");
+            entity.Property(e => e.StripeEventType).HasMaxLength(100);
         });
 
         modelBuilder.Entity<TblSubtenantProductMarkup>(entity =>

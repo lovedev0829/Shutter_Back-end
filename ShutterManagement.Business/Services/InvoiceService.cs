@@ -26,6 +26,7 @@ using MailKit.Search;
 using Microsoft.Extensions.Options;
 using ShutterManagement.Stripe;
 using Microsoft.Extensions.Logging;
+using Stripe;
 
 namespace ShutterManagement.Business.Services
 {
@@ -679,7 +680,7 @@ namespace ShutterManagement.Business.Services
 
                     responseVm.IsSuccess = true;
                     responseVm.Message = "Email Send SuccessFully.";
-                    File.Delete(savePath);
+                    System.IO.File.Delete(savePath);
 
                 }
                 else if(model.DocumentType==EstimateDocumentType.OrderForEmail)
@@ -745,7 +746,7 @@ namespace ShutterManagement.Business.Services
 
                     responseVm.IsSuccess = true;
                     responseVm.Message = "Email Send SuccessFully.";
-                    File.Delete(savePath);
+                    System.IO.File.Delete(savePath);
 
 
 
@@ -877,6 +878,42 @@ namespace ShutterManagement.Business.Services
                     // Generate Stripe Payment Link
 
                     // Generate Stripe Payment Link
+                    
+
+                    TblPayment tblPayments = new TblPayment
+                    {
+                        PaymentId = Guid.NewGuid(),
+                        InvoiceId = model.InvoiceId,
+                        PaymentDate = DateTime.Now,
+                        // PaymentDueDate = model.PaymentDueDate,
+                        Amount = invoiceDetails.BalanceDue,
+                        PaymentMethod = "emil send static",
+                        TransactionId = "static tranjection",
+                        Notes = "static tranjection",
+                        Status = EnumValue.GetEnumValue(PaymentStatus.Unpaid),
+                        CreatedAt = DateTime.Now,
+                        TenantId = AppConstant.LoggedInTenantId,
+                        CreatedBy = AppConstant.LoggedInUserID,
+                        IsActive = true,
+                        IsDelete = false
+                    };
+
+                    await dbContext.TblPayments.AddAsync(tblPayments);
+                    await dbContext.SaveChangesAsync();
+                    //var newPayment = new CreatePayments
+                    //{
+                    //    InvoiceId = invoiceDetails.InvoiceId,
+                    //    PaymentDate = DateTime.Now,
+                    //    Amount = invoiceDetails.BalanceDue ?? 0m, 
+                    //    PaymentMethod = "email send ",
+                    //    TransactionId = "static",
+                    //    Notes = "Email Send Notes ",
+                    //    PaymentStatus = PaymentStatus.Unpaid,
+                    //};
+
+                    //var paymentResponse = await paymentsService.CreatePayment(newPayment);
+
+                    FileLogger.Log($"Payment Response: {tblPayments}");
                     var paymentRequest = new PaymentRequest
                     {
                         CustomerEmail = customerDetails.Email,
@@ -884,10 +921,11 @@ namespace ShutterManagement.Business.Services
                         Amount = (long)(invoiceDetails?.BalanceDue * 100), // Convert to cents
                         Quantity = 1,
                         InvoiceId = invoiceDetails?.InvoiceId.ToString(),
-                        PaymentId = paymentDetails?.InvoicePaymentId.ToString(),
+                        PaymentId = tblPayments?.PaymentId.ToString(),
                     };
 
                     string paymentLink = _stripeService.CreateCheckoutSession(paymentRequest);
+
 
 
                     var emailBody = $@"
@@ -948,7 +986,7 @@ namespace ShutterManagement.Business.Services
                     responseVm.IsSuccess = true;
                     responseVm.Message = "Invoice email sent successfully.";
                     FileLogger.Log($"Invoice File Path for payment {InvicesavePath}");
-                    File.Delete(InvicesavePath);
+                    System.IO.File.Delete(InvicesavePath);
                 }
 
                 else if (model.DocumentType == EstimateDocumentType.DownloadPDF)
