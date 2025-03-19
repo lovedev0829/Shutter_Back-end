@@ -495,6 +495,7 @@ namespace ShutterManagement.Business.Services
                     invoice.UpdatedAt = DateTime.Now;
                     invoice.ModifiedBy = AppConstant.LoggedInUserID;
                     await invoiceService.Update(invoice);
+
                 }
                 await transaction.CommitAsync();
 

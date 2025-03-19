@@ -119,7 +119,7 @@ namespace ShutterManagement.Controllers
                                 PaymentStatus = PaymentStatus.Paid,
                                 PaymentMethod = paymentMethod,
                                 TransactionId = stripeTransactionId,
-                                Notes = "Stripe Payment Updated via Webhook",
+                                Notes = "",
                             };
 
                             var updateResponse = await paymentsService.UpdatePayment(updatePaymentRequest);

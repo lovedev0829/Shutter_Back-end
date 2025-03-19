@@ -878,55 +878,59 @@ namespace ShutterManagement.Business.Services
                     // Generate Stripe Payment Link
 
                     // Generate Stripe Payment Link
-                    
+                    string paymentLink = string.Empty;
 
-                    TblPayment tblPayments = new TblPayment
+                    if (invoiceDetails.BalanceDue > 0)
                     {
-                        PaymentId = Guid.NewGuid(),
-                        InvoiceId = model.InvoiceId,
-                        PaymentDate = DateTime.Now,
-                        // PaymentDueDate = model.PaymentDueDate,
-                        Amount = invoiceDetails.BalanceDue,
-                        PaymentMethod = "emil send static",
-                        TransactionId = "static tranjection",
-                        Notes = "static tranjection",
-                        Status = EnumValue.GetEnumValue(PaymentStatus.Unpaid),
-                        CreatedAt = DateTime.Now,
-                        TenantId = AppConstant.LoggedInTenantId,
-                        CreatedBy = AppConstant.LoggedInUserID,
-                        IsActive = true,
-                        IsDelete = false
-                    };
+                        TblPayment tblPayments = new TblPayment
+                        {
+                            PaymentId = Guid.NewGuid(),
+                            InvoiceId = model.InvoiceId,
+                            PaymentDate = DateTime.Now,
+                            // PaymentDueDate = model.PaymentDueDate,
+                            Amount = invoiceDetails.BalanceDue,
+                            PaymentMethod = "",
+                            TransactionId = "",
+                            Notes = "",
+                            Status = EnumValue.GetEnumValue(PaymentStatus.Unpaid),
+                            CreatedAt = DateTime.Now,
+                            TenantId = AppConstant.LoggedInTenantId,
+                            CreatedBy = AppConstant.LoggedInUserID,
+                            IsActive = true,
+                            IsDelete = false
+                        };
 
-                    await dbContext.TblPayments.AddAsync(tblPayments);
-                    await dbContext.SaveChangesAsync();
-                    //var newPayment = new CreatePayments
-                    //{
-                    //    InvoiceId = invoiceDetails.InvoiceId,
-                    //    PaymentDate = DateTime.Now,
-                    //    Amount = invoiceDetails.BalanceDue ?? 0m, 
-                    //    PaymentMethod = "email send ",
-                    //    TransactionId = "static",
-                    //    Notes = "Email Send Notes ",
-                    //    PaymentStatus = PaymentStatus.Unpaid,
-                    //};
+                        await dbContext.TblPayments.AddAsync(tblPayments);
+                        await dbContext.SaveChangesAsync();
+                        FileLogger.Log($"Payment Response: {tblPayments}");
 
-                    //var paymentResponse = await paymentsService.CreatePayment(newPayment);
+                        //var newPayment = new CreatePayments
+                        //{
+                        //    InvoiceId = invoiceDetails.InvoiceId,
+                        //    PaymentDate = DateTime.Now,
+                        //    Amount = invoiceDetails.BalanceDue ?? 0m, 
+                        //    PaymentMethod = "email send ",
+                        //    TransactionId = "static",
+                        //    Notes = "Email Send Notes ",
+                        //    PaymentStatus = PaymentStatus.Unpaid,
+                        //};
 
-                    FileLogger.Log($"Payment Response: {tblPayments}");
-                    var paymentRequest = new PaymentRequest
-                    {
-                        CustomerEmail = customerDetails.Email,
-                        ProductName = $"Invoice Payment - {invoiceDetails?.InvoiceNumber}",
-                        Amount = (long)(invoiceDetails?.BalanceDue * 100), // Convert to cents
-                        Quantity = 1,
-                        InvoiceId = invoiceDetails?.InvoiceId.ToString(),
-                        PaymentId = tblPayments?.PaymentId.ToString(),
-                    };
-
-                    string paymentLink = _stripeService.CreateCheckoutSession(paymentRequest);
+                        //var paymentResponse = await paymentsService.CreatePayment(newPayment);
 
 
+                        var paymentRequest = new PaymentRequest
+                        {
+                            CustomerEmail = customerDetails.Email,
+                            ProductName = $"Invoice Payment - {invoiceDetails?.InvoiceNumber}",
+                            Amount = (long)(invoiceDetails?.BalanceDue * 100), // Convert to cents
+                            Quantity = 1,
+                            InvoiceId = invoiceDetails?.InvoiceId.ToString(),
+                            PaymentId = tblPayments?.PaymentId.ToString(),
+                        };
+
+                         paymentLink = _stripeService.CreateCheckoutSession(paymentRequest);
+
+                    }
 
                     var emailBody = $@"
 <div style='max-width: 600px; margin: auto; background: #fff; border-radius: 8px; box-shadow: 0px 0px 10px rgba(0,0,0,0.1); padding: 20px; font-family: Arial, sans-serif; color: #333;'>
