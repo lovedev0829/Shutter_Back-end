@@ -101,6 +101,9 @@ namespace ShutterManagement.Controllers
                         string stripeTransactionId = session.PaymentIntentId ?? "N/A";
                         string paymentMethod = session.PaymentMethodTypes?.FirstOrDefault() ?? "Stripe";
                         DateTime paymentDate = session.Created;
+                        string customerEmail = session.CustomerEmail ?? "N/A";
+                        string customerName = session.CustomerDetails?.Name ?? "N/A";
+                        string paymentMode = session.Mode ?? "N/A"; 
                         FileLogger.Log($"Processing Stripe payment. PaymentId: {paymentId}, InvoiceId: {invoiceId}");
                         FileLogger.Log($"Stripe Amount: {paymentAmount}");
 
@@ -152,6 +155,9 @@ namespace ShutterManagement.Controllers
                             StripeEventType = stripeEvent.Type,
                             StripeTransactionId= stripeTransactionId,
                             InvoiceId = Guid.Parse(invoiceId),
+                            CustomerEmail = customerEmail,
+                            CustomerName = customerName,
+                            PaymentMode = paymentMode
                         };
 
                         dBContext.TblStripePayments.Add(stripePayment);

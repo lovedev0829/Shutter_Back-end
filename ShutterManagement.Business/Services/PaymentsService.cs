@@ -495,7 +495,6 @@ namespace ShutterManagement.Business.Services
                     invoice.UpdatedAt = DateTime.Now;
                     invoice.ModifiedBy = AppConstant.LoggedInUserID;
                     await invoiceService.Update(invoice);
-
                 }
                 await transaction.CommitAsync();
 
@@ -542,7 +541,10 @@ namespace ShutterManagement.Business.Services
                         ModifiedAt = i.ModeifiedAt,
                         WebhookResponse = i.WebhookResponse,
                         StripeTranjectionId=i.StripeTransactionId,
-                        StripeEventType = i.StripeEventType
+                        StripeEventType = i.StripeEventType,
+                        CustomerEmail=i.CustomerEmail??"",
+                        CustomerName=i.CustomerName??"",
+                        PaymentMode=i.PaymentMode??"",
                     })
                     .FirstOrDefault(); 
 

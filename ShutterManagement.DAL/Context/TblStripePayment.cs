@@ -30,4 +30,10 @@ public partial class TblStripePayment
     public Guid? InvoiceId { get; set; }
 
     public string? StripeTransactionId { get; set; }
+
+    public string? CustomerEmail { get; set; }
+
+    public string? CustomerName { get; set; }
+
+    public string? PaymentMode { get; set; }
 }
