@@ -1377,6 +1377,9 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.PaymentAmount).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.PaymentDate).HasColumnType("datetime");
             entity.Property(e => e.StripeEventType).HasMaxLength(100);
+            entity.Property(e => e.StripeTransactionId)
+                .HasMaxLength(100)
+                .HasColumnName("stripeTransactionId");
         });
 
         modelBuilder.Entity<TblSubtenantProductMarkup>(entity =>

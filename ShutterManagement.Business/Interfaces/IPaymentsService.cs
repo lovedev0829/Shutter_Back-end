@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ShutterManagement.Stripe;
 
 namespace ShutterManagement.Business.Interfaces
 {
@@ -19,6 +20,8 @@ namespace ShutterManagement.Business.Interfaces
         Task<IResponseVm<string>> DeletePayment(Guid PaymentId);
         Task<IResponseVm<string>> ActiveInActive(Guid PaymentId);
         Task<IResponseVm<List<PaymentsVM>>> GetAllPayment(Pagination filter);
+
+        Task<IResponseVm<StripePaymentVm>> GetPaymentDetails(string Tranjectionid, string PaymentId);
 
     }
 

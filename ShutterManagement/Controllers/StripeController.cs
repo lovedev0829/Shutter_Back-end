@@ -150,6 +150,7 @@ namespace ShutterManagement.Controllers
                             CreatedDate = DateTime.Now,
                             WebhookResponse = json,
                             StripeEventType = stripeEvent.Type,
+                            StripeTransactionId= stripeTransactionId,
                             InvoiceId = Guid.Parse(invoiceId),
                         };
 
@@ -174,6 +175,16 @@ namespace ShutterManagement.Controllers
                 FileLogger.Log($"Exception in Stripe Webhook: {ex.Message} | StackTrace: {ex.StackTrace}");
                 return StatusCode(500, new { message = "Internal Server Error. Please check logs for details." });
             }
+        }
+
+
+        [HttpGet]
+        [Route("GetPaymentDetails")]
+        public async Task<IActionResult> GetPaymentDetails(string Tranjectionid, string PaymentId)
+        {
+            var result = await paymentsService.GetPaymentDetails(Tranjectionid,PaymentId);
+
+            return Ok(result);
         }
 
 

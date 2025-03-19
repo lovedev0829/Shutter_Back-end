@@ -806,6 +806,8 @@ namespace ShutterManagement.Controllers
             return Ok(result);
         }
 
+       
+
 
         //[HttpGet]
         //[Route("ghlsync")]

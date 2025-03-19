@@ -516,6 +516,59 @@ namespace ShutterManagement.Business.Services
         #endregion UpdatePayment
 
 
+        #region Get_Payment_Details
+        public async Task<IResponseVm<StripePaymentVm>> GetPaymentDetails(string Tranjectionid, string PaymentId)
+        {
+            IResponseVm<StripePaymentVm> responseVm = new ResponseVm<StripePaymentVm>();
+
+            try
+            {
+                var payment =  dbContext.TblStripePayments
+                    .Where(x => x.TenantId == AppConstant.LoggedInTenantId)
+                    .Where(x => string.IsNullOrEmpty(Tranjectionid) || x.StripeTransactionId == Tranjectionid)
+                    .Where(x => string.IsNullOrEmpty(PaymentId) || x.PaymentId.ToString() == PaymentId)
+                    .OrderByDescending(x => x.CreatedDate)
+                    .Select(i => new StripePaymentVm
+                    {
+                        Id = i.Id,
+                        PaymentId = i.PaymentId,
+                        InvoiceId = i.InvoiceId,
+                        PaymentDate = i.PaymentDate,
+                        PaymentAmount = i.PaymentAmount,
+                        PaymentMethod = i.PaymentMethod,
+                        PaymentStatus = i.PaymentStatus,
+                        TenantId = i.TenantId,
+                        CreatedDate = i.CreatedDate,
+                        ModifiedAt = i.ModeifiedAt,
+                        WebhookResponse = i.WebhookResponse,
+                        StripeTranjectionId=i.StripeTransactionId,
+                        StripeEventType = i.StripeEventType
+                    })
+                    .FirstOrDefault(); 
+
+                if (payment != null)
+                {
+                    responseVm.IsSuccess = true;
+                    responseVm.Data = payment; 
+                    responseVm.Message = AppConstant.FetchSuccessMsg;
+                }
+                else
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = "No payment record found.";
+                }
+            }
+            catch (Exception ex)
+            {
+                responseVm.IsSuccess = false;
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+            }
+
+            return responseVm;
+        }
+        #endregion Get_Payment_Details
+
+
 
 
 
