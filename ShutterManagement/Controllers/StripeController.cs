@@ -60,6 +60,9 @@ namespace ShutterManagement.Controllers
                         string stripeTransactionId = session.PaymentIntentId ?? "N/A";
                         string paymentMethod = session.PaymentMethodTypes?.FirstOrDefault() ?? "Stripe";
                         DateTime paymentDate = session.Created;
+                        string customerEmail = session.CustomerEmail ?? "N/A";
+                        string customerName = session.CustomerDetails?.Name ?? "N/A";
+                        string paymentMode = session.Mode ?? "N/A"; 
                         FileLogger.Log($"Processing Stripe payment. PaymentId: {paymentId}, InvoiceId: {invoiceId}");
                         FileLogger.Log($"Stripe Amount: {paymentAmount}");
 
@@ -78,7 +81,7 @@ namespace ShutterManagement.Controllers
                                 PaymentStatus = PaymentStatus.Paid,
                                 PaymentMethod = paymentMethod,
                                 TransactionId = stripeTransactionId,
-                                Notes = "Stripe Payment Updated via Webhook",
+                                Notes = "",
                             };
 
                             var updateResponse = await paymentsService.UpdatePayment(updatePaymentRequest);
@@ -109,7 +112,11 @@ namespace ShutterManagement.Controllers
                             CreatedDate = DateTime.Now,
                             WebhookResponse = json,
                             StripeEventType = stripeEvent.Type,
+                            StripeTransactionId= stripeTransactionId,
                             InvoiceId = Guid.Parse(invoiceId),
+                            CustomerEmail = customerEmail,
+                            CustomerName = customerName,
+                            PaymentMode = paymentMode
                         };
 
                         dBContext.TblStripePayments.Add(stripePayment);
@@ -133,6 +140,16 @@ namespace ShutterManagement.Controllers
                 FileLogger.Log($"Exception in Stripe Webhook: {ex.Message} | StackTrace: {ex.StackTrace}");
                 return StatusCode(500, new { message = "Internal Server Error. Please check logs for details." });
             }
+        }
+
+
+        [HttpGet]
+        [Route("GetPaymentDetails")]
+        public async Task<IActionResult> GetPaymentDetails(string Tranjectionid, string PaymentId)
+        {
+            var result = await paymentsService.GetPaymentDetails(Tranjectionid,PaymentId);
+
+            return Ok(result);
         }
 
 

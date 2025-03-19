@@ -28,4 +28,12 @@ public partial class TblStripePayment
     public string? StripeEventType { get; set; }
 
     public Guid? InvoiceId { get; set; }
+
+    public string? StripeTransactionId { get; set; }
+
+    public string? CustomerEmail { get; set; }
+
+    public string? CustomerName { get; set; }
+
+    public string? PaymentMode { get; set; }
 }

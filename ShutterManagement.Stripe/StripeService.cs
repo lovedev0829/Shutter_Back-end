@@ -9,6 +9,12 @@ using Stripe;
 using Stripe.Checkout;
 using Microsoft.AspNetCore.Http;
 using ShutterManagement.Core;
+using ShutterManagement.Core.Common;
+using ShutterManagement.Core.ViewModels.Request;
+using ShutterManagement.Core.ViewModels.Response;
+using ShutterManagement.Core.ViewModels;
+using Microsoft.EntityFrameworkCore;
+using ShutterManagement.DAL.Context;
 
 namespace ShutterManagement.Stripe
 {
@@ -16,12 +22,11 @@ namespace ShutterManagement.Stripe
     {
         private readonly StripeSettings _stripeSettings;
         private readonly ILogger<StripeService> _logger;
-        public StripeService(IOptions<StripeSettings> stripeSettings, ILogger<StripeService> logger)
+
+        public StripeService(IOptions<StripeSettings> stripeSettings, ILogger<StripeService> logger )
         {
             _stripeSettings = stripeSettings.Value;
             _logger = logger;
-
-
             StripeConfiguration.ApiKey = _stripeSettings.SecretKey;
         }
 
@@ -176,6 +181,11 @@ namespace ShutterManagement.Stripe
                     break;
             }
         }
+
+
+       
+
+
     }
 }
 
