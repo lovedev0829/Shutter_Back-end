@@ -325,6 +325,7 @@ namespace ShutterManagement.Business.Services
                                      join j in dbContext.TblJobs on i.JobId equals j.JobId
                                      join c in dbContext.TblContacts on j.ContactId equals c.ContactId
                                      join d in dbContext.TblEstimates on i.EstimateId equals d.EstimateId
+                                     join O in dbContext.TblOrders on i.EstimateId equals O.EstimateId
                                      where i.IsDelete == false
                                      orderby i.CreatedAt descending
                                      select new InvoiceVM

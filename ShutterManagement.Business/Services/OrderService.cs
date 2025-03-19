@@ -149,8 +149,8 @@ namespace ShutterManagement.Business.Services
                     var windowproductdetails = await estimateService.BuildEstimate(updateOrder.WindowProductId, false,updateOrder.EstimateId.ToString(),true);
                     if (windowproductdetails.Data != null && windowproductdetails.Data.Any())
                     {
-                        additionalCost = (decimal)windowproductdetails.Data.Sum(x => x.AdditionalCost);
-                        subtotal = (decimal)windowproductdetails.Data.Sum(x => x.TotalPrice);
+                        additionalCost = (decimal)windowproductdetails.Data.ToList().DistinctBy(x => x.AdditionalCost).FirstOrDefault().AdditionalCost;
+                        subtotal = (decimal)windowproductdetails.Data.Sum(x => x.Price);
                         SumofSubtotalandAdditionalCost = subtotal + additionalCost;
                     }
                     if (string.IsNullOrEmpty((updateOrder.taxRateId).ToString()) && string.IsNullOrEmpty(updateOrder.DiscountCoupon))
@@ -369,7 +369,7 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
                 var isEstimationOrder = (await GetAll()).Where(c => c.OrderId == model.OrderId && c.TenantId == AppConstant.LoggedInTenantId
-              && c.IsDelete == false).ToList();
+                && c.IsDelete == false).ToList();
                 if (isEstimationOrder != null)
                 {
                     var latestRecord = isEstimationOrder
@@ -379,7 +379,7 @@ namespace ShutterManagement.Business.Services
                     var latestId = latestRecord?.OrderId;
                     if (latestId == model.OrderId)
                     {
-                        var orderExist = GetAllQuerable().Where(x => x.OrderId == model.OrderId && x.TenantId == AppConstant.LoggedInTenantId &&
+                        var orderExist = GetAllQuerable().Where(x => x.OrderId.ToString().ToLower() == model.OrderId.ToString().ToLower() && x.TenantId.ToString().ToLower() == AppConstant.LoggedInTenantId.ToString().ToLower() &&
                         x.IsDelete == false && x.Status != EnumValue.GetEnumValue(Estimation.Approved)).FirstOrDefault();
                         if (orderExist != null)
                         {
@@ -392,8 +392,8 @@ namespace ShutterManagement.Business.Services
                             var windowproductdetails = await estimateService.BuildEstimate(model.WindowProductId, false,model.EstimateId.ToString(),true);
                             if (windowproductdetails.Data != null && windowproductdetails.Data.Any())
                             {
-                                additionalCost = (decimal)windowproductdetails.Data.Sum(x => x.AdditionalCost);
-                                subtotal = (decimal)windowproductdetails.Data.Sum(x => x.TotalPrice);
+                                additionalCost = (decimal)windowproductdetails.Data.ToList().DistinctBy(x => x.AdditionalCost).FirstOrDefault().AdditionalCost;
+                                subtotal = (decimal)windowproductdetails.Data.Sum(x=>x.Price);
                                 SumofSubtotalandAdditionalCost = subtotal + additionalCost;
                             }
                             if (string.IsNullOrEmpty((model.taxRateId).ToString()) && string.IsNullOrEmpty(model.DiscountCoupon))
