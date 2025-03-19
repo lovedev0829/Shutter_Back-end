@@ -284,10 +284,80 @@ namespace ShutterManagement.Business.Services
                 responseVm.IsSuccess = false;
                 responseVm.Message = $"Exception occurred: {ex.Message}";
             }
+            await UpdateOpportunityInGHLfromApp();
 
             return responseVm;
         }
-        
+        public async Task<IResponseVm<string>> UpdateOpportunityInGHLfromApp()
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+            try
+            {
+                FileLogger.Log("Starting UpdateOpportunityInGHLfromApp process.");
+
+                var getAppOpportunities = GetAllQuerable()
+                    .Where(x => x.TenantId == AppConstant.LoggedInTenantId)
+                    .ToList();
+
+                var ghlOpportunitiesResponse = await ghlService.GetOpportunitiesFromGhl();
+                var ghlOpportunities = ghlOpportunitiesResponse?.Data ?? new List<Opportunity>();
+
+                foreach (var opportunity in getAppOpportunities)
+                {
+                    if (string.IsNullOrEmpty(opportunity.GhlOpportunityId))
+                    {
+                        var job = new TblJob
+                        {
+                            ContactId = opportunity.ContactId,
+                            JobName = opportunity.JobName,
+                            JobStatus = opportunity.JobStatus,
+                            GhlStageId = opportunity.GhlStageId
+                        };
+
+                        var responseghl = await ghlService.CreateOpportunityInGhl(job);
+                        FileLogger.Log($"Created Opportunity in GHL: {responseghl.Message}, Success: {responseghl.IsSuccess}");
+                    }
+                    else
+                    {
+                        var existingGHLOpportunity = ghlOpportunities.FirstOrDefault(x => x.OpportunityId == opportunity.GhlOpportunityId);
+
+                        if (existingGHLOpportunity != null)
+                        {
+                            var job = new TblJob
+                            {
+                                ContactId = opportunity.ContactId,
+                                JobName = opportunity.JobName,
+                                JobStatus = opportunity.JobStatus,
+                                GhlStageId = opportunity.GhlStageId
+                            };
+
+                            var responseghl = await UpdateOpportunityInGhl(job);
+                            FileLogger.Log($"Updated Opportunity in GHL: {responseghl.Message}, Success: {responseghl.IsSuccess}");
+                        }
+                        else
+                        {
+                            FileLogger.Log($"Opportunity {opportunity.GhlOpportunityId} not found in GHL.Start deletion from App.");
+                            var res = await DeleteJob(opportunity.JobId.ToString());
+                            if(!res.IsSuccess)
+                            {
+                                FileLogger.Log($"Opportunity {opportunity.GhlOpportunityId} not found in GHL. But it's not deleted in App.");
+                            }
+                        }
+                    }
+                }
+                responseVm.IsSuccess = true;
+                responseVm.Message = "Opportunities synced successfully with GHL.";
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Log($"Exception in UpdateOpportunityInGHLfromApp: {ex.Message}");
+                responseVm.IsSuccess = false;
+                responseVm.Message = $"Error: {ex.Message}";
+            }
+
+            return responseVm;
+        }
+
         public async Task<IResponseVm<List<Opportunity>>> SyncOpportunitiesFromGhl()
         {
             IResponseVm<List<Opportunity>> responseVm = new ResponseVm<List<Opportunity>>();
@@ -521,7 +591,115 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
+        //public async Task<List<GhlContactVM>> GetContactsAsync()
+        //{
+        //    var requestUrl = $"{BaseUrl}contacts/";
+        //    using var client = new HttpClient();
+        //    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetApiKey());
+        //    var response = await client.GetAsync(requestUrl);
+        //    response.EnsureSuccessStatusCode();
+
+        //    var json = await response.Content.ReadAsStringAsync();
+        //    var result = System.Text.Json.JsonSerializer.Deserialize<GhlContactResponse>(json);
+        //    //var result1 = GetClientIpAddress();
+        //    return result?.Contacts ?? new List<GhlContactVM>();
+        //}
+
         #endregion Ghl CRM related methods
+
+
+        //#region Contact Sync Related Method 
+        //public async Task<IResponseVm<string>> GetAndSaveContactsAsync()
+        //{
+        //    IResponseVm<string> responseVm = new ResponseVm<string>();
+
+        //    try
+        //    {
+        //        var ghlContactsResponse = await GetContactsAsync();
+
+        //        if (ghlContactsResponse == null || !ghlContactsResponse.Any())
+        //        {
+        //            responseVm.IsSuccess = false;
+        //            responseVm.Message = "No contacts found.";
+        //            return responseVm;
+        //        }
+
+        //        // 2. Get existing contacts from the database
+        //        var existingContacts = dbContext.TblContacts
+        //            .Where(x => x.TenantId == AppConstant.LoggedInTenantId)
+        //            .ToList();
+
+        //        var existingContactsDict = existingContacts.ToDictionary(x => x.GhlcontactId, x => x);
+
+        //        List<TblContact> contactsToUpdate = new();
+        //        List<TblContact> contactsToInsert = new();
+
+        //        foreach (var ghlContact in ghlContactsResponse)
+        //        {
+        //            if (existingContactsDict.TryGetValue(ghlContact.id, out var existingContact))
+        //            {
+        //                // 3. Update existing contacts
+        //                existingContact.FirstName = ghlContact.firstName;
+        //                existingContact.Email = ghlContact.email;
+        //                existingContact.PhoneNumber = ghlContact.phone;
+        //                existingContact.UpdatedAt = DateTime.Now;
+        //                existingContact.ModifiedBy = AppConstant.LoggedInUserID;
+        //                contactsToUpdate.Add(existingContact);
+        //            }
+        //            else
+        //            {
+        //                // 4. Insert new contacts
+        //                contactsToInsert.Add(new TblContact
+        //                {
+        //                    ContactId = Guid.NewGuid(),
+        //                    GhlcontactId = ghlContact.id,
+        //                    FirstName = ghlContact.firstName,
+        //                    Email = ghlContact.email,
+        //                    PhoneNumber = ghlContact.phone,
+        //                    CreatedAt = DateTime.Now,
+        //                    UpdatedAt = DateTime.Now,
+        //                    TenantId = AppConstant.LoggedInTenantId,
+        //                    CreatedBy = AppConstant.LoggedInUserID,
+        //                    IsActive = true
+        //                });
+        //            }
+        //        }
+
+        //        // 5. Save changes to database
+        //        if (contactsToUpdate.Any())
+        //        {
+        //            dbContext.TblContacts.UpdateRange(contactsToUpdate);
+        //        }
+
+        //        if (contactsToInsert.Any())
+        //        {
+        //            await dbContext.TblContacts.AddRangeAsync(contactsToInsert);
+        //        }
+
+        //        await dbContext.SaveChangesAsync();
+
+        //        // 6. Update Last Sync Configuration
+        //        var isUpdated = await ghlService.UpdateLastSyncConfigurationAsync();
+
+        //        if (!isUpdated)
+        //        {
+        //            responseVm.IsSuccess = false;
+        //            responseVm.Message = "Error: Configuration not found or update failed.";
+        //            return responseVm;
+        //        }
+
+        //        responseVm.IsSuccess = true;
+        //        responseVm.Message = "All contacts synced successfully.";
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        responseVm.IsSuccess = false;
+        //        responseVm.Message = $"Error: {ex.Message}";
+        //    }
+
+        //    return responseVm;
+        //}
+        //#endregion Contact Sync Related Method
 
         public async Task<IResponseVm<string>> Create(CreateJob model)
         {
@@ -645,7 +823,7 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        public async Task<IResponseVm<string>> Delete(string JobId)
+        public async Task<IResponseVm<string>> DeleteJob(string JobId)
         {
 
             IResponseVm<string> responseVm = new ResponseVm<string>();
