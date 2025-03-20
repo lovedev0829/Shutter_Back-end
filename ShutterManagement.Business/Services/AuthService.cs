@@ -518,7 +518,7 @@ namespace ShutterManagement.Services
 
 
 
-        public IResponseVm<string> GenerateToken()
+        public async Task<IResponseVm<string>> GenerateToken()
         {
             IResponseVm<string> result = new ResponseVm<string>();
             FileLogger.Log("Generate Token start");
