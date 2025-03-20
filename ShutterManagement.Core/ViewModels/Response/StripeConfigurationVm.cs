@@ -13,6 +13,6 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? PublishableKey { get; set; }
         public string? cancelUrl { get; set; }
         public string? successUrl { get; set; }
-       // public bool? IsActive { get; set; }
+        public string? WebhookSecret { get; set; }
     }
 }

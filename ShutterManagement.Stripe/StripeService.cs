@@ -18,16 +18,71 @@ using ShutterManagement.DAL.Context;
 
 namespace ShutterManagement.Stripe
 {
+    //public class StripeService
+    //{
+    //    private readonly StripeSettings _stripeSettings;
+    //    private readonly ILogger<StripeService> _logger;
+
+    //    public StripeService(IOptions<StripeSettings> stripeSettings, ILogger<StripeService> logger )
+    //    {
+    //        _stripeSettings = stripeSettings.Value;
+    //        _logger = logger;
+    //        StripeConfiguration.ApiKey = _stripeSettings.SecretKey;
+    //    }
+
     public class StripeService
     {
-        private readonly StripeSettings _stripeSettings;
         private readonly ILogger<StripeService> _logger;
-
-        public StripeService(IOptions<StripeSettings> stripeSettings, ILogger<StripeService> logger )
+        private readonly StripeSettings _stripeSettings;
+        public StripeService(ILogger<StripeService> logger, IOptions<StripeSettings> stripeSettings)
         {
-            _stripeSettings = stripeSettings.Value;
             _logger = logger;
+            //_stripeSettings = stripeSettings.Value;
             StripeConfiguration.ApiKey = _stripeSettings.SecretKey;
+        }
+
+
+
+        public string CreateCheckoutSession(PaymentRequest request, string currency = "usd")
+        {
+            var sessionService = new SessionService();
+            var sessionOptions = new SessionCreateOptions
+            {
+                PaymentMethodTypes = new List<string> { "card", "amazon_pay" },
+
+                CustomerEmail = request.CustomerEmail,
+
+                LineItems = new List<SessionLineItemOptions>
+        {
+            new SessionLineItemOptions
+            {
+                PriceData = new SessionLineItemPriceDataOptions
+                {
+                    Currency = currency,
+                    ProductData = new SessionLineItemPriceDataProductDataOptions
+                    {
+                        Name = request.ProductName,
+                    },
+                    UnitAmount = request.Amount,
+                },
+                Quantity = request.Quantity,
+
+            }
+        },
+                Mode = "payment",
+                SuccessUrl = AppConstant.Stripe_SuccessUrl,
+                CancelUrl = AppConstant.Stripe_CancelUrl,
+                Metadata = new Dictionary<string, string>
+            {
+                { "db_InvoiceId", request?.InvoiceId??"" },
+                 { "db_TenantId",AppConstant.LoggedInTenantId.ToString()??""},
+                    { "db_PaymentId",request?.PaymentId??""}
+
+            }
+            };
+
+            var session = sessionService.Create(sessionOptions);
+            return session.Url;
         }
 
         //// Method to create a Payment Intent
@@ -75,118 +130,119 @@ namespace ShutterManagement.Stripe
         //    return sessionService.Create(sessionOptions);
         //}
 
-        public string CreateCheckoutSession(PaymentRequest request, string currency = "usd")
-        {
-            var sessionService = new SessionService();
-            var sessionOptions = new SessionCreateOptions
-            {
-                PaymentMethodTypes = new List<string> { "card", "amazon_pay" },
+        //public string CreateCheckoutSession(PaymentRequest request, string currency = "usd")
+        //{
+        //    var sessionService = new SessionService();
+        //    var sessionOptions = new SessionCreateOptions
+        //    {
+        //        PaymentMethodTypes = new List<string> { "card", "amazon_pay" },
 
-                CustomerEmail = request.CustomerEmail, 
+        //        CustomerEmail = request.CustomerEmail,
 
-                LineItems = new List<SessionLineItemOptions>
-        {
-            new SessionLineItemOptions
-            {
-                PriceData = new SessionLineItemPriceDataOptions
-                {
-                    Currency = currency,
-                    ProductData = new SessionLineItemPriceDataProductDataOptions
-                    {
-                        Name = request.ProductName,
-                    },
-                    UnitAmount = request.Amount,
-                },
-                Quantity = request.Quantity,
+        //        LineItems = new List<SessionLineItemOptions>
+        //{
+        //    new SessionLineItemOptions
+        //    {
+        //        PriceData = new SessionLineItemPriceDataOptions
+        //        {
+        //            Currency = currency,
+        //            ProductData = new SessionLineItemPriceDataProductDataOptions
+        //            {
+        //                Name = request.ProductName,
+        //            },
+        //            UnitAmount = request.Amount,
+        //        },
+        //        Quantity = request.Quantity,
 
-            }
-        },
-                Mode = "payment",
-                SuccessUrl = _stripeSettings.successUrl,
-                CancelUrl = _stripeSettings.cancelUrl,
-                Metadata = new Dictionary<string, string>
-            {
-                { "db_InvoiceId", request?.InvoiceId??"" },
-                 { "db_TenantId",AppConstant.LoggedInTenantId.ToString()??""},
-                    { "db_PaymentId",request?.PaymentId??""}
+        //    }
+        //},
+        //        Mode = "payment",
+        //        SuccessUrl = _stripeSettings.successUrl,
+        //        CancelUrl = _stripeSettings.cancelUrl,
+        //        Metadata = new Dictionary<string, string>
+        //    {
+        //        { "db_InvoiceId", request?.InvoiceId??"" },
+        //         { "db_TenantId",AppConstant.LoggedInTenantId.ToString()??""},
+        //            { "db_PaymentId",request?.PaymentId??""}
 
-            }
-            };
+        //    }
+        //    };
 
-            var session = sessionService.Create(sessionOptions);
-            return session.Url;
-        }
+        //    var session = sessionService.Create(sessionOptions);
+        //    return session.Url;
+        //}
 
-        public async Task HandleStripeWebhook(HttpRequest request)
-        {
-            foreach (var header in request.Headers)
-            {
-                _logger.LogInformation($"Header: {header.Key}, Value: {string.Join(", ", header.Value)}");
-            }
-            var json = await new StreamReader(request.Body).ReadToEndAsync();
-            if (string.IsNullOrEmpty(json))
-            {
-                _logger.LogWarning("Webhook body is empty");
-                return; 
-            }
+        //public async Task HandleStripeWebhook(HttpRequest request)
+        //{
+        //    foreach (var header in request.Headers)
+        //    {
+        //        _logger.LogInformation($"Header: {header.Key}, Value: {string.Join(", ", header.Value)}");
+        //    }
+        //    var json = await new StreamReader(request.Body).ReadToEndAsync();
+        //    if (string.IsNullOrEmpty(json))
+        //    {
+        //        _logger.LogWarning("Webhook body is empty");
+        //        return;
+        //    }
 
-            Event stripeEvent;
-            var stripeSignatureHeader = request.Headers["Stripe-Signature"];
-            if (string.IsNullOrEmpty(stripeSignatureHeader))
-            {
-                _logger.LogError("Stripe-Signature header is missing");
-                return; 
-            }
-            _logger.LogInformation($"Received Stripe-Signature: {stripeSignatureHeader}");
-            try
-            {
-                stripeEvent = EventUtility.ConstructEvent(
-                    json,
-                    stripeSignatureHeader,
-                    _stripeSettings.WebhookSecret
-                );
-            }
-            catch (StripeException e)
-            {
-                _logger.LogError($"Webhook signature verification failed: {e.Message}");
-                throw new InvalidOperationException("Webhook signature verification failed", e);
-            }
-            switch (stripeEvent.Type)
-            {
-                case "checkout.session.completed":
-                    var session = stripeEvent.Data.Object as Session;
-                    if (session != null)
-                    {
-                        _logger.LogInformation($"Checkout session completed: {session.Id}");
-                    }
-                    break;
+        //    Event stripeEvent;
+        //    var stripeSignatureHeader = request.Headers["Stripe-Signature"];
+        //    if (string.IsNullOrEmpty(stripeSignatureHeader))
+        //    {
+        //        _logger.LogError("Stripe-Signature header is missing");
+        //        return;
+        //    }
+        //    _logger.LogInformation($"Received Stripe-Signature: {stripeSignatureHeader}");
+        //    try
+        //    {
+        //        stripeEvent = EventUtility.ConstructEvent(
+        //            json,
+        //            stripeSignatureHeader,
+        //            _stripeSettings.WebhookSecret
+        //        );
+        //    }
+        //    catch (StripeException e)
+        //    {
+        //        _logger.LogError($"Webhook signature verification failed: {e.Message}");
+        //        throw new InvalidOperationException("Webhook signature verification failed", e);
+        //    }
+        //    switch (stripeEvent.Type)
+        //    {
+        //        case "checkout.session.completed":
+        //            var session = stripeEvent.Data.Object as Session;
+        //            if (session != null)
+        //            {
+        //                _logger.LogInformation($"Checkout session completed: {session.Id}");
+        //            }
+        //            break;
 
-                case "payment_intent.succeeded":
-                    var paymentIntent = stripeEvent.Data.Object as PaymentIntent;
-                    if (paymentIntent != null)
-                    {
-                        _logger.LogInformation($"Payment intent succeeded: {paymentIntent.Id}");
-                    }
-                    break;
-                case "payment_intent.failed":
-                    var failedPaymentIntent = stripeEvent.Data.Object as PaymentIntent;
-                    if (failedPaymentIntent != null)
-                    {
-                        _logger.LogWarning($"Payment intent failed. ID: {failedPaymentIntent.Id}");
-                        _logger.LogWarning($"Error message: {failedPaymentIntent.LastPaymentError?.Message}");
-                    }
-                    break;
-                default:
-                    _logger.LogWarning($"Unhandled event type: {stripeEvent.Type}");
-                    break;
-            }
-        }
+        //        case "payment_intent.succeeded":
+        //            var paymentIntent = stripeEvent.Data.Object as PaymentIntent;
+        //            if (paymentIntent != null)
+        //            {
+        //                _logger.LogInformation($"Payment intent succeeded: {paymentIntent.Id}");
+        //            }
+        //            break;
+        //        case "payment_intent.failed":
+        //            var failedPaymentIntent = stripeEvent.Data.Object as PaymentIntent;
+        //            if (failedPaymentIntent != null)
+        //            {
+        //                _logger.LogWarning($"Payment intent failed. ID: {failedPaymentIntent.Id}");
+        //                _logger.LogWarning($"Error message: {failedPaymentIntent.LastPaymentError?.Message}");
+        //            }
+        //            break;
+        //        default:
+        //            _logger.LogWarning($"Unhandled event type: {stripeEvent.Type}");
+        //            break;
+        //    }
+        //}
 
 
-       
+
 
 
     }
+
 }
 
            

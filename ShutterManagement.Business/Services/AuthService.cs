@@ -32,9 +32,11 @@ namespace ShutterManagement.Services
         private readonly ITenantBrandingService tenantBrandingService;
         private readonly INotificationService notification;
         private readonly IGHLConfiguration gHLConfiguration;
+        private readonly IStripeConfiguration stripeConfiguration;
 
         public AuthService(DataServices dataServices, IMapper mapper, IConfiguration config,
-            ITenantService tenantService, ITenantBrandingService tenantBrandingService,INotificationService notification,IGHLConfiguration gHLConfiguration)
+            ITenantService tenantService, ITenantBrandingService tenantBrandingService,INotificationService notification,
+            IGHLConfiguration gHLConfiguration,IStripeConfiguration stripeConfiguration)
         {
             this.dataServices = dataServices;
             this.mapper = mapper;
@@ -43,6 +45,7 @@ namespace ShutterManagement.Services
             this.tenantBrandingService = tenantBrandingService;
             this.notification = notification;
             this.gHLConfiguration = gHLConfiguration;
+            this.stripeConfiguration = stripeConfiguration;
         }
         public async Task<IResponseVm<UserLoginDetails>> LoginAsync(LoginDetailVM user)
         {
@@ -165,6 +168,7 @@ namespace ShutterManagement.Services
                 responseVm.TotalRecords = 1;
 
                 await gHLConfiguration.GetGHLConfiguration(UserDetails[0].TenantId.ToString());
+                await stripeConfiguration.GetStripeConfiguration(UserDetails[0].TenantId.ToString());
             }
             else
             {

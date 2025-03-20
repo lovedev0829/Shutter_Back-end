@@ -1,10 +1,12 @@
 ﻿using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core;
+using ShutterManagement.Core.Common;
 using ShutterManagement.Core.ViewModels;
 using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.Core.ViewModels.Response;
 using ShutterManagement.DAL.Context;
 using ShutterManagement.Services;
+using Stripe;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -38,6 +40,7 @@ namespace ShutterManagement.Business.Services
                     IsStripeConfigurationTenantExist.PublishableKey = StripeConfiguration.PublishableKey;
                     IsStripeConfigurationTenantExist.SuccessUrl = StripeConfiguration.successUrl;
                     IsStripeConfigurationTenantExist.CancelUrl = StripeConfiguration.cancelUrl;
+                    IsStripeConfigurationTenantExist.WebhookSecret = StripeConfiguration.WebhookSecret;
                     IsStripeConfigurationTenantExist.ModifiedBy = AppConstant.LoggedInUserID;
 
 
@@ -53,6 +56,7 @@ namespace ShutterManagement.Business.Services
                         PublishableKey = StripeConfiguration.PublishableKey,
                         SuccessUrl = StripeConfiguration.successUrl,
                         CancelUrl = StripeConfiguration.cancelUrl,
+                        WebhookSecret=StripeConfiguration.WebhookSecret,
                         TenantId = AppConstant.LoggedInTenantId,
                         CreatedAt = DateTime.Now,
                     };
@@ -82,6 +86,7 @@ namespace ShutterManagement.Business.Services
                     PublishableKey = StripeConfigurationVm?.PublishableKey??"",
                     successUrl = StripeConfigurationVm?.SuccessUrl ?? "",
                     cancelUrl = StripeConfigurationVm?.CancelUrl??"",
+                    WebhookSecret = StripeConfigurationVm?.WebhookSecret??""
                 };
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.FetchSuccessMsg;
@@ -96,7 +101,29 @@ namespace ShutterManagement.Business.Services
         }
 
 
+        public async Task GetStripeConfiguration(string tenantId)
+        {
+            FileLogger.Log("Fetching Stripe configuration for Tenant ID:", tenantId);
+
+            var details = GetAllQuerable()
+                   .Where(x => x.TenantId.ToString().ToLower() == tenantId.ToLower())
+                   .FirstOrDefault();
+
+            if (details != null)
+            {
+                AppConstant.Stripe_SecretKey = details.SecretKey ?? "";
+                AppConstant.Stripe_PublishableKey = details.PublishableKey ?? "";
+                AppConstant.Stripe_WebhookSecret = details.WebhookSecret ?? "";
+                StripeConfiguration.ApiKey = AppConstant.Stripe_SecretKey;
+
+                FileLogger.Log("Stripe configuration updated successfully.", tenantId);
+            }
+            else
+            {
+                FileLogger.Log("No Stripe configuration found for Tenant ID:", tenantId);
+            }
         }
+    }
     }
 
 
