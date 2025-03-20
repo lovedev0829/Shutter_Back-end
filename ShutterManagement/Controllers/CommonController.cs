@@ -74,7 +74,7 @@ namespace ShutterManagement.Controllers
             IAddress address, IOption option, IProductService productService,
             IUnitofMeasurementService unitofMeasurementService, IRoleService roleService, IRegion region, IContactService contactService,
             IMstContactType contactType, IJobService jobService,IExpressionService expression ,IInvoiceService invoiceService,
-            ITaxRate taxService,IEstimateService estimateService,
+            ITaxRate taxService,IEstimateService estimateService, IAuthService authService,
             IEstimationBreakdownService estimationBreakdownService, ILocationService locationService,
            IDashboard dashboard, INotificationService notification, IGHLConfiguration gHLConfiguration,IStripeConfiguration stripeConfiguration,
            GhlService ghlService ,IPaymentsService paymentsService)
@@ -115,6 +115,7 @@ namespace ShutterManagement.Controllers
             this.invoiceService = invoiceService;
             this.taxService = taxService;
             this.estimateService = estimateService;
+            this.authService = authService;
             this.estimationBreakdownService = estimationBreakdownService;
             this.locationService = locationService;
             this.dashboard = dashboard;
