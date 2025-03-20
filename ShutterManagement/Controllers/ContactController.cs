@@ -116,6 +116,10 @@ namespace ShutterManagement.Controllers
         {
             try
             {
+                if (Request.Headers.TryGetValue("token", out var token))
+                {
+                    FileLogger.Log("Token: {0}", token);
+                }
                 var res = await _contactService.ContactFromGHL(contactData);
                 FileLogger.Log("Contact saved", res.Message);
                 return Ok(res);
