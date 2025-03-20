@@ -77,7 +77,7 @@ namespace ShutterManagement.Controllers
             ITaxRate taxService,IEstimateService estimateService,
             IEstimationBreakdownService estimationBreakdownService, ILocationService locationService,
            IDashboard dashboard, INotificationService notification, IGHLConfiguration gHLConfiguration,IStripeConfiguration stripeConfiguration,
-           GhlService ghlService)
+           GhlService ghlService ,IPaymentsService paymentsService)
         {
             this.masterCreate = masterCreate;
             this.fileUpload = fileUpload;
@@ -122,6 +122,7 @@ namespace ShutterManagement.Controllers
             this.gHLConfiguration = gHLConfiguration;
             this.stripeConfiguration = stripeConfiguration;
             this.ghlService = ghlService;
+            this.paymentsService = paymentsService;
         }
 
 
