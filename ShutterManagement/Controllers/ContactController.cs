@@ -116,6 +116,7 @@ namespace ShutterManagement.Controllers
         {
             try
             {
+                FileLogger.Log("Token print message....");
                 if (Request.Headers.TryGetValue("token", out var token))
                 {
                     FileLogger.Log("Token: {0}", token);
@@ -137,6 +138,11 @@ namespace ShutterManagement.Controllers
         {
             try
             {
+                FileLogger.Log("Token print message....");
+                if (Request.Headers.TryGetValue("token", out var token))
+                {
+                    FileLogger.Log("Token: {0}", token);
+                }
                 var res = await _contactService.UpdateContactFromGHL(contactData);
                 FileLogger.Log("Contact updated", res.Message);
                 return Ok(res);
