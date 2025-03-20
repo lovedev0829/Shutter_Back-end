@@ -937,6 +937,7 @@ namespace ShutterManagement.Business.Services
                         };
 
                          paymentLink = _stripeService.CreateCheckoutSession(paymentRequest);
+                         FileLogger.Log($"Payment Link: {paymentLink}");
 
                     }
 

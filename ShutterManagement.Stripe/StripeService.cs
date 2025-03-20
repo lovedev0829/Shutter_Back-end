@@ -82,7 +82,9 @@ namespace ShutterManagement.Stripe
             };
 
             var session = sessionService.Create(sessionOptions);
+            FileLogger.Log($"Stripe configuration updated successfully AppConstant.Stripe_SecretKey {session.Url}.");
             return session.Url;
+            
         }
 
         //// Method to create a Payment Intent
