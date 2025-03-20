@@ -811,9 +811,9 @@ namespace ShutterManagement.Controllers
 
         [HttpGet]
         [Route("GenerateToken")]
-        public IActionResult GenerateToken()
+        public async Task<IActionResult> GenerateToken()
         {
-            var result = authService.GenerateToken();
+            var result =await authService.GenerateToken();
             return Ok(result);
         }
 
