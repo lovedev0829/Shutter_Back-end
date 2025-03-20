@@ -496,6 +496,9 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
+                await stripeConfiguration.GetStripeConfiguration(AppConstant.LoggedInTenantId.ToString());
+
+                FileLogger.Log($"Stripe Configuration{AppConstant.LoggedInTenantId.ToString()}");
                 var isTenantValid = await tenantService.AnyAsync(x =>
                     x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
                 if (!isTenantValid)
@@ -757,7 +760,7 @@ namespace ShutterManagement.Business.Services
 
                 else if (model.DocumentType == EstimateDocumentType.InvoicePaymentForEmail)
                 {
-                    await stripeConfiguration.GetStripeConfiguration(AppConstant.LoggedInTenantId.ToString());
+                    
 
                     Guid? invoiceTemplateId = Guid.Parse("E9E279C4-1F54-476B-BCDF-778BD1634894");
 

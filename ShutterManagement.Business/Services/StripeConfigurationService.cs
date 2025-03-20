@@ -117,6 +117,9 @@ namespace ShutterManagement.Business.Services
                 StripeConfiguration.ApiKey = AppConstant.Stripe_SecretKey;
 
                 FileLogger.Log("Stripe configuration updated successfully.", tenantId);
+                FileLogger.Log("Stripe configuration updated successfully AppConstant.Stripe_SecretKey .", AppConstant.Stripe_SecretKey);
+                FileLogger.Log("Stripe configuration updated successfully AppConstant.Stripe_PublishableKey.", AppConstant.Stripe_PublishableKey);
+                FileLogger.Log("Stripe configuration updated successfully AppConstant.Stripe_WebhookSecret .", AppConstant.Stripe_WebhookSecret);
             }
             else
             {
