@@ -7,6 +7,7 @@ using ShutterManagement.Core.Common;
 using ShutterManagement.Core.SPModel;
 using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.Core.ViewModels.Response;
+using ShutterManagement.Services;
 using ShutterManagment.GHL.ViewModel.Request;
 using ShutterManagment.GHL.ViewModel.Response;
 using System.Net;
@@ -19,11 +20,15 @@ namespace ShutterManagement.Controllers
     {
         private readonly IJobService jobService;
         private readonly IContactService contactService;
+        private readonly IAuthService authService;
+        private readonly IGHLConfiguration gHLConfiguration;
 
-        public JobController(IJobService jobService,IContactService contactService)
+        public JobController(IJobService jobService,IContactService contactService,IAuthService authService,IGHLConfiguration gHLConfiguration)
         {
             this.jobService = jobService;
             this.contactService = contactService;
+            this.authService = authService;
+            this.gHLConfiguration = gHLConfiguration;
         }
 
 
@@ -82,35 +87,93 @@ namespace ShutterManagement.Controllers
         }
 
         [HttpPost("OpportunityFromGHL")]
-        [AllowAnonymous]
         public async Task<IActionResult> OpportunityFromGHL(GHLOpportunityTrigger opportunityTrigger)
         {
             try
             {
+                FileLogger.Log("Token print message....");
+
+                if (!Request.Headers.TryGetValue("token", out var token))
+                {
+                    FileLogger.Log("Token not found in request headers.");
+                    return Unauthorized("Token is missing.");
+                }
+
+                FileLogger.Log("Token: {0}", token);
+                var tenantId = authService.ReadTokenDetails(token);
+
+                if (tenantId == null || string.IsNullOrEmpty(tenantId.Data))
+                {
+                    FileLogger.Log("Invalid token: Unable to extract tenant ID.");
+                    return Unauthorized("Invalid token.");
+                }
+
+                bool isTenantExist = await gHLConfiguration.AnyAsync(x => x.TenantId.ToString().ToLower() == tenantId.Data.ToLower());
+                if (!isTenantExist)
+                {
+                    FileLogger.Log($"Tenant ID {tenantId.Data} does not exist.");
+                    return NotFound("Tenant does not exist.");
+                }
+
                 var res = await jobService.OpportunityFromGHL(opportunityTrigger);
+                if (res == null)
+                {
+                    return StatusCode(500, "Failed to process contact.");
+                }
+
+                FileLogger.Log("Contact saved: {0}", res.Message);
                 return Ok(res);
             }
             catch (Exception ex)
             {
-                FileLogger.Log("Error while creating contact: {ExceptionMessage}", ex.Message);
-                return StatusCode(500, $"Internal server error by application: {ex.Message}");
+                FileLogger.Log("Error while creating contact: {0}", ex.Message);
+                return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
 
 
         [HttpPost("UpdateOpportunityFromGHL")]
-        [AllowAnonymous]
         public async Task<IActionResult> UpdateOpporunityFromGHL(GHLOpportunityTrigger opportunityData)
         {
             try
             {
+                FileLogger.Log("Token print message....");
+
+                if (!Request.Headers.TryGetValue("token", out var token))
+                {
+                    FileLogger.Log("Token not found in request headers.");
+                    return Unauthorized("Token is missing.");
+                }
+
+                FileLogger.Log("Token: {0}", token);
+                var tenantId = authService.ReadTokenDetails(token);
+
+                if (tenantId == null || string.IsNullOrEmpty(tenantId.Data))
+                {
+                    FileLogger.Log("Invalid token: Unable to extract tenant ID.");
+                    return Unauthorized("Invalid token.");
+                }
+
+                bool isTenantExist = await gHLConfiguration.AnyAsync(x => x.TenantId.ToString().ToLower() == tenantId.Data.ToLower());
+                if (!isTenantExist)
+                {
+                    FileLogger.Log($"Tenant ID {tenantId.Data} does not exist.");
+                    return NotFound("Tenant does not exist.");
+                }
+
                 var res = await jobService.UpdateOpportunityFromGHL(opportunityData);
+                if (res == null)
+                {
+                    return StatusCode(500, "Failed to process contact.");
+                }
+
+                FileLogger.Log("Contact saved: {0}", res.Message);
                 return Ok(res);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                FileLogger.Log("Error while creating opportunity: {ExceptionMessage}", ex.Message);
-                return StatusCode(500, $"Internal server error by application: {ex.Message}");
+                FileLogger.Log("Error while creating contact: {0}", ex.Message);
+                return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
 

@@ -17,5 +17,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         public string? LocationId { get; set; }
         [Required]
         public string? BaseAddress { get; set; }
+        [Required]
+        public string? GeneratedToken { get; set; }
     }
 }

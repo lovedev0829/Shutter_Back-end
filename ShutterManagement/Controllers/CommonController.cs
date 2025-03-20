@@ -62,6 +62,7 @@ namespace ShutterManagement.Controllers
         private readonly IStripeConfiguration stripeConfiguration;
         private readonly GhlService ghlService;
         private readonly IPaymentsService paymentsService;
+        private readonly IAuthService authService;
 
         public CommonController(IMasterCreate masterCreate, 
             FileUploadHelper fileUpload, ClaimsProperty claimsProperty,
@@ -76,7 +77,7 @@ namespace ShutterManagement.Controllers
             ITaxRate taxService,IEstimateService estimateService,
             IEstimationBreakdownService estimationBreakdownService, ILocationService locationService,
            IDashboard dashboard, INotificationService notification, IGHLConfiguration gHLConfiguration,IStripeConfiguration stripeConfiguration,
-           GhlService ghlService,IPaymentsService paymentsService)
+           GhlService ghlService)
         {
             this.masterCreate = masterCreate;
             this.fileUpload = fileUpload;
@@ -121,7 +122,6 @@ namespace ShutterManagement.Controllers
             this.gHLConfiguration = gHLConfiguration;
             this.stripeConfiguration = stripeConfiguration;
             this.ghlService = ghlService;
-            this.paymentsService = paymentsService;
         }
 
 
@@ -808,26 +808,33 @@ namespace ShutterManagement.Controllers
             return Ok(result);
         }
 
-       
-
-
-        //[HttpGet]
-        //[Route("ghlsync")]
-        //public async Task<IActionResult> GHLSync()
-        //{
-        //    var result = await jobService.SyncOpportunitiesFromGhl();
-        //    return Ok(result);
-        //}
-
-        //[HttpPost("HandleOpportunityWebhook")]
-        //[AllowAnonymous]
-        //public async Task<IActionResult> HandleOpportunityWebhook([FromBody] GhlOpportunityWebhookModel webhookData)
-        //{
-        //    var response = await jobser.ProcessGhlOpportunityWebhook(webhookData);
-        //    return response.IsSuccess ? Ok(response) : BadRequest(response);
-        //}
+        [HttpGet]
+        [Route("GenerateToken")]
+        public IActionResult GenerateToken()
+        {
+            var result = authService.GenerateToken();
+            return Ok(result);
+        }
 
 
 
+            //[HttpGet]
+            //[Route("ghlsync")]
+            //public async Task<IActionResult> GHLSync()
+            //{
+            //    var result = await jobService.SyncOpportunitiesFromGhl();
+            //    return Ok(result);
+            //}
+
+            //[HttpPost("HandleOpportunityWebhook")]
+            //[AllowAnonymous]
+            //public async Task<IActionResult> HandleOpportunityWebhook([FromBody] GhlOpportunityWebhookModel webhookData)
+            //{
+            //    var response = await jobser.ProcessGhlOpportunityWebhook(webhookData);
+            //    return response.IsSuccess ? Ok(response) : BadRequest(response);
+            //}
+
+
+
+        }
     }
-}

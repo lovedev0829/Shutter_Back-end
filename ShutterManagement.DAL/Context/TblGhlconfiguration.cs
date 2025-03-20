@@ -18,4 +18,6 @@ public partial class TblGhlconfiguration
     public string? LocationId { get; set; }
 
     public DateTime? LastSync { get; set; }
+
+    public string? GeneratedToken { get; set; }
 }

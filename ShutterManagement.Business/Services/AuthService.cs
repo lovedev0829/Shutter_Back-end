@@ -168,7 +168,7 @@ namespace ShutterManagement.Services
                 responseVm.TotalRecords = 1;
 
                 await gHLConfiguration.GetGHLConfiguration(UserDetails[0].TenantId.ToString());
-                await stripeConfiguration.GetStripeConfiguration(UserDetails[0].TenantId.ToString());
+               // await stripeConfiguration.GetStripeConfiguration(UserDetails[0].TenantId.ToString());
             }
             else
             {
@@ -430,7 +430,6 @@ namespace ShutterManagement.Services
             return result;
         }
 
-
         private string GenerateTokenForgotPassword(string Email, Guid UserId)
         {
             DateTime PasswordExpiry = DateTime.Now.AddMinutes(Convert.ToInt32(AppConstant.JwtExpiryTime));
@@ -517,8 +516,64 @@ namespace ShutterManagement.Services
             return result;
         }
 
-        
+
+
+        public IResponseVm<string> GenerateToken()
+        {
+            IResponseVm<string> result = new ResponseVm<string>();
+
+            var claims = new List<Claim>
+    {
+        new Claim("tenant_id", AppConstant.LoggedInTenantId.ToString()),
+        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+        new Claim(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64)
+    };
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = Encoding.UTF8.GetBytes(AppConstant.JWTSecretKey);
+
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(claims),
+                Issuer = AppConstant.JwtIssuer,
+                Audience = AppConstant.JwtAudience,
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+                // Expires is removed to make token never expire
+            };
+
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            string TokenValue = tokenHandler.WriteToken(token);
+
+            result.IsSuccess = true;
+            result.Data = TokenValue;
+
+            return result;
+        }
+
+        public IResponseVm<string> ReadTokenDetails(string token)
+        {
+            IResponseVm<string> result = new ResponseVm<string>();
+            var handler = new JwtSecurityTokenHandler();
+            var jwtToken = handler.ReadJwtToken(token);
+
+            if (jwtToken == null)
+            {
+                Console.WriteLine("Invalid token.");
+                return result;
+            }
+
+            var tenantId = jwtToken.Claims.FirstOrDefault(c => c.Type == "tenant_id")?.Value;
+
+           result.IsSuccess = true;
+            result.Data = tenantId;
+            return result;
+        }
+
     }
+
+
+
 }
+
 
 
