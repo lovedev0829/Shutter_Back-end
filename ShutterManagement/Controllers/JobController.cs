@@ -87,7 +87,6 @@ namespace ShutterManagement.Controllers
         }
 
         [HttpPost("OpportunityFromGHL")]
-        [AllowAnonymous]
         public async Task<IActionResult> OpportunityFromGHL(GHLOpportunityTrigger opportunityTrigger)
         {
             try
@@ -134,7 +133,6 @@ namespace ShutterManagement.Controllers
 
 
         [HttpPost("UpdateOpportunityFromGHL")]
-        [AllowAnonymous]
         public async Task<IActionResult> UpdateOpporunityFromGHL(GHLOpportunityTrigger opportunityData)
         {
             try

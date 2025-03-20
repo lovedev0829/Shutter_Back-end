@@ -113,14 +113,13 @@ namespace ShutterManagement.Controllers
         }
 
         [HttpPost("ContactFromGHL")]
-        [AllowAnonymous]
         public async Task<IActionResult> ContactFromGHL(GHLContactTrigger contactData)
         {
             try
             {
                 FileLogger.Log("Token print message....");
 
-                if (!Request.Headers.TryGetValue("token", out var token))
+                if (!Request.Headers.TryGetValue("Authentication", out var token))
                 {
                     FileLogger.Log("Token not found in request headers.");
                     return Unauthorized("Token is missing.");
@@ -160,7 +159,6 @@ namespace ShutterManagement.Controllers
 
 
         [HttpPost("UpdateContactFromGHL")]
-        [AllowAnonymous]
         public async Task<IActionResult> UpdateContactFromGHL(GHLContactTrigger contactData)
         {
             try
