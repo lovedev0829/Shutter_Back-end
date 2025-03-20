@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+using System.IO;
 using System.Text;
-using System.Threading.Tasks;
 using Newtonsoft.Json;
 
 namespace ShutterManagement.Core.Common
@@ -13,32 +11,31 @@ namespace ShutterManagement.Core.Common
 
         public static void Log(string message, params object?[] objects)
         {
-            string logMessage = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} : {message}";
-            if (objects != null && objects.Length > 0)
-            {
-                string serializedObjects = JsonConvert.SerializeObject(objects, Formatting.Indented);
-                logMessage += $"\nData: {serializedObjects}";
-            }
-
             try
             {
-                using (var fileStream = new FileStream(logFilePath, FileMode.OpenOrCreate, FileAccess.Write, FileShare.ReadWrite))
+                // Ensure directory exists
+                string directory = Path.GetDirectoryName(logFilePath);
+                if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
                 {
-                    using (var writer = new StreamWriter(fileStream, Encoding.UTF8))
-                    {
-                        writer.WriteLine(logMessage + Environment.NewLine);
-                    }
+                    Directory.CreateDirectory(directory);
                 }
+
+                // Prepare log message
+                string logMessage = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} : {message}";
+                if (objects != null && objects.Length > 0)
+                {
+                    string serializedObjects = JsonConvert.SerializeObject(objects, Formatting.Indented);
+                    logMessage += $"\nData: {serializedObjects}";
+                }
+
+                // Append log entry safely
+                File.AppendAllText(logFilePath, logMessage + Environment.NewLine, Encoding.UTF8);
             }
             catch (Exception ex)
             {
-
+                // Handle logging failure (could log to console or another file)
+                Console.WriteLine($"Logging failed: {ex.Message}");
             }
-            // Append the log message to the file
-            //File.AppendAllText(logFilePath, );
-
-            // Optional: Write to console as well
-            // Console.WriteLine(logMessage);
         }
     }
 }
