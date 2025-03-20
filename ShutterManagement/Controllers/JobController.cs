@@ -50,7 +50,7 @@ namespace ShutterManagement.Controllers
         [Authorize(Roles = "JobDelete")]
         public async Task<IActionResult> Delete(string Id)
         {
-            var result = await jobService.Delete(Id);
+            var result = await jobService.DeleteJob(Id);
             return Ok(result);
         }
 

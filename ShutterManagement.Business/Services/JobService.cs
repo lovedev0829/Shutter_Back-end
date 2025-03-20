@@ -284,10 +284,80 @@ namespace ShutterManagement.Business.Services
                 responseVm.IsSuccess = false;
                 responseVm.Message = $"Exception occurred: {ex.Message}";
             }
+            await UpdateOpportunityInGHLfromApp();
 
             return responseVm;
         }
-        
+        public async Task<IResponseVm<string>> UpdateOpportunityInGHLfromApp()
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+            try
+            {
+                FileLogger.Log("Starting UpdateOpportunityInGHLfromApp process.");
+
+                var getAppOpportunities = GetAllQuerable()
+                    .Where(x => x.TenantId == AppConstant.LoggedInTenantId)
+                    .ToList();
+
+                var ghlOpportunitiesResponse = await ghlService.GetOpportunitiesFromGhl();
+                var ghlOpportunities = ghlOpportunitiesResponse?.Data ?? new List<Opportunity>();
+
+                foreach (var opportunity in getAppOpportunities)
+                {
+                    if (string.IsNullOrEmpty(opportunity.GhlOpportunityId))
+                    {
+                        var job = new TblJob
+                        {
+                            ContactId = opportunity.ContactId,
+                            JobName = opportunity.JobName,
+                            JobStatus = opportunity.JobStatus,
+                            GhlStageId = opportunity.GhlStageId
+                        };
+
+                        var responseghl = await ghlService.CreateOpportunityInGhl(job);
+                        FileLogger.Log($"Created Opportunity in GHL: {responseghl.Message}, Success: {responseghl.IsSuccess}");
+                    }
+                    else
+                    {
+                        var existingGHLOpportunity = ghlOpportunities.FirstOrDefault(x => x.OpportunityId == opportunity.GhlOpportunityId);
+
+                        if (existingGHLOpportunity != null)
+                        {
+                            var job = new TblJob
+                            {
+                                ContactId = opportunity.ContactId,
+                                JobName = opportunity.JobName,
+                                JobStatus = opportunity.JobStatus,
+                                GhlStageId = opportunity.GhlStageId
+                            };
+
+                            var responseghl = await UpdateOpportunityInGhl(job);
+                            FileLogger.Log($"Updated Opportunity in GHL: {responseghl.Message}, Success: {responseghl.IsSuccess}");
+                        }
+                        else
+                        {
+                            FileLogger.Log($"Opportunity {opportunity.GhlOpportunityId} not found in GHL.Start deletion from App.");
+                            var res = await DeleteJob(opportunity.JobId.ToString());
+                            if(!res.IsSuccess)
+                            {
+                                FileLogger.Log($"Opportunity {opportunity.GhlOpportunityId} not found in GHL. But it's not deleted in App.");
+                            }
+                        }
+                    }
+                }
+                responseVm.IsSuccess = true;
+                responseVm.Message = "Opportunities synced successfully with GHL.";
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Log($"Exception in UpdateOpportunityInGHLfromApp: {ex.Message}");
+                responseVm.IsSuccess = false;
+                responseVm.Message = $"Error: {ex.Message}";
+            }
+
+            return responseVm;
+        }
+
         public async Task<IResponseVm<List<Opportunity>>> SyncOpportunitiesFromGhl()
         {
             IResponseVm<List<Opportunity>> responseVm = new ResponseVm<List<Opportunity>>();
@@ -394,7 +464,6 @@ namespace ShutterManagement.Business.Services
                             Notes = "Synced from GHL",
                             GHL_StageId = Guid.Parse(opportunity.PipelineStageId),
                             locationId = opportunity.locationId,
-                            
                         };
                         await Create(createJobModel);
                     }
@@ -474,8 +543,6 @@ namespace ShutterManagement.Business.Services
 
                 var ghlOpportunityModel = new
                 {
-
-
                     title= job.JobName,
                     status= jobstatusname.ToLower()??"",
                     stageId=job.GhlStageId,
@@ -756,7 +823,7 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        public async Task<IResponseVm<string>> Delete(string JobId)
+        public async Task<IResponseVm<string>> DeleteJob(string JobId)
         {
 
             IResponseVm<string> responseVm = new ResponseVm<string>();
