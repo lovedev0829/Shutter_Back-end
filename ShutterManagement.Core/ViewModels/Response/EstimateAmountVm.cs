@@ -13,6 +13,9 @@ namespace ShutterManagement.Core.ViewModels.Response
         public decimal TotalPaidAmount { get; set; }
         public decimal DueBalance { get; set; }
         public decimal HalfAmount { get; set; }
+
+        public List<InvoiceVM> Invoices { get; set; }
+        public List<PaymentsVM> Payments { get; set; }
     }
 
 

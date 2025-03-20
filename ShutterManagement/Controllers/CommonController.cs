@@ -61,6 +61,7 @@ namespace ShutterManagement.Controllers
         private readonly IGHLConfiguration gHLConfiguration;
         private readonly IStripeConfiguration stripeConfiguration;
         private readonly GhlService ghlService;
+        private readonly IPaymentsService paymentsService;
 
         public CommonController(IMasterCreate masterCreate, 
             FileUploadHelper fileUpload, ClaimsProperty claimsProperty,
@@ -75,7 +76,7 @@ namespace ShutterManagement.Controllers
             ITaxRate taxService,IEstimateService estimateService,
             IEstimationBreakdownService estimationBreakdownService, ILocationService locationService,
            IDashboard dashboard, INotificationService notification, IGHLConfiguration gHLConfiguration,IStripeConfiguration stripeConfiguration,
-           GhlService ghlService)
+           GhlService ghlService,IPaymentsService paymentsService)
         {
             this.masterCreate = masterCreate;
             this.fileUpload = fileUpload;
@@ -120,6 +121,7 @@ namespace ShutterManagement.Controllers
             this.gHLConfiguration = gHLConfiguration;
             this.stripeConfiguration = stripeConfiguration;
             this.ghlService = ghlService;
+            this.paymentsService = paymentsService;
         }
 
 
@@ -802,7 +804,7 @@ namespace ShutterManagement.Controllers
         [Route("EstimateAmmount")]
         public async Task<IActionResult> EstimateAmmount(Guid? EstimateId)
         {
-            var result = await estimateService.GetEstimateAmmount(EstimateId);
+            var result = await paymentsService.GetEstimateAmmount(EstimateId);
             return Ok(result);
         }
 

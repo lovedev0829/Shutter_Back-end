@@ -44,11 +44,12 @@ namespace ShutterManagement.Business.Services
         private readonly IOrderService orderService;
         public Pagination filter = new Pagination();
         private readonly StripeService _stripeService;
+        private readonly IStripeConfiguration stripeConfiguration;
 
         public InvoiceService(ITenantService tenantService, IInvoicePaymentService invoicePaymentService,
             IHostEnvironment environment, IConverter converter ,IContactService contactService 
             ,IEstimateService estimateService, ITenantBrandingService tenantBrandingService,IUserService userService 
-            ,IJobService jobService,IOrderService orderService,StripeService stripeService)
+            ,IJobService jobService,IOrderService orderService,StripeService stripeService ,IStripeConfiguration stripeConfiguration)
         {
             this.tenantService = tenantService;
             this.invoicePaymentService = invoicePaymentService;
@@ -61,6 +62,7 @@ namespace ShutterManagement.Business.Services
             this.jobService = jobService;
             this.orderService = orderService;
             _stripeService = stripeService;
+            this.stripeConfiguration = stripeConfiguration;
         }
 
         #region Create  update ActiveInActive Delete Getall
@@ -755,6 +757,8 @@ namespace ShutterManagement.Business.Services
 
                 else if (model.DocumentType == EstimateDocumentType.InvoicePaymentForEmail)
                 {
+                    await stripeConfiguration.GetStripeConfiguration(AppConstant.LoggedInTenantId.ToString());
+
                     Guid? invoiceTemplateId = Guid.Parse("E9E279C4-1F54-476B-BCDF-778BD1634894");
 
                     var invoiceForEmailTemplate = dbContext.TblTemplates.FirstOrDefault(c =>

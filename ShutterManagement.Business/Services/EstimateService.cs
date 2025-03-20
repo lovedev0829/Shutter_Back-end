@@ -23,6 +23,7 @@ using System.Linq.Expressions;
 using NCalc;
 using Antlr.Runtime;
 using static System.Runtime.InteropServices.JavaScript.JSType;
+using Stripe;
 
 namespace ShutterManagement.Business.Services
 {
@@ -86,8 +87,9 @@ namespace ShutterManagement.Business.Services
             IOption optionService,
             ITaxRate taxRate,
             IRegion region, ITaxExemption taxExemption, IDiscountService discountservice,
-            ISubtenantProductMarkup subtenantProductMarkup, ITenantBrandingService tenantBrandingService, INotificationService notification
-            ,IMstProductType mstProductType
+            ISubtenantProductMarkup subtenantProductMarkup, ITenantBrandingService tenantBrandingService,
+            INotificationService notification
+            ,IMstProductType mstProductType 
             )
         {
             _context = context;
@@ -903,8 +905,7 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        #region private methods
-
+        
         private async Task<List<TblEstimate>> FetchEstimates(Pagination filter)
         {
             if (string.IsNullOrEmpty(filter.TenantId))
@@ -1657,77 +1658,7 @@ namespace ShutterManagement.Business.Services
             return res;
         }
 
-        public async Task<IResponseVm<EstimateAmountVm>> GetEstimateAmmount(Guid? EstimateId)
-        {
-            IResponseVm<EstimateAmountVm> responseVm = new ResponseVm<EstimateAmountVm>();
-
-            try
-            {
-                if (EstimateId == null || EstimateId == Guid.Empty)
-                {
-                    responseVm.IsSuccess = false;
-                    responseVm.Message = "Invalid Estimate ID.";
-                    return responseVm;
-                }
-
-                var estimate = dbContext.TblOrders
-                    .Where(e => e.EstimateId == EstimateId && e.IsDelete == false && e.Status == EnumValue.GetEnumValue(Estimation.Approved))
-                    .OrderByDescending(e => e.Version)
-                    .ThenByDescending(e => e.CreatedAt)
-                    .FirstOrDefault();
-
-                if (estimate == null)
-                {
-                    responseVm.IsSuccess = false;
-                    responseVm.Message = "No approved estimate found.";
-                    return responseVm;
-                }
-
-                decimal totalOrderAmount = estimate.GrandTotal ?? 0;
-                decimal halfAmount = totalOrderAmount / 2;
-
-                var invoice = dbContext.TblInvoices
-                    .Where(x => x.EstimateId == EstimateId && x.IsActive == true && x.IsDelete == false)
-                    .FirstOrDefault();
-
-                decimal totalInvoiceAmount = 0;
-                decimal totalPayments = 0;
-                decimal dueBalance = 0;
-
-                if (invoice != null)
-                {
-                    totalInvoiceAmount = invoice.TotalAmount ?? 0;
-
-                    totalPayments = dbContext.TblPayments
-                        .Where(x => x.InvoiceId == invoice.InvoiceId && x.IsActive == true && x.IsDelete == false)
-                        .Sum(x => x.Amount ?? 0);
-
-                    dueBalance = totalInvoiceAmount - totalPayments;
-                }
-                var estimateAmountVm = new EstimateAmountVm
-                {
-                    TotalOrderAmount = totalOrderAmount,
-                    TotalInvoiceAmount = totalInvoiceAmount,
-                    TotalPaidAmount = totalPayments,
-                    DueBalance = totalOrderAmount- totalPayments,
-                    HalfAmount = halfAmount
-                };
-
-                responseVm.IsSuccess = true;
-                responseVm.Data = estimateAmountVm;
-                responseVm.Message = $"Total Order: {totalOrderAmount:C}, Invoice Total: {totalInvoiceAmount:C}, Payments Made: {totalPayments:C}, Due Balance: {totalOrderAmount - totalPayments:C}";
-
-                FileLogger.Log($"Returning Total Order: {totalOrderAmount:C}, Invoice Total: {totalInvoiceAmount:C}, Payments Made: {totalPayments:C}, Due Balance: {totalOrderAmount - totalPayments:C}");
-            }
-            catch (Exception ex)
-            {
-                responseVm.IsSuccess = false;
-                responseVm.Message = "Error fetching estimate amount: " + ex.Message;
-            }
-
-            return responseVm;
-        }
-        #endregion
+       
 
 
 

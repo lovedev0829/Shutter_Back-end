@@ -36,4 +36,6 @@ public partial class TblStripePayment
     public string? CustomerName { get; set; }
 
     public string? PaymentMode { get; set; }
+
+    public string? Status { get; set; }
 }

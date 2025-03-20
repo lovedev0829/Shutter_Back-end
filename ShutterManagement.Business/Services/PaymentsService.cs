@@ -24,6 +24,7 @@ namespace ShutterManagement.Business.Services
         private readonly ITenantService tenantService;
         private readonly IInvoiceService invoiceService;
         private readonly StripeService stripeService;
+        public Pagination filter = new Pagination();
 
         public PaymentsService(ITenantService tenantService ,IInvoiceService invoiceService 
             ,StripeService stripeService)
@@ -545,9 +546,10 @@ namespace ShutterManagement.Business.Services
                         CustomerEmail=i.CustomerEmail??"",
                         CustomerName=i.CustomerName??"",
                         PaymentMode=i.PaymentMode??"",
+                        Status=i.Status??""
+                        
                     })
                     .FirstOrDefault(); 
-
                 if (payment != null)
                 {
                     responseVm.IsSuccess = true;
@@ -570,6 +572,102 @@ namespace ShutterManagement.Business.Services
         }
         #endregion Get_Payment_Details
 
+        public async Task<IResponseVm<EstimateAmountVm>> GetEstimateAmmount(Guid? EstimateId)
+        {
+            IResponseVm<EstimateAmountVm> responseVm = new ResponseVm<EstimateAmountVm>();
+
+            try
+            {
+                if (EstimateId == null || EstimateId == Guid.Empty)
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = "Invalid Estimate ID.";
+                    return responseVm;
+                }
+
+                var estimate = dbContext.TblOrders
+                    .Where(e => e.EstimateId == EstimateId && e.IsDelete == false && e.Status == EnumValue.GetEnumValue(Estimation.Approved))
+                    .OrderByDescending(e => e.Version)
+                    .ThenByDescending(e => e.CreatedAt)
+                    .FirstOrDefault();
+
+                if (estimate == null)
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = "No approved estimate found.";
+                    return responseVm;
+                }
+
+                decimal totalOrderAmount = estimate.GrandTotal ?? 0;
+                decimal halfAmount = totalOrderAmount / 2;
+
+                var invoice = dbContext.TblInvoices
+                    .Where(x => x.EstimateId == EstimateId && x.IsActive == true && x.IsDelete == false)
+                    .FirstOrDefault();
+
+                decimal totalInvoiceAmount = 0;
+                decimal totalPayments = 0;
+                decimal dueBalance = 0;
+
+                if (invoice != null)
+                {
+                    totalInvoiceAmount = invoice.TotalAmount ?? 0;
+
+                    totalPayments = dbContext.TblPayments
+                        .Where(x => x.InvoiceId == invoice.InvoiceId && x.IsActive == true && x.IsDelete == false)
+                        .Sum(x => x.Amount ?? 0);
+
+                    dueBalance = totalInvoiceAmount - totalPayments;
+                }
+
+                var invoices = await invoiceService.GetAllInvoice(filter);
+                var filteredInvoices = invoices.Data?
+                    .Where(x =>x.EstimateId == EstimateId)
+                    .ToList() ?? new List<InvoiceVM>();
+
+                var payments = await GetAllPayment(filter);
+
+                var invoiceIds = filteredInvoices.Select(i => i.InvoiceId).ToList();
+                var filteredPayments = payments.Data?
+                .Where(x => invoiceIds.Contains(x.InvoiceId ?? Guid.Empty)) 
+                .ToList() ?? new List<PaymentsVM>();
+
+                var estimateAmountVm = new EstimateAmountVm
+                {
+                    TotalOrderAmount = totalOrderAmount,
+                    TotalInvoiceAmount = totalInvoiceAmount,
+                    TotalPaidAmount = totalPayments,
+                    DueBalance = totalOrderAmount - totalPayments,
+                    HalfAmount = halfAmount,
+                    Invoices = filteredInvoices, // Send invoice data
+                    Payments = filteredPayments // Send payment data
+                };
+                //var estimateAmountVm = new EstimateAmountVm
+                //{
+                //    TotalOrderAmount = totalOrderAmount,
+                //    TotalInvoiceAmount = totalInvoiceAmount,
+                //    TotalPaidAmount = totalPayments,
+                //    DueBalance = totalOrderAmount- totalPayments,
+                //    HalfAmount = halfAmount
+                //};
+
+                //var invoices = invoiceService.GetAllInvoice(filter).Result.Data.Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.EstimateId == est).ToList();
+                //var payments = paymentsService.GetAllPayment(filter).Result.Data.Where(x => invoices.Data.invoiceid).ToList();
+
+                responseVm.IsSuccess = true;
+                responseVm.Data = estimateAmountVm;
+                responseVm.Message = $"Total Order: {totalOrderAmount:C}, Invoice Total: {totalInvoiceAmount:C}, Payments Made: {totalPayments:C}, Due Balance: {totalOrderAmount - totalPayments:C}";
+
+                FileLogger.Log($"Returning Total Order: {totalOrderAmount:C}, Invoice Total: {totalInvoiceAmount:C}, Payments Made: {totalPayments:C}, Due Balance: {totalOrderAmount - totalPayments:C}");
+            }
+            catch (Exception ex)
+            {
+                responseVm.IsSuccess = false;
+                responseVm.Message = "Error fetching estimate amount: " + ex.Message;
+            }
+
+            return responseVm;
+        }
 
 
 

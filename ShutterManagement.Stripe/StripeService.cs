@@ -23,28 +23,28 @@ namespace ShutterManagement.Stripe
     //    private readonly StripeSettings _stripeSettings;
     //    private readonly ILogger<StripeService> _logger;
 
-    //    public StripeService(IOptions<StripeSettings> stripeSettings, ILogger<StripeService> logger )
+    //    public StripeService(IOptions<StripeSettings> stripeSettings, ILogger<StripeService> logger)
     //    {
     //        _stripeSettings = stripeSettings.Value;
     //        _logger = logger;
     //        StripeConfiguration.ApiKey = _stripeSettings.SecretKey;
     //    }
 
-    public class StripeService
+        public class StripeService
     {
-        private readonly ILogger<StripeService> _logger;
+       
         private readonly StripeSettings _stripeSettings;
-        public StripeService(ILogger<StripeService> logger, IOptions<StripeSettings> stripeSettings)
+        public StripeService( IOptions<StripeSettings> stripeSettings  )
         {
-            _logger = logger;
             //_stripeSettings = stripeSettings.Value;
-            StripeConfiguration.ApiKey = _stripeSettings.SecretKey;
+            StripeConfiguration.ApiKey = AppConstant.Stripe_SecretKey;
         }
 
 
 
         public string CreateCheckoutSession(PaymentRequest request, string currency = "usd")
         {
+
             var sessionService = new SessionService();
             var sessionOptions = new SessionCreateOptions
             {

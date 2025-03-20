@@ -24,6 +24,7 @@ namespace ShutterManagement.Stripe
         public string? CustomerEmail { get; set; }
         public string? CustomerName { get; set; }
         public string? PaymentMode { get; set; }
+        public string? Status { get; set; }
     }
 
 }

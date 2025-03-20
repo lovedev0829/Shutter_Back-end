@@ -23,6 +23,8 @@ namespace ShutterManagement.Business.Interfaces
 
         Task<IResponseVm<StripePaymentVm>> GetPaymentDetails(string Tranjectionid, string PaymentId);
 
+        Task<IResponseVm<EstimateAmountVm>> GetEstimateAmmount(Guid? EstimateId);
+
     }
 
 }

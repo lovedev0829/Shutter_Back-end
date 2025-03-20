@@ -78,7 +78,7 @@ namespace ShutterManagement.Controllers
                                 PaymentId = existingPayment.PaymentId,
                                 PaymentDate = paymentDate,
                                 Amount = paymentAmount ?? 0m,
-                                PaymentStatus = PaymentStatus.Paid,
+                                PaymentStatus = session.PaymentStatus == "paid" ? PaymentStatus.Paid: PaymentStatus.Unpaid,
                                 PaymentMethod = paymentMethod,
                                 TransactionId = stripeTransactionId,
                                 Notes = "",
@@ -105,18 +105,19 @@ namespace ShutterManagement.Controllers
                             Id = Guid.NewGuid(),
                             PaymentId = paymentId,
                             PaymentAmount = paymentAmount ?? 0m,
-                            PaymentMethod = paymentMethod,
+                            PaymentMethod = paymentMethod ??"",
                             PaymentDate = paymentDate,
-                            PaymentStatus = "paid",
+                            PaymentStatus = session.PaymentStatus,
                             TenantId = Guid.Parse(tenantId),
                             CreatedDate = DateTime.Now,
                             WebhookResponse = json,
                             StripeEventType = stripeEvent.Type,
-                            StripeTransactionId= stripeTransactionId,
+                            StripeTransactionId= stripeTransactionId ?? "",
                             InvoiceId = Guid.Parse(invoiceId),
-                            CustomerEmail = customerEmail,
-                            CustomerName = customerName,
-                            PaymentMode = paymentMode
+                            CustomerEmail = customerEmail??"",
+                            CustomerName = customerName ?? "",
+                            PaymentMode = paymentMode??"",
+                            Status=session.Status??""
                         };
 
                         dBContext.TblStripePayments.Add(stripePayment);
