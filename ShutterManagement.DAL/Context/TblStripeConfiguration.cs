@@ -28,4 +28,6 @@ public partial class TblStripeConfiguration
     public bool? IsActive { get; set; }
 
     public bool? IsDelete { get; set; }
+
+    public string? WebhookSecret { get; set; }
 }
