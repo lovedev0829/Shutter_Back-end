@@ -639,20 +639,25 @@ namespace ShutterManagement.Business.Services
                     TotalPaidAmount = totalPayments,
                     DueBalance = totalOrderAmount - totalPayments,
                     HalfAmount = halfAmount,
-                    Invoices = filteredInvoices, // Send invoice data
-                    Payments = filteredPayments // Send payment data
+                    Invoices = filteredInvoices.Select(x=> new InvoicePayment_VM
+                    {
+                        InvoiceId = x.InvoiceId ,
+                        BalanceDue = x.BalanceDue,
+                        ContactFirstName = x.ContactFirstName,
+                        ContactLastName = x.ContactLastName,
+                        DueDate = x.DueDate,
+                        EstimateId = x.EstimateId,
+                        EstimateName = x.EstimateName,
+                        InvoiceNumber = x.InvoiceNumber,
+                        IssueDate = x.IssueDate,
+                        PaidAmount = x.PaidAmount,
+                        Status = x.Status,
+                        TotalAmount = x.TotalAmount,
+                        
+                        Payments = filteredPayments,
+                    }).ToList(),
                 };
-                //var estimateAmountVm = new EstimateAmountVm
-                //{
-                //    TotalOrderAmount = totalOrderAmount,
-                //    TotalInvoiceAmount = totalInvoiceAmount,
-                //    TotalPaidAmount = totalPayments,
-                //    DueBalance = totalOrderAmount- totalPayments,
-                //    HalfAmount = halfAmount
-                //};
-
-                //var invoices = invoiceService.GetAllInvoice(filter).Result.Data.Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.EstimateId == est).ToList();
-                //var payments = paymentsService.GetAllPayment(filter).Result.Data.Where(x => invoices.Data.invoiceid).ToList();
+                
 
                 responseVm.IsSuccess = true;
                 responseVm.Data = estimateAmountVm;
