@@ -521,16 +521,18 @@ namespace ShutterManagement.Services
         public IResponseVm<string> GenerateToken()
         {
             IResponseVm<string> result = new ResponseVm<string>();
-
+            FileLogger.Log("Generate Token start");
             var claims = new List<Claim>
     {
         new Claim("tenant_id", AppConstant.LoggedInTenantId.ToString()),
         new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
         new Claim(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64)
     };
+            FileLogger.Log("Generate Token claims",claims);
 
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.UTF8.GetBytes(AppConstant.JWTSecretKey);
+            FileLogger.Log("AppConstant.JWTSecretKey", AppConstant.JWTSecretKey);
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
@@ -542,10 +544,13 @@ namespace ShutterManagement.Services
             };
 
             var token = tokenHandler.CreateToken(tokenDescriptor);
+            FileLogger.Log("token", token);
+
             string TokenValue = tokenHandler.WriteToken(token);
 
             result.IsSuccess = true;
             result.Data = TokenValue;
+            FileLogger.Log("IsSuccess", true);
 
             return result;
         }
