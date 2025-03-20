@@ -284,7 +284,6 @@ namespace ShutterManagement.Business.Services
                 responseVm.IsSuccess = false;
                 responseVm.Message = $"Exception occurred: {ex.Message}";
             }
-            await UpdateOpportunityInGHLfromApp();
 
             return responseVm;
         }
@@ -479,7 +478,7 @@ namespace ShutterManagement.Business.Services
                 responseVm.IsSuccess = false;
                 responseVm.Message = $"Exception occurred: {ex.Message}";
             }
-
+            await UpdateOpportunityInGHLfromApp();
             return responseVm;
         }
 
