@@ -38,7 +38,7 @@ namespace ShutterManagement.Stripe
         {
             _logger = logger;
             //_stripeSettings = stripeSettings.Value;
-            StripeConfiguration.ApiKey = _stripeSettings.SecretKey;
+           // StripeConfiguration.ApiKey = _stripeSettings.SecretKey;
         }
 
 

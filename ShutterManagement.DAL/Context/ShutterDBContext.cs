@@ -1385,6 +1385,7 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.PaymentMode)
                 .HasMaxLength(100)
                 .HasColumnName("payment_mode");
+            entity.Property(e => e.Status).HasMaxLength(50);
             entity.Property(e => e.StripeEventType).HasMaxLength(100);
             entity.Property(e => e.StripeTransactionId)
                 .HasMaxLength(100)
