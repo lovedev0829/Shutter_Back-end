@@ -15,6 +15,7 @@ using System.Drawing;
 using ShutterManagement.Stripe;
 using Stripe;
 using System.Xml.Linq;
+using Azure;
 
 namespace ShutterManagement.Business.Services
 {
@@ -259,33 +260,17 @@ namespace ShutterManagement.Business.Services
                     var invoivedetail = dbContext.TblInvoices.Where(x => x.InvoiceId == model.InvoiceId).FirstOrDefault();
                     var job = dbContext.TblJobs.Where(x => x.JobId == invoivedetail.JobId).FirstOrDefault();
                     var customerDetails = dbContext.TblContacts.Where(x => x.ContactId == job.ContactId).FirstOrDefault();
-                   
 
-                    var emailBody = $@"
-    <div style='max-width: 600px; margin: auto; background: #fff; border-radius: 8px; 
-                 box-shadow: 0px 0px 10px rgba(0,0,0,0.1); padding: 20px; 
-                 font-family: Arial, sans-serif; color: #333;'>
-        <div style='background: #28a745; color: #fff; text-align: center; padding: 15px; 
-                    border-radius: 8px 8px 0 0;'>
-            <h2 style='margin: 0; font-size: 20px;'>Payment Confirmation</h2>
-        </div>
-        <div style='padding: 20px;'>
-            <p style='font-size: 16px; margin: 10px 0;'><strong>Dear {customerDetails?.FirstName} {customerDetails?.LastName},</strong></p>
-            <p style='font-size: 14px; margin: 10px 0;'>Your payment for Invoice <strong>{invoice?.InvoiceNumber}</strong> 
-               has been successfully processed.</p>
-            <div style='background: #e9ecef; padding: 15px; border-radius: 5px; margin: 15px 0;'>
-                <p style='margin: 5px 0; font-size: 14px;'><strong>Paid Amount:</strong> {model.Amount:C}</p>
-                <p style='margin: 5px 0; font-size: 14px;'><strong>Remaining Balance:</strong> {invoice.BalanceDue:C}</p>
-            </div>
-            <p style='font-size: 14px; text-align: center;'>Thank you for your business!</p>
-        </div>
-    </div>";
 
-                    EmailHelper.SendEmailWithAttachment(
+                    SendPaymentConfirmationEmail(
                         customerDetails?.Email,
-                        "Payment Confirmation",
-                        emailBody
-                    );
+                        customerDetails?.FirstName ?? "",
+                        customerDetails?.LastName ?? "",
+                        invoice?.InvoiceNumber ?? "",
+                        model.Amount ?? 0,
+                        invoice.BalanceDue
+                        );
+
 
                 }
                 await transaction.CommitAsync();
@@ -490,12 +475,27 @@ namespace ShutterManagement.Business.Services
 
                 if (updatePayment.PaymentStatus == PaymentStatus.Paid)
                 {
+                    
                     invoice.PaidAmount += updatePayment.Amount ?? 0;
                     invoice.BalanceDue = invoice.TotalAmount - invoice.PaidAmount;
                     invoice.Status = EnumValue.GetEnumValue(PaymentStatus.Paid);
                     invoice.UpdatedAt = DateTime.Now;
                     invoice.ModifiedBy = AppConstant.LoggedInUserID;
                     await invoiceService.Update(invoice);
+
+                    var invoivedetail = invoiceService.GetAllQuerable().Where(x => x.InvoiceId == updatePayment.InvoiceId).FirstOrDefault();
+                    var job = dbContext.TblJobs.Where(x => x.JobId == invoivedetail.JobId).FirstOrDefault();
+                    var customerDetails = dbContext.TblContacts.Where(x => x.ContactId == job.ContactId).FirstOrDefault();
+
+
+                    SendPaymentConfirmationEmail(
+                        customerDetails?.Email,
+                        customerDetails?.FirstName ?? "",
+                        customerDetails?.LastName ?? "",
+                        invoice?.InvoiceNumber ?? "",
+                        updatePayment.Amount ?? 0,
+                        invoice.BalanceDue
+                        );
                 }
                 await transaction.CommitAsync();
 
@@ -676,6 +676,61 @@ namespace ShutterManagement.Business.Services
         }
 
 
+        private void SendPaymentConfirmationEmail(string customerEmail, string firstName, string lastName, string invoiceNumber, decimal paidAmount, decimal? remainingBalance)
+        {
+            try
+            {
+                var tenantDetails = tenantService.GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true).FirstOrDefault();
+
+                var tenantInfoDetails = dbContext.TblTenantBrandingInfos.Where(x => x.Id == tenantDetails.BrandingInfo && x.IsActive == true).FirstOrDefault();
+                FileLogger.Log($" sending payment confirmation email tenantDetails: {tenantDetails}");
+                FileLogger.Log($" sending payment confirmation email tenantDetails: {tenantDetails}");
+
+                var emailBody = $@"
+    <div style='max-width: 600px; margin: auto; background: #fff; border-radius: 8px; 
+                 box-shadow: 0px 0px 10px rgba(0,0,0,0.1); padding: 20px; 
+                 font-family: Arial, sans-serif; color: #333;'>
+        <div style='background: #28a745; color: #fff; text-align: center; padding: 15px; 
+                    border-radius: 8px 8px 0 0;'>
+            <h2 style='margin: 0; font-size: 20px;'>Payment Confirmation</h2>
+        </div>
+        <div style='padding: 20px;'>
+            <p style='font-size: 16px; margin: 10px 0;'><strong>Dear {firstName} {lastName},</strong></p>
+            <p style='font-size: 14px; margin: 10px 0;'>Your payment for Invoice <strong>{invoiceNumber}</strong> 
+               has been successfully processed.</p>
+            <div style='background: #e9ecef; padding: 15px; border-radius: 5px; margin: 15px 0;'>
+                <p style='margin: 5px 0; font-size: 14px;'><strong>Paid Amount:</strong> {paidAmount:C}</p>
+                <p style='margin: 5px 0; font-size: 14px;'><strong>Remaining Balance:</strong> {remainingBalance:C}</p>
+            </div>
+            <p style='font-size: 14px; text-align: center;'>Thank you for your business!</p>
+ <hr style='border: 0; height: 1px; background: #ddd; margin: 20px 0;'>
+
+ <!-- Footer -->
+ <p style='font-size: 14px; text-align: center;'>Thank you for your business!</p>
+
+ <div style='text-align: center; margin: 15px 0;'>
+     <img src='{tenantInfoDetails?.Logo}' alt='Company Logo' style='height: 50px;'>
+ </div>
+
+ <p style='text-align: center; font-size: 14px;'><strong>Best regards,</strong></p>
+ <p style='text-align: center; font-size: 14px;'><strong>{tenantInfoDetails?.CompanyName}</strong></p>
+ <p style='text-align: center; font-size: 14px;'>Shutter Management and Estimation System</p>
+        </div>
+    </div>";
+
+                EmailHelper.SendEmailWithAttachment(
+                    customerEmail,
+                    "Payment Confirmation",
+                    emailBody
+                );
+
+            }
+            catch(Exception ex)
+            {
+                FileLogger.Log($"Error sending payment confirmation email: {ex.Message}");
+            }
+            
+        }
 
 
     }

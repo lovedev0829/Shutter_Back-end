@@ -106,6 +106,7 @@ namespace ShutterManagement.Controllers
                                 PaymentStatus = PaymentStatus.Paid,
                                 PaymentMethod = paymentMethod,
                                 TransactionId = stripeTransactionId,
+                                InvoiceId=Guid.Parse(invoiceId),
                                 Notes = "",
                             };
 
