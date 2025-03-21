@@ -680,56 +680,61 @@ namespace ShutterManagement.Business.Services
         {
             try
             {
-                var tenantDetails = tenantService.GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true).FirstOrDefault();
+                var tenantDetails = tenantService.GetAllQuerable()
+                    .FirstOrDefault(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive==true);
 
-                var tenantInfoDetails = dbContext.TblTenantBrandingInfos.Where(x => x.Id == tenantDetails.BrandingInfo && x.IsActive == true).FirstOrDefault();
-                FileLogger.Log($" sending payment confirmation email tenantDetails: {tenantDetails}");
-                FileLogger.Log($" sending payment confirmation email tenantDetails: {tenantDetails}");
+                var tenantInfoDetails = dbContext.TblTenantBrandingInfos
+                    .FirstOrDefault(x => x.Id == tenantDetails.BrandingInfo);
 
-                var emailBody = $@"
-    <div style='max-width: 600px; margin: auto; background: #fff; border-radius: 8px; 
-                 box-shadow: 0px 0px 10px rgba(0,0,0,0.1); padding: 20px; 
-                 font-family: Arial, sans-serif; color: #333;'>
-        <div style='background: #28a745; color: #fff; text-align: center; padding: 15px; 
-                    border-radius: 8px 8px 0 0;'>
-            <h2 style='margin: 0; font-size: 20px;'>Payment Confirmation</h2>
-        </div>
-        <div style='padding: 20px;'>
-            <p style='font-size: 16px; margin: 10px 0;'><strong>Dear {firstName} {lastName},</strong></p>
-            <p style='font-size: 14px; margin: 10px 0;'>Your payment for Invoice <strong>{invoiceNumber}</strong> 
-               has been successfully processed.</p>
-            <div style='background: #e9ecef; padding: 15px; border-radius: 5px; margin: 15px 0;'>
-                <p style='margin: 5px 0; font-size: 14px;'><strong>Paid Amount:</strong> {paidAmount:C}</p>
-                <p style='margin: 5px 0; font-size: 14px;'><strong>Remaining Balance:</strong> {remainingBalance:C}</p>
-            </div>
-            <p style='font-size: 14px; text-align: center;'>Thank you for your business!</p>
- <hr style='border: 0; height: 1px; background: #ddd; margin: 20px 0;'>
+                FileLogger.Log($"Sending payment confirmation email. Tenant Details: {tenantDetails}");
 
- <!-- Footer -->
- <p style='font-size: 14px; text-align: center;'>Thank you for your business!</p>
+                Guid templateId = Guid.Parse("11B8D318-52A5-4060-BEAD-A69800B904CA");
+                var invoiceTemplateValue = dbContext.TblTemplates
+                    .FirstOrDefault(c => c.TemplateId == templateId);
 
- <div style='text-align: center; margin: 15px 0;'>
-     <img src='{tenantInfoDetails?.Logo}' alt='Company Logo' style='height: 50px;'>
- </div>
+                if (invoiceTemplateValue == null)
+                {
+                    FileLogger.Log("Error: Email template not found.");
+                    return;
+                }
 
- <p style='text-align: center; font-size: 14px;'><strong>Best regards,</strong></p>
- <p style='text-align: center; font-size: 14px;'><strong>{tenantInfoDetails?.CompanyName}</strong></p>
- <p style='text-align: center; font-size: 14px;'>Shutter Management and Estimation System</p>
-        </div>
-    </div>";
+                var bodyContent = invoiceTemplateValue.TemplateValue;
+                var invoiceDataModel = new PaymentConfirmationModel
+                {
+                    CustomerEmail = customerEmail,
+                    FirstName = firstName,
+                    LastName = lastName,
+                    InvoiceNumber = invoiceNumber,
+                    PaidAmount = paidAmount,
+                    RemainingBalance = remainingBalance,
+                    CompanyName = tenantInfoDetails?.CompanyName ?? "",
+                    TenantEmail = tenantInfoDetails?.Email ?? "",
+                    CompanyLogo = tenantInfoDetails?.Logo ?? ""
+                };
 
-                EmailHelper.SendEmailWithAttachment(
-                    customerEmail,
-                    "Payment Confirmation",
-                    emailBody
-                );
-
+                var emailBody = ReplacePaymentConfirmationPlaceholders(bodyContent, invoiceDataModel);
+                EmailHelper.SendEmailWithAttachment(customerEmail, "Payment Confirmation", emailBody);
+                FileLogger.Log("Payment confirmation email sent successfully.");
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 FileLogger.Log($"Error sending payment confirmation email: {ex.Message}");
             }
-            
+        }
+
+
+
+        private string ReplacePaymentConfirmationPlaceholders(string template, PaymentConfirmationModel data)
+        {
+            return template
+                .Replace("{firstName}", data.FirstName ?? "")
+                .Replace("{lastName}", data.LastName ?? "")
+                .Replace("{invoiceNumber}", data.InvoiceNumber ?? "")
+                .Replace("{paidAmount:C}", data.PaidAmount.ToString())
+                .Replace("{remainingBalance:C}", data.RemainingBalance?.ToString() ?? "$0.00")
+                .Replace("{tenantInfoDetails?.CompanyName}", data.CompanyName ?? "")
+                .Replace("{tenantInfoDetails?.Email}", data.TenantEmail ?? "")
+                .Replace("{tenantInfoDetails?.Logo}", data.CompanyLogo ?? "");
         }
 
 
