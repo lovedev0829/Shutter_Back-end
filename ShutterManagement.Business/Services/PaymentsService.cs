@@ -628,8 +628,9 @@ namespace ShutterManagement.Business.Services
                 var payments = await GetAllPayment(filter);
 
                 var invoiceIds = filteredInvoices.Select(i => i.InvoiceId).ToList();
+
                 var filteredPayments = payments.Data?
-                .Where(x => invoiceIds.Contains(x.InvoiceId ?? Guid.Empty)) 
+                .Where(x => x.InvoiceId.HasValue && invoiceIds.Contains(x.InvoiceId.Value))
                 .ToList() ?? new List<PaymentsVM>();
 
                 var estimateAmountVm = new EstimateAmountVm
@@ -654,7 +655,7 @@ namespace ShutterManagement.Business.Services
                         Status = x.Status,
                         TotalAmount = x.TotalAmount,
                         
-                        Payments = filteredPayments,
+                        Payments = filteredPayments.Where(y=>y.InvoiceId==x.InvoiceId).ToList(),
                     }).ToList(),
                 };
                 
