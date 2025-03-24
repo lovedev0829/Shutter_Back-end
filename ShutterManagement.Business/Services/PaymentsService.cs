@@ -15,6 +15,7 @@ using System.Drawing;
 using ShutterManagement.Stripe;
 using Stripe;
 using System.Xml.Linq;
+using Azure;
 
 namespace ShutterManagement.Business.Services
 {
@@ -24,14 +25,16 @@ namespace ShutterManagement.Business.Services
         private readonly ITenantService tenantService;
         private readonly IInvoiceService invoiceService;
         private readonly StripeService stripeService;
+        private readonly IOrderService orderService;
         public Pagination filter = new Pagination();
 
         public PaymentsService(ITenantService tenantService ,IInvoiceService invoiceService 
-            ,StripeService stripeService)
+            ,StripeService stripeService ,IOrderService orderService)
         {
             this.tenantService = tenantService;
             this.invoiceService = invoiceService;
             this.stripeService = stripeService;
+            this.orderService = orderService;
         }
 
         #region Active_InActive_Payment
@@ -176,17 +179,6 @@ namespace ShutterManagement.Business.Services
                     var invoiceDetail = dbContext.TblInvoices.Where(x => x.InvoiceId == model.InvoiceId).FirstOrDefault();
                     var job = dbContext.TblJobs.Where(x => x.JobId == invoiceDetail.JobId).FirstOrDefault();
                     var contactDetails = dbContext.TblContacts.Where(x => x.ContactId == job.ContactId).FirstOrDefault();
-                    //var GenerateInvoiceModel = new GenerateInvoiceModel
-                    //{
-                    //    InvoiceId = model.InvoiceId,
-                    //    DocumentType = EstimateDocumentType.InvoicePaymentForEmail,
-                    //    EstimationId = invoice.EstimateId,
-                    //    ContactId = contactdetails.ContactId,
-
-                    //};
-                    //var res = invoiceService.SendInvoiceAttachment(GenerateInvoiceModel);
-                    // Generate Stripe Payment Link
-
 
                     var paymentRequest = new PaymentRequest
                     {
@@ -200,8 +192,6 @@ namespace ShutterManagement.Business.Services
 
                     string paymentLink = stripeService.CreateCheckoutSession(paymentRequest);
 
-                    // ✅ Email Content for Payment Request
-                    // ✅ Email Content for Payment Request
                     var emailBody = $@"
 <div style='max-width: 600px; margin: auto; background: #fff; border-radius: 8px; 
             box-shadow: 0px 0px 10px rgba(0,0,0,0.1); padding: 20px; 
@@ -259,33 +249,17 @@ namespace ShutterManagement.Business.Services
                     var invoivedetail = dbContext.TblInvoices.Where(x => x.InvoiceId == model.InvoiceId).FirstOrDefault();
                     var job = dbContext.TblJobs.Where(x => x.JobId == invoivedetail.JobId).FirstOrDefault();
                     var customerDetails = dbContext.TblContacts.Where(x => x.ContactId == job.ContactId).FirstOrDefault();
-                   
 
-                    var emailBody = $@"
-    <div style='max-width: 600px; margin: auto; background: #fff; border-radius: 8px; 
-                 box-shadow: 0px 0px 10px rgba(0,0,0,0.1); padding: 20px; 
-                 font-family: Arial, sans-serif; color: #333;'>
-        <div style='background: #28a745; color: #fff; text-align: center; padding: 15px; 
-                    border-radius: 8px 8px 0 0;'>
-            <h2 style='margin: 0; font-size: 20px;'>Payment Confirmation</h2>
-        </div>
-        <div style='padding: 20px;'>
-            <p style='font-size: 16px; margin: 10px 0;'><strong>Dear {customerDetails?.FirstName} {customerDetails?.LastName},</strong></p>
-            <p style='font-size: 14px; margin: 10px 0;'>Your payment for Invoice <strong>{invoice?.InvoiceNumber}</strong> 
-               has been successfully processed.</p>
-            <div style='background: #e9ecef; padding: 15px; border-radius: 5px; margin: 15px 0;'>
-                <p style='margin: 5px 0; font-size: 14px;'><strong>Paid Amount:</strong> {model.Amount:C}</p>
-                <p style='margin: 5px 0; font-size: 14px;'><strong>Remaining Balance:</strong> {invoice.BalanceDue:C}</p>
-            </div>
-            <p style='font-size: 14px; text-align: center;'>Thank you for your business!</p>
-        </div>
-    </div>";
 
-                    EmailHelper.SendEmailWithAttachment(
+                    SendPaymentConfirmationEmail(
                         customerDetails?.Email,
-                        "Payment Confirmation",
-                        emailBody
-                    );
+                        customerDetails?.FirstName ?? "",
+                        customerDetails?.LastName ?? "",
+                        invoice?.InvoiceNumber ?? "",
+                        model.Amount ?? 0,
+                        invoice.BalanceDue
+                        );
+
 
                 }
                 await transaction.CommitAsync();
@@ -486,16 +460,41 @@ namespace ShutterManagement.Business.Services
                 payment.UpdatedAt = DateTime.Now;
                 payment.ModifiedBy = AppConstant.LoggedInUserID;
 
+
                 await Update(payment);
 
                 if (updatePayment.PaymentStatus == PaymentStatus.Paid)
                 {
+                    
                     invoice.PaidAmount += updatePayment.Amount ?? 0;
                     invoice.BalanceDue = invoice.TotalAmount - invoice.PaidAmount;
                     invoice.Status = EnumValue.GetEnumValue(PaymentStatus.Paid);
                     invoice.UpdatedAt = DateTime.Now;
                     invoice.ModifiedBy = AppConstant.LoggedInUserID;
                     await invoiceService.Update(invoice);
+
+                    var invoivedetail = invoiceService.GetAllQuerable().Where(x => x.InvoiceId == updatePayment.InvoiceId).FirstOrDefault();
+                    var job = dbContext.TblJobs.Where(x => x.JobId == invoivedetail.JobId).FirstOrDefault();
+                    var customerDetails = dbContext.TblContacts.Where(x => x.ContactId == job.ContactId).FirstOrDefault();
+
+                    var orderdetails = orderService.GetAllQuerable().Where(x => x.EstimateId == invoivedetail.EstimateId).FirstOrDefault();
+                    if (orderdetails != null)
+                    {
+                        orderdetails.PaidAmount += updatePayment.Amount ?? 0;
+                        orderdetails.BalanceDue = orderdetails.GrandTotal - orderdetails.PaidAmount;
+                        orderdetails.UpdatedAt = DateTime.Now;
+                        orderdetails.ModifiedBy = AppConstant.LoggedInUserID;
+                        await orderService.Update(orderdetails);
+                    }
+
+                    SendPaymentConfirmationEmail(
+                        customerDetails?.Email,
+                        customerDetails?.FirstName ?? "",
+                        customerDetails?.LastName ?? "",
+                        invoice?.InvoiceNumber ?? "",
+                        updatePayment.Amount ?? 0,
+                        invoice.BalanceDue
+                        );
                 }
                 await transaction.CommitAsync();
 
@@ -514,7 +513,6 @@ namespace ShutterManagement.Business.Services
         }
 
         #endregion UpdatePayment
-
 
         #region Get_Payment_Details
         public async Task<IResponseVm<StripePaymentVm>> GetPaymentDetails(string Tranjectionid, string PaymentId)
@@ -572,6 +570,7 @@ namespace ShutterManagement.Business.Services
         }
         #endregion Get_Payment_Details
 
+        #region EstimateAmount
         public async Task<IResponseVm<EstimateAmountVm>> GetEstimateAmmount(Guid? EstimateId)
         {
             IResponseVm<EstimateAmountVm> responseVm = new ResponseVm<EstimateAmountVm>();
@@ -628,8 +627,9 @@ namespace ShutterManagement.Business.Services
                 var payments = await GetAllPayment(filter);
 
                 var invoiceIds = filteredInvoices.Select(i => i.InvoiceId).ToList();
+
                 var filteredPayments = payments.Data?
-                .Where(x => invoiceIds.Contains(x.InvoiceId ?? Guid.Empty)) 
+                .Where(x => x.InvoiceId.HasValue && invoiceIds.Contains(x.InvoiceId.Value))
                 .ToList() ?? new List<PaymentsVM>();
 
                 var estimateAmountVm = new EstimateAmountVm
@@ -639,20 +639,25 @@ namespace ShutterManagement.Business.Services
                     TotalPaidAmount = totalPayments,
                     DueBalance = totalOrderAmount - totalPayments,
                     HalfAmount = halfAmount,
-                    Invoices = filteredInvoices, // Send invoice data
-                    Payments = filteredPayments // Send payment data
+                    Invoices = filteredInvoices.Select(x=> new InvoicePayment_VM
+                    {
+                        InvoiceId = x.InvoiceId ,
+                        BalanceDue = x.BalanceDue,
+                        ContactFirstName = x.ContactFirstName,
+                        ContactLastName = x.ContactLastName,
+                        DueDate = x.DueDate,
+                        EstimateId = x.EstimateId,
+                        EstimateName = x.EstimateName,
+                        InvoiceNumber = x.InvoiceNumber,
+                        IssueDate = x.IssueDate,
+                        PaidAmount = x.PaidAmount,
+                        Status = x.Status,
+                        TotalAmount = x.TotalAmount,
+                        
+                        Payments = filteredPayments.Where(y=>y.InvoiceId==x.InvoiceId).ToList(),
+                    }).ToList(),
                 };
-                //var estimateAmountVm = new EstimateAmountVm
-                //{
-                //    TotalOrderAmount = totalOrderAmount,
-                //    TotalInvoiceAmount = totalInvoiceAmount,
-                //    TotalPaidAmount = totalPayments,
-                //    DueBalance = totalOrderAmount- totalPayments,
-                //    HalfAmount = halfAmount
-                //};
-
-                //var invoices = invoiceService.GetAllInvoice(filter).Result.Data.Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.EstimateId == est).ToList();
-                //var payments = paymentsService.GetAllPayment(filter).Result.Data.Where(x => invoices.Data.invoiceid).ToList();
+                
 
                 responseVm.IsSuccess = true;
                 responseVm.Data = estimateAmountVm;
@@ -669,8 +674,71 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
+        #endregion EstimateAmount
 
+        #region SendPaymentConfirmationEmail
+        private void SendPaymentConfirmationEmail(string customerEmail, string firstName, string lastName, string invoiceNumber, decimal paidAmount, decimal? remainingBalance)
+        {
+            try
+            {
+                var tenantDetails = tenantService.GetAllQuerable()
+                    .FirstOrDefault(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive==true);
 
+                var tenantInfoDetails = dbContext.TblTenantBrandingInfos
+                    .FirstOrDefault(x => x.Id == tenantDetails.BrandingInfo);
+
+                FileLogger.Log($"Sending payment confirmation email. Tenant Details: {tenantDetails}");
+
+                Guid templateId = Guid.Parse("11B8D318-52A5-4060-BEAD-A69800B904CA");
+                var invoiceTemplateValue = dbContext.TblTemplates
+                    .FirstOrDefault(c => c.TemplateId == templateId);
+
+                if (invoiceTemplateValue == null)
+                {
+                    FileLogger.Log("Error: Email template not found.");
+                    return;
+                }
+
+                var bodyContent = invoiceTemplateValue.TemplateValue;
+                var invoiceDataModel = new PaymentConfirmationModel
+                {
+                    CustomerEmail = customerEmail,
+                    FirstName = firstName,
+                    LastName = lastName,
+                    InvoiceNumber = invoiceNumber,
+                    PaidAmount = paidAmount,
+                    RemainingBalance = remainingBalance,
+                    CompanyName = tenantInfoDetails?.CompanyName ?? "",
+                    TenantEmail = tenantInfoDetails?.Email ?? "",
+                    CompanyLogo = tenantInfoDetails?.Logo ?? ""
+                };
+
+                var emailBody = ReplacePaymentConfirmationPlaceholders(bodyContent, invoiceDataModel);
+                EmailHelper.SendEmailWithAttachment(customerEmail, "Payment Confirmation", emailBody);
+                FileLogger.Log("Payment confirmation email sent successfully.");
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Log($"Error sending payment confirmation email: {ex.Message}");
+            }
+        }
+
+        #endregion SendPaymentConfirmationEmail
+
+        #region ReplacePaymentConfirmationPlaceholders
+        private string ReplacePaymentConfirmationPlaceholders(string template, PaymentConfirmationModel data)
+        {
+            return template
+                .Replace("{firstName}", data.FirstName ?? "")
+                .Replace("{lastName}", data.LastName ?? "")
+                .Replace("{invoiceNumber}", data.InvoiceNumber ?? "")
+                .Replace("{paidAmount:C}", data.PaidAmount.ToString())
+                .Replace("{remainingBalance:C}", data.RemainingBalance?.ToString() ?? "$0.00")
+                .Replace("{tenantInfoDetails?.CompanyName}", data.CompanyName ?? "")
+                .Replace("{tenantInfoDetails?.Email}", data.TenantEmail ?? "")
+                .Replace("{tenantInfoDetails?.Logo}", data.CompanyLogo ?? "");
+        }
+        #endregion ReplacePaymentConfirmationPlaceholders
 
     }
 
