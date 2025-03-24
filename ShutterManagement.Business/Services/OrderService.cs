@@ -199,6 +199,8 @@ namespace ShutterManagement.Business.Services
                     newOrder.OrderName = OrderNumber;
                     newOrder.IsActive = true;
                     newOrder.IsDelete = false;
+                    newOrder.PaidAmount = 0;
+                    newOrder.BalanceDue = 0;
                     newOrder.CreatedBy = AppConstant.LoggedInUserID;
                     newOrder.ModifiedBy = AppConstant.LoggedInUserID;
                 }
@@ -224,6 +226,8 @@ namespace ShutterManagement.Business.Services
                     newOrder.UpdatedAt = DateTime.Now;
                     newOrder.Version = version1;
                     newOrder.OrderName = OrderNumber;
+                    newOrder.PaidAmount = 0;
+                    newOrder.BalanceDue = 0;
                     newOrder.IsActive = true;
                     newOrder.IsDelete = false;
                     newOrder.CreatedBy = AppConstant.LoggedInUserID;

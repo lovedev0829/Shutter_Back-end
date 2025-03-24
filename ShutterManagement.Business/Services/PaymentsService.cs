@@ -25,14 +25,16 @@ namespace ShutterManagement.Business.Services
         private readonly ITenantService tenantService;
         private readonly IInvoiceService invoiceService;
         private readonly StripeService stripeService;
+        private readonly IOrderService orderService;
         public Pagination filter = new Pagination();
 
         public PaymentsService(ITenantService tenantService ,IInvoiceService invoiceService 
-            ,StripeService stripeService)
+            ,StripeService stripeService ,IOrderService orderService)
         {
             this.tenantService = tenantService;
             this.invoiceService = invoiceService;
             this.stripeService = stripeService;
+            this.orderService = orderService;
         }
 
         #region Active_InActive_Payment
@@ -177,17 +179,6 @@ namespace ShutterManagement.Business.Services
                     var invoiceDetail = dbContext.TblInvoices.Where(x => x.InvoiceId == model.InvoiceId).FirstOrDefault();
                     var job = dbContext.TblJobs.Where(x => x.JobId == invoiceDetail.JobId).FirstOrDefault();
                     var contactDetails = dbContext.TblContacts.Where(x => x.ContactId == job.ContactId).FirstOrDefault();
-                    //var GenerateInvoiceModel = new GenerateInvoiceModel
-                    //{
-                    //    InvoiceId = model.InvoiceId,
-                    //    DocumentType = EstimateDocumentType.InvoicePaymentForEmail,
-                    //    EstimationId = invoice.EstimateId,
-                    //    ContactId = contactdetails.ContactId,
-
-                    //};
-                    //var res = invoiceService.SendInvoiceAttachment(GenerateInvoiceModel);
-                    // Generate Stripe Payment Link
-
 
                     var paymentRequest = new PaymentRequest
                     {
@@ -201,8 +192,6 @@ namespace ShutterManagement.Business.Services
 
                     string paymentLink = stripeService.CreateCheckoutSession(paymentRequest);
 
-                    // ✅ Email Content for Payment Request
-                    // ✅ Email Content for Payment Request
                     var emailBody = $@"
 <div style='max-width: 600px; margin: auto; background: #fff; border-radius: 8px; 
             box-shadow: 0px 0px 10px rgba(0,0,0,0.1); padding: 20px; 
@@ -471,6 +460,7 @@ namespace ShutterManagement.Business.Services
                 payment.UpdatedAt = DateTime.Now;
                 payment.ModifiedBy = AppConstant.LoggedInUserID;
 
+
                 await Update(payment);
 
                 if (updatePayment.PaymentStatus == PaymentStatus.Paid)
@@ -487,6 +477,15 @@ namespace ShutterManagement.Business.Services
                     var job = dbContext.TblJobs.Where(x => x.JobId == invoivedetail.JobId).FirstOrDefault();
                     var customerDetails = dbContext.TblContacts.Where(x => x.ContactId == job.ContactId).FirstOrDefault();
 
+                    var orderdetails = orderService.GetAllQuerable().Where(x => x.EstimateId == invoivedetail.EstimateId).FirstOrDefault();
+                    if (orderdetails != null)
+                    {
+                        orderdetails.PaidAmount += updatePayment.Amount ?? 0;
+                        orderdetails.BalanceDue = orderdetails.GrandTotal - orderdetails.PaidAmount;
+                        orderdetails.UpdatedAt = DateTime.Now;
+                        orderdetails.ModifiedBy = AppConstant.LoggedInUserID;
+                        await orderService.Update(orderdetails);
+                    }
 
                     SendPaymentConfirmationEmail(
                         customerDetails?.Email,
@@ -514,7 +513,6 @@ namespace ShutterManagement.Business.Services
         }
 
         #endregion UpdatePayment
-
 
         #region Get_Payment_Details
         public async Task<IResponseVm<StripePaymentVm>> GetPaymentDetails(string Tranjectionid, string PaymentId)
@@ -572,6 +570,7 @@ namespace ShutterManagement.Business.Services
         }
         #endregion Get_Payment_Details
 
+        #region EstimateAmount
         public async Task<IResponseVm<EstimateAmountVm>> GetEstimateAmmount(Guid? EstimateId)
         {
             IResponseVm<EstimateAmountVm> responseVm = new ResponseVm<EstimateAmountVm>();
@@ -675,7 +674,9 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
+        #endregion EstimateAmount
 
+        #region SendPaymentConfirmationEmail
         private void SendPaymentConfirmationEmail(string customerEmail, string firstName, string lastName, string invoiceNumber, decimal paidAmount, decimal? remainingBalance)
         {
             try
@@ -722,8 +723,9 @@ namespace ShutterManagement.Business.Services
             }
         }
 
+        #endregion SendPaymentConfirmationEmail
 
-
+        #region ReplacePaymentConfirmationPlaceholders
         private string ReplacePaymentConfirmationPlaceholders(string template, PaymentConfirmationModel data)
         {
             return template
@@ -736,7 +738,7 @@ namespace ShutterManagement.Business.Services
                 .Replace("{tenantInfoDetails?.Email}", data.TenantEmail ?? "")
                 .Replace("{tenantInfoDetails?.Logo}", data.CompanyLogo ?? "");
         }
-
+        #endregion ReplacePaymentConfirmationPlaceholders
 
     }
 
