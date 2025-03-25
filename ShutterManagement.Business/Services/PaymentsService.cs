@@ -641,7 +641,17 @@ namespace ShutterManagement.Business.Services
                 decimal? invoiceSum = invoices.Sum(x => x.TotalAmount);
                 decimal totalOrderAmount = LatestOrder.GrandTotal ?? 0;
                 decimal totalPaidAmount = payments.Sum(p => p.Amount ?? 0);
-                decimal dueBalance = invoiceSum > 0 ? totalOrderAmount - totalPaidAmount : Math.Round(totalOrderAmount/2,2);
+
+                bool isHalfPaymentMade = totalPaidAmount >= Math.Round(totalOrderAmount / 2, 2);
+
+
+                decimal dueBalance = isHalfPaymentMade
+                    ? totalOrderAmount - totalPaidAmount  
+                    : Math.Round(totalOrderAmount / 2, 2);
+
+                dueBalance = Math.Max(dueBalance, 0);
+
+               // decimal dueBalance = invoiceSum > 0 ? totalOrderAmount - totalPaidAmount : Math.Round(totalOrderAmount/2,2);
                 //decimal halfAmount = ? Math.Round(totalOrderAmount / 2, 2) : 0;
                 //decimal extraBalance = Math.Max(0, totalPaidAmount - totalOrderAmount);
 
