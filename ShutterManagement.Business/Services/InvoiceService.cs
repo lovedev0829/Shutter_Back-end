@@ -150,15 +150,6 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.TenantNotFound;
                     return responseVm;
                 }
-                //var isInvoiceNumberExists = await AnyAsync(x =>
-                //  x.InvoiceNumber == model.InvoiceNumber && x.IsDelete == false && x.IsActive==true && x.TenantId == AppConstant.LoggedInTenantId);
-
-                //if (isInvoiceNumberExists)
-                //{
-                //    responseVm.IsSuccess = false;
-                //    responseVm.Message = "Invoice Number Already Exists.";
-                //    return responseVm;
-                //}
 
                 int Version = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt)
                .Select(p => (p.InvoiceNumber.Split("-", StringSplitOptions.RemoveEmptyEntries).Length == 3 ? Convert.ToInt32(p.InvoiceNumber.Split("-", StringSplitOptions.RemoveEmptyEntries)[2]) : 0)).FirstOrDefault();
@@ -328,8 +319,8 @@ namespace ShutterManagement.Business.Services
                                      join j in dbContext.TblJobs on i.JobId equals j.JobId
                                      join c in dbContext.TblContacts on j.ContactId equals c.ContactId
                                      join d in dbContext.TblEstimates on i.EstimateId equals d.EstimateId
-                                     join O in dbContext.TblOrders on i.EstimateId equals O.EstimateId
-                                     where i.IsDelete == false
+                                     let hasActiveOrder = dbContext.TblOrders.Any(o => o.EstimateId == i.EstimateId && o.IsActive == true)
+                                     where i.IsDelete == false && hasActiveOrder
                                      orderby i.CreatedAt descending
                                      select new InvoiceVM
                                      {
@@ -992,7 +983,7 @@ namespace ShutterManagement.Business.Services
 
                     var emailSent = EmailHelper.SendEmailWithAttachment(
                         customerDetails.Email,
-                        "Invoice Payment Link and PDF",
+                        AppConstant.InvoicePaymentLinkandPDF,
                         emailBody,
                         new List<EmailAttachment> { emailAttachment }
                     );

@@ -23,12 +23,13 @@ namespace ShutterManagement.Business.Services
 
     public class PaymentsService : BaseRepository<ShutterDBContext, TblPayment>, IPaymentsService
     {
+        #region Private Fields
         private readonly ITenantService tenantService;
         private readonly IInvoiceService invoiceService;
         private readonly StripeService stripeService;
         private readonly IOrderService orderService;
         public Pagination filter = new Pagination();
-
+        #endregion Private Fields
         public PaymentsService(ITenantService tenantService ,IInvoiceService invoiceService 
             ,StripeService stripeService ,IOrderService orderService)
         {
@@ -434,7 +435,7 @@ namespace ShutterManagement.Business.Services
                 if (updatePayment.PaymentStatus == PaymentStatus.Paid)
                 {
                     await UpdateInvoicePayment(invoice, updatePayment);
-                    await UpdateOrderPayment(invoice, updatePayment);
+                   // await UpdateOrderPayment(invoice, updatePayment);
 
                     var customerDetails = GetCustomerDetails(invoice.InvoiceId);
                     SendPaymentConfirmationEmail(
@@ -622,33 +623,42 @@ namespace ShutterManagement.Business.Services
                     return GenerateErrorResponse("Invalid Estimate ID.");
                 }
 
-                var estimate = dbContext.TblOrders
-                    .Where(e => e.EstimateId == EstimateId && e.IsDelete == false && e.Status == EnumValue.GetEnumValue(Estimation.Approved))
+                var LatestOrder = dbContext.TblOrders
+                    .Where(e => e.EstimateId == EstimateId && e.IsDelete == false &&
+                                e.Status == EnumValue.GetEnumValue(Estimation.Approved))
                     .OrderByDescending(e => e.Version)
                     .ThenByDescending(e => e.CreatedAt)
                     .FirstOrDefault();
 
-                if (estimate == null)
+                if (LatestOrder == null)
                 {
                     return GenerateErrorResponse("No approved estimate found.");
                 }
 
-                decimal totalOrderAmount = estimate.GrandTotal ?? estimate.BalanceDue ?? 0;
-                decimal totalPaidAmount = estimate.PaidAmount ?? 0;
-                decimal dueBalance = estimate.BalanceDue ?? (totalOrderAmount - totalPaidAmount);
-                decimal halfAmount = (dueBalance <= 0) ? 0 : Math.Round(totalOrderAmount / 2, 2);
-                decimal extraBalance = estimate.ExtraBalance ?? 0;
-
-                // Fetch invoices and payments using helper methods
                 var invoices = await GetInvoicesByEstimateId(EstimateId);
                 var payments = await GetPaymentsByInvoices(invoices);
 
-                var estimateAmountVm = CreateEstimateAmountVm(totalOrderAmount, totalPaidAmount, dueBalance, halfAmount, extraBalance,invoices, payments);
+                decimal? invoiceSum = invoices.Sum(x => x.TotalAmount);
+                decimal totalOrderAmount = LatestOrder.GrandTotal ?? 0;
+                decimal totalPaidAmount = payments.Sum(p => p.Amount ?? 0);
+                decimal dueBalance = invoiceSum > 0 ? totalOrderAmount - totalPaidAmount : Math.Round(totalOrderAmount/2,2);
+                //decimal halfAmount = ? Math.Round(totalOrderAmount / 2, 2) : 0;
+                //decimal extraBalance = Math.Max(0, totalPaidAmount - totalOrderAmount);
+
+                var estimateAmountVm = CreateEstimateAmountVm(
+                    totalOrderAmount,
+                    totalPaidAmount,
+                    dueBalance, 
+                    //halfAmount,
+                    //extraBalance,
+                    invoices,
+                    payments
+                );
 
                 responseVm.IsSuccess = true;
                 responseVm.Data = estimateAmountVm;
                 responseVm.Message = (dueBalance == 0)
-                    ? $"Payment has already been completed for Order {estimate.OrderName}."
+                    ? $"Payment has already been completed for Order {LatestOrder.OrderName}."
                     : $"Total Order: {totalOrderAmount:C}, Payments Paid: {totalPaidAmount:C}, Due Balance: {dueBalance:C}";
 
                 FileLogger.Log(responseVm.Message);
@@ -661,6 +671,7 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
+
 
         private async Task<List<InvoiceVM>> GetInvoicesByEstimateId(Guid? estimateId)
         {
@@ -679,8 +690,8 @@ namespace ShutterManagement.Business.Services
                 .ToList() ?? new List<PaymentsVM>();
         }
 
-        private EstimateAmountVm CreateEstimateAmountVm(decimal totalOrderAmount, decimal totalPaidAmount, decimal dueBalance,
-                                                        decimal halfAmount, decimal ExtraBalance, List<InvoiceVM> invoices, List<PaymentsVM> payments)
+        private EstimateAmountVm CreateEstimateAmountVm(decimal totalOrderAmount, decimal totalPaidAmount, decimal dueBalance
+                                                        /*decimal halfAmount, decimal ExtraBalance*/, List<InvoiceVM> invoices, List<PaymentsVM> payments)
         {
             return new EstimateAmountVm
             {
@@ -688,8 +699,8 @@ namespace ShutterManagement.Business.Services
                 TotalInvoiceAmount = invoices.Sum(x => x.TotalAmount ?? 0),
                 TotalPaidAmount = totalPaidAmount,
                 DueBalance = dueBalance,
-                HalfAmount = halfAmount,
-                ExtraBalance= ExtraBalance,
+                //HalfAmount = halfAmount,
+                //ExtraBalance= ExtraBalance,
                 Invoices = invoices.Select(x => new InvoicePayment_VM
                 {
                     InvoiceId = x.InvoiceId,
