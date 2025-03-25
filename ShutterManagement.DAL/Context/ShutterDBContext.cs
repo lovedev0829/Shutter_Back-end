@@ -1087,16 +1087,17 @@ public partial class ShutterDBContext : DbContext
 
             entity.Property(e => e.OrderId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.AdditionalCost).HasColumnType("decimal(10, 2)");
-            entity.Property(e => e.BalanceDue).HasColumnType("decimal(18, 0)");
+            entity.Property(e => e.BalanceDue).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
             entity.Property(e => e.DiscountAmount).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.DiscountCoupon).HasMaxLength(200);
             entity.Property(e => e.EstimateCode).HasMaxLength(50);
             entity.Property(e => e.EstimateName).HasMaxLength(200);
+            entity.Property(e => e.ExtraBalance).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.GrandTotal).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.Notes).HasMaxLength(2000);
             entity.Property(e => e.OrderName).HasMaxLength(100);
-            entity.Property(e => e.PaidAmount).HasColumnType("decimal(18, 0)");
+            entity.Property(e => e.PaidAmount).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.Status)
                 .HasMaxLength(50)
                 .IsUnicode(false);
@@ -1461,6 +1462,9 @@ public partial class ShutterDBContext : DbContext
 
             entity.Property(e => e.TemplateId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.TemplateCategory)
+                .HasMaxLength(100)
+                .IsUnicode(false);
             entity.Property(e => e.TemplateName)
                 .HasMaxLength(200)
                 .IsUnicode(false);
