@@ -15,6 +15,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShutterManagment.GHL", "Shu
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShutterManagement.Stripe", "ShutterManagement.Stripe\ShutterManagement.Stripe.csproj", "{BA120E65-E966-4EA7-8A8B-8BC2B11C4453}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShutterManagement.GHLv2", "ShutterManagement.GHLv2\ShutterManagement.GHLv2.csproj", "{A404FF7B-7DF7-4B09-93AE-DD226170BA94}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,6 +47,10 @@ Global
 		{BA120E65-E966-4EA7-8A8B-8BC2B11C4453}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BA120E65-E966-4EA7-8A8B-8BC2B11C4453}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BA120E65-E966-4EA7-8A8B-8BC2B11C4453}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A404FF7B-7DF7-4B09-93AE-DD226170BA94}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A404FF7B-7DF7-4B09-93AE-DD226170BA94}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A404FF7B-7DF7-4B09-93AE-DD226170BA94}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A404FF7B-7DF7-4B09-93AE-DD226170BA94}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

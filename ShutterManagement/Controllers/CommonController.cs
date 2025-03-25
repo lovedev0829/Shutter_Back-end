@@ -812,31 +812,54 @@ namespace ShutterManagement.Controllers
 
         [HttpGet]
         [Route("GenerateToken")]
+        [AllowAnonymous]
         public async Task<IActionResult> GenerateToken()
         {
             var result =await authService.GenerateToken();
             return Ok(result);
         }
-
-
-
-            //[HttpGet]
-            //[Route("ghlsync")]
-            //public async Task<IActionResult> GHLSync()
-            //{
-            //    var result = await jobService.SyncOpportunitiesFromGhl();
-            //    return Ok(result);
-            //}
-
-            //[HttpPost("HandleOpportunityWebhook")]
-            //[AllowAnonymous]
-            //public async Task<IActionResult> HandleOpportunityWebhook([FromBody] GhlOpportunityWebhookModel webhookData)
-            //{
-            //    var response = await jobser.ProcessGhlOpportunityWebhook(webhookData);
-            //    return response.IsSuccess ? Ok(response) : BadRequest(response);
-            //}
-
-
+        [HttpGet]
+        [Route("GoHighLevelAuthorization")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GoHighLevelAuthorization()
+        {
+            var oauthService = new GoHighLevelOAuthService();
+            var authorizationUrl = oauthService.GetAuthorizationUrl();
+            // Console.WriteLine("Go to this URL to authenticate: " + authorizationUrl);
+            //return Redirect(authorizationUrl);
+            return Ok(authorizationUrl);
 
         }
+        [HttpGet]
+        [Route("GetAuthorizationUrl")]
+        public async Task<IActionResult> GetAuthorizationUrl(string authorizationCode)
+        {
+            var oauthService = new GoHighLevelOAuthService();
+            var accessToken = await oauthService.GetAccessToken(authorizationCode);
+            Console.WriteLine("Access Token: " + accessToken);
+            return Ok(accessToken);
+
+        }
+
+
+
+        //[HttpGet]
+        //[Route("ghlsync")]
+        //public async Task<IActionResult> GHLSync()
+        //{
+        //    var result = await jobService.SyncOpportunitiesFromGhl();
+        //    return Ok(result);
+        //}
+
+        //[HttpPost("HandleOpportunityWebhook")]
+        //[AllowAnonymous]
+        //public async Task<IActionResult> HandleOpportunityWebhook([FromBody] GhlOpportunityWebhookModel webhookData)
+        //{
+        //    var response = await jobser.ProcessGhlOpportunityWebhook(webhookData);
+        //    return response.IsSuccess ? Ok(response) : BadRequest(response);
+        //}
+
+
+
+    }
     }
