@@ -499,10 +499,10 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.AccessDenied;
                     return responseVm;
                 }
-                Guid? templateId = Guid.Parse("3A49D48B-CA1D-4E0E-9E1F-A22E7529EF47");
+               // Guid? templateId = Guid.Parse("3A49D48B-CA1D-4E0E-9E1F-A22E7529EF47");
 
                 var invoiceTemplate = dbContext.TblTemplates.FirstOrDefault(c =>
-                    c.TemplateId == templateId  &&
+                    c.TemplateCategory == EnumValue.GetEnumValue(EmailTemplateType.EstimatePDF)  &&
                     c.IsDelete == false);
 
                 if (invoiceTemplate == null)
@@ -754,10 +754,10 @@ namespace ShutterManagement.Business.Services
                 {
                     
 
-                    Guid? invoiceTemplateId = Guid.Parse("E9E279C4-1F54-476B-BCDF-778BD1634894");
+                    //Guid? invoiceTemplateId = Guid.Parse("E9E279C4-1F54-476B-BCDF-778BD1634894");
 
                     var invoiceForEmailTemplate = dbContext.TblTemplates.FirstOrDefault(c =>
-                        c.TemplateId == invoiceTemplateId &&
+                        c.TemplateCategory == EnumValue.GetEnumValue(EmailTemplateType.InvoicePDF) &&
                         c.IsDelete == false);
 
                    

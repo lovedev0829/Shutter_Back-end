@@ -754,9 +754,9 @@ namespace ShutterManagement.Business.Services
 
                 FileLogger.Log($"Sending payment confirmation email. Tenant Details: {tenantDetails}");
 
-                Guid templateId = Guid.Parse("11B8D318-52A5-4060-BEAD-A69800B904CA");
+                //Guid templateId = Guid.Parse("11B8D318-52A5-4060-BEAD-A69800B904CA");
                 var invoiceTemplateValue = dbContext.TblTemplates
-                    .FirstOrDefault(c => c.TemplateId == templateId);
+                    .FirstOrDefault(c => c.TemplateCategory == EnumValue.GetEnumValue(EmailTemplateType.PaymentConfirmation));
 
                 if (invoiceTemplateValue == null)
                 {

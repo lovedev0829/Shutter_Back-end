@@ -17,6 +17,7 @@ using Microsoft.AspNetCore.Http;
 using ShutterManagement.Core.Common;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using ShutterManagement.Core.ViewModels.Response;
+using System.Data.Entity.Core.Metadata.Edm;
 
 namespace ShutterManagement.Business.Services
 {
@@ -193,7 +194,7 @@ namespace ShutterManagement.Business.Services
                     }
                 }
 
-                var Templateid = Guid.Parse("1916A280-109F-4829-8A70-0AFA94146A5F").ToString().ToLower();
+               // var Templateid = Guid.Parse("1916A280-109F-4829-8A70-0AFA94146A5F").ToString().ToLower();
                 var Tenantcode =  dbContext.TblTenants.Where(x => x.IsDelete == false && x.TenantId==AppConstant.LoggedInTenantId).FirstOrDefault();
                 var tenantInfoDetails = tenantBrandingService.GetAllQuerable().Where(x => x.Id == Tenantcode.BrandingInfo && x.IsActive == true).FirstOrDefault();
 
@@ -209,7 +210,7 @@ namespace ShutterManagement.Business.Services
 
                 };
 
-                var WelcomeTemplate = dbContext.TblTemplates.Where(x => x.IsDelete == false && x.TemplateId.ToString().ToLower() == Templateid).FirstOrDefault();
+                var WelcomeTemplate = dbContext.TblTemplates.Where(x => x.IsDelete == false && x.TemplateCategory == EnumValue.GetEnumValue(EmailTemplateType.WelcomeEmail)).FirstOrDefault();
                 var emailContent = EmailHelper.ReplacePlaceholdersForlWelcomeEmail(WelcomeTemplate?.TemplateValue, welcomemodel);
                 EmailHelper.WelcomeEmail(model.Email, emailContent);
 
