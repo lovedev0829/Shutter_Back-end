@@ -447,7 +447,7 @@ namespace ShutterManagement.Business.Services
                     if (!isTenantExists)
                     {
                         responseVm.Message = AppConstant.TenantNotFound;
-                        return responseVm; // Return early if tenant is not found
+                        return responseVm; 
                     }
                     if (windowProductIds == null || windowProductIds.Length == 0)
                     {
@@ -1372,7 +1372,7 @@ namespace ShutterManagement.Business.Services
                     return;
                 }
 
-                await AddComponentsToEstimate((Guid)windowProductData.ProductId,(Guid)windowProductData.WindowId, estimateId, windowProdcutDetailsForEstimates);
+                await AddComponentsToEstimate((Guid)windowProductData.ProductId,(Guid)windowProductData.WindowId, estimateId, windowProdcutDetailsForEstimates.Where(x=>x.WindowProdcutId == product).ToList());
                 if (!string.IsNullOrEmpty(Message))
                 {
                     return;
@@ -1468,7 +1468,7 @@ namespace ShutterManagement.Business.Services
                     return; // Return early if component data not found
                 }
                 //expressionList.Add(Guid.Parse(componentData.PricingExpression ?? ""));
-                var componentPrice = windowProdcutDetailsForEstimates.Where(x => x.ComponentId == component.ComponentId).Select(x => x.Price).FirstOrDefault();
+                var componentPrice = windowProdcutDetailsForEstimates.Where(x => x.ComponentId == component.ComponentId && x.WindowId == WindowId).Select(x => x.Price).FirstOrDefault();
                 await AddComponentToEstimateWindow(componentData,WindowId, (Guid)component.ProductId, estimateId, componentPrice ?? 0.0m);
                 await AddComponentMaterialsToEstimate(componentData.ComponentId, estimateId,WindowId);
                 if (!string.IsNullOrEmpty(Message))

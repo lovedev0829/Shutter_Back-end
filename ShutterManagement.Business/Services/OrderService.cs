@@ -914,7 +914,6 @@ namespace ShutterManagement.Business.Services
 
         private void AddJobDetails(OrderList e)
         {
-
             var jobdetails1 = (from j1 in dbContext.TblJobs
                                join j2 in dbContext.TblOrders on j1.JobId equals j2.JobId
                                join j3 in dbContext.TblAddresses on j1.AddressId equals j3.AddressId
@@ -1075,7 +1074,7 @@ namespace ShutterManagement.Business.Services
         {
             FileLogger.Log($"Adding product data for product {windowProductData.ProductId} to order...");
             var productData = (await productService.GetAll()).Where(x => x.ProductId == windowProductData.ProductId && x.IsDelete == false).FirstOrDefault();
-            var estimatePrice = estimateWindowProduct.GetAllQuerable().Where(x => x.EstimateId == estimateId && x.IsDelete == false).Select(x => x.Price).FirstOrDefault();
+            var estimatePrice = estimateWindowProduct.GetAllQuerable().Where(x => x.EstimateId.ToString() == estimateId.ToString() && x.WindowId.ToString() == windowProductData.WindowId.ToString() &&  x.ProductId.ToString() == windowProductData.ProductId.ToString() && x.IsDelete == false).Select(x => x.Price).FirstOrDefault();
             if (productData == null)
             {
                 Message = "Product " + AppConstant.NoDataFound;
