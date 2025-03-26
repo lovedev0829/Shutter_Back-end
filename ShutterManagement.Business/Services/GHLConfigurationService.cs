@@ -15,7 +15,7 @@ using ShutterManagement.Services;
 
 namespace ShutterManagement.Business.Services
 {
-    public class GHLConfigurationService : BaseRepository<ShutterDBContext, TblGhlconfiguration> , IGHLConfiguration
+    public class GHLConfigurationService : BaseRepository<ShutterDBContext, TblGhlconfiguration>, IGHLConfiguration
     {
         private readonly ClaimsProperty claimsProperty;
         private readonly GoHighLevelOAuthService goHighLevelOAuthService;
@@ -50,8 +50,8 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-               var IsGHLConfigurationTenantExist = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
-                if(IsGHLConfigurationTenantExist != null)
+                var IsGHLConfigurationTenantExist = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
+                if (IsGHLConfigurationTenantExist != null)
                 {
                     IsGHLConfigurationTenantExist.Apikey = gHLConfiguration.APIkey;
                     IsGHLConfigurationTenantExist.LocationId = gHLConfiguration.LocationId;
@@ -89,7 +89,7 @@ namespace ShutterManagement.Business.Services
 
 
         //This method is to get the GHL configuration...
-        public async  Task<IResponseVm<GetGHLConfiguration>> GetGHLConfigurations(string? code)
+        public async Task<IResponseVm<GetGHLConfiguration>> GetGHLConfigurations(string? code)
         {
             IResponseVm<GetGHLConfiguration> responseVm = new ResponseVm<GetGHLConfiguration>();
             try
@@ -104,21 +104,20 @@ namespace ShutterManagement.Business.Services
                         gHLConfiguration.AccessToken = res.Result.AccessToken;
                         gHLConfiguration.AccessExpirationtime = DateTime.Now.AddDays(1);
                         gHLConfiguration.RefreshExpirationtime = DateTime.Now.AddDays(365);
-                        Update(gHLConfiguration);
+                        await Update(gHLConfiguration);
                     }
-
                 }
                 responseVm.Data = new GetGHLConfiguration
                 {
-                   APIkey = gHLConfiguration?.Apikey??"",
-                   BaseAddress = gHLConfiguration?.BaseAddress??"",
-                   LocationId = gHLConfiguration?.LocationId??"",
-                   PipelineId = gHLConfiguration?.PipelineId ?? "",
-                   LastSync = gHLConfiguration?.LastSync ?? DateTime.Now,
-                   GeneratedToken= gHLConfiguration?.GeneratedToken ?? "",
+                    APIkey = gHLConfiguration?.Apikey ?? "",
+                    BaseAddress = gHLConfiguration?.BaseAddress ?? "",
+                    LocationId = gHLConfiguration?.LocationId ?? "",
+                    PipelineId = gHLConfiguration?.PipelineId ?? "",
+                    LastSync = gHLConfiguration?.LastSync ?? DateTime.Now,
+                    GeneratedToken = gHLConfiguration?.GeneratedToken ?? "",
                 };
                 responseVm.IsSuccess = true;
-                responseVm.Message= AppConstant.FetchSuccessMsg;
+                responseVm.Message = AppConstant.FetchSuccessMsg;
 
             }
             catch (Exception ex)
@@ -131,14 +130,14 @@ namespace ShutterManagement.Business.Services
 
         public async Task<IResponseVm<string>> GetOauthGHL()
         {
-            IResponseVm<string>  responseVm = new ResponseVm<string>();
+            IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
                 var res = goHighLevelOAuthService.GetAuthorizationUrl();
-                if(res != null)
+                if (res != null)
                 {
                     responseVm.IsSuccess = true;
-                    responseVm.Data= res;
+                    responseVm.Data = res;
                     responseVm.Message = "Authorization URL for Oauth2.0";
                 }
             }
@@ -147,6 +146,40 @@ namespace ShutterManagement.Business.Services
                 responseVm.Message += ex.Message;
             }
             return null;
+        }
+
+        public async Task<bool> CheckGHLConfiguration()
+        {
+            bool res = false;
+            var isExist = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
+            if (isExist != null)
+            {
+                if (isExist.AccessExpirationtime > DateTime.Now)
+                {
+                    if (isExist.RefreshExpirationtime > DateTime.Now)
+                    {
+                        return res =true;
+                    }
+                    else
+                    {
+                        return res = false;
+                    }
+                }
+                else
+                {
+                    var res1 = goHighLevelOAuthService.GetAccessToken(isExist.RefreshToken);
+                    if (res != null)
+                    {
+                        isExist.AccessExpirationtime = DateTime.Now.AddDays(1);
+                        isExist.RefreshExpirationtime = DateTime.Now.AddDays(365);
+                        isExist.RefreshToken = res1.Result.RefreshToken;
+                        isExist.AccessToken = res1.Result.AccessToken;
+                        await Update(isExist);
+                    }
+                }
+                return res = false;
+            }
+            return res;
         }
     }
 }

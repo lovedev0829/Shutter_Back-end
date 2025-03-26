@@ -44,48 +44,58 @@ namespace ShutterManagement.Stripe
 
         public string CreateCheckoutSession(PaymentRequest request, string currency = "usd")
         {
-
-            var sessionService = new SessionService();
-            var sessionOptions = new SessionCreateOptions
+            try
             {
-                PaymentMethodTypes = new List<string> { "card", "amazon_pay" },
-
-                CustomerEmail = request.CustomerEmail,
-
-                LineItems = new List<SessionLineItemOptions>
-        {
-            new SessionLineItemOptions
-            {
-                PriceData = new SessionLineItemPriceDataOptions
+                var sessionService = new SessionService();
+                var sessionOptions = new SessionCreateOptions
                 {
-                    Currency = currency,
-                    ProductData = new SessionLineItemPriceDataProductDataOptions
-                    {
-                        Name = request.ProductName,
-                    },
-                    UnitAmount = request.Amount,
-                },
-                Quantity = request.Quantity,
-
-            }
-        },
-                Mode = "payment",
-                SuccessUrl = AppConstant.Stripe_SuccessUrl,
-                CancelUrl = AppConstant.Stripe_CancelUrl,
-                Metadata = new Dictionary<string, string>
+                    PaymentMethodTypes = new List<string> { "card", "amazon_pay" },
+                    CustomerEmail = request.CustomerEmail,
+                    LineItems = new List<SessionLineItemOptions>
             {
-                { "db_InvoiceId", request?.InvoiceId??"" },
-                 { "db_TenantId",AppConstant.LoggedInTenantId.ToString()??""},
-                    { "db_PaymentId",request?.PaymentId??""}
-
+                new SessionLineItemOptions
+                {
+                    PriceData = new SessionLineItemPriceDataOptions
+                    {
+                        Currency = currency,
+                        ProductData = new SessionLineItemPriceDataProductDataOptions
+                        {
+                            Name = request.ProductName,
+                        },
+                        UnitAmount = request.Amount,
+                    },
+                    Quantity = request.Quantity,
+                }
+            },
+                    Mode = "payment",
+                    SuccessUrl = AppConstant.Stripe_SuccessUrl,
+                    CancelUrl = AppConstant.Stripe_CancelUrl,
+                    Metadata = new Dictionary<string, string>
+            {
+                { "db_InvoiceId", request?.InvoiceId ?? "" },
+                { "db_TenantId", AppConstant.LoggedInTenantId.ToString() ?? "" },
+                { "db_PaymentId", request?.PaymentId ?? "" }
             }
-            };
+                };
 
-            var session = sessionService.Create(sessionOptions);
-            FileLogger.Log($"Stripe configuration updated successfully AppConstant.Stripe_SecretKey {session.Url}.");
-            return session.Url;
-            
+                var session = sessionService.Create(sessionOptions);
+                FileLogger.Log($"Stripe Checkout Session Created Successfully: {session.Url}");
+                return session.Url;
+            }
+            catch (StripeException stripeEx)
+            {
+                
+                FileLogger.Log($"Stripe Error: {stripeEx.StripeError.Message} (Code: {stripeEx.StripeError.Code})");
+                return $"Error: {stripeEx.StripeError.Message}";
+            }
+            catch (Exception ex)
+            {
+                // Log unexpected errors
+                FileLogger.Log($"Unexpected Error: {ex.Message}");
+                return "Error: Unable to process the payment request.";
+            }
         }
+
 
         //// Method to create a Payment Intent
         //public PaymentIntent CreatePaymentIntent(long amount, string currency = "usd")

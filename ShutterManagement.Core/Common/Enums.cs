@@ -104,6 +104,20 @@ namespace ShutterManagement.Core.Common
         Paid
     }
 
+    public enum EmailTemplateType
+    {
+        [EnumMember(Value = "WelcomeEmail")]
+        WelcomeEmail,
+        [EnumMember(Value = "EstimatePDF")]
+        EstimatePDF,
+        [EnumMember(Value = "InvoicePDF")]
+        InvoicePDF,
+        [EnumMember(Value = "PaymentConfirmation")]
+        PaymentConfirmation,
+       
+    }
+
+
 
 
     public enum VendorOrderStatus

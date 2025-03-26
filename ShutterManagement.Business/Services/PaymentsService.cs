@@ -16,18 +16,20 @@ using ShutterManagement.Stripe;
 using Stripe;
 using System.Xml.Linq;
 using Azure;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace ShutterManagement.Business.Services
 {
 
     public class PaymentsService : BaseRepository<ShutterDBContext, TblPayment>, IPaymentsService
     {
+        #region Private Fields
         private readonly ITenantService tenantService;
         private readonly IInvoiceService invoiceService;
         private readonly StripeService stripeService;
         private readonly IOrderService orderService;
         public Pagination filter = new Pagination();
-
+        #endregion Private Fields
         public PaymentsService(ITenantService tenantService ,IInvoiceService invoiceService 
             ,StripeService stripeService ,IOrderService orderService)
         {
@@ -401,7 +403,7 @@ namespace ShutterManagement.Business.Services
 
         #endregion Get_All_Payments
 
-        #region UpdatePayment
+        #region UpdatePayment details
         public async Task<IResponseVm<string>> UpdatePayment(UpdatePayments updatePayment)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
@@ -409,84 +411,33 @@ namespace ShutterManagement.Business.Services
             using var transaction = await dbContext.Database.BeginTransactionAsync();
             try
             {
-                var isTenantValid = await tenantService.AnyAsync(x =>
-                    x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
-
-                if (!isTenantValid)
+                if (!await IsTenantValid())
                 {
                     responseVm.IsSuccess = false;
                     responseVm.Message = AppConstant.TenantNotFound;
                     return responseVm;
                 }
-
-                var payment = GetAllQuerable()
-                    .FirstOrDefault(c => c.PaymentId == updatePayment.PaymentId
-                                         && c.TenantId == AppConstant.LoggedInTenantId
-                                         && c.IsDelete == false);
-
+                var payment = GetPaymentById(updatePayment.PaymentId);
                 if (payment == null)
-                {
-                    responseVm.IsSuccess = false;
-                    responseVm.Message = AppConstant.NoDataFound;
-                    return responseVm;
-                }
+                    return  await GetErrorResponse(responseVm, AppConstant.NoDataFound);
 
-                var invoice = invoiceService.GetAllQuerable()
-                    .FirstOrDefault(i => i.InvoiceId == payment.InvoiceId && i.IsActive == true);
-
+                var invoice = GetInvoiceById(payment.InvoiceId);
                 if (invoice == null)
-                {
-                    responseVm.IsSuccess = false;
-                    responseVm.Message = "Invoice not found.";
-                    await transaction.RollbackAsync();
-                    return responseVm;
-                }
+                    return await GetErrorResponse(responseVm, "Invoice not found.", transaction);
 
                 if (updatePayment.Amount > invoice.BalanceDue)
-                {
-                    responseVm.IsSuccess = false;
-                    responseVm.Message = "Please enter an amount equal to or less than balance due.";
-                    await transaction.RollbackAsync();
-                    return responseVm;
-                }
-
-                payment.TransactionId = updatePayment.TransactionId?.Trim();
-                payment.PaymentDate = updatePayment.PaymentDate;
-                //payment.PaymentDueDate = updatePayment.PaymentDueDate;
-                payment.PaymentMethod = updatePayment.PaymentMethod;
-                payment.Amount = updatePayment.Amount;
-                payment.Status = EnumValue.GetEnumValue(updatePayment.PaymentStatus);
-                payment.Notes = updatePayment.Notes;
-                payment.UpdatedAt = DateTime.Now;
-                payment.ModifiedBy = AppConstant.LoggedInUserID;
+                    return await GetErrorResponse(responseVm, "Please enter an amount equal to or less than balance due.", transaction);
 
 
+                UpdatePaymentDetails(payment, updatePayment);
                 await Update(payment);
 
                 if (updatePayment.PaymentStatus == PaymentStatus.Paid)
                 {
-                    
-                    invoice.PaidAmount += updatePayment.Amount ?? 0;
-                    invoice.BalanceDue = invoice.TotalAmount - invoice.PaidAmount;
-                    invoice.Status = EnumValue.GetEnumValue(PaymentStatus.Paid);
-                    invoice.UpdatedAt = DateTime.Now;
-                    invoice.ModifiedBy = AppConstant.LoggedInUserID;
-                    await invoiceService.Update(invoice);
+                    await UpdateInvoicePayment(invoice, updatePayment);
+                   // await UpdateOrderPayment(invoice, updatePayment);
 
-                    var invoivedetail = invoiceService.GetAllQuerable().Where(x => x.InvoiceId == updatePayment.InvoiceId).FirstOrDefault();
-                    var job = dbContext.TblJobs.Where(x => x.JobId == invoivedetail.JobId).FirstOrDefault();
-                    var customerDetails = dbContext.TblContacts.Where(x => x.ContactId == job.ContactId).FirstOrDefault();
-
-                    var orderdetails = orderService.GetAllQuerable().Where(x => x.EstimateId == invoivedetail.EstimateId).FirstOrDefault();
-                    if (orderdetails != null)
-                    {
-                        orderdetails.PaidAmount += updatePayment.Amount ?? 0;
-                        orderdetails.BalanceDue = orderdetails.GrandTotal - orderdetails.PaidAmount;
-                        orderdetails.UpdatedAt = DateTime.Now;
-                        orderdetails.ModifiedBy = AppConstant.LoggedInUserID;
-                        await orderService.Update(orderdetails);
-                    }
-
+                    var customerDetails = GetCustomerDetails(invoice.InvoiceId);
                     SendPaymentConfirmationEmail(
                         customerDetails?.Email,
                         customerDetails?.FirstName ?? "",
@@ -494,25 +445,115 @@ namespace ShutterManagement.Business.Services
                         invoice?.InvoiceNumber ?? "",
                         updatePayment.Amount ?? 0,
                         invoice.BalanceDue
-                        );
+                    );
                 }
-                await transaction.CommitAsync();
 
+                await transaction.CommitAsync();
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.UpdateSuccessMsg;
             }
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-
                 responseVm.IsSuccess = false;
-                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+                responseVm.Message = $"{AppConstant.ExceptionError} {ex.Message}";
             }
 
             return responseVm;
         }
+     
 
-        #endregion UpdatePayment
+
+        private async Task<bool> IsTenantValid()
+        {
+            return await tenantService.AnyAsync(x =>
+                x.TenantId == AppConstant.LoggedInTenantId && x.IsActive==true && x.IsDelete==false);
+        }
+
+
+        private TblPayment GetPaymentById(Guid? paymentId)
+        {
+            return GetAllQuerable().FirstOrDefault(c =>
+                c.PaymentId == paymentId &&
+                c.TenantId == AppConstant.LoggedInTenantId &&
+                c.IsDelete==false);
+        }
+
+        private TblInvoice GetInvoiceById(Guid? invoiceId)
+        {
+            return invoiceService.GetAllQuerable().FirstOrDefault(i => i.InvoiceId == invoiceId && i.IsActive==true);
+        }
+
+        private void UpdatePaymentDetails(TblPayment payment, UpdatePayments updatePayment)
+        {
+            payment.TransactionId = updatePayment.TransactionId?.Trim();
+            payment.PaymentDate = updatePayment.PaymentDate;
+            payment.PaymentMethod = updatePayment.PaymentMethod;
+            payment.Amount = updatePayment.Amount;
+            payment.Status = EnumValue.GetEnumValue(updatePayment.PaymentStatus);
+            payment.Notes = updatePayment.Notes;
+            payment.UpdatedAt = DateTime.Now;
+            payment.ModifiedBy = AppConstant.LoggedInUserID;
+        }
+
+ 
+        private async Task UpdateInvoicePayment(TblInvoice invoice, UpdatePayments updatePayment)
+        {
+            invoice.PaidAmount += updatePayment.Amount ?? 0;
+            invoice.BalanceDue = invoice.TotalAmount - invoice.PaidAmount;
+            invoice.Status = EnumValue.GetEnumValue(PaymentStatus.Paid);
+            invoice.UpdatedAt = DateTime.Now;
+            invoice.ModifiedBy = AppConstant.LoggedInUserID;
+
+            await invoiceService.Update(invoice);
+        }
+
+        //private async Task UpdateOrderPayment(TblInvoice invoice, UpdatePayments updatePayment)
+        //{
+        //    var order = orderService.GetAllQuerable()
+        //        .FirstOrDefault(x => x.EstimateId == invoice.EstimateId);
+
+        //    if (order == null) return;
+
+        //    if (order.BalanceDue == 0)
+        //    {
+        //        order.ExtraBalance += updatePayment.Amount ?? 0;
+
+        //    }
+        //    else
+        //    {
+        //        order.PaidAmount += updatePayment.Amount ?? 0;
+        //        order.BalanceDue = Math.Round(order.GrandTotal ?? 0, 2) - Math.Round(order.PaidAmount ?? 0, 2);
+        //    }
+
+        //    order.UpdatedAt = DateTime.Now;
+        //    order.ModifiedBy = AppConstant.LoggedInUserID;
+
+        //    await orderService.Update(order);
+        //}
+
+        private TblContact GetCustomerDetails(Guid invoiceId)
+        {
+            var invoiceDetail = invoiceService.GetAllQuerable().FirstOrDefault(x => x.InvoiceId == invoiceId);
+            var job = dbContext.TblJobs.FirstOrDefault(x => x.JobId == invoiceDetail.JobId);
+            return dbContext.TblContacts.FirstOrDefault(x => x.ContactId == job.ContactId);
+        }
+
+        /// <summary>
+        /// Returns an error response and rolls back the transaction if provided.
+        /// </summary>
+        private async Task<IResponseVm<string>> GetErrorResponse(IResponseVm<string> responseVm, string message, IDbContextTransaction transaction = null)
+        {
+            responseVm.IsSuccess = false;
+            responseVm.Message = message;
+
+            if (transaction != null)
+                await transaction.RollbackAsync();
+
+            return responseVm;
+        }
+
+        #endregion UpdatePayment details
 
         #region Get_Payment_Details
         public async Task<IResponseVm<StripePaymentVm>> GetPaymentDetails(string Tranjectionid, string PaymentId)
@@ -579,91 +620,58 @@ namespace ShutterManagement.Business.Services
             {
                 if (EstimateId == null || EstimateId == Guid.Empty)
                 {
-                    responseVm.IsSuccess = false;
-                    responseVm.Message = "Invalid Estimate ID.";
-                    return responseVm;
+                    return GenerateErrorResponse("Invalid Estimate ID.");
                 }
 
-                var estimate = dbContext.TblOrders
-                    .Where(e => e.EstimateId == EstimateId && e.IsDelete == false && e.Status == EnumValue.GetEnumValue(Estimation.Approved))
+                var LatestOrder = dbContext.TblOrders
+                    .Where(e => e.EstimateId == EstimateId && e.IsDelete == false &&
+                                e.Status == EnumValue.GetEnumValue(Estimation.Approved))
                     .OrderByDescending(e => e.Version)
                     .ThenByDescending(e => e.CreatedAt)
                     .FirstOrDefault();
 
-                if (estimate == null)
+                if (LatestOrder == null)
                 {
-                    responseVm.IsSuccess = false;
-                    responseVm.Message = "No approved estimate found.";
-                    return responseVm;
+                    return GenerateErrorResponse("No approved estimate found.");
                 }
 
-                decimal totalOrderAmount = estimate.GrandTotal ?? 0;
-                decimal halfAmount = totalOrderAmount / 2;
+                var invoices = await GetInvoicesByEstimateId(EstimateId);
+                var payments = await GetPaymentsByInvoices(invoices);
 
-                var invoice = dbContext.TblInvoices
-                    .Where(x => x.EstimateId == EstimateId && x.IsActive == true && x.IsDelete == false)
-                    .FirstOrDefault();
+                decimal? invoiceSum = invoices.Sum(x => x.TotalAmount);
+                decimal totalOrderAmount = LatestOrder.GrandTotal ?? 0;
+                decimal totalPaidAmount = payments.Sum(p => p.Amount ?? 0);
 
-                decimal totalInvoiceAmount = 0;
-                decimal totalPayments = 0;
-                decimal dueBalance = 0;
+                bool isHalfPaymentMade = totalPaidAmount >= Math.Round(totalOrderAmount / 2, 2);
 
-                if (invoice != null)
-                {
-                    totalInvoiceAmount = invoice.TotalAmount ?? 0;
 
-                    totalPayments = dbContext.TblPayments
-                        .Where(x => x.InvoiceId == invoice.InvoiceId && x.IsActive == true && x.IsDelete == false)
-                        .Sum(x => x.Amount ?? 0);
+                decimal dueBalance = isHalfPaymentMade
+                    ? totalOrderAmount - totalPaidAmount  
+                    : Math.Round(totalOrderAmount / 2, 2);
 
-                    dueBalance = totalInvoiceAmount - totalPayments;
-                }
+                dueBalance = Math.Max(dueBalance, 0);
 
-                var invoices = await invoiceService.GetAllInvoice(filter);
-                var filteredInvoices = invoices.Data?
-                    .Where(x =>x.EstimateId == EstimateId)
-                    .ToList() ?? new List<InvoiceVM>();
+               // decimal dueBalance = invoiceSum > 0 ? totalOrderAmount - totalPaidAmount : Math.Round(totalOrderAmount/2,2);
+                //decimal halfAmount = ? Math.Round(totalOrderAmount / 2, 2) : 0;
+                //decimal extraBalance = Math.Max(0, totalPaidAmount - totalOrderAmount);
 
-                var payments = await GetAllPayment(filter);
-
-                var invoiceIds = filteredInvoices.Select(i => i.InvoiceId).ToList();
-
-                var filteredPayments = payments.Data?
-                .Where(x => x.InvoiceId.HasValue && invoiceIds.Contains(x.InvoiceId.Value))
-                .ToList() ?? new List<PaymentsVM>();
-
-                var estimateAmountVm = new EstimateAmountVm
-                {
-                    TotalOrderAmount = totalOrderAmount,
-                    TotalInvoiceAmount = totalInvoiceAmount,
-                    TotalPaidAmount = totalPayments,
-                    DueBalance = totalOrderAmount - totalPayments,
-                    HalfAmount = halfAmount,
-                    Invoices = filteredInvoices.Select(x=> new InvoicePayment_VM
-                    {
-                        InvoiceId = x.InvoiceId ,
-                        BalanceDue = x.BalanceDue,
-                        ContactFirstName = x.ContactFirstName,
-                        ContactLastName = x.ContactLastName,
-                        DueDate = x.DueDate,
-                        EstimateId = x.EstimateId,
-                        EstimateName = x.EstimateName,
-                        InvoiceNumber = x.InvoiceNumber,
-                        IssueDate = x.IssueDate,
-                        PaidAmount = x.PaidAmount,
-                        Status = x.Status,
-                        TotalAmount = x.TotalAmount,
-                        
-                        Payments = filteredPayments.Where(y=>y.InvoiceId==x.InvoiceId).ToList(),
-                    }).ToList(),
-                };
-                
+                var estimateAmountVm = CreateEstimateAmountVm(
+                    totalOrderAmount,
+                    totalPaidAmount,
+                    dueBalance, 
+                    //halfAmount,
+                    //extraBalance,
+                    invoices,
+                    payments
+                );
 
                 responseVm.IsSuccess = true;
                 responseVm.Data = estimateAmountVm;
-                responseVm.Message = $"Total Order: {totalOrderAmount:C}, Invoice Total: {totalInvoiceAmount:C}, Payments Made: {totalPayments:C}, Due Balance: {totalOrderAmount - totalPayments:C}";
+                responseVm.Message = (dueBalance == 0)
+                    ? $"Payment has already been completed for Order {LatestOrder.OrderName}."
+                    : $"Total Order: {totalOrderAmount:C}, Payments Paid: {totalPaidAmount:C}, Due Balance: {dueBalance:C}";
 
-                FileLogger.Log($"Returning Total Order: {totalOrderAmount:C}, Invoice Total: {totalInvoiceAmount:C}, Payments Made: {totalPayments:C}, Due Balance: {totalOrderAmount - totalPayments:C}");
+                FileLogger.Log(responseVm.Message);
             }
             catch (Exception ex)
             {
@@ -672,6 +680,63 @@ namespace ShutterManagement.Business.Services
             }
 
             return responseVm;
+        }
+
+
+        private async Task<List<InvoiceVM>> GetInvoicesByEstimateId(Guid? estimateId)
+        {
+            var invoices = await invoiceService.GetAllInvoice(filter);
+            return invoices.Data?
+                .Where(x => x.EstimateId == estimateId)
+                .ToList() ?? new List<InvoiceVM>();
+        }
+
+        private async Task<List<PaymentsVM>> GetPaymentsByInvoices(List<InvoiceVM> invoices)
+        {
+            var invoiceIds = invoices.Select(i => i.InvoiceId).ToList();
+            var payments = await GetAllPayment(filter);
+            return payments.Data?
+                .Where(x => x.InvoiceId.HasValue && invoiceIds.Contains(x.InvoiceId.Value))
+                .ToList() ?? new List<PaymentsVM>();
+        }
+
+        private EstimateAmountVm CreateEstimateAmountVm(decimal totalOrderAmount, decimal totalPaidAmount, decimal dueBalance
+                                                        /*decimal halfAmount, decimal ExtraBalance*/, List<InvoiceVM> invoices, List<PaymentsVM> payments)
+        {
+            return new EstimateAmountVm
+            {
+                TotalOrderAmount = totalOrderAmount,
+                TotalInvoiceAmount = invoices.Sum(x => x.TotalAmount ?? 0),
+                TotalPaidAmount = totalPaidAmount,
+                DueBalance = dueBalance,
+                //HalfAmount = halfAmount,
+                //ExtraBalance= ExtraBalance,
+                Invoices = invoices.Select(x => new InvoicePayment_VM
+                {
+                    InvoiceId = x.InvoiceId,
+                    BalanceDue = x.BalanceDue,
+                    ContactFirstName = x.ContactFirstName,
+                    ContactLastName = x.ContactLastName,
+                    DueDate = x.DueDate,
+                    EstimateId = x.EstimateId,
+                    EstimateName = x.EstimateName,
+                    InvoiceNumber = x.InvoiceNumber,
+                    IssueDate = x.IssueDate,
+                    PaidAmount = x.PaidAmount,
+                    Status = x.Status,
+                    TotalAmount = x.TotalAmount,
+                    Payments = payments.Where(y => y.InvoiceId == x.InvoiceId).ToList(),
+                }).ToList(),
+            };
+        }
+
+        private IResponseVm<EstimateAmountVm> GenerateErrorResponse(string message)
+        {
+            return new ResponseVm<EstimateAmountVm>
+            {
+                IsSuccess = false,
+                Message = message
+            };
         }
 
         #endregion EstimateAmount
@@ -689,9 +754,9 @@ namespace ShutterManagement.Business.Services
 
                 FileLogger.Log($"Sending payment confirmation email. Tenant Details: {tenantDetails}");
 
-                Guid templateId = Guid.Parse("11B8D318-52A5-4060-BEAD-A69800B904CA");
+                //Guid templateId = Guid.Parse("11B8D318-52A5-4060-BEAD-A69800B904CA");
                 var invoiceTemplateValue = dbContext.TblTemplates
-                    .FirstOrDefault(c => c.TemplateId == templateId);
+                    .FirstOrDefault(c => c.TemplateCategory == EnumValue.GetEnumValue(EmailTemplateType.PaymentConfirmation));
 
                 if (invoiceTemplateValue == null)
                 {
