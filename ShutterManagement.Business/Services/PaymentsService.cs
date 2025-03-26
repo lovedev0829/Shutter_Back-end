@@ -508,29 +508,29 @@ namespace ShutterManagement.Business.Services
             await invoiceService.Update(invoice);
         }
 
-        private async Task UpdateOrderPayment(TblInvoice invoice, UpdatePayments updatePayment)
-        {
-            var order = orderService.GetAllQuerable()
-                .FirstOrDefault(x => x.EstimateId == invoice.EstimateId);
+        //private async Task UpdateOrderPayment(TblInvoice invoice, UpdatePayments updatePayment)
+        //{
+        //    var order = orderService.GetAllQuerable()
+        //        .FirstOrDefault(x => x.EstimateId == invoice.EstimateId);
 
-            if (order == null) return;
+        //    if (order == null) return;
 
-            if (order.BalanceDue == 0)
-            {
-                order.ExtraBalance += updatePayment.Amount ?? 0;
+        //    if (order.BalanceDue == 0)
+        //    {
+        //        order.ExtraBalance += updatePayment.Amount ?? 0;
 
-            }
-            else
-            {
-                order.PaidAmount += updatePayment.Amount ?? 0;
-                order.BalanceDue = Math.Round(order.GrandTotal ?? 0, 2) - Math.Round(order.PaidAmount ?? 0, 2);
-            }
+        //    }
+        //    else
+        //    {
+        //        order.PaidAmount += updatePayment.Amount ?? 0;
+        //        order.BalanceDue = Math.Round(order.GrandTotal ?? 0, 2) - Math.Round(order.PaidAmount ?? 0, 2);
+        //    }
 
-            order.UpdatedAt = DateTime.Now;
-            order.ModifiedBy = AppConstant.LoggedInUserID;
+        //    order.UpdatedAt = DateTime.Now;
+        //    order.ModifiedBy = AppConstant.LoggedInUserID;
 
-            await orderService.Update(order);
-        }
+        //    await orderService.Update(order);
+        //}
 
         private TblContact GetCustomerDetails(Guid invoiceId)
         {
