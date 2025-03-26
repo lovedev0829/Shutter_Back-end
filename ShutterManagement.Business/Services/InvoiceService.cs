@@ -875,7 +875,7 @@ namespace ShutterManagement.Business.Services
                     bool isStripeConfigured = !string.IsNullOrEmpty(AppConstant.Stripe_SecretKey) && IsStripeApiKeyValid();
                     bool isPaymentLinkGenerated = false;
 
-                    if (invoiceDetails.BalanceDue > 0)
+                    if (invoiceDetails.BalanceDue > 0 && IsStripeApiKeyValid())
                     {
                         TblPayment tblPayments = new TblPayment
                         {
