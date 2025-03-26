@@ -982,7 +982,7 @@ namespace ShutterManagement.Business.Services
                     responseVm.IsSuccess = true;
                     responseVm.Message = isStripeConfigured
                         ? "Invoice email sent successfully with payment link."
-                        : "Invoice email sent successfully, but Stripe credentials are missing. Payment link not included.";
+                        : "Invoice email sent successfully, but Stripe credentials are missing Or Invalid. Payment link not included.";
 
                     FileLogger.Log($"Invoice Email Status: {responseVm.Message}");
                     System.IO.File.Delete(InvicesavePath);
@@ -1258,13 +1258,13 @@ namespace ShutterManagement.Business.Services
                     return false;
                 }
 
-                StripeConfiguration.ApiKey = AppConstant.Stripe_SecretKey; // Set API Key
+                StripeConfiguration.ApiKey = AppConstant.Stripe_SecretKey;
 
                 var service = new BalanceService();
-                var balance = service.Get(); // A simple API call to check validity
+                var balance = service.Get(); 
 
                 FileLogger.Log("Stripe API Key validation successful.");
-                return true; // API key is valid
+                return true; 
             }
             catch (StripeException stripeEx)
             {
