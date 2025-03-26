@@ -62,6 +62,7 @@ namespace ShutterManagement.Core
         public static string NoUserFound { get; set; } = "No user found";
         public static string ExceptionError { get; set; } = "Server error. ";
         public static string InvoiceDownloadSuccessMsg { get; set; } = "Invoice Download successfully.. ";
+        public static string InvoicePaymentLinkandPDF { get; set; } = "Invoice Payment Link and PDF";
         public static string InvalidExcelFile { get; set; } = "Please import only CSV or Excel files.";
         public static string ParentTenantIdNull { get; set; } = "Need parent Tenant ID to create or update Sub Tenant.. ";
         public static string TenantIdNull { get; set; } = "Need Tenant ID to update Sub Tenant.. ";

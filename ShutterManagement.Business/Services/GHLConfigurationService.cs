@@ -97,7 +97,7 @@ namespace ShutterManagement.Business.Services
                    LocationId = gHLConfiguration?.LocationId??"",
                    PipelineId = gHLConfiguration?.PipelineId ?? "",
                    LastSync = gHLConfiguration?.LastSync ?? DateTime.Now,
-                   GeneratedToken= gHLConfiguration?.GeneratedToken,
+                   GeneratedToken= gHLConfiguration?.GeneratedToken ?? "",
                 };
                 responseVm.IsSuccess = true;
                 responseVm.Message= AppConstant.FetchSuccessMsg;

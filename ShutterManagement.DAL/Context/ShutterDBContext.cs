@@ -1459,6 +1459,9 @@ public partial class ShutterDBContext : DbContext
 
             entity.Property(e => e.TemplateId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.TemplateCategory)
+                .HasMaxLength(100)
+                .IsUnicode(false);
             entity.Property(e => e.TemplateName)
                 .HasMaxLength(200)
                 .IsUnicode(false);

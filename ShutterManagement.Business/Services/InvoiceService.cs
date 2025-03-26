@@ -150,15 +150,6 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.TenantNotFound;
                     return responseVm;
                 }
-                //var isInvoiceNumberExists = await AnyAsync(x =>
-                //  x.InvoiceNumber == model.InvoiceNumber && x.IsDelete == false && x.IsActive==true && x.TenantId == AppConstant.LoggedInTenantId);
-
-                //if (isInvoiceNumberExists)
-                //{
-                //    responseVm.IsSuccess = false;
-                //    responseVm.Message = "Invoice Number Already Exists.";
-                //    return responseVm;
-                //}
 
                 int Version = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt)
                .Select(p => (p.InvoiceNumber.Split("-", StringSplitOptions.RemoveEmptyEntries).Length == 3 ? Convert.ToInt32(p.InvoiceNumber.Split("-", StringSplitOptions.RemoveEmptyEntries)[2]) : 0)).FirstOrDefault();
@@ -328,8 +319,8 @@ namespace ShutterManagement.Business.Services
                                      join j in dbContext.TblJobs on i.JobId equals j.JobId
                                      join c in dbContext.TblContacts on j.ContactId equals c.ContactId
                                      join d in dbContext.TblEstimates on i.EstimateId equals d.EstimateId
-                                     join O in dbContext.TblOrders on i.EstimateId equals O.EstimateId
-                                     where i.IsDelete == false
+                                     let hasActiveOrder = dbContext.TblOrders.Any(o => o.EstimateId == i.EstimateId && o.IsActive == true)
+                                     where i.IsDelete == false && hasActiveOrder
                                      orderby i.CreatedAt descending
                                      select new InvoiceVM
                                      {
@@ -508,10 +499,10 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.AccessDenied;
                     return responseVm;
                 }
-                Guid? templateId = Guid.Parse("3A49D48B-CA1D-4E0E-9E1F-A22E7529EF47");
+               // Guid? templateId = Guid.Parse("3A49D48B-CA1D-4E0E-9E1F-A22E7529EF47");
 
                 var invoiceTemplate = dbContext.TblTemplates.FirstOrDefault(c =>
-                    c.TemplateId == templateId  &&
+                    c.TemplateCategory == EnumValue.GetEnumValue(EmailTemplateType.EstimatePDF)  &&
                     c.IsDelete == false);
 
                 if (invoiceTemplate == null)
@@ -763,10 +754,10 @@ namespace ShutterManagement.Business.Services
                 {
                     
 
-                    Guid? invoiceTemplateId = Guid.Parse("E9E279C4-1F54-476B-BCDF-778BD1634894");
+                    //Guid? invoiceTemplateId = Guid.Parse("E9E279C4-1F54-476B-BCDF-778BD1634894");
 
                     var invoiceForEmailTemplate = dbContext.TblTemplates.FirstOrDefault(c =>
-                        c.TemplateId == invoiceTemplateId &&
+                        c.TemplateCategory == EnumValue.GetEnumValue(EmailTemplateType.InvoicePDF) &&
                         c.IsDelete == false);
 
                    
@@ -992,7 +983,7 @@ namespace ShutterManagement.Business.Services
 
                     var emailSent = EmailHelper.SendEmailWithAttachment(
                         customerDetails.Email,
-                        "Invoice Payment Link and PDF",
+                        AppConstant.InvoicePaymentLinkandPDF,
                         emailBody,
                         new List<EmailAttachment> { emailAttachment }
                     );
