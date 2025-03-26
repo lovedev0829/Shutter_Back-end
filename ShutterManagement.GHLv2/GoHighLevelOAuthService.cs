@@ -5,12 +5,13 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using ShutterManagement.GHLv2;
 
 
 public class GoHighLevelOAuthService
 {
-    private const string AuthorizationUrl = "https://marketplace.gohighlevel.com/oauth/authorize";
-    private const string TokenUrl = "https://auth.gohighlevel.com/oauth/token";
+    private const string AuthorizationUrl = "https://marketplace.gohighlevel.com/oauth/chooselocation";
+    private const string TokenUrl = "https://services.leadconnectorhq.com/oauth/token";
     private const string RedirectUri = "https://localhost:44355/common/GenerateToken"; 
     private const string ClientId = "67e11c72c90a2f81200cc12a-m8mtsqrn";
     private const string ClientSecret = "c23af409-223c-48c1-a0d5-b1f25bbc2336";
@@ -28,10 +29,9 @@ public class GoHighLevelOAuthService
         var queryParams = new Dictionary<string, string>
         {
             { "client_id", ClientId },
-            { "client_secret", ClientSecret },
             { "redirect_uri", RedirectUri },
             { "response_type", "code" },
-            { "scope", "read write" } 
+            { "scope", "conversations/message.readonly conversations/message.write contacts.readonly contacts.write" } 
         };
 
         var queryString = string.Join("&", queryParams.Select(kvp => $"{kvp.Key}={Uri.EscapeDataString(kvp.Value)}"));
@@ -39,15 +39,15 @@ public class GoHighLevelOAuthService
     }
 
     // Step 2: Exchange the authorization code for an access token
-    public async Task<string> GetAccessToken(string authorizationCode)
+    public async Task<TokenResponse> GetRefreshToken(string authorizationCode)
     {
         var tokenRequest = new FormUrlEncodedContent(new Dictionary<string, string>
         {
             { "client_id", ClientId },              
             { "client_secret", ClientSecret },       
-            { "code", authorizationCode },          
+            { "code", authorizationCode },
             { "redirect_uri", RedirectUri },        
-            { "grant_type", "authorization_code" }  
+            { "grant_type", "authorization_code contacts.readonly" }  
         });
 
         var response = await _httpClient.PostAsync(TokenUrl, tokenRequest);
@@ -56,26 +56,42 @@ public class GoHighLevelOAuthService
         {
             var responseContent = await response.Content.ReadAsStringAsync();
             var tokenData = JsonConvert.DeserializeObject<TokenResponse>(responseContent);
-            return tokenData.AccessToken; 
+            return tokenData; 
+        }
+        else
+        {
+            var errorContent = await response.Content.ReadAsStringAsync();
+            return null;
+        }
+    }
+    // Step 3: Exchange the refreshtoken for an access token
+    public async Task<TokenResponse> GetAccessToken(string refreshtoken)
+    {
+        var tokenRequest = new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            { "client_id", ClientId },
+            { "client_secret", ClientSecret },
+            { "refresh_token", refreshtoken },
+            { "redirect_uri", RedirectUri },
+            { "grant_type", "refresh_token" }
+        });
+
+        var response = await _httpClient.PostAsync(TokenUrl, tokenRequest);
+
+        if (response.IsSuccessStatusCode)
+        {
+            var responseContent = await response.Content.ReadAsStringAsync();
+            var tokenData = JsonConvert.DeserializeObject<TokenResponse>(responseContent);
+            return tokenData;
         }
         else
         {
             var errorContent = await response.Content.ReadAsStringAsync();
             throw new Exception($"Error retrieving access token: {errorContent}");
+            return null;
         }
     }
 
-    private class TokenResponse
-    {
-        [JsonProperty("access_token")]
-        public string AccessToken { get; set; }
-
-        [JsonProperty("refresh_token")]
-        public string RefreshToken { get; set; }
-
-        [JsonProperty("expires_in")]
-        public int ExpiresIn { get; set; }
-    }
 
     //public class GoHighLevelApiService
     //{

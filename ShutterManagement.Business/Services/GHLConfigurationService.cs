@@ -18,12 +18,15 @@ namespace ShutterManagement.Business.Services
     public class GHLConfigurationService : BaseRepository<ShutterDBContext, TblGhlconfiguration> , IGHLConfiguration
     {
         private readonly ClaimsProperty claimsProperty;
+        private readonly GoHighLevelOAuthService goHighLevelOAuthService;
 
-        public GHLConfigurationService(ClaimsProperty claimsProperty)
+        public GHLConfigurationService(ClaimsProperty claimsProperty, GoHighLevelOAuthService goHighLevelOAuthService)
         {
             this.claimsProperty = claimsProperty;
+            this.goHighLevelOAuthService = goHighLevelOAuthService;
         }
 
+        //This method to set the GHLConfiguration in AppConstant...
         public async Task GetGHLConfiguration(string Id)
         {
             FileLogger.Log("details GHl ID: ", Id);
@@ -84,12 +87,27 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        public async  Task<IResponseVm<GetGHLConfiguration>> GetGHLConfiguration()
+
+        //This method is to get the GHL configuration...
+        public async  Task<IResponseVm<GetGHLConfiguration>> GetGHLConfigurations(string? code)
         {
             IResponseVm<GetGHLConfiguration> responseVm = new ResponseVm<GetGHLConfiguration>();
             try
             {
                 var gHLConfiguration = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
+                if (code != null)
+                {
+                    var res = goHighLevelOAuthService.GetRefreshToken(code);
+                    if (res != null)
+                    {
+                        gHLConfiguration.RefreshToken = res.Result.RefreshToken;
+                        gHLConfiguration.AccessToken = res.Result.AccessToken;
+                        gHLConfiguration.AccessExpirationtime = DateTime.Now.AddDays(1);
+                        gHLConfiguration.RefreshExpirationtime = DateTime.Now.AddDays(365);
+                        Update(gHLConfiguration);
+                    }
+
+                }
                 responseVm.Data = new GetGHLConfiguration
                 {
                    APIkey = gHLConfiguration?.Apikey??"",
@@ -109,6 +127,26 @@ namespace ShutterManagement.Business.Services
             }
             return responseVm;
 
+        }
+
+        public async Task<IResponseVm<string>> GetOauthGHL()
+        {
+            IResponseVm<string>  responseVm = new ResponseVm<string>();
+            try
+            {
+                var res = goHighLevelOAuthService.GetAuthorizationUrl();
+                if(res != null)
+                {
+                    responseVm.IsSuccess = true;
+                    responseVm.Data= res;
+                    responseVm.Message = "Authorization URL for Oauth2.0";
+                }
+            }
+            catch (Exception ex)
+            {
+                responseVm.Message += ex.Message;
+            }
+            return null;
         }
     }
 }

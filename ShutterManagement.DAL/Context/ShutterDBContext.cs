@@ -770,10 +770,14 @@ public partial class ShutterDBContext : DbContext
             entity.ToTable("TblGHLConfiguration", "dbo");
 
             entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.AccessExpirationtime).HasColumnType("datetime");
+            entity.Property(e => e.AccessToken).HasColumnName("Access_token");
             entity.Property(e => e.Apikey).HasColumnName("APIkey");
             entity.Property(e => e.LastSync)
                 .HasColumnType("datetime")
                 .HasColumnName("lastSync");
+            entity.Property(e => e.RefreshExpirationtime).HasColumnType("datetime");
+            entity.Property(e => e.RefreshToken).HasColumnName("Refresh_token");
         });
 
         modelBuilder.Entity<TblInvoice>(entity =>
@@ -1087,7 +1091,6 @@ public partial class ShutterDBContext : DbContext
 
             entity.Property(e => e.OrderId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.AdditionalCost).HasColumnType("decimal(10, 2)");
-            entity.Property(e => e.BalanceDue).HasColumnType("decimal(18, 0)");
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
             entity.Property(e => e.DiscountAmount).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.DiscountCoupon).HasMaxLength(200);
@@ -1096,7 +1099,6 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.GrandTotal).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.Notes).HasMaxLength(2000);
             entity.Property(e => e.OrderName).HasMaxLength(100);
-            entity.Property(e => e.PaidAmount).HasColumnType("decimal(18, 0)");
             entity.Property(e => e.Status)
                 .HasMaxLength(50)
                 .IsUnicode(false);
@@ -1205,6 +1207,9 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.PaymentDate).HasColumnType("datetime");
             entity.Property(e => e.PaymentDueDate).HasColumnType("datetime");
             entity.Property(e => e.PaymentMethod)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.PaymentTypeStatus)
                 .HasMaxLength(100)
                 .IsUnicode(false);
             entity.Property(e => e.Status)
@@ -1461,6 +1466,9 @@ public partial class ShutterDBContext : DbContext
 
             entity.Property(e => e.TemplateId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.TemplateCategory)
+                .HasMaxLength(100)
+                .IsUnicode(false);
             entity.Property(e => e.TemplateName)
                 .HasMaxLength(200)
                 .IsUnicode(false);

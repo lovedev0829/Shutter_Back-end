@@ -19,6 +19,7 @@ using System.Text.Json.Serialization;
 using System.Text.Json;
 using ShutterManagement.GHL.Services;
 using ShutterManagment.GHL.ViewModel.Response;
+using ShutterManagement.GHLv2;
 
 namespace ShutterManagement.Controllers
 {
@@ -820,22 +821,19 @@ namespace ShutterManagement.Controllers
         }
         [HttpGet]
         [Route("GoHighLevelAuthorization")]
-        [AllowAnonymous]
         public async Task<IActionResult> GoHighLevelAuthorization()
         {
-            var oauthService = new GoHighLevelOAuthService();
-            var authorizationUrl = oauthService.GetAuthorizationUrl();
-            // Console.WriteLine("Go to this URL to authenticate: " + authorizationUrl);
-            //return Redirect(authorizationUrl);
+            var authorizationUrl = gHLConfiguration.GetOauthGHL();
             return Ok(authorizationUrl);
-
         }
+
         [HttpGet]
         [Route("GetAuthorizationUrl")]
-        public async Task<IActionResult> GetAuthorizationUrl(string authorizationCode)
+        public async Task<IActionResult> GetAuthorizationUrl(string refreshtoken)
         {
             var oauthService = new GoHighLevelOAuthService();
-            var accessToken = await oauthService.GetAccessToken(authorizationCode);
+            TokenResponse accesstoken = new TokenResponse();
+            var accessToken = await oauthService.GetAccessToken(refreshtoken);
             Console.WriteLine("Access Token: " + accessToken);
             return Ok(accessToken);
 

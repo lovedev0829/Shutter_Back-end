@@ -52,8 +52,4 @@ public partial class TblOrder
     public Guid? TaxId { get; set; }
 
     public decimal? AdditionalCost { get; set; }
-
-    public decimal? PaidAmount { get; set; }
-
-    public decimal? BalanceDue { get; set; }
 }
