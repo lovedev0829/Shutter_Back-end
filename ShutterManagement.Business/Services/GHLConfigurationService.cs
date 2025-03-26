@@ -110,5 +110,15 @@ namespace ShutterManagement.Business.Services
             return responseVm;
 
         }
+
+        public async Task<bool> CheckGHLConfiguration()
+        {
+            var isExist = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
+            if(isExist != null)
+            {
+                return true;
+            }
+            return false;
+        }
     }
 }

@@ -38,7 +38,8 @@ namespace ShutterManagement.Business.Services
         private  string BaseUrl = AppConstant.GHL_BaseAddress;
 
         public JobService(ShutterDBContext context, ClaimsProperty claimsProperty, IAddress address,
-            ITenantService tenantService,INotificationService notification, IGHLConfiguration gHLConfiguration, GhlService ghlService,IContactService contact)
+            ITenantService tenantService,INotificationService notification, IGHLConfiguration gHLConfiguration,
+            GhlService ghlService,IContactService contact)
         {
             _context = context;
             this.claimsProperty = claimsProperty;
@@ -169,114 +170,117 @@ namespace ShutterManagement.Business.Services
 
             try
             {
-                FileLogger.Log($"Starting SyncOpportunitiesFromGhl process.");
-                using var client = new HttpClient();
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetApiKey());
-
-                var pipelineResponse = await ghlService.GetAllPipelinesWithStagesAsync();
-
-                if (pipelineResponse?.Pipelines == null || !pipelineResponse.Pipelines.Any())
+                if (await gHLConfiguration.CheckGHLConfiguration())
                 {
-                    FileLogger.Log("No pipelines found in GHL.");
-                    responseVm.IsSuccess = false;
-                    responseVm.Message = "No pipelines found.";
-                    return responseVm;
-                }
+                    FileLogger.Log($"Starting SyncOpportunitiesFromGhl process.");
+                    using var client = new HttpClient();
+                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetApiKey());
 
-                string userProvidedPipelineNameOrId = AppConstant.GHL_PipelineId; 
+                    var pipelineResponse = await ghlService.GetAllPipelinesWithStagesAsync();
 
-                var targetPipeline = pipelineResponse.Pipelines
-                    .FirstOrDefault(p => p.Id.Contains(userProvidedPipelineNameOrId) || p.Name.Contains(userProvidedPipelineNameOrId));
-
-
-                if (targetPipeline == null)
-                {
-                    FileLogger.Log($"Target pipeline '{userProvidedPipelineNameOrId}' not found.");
-                    responseVm.IsSuccess = false;
-                    responseVm.Message = "Target pipeline not found.";
-                    return responseVm;
-                }
-
-                FileLogger.Log($"Fetching opportunities from pipeline ID: {targetPipeline.Id}");
-
-                var url = $"{BaseUrl}pipelines/{targetPipeline.Id}/opportunities/";
-                var response = await client.GetAsync(url);
-                string responseBody = await response.Content.ReadAsStringAsync();
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    FileLogger.Log($"Error fetching opportunities. StatusCode: {response.StatusCode}, Response: {responseBody}");
-                    responseVm.IsSuccess = false;
-                    responseVm.Message = $"Error: {response.StatusCode}, Details: {responseBody}";
-                    return responseVm;
-                }
-
-                var ghlResponse = JsonConvert.DeserializeObject<GhlOpportunitiesResponse>(responseBody);
-                var opportunities = ghlResponse?.Opportunities ?? new List<Opportunity>();
-                FileLogger.Log($"Fetched {opportunities.Count} opportunities from GHL.");
-                foreach (var opportunity in opportunities)
-                {
-                    FileLogger.Log($"Processing opportunity ID: {opportunity.OpportunityId}, Name: {opportunity.Name}");
-                    var existingJob =  GetAllQuerable()
-                        .Where(x => x.GhlOpportunityId == opportunity.OpportunityId).FirstOrDefault();
-
-                    // Fetch job status dynamically from DB based on GHL stage
-                    var res = await GetGHLStages();
-                    var stage = res?.Data.Where(x=>x.GhlStageId==opportunity.PipelineStageId).FirstOrDefault();
-
-                    
-
-                    var contacts = await ghlService.GetContactsAsync();
-                    var contact = contacts.FirstOrDefault(c => c.id == opportunity.Contact?.Id);
-                    var dbcontact = _context.TblContacts.Where(x => x.GhlcontactId == contact.id).FirstOrDefault();
-                    var jobstatusId = _context.MstJobStatuses.Where(x => x.JobStatusName == opportunity.Status).Select(x => x.JobStatusId).FirstOrDefault();
-                    if(dbcontact==null)
+                    if (pipelineResponse?.Pipelines == null || !pipelineResponse.Pipelines.Any())
                     {
-                        FileLogger.Log($"Contact not found for GHL Contact ID: {contact?.id}");
+                        FileLogger.Log("No pipelines found in GHL.");
                         responseVm.IsSuccess = false;
-                        responseVm.Message = "Contact Not Found related GHl Contact id";
+                        responseVm.Message = "No pipelines found.";
                         return responseVm;
                     }
 
-                    if (existingJob != null)
-                    {
-                        FileLogger.Log($"Updating existing job: {existingJob.JobId} for opportunity ID: {opportunity.OpportunityId}");
+                    string userProvidedPipelineNameOrId = AppConstant.GHL_PipelineId;
 
-                        // Update existing job
-                        existingJob.JobName = opportunity.Name;
-                        existingJob.JobStatus = jobstatusId;
-                        existingJob.GhlContactId = contact?.id;
-                        existingJob.ContactId = dbcontact.ContactId;
-                        existingJob.GhlStageName = stage?.GhlStageName;
-                        existingJob.GhlStageId = Guid.Parse(opportunity.PipelineStageId);
-                        existingJob.UpdatedAt = DateTime.Now;
-                        existingJob.LastAsync = DateTime.Now;
-                        await Update(existingJob);
-                    }
-                    else
+                    var targetPipeline = pipelineResponse.Pipelines
+                        .FirstOrDefault(p => p.Id.Contains(userProvidedPipelineNameOrId) || p.Name.Contains(userProvidedPipelineNameOrId));
+
+
+                    if (targetPipeline == null)
                     {
-                        FileLogger.Log($"Creating new job for opportunity ID: {opportunity.OpportunityId}");
-                        var createJobModel = new CreateJob
-                        {
-                            ContactId= dbcontact?.ContactId,
-                            GHL_ContactId = opportunity.Contact?.Id,  
-                            GhlOpportunityId= opportunity.OpportunityId,  
-                            AddressId= dbcontact?.PrimaryAddress,  
-                            GHL_StageName= stage?.GhlStageName,  
-                            JobName = opportunity.Name?.Trim(),
-                            ScheduledDate = DateTime.Now,
-                            lastasync= DateTime.Now,
-                            Notes = "Synced from GHL",
-                            GHL_StageId = Guid.Parse(opportunity.PipelineStageId),
-                            
-                        };
-                        await Create(createJobModel);
+                        FileLogger.Log($"Target pipeline '{userProvidedPipelineNameOrId}' not found.");
+                        responseVm.IsSuccess = false;
+                        responseVm.Message = "Target pipeline not found.";
+                        return responseVm;
                     }
+
+                    FileLogger.Log($"Fetching opportunities from pipeline ID: {targetPipeline.Id}");
+
+                    var url = $"{BaseUrl}pipelines/{targetPipeline.Id}/opportunities/";
+                    var response = await client.GetAsync(url);
+                    string responseBody = await response.Content.ReadAsStringAsync();
+
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        FileLogger.Log($"Error fetching opportunities. StatusCode: {response.StatusCode}, Response: {responseBody}");
+                        responseVm.IsSuccess = false;
+                        responseVm.Message = $"Error: {response.StatusCode}, Details: {responseBody}";
+                        return responseVm;
+                    }
+
+                    var ghlResponse = JsonConvert.DeserializeObject<GhlOpportunitiesResponse>(responseBody);
+                    var opportunities = ghlResponse?.Opportunities ?? new List<Opportunity>();
+                    FileLogger.Log($"Fetched {opportunities.Count} opportunities from GHL.");
+                    foreach (var opportunity in opportunities)
+                    {
+                        FileLogger.Log($"Processing opportunity ID: {opportunity.OpportunityId}, Name: {opportunity.Name}");
+                        var existingJob = GetAllQuerable()
+                            .Where(x => x.GhlOpportunityId == opportunity.OpportunityId).FirstOrDefault();
+
+                        // Fetch job status dynamically from DB based on GHL stage
+                        var res = await GetGHLStages();
+                        var stage = res?.Data.Where(x => x.GhlStageId == opportunity.PipelineStageId).FirstOrDefault();
+
+
+
+                        var contacts = await ghlService.GetContactsAsync();
+                        var contact = contacts.FirstOrDefault(c => c.id == opportunity.Contact?.Id);
+                        var dbcontact = _context.TblContacts.Where(x => x.GhlcontactId == contact.id).FirstOrDefault();
+                        var jobstatusId = _context.MstJobStatuses.Where(x => x.JobStatusName == opportunity.Status).Select(x => x.JobStatusId).FirstOrDefault();
+                        if (dbcontact == null)
+                        {
+                            FileLogger.Log($"Contact not found for GHL Contact ID: {contact?.id}");
+                            responseVm.IsSuccess = false;
+                            responseVm.Message = "Contact Not Found related GHl Contact id";
+                            return responseVm;
+                        }
+
+                        if (existingJob != null)
+                        {
+                            FileLogger.Log($"Updating existing job: {existingJob.JobId} for opportunity ID: {opportunity.OpportunityId}");
+
+                            // Update existing job
+                            existingJob.JobName = opportunity.Name;
+                            existingJob.JobStatus = jobstatusId;
+                            existingJob.GhlContactId = contact?.id;
+                            existingJob.ContactId = dbcontact.ContactId;
+                            existingJob.GhlStageName = stage?.GhlStageName;
+                            existingJob.GhlStageId = Guid.Parse(opportunity.PipelineStageId);
+                            existingJob.UpdatedAt = DateTime.Now;
+                            existingJob.LastAsync = DateTime.Now;
+                            await Update(existingJob);
+                        }
+                        else
+                        {
+                            FileLogger.Log($"Creating new job for opportunity ID: {opportunity.OpportunityId}");
+                            var createJobModel = new CreateJob
+                            {
+                                ContactId = dbcontact?.ContactId,
+                                GHL_ContactId = opportunity.Contact?.Id,
+                                GhlOpportunityId = opportunity.OpportunityId,
+                                AddressId = dbcontact?.PrimaryAddress,
+                                GHL_StageName = stage?.GhlStageName,
+                                JobName = opportunity.Name?.Trim(),
+                                ScheduledDate = DateTime.Now,
+                                lastasync = DateTime.Now,
+                                Notes = "Synced from GHL",
+                                GHL_StageId = Guid.Parse(opportunity.PipelineStageId),
+
+                            };
+                            await Create(createJobModel);
+                        }
+                    }
+                    FileLogger.Log("Synchronization completed successfully.");
+                    responseVm.Data = opportunities;
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = "Synchronization completed successfully.";
                 }
-                FileLogger.Log("Synchronization completed successfully.");
-                responseVm.Data = opportunities;
-                responseVm.IsSuccess = true;
-                responseVm.Message = "Synchronization completed successfully.";
             }
             catch (Exception ex)
             {
@@ -289,38 +293,24 @@ namespace ShutterManagement.Business.Services
         }
         public async Task<IResponseVm<string>> UpdateOpportunityInGHLfromApp()
         {
-            IResponseVm<string> responseVm = new ResponseVm<string>();
-            try
-            {
-                FileLogger.Log("Starting UpdateOpportunityInGHLfromApp process.");
-
-                var getAppOpportunities = GetAllQuerable()
-                    .Where(x => x.TenantId == AppConstant.LoggedInTenantId)
-                    .ToList();
-
-                var ghlOpportunitiesResponse = await ghlService.GetOpportunitiesFromGhl();
-                var ghlOpportunities = ghlOpportunitiesResponse?.Data ?? new List<Opportunity>();
-
-                foreach (var opportunity in getAppOpportunities)
+          
+                IResponseVm<string> responseVm = new ResponseVm<string>();
+                try
                 {
-                    if (string.IsNullOrEmpty(opportunity.GhlOpportunityId))
-                    {
-                        var job = new TblJob
-                        {
-                            ContactId = opportunity.ContactId,
-                            JobName = opportunity.JobName,
-                            JobStatus = opportunity.JobStatus,
-                            GhlStageId = opportunity.GhlStageId
-                        };
+                if (await gHLConfiguration.CheckGHLConfiguration())
+                {
+                    FileLogger.Log("Starting UpdateOpportunityInGHLfromApp process.");
 
-                        var responseghl = await ghlService.CreateOpportunityInGhl(job);
-                        FileLogger.Log($"Created Opportunity in GHL: {responseghl.Message}, Success: {responseghl.IsSuccess}");
-                    }
-                    else
-                    {
-                        var existingGHLOpportunity = ghlOpportunities.FirstOrDefault(x => x.OpportunityId == opportunity.GhlOpportunityId);
+                    var getAppOpportunities = GetAllQuerable()
+                        .Where(x => x.TenantId == AppConstant.LoggedInTenantId)
+                        .ToList();
 
-                        if (existingGHLOpportunity != null)
+                    var ghlOpportunitiesResponse = await ghlService.GetOpportunitiesFromGhl();
+                    var ghlOpportunities = ghlOpportunitiesResponse?.Data ?? new List<Opportunity>();
+
+                    foreach (var opportunity in getAppOpportunities)
+                    {
+                        if (string.IsNullOrEmpty(opportunity.GhlOpportunityId))
                         {
                             var job = new TblJob
                             {
@@ -330,23 +320,41 @@ namespace ShutterManagement.Business.Services
                                 GhlStageId = opportunity.GhlStageId
                             };
 
-                            var responseghl = await UpdateOpportunityInGhl(job);
-                            FileLogger.Log($"Updated Opportunity in GHL: {responseghl.Message}, Success: {responseghl.IsSuccess}");
+                            var responseghl = await ghlService.CreateOpportunityInGhl(job);
+                            FileLogger.Log($"Created Opportunity in GHL: {responseghl.Message}, Success: {responseghl.IsSuccess}");
                         }
                         else
                         {
-                            FileLogger.Log($"Opportunity {opportunity.GhlOpportunityId} not found in GHL.Start deletion from App.");
-                            var res = await DeleteJob(opportunity.JobId.ToString());
-                            if(!res.IsSuccess)
+                            var existingGHLOpportunity = ghlOpportunities.FirstOrDefault(x => x.OpportunityId == opportunity.GhlOpportunityId);
+
+                            if (existingGHLOpportunity != null)
                             {
-                                FileLogger.Log($"Opportunity {opportunity.GhlOpportunityId} not found in GHL. But it's not deleted in App.");
+                                var job = new TblJob
+                                {
+                                    ContactId = opportunity.ContactId,
+                                    JobName = opportunity.JobName,
+                                    JobStatus = opportunity.JobStatus,
+                                    GhlStageId = opportunity.GhlStageId
+                                };
+
+                                var responseghl = await UpdateOpportunityInGhl(job);
+                                FileLogger.Log($"Updated Opportunity in GHL: {responseghl.Message}, Success: {responseghl.IsSuccess}");
+                            }
+                            else
+                            {
+                                FileLogger.Log($"Opportunity {opportunity.GhlOpportunityId} not found in GHL.Start deletion from App.");
+                                var res = await DeleteJob(opportunity.JobId.ToString());
+                                if (!res.IsSuccess)
+                                {
+                                    FileLogger.Log($"Opportunity {opportunity.GhlOpportunityId} not found in GHL. But it's not deleted in App.");
+                                }
                             }
                         }
                     }
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = "Opportunities synced successfully with GHL.";
                 }
-                responseVm.IsSuccess = true;
-                responseVm.Message = "Opportunities synced successfully with GHL.";
-            }
+                }
             catch (Exception ex)
             {
                 FileLogger.Log($"Exception in UpdateOpportunityInGHLfromApp: {ex.Message}");
@@ -363,114 +371,117 @@ namespace ShutterManagement.Business.Services
 
             try
             {
-                FileLogger.Log($"Starting SyncOpportunitiesFromGhl process.");
-                using var client = new HttpClient();
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetApiKey());
-
-                var pipelineResponse = await ghlService.GetAllPipelinesWithStagesAsync();
-
-                if (pipelineResponse?.Pipelines == null || !pipelineResponse.Pipelines.Any())
+                if (await gHLConfiguration.CheckGHLConfiguration())
                 {
-                    FileLogger.Log("No pipelines found in GHL.");
-                    responseVm.IsSuccess = false;
-                    responseVm.Message = "No pipelines found.";
-                    return responseVm;
-                }
+                    FileLogger.Log($"Starting SyncOpportunitiesFromGhl process.");
+                    using var client = new HttpClient();
+                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetApiKey());
 
-                string userProvidedPipelineNameOrId = AppConstant.GHL_PipelineId; 
+                    var pipelineResponse = await ghlService.GetAllPipelinesWithStagesAsync();
 
-                var targetPipeline = pipelineResponse.Pipelines
-                    .FirstOrDefault(p => p.Id.Contains(userProvidedPipelineNameOrId) || p.Name.Contains(userProvidedPipelineNameOrId));
-
-
-                if (targetPipeline == null)
-                {
-                    FileLogger.Log($"Target pipeline '{userProvidedPipelineNameOrId}' not found.");
-                    responseVm.IsSuccess = false;
-                    responseVm.Message = "Target pipeline not found.";
-                    return responseVm;
-                }
-
-                FileLogger.Log($"Fetching opportunities from pipeline ID: {targetPipeline.Id}");
-
-                var url = $"{AppConstant.GHL_BaseAddress}pipelines/{targetPipeline.Id}/opportunities/";
-                var response = await client.GetAsync(url);
-                string responseBody = await response.Content.ReadAsStringAsync();
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    FileLogger.Log($"Error fetching opportunities. StatusCode: {response.StatusCode}, Response: {responseBody}");
-                    responseVm.IsSuccess = false;
-                    responseVm.Message = $"Error: {response.StatusCode}, Details: {responseBody}";
-                    return responseVm;
-                }
-
-                var ghlResponse = JsonConvert.DeserializeObject<GhlOpportunitiesResponse>(responseBody);
-                var opportunities = ghlResponse?.Opportunities ?? new List<Opportunity>();
-                FileLogger.Log($"Fetched {opportunities.Count} opportunities from GHL.");
-                foreach (var opportunity in opportunities)
-                {
-                    FileLogger.Log($"Processing opportunity ID: {opportunity.OpportunityId}, Name: {opportunity.Name}");
-                    var existingJob =  GetAllQuerable()
-                        .Where(x => x.GhlOpportunityId == opportunity.OpportunityId).FirstOrDefault();
-
-                    // Fetch job status dynamically from DB based on GHL stage
-                    var res = await GetGHLStages();
-                    var stage = res?.Data.Where(x=>x.GhlStageId==opportunity.PipelineStageId).FirstOrDefault();
-
-                    
-
-                    var contacts = await ghlService.GetContactsAsync();
-                    var contact = contacts.FirstOrDefault(c => c.id == opportunity.Contact?.Id);
-                    var dbcontact = _context.TblContacts.Where(x => x.GhlcontactId == contact.id).FirstOrDefault();
-                    var jobstatusId = _context.MstJobStatuses.Where(x => x.JobStatusName == opportunity.Status).Select(x => x.JobStatusId).FirstOrDefault();
-                    if(dbcontact==null)
+                    if (pipelineResponse?.Pipelines == null || !pipelineResponse.Pipelines.Any())
                     {
-                        FileLogger.Log($"Contact not found for GHL Contact ID: {contact?.id}");
+                        FileLogger.Log("No pipelines found in GHL.");
                         responseVm.IsSuccess = false;
-                        responseVm.Message = "Contact Not Found related GHl Contact id";
+                        responseVm.Message = "No pipelines found.";
                         return responseVm;
                     }
 
-                    if (existingJob != null)
-                    {
-                        FileLogger.Log($"Updating existing job: {existingJob.JobId} for opportunity ID: {opportunity.OpportunityId}");
+                    string userProvidedPipelineNameOrId = AppConstant.GHL_PipelineId;
 
-                        // Update existing job
-                        existingJob.JobName = opportunity.Name;
-                        existingJob.JobStatus = jobstatusId;
-                        existingJob.GhlContactId = contact?.id;
-                        existingJob.ContactId = dbcontact.ContactId;
-                        existingJob.GhlStageName = stage?.GhlStageName;
-                        existingJob.GhlStageId = Guid.Parse(opportunity.PipelineStageId);
-                        existingJob.UpdatedAt = DateTime.Now;
-                        existingJob.LastAsync = DateTime.Now;
-                        await Update(existingJob);
-                    }
-                    else
+                    var targetPipeline = pipelineResponse.Pipelines
+                        .FirstOrDefault(p => p.Id.Contains(userProvidedPipelineNameOrId) || p.Name.Contains(userProvidedPipelineNameOrId));
+
+
+                    if (targetPipeline == null)
                     {
-                        FileLogger.Log($"Creating new job for opportunity ID: {opportunity.OpportunityId}");
-                        var createJobModel = new CreateJob
-                        {
-                            ContactId= dbcontact?.ContactId,
-                            GHL_ContactId = opportunity.Contact?.Id,  
-                            GhlOpportunityId= opportunity.OpportunityId,  
-                            AddressId= dbcontact?.PrimaryAddress,  
-                            GHL_StageName= stage?.GhlStageName,  
-                            JobName = opportunity.Name?.Trim(),
-                            ScheduledDate = DateTime.Now,
-                            lastasync= DateTime.Now,
-                            Notes = "Synced from GHL",
-                            GHL_StageId = Guid.Parse(opportunity.PipelineStageId),
-                            locationId = opportunity.locationId,
-                        };
-                        await Create(createJobModel);
+                        FileLogger.Log($"Target pipeline '{userProvidedPipelineNameOrId}' not found.");
+                        responseVm.IsSuccess = false;
+                        responseVm.Message = "Target pipeline not found.";
+                        return responseVm;
                     }
+
+                    FileLogger.Log($"Fetching opportunities from pipeline ID: {targetPipeline.Id}");
+
+                    var url = $"{AppConstant.GHL_BaseAddress}pipelines/{targetPipeline.Id}/opportunities/";
+                    var response = await client.GetAsync(url);
+                    string responseBody = await response.Content.ReadAsStringAsync();
+
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        FileLogger.Log($"Error fetching opportunities. StatusCode: {response.StatusCode}, Response: {responseBody}");
+                        responseVm.IsSuccess = false;
+                        responseVm.Message = $"Error: {response.StatusCode}, Details: {responseBody}";
+                        return responseVm;
+                    }
+
+                    var ghlResponse = JsonConvert.DeserializeObject<GhlOpportunitiesResponse>(responseBody);
+                    var opportunities = ghlResponse?.Opportunities ?? new List<Opportunity>();
+                    FileLogger.Log($"Fetched {opportunities.Count} opportunities from GHL.");
+                    foreach (var opportunity in opportunities)
+                    {
+                        FileLogger.Log($"Processing opportunity ID: {opportunity.OpportunityId}, Name: {opportunity.Name}");
+                        var existingJob = GetAllQuerable()
+                            .Where(x => x.GhlOpportunityId == opportunity.OpportunityId).FirstOrDefault();
+
+                        // Fetch job status dynamically from DB based on GHL stage
+                        var res = await GetGHLStages();
+                        var stage = res?.Data.Where(x => x.GhlStageId == opportunity.PipelineStageId).FirstOrDefault();
+
+
+
+                        var contacts = await ghlService.GetContactsAsync();
+                        var contact = contacts.FirstOrDefault(c => c.id == opportunity.Contact?.Id);
+                        var dbcontact = _context.TblContacts.Where(x => x.GhlcontactId == contact.id).FirstOrDefault();
+                        var jobstatusId = _context.MstJobStatuses.Where(x => x.JobStatusName == opportunity.Status).Select(x => x.JobStatusId).FirstOrDefault();
+                        if (dbcontact == null)
+                        {
+                            FileLogger.Log($"Contact not found for GHL Contact ID: {contact?.id}");
+                            responseVm.IsSuccess = false;
+                            responseVm.Message = "Contact Not Found related GHl Contact id";
+                            return responseVm;
+                        }
+
+                        if (existingJob != null)
+                        {
+                            FileLogger.Log($"Updating existing job: {existingJob.JobId} for opportunity ID: {opportunity.OpportunityId}");
+
+                            // Update existing job
+                            existingJob.JobName = opportunity.Name;
+                            existingJob.JobStatus = jobstatusId;
+                            existingJob.GhlContactId = contact?.id;
+                            existingJob.ContactId = dbcontact.ContactId;
+                            existingJob.GhlStageName = stage?.GhlStageName;
+                            existingJob.GhlStageId = Guid.Parse(opportunity.PipelineStageId);
+                            existingJob.UpdatedAt = DateTime.Now;
+                            existingJob.LastAsync = DateTime.Now;
+                            await Update(existingJob);
+                        }
+                        else
+                        {
+                            FileLogger.Log($"Creating new job for opportunity ID: {opportunity.OpportunityId}");
+                            var createJobModel = new CreateJob
+                            {
+                                ContactId = dbcontact?.ContactId,
+                                GHL_ContactId = opportunity.Contact?.Id,
+                                GhlOpportunityId = opportunity.OpportunityId,
+                                AddressId = dbcontact?.PrimaryAddress,
+                                GHL_StageName = stage?.GhlStageName,
+                                JobName = opportunity.Name?.Trim(),
+                                ScheduledDate = DateTime.Now,
+                                lastasync = DateTime.Now,
+                                Notes = "Synced from GHL",
+                                GHL_StageId = Guid.Parse(opportunity.PipelineStageId),
+                                locationId = opportunity.locationId,
+                            };
+                            await Create(createJobModel);
+                        }
+                    }
+                    FileLogger.Log("Synchronization completed successfully.");
+                    responseVm.Data = opportunities;
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = "Synchronization completed successfully.";
                 }
-                FileLogger.Log("Synchronization completed successfully.");
-                responseVm.Data = opportunities;
-                responseVm.IsSuccess = true;
-                responseVm.Message = "Synchronization completed successfully.";
             }
             catch (Exception ex)
             {
@@ -487,25 +498,28 @@ namespace ShutterManagement.Business.Services
             IResponseVm<List<PipelineAndStage>> responseVm = new ResponseVm<List<PipelineAndStage>>();
             try
             {
-                var gHLStages = dbContext.TblGhlStages
+                if (await gHLConfiguration.CheckGHLConfiguration())
+                {
+                    var gHLStages = dbContext.TblGhlStages
                     .Where(x => x.TenantId == AppConstant.LoggedInTenantId).OrderByDescending(x => x.CreatedAt)
                     .ToList();
 
-                var stageList = new List<PipelineAndStage>();
+                    var stageList = new List<PipelineAndStage>();
 
-                foreach (var stage in gHLStages)
-                {
-                    stageList.Add(new PipelineAndStage
+                    foreach (var stage in gHLStages)
                     {
-                        GhlPipelineId = stage.GhlPipelineId ?? "",
-                        GhlStageId = stage.GhlStageId ?? "",
-                        GhlStageName = stage.GhlStageName ?? ""
-                    });
-                }
+                        stageList.Add(new PipelineAndStage
+                        {
+                            GhlPipelineId = stage.GhlPipelineId ?? "",
+                            GhlStageId = stage.GhlStageId ?? "",
+                            GhlStageName = stage.GhlStageName ?? ""
+                        });
+                    }
 
-                responseVm.Data = stageList;
-                responseVm.IsSuccess = true;
-                responseVm.Message = AppConstant.FetchSuccessMsg;
+                    responseVm.Data = stageList;
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = AppConstant.FetchSuccessMsg;
+                }
             }
             catch (Exception ex)
             {
@@ -784,13 +798,16 @@ namespace ShutterManagement.Business.Services
                         responseVm.Message = AppConstant.InsertSuccessMsg;
                         if (responseVm.IsSuccess)
                         {
-                            if (model.GhlOpportunityId == null)
+                        if (model.GhlOpportunityId == null)
+                        {
+                            if (await gHLConfiguration.CheckGHLConfiguration())
                             {
                                 var responseghl = await ghlService.CreateOpportunityInGhl(job);
                                 FileLogger.Log($"Start: Creating CreateOpportunityInGhl : {responseghl.Message}");
                                 FileLogger.Log($"Start: Creating CreateOpportunityInGhl : {responseghl.IsSuccess}");
                                 FileLogger.Log($"Start: Creating CreateOpportunityInGhl : {responseghl.Data}");
                             }
+                        }
                         else
                         {
                             res.GhlOpportunityId = model.GhlOpportunityId;
@@ -1134,9 +1151,12 @@ namespace ShutterManagement.Business.Services
 
                         if (responseVm.IsSuccess && IsJobExist?.GhlOpportunityId != null)
                         {
-                            //authService.GetGHLConfiguration(model.locationId);
-                            var ghlUpdateResponse = await UpdateOpportunityInGhl(IsJobExist);
-                            FileLogger.Log($"GHL Sync: Job updated in GHL - {ghlUpdateResponse.Message}");
+                            if (await gHLConfiguration.CheckGHLConfiguration())
+                            {
+                                //authService.GetGHLConfiguration(model.locationId);
+                                var ghlUpdateResponse = await UpdateOpportunityInGhl(IsJobExist);
+                                FileLogger.Log($"GHL Sync: Job updated in GHL - {ghlUpdateResponse.Message}");
+                            }
                         }
                     }
                     else
