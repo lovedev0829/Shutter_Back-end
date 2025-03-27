@@ -170,7 +170,8 @@ namespace ShutterManagement.Business.Services
 
             try
             {
-                if (await gHLConfiguration.CheckGHLConfiguration())
+                var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration();
+                if (Checkghlresponse.IsSuccess)
                 {
                     FileLogger.Log($"Starting SyncOpportunitiesFromGhl process.");
                     using var client = new HttpClient();
@@ -297,7 +298,8 @@ namespace ShutterManagement.Business.Services
                 IResponseVm<string> responseVm = new ResponseVm<string>();
                 try
                 {
-                if (await gHLConfiguration.CheckGHLConfiguration())
+                var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration();
+                if (Checkghlresponse.IsSuccess)
                 {
                     FileLogger.Log("Starting UpdateOpportunityInGHLfromApp process.");
 
@@ -371,7 +373,8 @@ namespace ShutterManagement.Business.Services
 
             try
             {
-                if (await gHLConfiguration.CheckGHLConfiguration())
+                var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration();
+                if (Checkghlresponse.IsSuccess)
                 {
                     FileLogger.Log($"Starting SyncOpportunitiesFromGhl process.");
                     using var client = new HttpClient();
@@ -498,7 +501,8 @@ namespace ShutterManagement.Business.Services
             IResponseVm<List<PipelineAndStage>> responseVm = new ResponseVm<List<PipelineAndStage>>();
             try
             {
-                if (await gHLConfiguration.CheckGHLConfiguration())
+                var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration();
+                if (Checkghlresponse.IsSuccess)
                 {
                     var gHLStages = dbContext.TblGhlStages
                     .Where(x => x.TenantId == AppConstant.LoggedInTenantId).OrderByDescending(x => x.CreatedAt)
@@ -800,12 +804,17 @@ namespace ShutterManagement.Business.Services
                         {
                         if (model.GhlOpportunityId == null)
                         {
-                            if (await gHLConfiguration.CheckGHLConfiguration())
+                            var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration();
+                            if (Checkghlresponse.IsSuccess)
                             {
                                 var responseghl = await ghlService.CreateOpportunityInGhl(job);
                                 FileLogger.Log($"Start: Creating CreateOpportunityInGhl : {responseghl.Message}");
                                 FileLogger.Log($"Start: Creating CreateOpportunityInGhl : {responseghl.IsSuccess}");
                                 FileLogger.Log($"Start: Creating CreateOpportunityInGhl : {responseghl.Data}");
+                            }
+                            else
+                            {
+                                responseVm.Message = Checkghlresponse.Message;
                             }
                         }
                         else
@@ -1151,11 +1160,15 @@ namespace ShutterManagement.Business.Services
 
                         if (responseVm.IsSuccess && IsJobExist?.GhlOpportunityId != null)
                         {
-                            if (await gHLConfiguration.CheckGHLConfiguration())
-                            {
-                                //authService.GetGHLConfiguration(model.locationId);
+                            var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration();
+                            if (Checkghlresponse.IsSuccess)
+                            {  //authService.GetGHLConfiguration(model.locationId);
                                 var ghlUpdateResponse = await UpdateOpportunityInGhl(IsJobExist);
                                 FileLogger.Log($"GHL Sync: Job updated in GHL - {ghlUpdateResponse.Message}");
+                            }
+                            else
+                            {
+                                responseVm.Message = Checkghlresponse.Message;
                             }
                         }
                     }

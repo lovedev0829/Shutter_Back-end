@@ -262,14 +262,21 @@ namespace ShutterManagement.Business.Services
                         }
                         if (model.GHLContactId == null)
                         {
-                            if (await gHLConfigurationService.CheckGHLConfiguration())
+                            var Checkghlresponse = await gHLConfigurationService.CheckGHLConfiguration();
+                            if (Checkghlresponse.IsSuccess)
                             {
                                 var ghlResponse = await SyncWithGHL(res, model);
                                 if (!ghlResponse.IsSuccess)
                                 {
-                                    responseVm.Message = "Contact sync with GHL failed: " + ghlResponse.Message;
+                                    responseVm.Message = AppConstant.InsertSuccessMsg + ghlResponse.Message;
                                 }
                             }
+                            else
+                            {
+                                responseVm.Message = Checkghlresponse.Message;
+                            }
+                            return responseVm;
+                            
                         }
                         responseVm.IsSuccess = true;
                         responseVm.Message = AppConstant.InsertSuccessMsg;
@@ -511,11 +518,17 @@ namespace ShutterManagement.Business.Services
                             Referral = model.Referral ?? string.Empty,
                             GHLContactId = model.GHLContactId ?? string.Empty,
                         };
-                        if (await gHLConfigurationService.CheckGHLConfiguration())
+                        var Checkghlresponse = await gHLConfigurationService.CheckGHLConfiguration();
+                        if (Checkghlresponse.IsSuccess)
                         {
                             var ghlResponse = await SyncWithGHL(contact1, ghlContactAdd);
+                            responseVm.IsSuccess = true;
+                            responseVm.Message = Checkghlresponse.Message;
                         }
-
+                        else
+                         {
+                          responseVm.Message = Checkghlresponse.Message;
+                         }
                         responseVm.IsSuccess = true;
                         responseVm.Message = AppConstant.UpdateSuccessMsg;
                     }
@@ -995,7 +1008,8 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                if (await gHLConfigurationService.CheckGHLConfiguration())
+                var Checkghlresponse = await gHLConfigurationService.CheckGHLConfiguration();
+                if (Checkghlresponse.IsSuccess)
                 {
                     var getGHLContacts = await gHLService_V2.GetContactsAsync();
                     if (getGHLContacts != null)
