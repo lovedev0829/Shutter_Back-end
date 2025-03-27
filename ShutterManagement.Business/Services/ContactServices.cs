@@ -31,10 +31,12 @@ namespace ShutterManagement.Business.Services
         private readonly GhlService ghlService;
         private readonly IGHLConfiguration gHLConfigurationService;
         private readonly ITenantBrandingService tenantBranding;
+        private readonly GHLService_v2 gHLService_V2;
 
         public ContactServices(ShutterDBContext context, IContactBillingService billingService,
             ITenantService tenantService, ITaxExemption taxExemptionService,
-            ClaimsProperty claimsProperty, GhlService ghlService,IGHLConfiguration gHLConfigurationService,ITenantBrandingService tenantBranding)
+            ClaimsProperty claimsProperty, GhlService ghlService,IGHLConfiguration gHLConfigurationService,
+            ITenantBrandingService tenantBranding,GHLService_v2 gHLService_V2)
         {
             _context = context;
             this.billingService = billingService;
@@ -44,6 +46,7 @@ namespace ShutterManagement.Business.Services
             this.ghlService = ghlService;
             this.gHLConfigurationService = gHLConfigurationService;
             this.tenantBranding = tenantBranding;
+            this.gHLService_V2 = gHLService_V2;
         }
 
         public async Task<IResponseVm<string>> GetContactByEmailOrPhone(string email, string phone)
@@ -994,7 +997,7 @@ namespace ShutterManagement.Business.Services
             {
                 if (await gHLConfigurationService.CheckGHLConfiguration())
                 {
-                    var getGHLContacts = await ghlService.GetContactsAsync();
+                    var getGHLContacts = await gHLService_V2.GetContactsAsync();
                     if (getGHLContacts != null)
                     {
                         FileLogger.Log("GHL", getGHLContacts);
@@ -1040,9 +1043,16 @@ namespace ShutterManagement.Business.Services
                                     GHLContactId = existingContact.GhlcontactId ?? ""
                                 };
                                 FileLogger.Log("Updating Contact in application(GhlContactId).", existingContact.GhlcontactId);
-                                var res = await ghlService.UpdateContactAsync(ghlUpdatecontact.GHLContactId, ghlUpdatecontact);
-                                if (res.Contact == null)
-                                { FileLogger.Log("Exception occurred Updating Contact in application.", res); }
+                                var res = await gHLService_V2.UpdateContactAsync(ghlUpdatecontact.GHLContactId, ghlUpdatecontact);
+                                if (res == null)
+                                {
+                                    FileLogger.Log("Exception occurred: Response object is null.");
+                                }
+                                else if (res.Contact == null)
+                                {
+                                    FileLogger.Log("Exception occurred: Contact is null.", res);
+                                }
+
                             }
                         }
                         else if (existingContact == null)
@@ -1159,12 +1169,12 @@ namespace ShutterManagement.Business.Services
                     {
                         foreach (var contact in contactsToAddToGHL)
                         {
-                            if (contact.GHLContactId == null)
+                            if (contact?.GHLContactId == null)
                             {
 
                                 FileLogger.Log("Creating bulk Contact in GHL(GhlContactId).", contact);
-                                var res = await ghlService.CreateContactAsync(contact);
-                                if (res.Contact != null)
+                                var res = await gHLService_V2.CreateContactAsync(contact);
+                                if (res?.Contact != null)
                                 {
                                     var contactExist = (await GetAll()).Where(x => x.Email == contact.Email).FirstOrDefault();
                                     if (contactExist != null)
@@ -1175,14 +1185,14 @@ namespace ShutterManagement.Business.Services
                                     await Update(contactExist);
 
                                 }
-                                if (res.Contact == null)
+                                if (res?.Contact == null)
                                 { FileLogger.Log("Exception occurred Creating bulk Contact in GHL.", res); }
                             }
                             else
                             {
                                 FileLogger.Log("Updating Contact in GHL.", contact.GHLContactId);
                                 var res = await ghlService.UpdateContactAsync(contact.GHLContactId, contact);
-                                if (res.Contact == null)
+                                if (res?.Contact == null)
                                 { FileLogger.Log("Updating Contact in GHL.", contact.GHLContactId); }
 
                             }

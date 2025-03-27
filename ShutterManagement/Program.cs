@@ -22,6 +22,7 @@ using System.Text.Json;
 using ShutterManagement.GHL.Services;
 using ShutterManagement.Stripe;
 
+
 var builder = WebApplication.CreateBuilder(args);
 
 IConfiguration configuration= builder.Configuration;
@@ -177,6 +178,7 @@ builder.Services.AddScoped<GoHighLevelOAuthService>();
 // Add services to the DI container
 builder.Services.AddHttpClient<GhlService>(); // Register HttpClient for GhlService
 builder.Services.AddScoped<GhlService>(); // Register GhlService as a scoped dependency
+builder.Services.AddScoped<GHLService_v2>(); // Register GhlService as a scoped dependency
 builder.Services.AddSingleton(typeof(IConverter), new SynchronizedConverter(new PdfTools()));
 
 

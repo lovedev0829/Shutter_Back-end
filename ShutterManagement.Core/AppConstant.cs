@@ -113,8 +113,6 @@ namespace ShutterManagement.Core
         public static string GHL_Locationd { get; set; } = string.Empty;
         public static string GHL_RefreshToken { get; set; } = string.Empty;
         public static string GHL_AccessToken { get; set; } = string.Empty;
-
-
         //Stripe Configuration
 
         public static string Stripe_SecretKey { get; set; } = string.Empty;

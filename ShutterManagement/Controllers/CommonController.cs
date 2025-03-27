@@ -20,6 +20,7 @@ using System.Text.Json;
 using ShutterManagement.GHL.Services;
 using ShutterManagment.GHL.ViewModel.Response;
 using ShutterManagement.GHLv2;
+using System.Runtime.InteropServices;
 
 namespace ShutterManagement.Controllers
 {
@@ -63,6 +64,7 @@ namespace ShutterManagement.Controllers
         private readonly IStripeConfiguration stripeConfiguration;
         private readonly GhlService ghlService;
         private readonly IPaymentsService paymentsService;
+        private readonly GHLService_v2 gHLService_V2;
         private readonly IAuthService authService;
 
         public CommonController(IMasterCreate masterCreate, 
@@ -78,7 +80,7 @@ namespace ShutterManagement.Controllers
             ITaxRate taxService,IEstimateService estimateService, IAuthService authService,
             IEstimationBreakdownService estimationBreakdownService, ILocationService locationService,
            IDashboard dashboard, INotificationService notification, IGHLConfiguration gHLConfiguration,IStripeConfiguration stripeConfiguration,
-           GhlService ghlService ,IPaymentsService paymentsService)
+           GhlService ghlService ,IPaymentsService paymentsService ,GHLService_v2 gHLService_V2)
         {
             this.masterCreate = masterCreate;
             this.fileUpload = fileUpload;
@@ -125,6 +127,7 @@ namespace ShutterManagement.Controllers
             this.stripeConfiguration = stripeConfiguration;
             this.ghlService = ghlService;
             this.paymentsService = paymentsService;
+            this.gHLService_V2 = gHLService_V2;
         }
 
 
@@ -747,9 +750,11 @@ namespace ShutterManagement.Controllers
         [Route("SaveStageGHLToDB")]
         public async Task<IActionResult> GetPipeline()
         {
-            var pipelineData = await ghlService.GetAndSaveDefaultPipelineAndStage();
+            // var pipelineData = await ghlService.GetAndSaveDefaultPipelineAndStage();
+            await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInUserID.ToString());  
+            var pipelineData_v2 = await gHLService_V2.GetAllPipelinesWithStagesAsync();
 
-            if (pipelineData == null)
+            if (pipelineData_v2 == null)
             {
                 return NotFound("Pipeline not found");
             }
@@ -761,7 +766,7 @@ namespace ShutterManagement.Controllers
                 WriteIndented = true
             };
 
-            var json = JsonSerializer.Serialize(pipelineData, options);
+            var json = JsonSerializer.Serialize(pipelineData_v2, options);
             return Ok(json);
         }
 
@@ -788,7 +793,8 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> SyncAllData()
         {
             await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
-            var pipelineResult = await ghlService.GetAndSaveDefaultPipelineAndStage();
+            //var pipelineResult = await ghlService.GetAndSaveDefaultPipelineAndStage();
+            var pipelineResult = await gHLService_V2.GetAndSaveDefaultPipelineAndStage();
             var contact = await contactService.ContactSync();
             var opportunityResult = await jobService.SyncOpportunitiesFromGhl();
 
