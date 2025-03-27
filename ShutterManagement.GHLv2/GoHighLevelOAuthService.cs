@@ -31,7 +31,8 @@ public class GoHighLevelOAuthService
             { "client_id", ClientId },
             { "redirect_uri", RedirectUri },
             { "response_type", "code" },
-            { "scope", "conversations/message.readonly conversations/message.write contacts.readonly contacts.write" } 
+            { "scope", "conversations/message.readonly conversations/message.write contacts.readonly contacts.write opportunities.readonly opportunities.write calendars.readonly " +
+            "calendars.write calendars/events.readonly calendars/events.write calendars/groups.readonly calendars/groups.write calendars/resources.readonly calendars/resources.write users.readonly" } 
         };
 
         var queryString = string.Join("&", queryParams.Select(kvp => $"{kvp.Key}={Uri.EscapeDataString(kvp.Value)}"));

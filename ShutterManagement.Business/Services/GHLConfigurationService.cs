@@ -147,41 +147,56 @@ namespace ShutterManagement.Business.Services
             {
                 responseVm.Message += ex.Message;
             }
-            return null;
+            return responseVm;
         }
 
-        public async Task<bool> CheckGHLConfiguration()
+        public async Task<IResponseVm<string>> CheckGHLConfiguration()
         {
-            bool res = false;
-            var isExist = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
-            if (isExist != null)
+            IResponseVm<string> response = new ResponseVm<string>();
+            try
             {
-                if (isExist.AccessExpirationtime > DateTime.Now)
+                bool res = false;
+                var isExist = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
+                if (isExist != null)
                 {
-                    if (isExist.RefreshExpirationtime > DateTime.Now)
+                    if (isExist.AccessExpirationtime > DateTime.Now && isExist.RefreshExpirationtime > DateTime.Now)
                     {
-                        return res =true;
+                        response.IsSuccess = true;
+                        response.Message = "AccessToken and RefreshToken is valid.";
                     }
                     else
                     {
-                        return res = false;
+                        if(isExist.AccessExpirationtime > DateTime.Now)
+                        {
+                            var res1 = goHighLevelOAuthService.GetAccessToken(isExist.RefreshToken);
+                            if (res != null)
+                            {
+                                isExist.AccessExpirationtime = DateTime.Now.AddDays(1);
+                                isExist.RefreshExpirationtime = DateTime.Now.AddDays(365);
+                                isExist.RefreshToken = res1.Result.RefreshToken;
+                                isExist.AccessToken = res1.Result.AccessToken;
+                                await Update(isExist);
+                            }
+                            response.IsSuccess = true;
+                            response.Message = "AccessToken Generated.";
+                        }
+                        else if(isExist.RefreshExpirationtime > DateTime.Now)
+                        {
+                            response.IsSuccess = false;
+                            response.Message = "User need to verify GoHighLevelConfiguration.";
+                        }
                     }
                 }
                 else
                 {
-                    var res1 = goHighLevelOAuthService.GetAccessToken(isExist.RefreshToken);
-                    if (res != null)
-                    {
-                        isExist.AccessExpirationtime = DateTime.Now.AddDays(1);
-                        isExist.RefreshExpirationtime = DateTime.Now.AddDays(365);
-                        isExist.RefreshToken = res1.Result.RefreshToken;
-                        isExist.AccessToken = res1.Result.AccessToken;
-                        await Update(isExist);
-                    }
+                    response.IsSuccess = false;
                 }
-                return res = false;
             }
-            return res;
+            catch(Exception ex)
+            {
+                response.Message = ex.Message;
+            }
+            return response;
         }
     }
 }
