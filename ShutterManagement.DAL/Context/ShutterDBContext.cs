@@ -960,6 +960,8 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.JobScheduleId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
             entity.Property(e => e.EndDate).HasColumnType("datetime");
+            entity.Property(e => e.GhlEventId).HasColumnName("GHL_EventId");
+            entity.Property(e => e.LasSync).HasColumnType("datetime");
             entity.Property(e => e.StartDate).HasColumnType("datetime");
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
 

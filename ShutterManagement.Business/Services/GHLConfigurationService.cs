@@ -44,6 +44,8 @@ namespace ShutterManagement.Business.Services
                 AppConstant.LoggedInTenantId = details.TenantId;
                 AppConstant.GHL_AccessToken = details.AccessToken;
                 AppConstant.GHL_RefreshToken = details.RefreshToken;
+                AppConstant.GHL_CalendarName = details.CalendarName;
+                
             }
         }
 
@@ -60,6 +62,7 @@ namespace ShutterManagement.Business.Services
                     IsGHLConfigurationTenantExist.PipelineId = gHLConfiguration.PipelineId;
                     IsGHLConfigurationTenantExist.BaseAddress = gHLConfiguration.BaseAddress;
                     IsGHLConfigurationTenantExist.GeneratedToken = gHLConfiguration.GeneratedToken;
+                    IsGHLConfigurationTenantExist.CalendarName = gHLConfiguration.CalendarName;
 
                     var res = await Update(IsGHLConfigurationTenantExist);
                     responseVm.IsSuccess = true;
@@ -76,6 +79,7 @@ namespace ShutterManagement.Business.Services
                         TenantId = AppConstant.LoggedInTenantId,
                         LastSync = DateTime.Now,
                         GeneratedToken = gHLConfiguration.GeneratedToken,
+                        CalendarName = gHLConfiguration.CalendarName,
                     };
                     var res1 = await Add(tblGhlconfiguration);
                     responseVm.IsSuccess = true;
@@ -116,6 +120,7 @@ namespace ShutterManagement.Business.Services
                     LocationId = gHLConfiguration?.LocationId ?? "",
                     PipelineId = gHLConfiguration?.PipelineId ?? "",
                     LastSync = gHLConfiguration?.LastSync ?? DateTime.Now,
+                    CalendarName = gHLConfiguration.CalendarName ?? "",
                     GeneratedToken = gHLConfiguration?.GeneratedToken ?? "",
                 };
                 responseVm.IsSuccess = true;

@@ -496,40 +496,173 @@ namespace ShutterManagement.GHL.Services
             return responseVm;
         }
 
-        public class OpportunityResponse
-        {
-            [JsonProperty("id")]
-            public string OpportunityId { get; set; }
-
-            [JsonProperty("contact")]
-            public ContactInfo Contact { get; set; }
-        }
-
-        public class ContactInfo
-        {
-            [JsonProperty("id")]
-            public string ContactId { get; set; }
-
-            [JsonProperty("name")]
-            public string Name { get; set; }
-
-            [JsonProperty("companyName")]
-            public string CompanyName { get; set; }
-
-            [JsonProperty("email")]
-            public string Email { get; set; }
-
-            [JsonProperty("phone")]
-            public string Phone { get; set; }
-
-            [JsonProperty("tags")]
-            public List<string> Tags { get; set; }
-        }
-
-
-
-
         #endregion End Opportunity Related Methods
+
+
+        public async Task<GHLAppointmentResponse> CreateAppointmentAsync(GHLAppointmentAdd appointment)
+        {
+            try
+            {
+
+                var CalendarId = GetAppointmentsAsync().Result.Where(x => x.name.ToLower() == AppConstant.GHL_CalendarName.ToLower()).Select(x=> x.id).FirstOrDefault();
+                FileLogger.Log($"Base Address from Create Appointment: {AppConstant.GHL_BaseAddress}");
+
+                var contactData = new
+                {
+                    calendarId = CalendarId,
+                    contactId = appointment.contactId,
+                    startTime = appointment.startTime,
+                    locationId = appointment.locationId,
+                    endTime = appointment.endtime,
+                };
+
+                var requestUrl = $"{AppConstant.GHL_BaseAddress}/calendars/events/appointments";
+
+                // Create the HTTP client
+                using var httpClient = new HttpClient();
+
+                // Prepare the request content (serialized JSON)
+                var contactJson = JsonConvert.SerializeObject(contactData);
+                var content = new StringContent(contactJson, Encoding.UTF8, "application/json");
+
+                // Create the request message with necessary headers and set method to POST
+                using var requestMessage = new HttpRequestMessage(HttpMethod.Post, requestUrl)
+                {
+                    Content = content
+                };
+
+                // Set headers (authorization and versioning)
+                requestMessage.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
+                requestMessage.Headers.Add("Version", "2021-07-28");
+
+                var response = await httpClient.SendAsync(requestMessage);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorResponse = await response.Content.ReadAsStringAsync();
+                    FileLogger.Log($"Error: {response.StatusCode} - {errorResponse}");
+                    return null;
+                }
+
+                var jsonResponse = await response.Content.ReadAsStringAsync();
+                var appointmentResponse = JsonConvert.DeserializeObject<GHLAppointmentResponse>(jsonResponse);
+
+                return appointmentResponse;
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Log($"Exception in CreateAppointmentAsync: {ex.Message}");
+                return null;
+            }
+        }
+
+        public async Task<GHLAppointmentResponse> UpdateAppointmentAsync(string eventId ,GHLAppointmentAdd appointment)
+        {
+            try
+            {
+
+                var CalendarId = GetAppointmentsAsync().Result.Where(x => x.name.ToLower() == AppConstant.GHL_CalendarName.ToLower()).Select(x => x.id).FirstOrDefault();
+                FileLogger.Log($"Base Address from Create Appointment: {AppConstant.GHL_BaseAddress}");
+
+                var contactData = new
+                {
+                    calendarId = CalendarId,
+                    contactId = appointment.contactId,
+                    startTime = appointment.startTime,
+                    locationId = appointment.locationId,
+                    endTime = appointment.endtime,
+                };
+
+                var requestUrl = $"{AppConstant.GHL_BaseAddress}/calendars/events/appointments/{eventId}";
+
+                // Create the HTTP client
+                using var httpClient = new HttpClient();
+
+                // Prepare the request content (serialized JSON)
+                var contactJson = JsonConvert.SerializeObject(contactData);
+                var content = new StringContent(contactJson, Encoding.UTF8, "application/json");
+
+                // Create the request message with necessary headers and set method to POST
+                using var requestMessage = new HttpRequestMessage(HttpMethod.Post, requestUrl)
+                {
+                    Content = content
+                };
+
+                // Set headers (authorization and versioning)
+                requestMessage.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
+                requestMessage.Headers.Add("Version", "2021-07-28");
+
+                var response = await httpClient.SendAsync(requestMessage);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorResponse = await response.Content.ReadAsStringAsync();
+                    FileLogger.Log($"Error: {response.StatusCode} - {errorResponse}");
+                    return null;
+                }
+
+                var jsonResponse = await response.Content.ReadAsStringAsync();
+                var appointmentResponse = JsonConvert.DeserializeObject<GHLAppointmentResponse>(jsonResponse);
+
+                return appointmentResponse;
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Log($"Exception in CreateAppointmentAsync: {ex.Message}");
+                return null;
+            }
+        }
+
+        public async Task<List<Calendar>> GetAppointmentsAsync()
+        {
+            try
+            {
+                FileLogger.Log("Fetching Calendar:-");
+                // Construct the URL for the API request
+                var requestUrl = $"{AppConstant.GHL_BaseAddress}/calendars/?locationId={AppConstant.GHL_Locationd}";
+
+                // Create a new HttpRequestMessage with GET method
+                using var requestMessage = new HttpRequestMessage(HttpMethod.Get, requestUrl);
+
+                // Set the necessary headers (Authorization and Version)
+                requestMessage.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
+                requestMessage.Headers.Add("Version", "2021-07-28");
+
+                // Send the request using the _httpClient
+                HttpResponseMessage response = await _httpClient.SendAsync(requestMessage);
+
+                // Ensure the status code indicates success (200-299 range)
+                response.EnsureSuccessStatusCode();
+
+                // Read and parse the response content as a string
+                var json = await response.Content.ReadAsStringAsync();
+
+                // Deserialize the response to the GetGHLAppointment object
+                var result = System.Text.Json.JsonSerializer.Deserialize<GetGHLAppointment>(json, new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                });
+
+                return result.calendars ?? new List<Calendar>();
+            }
+            catch (HttpRequestException httpEx)
+            {
+                // Log HTTP-related exceptions (e.g., network errors, 4xx/5xx status codes)
+                FileLogger.Log($"HTTP Request error: {httpEx.Message}");
+                return new List<Calendar>();
+            }
+            catch (Exception ex)
+            {
+                // Catch any other exceptions that might occur
+                FileLogger.Log($"Unexpected error: {ex.Message}");
+                return new List<Calendar>();
+            }
+        }
+
+
     }
 }
 

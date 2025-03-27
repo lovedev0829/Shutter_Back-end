@@ -10,6 +10,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ShutterManagement.GHL.Services;
+using ShutterManagment.GHL.ViewModel.Request;
 
 namespace ShutterManagement.Business.Services
 {
@@ -18,11 +20,16 @@ namespace ShutterManagement.Business.Services
     {
         private readonly ITenantService tenantService;
         private readonly ClaimsProperty claimsProperty;
+        private readonly IGHLConfiguration gHLConfiguration;
+        private readonly GHLService_v2 gHLService_V2;
 
-        public JobScheduleService(ITenantService tenantService,ClaimsProperty claimsProperty)
+        public JobScheduleService(ITenantService tenantService,ClaimsProperty claimsProperty,
+            IGHLConfiguration gHLConfiguration,GHLService_v2 gHLService_V2)
         {
             this.tenantService = tenantService;
             this.claimsProperty = claimsProperty;
+            this.gHLConfiguration = gHLConfiguration;
+            this.gHLService_V2 = gHLService_V2;
         }
 
         public async Task<IResponseVm<string>> ActiveInActive(Guid JobScheduleId)
@@ -107,8 +114,40 @@ namespace ShutterManagement.Business.Services
                     IsActive = true,
                     IsDelete = false
                 };
-
                 var res = await Add(tblJobSchedule);
+
+                var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration();
+                await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
+                if (Checkghlresponse.IsSuccess)
+                {
+                    var contactId = dbContext.TblJobs.Where(x => x.JobId.ToString().ToLower() == res.JobId.ToString().ToLower() && x.IsDelete == true).Select(x => x.GhlContactId).FirstOrDefault();
+                    
+                    DateTime combinedStartDateTime = res.StartDate.Value.Date + res.DayEndDateTime.Value.ToTimeSpan();
+                    string formattedStartTime = combinedStartDateTime.ToString("yyyy-MM-ddTHH:mm:ss") + GetTimezoneOffset();
+                   
+                    DateTime combinedEndDateTime = res.EndDate.Value.Date + res.DayEndDateTime.Value.ToTimeSpan();
+                    string formattedEndTime = combinedStartDateTime.ToString("yyyy-MM-ddTHH:mm:ss") + GetTimezoneOffset();
+                    var appointment = new GHLAppointmentAdd
+                    {
+                        contactId = contactId,
+                        startTime = formattedStartTime,
+                        endtime = formattedEndTime,
+                        locationId = AppConstant.GHL_Locationd,
+                    };
+                    var ghlResponse = await gHLService_V2.CreateAppointmentAsync(appointment);
+                    if(ghlResponse != null)
+                    {
+                        res.GhlEventId = ghlResponse.appointment.id;
+                        res.LasSync = DateTime.Now;
+                        await Update(res);
+                    }
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = Checkghlresponse.Message;
+                }
+                else
+                {
+                    responseVm.Message = Checkghlresponse.Message;
+                }
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.InsertSuccessMsg;
 
@@ -285,10 +324,60 @@ namespace ShutterManagement.Business.Services
                 JobSchedule.ModifiedBy = AppConstant.LoggedInUserID;
 
                 await Update(JobSchedule);
+                var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration();
+                await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
+                if (Checkghlresponse.IsSuccess)
+                {
+                    if (JobSchedule.GhlEventId != null)
+                    {
 
-                responseVm.IsSuccess = true;
-                responseVm.Message = AppConstant.UpdateSuccessMsg;
-            }
+                        var contactId = dbContext.TblJobs.Where(x => x.JobId.ToString().ToLower() == JobSchedule.JobId.ToString().ToLower() && x.IsDelete == true).Select(x => x.GhlContactId).FirstOrDefault();
+
+                        DateTime combinedStartDateTime = JobSchedule.StartDate.Value.Date + JobSchedule.DayEndDateTime.Value.ToTimeSpan();
+                        string formattedStartTime = combinedStartDateTime.ToString("yyyy-MM-ddTHH:mm:ss") + GetTimezoneOffset();
+
+                        DateTime combinedEndDateTime = JobSchedule.EndDate.Value.Date + JobSchedule.DayEndDateTime.Value.ToTimeSpan();
+                        string formattedEndTime = combinedStartDateTime.ToString("yyyy-MM-ddTHH:mm:ss") + GetTimezoneOffset();
+                        var appointment = new GHLAppointmentAdd
+                        {
+                            contactId = contactId,
+                            startTime = formattedStartTime,
+                            endtime = formattedEndTime,
+                            locationId = AppConstant.GHL_Locationd,
+                        };
+                        var ghlResponse = await gHLService_V2.UpdateAppointmentAsync(JobSchedule.GhlEventId, appointment);
+                    }
+                    else
+                    {
+                        var contactId = dbContext.TblJobs.Where(x => x.JobId.ToString().ToLower() == JobSchedule.JobId.ToString().ToLower() && x.IsDelete == true).Select(x => x.GhlContactId).FirstOrDefault();
+
+                        DateTime combinedStartDateTime = JobSchedule.StartDate.Value.Date + JobSchedule.DayEndDateTime.Value.ToTimeSpan();
+                        string formattedStartTime = combinedStartDateTime.ToString("yyyy-MM-ddTHH:mm:ss") + GetTimezoneOffset();
+
+                        DateTime combinedEndDateTime = JobSchedule.EndDate.Value.Date + JobSchedule.DayEndDateTime.Value.ToTimeSpan();
+                        string formattedEndTime = combinedStartDateTime.ToString("yyyy-MM-ddTHH:mm:ss") + GetTimezoneOffset();
+                        var appointment = new GHLAppointmentAdd
+                        {
+                            contactId = contactId,
+                            startTime = formattedStartTime,
+                            endtime = formattedEndTime,
+                            locationId = AppConstant.GHL_Locationd,
+                        };
+                        var ghlResponse = await gHLService_V2.CreateAppointmentAsync(appointment);
+                        if (ghlResponse != null)
+                        {
+                            JobSchedule.GhlEventId = ghlResponse.appointment.id;
+                            JobSchedule.LasSync = DateTime.Now;
+                            await Update(JobSchedule);
+                        }
+                    }
+
+                }
+
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = AppConstant.UpdateSuccessMsg;
+                }
+            
             catch (Exception ex)
             {
                 responseVm.IsSuccess = false;
@@ -296,6 +385,13 @@ namespace ShutterManagement.Business.Services
             }
 
             return responseVm;
+        }
+
+        private string GetTimezoneOffset()
+        {
+            TimeZoneInfo localTimeZone = TimeZoneInfo.Local;
+            TimeSpan offset = localTimeZone.GetUtcOffset(DateTime.UtcNow);
+            return offset.ToString(@"hh\:mm"); 
         }
 
     }

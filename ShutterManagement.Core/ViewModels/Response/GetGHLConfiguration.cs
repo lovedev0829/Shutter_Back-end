@@ -14,5 +14,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? BaseAddress { get; set; }
         public DateTime? LastSync { get; set; }
         public string? GeneratedToken { get; set; }
+        public string? CalendarName { get; set; }
+    
     }
 }

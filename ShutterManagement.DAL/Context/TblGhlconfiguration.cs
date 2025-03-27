@@ -28,4 +28,6 @@ public partial class TblGhlconfiguration
     public DateTime? RefreshExpirationtime { get; set; }
 
     public DateTime? AccessExpirationtime { get; set; }
+
+    public string? CalendarName { get; set; }
 }

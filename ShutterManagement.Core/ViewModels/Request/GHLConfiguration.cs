@@ -19,5 +19,6 @@ namespace ShutterManagement.Core.ViewModels.Request
         public string? BaseAddress { get; set; }
         [Required]
         public string? GeneratedToken { get; set; }
+        public string? CalendarName { get; set; }
     }
 }
