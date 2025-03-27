@@ -42,6 +42,8 @@ namespace ShutterManagement.Business.Services
                 AppConstant.GHL_PipelineId = details.PipelineId;
                 AppConstant.GHL_Locationd = details.LocationId;
                 AppConstant.LoggedInTenantId = details.TenantId;
+                AppConstant.GHL_AccessToken = details.AccessToken;
+                AppConstant.GHL_RefreshToken = details.RefreshToken;
             }
         }
 
