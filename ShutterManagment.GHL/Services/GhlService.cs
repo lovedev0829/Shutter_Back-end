@@ -395,8 +395,8 @@ namespace ShutterManagement.GHL.Services
 
             try
             {
-                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetApiKey());
-                var endpoint = $"{AppConstant.GHL_BaseAddress}pipelines/{stage.GhlPipelineId}/opportunities/";
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
+                var endpoint = $"{AppConstant.GHL_BaseAddress}/pipelines/{stage.GhlPipelineId}/opportunities/";
                 var opportunityJson = JsonConvert.SerializeObject(opportunityData);
                 var content = new StringContent(opportunityJson, Encoding.UTF8, "application/json");
                 var response = await _httpClient.PostAsync(endpoint, content);

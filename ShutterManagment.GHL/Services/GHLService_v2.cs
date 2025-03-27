@@ -12,6 +12,7 @@ using ShutterManagement.Core.ViewModels.Response;
 using ShutterManagement.DAL.Context;
 using ShutterManagment.GHL.ViewModel.Request;
 using ShutterManagment.GHL.ViewModel.Response;
+using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Numerics;
 using System.Text;
@@ -275,39 +276,58 @@ namespace ShutterManagement.GHL.Services
         }
 
 
-        public async Task<GhlContactSingleResponse> CreateContactAsync(GhlContactAdd contact)
+        public async Task<GhlContactSingleResponse?> CreateContactAsync(GhlContactAdd contact)
         {
             try
             {
-                FileLogger.Log($"Base Address from CRete contact: {AppConstant.GHL_BaseAddress}");
+                if (contact == null)
+                {
+                    FileLogger.Log("CreateContactAsync: Contact object is null.");
+                    return null;
+                }
 
-                using var httpClient = new HttpClient();
+                if (string.IsNullOrEmpty(AppConstant.GHL_AccessToken))
+                {
+                    FileLogger.Log("CreateContactAsync: OAuth token is missing or invalid.");
+                    return null;
+                }
+
                 var contactData = new
                 {
                     firstName = contact.FirstName,
                     lastName = contact.LastName,
                     email = contact.Email,
                     phone = contact.Phone,
+                    locationId = AppConstant.GHL_Locationd,
+                    source = "public api",
+                    companyName = "Brain Technosys",
+                    assignedTo = "d8heZIvtIbd5OphFusfb",
+                    tags = new[] { "tag1", "tag2" },
+                    customFields = new[]
+                    {
+                new { id = "6dvNaf7VhkQ9snc5vnjJ", key = "my_custom_field", field_value = "9039160788" }
+            }
                 };
 
-                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
+                var requestUrl = $"{AppConstant.GHL_BaseAddress}/contacts";
                 var contactJson = JsonConvert.SerializeObject(contactData);
                 var content = new StringContent(contactJson, Encoding.UTF8, "application/json");
 
-                var url = $"{AppConstant.GHL_BaseAddress}contacts/";
+                using var httpClient = new HttpClient();
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
+                httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                httpClient.DefaultRequestHeaders.Add("Version", "2021-07-28");
 
-                var response = await httpClient.PostAsync(url, content);
+                HttpResponseMessage response = await httpClient.PostAsync(requestUrl, content);
+                string jsonResponse = await response.Content.ReadAsStringAsync();
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    FileLogger.Log($"Error: {response.StatusCode} - {await response.Content.ReadAsStringAsync()}");
+                    FileLogger.Log($"CreateContactAsync Error: {response.StatusCode} - {jsonResponse}");
                     return null;
                 }
 
-                var jsonResponse = await response.Content.ReadAsStringAsync();
-                var contactResponse = JsonConvert.DeserializeObject<GhlContactSingleResponse>(jsonResponse);
-
-                return contactResponse;
+                return JsonConvert.DeserializeObject<GhlContactSingleResponse>(jsonResponse);
             }
             catch (Exception ex)
             {
@@ -316,49 +336,67 @@ namespace ShutterManagement.GHL.Services
             }
         }
 
-
-        public async Task<GhlContactSingleResponse> UpdateContactAsync(string contactId, GhlContactAdd contact)
+        public async Task<GhlContactSingleResponse?> UpdateContactAsync(string contactId, GhlContactAdd contact)
         {
             try
             {
                 if (string.IsNullOrEmpty(contactId) || contact == null)
                 {
+                    FileLogger.Log("UpdateContactAsync: Invalid input. ContactId or Contact is null.");
                     return null;
                 }
-                using var httpClient = new HttpClient();
+
+                if (string.IsNullOrEmpty(AppConstant.GHL_AccessToken))
+                {
+                    FileLogger.Log("UpdateContactAsync: OAuth token is missing or invalid.");
+                    return null;
+                }
+
                 var contactData = new
                 {
                     firstName = contact.FirstName,
                     lastName = contact.LastName,
                     email = contact.Email,
-                    phone = contact.Phone
+                    phone = contact.Phone,
+                    locationId = AppConstant.GHL_Locationd, 
+                    source = "public api",
+                    companyName = "Brain Technosys",
+                    assignedTo = "d8heZIvtIbd5OphFusfb",
+                    tags = new[] { "tag1", "tag2" },
+                    customFields = new[]
+                    {
+                new { id = "6dvNaf7VhkQ9snc5vnjJ", key = "my_custom_field", field_value = "9039160788" }
+            }
                 };
 
-                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
+                var requestUrl = $"{AppConstant.GHL_BaseAddress}/contacts/{contactId}";
                 var contactJson = JsonConvert.SerializeObject(contactData);
                 var content = new StringContent(contactJson, Encoding.UTF8, "application/json");
 
-                var url = $"{AppConstant.GHL_BaseAddress}contacts/{contactId}";
+                using var httpClient = new HttpClient();
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
+                httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                httpClient.DefaultRequestHeaders.Add("Version", "2021-07-28");
 
-                var response = await httpClient.PutAsync(url, content);
+                HttpResponseMessage response = await httpClient.PutAsync(requestUrl, content);
+                string jsonResponse = await response.Content.ReadAsStringAsync();
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    FileLogger.Log($"Failed to update contact. Status code: {response.StatusCode}");
+                    FileLogger.Log($"UpdateContactAsync Error: {response.StatusCode} - {jsonResponse}");
                     return null;
                 }
 
-                var jsonResponse = await response.Content.ReadAsStringAsync();
-                var contactResponse = JsonConvert.DeserializeObject<GhlContactSingleResponse>(jsonResponse);
-
-                return contactResponse;
+                return JsonConvert.DeserializeObject<GhlContactSingleResponse>(jsonResponse);
             }
             catch (Exception ex)
             {
-                FileLogger.Log($"Error updating contact: {ex.Message}");
+                FileLogger.Log($"Exception in UpdateContactAsync: {ex.Message}");
                 return null;
             }
         }
+
+
 
         public string GetClientIpAddress()
         {
@@ -376,54 +414,65 @@ namespace ShutterManagement.GHL.Services
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
 
-            var res = await GetGHLStages();
-            var stage = res?.Data.FirstOrDefault();
-            if (stage == null)
-            {
-                responseVm.IsSuccess = false;
-                responseVm.Message = "No available pipeline stage found.";
-                return responseVm;
-            }
-            var IsContactExists = dBContext.TblContacts.Where(c => c.ContactId == job.ContactId && c.IsDelete == false).FirstOrDefault();
-
-            var opportunityData = new
-            {
-                title = job.JobName,
-                status = "open",
-                stageId = job.GhlStageId,
-                email = IsContactExists?.Email,
-                phone = IsContactExists?.PhoneNumber,
-                monetaryValue = 122.22,
-                source = "public hh",
-                name = IsContactExists?.FirstName + " " + IsContactExists?.LastName,
-                companyName = "Brain Technosys PVT LTd",
-            };
-
             try
             {
-                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetApiKey());
-                var endpoint = $"{AppConstant.GHL_BaseAddress}pipelines/{stage.GhlPipelineId}/opportunities/";
-                var opportunityJson = JsonConvert.SerializeObject(opportunityData);
-                var content = new StringContent(opportunityJson, Encoding.UTF8, "application/json");
-                var response = await _httpClient.PostAsync(endpoint, content);
-                var json = await response.Content.ReadAsStringAsync();
-                if (!response.IsSuccessStatusCode)
+                    
+                var res = await GetGHLStages();
+                var stage = res?.Data.FirstOrDefault();
+                if (stage == null)
                 {
                     responseVm.IsSuccess = false;
-                    responseVm.Message = $"Error creating opportunity: {response.StatusCode}";
+                    responseVm.Message = "No available pipeline stage found.";
                     return responseVm;
                 }
 
-                // Deserialize response to fetch created opportunityId and contactId
-                var result = JsonConvert.DeserializeObject<OpportunityResponse>(json);
+                var contact = dBContext.TblContacts.FirstOrDefault(c => c.ContactId == job.ContactId && c.IsDelete==false);
+                if (contact == null)
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = "No associated contact found for the job.";
+                    return responseVm;
+                }
+
+                var opportunityData = new
+                {
+                    pipelineId = stage.GhlPipelineId,
+                    locationId = AppConstant.GHL_Locationd,
+                    name = job.JobName,
+                    pipelineStageId = job.GhlStageId,
+                    status = "open",
+                    contactId = contact.ContactId,
+                    monetaryValue = 220,
+                    assignedTo = "082goXVW3lIExEQPOnd3",
+                };
+
+                var endpoint = $"{AppConstant.GHL_BaseAddress}/opportunities";
+                var opportunityJson = JsonConvert.SerializeObject(opportunityData);
+                var content = new StringContent(opportunityJson, Encoding.UTF8, "application/json");
+
+                using var httpClient = new HttpClient();
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
+                httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                httpClient.DefaultRequestHeaders.Add("Version", "2021-07-28");
+
+                var response = await httpClient.PostAsync(endpoint, content);
+                var jsonResponse = await response.Content.ReadAsStringAsync();
+
+               
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorResponse = await response.Content.ReadAsStringAsync();
+                    FileLogger.Log($"Error: {response.StatusCode} - {errorResponse}");
+                    return null;
+                }
+
+                var result = JsonConvert.DeserializeObject<OpportunityResponse>(jsonResponse);
                 if (result == null || string.IsNullOrEmpty(result.OpportunityId))
                 {
                     responseVm.IsSuccess = false;
                     responseVm.Message = "Failed to retrieve opportunity details from response.";
                     return responseVm;
                 }
-
-                // Fetch the existing job and update GhlOpportunityId and GhlContactId
                 var existingJob = await dBContext.TblJobs.FindAsync(job.JobId);
                 if (existingJob != null)
                 {
@@ -434,7 +483,6 @@ namespace ShutterManagement.GHL.Services
 
                 responseVm.IsSuccess = true;
                 responseVm.Message = "Opportunity added successfully.";
-
             }
             catch (Exception ex)
             {
@@ -444,6 +492,7 @@ namespace ShutterManagement.GHL.Services
 
             return responseVm;
         }
+
 
 
         public async Task<IResponseVm<List<Opportunity>>> GetOpportunitiesFromGhl()

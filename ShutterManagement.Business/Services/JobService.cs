@@ -35,11 +35,12 @@ namespace ShutterManagement.Business.Services
         private readonly IGHLConfiguration gHLConfiguration;
         private readonly GhlService ghlService;
         private readonly IContactService contact;
+        private readonly GHLService_v2 gHLService_V2;
         private  string BaseUrl = AppConstant.GHL_BaseAddress;
 
         public JobService(ShutterDBContext context, ClaimsProperty claimsProperty, IAddress address,
             ITenantService tenantService,INotificationService notification, IGHLConfiguration gHLConfiguration,
-            GhlService ghlService,IContactService contact)
+            GhlService ghlService,IContactService contact,GHLService_v2 gHLService_V2)
         {
             _context = context;
             this.claimsProperty = claimsProperty;
@@ -49,6 +50,7 @@ namespace ShutterManagement.Business.Services
             this.gHLConfiguration = gHLConfiguration;
             this.ghlService = ghlService;
             this.contact = contact;
+            this.gHLService_V2 = gHLService_V2;
         }
 
         private static string GetApiKey()
@@ -175,9 +177,9 @@ namespace ShutterManagement.Business.Services
                 {
                     FileLogger.Log($"Starting SyncOpportunitiesFromGhl process.");
                     using var client = new HttpClient();
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetApiKey());
+                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
 
-                    var pipelineResponse = await ghlService.GetAllPipelinesWithStagesAsync();
+                    var pipelineResponse = await gHLService_V2.GetAllPipelinesWithStagesAsync();
 
                     if (pipelineResponse?.Pipelines == null || !pipelineResponse.Pipelines.Any())
                     {
@@ -203,7 +205,7 @@ namespace ShutterManagement.Business.Services
 
                     FileLogger.Log($"Fetching opportunities from pipeline ID: {targetPipeline.Id}");
 
-                    var url = $"{BaseUrl}pipelines/{targetPipeline.Id}/opportunities/";
+                    var url = $"{BaseUrl}/pipelines/{targetPipeline.Id}/opportunities/";
                     var response = await client.GetAsync(url);
                     string responseBody = await response.Content.ReadAsStringAsync();
 
@@ -378,7 +380,7 @@ namespace ShutterManagement.Business.Services
                 {
                     FileLogger.Log($"Starting SyncOpportunitiesFromGhl process.");
                     using var client = new HttpClient();
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetApiKey());
+                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
 
                     var pipelineResponse = await ghlService.GetAllPipelinesWithStagesAsync();
 
@@ -807,7 +809,8 @@ namespace ShutterManagement.Business.Services
                             var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration();
                             if (Checkghlresponse.IsSuccess)
                             {
-                                var responseghl = await ghlService.CreateOpportunityInGhl(job);
+                                await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
+                                var responseghl = await gHLService_V2.CreateOpportunityInGhl(job);
                                 FileLogger.Log($"Start: Creating CreateOpportunityInGhl : {responseghl.Message}");
                                 FileLogger.Log($"Start: Creating CreateOpportunityInGhl : {responseghl.IsSuccess}");
                                 FileLogger.Log($"Start: Creating CreateOpportunityInGhl : {responseghl.Data}");
