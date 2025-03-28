@@ -121,12 +121,12 @@ namespace ShutterManagement.Business.Services
                 if (Checkghlresponse.IsSuccess)
                 {
                     var contactId = dbContext.TblJobs.Where(x => x.JobId.ToString().ToLower() == res.JobId.ToString().ToLower() && x.IsDelete == true).Select(x => x.GhlContactId).FirstOrDefault();
-                    
+
                     DateTime combinedStartDateTime = res.StartDate.Value.Date + res.DayEndDateTime.Value.ToTimeSpan();
                     string formattedStartTime = combinedStartDateTime.ToString("yyyy-MM-ddTHH:mm:ss") + GetTimezoneOffset();
-                   
+
                     DateTime combinedEndDateTime = res.EndDate.Value.Date + res.DayEndDateTime.Value.ToTimeSpan();
-                    string formattedEndTime = combinedStartDateTime.ToString("yyyy-MM-ddTHH:mm:ss") + GetTimezoneOffset();
+                    string formattedEndTime = combinedEndDateTime.ToString("yyyy-MM-ddTHH:mm:ss") + GetTimezoneOffset();
                     var appointment = new GHLAppointmentAdd
                     {
                         contactId = contactId,
@@ -391,7 +391,7 @@ namespace ShutterManagement.Business.Services
         {
             TimeZoneInfo localTimeZone = TimeZoneInfo.Local;
             TimeSpan offset = localTimeZone.GetUtcOffset(DateTime.UtcNow);
-            return offset.ToString(@"hh\:mm"); 
+            return offset.ToString(@"+hh\:mm");  // Ensure the "+" sign is included
         }
 
     }
