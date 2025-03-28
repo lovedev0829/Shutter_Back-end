@@ -12,7 +12,7 @@ public class GoHighLevelOAuthService
 {
     private const string AuthorizationUrl = "https://marketplace.gohighlevel.com/oauth/chooselocation";
     private const string TokenUrl = "https://services.leadconnectorhq.com/oauth/token";
-    private const string RedirectUri = "https://localhost:44355/common/GenerateToken"; 
+    private const string RedirectUri = "http://192.168.0.22:5500/configuration"; 
     private const string ClientId = "67e11c72c90a2f81200cc12a-m8mtsqrn";
     private const string ClientSecret = "c23af409-223c-48c1-a0d5-b1f25bbc2336";
 

@@ -830,7 +830,7 @@ namespace ShutterManagement.Controllers
         [Route("GoHighLevelAuthorization")]
         public async Task<IActionResult> GoHighLevelAuthorization()
         {
-            var authorizationUrl = gHLConfiguration.GetOauthGHL();
+            var authorizationUrl =await gHLConfiguration.GetOauthGHL();
             return Ok(authorizationUrl);
         }
 

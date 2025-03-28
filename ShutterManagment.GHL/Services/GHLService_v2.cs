@@ -553,13 +553,14 @@ namespace ShutterManagement.GHL.Services
             try
             {
 
-                var CalendarId = GetAppointmentsAsync().Result.Where(x => x.name.ToLower() == AppConstant.GHL_CalendarName.ToLower()).Select(x=> x.id).FirstOrDefault();
+                var CalendarId = GetAppointmentsAsync().Result.Where(x => x.name.ToLower() == AppConstant.GHL_CalendarName.ToLower() || x.id.ToLower() == AppConstant.GHL_CalendarName.ToLower()).Select(x=> x.id).FirstOrDefault();
                 FileLogger.Log($"Base Address from Create Appointment: {AppConstant.GHL_BaseAddress}");
 
                 var contactData = new
                 {
                     calendarId = CalendarId,
-                    contactId = appointment.contactId,
+                   // contactId = appointment.contactId,
+                    contactId = "ha2DVtzFf5a12NInSUjR",
                     startTime = appointment.startTime,
                     locationId = appointment.locationId,
                     endTime = appointment.endtime,
