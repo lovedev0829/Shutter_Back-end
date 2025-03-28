@@ -33,14 +33,13 @@ namespace ShutterManagement.Business.Services
         private readonly ITenantService tenantService;
         private readonly INotificationService notification;
         private readonly IGHLConfiguration gHLConfiguration;
-        private readonly GhlService ghlService;
+        //private readonly GhlService ghlService;
         private readonly IContactService contact;
         private readonly GHLService_v2 gHLService_V2;
         private  string BaseUrl = AppConstant.GHL_BaseAddress;
 
         public JobService(ShutterDBContext context, ClaimsProperty claimsProperty, IAddress address,
-            ITenantService tenantService,INotificationService notification, IGHLConfiguration gHLConfiguration,
-            GhlService ghlService,IContactService contact,GHLService_v2 gHLService_V2)
+            ITenantService tenantService,INotificationService notification, IGHLConfiguration gHLConfiguration,IContactService contact,GHLService_v2 gHLService_V2)
         {
             _context = context;
             this.claimsProperty = claimsProperty;
@@ -48,7 +47,7 @@ namespace ShutterManagement.Business.Services
             this.tenantService = tenantService;
             this.notification = notification;
             this.gHLConfiguration = gHLConfiguration;
-            this.ghlService = ghlService;
+
             this.contact = contact;
             this.gHLService_V2 = gHLService_V2;
         }
@@ -232,7 +231,7 @@ namespace ShutterManagement.Business.Services
 
 
 
-                        var contacts = await ghlService.GetContactsAsync();
+                        var contacts = await gHLService_V2.GetContactsAsync();
                         var contact = contacts.FirstOrDefault(c => c.id == opportunity.Contact?.Id);
                         var dbcontact = _context.TblContacts.Where(x => x.GhlcontactId == contact.id).FirstOrDefault();
                         var jobstatusId = _context.MstJobStatuses.Where(x => x.JobStatusName == opportunity.Status).Select(x => x.JobStatusId).FirstOrDefault();
@@ -309,7 +308,7 @@ namespace ShutterManagement.Business.Services
                         .Where(x => x.TenantId == AppConstant.LoggedInTenantId)
                         .ToList();
 
-                    var ghlOpportunitiesResponse = await ghlService.GetOpportunitiesFromGhl();
+                    var ghlOpportunitiesResponse = await gHLService_V2.GetOpportunitiesFromGhl();
                     var ghlOpportunities = ghlOpportunitiesResponse?.Data ?? new List<Opportunity>();
 
                     foreach (var opportunity in getAppOpportunities)
@@ -324,7 +323,7 @@ namespace ShutterManagement.Business.Services
                                 GhlStageId = opportunity.GhlStageId
                             };
 
-                            var responseghl = await ghlService.CreateOpportunityInGhl(job);
+                            var responseghl = await gHLService_V2.CreateOpportunityInGhl(job);
                             FileLogger.Log($"Created Opportunity in GHL: {responseghl.Message}, Success: {responseghl.IsSuccess}");
                         }
                         else
@@ -382,7 +381,7 @@ namespace ShutterManagement.Business.Services
                     using var client = new HttpClient();
                     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
 
-                    var pipelineResponse = await ghlService.GetAllPipelinesWithStagesAsync();
+                    var pipelineResponse = await gHLService_V2.GetAllPipelinesWithStagesAsync();
 
                     if (pipelineResponse?.Pipelines == null || !pipelineResponse.Pipelines.Any())
                     {
@@ -408,22 +407,23 @@ namespace ShutterManagement.Business.Services
 
                     FileLogger.Log($"Fetching opportunities from pipeline ID: {targetPipeline.Id}");
 
-                    var url = $"{AppConstant.GHL_BaseAddress}pipelines/{targetPipeline.Id}/opportunities/";
-                    var response = await client.GetAsync(url);
-                    string responseBody = await response.Content.ReadAsStringAsync();
+                    //var url = $"{AppConstant.GHL_BaseAddress}/pipelines/{targetPipeline.Id}/opportunities/";
+                    //var response = await client.GetAsync(url);
+                    //string responseBody = await response.Content.ReadAsStringAsync();
 
-                    if (!response.IsSuccessStatusCode)
-                    {
-                        FileLogger.Log($"Error fetching opportunities. StatusCode: {response.StatusCode}, Response: {responseBody}");
-                        responseVm.IsSuccess = false;
-                        responseVm.Message = $"Error: {response.StatusCode}, Details: {responseBody}";
-                        return responseVm;
-                    }
+                    //if (!response.IsSuccessStatusCode)
+                    //{
+                    //    FileLogger.Log($"Error fetching opportunities. StatusCode: {response.StatusCode}, Response: {responseBody}");
+                    //    responseVm.IsSuccess = false;
+                    //    responseVm.Message = $"Error: {response.StatusCode}, Details: {responseBody}";
+                    //    return responseVm;
+                    //}
 
-                    var ghlResponse = JsonConvert.DeserializeObject<GhlOpportunitiesResponse>(responseBody);
-                    var opportunities = ghlResponse?.Opportunities ?? new List<Opportunity>();
-                    FileLogger.Log($"Fetched {opportunities.Count} opportunities from GHL.");
-                    foreach (var opportunity in opportunities)
+                    //var ghlResponse = JsonConvert.DeserializeObject<GhlOpportunitiesResponse>(responseBody);
+                    //var opportunities = ghlResponse?.Opportunities ?? new List<Opportunity>();
+                    //FileLogger.Log($"Fetched {opportunities.Count} opportunities from GHL.");
+                    var opportunities = await gHLService_V2.GetOpportunitiesFromGhl();
+                    foreach (var opportunity in opportunities.Data)
                     {
                         FileLogger.Log($"Processing opportunity ID: {opportunity.OpportunityId}, Name: {opportunity.Name}");
                         var existingJob = GetAllQuerable()
@@ -435,7 +435,7 @@ namespace ShutterManagement.Business.Services
 
 
 
-                        var contacts = await ghlService.GetContactsAsync();
+                        var contacts = await gHLService_V2.GetContactsAsync();
                         var contact = contacts.FirstOrDefault(c => c.id == opportunity.Contact?.Id);
                         var dbcontact = _context.TblContacts.Where(x => x.GhlcontactId == contact.id).FirstOrDefault();
                         var jobstatusId = _context.MstJobStatuses.Where(x => x.JobStatusName == opportunity.Status).Select(x => x.JobStatusId).FirstOrDefault();
@@ -483,7 +483,7 @@ namespace ShutterManagement.Business.Services
                         }
                     }
                     FileLogger.Log("Synchronization completed successfully.");
-                    responseVm.Data = opportunities;
+                    responseVm.Data = opportunities.Data;
                     responseVm.IsSuccess = true;
                     responseVm.Message = "Synchronization completed successfully.";
                 }
