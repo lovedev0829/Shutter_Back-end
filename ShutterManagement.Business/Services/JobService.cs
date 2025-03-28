@@ -471,6 +471,7 @@ namespace ShutterManagement.Business.Services
                                 GHL_ContactId = opportunity.Contact?.Id,
                                 GhlOpportunityId = opportunity.OpportunityId,
                                 AddressId = dbcontact?.PrimaryAddress,
+                                GHL_jobstatus= jobstatusId.ToString(),
                                 GHL_StageName = stage?.GhlStageName,
                                 JobName = opportunity.Name?.Trim(),
                                 ScheduledDate = DateTime.Now,
