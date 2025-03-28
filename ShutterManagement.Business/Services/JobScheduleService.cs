@@ -121,23 +121,17 @@ namespace ShutterManagement.Business.Services
                 if (Checkghlresponse.IsSuccess)
                 {
                     var contactId = dbContext.TblJobs.Where(x => x.JobId.ToString().ToLower() == res.JobId.ToString().ToLower() && x.IsDelete == true).Select(x => x.GhlContactId).FirstOrDefault();
-                    string Startdatetimeapp = res.StartDate.ToString() + res.DayStartTime.ToString();
-                    DateTime dateTime = DateTime.ParseExact(Startdatetimeapp, "yyyy-MM-dd HH:mm", null);
-                    string formattedStartDate = dateTime.ToString("yyyy-MM-ddTHH:mm:sszzz");
-
-                    string Enddatetimeapp = res.StartDate.ToString() + res.DayStartTime.ToString();
-                    DateTime dateTime1 = DateTime.ParseExact(Enddatetimeapp, "yyyy-MM-dd HH:mm", null);
-                    string formattedEndDate = dateTime.ToString("yyyy-MM-ddTHH:mm:sszzz");
-                    //DateTime combinedStartDateTime = res.StartDate.Value.Date.Add(res.DayEndDateTime.Value.ToTimeSpan());
-                    //string formattedStartTime = combinedStartDateTime.ToString("yyyy-MM-ddTHH:mm:ss") + GetTimezoneOffset();
-
-                    //DateTime combinedEndDateTime = res.EndDate.Value.Date + res.DayEndDateTime.Value.ToTimeSpan();
-                    //string formattedEndTime = combinedEndDateTime.ToString("yyyy-MM-ddTHH:mm:ss") + GetTimezoneOffset();
+                    
+                    DateTime combinedStartDateTime = res.StartDate.Value.Date + res.DayEndDateTime.Value.ToTimeSpan();
+                    string formattedStartTime = combinedStartDateTime.ToString("yyyy-MM-ddTHH:mm:ss") + GetTimezoneOffset();
+                   
+                    DateTime combinedEndDateTime = res.EndDate.Value.Date + res.DayEndDateTime.Value.ToTimeSpan();
+                    string formattedEndTime = combinedStartDateTime.ToString("yyyy-MM-ddTHH:mm:ss") + GetTimezoneOffset();
                     var appointment = new GHLAppointmentAdd
                     {
                         contactId = contactId,
-                        startTime = formattedStartDate,
-                        endtime = formattedEndDate,
+                        startTime = formattedStartTime,
+                        endtime = formattedEndTime,
                         locationId = AppConstant.GHL_Locationd,
                     };
                     var ghlResponse = await gHLService_V2.CreateAppointmentAsync(appointment);
@@ -397,7 +391,7 @@ namespace ShutterManagement.Business.Services
         {
             TimeZoneInfo localTimeZone = TimeZoneInfo.Local;
             TimeSpan offset = localTimeZone.GetUtcOffset(DateTime.UtcNow);
-            return offset.ToString(@"+hh\:mm");  // Ensure the "+" sign is included
+            return offset.ToString(@"hh\:mm"); 
         }
 
     }
