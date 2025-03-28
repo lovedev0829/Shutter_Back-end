@@ -12,6 +12,7 @@ using ShutterManagement.Core.ViewModels.Response;
 using ShutterManagement.DAL.Context;
 using ShutterManagment.GHL.ViewModel.Request;
 using ShutterManagment.GHL.ViewModel.Response;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Numerics;
@@ -416,9 +417,8 @@ namespace ShutterManagement.GHL.Services
 
             try
             {
-                    
                 var res = await GetGHLStages();
-                var stage = res?.Data.FirstOrDefault();
+                var stage = res?.Data?.FirstOrDefault();
                 if (stage == null)
                 {
                     responseVm.IsSuccess = false;
@@ -434,36 +434,53 @@ namespace ShutterManagement.GHL.Services
                     return responseVm;
                 }
 
+                if (string.IsNullOrEmpty(stage.GhlPipelineId) || string.IsNullOrEmpty(contact.ContactId.ToString()) || string.IsNullOrEmpty(AppConstant.GHL_Locationd))
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = "Missing required GHL identifiers.";
+                    return responseVm;
+                }
+
                 var opportunityData = new
                 {
-                    pipelineId = stage.GhlPipelineId,
-                    locationId = AppConstant.GHL_Locationd,
-                    name = job.JobName,
-                    pipelineStageId = job.GhlStageId,
-                    status = "open",
-                    contactId = contact.ContactId,
+                    pipelineId = "CFoi90n88zrDhMFP8R2I",
+                    locationId = "PTnICMN0mKr03kzJQqPQ",
+                    name = job.JobName ?? "Unnamed Job",
+                    pipelineStageId = "51740389-e764-4f93-9ff3-5c6b5c046ef1",
+                    status = "Open",
+                    contactId = "ha2DVtzFf5a12NInSUjR",
                     monetaryValue = 220,
-                    assignedTo = "082goXVW3lIExEQPOnd3",
+                   // assignedTo = "d8heZIvtIbd5OphFusfb",
                 };
 
-                var endpoint = $"{AppConstant.GHL_BaseAddress}/opportunities";
-                var opportunityJson = JsonConvert.SerializeObject(opportunityData);
-                var content = new StringContent(opportunityJson, Encoding.UTF8, "application/json");
+                var requestUrl = $"{AppConstant.GHL_BaseAddress}/opportunities";
+                var contactJson = JsonConvert.SerializeObject(opportunityData);
+                var content = new StringContent(contactJson, Encoding.UTF8, "application/json");
 
                 using var httpClient = new HttpClient();
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
                 httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
                 httpClient.DefaultRequestHeaders.Add("Version", "2021-07-28");
 
-                var response = await httpClient.PostAsync(endpoint, content);
-                var jsonResponse = await response.Content.ReadAsStringAsync();
+                HttpResponseMessage response = await httpClient.PostAsync(requestUrl, content);
+                string jsonResponse = await response.Content.ReadAsStringAsync();
 
-               
                 if (!response.IsSuccessStatusCode)
                 {
-                    var errorResponse = await response.Content.ReadAsStringAsync();
-                    FileLogger.Log($"Error: {response.StatusCode} - {errorResponse}");
+                    FileLogger.Log($"CreateContactAsync Error: {response.StatusCode} - {jsonResponse}");
                     return null;
+                }
+
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = $"API request failed: {response.StatusCode} - {jsonResponse}";
+
+                    if (response.StatusCode == HttpStatusCode.NotFound)
+                        responseVm.Message = "404 Not Found: Verify API endpoint and resource availability.";
+
+                    return responseVm;
                 }
 
                 var result = JsonConvert.DeserializeObject<OpportunityResponse>(jsonResponse);
@@ -473,6 +490,7 @@ namespace ShutterManagement.GHL.Services
                     responseVm.Message = "Failed to retrieve opportunity details from response.";
                     return responseVm;
                 }
+
                 var existingJob = await dBContext.TblJobs.FindAsync(job.JobId);
                 if (existingJob != null)
                 {
@@ -488,10 +506,12 @@ namespace ShutterManagement.GHL.Services
             {
                 responseVm.IsSuccess = false;
                 responseVm.Message = $"Exception occurred: {ex.Message}";
+                FileLogger.Log($"[CreateOpportunityInGhl] Exception: {ex}");
             }
 
             return responseVm;
         }
+
 
 
 
