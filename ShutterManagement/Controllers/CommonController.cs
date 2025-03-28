@@ -21,6 +21,7 @@ using ShutterManagement.GHL.Services;
 using ShutterManagment.GHL.ViewModel.Response;
 using ShutterManagement.GHLv2;
 using System.Runtime.InteropServices;
+using ShutterManagment.GHL.ViewModel.Request;
 
 namespace ShutterManagement.Controllers
 {
@@ -829,7 +830,7 @@ namespace ShutterManagement.Controllers
         [Route("GoHighLevelAuthorization")]
         public async Task<IActionResult> GoHighLevelAuthorization()
         {
-            var authorizationUrl = gHLConfiguration.GetOauthGHL();
+            var authorizationUrl =await gHLConfiguration.GetOauthGHL();
             return Ok(authorizationUrl);
         }
 
@@ -841,6 +842,16 @@ namespace ShutterManagement.Controllers
             TokenResponse accesstoken = new TokenResponse();
             var accessToken = await oauthService.GetAccessToken(refreshtoken);
             Console.WriteLine("Access Token: " + accessToken);
+            return Ok(accessToken);
+
+        }
+
+        [HttpPost]
+        [Route("GHLAppointment")]
+        public async Task<IActionResult> GHLAppointment(GHLAppointmentAdd appointment)
+        {
+            await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
+            var accessToken = await gHLService_V2.CreateAppointmentAsync(appointment);
             return Ok(accessToken);
 
         }
