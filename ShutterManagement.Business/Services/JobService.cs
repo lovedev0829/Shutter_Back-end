@@ -549,42 +549,57 @@ namespace ShutterManagement.Business.Services
                     FileLogger.Log($"Error in UpdateOpportunityInGhl: {job.GhlOpportunityId}");
                     return responseVm;
                 }
-                var jobstatusname = dbContext.MstJobStatuses.Where(x => x.JobStatusId == job.JobStatus).Select(x => x.JobStatusName).FirstOrDefault();
-                var contactData = dbContext.TblContacts.Where(x => x.GhlcontactId == job.GhlContactId).FirstOrDefault();
 
-                if (jobstatusname==null)
+                var jobStatusName = dbContext.MstJobStatuses
+                    .Where(x => x.JobStatusId == job.JobStatus)
+                    .Select(x => x.JobStatusName)
+                    .FirstOrDefault();
+
+                var contactData = dbContext.TblContacts
+                    .Where(x => x.GhlcontactId == job.GhlContactId)
+                    .FirstOrDefault();
+
+                if (jobStatusName == null)
                 {
                     responseVm.IsSuccess = false;
-                    responseVm.Message = "No job status name  found";
-                    FileLogger.Log($"Error in UpdateOpportunityInGhl No job status name  found: {job.JobName}");
+                    responseVm.Message = "No job status name found";
+                    FileLogger.Log($"Error in UpdateOpportunityInGhl: No job status name found for {job.JobName}");
                     return responseVm;
                 }
-
-                var ghlOpportunityModel = new
-                {
-                    title= job.JobName,
-                    status= jobstatusname.ToLower()??"",
-                    stageId=job.GhlStageId,
-                    email= contactData?.Email,
-                    phone= contactData?.PhoneNumber,
-                    monetaryValue=122.22,
-                    source="public hh",
-                    contactId= contactData?.GhlcontactId,
-                    name= contactData?.FirstName+" "+ contactData?.LastName,
-                    companyName="Brain Technosys PVT LTd",
-                };
-
-                using var client = new HttpClient();
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetApiKey());
 
                 string userProvidedPipelineNameOrId = AppConstant.GHL_PipelineId;
 
                 var targetPipeline = dbContext.TblGhlStages
                     .FirstOrDefault(p => p.GhlPipelineId.Contains(userProvidedPipelineNameOrId) || p.GhlPipelineName.Contains(userProvidedPipelineNameOrId));
 
+                if (targetPipeline == null)
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = "Pipeline ID not found";
+                    FileLogger.Log($"Error in UpdateOpportunityInGhl: Pipeline ID {userProvidedPipelineNameOrId} not found.");
+                    return responseVm;
+                }
+
+                var ghlOpportunityModel = new
+                {
+                    pipelineId = targetPipeline.GhlPipelineId,
+                    name = job.JobName,
+                    pipelineStageId = job.GhlStageId,
+                    status = jobStatusName.ToLower() ?? "open",
+                    monetaryValue = 220, 
+                    email = contactData?.Email,
+                    phone = contactData?.PhoneNumber,
+                    contactId = contactData?.GhlcontactId,
+                  
+                };
+
+                using var client = new HttpClient();
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
+                client.DefaultRequestHeaders.Add("Version", "2021-07-28");
+
+                var url = $"{BaseUrl}/opportunities/{job.GhlOpportunityId}";
                 var content = new StringContent(JsonConvert.SerializeObject(ghlOpportunityModel), Encoding.UTF8, "application/json");
-                var url = $"{BaseUrl}pipelines/{targetPipeline.GhlPipelineId}/opportunities/{job.GhlOpportunityId}";
-                 
+
                 var response = await client.PutAsync(url, content);
                 var responseBody = await response.Content.ReadAsStringAsync();
 
@@ -598,7 +613,7 @@ namespace ShutterManagement.Business.Services
 
                 responseVm.IsSuccess = true;
                 responseVm.Message = "Opportunity successfully updated in GHL.";
-                FileLogger.Log($"Opportunity successfully updated in GHL.: {job.GhlOpportunityId}, Details:");
+                FileLogger.Log($"Opportunity successfully updated in GHL.: {job.GhlOpportunityId}, Details: {responseBody}");
             }
             catch (Exception ex)
             {
@@ -609,6 +624,7 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
+
 
         //public async Task<List<GhlContactVM>> GetContactsAsync()
         //{
