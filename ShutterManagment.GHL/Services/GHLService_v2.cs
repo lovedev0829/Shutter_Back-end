@@ -567,8 +567,9 @@ namespace ShutterManagement.GHL.Services
         #endregion End Opportunity Related Methods
 
 
-        public async Task<GHLAppointmentResponse> CreateAppointmentAsync(GHLAppointmentAdd appointment)
+        public async Task<IResponseVm<GHLAppointment>> CreateAppointmentAsync(GHLAppointmentAdd appointment)
         {
+            IResponseVm<GHLAppointment> responseVm = new ResponseVm<GHLAppointment>();
             try
             {
 
@@ -578,13 +579,14 @@ namespace ShutterManagement.GHL.Services
                 var contactData = new
                 {
                     calendarId = CalendarId,
-                   // contactId = appointment.contactId,
-                    contactId = "TYWPKcoMp715KTOPeCHb",
-                   // startTime = appointment.startTime,
-                    startTime = "2026-12-01T01:52:00+05:30",
+                    contactId = appointment.contactId,
+                    //contactId = "TYWPKcoMp715KTOPeCHb",
+                    startTime = appointment.startTime,
                     locationId = appointment.locationId,
-                    //endTime = appointment.endtime,
-                    endTime = "2026-12-01T02:52:00+05:30",
+                    endTime = appointment.endtime,
+                    ignoreDateRange = true,
+                    meetingLocationType = "default",
+                    ignoreFreeSlotValidation = false,
                 };
 
                 var requestUrl = $"{AppConstant.GHL_BaseAddress}/calendars/events/appointments";
@@ -613,78 +615,85 @@ namespace ShutterManagement.GHL.Services
                 {
                     var errorResponse = await response.Content.ReadAsStringAsync();
                     FileLogger.Log($"Error: {response.StatusCode} - {errorResponse}");
-                    return null;
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = errorResponse;
                 }
 
                 var jsonResponse = await response.Content.ReadAsStringAsync();
-                var appointmentResponse = JsonConvert.DeserializeObject<GHLAppointmentResponse>(jsonResponse);
+                var appointmentResponse = JsonConvert.DeserializeObject<GHLAppointment>(jsonResponse);
+                responseVm.IsSuccess = true;
+                responseVm.Message = response.ToString();
+                responseVm.Data = appointmentResponse;
 
-                return appointmentResponse;
             }
             catch (Exception ex)
             {
                 FileLogger.Log($"Exception in CreateAppointmentAsync: {ex.Message}");
-                return null;
+                responseVm.Message = ex.Message;
             }
+            return responseVm;
         }
 
-        public async Task<GHLAppointmentResponse> UpdateAppointmentAsync(string eventId ,GHLAppointmentAdd appointment)
+        public async Task<IResponseVm<GHLAppointment>> UpdateAppointmentAsync(string eventId, GHLAppointmentAdd appointment)
         {
+            IResponseVm<GHLAppointment> responseVm = new ResponseVm<GHLAppointment>();
             try
             {
+                var calendarId = (await GetAppointmentsAsync())
+                                     .Where(x => x.name.ToLower() == AppConstant.GHL_CalendarName.ToLower() || x.id.ToLower() == AppConstant.GHL_CalendarName.ToLower())
+                                     .Select(x => x.id)
+                                     .FirstOrDefault();
 
-                var CalendarId = GetAppointmentsAsync().Result.Where(x => x.name.ToLower() == AppConstant.GHL_CalendarName.ToLower()).Select(x => x.id).FirstOrDefault();
-                FileLogger.Log($"Base Address from Create Appointment: {AppConstant.GHL_BaseAddress}");
+                FileLogger.Log($"Base Address from Update Appointment: {AppConstant.GHL_BaseAddress}");
 
                 var contactData = new
                 {
-                    calendarId = CalendarId,
-                    contactId = appointment.contactId,
+                    calendarId = calendarId,
                     startTime = appointment.startTime,
-                    locationId = appointment.locationId,
                     endTime = appointment.endtime,
+                    title = "Test Event Updated",
+                    meetingLocationType = "default",
+                    appointmentStatus = "new",
+                    ignoreDateRange = true,
+                    ignoreFreeSlotValidation = false,
                 };
 
                 var requestUrl = $"{AppConstant.GHL_BaseAddress}/calendars/events/appointments/{eventId}";
 
-                // Create the HTTP client
                 using var httpClient = new HttpClient();
 
-                // Prepare the request content (serialized JSON)
                 var contactJson = JsonConvert.SerializeObject(contactData);
                 var content = new StringContent(contactJson, Encoding.UTF8, "application/json");
 
-                // Create the request message with necessary headers and set method to POST
-                using var requestMessage = new HttpRequestMessage(HttpMethod.Post, requestUrl)
-                {
-                    Content = content
-                };
-
-                // Set headers (authorization and versioning)
-                requestMessage.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
-                requestMessage.Headers.Add("Version", "2021-07-28");
-
-                var response = await httpClient.SendAsync(requestMessage);
+                httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
+                httpClient.DefaultRequestHeaders.Add("Version", "2021-04-15");
+                var response = await httpClient.PutAsync(requestUrl, content);
 
                 if (!response.IsSuccessStatusCode)
                 {
                     var errorResponse = await response.Content.ReadAsStringAsync();
                     FileLogger.Log($"Error: {response.StatusCode} - {errorResponse}");
-                    return null;
+                    responseVm.Message = errorResponse;
                 }
 
                 var jsonResponse = await response.Content.ReadAsStringAsync();
-                var appointmentResponse = JsonConvert.DeserializeObject<GHLAppointmentResponse>(jsonResponse);
+                var appointmentResponse = JsonConvert.DeserializeObject<GHLAppointment>(jsonResponse);
 
-                return appointmentResponse;
+                responseVm.IsSuccess = true;
+                responseVm.Message = "Appointment updated at GoHighLevel";
+                responseVm.Data = appointmentResponse;
             }
             catch (Exception ex)
             {
-                FileLogger.Log($"Exception in CreateAppointmentAsync: {ex.Message}");
-                return null;
+                // Log any exceptions that occur during the process
+                FileLogger.Log($"Exception in UpdateAppointmentAsync: {ex.Message}");
+                responseVm.Message = ex.Message;
             }
+            return responseVm;
+
         }
+
 
         public async Task<List<Calendar>> GetAppointmentsAsync()
         {

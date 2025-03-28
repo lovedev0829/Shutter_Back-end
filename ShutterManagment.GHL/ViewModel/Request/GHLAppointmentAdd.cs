@@ -13,5 +13,9 @@ namespace ShutterManagment.GHL.ViewModel.Request
        // public string calendarId { get; set; }
         public string contactId { get; set; }
         public string endtime { get; set; }
+        public string rrule { get; set; }
+        public bool ignoreDateRange { get; set; } = true;
+        public string meetingLocationType { get; set; } = "custom";
+        public bool ignoreFreeSlotValidation { get; set; } = false;
     }
 }
