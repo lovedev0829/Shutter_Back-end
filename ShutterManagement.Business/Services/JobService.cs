@@ -807,6 +807,7 @@ namespace ShutterManagement.Business.Services
                         JobUniqueId = generateUnique,
                         GhlStageId = model.GHL_StageId,
                         GhlStageName = stage?.GhlStageName?.Trim() ?? "",
+                        GhlContactId=model.GHL_ContactId??"",
                         TenantId = TenantId,
                         IsActive = true,
                         IsDelete = false,
