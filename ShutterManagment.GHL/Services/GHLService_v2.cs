@@ -443,19 +443,21 @@ namespace ShutterManagement.GHL.Services
 
                 var opportunityData = new
                 {
-                    pipelineId = "CFoi90n88zrDhMFP8R2I",
-                    locationId = "PTnICMN0mKr03kzJQqPQ",
+                    pipelineId = stage.GhlPipelineId,
+                    locationId = AppConstant.GHL_Locationd,
                     name = job.JobName ?? "Unnamed Job",
-                    pipelineStageId = "51740389-e764-4f93-9ff3-5c6b5c046ef1",
-                    status = "Open",
-                    contactId = "ha2DVtzFf5a12NInSUjR",
+                    pipelineStageId = job.GhlStageId,
+                    status = "open",
+                    contactId = contact.GhlcontactId,
                     monetaryValue = 220,
-                   // assignedTo = "d8heZIvtIbd5OphFusfb",
+                    assignedTo = "d8heZIvtIbd5OphFusfb",
                 };
 
-                var requestUrl = $"{AppConstant.GHL_BaseAddress}/opportunities";
-                var contactJson = JsonConvert.SerializeObject(opportunityData);
-                var content = new StringContent(contactJson, Encoding.UTF8, "application/json");
+                var requestUrl = $"{AppConstant.GHL_BaseAddress}/opportunities/";
+                var opportunityJson = JsonConvert.SerializeObject(opportunityData);
+                var content = new StringContent(opportunityJson, Encoding.UTF8, "application/json");
+                FileLogger.Log($"[CreateOpportunityInGhl] Request URL: {requestUrl}");
+                FileLogger.Log($"[CreateOpportunityInGhl] Request Payload: {opportunityJson}");
 
                 using var httpClient = new HttpClient();
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
@@ -465,12 +467,8 @@ namespace ShutterManagement.GHL.Services
                 HttpResponseMessage response = await httpClient.PostAsync(requestUrl, content);
                 string jsonResponse = await response.Content.ReadAsStringAsync();
 
-                if (!response.IsSuccessStatusCode)
-                {
-                    FileLogger.Log($"CreateContactAsync Error: {response.StatusCode} - {jsonResponse}");
-                    return null;
-                }
-
+                FileLogger.Log($"[CreateOpportunityInGhl] Response Status Code: {response.StatusCode}");
+                FileLogger.Log($"[CreateOpportunityInGhl] Response Content: {jsonResponse}");
 
                 if (!response.IsSuccessStatusCode)
                 {
