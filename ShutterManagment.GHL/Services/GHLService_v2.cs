@@ -579,10 +579,12 @@ namespace ShutterManagement.GHL.Services
                 {
                     calendarId = CalendarId,
                    // contactId = appointment.contactId,
-                    contactId = "ha2DVtzFf5a12NInSUjR",
-                    startTime = appointment.startTime,
+                    contactId = "TYWPKcoMp715KTOPeCHb",
+                   // startTime = appointment.startTime,
+                    startTime = "2026-12-01T01:52:00+05:30",
                     locationId = appointment.locationId,
-                    endTime = appointment.endtime,
+                    //endTime = appointment.endtime,
+                    endTime = "2026-12-01T02:52:00+05:30",
                 };
 
                 var requestUrl = $"{AppConstant.GHL_BaseAddress}/calendars/events/appointments";
