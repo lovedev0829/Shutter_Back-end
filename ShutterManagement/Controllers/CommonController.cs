@@ -66,6 +66,7 @@ namespace ShutterManagement.Controllers
         private readonly GhlService ghlService;
         private readonly IPaymentsService paymentsService;
         private readonly GHLService_v2 gHLService_V2;
+        private readonly IJobSchedule jobSchedule;
         private readonly IAuthService authService;
 
         public CommonController(IMasterCreate masterCreate, 
@@ -81,7 +82,7 @@ namespace ShutterManagement.Controllers
             ITaxRate taxService,IEstimateService estimateService, IAuthService authService,
             IEstimationBreakdownService estimationBreakdownService, ILocationService locationService,
            IDashboard dashboard, INotificationService notification, IGHLConfiguration gHLConfiguration,IStripeConfiguration stripeConfiguration,
-           GhlService ghlService ,IPaymentsService paymentsService ,GHLService_v2 gHLService_V2)
+           GhlService ghlService ,IPaymentsService paymentsService ,GHLService_v2 gHLService_V2,IJobSchedule jobSchedule)
         {
             this.masterCreate = masterCreate;
             this.fileUpload = fileUpload;
@@ -129,6 +130,7 @@ namespace ShutterManagement.Controllers
             this.ghlService = ghlService;
             this.paymentsService = paymentsService;
             this.gHLService_V2 = gHLService_V2;
+            this.jobSchedule = jobSchedule;
         }
 
 
@@ -798,10 +800,12 @@ namespace ShutterManagement.Controllers
             var pipelineResult = await gHLService_V2.GetAndSaveDefaultPipelineAndStage();
             var contact = await contactService.ContactSync();
             var opportunityResult = await jobService.SyncOpportunitiesFromGhl();
+            var appointment = await jobSchedule.AppointmentSync();
 
             bool isSuccess = pipelineResult.IsSuccess && opportunityResult.IsSuccess;
             string message = isSuccess ? "Synchronization completed successfully." :
-                                         $"Pipeline: {pipelineResult.Message}, Opportunities: {opportunityResult.Message}";
+                                         $"Pipeline: {pipelineResult.Message}, Opportunities: {opportunityResult.Message},Contact : {contact.Message} ," +
+                                         $"Appointment : {appointment.Message}";
             var response = new
             {
                 IsSuccess = isSuccess,

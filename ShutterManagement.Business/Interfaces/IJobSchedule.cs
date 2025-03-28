@@ -19,6 +19,7 @@ namespace ShutterManagement.Business.Interfaces
         Task<IResponseVm<string>> DeleteJobSchedule(Guid JobScheduleId);
         Task<IResponseVm<string>> ActiveInActive(Guid JobScheduleId);
         Task<IResponseVm<List<JobScheduleVm>>> GetAll_JobSchedule(Pagination filter);
+        Task<IResponseVm<string>> AppointmentSync();
     }
     
 }
