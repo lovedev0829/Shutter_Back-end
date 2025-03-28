@@ -12,6 +12,8 @@ using System.Text;
 using System.Threading.Tasks;
 using ShutterManagement.GHL.Services;
 using ShutterManagment.GHL.ViewModel.Request;
+using System.Globalization;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace ShutterManagement.Business.Services
 {
@@ -121,17 +123,25 @@ namespace ShutterManagement.Business.Services
                 if (Checkghlresponse.IsSuccess)
                 {
                     var contactId = dbContext.TblJobs.Where(x => x.JobId.ToString().ToLower() == res.JobId.ToString().ToLower() && x.IsDelete == true).Select(x => x.GhlContactId).FirstOrDefault();
-                    
-                    DateTime combinedStartDateTime = res.StartDate.Value.Date + res.DayEndDateTime.Value.ToTimeSpan();
-                    string formattedStartTime = combinedStartDateTime.ToString("yyyy-MM-ddTHH:mm:ss") + GetTimezoneOffset();
-                   
-                    DateTime combinedEndDateTime = res.EndDate.Value.Date + res.DayEndDateTime.Value.ToTimeSpan();
-                    string formattedEndTime = combinedStartDateTime.ToString("yyyy-MM-ddTHH:mm:ss") + GetTimezoneOffset();
+
+
+                    string input = res?.StartDate.Value.ToString("yyyy-MM-dd") + " " + res?.DayStartTime.Value.ToString(@"hh\:mm");
+                    string format = "yyyy-MM-dd HH:mm";
+                    DateTime dateTime = DateTime.ParseExact(input, format, CultureInfo.InvariantCulture);
+                    DateTimeOffset dateTimeOffset = new DateTimeOffset(dateTime, TimeSpan.FromHours(5.5));
+                    string formattedstartDate = dateTimeOffset.ToString("yyyy-MM-ddTHH\\:mm\\:sszzz", CultureInfo.InvariantCulture);
+
+                    string inputend = res?.EndDate.Value.ToString("yyyy-MM-dd") + " " + res?.DayEndDateTime.Value.ToString(@"hh\:mm");
+                    string formatend = "yyyy-MM-dd HH:mm";
+                    DateTime dateTimeend = DateTime.ParseExact(input, format, CultureInfo.InvariantCulture);
+                    DateTimeOffset dateTimeOffsetend = new DateTimeOffset(dateTime, TimeSpan.FromHours(5.5));
+                    string formattedstartDateend = dateTimeOffset.ToString("yyyy-MM-ddTHH\\:mm\\:sszzz", CultureInfo.InvariantCulture);
+
                     var appointment = new GHLAppointmentAdd
                     {
                         contactId = contactId,
-                        startTime = formattedStartTime,
-                        endtime = formattedEndTime,
+                        startTime = formattedstartDate,
+                        endtime = formattedstartDateend,
                         locationId = AppConstant.GHL_Locationd,
                     };
                     var ghlResponse = await gHLService_V2.CreateAppointmentAsync(appointment);
