@@ -587,9 +587,6 @@ namespace ShutterManagement.Business.Services
                     pipelineStageId = job.GhlStageId,
                     status = jobStatusName.ToLower() ?? "open",
                     monetaryValue = 220, 
-                    email = contactData?.Email,
-                    phone = contactData?.PhoneNumber,
-                    contactId = contactData?.GhlcontactId,
                   
                 };
 

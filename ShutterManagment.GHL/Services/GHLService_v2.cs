@@ -481,19 +481,20 @@ namespace ShutterManagement.GHL.Services
                     return responseVm;
                 }
 
-                var result = JsonConvert.DeserializeObject<OpportunityResponse>(jsonResponse);
-                if (result == null || string.IsNullOrEmpty(result.OpportunityId))
+                var result = JsonConvert.DeserializeObject<OpportunityResponsees>(jsonResponse);
+                if (result == null )
                 {
                     responseVm.IsSuccess = false;
                     responseVm.Message = "Failed to retrieve opportunity details from response.";
                     return responseVm;
                 }
 
-                var existingJob = await dBContext.TblJobs.FindAsync(job.JobId);
+                var existingJob =  dBContext.TblJobs.Where(j => j.JobId == job.JobId).FirstOrDefault();
                 if (existingJob != null)
                 {
-                    existingJob.GhlOpportunityId = result.OpportunityId;
-                    existingJob.GhlContactId = result.Contact.ContactId;
+                    existingJob.GhlOpportunityId = result.Opportunity.OpportunityId;
+                    existingJob.GhlContactId = result.Opportunity.Contact?.ContactId; //
+                    dBContext.TblJobs.Update(existingJob);
                     await dBContext.SaveChangesAsync();
                 }
 
@@ -728,6 +729,31 @@ namespace ShutterManagement.GHL.Services
                 FileLogger.Log($"Unexpected error: {ex.Message}");
                 return new List<Calendar>();
             }
+        }
+
+
+        public class OpportunityResponsees
+        {
+            [JsonProperty("opportunity")]
+            public OpportunityDetails Opportunity { get; set; }
+        }
+
+        public class OpportunityDetails
+        {
+            [JsonProperty("id")]
+            public string OpportunityId { get; set; }
+
+            [JsonProperty("contactId")]
+            public string ContactId { get; set; }
+
+            [JsonProperty("contact")]
+            public ContactDetails Contact { get; set; }
+        }
+
+        public class ContactDetails
+        {
+            [JsonProperty("id")]
+            public string ContactId { get; set; }
         }
 
 
