@@ -1,4 +1,5 @@
 ﻿
+using Azure.Core;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
@@ -521,7 +522,7 @@ namespace ShutterManagement.GHL.Services
             try
             {
                 using var client = new HttpClient();
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetApiKey());
+
 
                 var pipelineResponse = await GetAllPipelinesWithStagesAsync();
 
@@ -537,10 +538,12 @@ namespace ShutterManagement.GHL.Services
                 var targetPipeline = pipelineResponse.Pipelines
                     .FirstOrDefault(p => p.Id.Contains(userProvidedPipelineNameOrId) || p.Name.Contains(userProvidedPipelineNameOrId));
 
-                var url = $"{AppConstant.GHL_BaseAddress}pipelines/{targetPipeline?.Id}/opportunities/";
-                var request = new HttpRequestMessage(HttpMethod.Get, url);
+                string url = $"{AppConstant.GHL_BaseAddress}/opportunities/search?location_id={AppConstant.GHL_Locationd}";
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
+                client.DefaultRequestHeaders.Add("Version", "2021-07-28");
 
-                var response = await client.SendAsync(request);
+                HttpResponseMessage response = await client.GetAsync(url);
                 string responseBody = await response.Content.ReadAsStringAsync();
 
                 if (!response.IsSuccessStatusCode)
