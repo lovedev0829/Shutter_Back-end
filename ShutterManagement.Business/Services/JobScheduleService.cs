@@ -348,7 +348,7 @@ namespace ShutterManagement.Business.Services
                     }
                     else
                     {
-                        var contactId = dbContext.TblJobs.Where(x => x.JobId.ToString().ToLower() == JobSchedule.JobId.ToString().ToLower() && x.IsDelete == true).Select(x => x.GhlContactId).FirstOrDefault();
+                        var contactId = dbContext.TblJobs.Where(x => x.JobId.ToString().ToLower() == JobSchedule.JobId.ToString().ToLower() && x.IsDelete == false).Select(x => x.GhlContactId).FirstOrDefault();
 
                         string formattedstartDate = FormatDateTimeWithOffset(JobSchedule.StartDate, JobSchedule.DayStartTime);
                         string formattedstartDateend = FormatDateTimeWithOffset(JobSchedule.EndDate, JobSchedule.DayEndDateTime);
