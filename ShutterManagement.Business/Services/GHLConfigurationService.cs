@@ -45,7 +45,9 @@ namespace ShutterManagement.Business.Services
                 AppConstant.GHL_AccessToken = details.AccessToken;
                 AppConstant.GHL_RefreshToken = details.RefreshToken;
                 AppConstant.GHL_CalendarName = details.CalendarName;
-                
+                AppConstant.GHL_ClientId = details.ClientId;
+                AppConstant.GHL_ClientSecret = details.ClientSecret;
+                AppConstant.GHL_RedirectUri = details.RedirectUri;
             }
         }
 
@@ -63,6 +65,9 @@ namespace ShutterManagement.Business.Services
                     IsGHLConfigurationTenantExist.BaseAddress = gHLConfiguration.BaseAddress;
                     IsGHLConfigurationTenantExist.GeneratedToken = gHLConfiguration.GeneratedToken;
                     IsGHLConfigurationTenantExist.CalendarName = gHLConfiguration.CalendarName;
+                    IsGHLConfigurationTenantExist.RedirectUri  = gHLConfiguration.RedirectURI;
+                    IsGHLConfigurationTenantExist.ClientSecret = gHLConfiguration.ClientSecret;
+                    IsGHLConfigurationTenantExist.ClientId = gHLConfiguration.ClientId;
 
                     var res = await Update(IsGHLConfigurationTenantExist);
                     responseVm.IsSuccess = true;
@@ -80,6 +85,9 @@ namespace ShutterManagement.Business.Services
                         LastSync = DateTime.Now,
                         GeneratedToken = gHLConfiguration.GeneratedToken,
                         CalendarName = gHLConfiguration.CalendarName,
+                        ClientId = gHLConfiguration.ClientId,
+                        ClientSecret = gHLConfiguration.ClientSecret,
+                        RedirectUri = gHLConfiguration.RedirectURI,
                     };
                     var res1 = await Add(tblGhlconfiguration);
                     responseVm.IsSuccess = true;
@@ -122,6 +130,9 @@ namespace ShutterManagement.Business.Services
                     LastSync = gHLConfiguration?.LastSync ?? DateTime.Now,
                     CalendarName = gHLConfiguration.CalendarName ?? "",
                     GeneratedToken = gHLConfiguration?.GeneratedToken ?? "",
+                    ClientId = gHLConfiguration?.ClientId ?? "",
+                    ClientSecret = gHLConfiguration?.ClientSecret ?? "",
+                    RedirectURI =gHLConfiguration?.RedirectUri ?? "",
                 };
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.FetchSuccessMsg;
@@ -140,6 +151,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
+                await GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
                 var res = goHighLevelOAuthService.GetAuthorizationUrl();
                 if (res != null)
                 {

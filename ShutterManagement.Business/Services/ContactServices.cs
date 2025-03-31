@@ -268,11 +268,13 @@ namespace ShutterManagement.Business.Services
                                 var ghlResponse = await SyncWithGHL(res, model);
                                 if (!ghlResponse.IsSuccess)
                                 {
+                                    responseVm.IsSuccess = true;
                                     responseVm.Message = AppConstant.InsertSuccessMsg + ghlResponse.Message;
                                 }
                             }
                             else
                             {
+
                                 responseVm.Message = Checkghlresponse.Message;
                             }
                             return responseVm;
@@ -883,9 +885,12 @@ namespace ShutterManagement.Business.Services
                             contactExist.LastSync = DateTime.Now;
                         }
                         var res = await Update(contactExist);
-
+                        responseVm.IsSuccess = true;
+                        responseVm.Message = "Contact synced successfully with GHL.";
                     }
-
+                    //responseVm.IsSuccess = true;
+                    //responseVm.Message = AppConstant.InsertSuccessMsg;
+                    return responseVm;
                 }
                 else
                 {

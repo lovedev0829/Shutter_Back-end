@@ -739,12 +739,41 @@ namespace ShutterManagement.GHL.Services
             }
             catch (Exception ex)
             {
-                // Catch any other exceptions that might occur
                 FileLogger.Log($"Unexpected error: {ex.Message}");
                 return new List<Calendar>();
             }
         }
 
+        public async Task<List<User>> GetUsersAsync()
+        {
+            try
+            {
+                var requestUrl = $"{AppConstant.GHL_BaseAddress}/users/?locationId={AppConstant.GHL_Locationd}";
+                using var requestMessage = new HttpRequestMessage(HttpMethod.Get, requestUrl)
+                {
+                    Headers =
+                {
+                Accept = { new MediaTypeWithQualityHeaderValue("application/json") },
+                Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken),
+                }
+                };
+                requestMessage.Headers.Add("Version", "2021-07-28");
+                HttpResponseMessage response = await _httpClient.SendAsync(requestMessage);
+                response.EnsureSuccessStatusCode();
+                var json = await response.Content.ReadAsStringAsync();
+
+                var result = System.Text.Json.JsonSerializer.Deserialize<GetUserVM>(json, new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                });
+                return result?.users ?? new List<User>();
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Log($"Error fetching users: {ex.Message}");
+                return new List<User>(); 
+            }
+        }
 
         public class OpportunityResponsees
         {
