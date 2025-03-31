@@ -44,7 +44,7 @@ namespace ShutterManagement.Business.Services
         private readonly IInvoiceService invoiceService;
         private readonly IReportServices reportServices;
         private readonly IMstProductType productType;
-
+        public Pagination filter = new Pagination();
         public ImportandExportCSV(ShutterDBContext context, IVendorService vendorService,
             IMaterial material, IContactService contactService, ClaimsProperty claimsProperty,
             IUnitofMeasurementService unitofMeasurement, ITenantService tenantService,
@@ -255,12 +255,13 @@ namespace ShutterManagement.Business.Services
             IResponseVm<List<string>> responseVm = new ResponseVm<List<string>>();
             List<string> validationErrors = new List<string>();
             List<Sp_Contact> validContacts = new List<Sp_Contact>();
-            int successfulImports = 0;
+            int successfulUpdates = 0;
+            int successfulInserts = 0;
             int totalRecords = 0;
 
             try
             {
-                var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
+                var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive==true);
                 if (!isTenantExists)
                 {
                     responseVm.Message = AppConstant.TenantNotFound;
@@ -272,9 +273,10 @@ namespace ShutterManagement.Business.Services
                 {
                     var expectedHeaders = new[]
                     {
-                   "ContactType", "FirstName","LastName", "PhoneNumber", "Email", "Website",
-                   "Notes", "Referral", "BillingFirstName","BillingLastName", "PhoneNumber", "Email","City","State","ZipCode","StreetAddress","EffectiveDate","ExpiryDate"
-                    };
+                "ContactType", "FirstName", "LastName", "PhoneNumber", "Email", "Website",
+                "Notes", "Referral", "BillingFirstName", "BillingLastName", "PhoneNumber",
+                "Email", "City", "State", "ZipCode", "StreetAddress", "EffectiveDate", "ExpiryDate"
+            };
 
                     csv.Read();
                     csv.ReadHeader();
@@ -282,57 +284,56 @@ namespace ShutterManagement.Business.Services
 
                     if (!expectedHeaders.SequenceEqual(actualHeaders, StringComparer.InvariantCultureIgnoreCase))
                     {
-                        responseVm.Message = "The CSV file header format is  incorrect. Please export format";
+                        responseVm.Message = "The CSV file header format is incorrect. Please export in the correct format.";
                         return responseVm;
                     }
 
                     var records = csv.GetRecords<ImportContact>().ToList();
                     totalRecords = records.Count;
                     int rowNumber = 1;
-                    bool hasValidationError = false;
 
                     foreach (var record in records)
                     {
-                        var contactModel = MapToSpContact(record);
+                        var filter = new Pagination { SearchValue = record.Email };
+                        bool role = true;
 
-                        var validationError = await ValidateContactAsync(contactModel, rowNumber);
-                        if (validationError != null)
+                        var existingContactResponse = await contactService.GetAll_Contact(filter, role);
+                        var existingContact = existingContactResponse.Data?.FirstOrDefault();
+
+                        var contactModel = MapToSpContact(record, existingContact != null , existingContact.ContactId);
+
+                        if (existingContact != null)
                         {
-                            validationErrors.Add(validationError);
-                            hasValidationError = true;
+                            contactModel.ContactId = existingContact.ContactId;
+
+                            var updateResponse = await contactService.Update_Contact(contactModel);
+                            if (updateResponse.IsSuccess)
+                            {
+                                successfulUpdates++;
+                            }
+                            else
+                            {
+                                validationErrors.Add($"Error updating contact in row {rowNumber}: {updateResponse.Message}");
+                            }
                         }
                         else
                         {
                             validContacts.Add(contactModel);
                         }
-
                         rowNumber++;
                     }
 
-                    if (hasValidationError)
+                    if (validContacts.Any())
                     {
-                        responseVm.IsSuccess = false;
-                        responseVm.Message = "Validation errors occurred during the import.";
-                        responseVm.Data = validationErrors;
-                        responseVm.TotalRecords = validContacts.Count;
+                        successfulInserts = await SaveOrUpdateContacts(validContacts, validationErrors);
                     }
-                    else
-                    {
-                        successfulImports = await InsertValidContacts(validContacts, validationErrors);
 
-                        if (validationErrors.Any())
-                        {
-                            responseVm.IsSuccess = false;
-                            responseVm.Message = "Some contacts failed to be inserted.";
-                            responseVm.Data = validationErrors;
-                            responseVm.TotalRecords = successfulImports;
-                        }
-                        else
-                        {
-                            responseVm.IsSuccess = true;
-                            responseVm.Message = AppConstant.UploadSuccessMsg;
-                            responseVm.TotalRecords = successfulImports;
-                        }
+                    responseVm.IsSuccess = !validationErrors.Any();
+                    responseVm.Message = $"Processed {successfulUpdates + successfulInserts} contacts ({successfulUpdates} updated, {successfulInserts} inserted).";
+                    responseVm.TotalRecords = successfulUpdates + successfulInserts;
+                    if (validationErrors.Any())
+                    {
+                        responseVm.Data = validationErrors;
                     }
                 }
             }
@@ -345,24 +346,73 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        private Sp_Contact MapToSpContact(ImportContact record)
+        private async Task<int> SaveOrUpdateContacts(List<Sp_Contact> contacts, List<string> validationErrors)
         {
-            var contactModel = new Sp_Contact
+            int successfulInserts = 0;
+
+            foreach (var contact in contacts)
+            {
+                var createContactResponse = await contactService.Create_Contact(contact);
+
+                if (createContactResponse.IsSuccess)
+                {
+                    successfulInserts++;
+                }
+                else
+                {
+                    validationErrors.Add($"Error creating contact {contact.Email}: {createContactResponse.Message}");
+                }
+            }
+
+            return successfulInserts;
+        }
+
+        private dynamic MapToSpContact(ImportContact record, bool isUpdate,Guid? Contactid)
+        {
+            if (isUpdate)
+            {
+                return new UpdateContact
+                {
+                    ContactId = Contactid,
+                    FirstName = record.FirstName?.Trim(),
+                    LastName = record.LastName?.Trim(),
+                    PhoneNumber = record.PhoneNumber?.Trim(),
+                    Email = record.Email?.Trim(),
+                    Website = record.Website?.Trim(),
+                    Notes = record.Notes?.Trim(),
+                    Referral = record.Referral?.Trim(),
+                    BillingAddressVm = record.BillingAddressVm != null ? new BillingAddressVm
+                    {
+                        FirstName = record.BillingAddressVm.BillingFirstName?.Trim(),
+                        LastName = record.BillingAddressVm.BillingLastName?.Trim(),
+                        PhoneNumber = record.BillingAddressVm.PhoneNumber?.Trim(),
+                        Email = record.BillingAddressVm.Email?.Trim(),
+                        StreetAddress = record.BillingAddressVm.StreetAddress?.Trim(),
+                        ZipCode = record.BillingAddressVm.ZipCode?.Trim(),
+                        City = record.BillingAddressVm.City?.Trim(),
+                        State = record.BillingAddressVm.State?.Trim()
+                    } : null,
+                    TaxExemptionVm = record.TaxExemptionVm != null ? new TaxExemption
+                    {
+                        ExemptionCertificate = record.TaxExemptionVm.ExemptionCertificate,
+                        EffectiveDate = record.TaxExemptionVm.EffectiveDate,
+                        ExpiryDate = record.TaxExemptionVm.ExpiryDate
+                    } : null
+                };
+            }
+
+            return new Sp_Contact
             {
                 ContactType = record.ContactType?.Trim(),
                 FirstName = record.FirstName?.Trim(),
                 LastName = record.LastName?.Trim(),
-                PhoneNumber = record.PhoneNumber.Trim(),
+                PhoneNumber = record.PhoneNumber?.Trim(),
                 Email = record.Email?.Trim(),
-                Website = record.Website.Trim(),
-                Notes = record.Notes,
-                Referral = record.Referral.Trim(),
+                Website = record.Website?.Trim(),
+                Notes = record.Notes?.Trim(),
+                Referral = record.Referral?.Trim(),
                 IsBillingAddressSameAsAddress = false,
-            };
-
-            if (record.BillingAddressVm != null)
-            {
-                contactModel.BillingAddressVm = new BillingAddressVm
+                BillingAddressVm = record.BillingAddressVm != null ? new BillingAddressVm
                 {
                     FirstName = record.BillingAddressVm.BillingFirstName?.Trim(),
                     LastName = record.BillingAddressVm.BillingLastName?.Trim(),
@@ -372,21 +422,91 @@ namespace ShutterManagement.Business.Services
                     ZipCode = record.BillingAddressVm.ZipCode?.Trim(),
                     City = record.BillingAddressVm.City?.Trim(),
                     State = record.BillingAddressVm.State?.Trim()
-                };
-            }
-
-            if (record.TaxExemptionVm != null)
-            {
-                contactModel.TaxExemptionVm = new TaxExemption
+                } : null,
+                TaxExemptionVm = record.TaxExemptionVm != null ? new TaxExemption
                 {
                     ExemptionCertificate = record.TaxExemptionVm.ExemptionCertificate,
                     EffectiveDate = record.TaxExemptionVm.EffectiveDate,
-                    ExpiryDate = record.TaxExemptionVm?.ExpiryDate
-                };
-            }
-
-            return contactModel;
+                    ExpiryDate = record.TaxExemptionVm.ExpiryDate
+                } : null
+            };
         }
+
+
+        //private async Task<int> SaveOrUpdateContacts(List<Sp_Contact> contacts, List<string> validationErrors)
+        //{
+        //    int successfulInserts = 0;
+
+        //    foreach (var contact in contacts)
+        //    {
+        //        var createContactResponse = await contactService.Create_Contact(contact);
+
+        //        if (createContactResponse.IsSuccess)
+        //        {
+        //            successfulInserts++;
+        //        }
+        //        else
+        //        {
+        //            validationErrors.Add($"Error creating contact {contact.Email}: {createContactResponse.Message}");
+        //        }
+        //    }
+
+        //    return successfulInserts;
+        //}
+
+
+
+        //private Sp_Contact MapToSpContact(ImportContact record , bool IsUpdate)
+        //{
+        //    if(IsUpdate)
+        //    {
+        //        var contact = new UpdateContact();
+
+        //        {
+
+        //        }
+        //    }
+        //    var contactModel = new Sp_Contact
+        //    {
+        //        ContactType = record.ContactType?.Trim(),
+        //        ContactId= record?.ContactId.Trim(),
+        //        FirstName = record.FirstName?.Trim(),
+        //        LastName = record.LastName?.Trim(),
+        //        PhoneNumber = record.PhoneNumber.Trim(),
+        //        Email = record.Email?.Trim(),
+        //        Website = record.Website.Trim(),
+        //        Notes = record.Notes,
+        //        Referral = record.Referral.Trim(),
+        //        IsBillingAddressSameAsAddress = false,
+        //    };
+
+        //    if (record.BillingAddressVm != null)
+        //    {
+        //        contactModel.BillingAddressVm = new BillingAddressVm
+        //        {
+        //            FirstName = record.BillingAddressVm.BillingFirstName?.Trim(),
+        //            LastName = record.BillingAddressVm.BillingLastName?.Trim(),
+        //            PhoneNumber = record.BillingAddressVm.PhoneNumber?.Trim(),
+        //            Email = record.BillingAddressVm.Email?.Trim(),
+        //            StreetAddress = record.BillingAddressVm.StreetAddress?.Trim(),
+        //            ZipCode = record.BillingAddressVm.ZipCode?.Trim(),
+        //            City = record.BillingAddressVm.City?.Trim(),
+        //            State = record.BillingAddressVm.State?.Trim()
+        //        };
+        //    }
+
+        //    if (record.TaxExemptionVm != null)
+        //    {
+        //        contactModel.TaxExemptionVm = new TaxExemption
+        //        {
+        //            ExemptionCertificate = record.TaxExemptionVm.ExemptionCertificate,
+        //            EffectiveDate = record.TaxExemptionVm.EffectiveDate,
+        //            ExpiryDate = record.TaxExemptionVm?.ExpiryDate
+        //        };
+        //    }
+
+        //    return contactModel;
+        //}
 
         private async Task<string> ValidateContactAsync(Sp_Contact contactModel, int rowNumber)
         {
@@ -488,21 +608,23 @@ namespace ShutterManagement.Business.Services
                         contact.Referral,
                         contact.IsTaxExemption,
                         contact.IsBillingAddressSameAsAddress,
+                        contact.PrimaryAddress,
                         contact.IsActive
                     }).ToList();
 
                 var detailedContactList = new List<ContactsList>();
                 foreach (var contact in contactsList)
                 {
-                    var billingAddress = billingService.GetAllQuerable()
-                        .Where(x => x.ContactId == contact.ContactId && !x.IsDelete)
+                    var billingAddress = dbContext.TblAddresses
+                        .Where(x => x.AddressId == contact.PrimaryAddress
+                        && x.IsDelete == false)
                         .Select(x => new BillingAddressVm
                         {
                             City = x.City,
                             Email = x.Email,
                             FirstName = x.FirstName,
                             LastName = x.LastName,
-                            PhoneNumber = x.PhoneNumber,
+                            PhoneNumber = x.Phone,
                             State = x.State,
                             StreetAddress = x.StreetAddress,
                             ZipCode = x.ZipCode,

@@ -57,6 +57,7 @@ namespace ShutterManagement.Core.SPModel
         [DefaultValue("")]
         public string? Referral { get; set; }
         public string? GHLContactId { get; set; }
+        public string? ContactId { get; set; }
         public DateTime? lastAsync { get; set; }
         public string? locationId { get; set; }
 

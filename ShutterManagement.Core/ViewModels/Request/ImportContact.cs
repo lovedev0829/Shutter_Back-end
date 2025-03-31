@@ -17,6 +17,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabaticalError)]
         [DefaultValue("")]
         public string ContactType { get; set; } = string.Empty;
+        //public Guid? ContactId { get; set; } = Guid.Empty;
 
         [Required]
         [MaxLength(255)]
