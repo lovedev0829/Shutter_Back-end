@@ -70,7 +70,7 @@ namespace ShutterManagement.Business.Services
 
         #region Start Export import Contact and material
 
-        public async Task<IResponseVm<List<string>>> ImportCsvToDatabase(Stream csvStream)
+        public async Task<IResponseVm<List<string>>> ImportMaterialDatabase(Stream csvStream)
         {
             IResponseVm<List<string>> responseVm = new ResponseVm<List<string>>();
             List<string> validationErrors = new List<string>();

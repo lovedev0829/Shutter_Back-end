@@ -277,7 +277,7 @@ namespace ShutterManagement.Business.Services
                                             SKU = t2.Sku,
                                             StockQuantity = t2.StockQuantity,
                                             UnitCost = t2.UnitCost,
-                                            Non_Rated_UnitCost = t2.NonRatedUnitCost,
+                                            NonRatedUnitCost = t2.NonRatedUnitCost,
                                             ProductType = t2.ProductType,
                                             UnitOfMeasurement = t2.UnitOfMeasurement,
                                             VendorId = t2.VendorId,
@@ -296,7 +296,7 @@ namespace ShutterManagement.Business.Services
                                         || (x.ProductType.ToString() == filter.SearchValue)
                                         || (x.MaterialName ?? "").ToLower().Contains(filter.SearchValue)
                                         || (x.UnitCost.ToString() ?? "").ToLower().Contains(filter.SearchValue)
-                                        || (x.Non_Rated_UnitCost.ToString() ?? "").ToLower().Contains(filter.SearchValue)
+                                        || (x.NonRatedUnitCost.ToString() ?? "").ToLower().Contains(filter.SearchValue)
                                         || (x.ReorderLevel.ToString() ?? "").ToLower().Contains(filter.SearchValue)
                                         || (x.StockQuantity.ToString() ?? "").ToLower().Contains(filter.SearchValue)
                                         || (x.Notes.ToString() ?? "").ToLower().Contains(filter.SearchValue)
@@ -321,7 +321,7 @@ namespace ShutterManagement.Business.Services
                         ProductType = x.ProductType,
                         Notes = x.Notes,
                         UnitCost= x.UnitCost,
-                        Non_Rated_UnitCost = x.Non_Rated_UnitCost,
+                        NonRatedUnitCost = x.NonRatedUnitCost,
                         UnitOfMeasurement = x.UnitOfMeasurement,
                         StockQuantity = x.StockQuantity,
                         ReorderLevel = x.ReorderLevel

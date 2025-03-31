@@ -54,7 +54,7 @@ namespace ShutterManagement.Controllers
                     switch (model.ToLower())
                     {
                         case "material":
-                            var materialresponse = await importandExportCSV.ImportCsvToDatabase(stream);
+                            var materialresponse = await importandExportCSV.ImportMaterialDatabase(stream);
                             responseVm = materialresponse;
                             break;        
 

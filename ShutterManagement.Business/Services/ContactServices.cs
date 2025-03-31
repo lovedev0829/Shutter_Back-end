@@ -28,14 +28,13 @@ namespace ShutterManagement.Business.Services
         private readonly ITenantService tenantService;
         private readonly ITaxExemption taxExemptionService;
         private readonly ClaimsProperty claimsProperty;
-        private readonly GhlService ghlService;
         private readonly IGHLConfiguration gHLConfigurationService;
         private readonly ITenantBrandingService tenantBranding;
         private readonly GHLService_v2 gHLService_V2;
 
         public ContactServices(ShutterDBContext context, IContactBillingService billingService,
             ITenantService tenantService, ITaxExemption taxExemptionService,
-            ClaimsProperty claimsProperty, GhlService ghlService,IGHLConfiguration gHLConfigurationService,
+            ClaimsProperty claimsProperty,IGHLConfiguration gHLConfigurationService,
             ITenantBrandingService tenantBranding,GHLService_v2 gHLService_V2)
         {
             _context = context;
@@ -43,7 +42,6 @@ namespace ShutterManagement.Business.Services
             this.tenantService = tenantService;
             this.taxExemptionService = taxExemptionService;
             this.claimsProperty = claimsProperty;
-            this.ghlService = ghlService;
             this.gHLConfigurationService = gHLConfigurationService;
             this.tenantBranding = tenantBranding;
             this.gHLService_V2 = gHLService_V2;
@@ -872,7 +870,7 @@ namespace ShutterManagement.Business.Services
                 if (contact.GhlcontactId == null)
                 {
                     await gHLConfigurationService.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
-                    ghlResponse = await ghlService.CreateContactAsync(ghlContactAdd);
+                    ghlResponse = await gHLService_V2.CreateContactAsync(ghlContactAdd);
                     if (ghlResponse != null)
                     {
                         var contactExist = (await GetById(contact.ContactId));
@@ -890,7 +888,7 @@ namespace ShutterManagement.Business.Services
                 else
                 {
                     await gHLConfigurationService.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
-                    ghlResponse = await ghlService.UpdateContactAsync(contact.GhlcontactId, ghlContactAdd);
+                    ghlResponse = await gHLService_V2.UpdateContactAsync(contact.GhlcontactId, ghlContactAdd);
                 }
                 if (ghlResponse != null)
                 {
@@ -1205,14 +1203,14 @@ namespace ShutterManagement.Business.Services
                             else
                             {
                                 FileLogger.Log("Updating Contact in GHL.", contact.GHLContactId);
-                                var res = await ghlService.UpdateContactAsync(contact.GHLContactId, contact);
+                                var res = await gHLService_V2.UpdateContactAsync(contact.GHLContactId, contact);
                                 if (res?.Contact == null)
                                 { FileLogger.Log("Updating Contact in GHL.", contact.GHLContactId); }
 
                             }
                         }
                     }
-                    var isUpdated = await ghlService.UpdateLastSyncConfigurationAsync();
+                    var isUpdated = await gHLService_V2.UpdateLastSyncConfigurationAsync();
 
                     if (!isUpdated)
                     {
