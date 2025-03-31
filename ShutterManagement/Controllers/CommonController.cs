@@ -839,16 +839,23 @@ namespace ShutterManagement.Controllers
         }
 
         [HttpGet]
-        [Route("GetAuthorizationUrl")]
-        public async Task<IActionResult> GetAuthorizationUrl(string refreshtoken)
+        [Route("GetUserAsync")]
+        public async Task<IActionResult> GetUserAsync()
         {
-            var oauthService = new GoHighLevelOAuthService();
-            TokenResponse accesstoken = new TokenResponse();
-            var accessToken = await oauthService.GetAccessToken(refreshtoken);
-            Console.WriteLine("Access Token: " + accessToken);
-            return Ok(accessToken);
-
+            await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
+            var authorizationUrl = await gHLService_V2.GetUsersAsync();
+            return Ok(authorizationUrl);
         }
+
+        //[HttpPost]
+        //[Route("VerifyGoHighLevel")]
+        //public async Task<IActionResult> GetAuthorizationUrl(string refreshtoken)
+        //{
+        //    var accessToken = await ghlService.GetAccessToken(refreshtoken);
+        //    Console.WriteLine("Access Token: " + accessToken);
+        //    return Ok(accessToken);
+
+        //}
 
         [HttpPost]
         [Route("GHLAppointment")]

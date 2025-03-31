@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using Org.BouncyCastle.Asn1.X509.Qualified;
+using Org.BouncyCastle.Crypto;
 using ShutterManagement.Core;
 using ShutterManagement.Core.Common;
 using ShutterManagement.Core.SPModel;
@@ -277,21 +278,23 @@ namespace ShutterManagement.GHL.Services
             }
         }
 
-
-        public async Task<GhlContactSingleResponse?> CreateContactAsync(GhlContactAdd contact)
+        public async Task<IResponseVm<GhlContactSingleResponse>> CreateContactAsync(GhlContactAdd contact)
         {
+            IResponseVm<GhlContactSingleResponse> responseVm = new ResponseVm<GhlContactSingleResponse>();
             try
             {
                 if (contact == null)
                 {
                     FileLogger.Log("CreateContactAsync: Contact object is null.");
-                    return null;
+                    responseVm.Message = "Contact object is null";
+                    return responseVm;
                 }
 
                 if (string.IsNullOrEmpty(AppConstant.GHL_AccessToken))
                 {
                     FileLogger.Log("CreateContactAsync: OAuth token is missing or invalid.");
-                    return null;
+                    responseVm.Message = "OAuth token is missing or invalid.";
+                    return responseVm;
                 }
 
                 var contactData = new
@@ -301,15 +304,7 @@ namespace ShutterManagement.GHL.Services
                     email = contact.Email,
                     phone = contact.Phone,
                     locationId = AppConstant.GHL_Locationd,
-                    source = "public api",
-                    companyName = "Brain Technosys",
-                    assignedTo = "d8heZIvtIbd5OphFusfb",
-                    tags = new[] { "tag1", "tag2" },
-                    customFields = new[]
-                    {
-                new { id = "6dvNaf7VhkQ9snc5vnjJ", key = "my_custom_field", field_value = "9039160788" }
-            }
-                };
+               };
 
                 var requestUrl = $"{AppConstant.GHL_BaseAddress}/contacts";
                 var contactJson = JsonConvert.SerializeObject(contactData);
@@ -326,32 +321,37 @@ namespace ShutterManagement.GHL.Services
                 if (!response.IsSuccessStatusCode)
                 {
                     FileLogger.Log($"CreateContactAsync Error: {response.StatusCode} - {jsonResponse}");
-                    return null;
+                    responseVm.Message =response.StatusCode.ToString();
                 }
-
-                return JsonConvert.DeserializeObject<GhlContactSingleResponse>(jsonResponse);
+                responseVm.IsSuccess = true;
+                responseVm.Data = JsonConvert.DeserializeObject<GhlContactSingleResponse>(jsonResponse);
+                responseVm.Message = AppConstant.InsertSuccessMsg;
             }
             catch (Exception ex)
             {
                 FileLogger.Log($"Exception in CreateContactAsync: {ex.Message}");
-                return null;
+                responseVm.Message = ex.Message;
             }
+            return responseVm;
         }
 
-        public async Task<GhlContactSingleResponse?> UpdateContactAsync(string contactId, GhlContactAdd contact)
+        public async Task<IResponseVm<GhlContactSingleResponse?>> UpdateContactAsync(string contactId, GhlContactAdd contact)
         {
+            IResponseVm<GhlContactSingleResponse> responseVm = new ResponseVm<GhlContactSingleResponse>();
             try
             {
                 if (string.IsNullOrEmpty(contactId) || contact == null)
                 {
                     FileLogger.Log("UpdateContactAsync: Invalid input. ContactId or Contact is null.");
-                    return null;
+                    responseVm.Message = "Contact object is null";
+                    return responseVm;
                 }
 
                 if (string.IsNullOrEmpty(AppConstant.GHL_AccessToken))
                 {
                     FileLogger.Log("UpdateContactAsync: OAuth token is missing or invalid.");
-                    return null;
+                    responseVm.Message = "OAuth token is missing or invalid.";
+                    return responseVm;
                 }
 
                 var contactData = new
@@ -360,15 +360,7 @@ namespace ShutterManagement.GHL.Services
                     lastName = contact.LastName,
                     email = contact.Email,
                     phone = contact.Phone,
-                    locationId = AppConstant.GHL_Locationd, 
-                    source = "public api",
-                    companyName = "Brain Technosys",
-                    assignedTo = "d8heZIvtIbd5OphFusfb",
-                    tags = new[] { "tag1", "tag2" },
-                    customFields = new[]
-                    {
-                new { id = "6dvNaf7VhkQ9snc5vnjJ", key = "my_custom_field", field_value = "9039160788" }
-            }
+                    locationId = AppConstant.GHL_Locationd,
                 };
 
                 var requestUrl = $"{AppConstant.GHL_BaseAddress}/contacts/{contactId}";
@@ -382,31 +374,28 @@ namespace ShutterManagement.GHL.Services
 
                 HttpResponseMessage response = await httpClient.PutAsync(requestUrl, content);
                 string jsonResponse = await response.Content.ReadAsStringAsync();
-
+                responseVm.IsSuccess = true;
+                responseVm.Message = AppConstant.UpdateSuccessMsg;
+                responseVm.Data = JsonConvert.DeserializeObject<GhlContactSingleResponse>(jsonResponse);
                 if (!response.IsSuccessStatusCode)
                 {
                     FileLogger.Log($"UpdateContactAsync Error: {response.StatusCode} - {jsonResponse}");
-                    return null;
+                    responseVm.Message = "Contact object is null";
                 }
-
-                return JsonConvert.DeserializeObject<GhlContactSingleResponse>(jsonResponse);
             }
             catch (Exception ex)
             {
                 FileLogger.Log($"Exception in UpdateContactAsync: {ex.Message}");
-                return null;
+                responseVm.Message = ex.Message;
             }
+            return responseVm;
         }
-
-
 
         public string GetClientIpAddress()
         {
             var ipAddress = httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString();
             return ipAddress;
         }
-
-
 
         #endregion End Contact Related Methods
 
@@ -569,7 +558,6 @@ namespace ShutterManagement.GHL.Services
 
         #endregion End Opportunity Related Methods
 
-
         public async Task<IResponseVm<GHLAppointment>> CreateAppointmentAsync(GHLAppointmentAdd appointment)
         {
             IResponseVm<GHLAppointment> responseVm = new ResponseVm<GHLAppointment>();
@@ -697,7 +685,6 @@ namespace ShutterManagement.GHL.Services
 
         }
 
-
         public async Task<List<Calendar>> GetAppointmentsAsync()
         {
             try
@@ -739,12 +726,40 @@ namespace ShutterManagement.GHL.Services
             }
             catch (Exception ex)
             {
-                // Catch any other exceptions that might occur
                 FileLogger.Log($"Unexpected error: {ex.Message}");
                 return new List<Calendar>();
             }
         }
+        public async Task<List<User>> GetUsersAsync()
+        {
+            try
+            {
+                var requestUrl = $"{AppConstant.GHL_BaseAddress}/users/?locationId={AppConstant.GHL_Locationd}";
+                using var requestMessage = new HttpRequestMessage(HttpMethod.Get, requestUrl)
+                {
+                    Headers =
+                {
+                Accept = { new MediaTypeWithQualityHeaderValue("application/json") },
+                Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken),
+                }
+                };
+                requestMessage.Headers.Add("Version", "2021-07-28");
+                HttpResponseMessage response = await _httpClient.SendAsync(requestMessage);
+                response.EnsureSuccessStatusCode();
+                var json = await response.Content.ReadAsStringAsync();
 
+                var result = System.Text.Json.JsonSerializer.Deserialize<GetUserVM>(json, new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                });
+                return result?.users ?? new List<User>();
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Log($"Error fetching users: {ex.Message}");
+                return new List<User>(); 
+            }
+        }
 
         public class OpportunityResponsees
         {

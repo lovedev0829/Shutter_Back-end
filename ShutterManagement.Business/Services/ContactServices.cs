@@ -257,6 +257,8 @@ namespace ShutterManagement.Business.Services
                                 IsDelete = false,
                             };
                             await taxExemptionService.Add(taxExemption1);
+                            responseVm.IsSuccess = true;
+                            responseVm.Message = AppConstant.InsertSuccessMsg;
                         }
                         if (model.GHLContactId == null)
                         {
@@ -271,13 +273,12 @@ namespace ShutterManagement.Business.Services
                             }
                             else
                             {
+                                responseVm.IsSuccess = true; 
                                 responseVm.Message = Checkghlresponse.Message;
                             }
-                            return responseVm;
                             
                         }
-                        responseVm.IsSuccess = true;
-                        responseVm.Message = AppConstant.InsertSuccessMsg;
+                        
                     }
                     else
                     {
@@ -736,7 +737,6 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-
         public async Task<IResponseVm<List<ContactsList>>> GetAll_Contact(Pagination filter, bool Role)
         {
             IResponseVm<List<ContactsList>> responseVm = new ResponseVm<List<ContactsList>>();
@@ -853,14 +853,14 @@ namespace ShutterManagement.Business.Services
             try
             {
 
-                var ghlResponse = new GhlContactSingleResponse();
+                IResponseVm<GhlContactSingleResponse> ghlResponse = new ResponseVm<GhlContactSingleResponse>();
                 var ghlContactAdd = new GhlContactAdd
                 {
                     Id = contact.ContactId.ToString() ?? string.Empty,
                     FirstName = model.FirstName ?? string.Empty,
                     LastName = model.LastName ?? string.Empty,
                     Email = model.Email ?? string.Empty,
-                    Phone = model.PhoneNumber ?? string.Empty,
+                   // Phone = model.PhoneNumber ?? string.Empty,
                     Notes = model.Notes ?? string.Empty,
                     ContactType = model.ContactType ?? string.Empty,
                     Website = model.Website ?? string.Empty,
@@ -871,19 +871,22 @@ namespace ShutterManagement.Business.Services
                 {
                     await gHLConfigurationService.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
                     ghlResponse = await gHLService_V2.CreateContactAsync(ghlContactAdd);
-                    if (ghlResponse != null)
+                    if (ghlResponse.IsSuccess)
                     {
                         var contactExist = (await GetById(contact.ContactId));
 
                         if (contactExist != null && contactExist.IsDelete == false)
                         {
-                            contactExist.GhlcontactId = ghlResponse.Contact.id;
+                            contactExist.GhlcontactId = ghlResponse.Data.Contact.id;
                             contactExist.LastSync = DateTime.Now;
                         }
                         var res = await Update(contactExist);
-
+                        responseVm.IsSuccess = true;
+                        responseVm.Message = "Contact synced successfully with GHL.";
                     }
-
+                    //responseVm.IsSuccess = true;
+                    //responseVm.Message = AppConstant.InsertSuccessMsg;
+                    return responseVm;
                 }
                 else
                 {
@@ -1060,7 +1063,7 @@ namespace ShutterManagement.Business.Services
                                 {
                                     FileLogger.Log("Exception occurred: Response object is null.");
                                 }
-                                else if (res.Contact == null)
+                                else if (!res.IsSuccess)
                                 {
                                     FileLogger.Log("Exception occurred: Contact is null.", res);
                                 }
@@ -1186,25 +1189,25 @@ namespace ShutterManagement.Business.Services
 
                                 FileLogger.Log("Creating bulk Contact in GHL(GhlContactId).", contact);
                                 var res = await gHLService_V2.CreateContactAsync(contact);
-                                if (res?.Contact != null)
+                                if (res.IsSuccess)
                                 {
                                     var contactExist = (await GetAll()).Where(x => x.Email == contact.Email).FirstOrDefault();
                                     if (contactExist != null)
                                     {
-                                        contactExist.GhlcontactId = res.Contact.id;
+                                        contactExist.GhlcontactId = res.Data.Contact.id;
                                         contactExist.LastSync = DateTime.Now;
                                     }
                                     await Update(contactExist);
 
                                 }
-                                if (res?.Contact == null)
+                                if (!res.IsSuccess)
                                 { FileLogger.Log("Exception occurred Creating bulk Contact in GHL.", res); }
                             }
                             else
                             {
                                 FileLogger.Log("Updating Contact in GHL.", contact.GHLContactId);
                                 var res = await gHLService_V2.UpdateContactAsync(contact.GHLContactId, contact);
-                                if (res?.Contact == null)
+                                if (!res.IsSuccess)
                                 { FileLogger.Log("Updating Contact in GHL.", contact.GHLContactId); }
 
                             }

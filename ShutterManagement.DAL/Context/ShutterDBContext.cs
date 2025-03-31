@@ -776,6 +776,7 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.LastSync)
                 .HasColumnType("datetime")
                 .HasColumnName("lastSync");
+            entity.Property(e => e.RedirectUri).HasColumnName("RedirectURI");
             entity.Property(e => e.RefreshExpirationtime).HasColumnType("datetime");
             entity.Property(e => e.RefreshToken).HasColumnName("Refresh_token");
         });

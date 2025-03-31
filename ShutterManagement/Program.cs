@@ -21,6 +21,7 @@ using System.Text.Json.Serialization;
 using System.Text.Json;
 using ShutterManagement.GHL.Services;
 using ShutterManagement.Stripe;
+using ShutterManagement.GHLv2;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -182,11 +183,11 @@ builder.Services.AddScoped<GHLService_v2>(); // Register GhlService as a scoped 
 builder.Services.AddSingleton(typeof(IConverter), new SynchronizedConverter(new PdfTools()));
 
 
-
+builder.Services.Configure<GoHighLevelOAuthSettings>(builder.Configuration.GetSection("GoHighLevelOAuthSettings"));
 builder.Services.Configure<StripeSettings>(builder.Configuration.GetSection("Stripe"));
 
 // Register the StripeService as a singleton
-builder.Services.AddSingleton<StripeService>();
+ builder.Services.AddSingleton<StripeService>();
 
 var app = builder.Build();
 
