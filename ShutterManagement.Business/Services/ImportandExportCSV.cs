@@ -93,7 +93,7 @@ namespace ShutterManagement.Business.Services
                     //var records = csv.GetRecords<ImportMaterial>().ToList();
                     var expectedHeaders = new[]
                    {
-                   "MaterialName", "UnitCost", "UnitOfMeasurement", "StockQuantity", "ReorderLevel",
+                   "MaterialName", "UnitCost","NonRatedUnitCost", "UnitOfMeasurement", "StockQuantity", "ReorderLevel",
                    "VendorCode", "Notes", "ProductType", "SKU", "IsCutSheet"
                     };
 
@@ -177,6 +177,7 @@ namespace ShutterManagement.Business.Services
                             SKU = record.SKU?.Trim(),
                             MaterialName = record.MaterialName?.Trim(),
                             UnitCost = record.UnitCost,
+                            NonRatedUnitCost=record.NonRatedUnitCost,
                             UnitOfMeasurement = record.UnitOfMeasurement,
                             StockQuantity = record.StockQuantity,
                             ReorderLevel = record.ReorderLevel,
@@ -420,97 +421,7 @@ namespace ShutterManagement.Business.Services
 
         #endregion Start Export import Contact and material
 
-        //public async Task<IResponseVm<dynamic>> ExportContactsToCsvAsync(string filePath)
-        //{
-        //    IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
-        //    try
-        //    {
-        //        var IsTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
-        //        if (IsTenantExists)
-        //        {
-        //            var Contacts = new List<TblContact>();
-        //            List<ContactsList> ContactList = new List<ContactsList>();
-
-        //            Contacts = (await contactService.GetAll()).Where(x => x.IsDelete == false && x.IsArchive == false && x.TenantId == AppConstant.LoggedInTenantId).OrderByDescending(x => x.CreatedAt).ToList();
-
-        //            foreach (var contact in Contacts)
-        //            {
-        //                ContactsList contacts = new ContactsList
-        //                {
-        //                    ContactId = contact.ContactId,
-        //                    ContactType = contact.ContactType ?? "",
-        //                    Email = contact.Email,
-        //                    PhoneNumber = contact.PhoneNumber,
-        //                    Name = contact.Name,
-        //                    Website = contact.Website,
-        //                    Notes = contact.Notes,
-        //                    Referral = contact.Referral,
-        //                    IsTaxExemption = contact.IsTaxExemption ?? false,
-        //                    IsBillingAddressSameAsAddress = contact.IsBillingAddressSameAsAddress,
-        //                    IsActive = contact.IsActive
-        //                };
-
-        //                contacts.billingAddressVm = billingService.GetAllQuerable()
-        //                    .Where(x => x.ContactId == contact.ContactId
-        //                    && x.IsDelete == false).Select(x => new BillingAddressVm
-        //                    {
-        //                        City = x.City,
-        //                        Email = x.Email,
-        //                        FullName = x.FullName,
-        //                        PhoneNumber = x.PhoneNumber,
-        //                        State = x.State,
-        //                        StreetAddress = x.StreetAddress,
-        //                        ZipCode = x.ZipCode,
-        //                    }).FirstOrDefault();
-        //                contacts.taxExemptionVm = taxExemptionService.GetAllQuerable()
-        //                    .Where(x => x.ContactId == contact.ContactId
-        //                    && x.IsDelete == false).Select(x => new TaxExemption
-        //                    {
-        //                        EffectiveDate = x.EffectiveDate,
-        //                        ExemptionCertificate = x.ExemptionCertificate.Split(new[] {","},StringSplitOptions.None),
-        //                        ExpiryDate = x.ExpiryDate
-        //                    }).FirstOrDefault();
-        //                ContactList.Add(contacts);
-        //            }
-        //            var csvBuilder = new StringBuilder();
-        //            csvBuilder.AppendLine("ContactType,Name,PhoneNumber,Email,Website,Notes,Referral,FullName,PhoneNumber,Email,City,State,ZipCode,StreetAddress,ExemptionCertificate,EffectiveDate,ExpiryDate");
-
-
-        //            foreach (var contact in ContactList)
-        //            {
-        //                var billingAddress = contact.billingAddressVm ?? new BillingAddressVm();
-
-
-        //                var line = $"{contact.ContactType},{contact.Name},{contact.PhoneNumber},{contact.Email},{contact.Website},{contact.Notes},{contact.Referral}," +
-        //                           $"{billingAddress.FullName},{billingAddress.PhoneNumber},{billingAddress.Email},{billingAddress.City},{billingAddress.State}," +
-        //                           $"{billingAddress.ZipCode},{billingAddress.StreetAddress},{contact.taxExemptionVm?.ExemptionCertificate},{contact.taxExemptionVm?.EffectiveDate},{contact.taxExemptionVm?.ExpiryDate}";
-
-        //                csvBuilder.AppendLine(line);
-        //            }
-
-        //            try
-        //            {
-        //                await File.WriteAllTextAsync(filePath, csvBuilder.ToString());
-        //                responseVm.IsSuccess = true;
-        //                responseVm.Message = AppConstant.ExportSuccessMsg; 
-        //            }
-        //            catch (Exception ex)
-        //            {
-        //                responseVm.IsSuccess = false;
-        //                responseVm.Message = AppConstant.ExceptionError + ex.Message; 
-        //            }
-
-        //            return responseVm;
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        responseVm.IsSuccess = false;
-        //        responseVm.Message = AppConstant.ExceptionError + ex.Message; 
-        //        return responseVm;
-        //    }
-        //    return responseVm;
-        //}
+        
 
         #region Start Export ExportContactsToCsv
 
@@ -729,18 +640,20 @@ namespace ShutterManagement.Business.Services
                                         UnitCost = t2.UnitCost,
                                         ProductTypeName = t3.ProductName,
                                         UnitOfMeasurement = t2.UnitOfMeasurement,
+                                        Non_Rated_UnitCost = t2.NonRatedUnitCost,
                                         VendorId = t2.VendorId,
-                                        VendorName = t1.VendorName,
+                                        FirstName = t1.FirstName,
+                                        LastName = t1.LastName,
                                         VendorCode = t1.VendorCode,
                                         IsCutSheet = t2.IsCutSheet,
                                     }).ToList();
 
                 var csvBuilder = new StringBuilder();
-                csvBuilder.AppendLine("MaterialName,UnitCost,UnitOfMeasurement,StockQuantity,ReorderLevel,VendorCode,Notes,ProductType,SKU,IsCutSheet");
+                csvBuilder.AppendLine("MaterialName,UnitCost,NonRatedUnitCost,UnitOfMeasurement,StockQuantity,ReorderLevel,VendorCode,Notes,ProductType,SKU,IsCutSheet");
 
                 foreach (var material in materialList)
                 {
-                    var line = $"{material.MaterialName},{material.UnitCost},{material.UnitOfMeasurement},{material.StockQuantity}," +
+                    var line = $"{material.MaterialName},{material.UnitCost},{material.Non_Rated_UnitCost},{material.UnitOfMeasurement},{material.StockQuantity}," +
                                $"{material.ReorderLevel},{material.VendorCode},{material.Notes},{material.ProductTypeName},{material.SKU},{material.IsCutSheet}";
 
                     csvBuilder.AppendLine(line);

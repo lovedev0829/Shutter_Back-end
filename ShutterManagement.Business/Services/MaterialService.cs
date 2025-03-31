@@ -145,7 +145,7 @@ namespace ShutterManagement.Business.Services
                         {
                             MaterialName = model.MaterialName.Trim(),
                             UnitCost = model.UnitCost,
-                            NonRatedUnitCost = model.Non_Rated_UnitCost,
+                            NonRatedUnitCost = model.NonRatedUnitCost,
                             UnitOfMeasurement = model.UnitOfMeasurement,
                             StockQuantity = model.StockQuantity,
                             ReorderLevel = model.ReorderLevel,
@@ -372,7 +372,7 @@ namespace ShutterManagement.Business.Services
                             IsMaterialExists.IsCutSheet = model.IsCutSheet;
                             IsMaterialExists.MaterialName = model.MaterialName;
                             IsMaterialExists.UnitCost = model.UnitCost;
-                            IsMaterialExists.NonRatedUnitCost = model.Non_Rated_UnitCost;
+                            IsMaterialExists.NonRatedUnitCost = model.NonRatedUnitCost;
                             IsMaterialExists.Sku = model.SKU;
                             IsMaterialExists.ProductType = Guid.Parse(model.ProductType);
                             IsMaterialExists.UnitOfMeasurement = model.UnitOfMeasurement;

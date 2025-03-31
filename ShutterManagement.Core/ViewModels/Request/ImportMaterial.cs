@@ -25,6 +25,8 @@ namespace ShutterManagement.Core.ViewModels.Request
         [Required]
         public string? UnitOfMeasurement { get; set; }
 
+        public decimal? NonRatedUnitCost { get; set; }
+
         [DefaultValue("")]
         [Required]
         public decimal? StockQuantity { get; set; }
