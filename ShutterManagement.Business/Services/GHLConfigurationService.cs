@@ -181,10 +181,13 @@ namespace ShutterManagement.Business.Services
                         response.IsSuccess = true;
                         response.Message = "AccessToken and RefreshToken is valid.";
                     }
-                    else
-                    {
-                        if(isExist.AccessExpirationtime > DateTime.Now)
+                    else if(isExist.RefreshExpirationtime > DateTime.Now)
                         {
+                            //if(isExist.AccessExpirationtime > DateTime.Now) {
+                            //    response.IsSuccess = true;
+                            //    response.Message = "AccessToken and RefreshToken is valid.";
+                            //}
+
                             var res1 = goHighLevelOAuthService.GetAccessToken(isExist.RefreshToken);
                             if (res != null)
                             {
@@ -197,17 +200,12 @@ namespace ShutterManagement.Business.Services
                             response.IsSuccess = true;
                             response.Message = "AccessToken Generated.";
                         }
-                        else if(isExist.RefreshExpirationtime > DateTime.Now)
+                        else
                         {
-                            response.IsSuccess = false;
                             response.Message = "User need to verify GoHighLevelConfiguration.";
                         }
                     }
-                }
-                else
-                {
-                    response.IsSuccess = false;
-                }
+                
             }
             catch(Exception ex)
             {
