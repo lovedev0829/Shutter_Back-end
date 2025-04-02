@@ -17,6 +17,7 @@ using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace ShutterManagement.Controllers
@@ -155,6 +156,8 @@ namespace ShutterManagement.Controllers
             }
         }
 
+
+           
 
         [HttpPost("UpdateContactFromGHL")]
         public async Task<IActionResult> UpdateContactFromGHL(GHLContactTrigger contactData)

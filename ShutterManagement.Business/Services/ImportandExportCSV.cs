@@ -300,7 +300,13 @@ namespace ShutterManagement.Business.Services
                         var existingContactResponse = await contactService.GetAll_Contact(filter, role);
                         var existingContact = existingContactResponse.Data?.FirstOrDefault();
 
-                        var contactModel = MapToSpContact(record, existingContact != null , existingContact.ContactId);
+                        bool isUpdate =  false;
+                        if(existingContact!=null)
+                        {
+                            isUpdate = true;
+                        }
+
+                        var contactModel = MapToSpContact(record, isUpdate, existingContact?.ContactId);
 
                         if (existingContact != null)
                         {
@@ -367,13 +373,14 @@ namespace ShutterManagement.Business.Services
             return successfulInserts;
         }
 
-        private dynamic MapToSpContact(ImportContact record, bool isUpdate,Guid? Contactid)
+        private dynamic MapToSpContact(ImportContact record, bool isUpdate, Guid? contactId)
         {
             if (isUpdate)
             {
                 return new UpdateContact
                 {
-                    ContactId = Contactid,
+                    ContactId = contactId,
+                    ContactType=record.ContactType?.Trim(),
                     FirstName = record.FirstName?.Trim(),
                     LastName = record.LastName?.Trim(),
                     PhoneNumber = record.PhoneNumber?.Trim(),
@@ -433,82 +440,82 @@ namespace ShutterManagement.Business.Services
         }
 
 
-        //private async Task<int> SaveOrUpdateContacts(List<Sp_Contact> contacts, List<string> validationErrors)
-        //{
-        //    int successfulInserts = 0;
+            //private async Task<int> SaveOrUpdateContacts(List<Sp_Contact> contacts, List<string> validationErrors)
+            //{
+            //    int successfulInserts = 0;
 
-        //    foreach (var contact in contacts)
-        //    {
-        //        var createContactResponse = await contactService.Create_Contact(contact);
+            //    foreach (var contact in contacts)
+            //    {
+            //        var createContactResponse = await contactService.Create_Contact(contact);
 
-        //        if (createContactResponse.IsSuccess)
-        //        {
-        //            successfulInserts++;
-        //        }
-        //        else
-        //        {
-        //            validationErrors.Add($"Error creating contact {contact.Email}: {createContactResponse.Message}");
-        //        }
-        //    }
+            //        if (createContactResponse.IsSuccess)
+            //        {
+            //            successfulInserts++;
+            //        }
+            //        else
+            //        {
+            //            validationErrors.Add($"Error creating contact {contact.Email}: {createContactResponse.Message}");
+            //        }
+            //    }
 
-        //    return successfulInserts;
-        //}
+            //    return successfulInserts;
+            //}
 
 
 
-        //private Sp_Contact MapToSpContact(ImportContact record , bool IsUpdate)
-        //{
-        //    if(IsUpdate)
-        //    {
-        //        var contact = new UpdateContact();
+            //private Sp_Contact MapToSpContact(ImportContact record , bool IsUpdate)
+            //{
+            //    if(IsUpdate)
+            //    {
+            //        var contact = new UpdateContact();
 
-        //        {
+            //        {
 
-        //        }
-        //    }
-        //    var contactModel = new Sp_Contact
-        //    {
-        //        ContactType = record.ContactType?.Trim(),
-        //        ContactId= record?.ContactId.Trim(),
-        //        FirstName = record.FirstName?.Trim(),
-        //        LastName = record.LastName?.Trim(),
-        //        PhoneNumber = record.PhoneNumber.Trim(),
-        //        Email = record.Email?.Trim(),
-        //        Website = record.Website.Trim(),
-        //        Notes = record.Notes,
-        //        Referral = record.Referral.Trim(),
-        //        IsBillingAddressSameAsAddress = false,
-        //    };
+            //        }
+            //    }
+            //    var contactModel = new Sp_Contact
+            //    {
+            //        ContactType = record.ContactType?.Trim(),
+            //        ContactId= record?.ContactId.Trim(),
+            //        FirstName = record.FirstName?.Trim(),
+            //        LastName = record.LastName?.Trim(),
+            //        PhoneNumber = record.PhoneNumber.Trim(),
+            //        Email = record.Email?.Trim(),
+            //        Website = record.Website.Trim(),
+            //        Notes = record.Notes,
+            //        Referral = record.Referral.Trim(),
+            //        IsBillingAddressSameAsAddress = false,
+            //    };
 
-        //    if (record.BillingAddressVm != null)
-        //    {
-        //        contactModel.BillingAddressVm = new BillingAddressVm
-        //        {
-        //            FirstName = record.BillingAddressVm.BillingFirstName?.Trim(),
-        //            LastName = record.BillingAddressVm.BillingLastName?.Trim(),
-        //            PhoneNumber = record.BillingAddressVm.PhoneNumber?.Trim(),
-        //            Email = record.BillingAddressVm.Email?.Trim(),
-        //            StreetAddress = record.BillingAddressVm.StreetAddress?.Trim(),
-        //            ZipCode = record.BillingAddressVm.ZipCode?.Trim(),
-        //            City = record.BillingAddressVm.City?.Trim(),
-        //            State = record.BillingAddressVm.State?.Trim()
-        //        };
-        //    }
+            //    if (record.BillingAddressVm != null)
+            //    {
+            //        contactModel.BillingAddressVm = new BillingAddressVm
+            //        {
+            //            FirstName = record.BillingAddressVm.BillingFirstName?.Trim(),
+            //            LastName = record.BillingAddressVm.BillingLastName?.Trim(),
+            //            PhoneNumber = record.BillingAddressVm.PhoneNumber?.Trim(),
+            //            Email = record.BillingAddressVm.Email?.Trim(),
+            //            StreetAddress = record.BillingAddressVm.StreetAddress?.Trim(),
+            //            ZipCode = record.BillingAddressVm.ZipCode?.Trim(),
+            //            City = record.BillingAddressVm.City?.Trim(),
+            //            State = record.BillingAddressVm.State?.Trim()
+            //        };
+            //    }
 
-        //    if (record.TaxExemptionVm != null)
-        //    {
-        //        contactModel.TaxExemptionVm = new TaxExemption
-        //        {
-        //            ExemptionCertificate = record.TaxExemptionVm.ExemptionCertificate,
-        //            EffectiveDate = record.TaxExemptionVm.EffectiveDate,
-        //            ExpiryDate = record.TaxExemptionVm?.ExpiryDate
-        //        };
-        //    }
+            //    if (record.TaxExemptionVm != null)
+            //    {
+            //        contactModel.TaxExemptionVm = new TaxExemption
+            //        {
+            //            ExemptionCertificate = record.TaxExemptionVm.ExemptionCertificate,
+            //            EffectiveDate = record.TaxExemptionVm.EffectiveDate,
+            //            ExpiryDate = record.TaxExemptionVm?.ExpiryDate
+            //        };
+            //    }
 
-        //    return contactModel;
-        //}
+            //    return contactModel;
+            //}
 
-        private async Task<string> ValidateContactAsync(Sp_Contact contactModel, int rowNumber)
+            private async Task<string> ValidateContactAsync(Sp_Contact contactModel, int rowNumber)
         {
             var existingContact = await contactService.GetContactByEmailOrPhone(contactModel.Email, contactModel.PhoneNumber);
             if (existingContact.Message != null)

@@ -87,6 +87,15 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
+
+        public static string FormatPhoneNumber(string phoneNumber)
+        {
+            if (string.IsNullOrWhiteSpace(phoneNumber))
+                return string.Empty;
+
+            var match = Regex.Match(phoneNumber, @"^\+?\d{1}");
+            return match.Value == "+1" ? phoneNumber : "+1" + phoneNumber.TrimStart('+');
+        }
         public async Task<IResponseVm<string>> Create_Contact(Sp_Contact model)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
@@ -96,10 +105,7 @@ namespace ShutterManagement.Business.Services
                 var IsTenantExists = false;
                 if (model.PhoneNumber != null)
                 {
-                    var match = Regex.Match(model.PhoneNumber, @"^\+?\d{1}");
-                    model.PhoneNumber = match.Value == "+1"
-                                        ? model.PhoneNumber
-                                        : "+1" + model.PhoneNumber.TrimStart('+');
+                    model.PhoneNumber = FormatPhoneNumber(model.PhoneNumber);
                 }
                 FileLogger.Log($"Location id fetched {model.locationId}");
                 if (model.locationId != null)
@@ -266,9 +272,14 @@ namespace ShutterManagement.Business.Services
                             if (Checkghlresponse.IsSuccess)
                             {
                                 var ghlResponse = await SyncWithGHL(res, model);
-                                if (!ghlResponse.IsSuccess)
+                                if (ghlResponse.IsSuccess)
                                 {
+                                    responseVm.IsSuccess = true;
                                     responseVm.Message = AppConstant.InsertSuccessMsg + ghlResponse.Message;
+                                }
+                                else
+                                { 
+                                  responseVm.Message = AppConstant.InsertSuccessMsg + ghlResponse.Message;
                                 }
                             }
                             else
@@ -306,10 +317,7 @@ namespace ShutterManagement.Business.Services
                 var IsTenantExists = false;
                 if (model.PhoneNumber != null)
                 {
-                    var match = Regex.Match(model.PhoneNumber, @"^\+?\d{1}");
-                    model.PhoneNumber = match.Value == "+1"
-                                        ? model.PhoneNumber
-                                        : "+1" + model.PhoneNumber.TrimStart('+');
+                    model.PhoneNumber = FormatPhoneNumber(model.PhoneNumber);
                 }
                 if (model.locationId != null)
                 {
@@ -591,7 +599,7 @@ namespace ShutterManagement.Business.Services
                 responseVm.Message = AppConstant.ExceptionError + ex.Message;
             }
             return responseVm;
-        }
+        }  
         public async Task<IResponseVm<string>> DeleteContact(Guid ContactId)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();

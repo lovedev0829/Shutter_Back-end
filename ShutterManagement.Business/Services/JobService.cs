@@ -821,10 +821,11 @@ namespace ShutterManagement.Business.Services
                         {
                         if (model.GhlOpportunityId == null)
                         {
+                            await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
                             var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration();
                             if (Checkghlresponse.IsSuccess)
                             {
-                                await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
+                                
                                 var responseghl = await gHLService_V2.CreateOpportunityInGhl(job);
                                 FileLogger.Log($"Start: Creating CreateOpportunityInGhl : {responseghl.Message}");
                                 FileLogger.Log($"Start: Creating CreateOpportunityInGhl : {responseghl.IsSuccess}");
