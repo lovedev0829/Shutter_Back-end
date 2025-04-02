@@ -41,10 +41,11 @@ namespace ShutterManagement.Core.SPModel
         public string? City { get; set; } = string.Empty;
 
         [Required]
-        [MaxLength(50)]
-        [RegularExpression("^[\\p{L} .'-]+$", ErrorMessage = AppConstant.AlphabaticalError)]
         [DefaultValue("")]
         public string? State { get; set; } = string.Empty;
+
+        public Guid? StateId { get; set; } = Guid.Empty;
+        public string? StateCode { get; set; } = string.Empty;
 
         [Required]
         [MaxLength(6), MinLength(5)]

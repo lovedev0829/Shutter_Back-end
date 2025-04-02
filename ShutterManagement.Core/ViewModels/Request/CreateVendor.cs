@@ -22,6 +22,11 @@ namespace ShutterManagement.Core.ViewModels.Request
         [RegularExpression("^[\\p{L} .'-]+$", ErrorMessage = AppConstant.AlphabaticalError)]
         public string? LastName { get; set; }
 
+        [DefaultValue("")]
+        [Required]
+        [MaxLength(100)]
+        public string? CompanyName { get; set; }
+
         [Required, MaxLength(100)]
         [RegularExpression(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", ErrorMessage = "Invalid email address.")]
         [EmailAddress]
@@ -34,12 +39,12 @@ namespace ShutterManagement.Core.ViewModels.Request
         [RegularExpression(@"^\d{10}$", ErrorMessage = "Phone number must be exactly 10 digits.")]
         public string? PhoneNumber { get; set; }
 
-        [Required]
+        //[Required]
         [DefaultValue("")]
         [MaxLength(200)]
         public string? StreetAddress { get; set; }
         [DefaultValue("")]
-        [Required]
+        //[Required]
         [MaxLength(100)]
         [RegularExpression("^[\\p{L} .'-]+$", ErrorMessage = AppConstant.AlphabaticalError)]
         public string? City { get; set; }

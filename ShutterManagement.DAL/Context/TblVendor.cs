@@ -41,6 +41,8 @@ public partial class TblVendor
 
     public string? LastName { get; set; }
 
+    public string? CompanyName { get; set; }
+
     public virtual ICollection<TblRawMaterial> TblRawMaterials { get; set; } = new List<TblRawMaterial>();
 
     public virtual ICollection<TblVendorOrder> TblVendorOrders { get; set; } = new List<TblVendorOrder>();

@@ -222,7 +222,7 @@ namespace ShutterManagement.Business.Services
                                     || (x.Label ?? "").ToLower().Contains(filter.SearchValue.Trim())
                                     || (x.ZipCode ?? "").Contains(filter.SearchValue.Trim())
                                     || (x.City ?? "").ToLower().Contains(filter.SearchValue.Trim())
-                                    || (x.State ?? "").ToLower().Contains(filter.SearchValue.Trim())
+                                    //|| (x.State ?? "").ToLower().Contains(filter.SearchValue.Trim())
                                     || (x.FirstName ?? "").ToLower().Contains(filter.SearchValue.Trim())
                                     || (x.LastName ?? "").ToLower().Contains(filter.SearchValue.Trim())
                                     || ((x.FirstName + " "  + x.LastName) ?? "").ToLower().Contains(filter.SearchValue.Trim())
@@ -241,7 +241,7 @@ namespace ShutterManagement.Business.Services
                     StreetAddress = x.StreetAddress,
                     Notes = x.Notes,
                     City = x.City,
-                    State = x.State,
+                    //State = x.State,
                     ZipCode = x.ZipCode,
                     AccessCode = x.AccessCode,
                     FirstName = x.FirstName,

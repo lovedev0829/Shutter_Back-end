@@ -632,7 +632,7 @@ namespace ShutterManagement.Business.Services
                             FirstName = x.FirstName,
                             LastName = x.LastName,
                             PhoneNumber = x.Phone,
-                            State = x.State,
+                            //State = x.State,
                             StreetAddress = x.StreetAddress,
                             ZipCode = x.ZipCode,
                         }).FirstOrDefault();
@@ -888,7 +888,7 @@ namespace ShutterManagement.Business.Services
                                    JobStatusName = t5.JobStatusName,
                                    StreetAddress = t1.StreetAddress,
                                    City = t1.City,
-                                   State = t1.State,
+                                   State = dbContext.MstStates.Where(s => s.Id == t1.State).Select(y => y.StateName ?? "").FirstOrDefault(),
                                    ZipCode = t1.ZipCode
                                }).ToList();
 

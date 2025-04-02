@@ -235,7 +235,7 @@ namespace ShutterManagement.Business.Services
                                 Phone = model.BillingAddressVm?.PhoneNumber,
                                 Email = model.BillingAddressVm?.Email,
                                 City = model.BillingAddressVm?.City,
-                                State = model.BillingAddressVm?.State,
+                                State = model.BillingAddressVm?.StateId,
                                 ZipCode = model.BillingAddressVm?.ZipCode,
                                 StreetAddress = model.BillingAddressVm?.StreetAddress,
                                 CreatedAt = DateTime.Now,
@@ -443,7 +443,7 @@ namespace ShutterManagement.Business.Services
                                     contactBillingAddress.Phone = model.BillingAddressVm?.PhoneNumber;
                                     contactBillingAddress.Email = model.BillingAddressVm?.Email;
                                     contactBillingAddress.City = model.BillingAddressVm?.City;
-                                    contactBillingAddress.State = model.BillingAddressVm?.State;
+                                    contactBillingAddress.State = model.BillingAddressVm?.StateId;
                                     contactBillingAddress.ZipCode = model.BillingAddressVm?.ZipCode;
                                     contactBillingAddress.StreetAddress = model.BillingAddressVm?.StreetAddress;
                                     contactBillingAddress.UpdatedAt = DateTime.Now;
@@ -462,7 +462,7 @@ namespace ShutterManagement.Business.Services
                                         Phone = model.BillingAddressVm?.PhoneNumber,
                                         Email = model.BillingAddressVm?.Email,
                                         City = model.BillingAddressVm?.City,
-                                        State = model.BillingAddressVm?.State,
+                                        State = model.BillingAddressVm?.StateId,
                                         ZipCode = model.BillingAddressVm?.ZipCode,
                                         StreetAddress = model.BillingAddressVm?.StreetAddress,
                                         CreatedAt = DateTime.Now,
@@ -755,6 +755,7 @@ namespace ShutterManagement.Business.Services
                 List<ContactsList> ContactList = new List<ContactsList>();
                 if (filter.TenantId != "" && Role)
                 {
+                    
                     var IsRealtedTenant = tenantService.GetAllQuerable().Where(x => x.TenantId.ToString() == filter.TenantId && x.ParentTenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
                     if (IsRealtedTenant == null)
                     {
@@ -772,9 +773,11 @@ namespace ShutterManagement.Business.Services
                     Contacts = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId).OrderByDescending(x => x.CreatedAt).ToList();
                 }
 
-
+                
                 foreach (var contact in Contacts)
                 {
+                    
+
                     ContactsList contacts = new ContactsList
                     {
                         ContactId = contact.ContactId,
@@ -799,12 +802,13 @@ namespace ShutterManagement.Business.Services
                         .Where(x => x.AddressId == contact.PrimaryAddress
                         && x.IsDelete == false).Select(x => new BillingAddressVm
                         {
+                             
                             City = x.City,
                             Email = x.Email,
                             FirstName = x.FirstName,
                             LastName = x.LastName,
                             PhoneNumber = x.Phone,
-                            State = x.State,
+                            State = dbContext.MstStates.Where(s => s.Id == x.State).Select(y => y.StateName ?? "").FirstOrDefault(),
                             StreetAddress = x.StreetAddress,
                             ZipCode = x.ZipCode,
                         }).FirstOrDefault();
@@ -946,7 +950,7 @@ namespace ShutterManagement.Business.Services
                             Email = contactData.email,
                             PhoneNumber = contactData.phone,
                             City = contactData.location.city,
-                            State = contactData.location.state,
+                            //State = contactData.location.state,
                             ZipCode = contactData.location.postalCode,
                             StreetAddress = contactData.location.address
                         };
@@ -1112,7 +1116,7 @@ namespace ShutterManagement.Business.Services
                                     Email = newContact.Email,
                                     PhoneNumber = newContact.PhoneNumber,
                                     City = brandingInfo.City,
-                                    State = brandingInfo.StreetAddress,
+                                    //State = brandingInfo.StreetAddress,
                                     ZipCode = brandingInfo.ZipCode,
                                     StreetAddress = brandingInfo.StreetAddress
                                 };

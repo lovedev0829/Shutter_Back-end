@@ -97,15 +97,16 @@ namespace ShutterManagement.Business.Services
 
                 TblVendor vendor = new TblVendor
                 {
-                    FirstName = model?.FirstName?.Trim(),
-                    LastName = model?.LastName?.Trim(),
-                    Email = model.Email.Trim(),
-                    PhoneNumber = model.PhoneNumber.Trim(),
-                    State = model.State.Trim(),
-                    City = model.City.Trim(),
-                    ZipCode = model.ZipCode.Trim(),
-                    StreetAddress = model.StreetAddress.Trim(),
-                    VendorCode = generateUnique,
+                    FirstName = model?.FirstName?.Trim()??"",
+                    LastName = model?.LastName?.Trim() ?? "",
+                    Email = model.Email.Trim()??"",
+                    PhoneNumber = model.PhoneNumber.Trim() ?? "",
+                    State = model.State.Trim()??"",
+                    City = model.City.Trim() ?? "",
+                    ZipCode = model.ZipCode.Trim()??"",
+                    StreetAddress = model.StreetAddress.Trim() ?? "",
+                    VendorCode = generateUnique??"",
+                    CompanyName= model.CompanyName.Trim()??"",
                     IsActive = true,
                     IsDelete = false,
                     CreatedAt = DateTime.Now,
@@ -189,6 +190,7 @@ namespace ShutterManagement.Business.Services
                                     (x.VendorId.ToString() == filter.SearchValue) ||
                                     ((x.FirstName.ToLower() + " " + x.LastName.ToLower()) ?? "").Contains(filter.SearchValue) ||
                                     (x.FirstName.ToLower() ?? "").Contains(filter.SearchValue) ||
+                                    (x.CompanyName.ToLower() ?? "").Contains(filter.SearchValue) ||
                                     (x.LastName.ToLower() ?? "").Contains(filter.SearchValue) ||
                                     (x.Email ?? "").Contains(filter.SearchValue.Trim()) ||
                                     (x.PhoneNumber ?? "").Contains(filter.SearchValue.Trim()) ||
@@ -208,17 +210,18 @@ namespace ShutterManagement.Business.Services
                     responseVm.Data = TakenRecords.Select(x => new VendorListVm
                     {
                         VendorId = x.VendorId,
-                        FirstName = x.FirstName,
-                        LastName = x.LastName,
-                        City = x.City,
-                        State = x.State,
-                        ZipCode = x.ZipCode,
-                        Email = x.Email,
-                        StreetAddress = x.StreetAddress,
-                        PhoneNumber = x.PhoneNumber,
+                        FirstName = x.FirstName??"",
+                        LastName = x.LastName ?? "",
+                        City = x.City??"",
+                        State = x.State ?? "",
+                        ZipCode = x.ZipCode ?? "",  
+                        Email = x.Email ?? "",
+                        StreetAddress = x.StreetAddress ??"",
+                        PhoneNumber = x.PhoneNumber ?? "",
                         TenantId = x.TenantId,
                         IsActive = x.IsActive,
                         VendorCode = x.VendorCode,
+                        CompanyName=x.CompanyName
                     }).ToList();
                     responseVm.TotalRecords = FilterRecords.Count;
                     responseVm.Message = $"{AppConstant.FetchSuccessMsg}";
@@ -287,17 +290,18 @@ namespace ShutterManagement.Business.Services
                     //}
                     if (vendor != null)
                     {
-                        vendor.FirstName = model.FirstName;
-                        vendor.LastName = model.LastName;
-                        vendor.Email = model.Email;
-                        vendor.PhoneNumber = model.PhoneNumber;
-                        vendor.StreetAddress = model.StreetAddress;
-                        vendor.City = model.City;
-                        vendor.State = model.State;
-                        vendor.ZipCode = model.ZipCode;
+                        vendor.FirstName = model.FirstName??"";
+                        vendor.LastName = model.LastName??"";
+                        vendor.Email = model.Email ?? "";
+                        vendor.PhoneNumber = model.PhoneNumber??"";
+                        vendor.StreetAddress = model.StreetAddress ?? "";
+                        vendor.City = model.City??"";
+                        vendor.State = model.State ?? "";
+                        vendor.ZipCode = model.ZipCode ?? "";
+                        vendor.CompanyName = model.CompanyName ?? "";
                         vendor.ModifiedBy = AppConstant.LoggedInUserID;
                         vendor.UpdatedAt = DateTime.Now;
-                         Update(vendor);
+                        await Update(vendor);
                         responseVm.IsSuccess = true;
                         responseVm.Message = AppConstant.UpdateSuccessMsg;
                     }

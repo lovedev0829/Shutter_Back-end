@@ -39,7 +39,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         [RegularExpression("^[\\p{L} .'-]+$", ErrorMessage = AppConstant.AlphabaticalError)]
         [DefaultValue("")]
       
-        public string? State { get; set; }
+        public Guid? State { get; set; }
 
         [Required]
         [MaxLength(6),MinLength(5)]

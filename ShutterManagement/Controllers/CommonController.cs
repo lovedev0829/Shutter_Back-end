@@ -67,6 +67,7 @@ namespace ShutterManagement.Controllers
         private readonly IPaymentsService paymentsService;
         private readonly GHLService_v2 gHLService_V2;
         private readonly IJobSchedule jobSchedule;
+        private readonly IStateService stateService;
         private readonly IAuthService authService;
 
         public CommonController(IMasterCreate masterCreate, 
@@ -82,7 +83,7 @@ namespace ShutterManagement.Controllers
             ITaxRate taxService,IEstimateService estimateService, IAuthService authService,
             IEstimationBreakdownService estimationBreakdownService, ILocationService locationService,
            IDashboard dashboard, INotificationService notification, IGHLConfiguration gHLConfiguration,IStripeConfiguration stripeConfiguration,
-           GhlService ghlService ,IPaymentsService paymentsService ,GHLService_v2 gHLService_V2,IJobSchedule jobSchedule)
+           GhlService ghlService ,IPaymentsService paymentsService ,GHLService_v2 gHLService_V2,IJobSchedule jobSchedule,IStateService stateService)
         {
             this.masterCreate = masterCreate;
             this.fileUpload = fileUpload;
@@ -131,6 +132,7 @@ namespace ShutterManagement.Controllers
             this.paymentsService = paymentsService;
             this.gHLService_V2 = gHLService_V2;
             this.jobSchedule = jobSchedule;
+            this.stateService = stateService;
         }
 
 
@@ -885,6 +887,15 @@ namespace ShutterManagement.Controllers
         //    return response.IsSuccess ? Ok(response) : BadRequest(response);
         //}
 
+
+        [HttpGet]
+        [Route("GetAllState")]
+        public async Task<IActionResult> GetAllState()
+        {
+            var res = await stateService.GetAll(filter);
+            res.Data = res.Data.Where(x => x.IsActive == true).ToList();
+            return Ok(res);
+        }
 
 
     }

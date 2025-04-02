@@ -35,6 +35,8 @@ public partial class ShutterDBContext : DbContext
 
     public virtual DbSet<MstRegion> MstRegions { get; set; }
 
+    public virtual DbSet<MstState> MstStates { get; set; }
+
     public virtual DbSet<MstUnitofMeasurement> MstUnitofMeasurements { get; set; }
 
     public virtual DbSet<TblAddress> TblAddresses { get; set; }
@@ -286,6 +288,18 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.RegionName).HasMaxLength(200);
         });
 
+        modelBuilder.Entity<MstState>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__MstState__3213E83FEB8BE5D3");
+
+            entity.ToTable("MstState", "dbo");
+
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("(newid())")
+                .HasColumnName("id");
+            entity.Property(e => e.StateName).HasMaxLength(100);
+        });
+
         modelBuilder.Entity<MstUnitofMeasurement>(entity =>
         {
             entity.HasKey(e => e.UnitofMeasurementId).HasName("PK__MstUnito__21E7C5537FB3558A");
@@ -325,7 +339,7 @@ public partial class ShutterDBContext : DbContext
                 .HasMaxLength(50)
                 .IsUnicode(false);
             entity.Property(e => e.Phone).HasMaxLength(128);
-            entity.Property(e => e.State).HasMaxLength(100);
+            entity.Property(e => e.State).HasDefaultValueSql("(newid())");
             entity.Property(e => e.StreetAddress).HasMaxLength(128);
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(getdate())")
@@ -1620,6 +1634,9 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.VendorId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.City)
                 .HasMaxLength(200)
+                .IsUnicode(false);
+            entity.Property(e => e.CompanyName)
+                .HasMaxLength(100)
                 .IsUnicode(false);
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
