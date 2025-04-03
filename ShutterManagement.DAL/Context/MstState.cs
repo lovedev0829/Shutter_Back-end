@@ -12,4 +12,10 @@ public partial class MstState
     public bool? IsActive { get; set; }
 
     public bool? IsDelete { get; set; }
+
+    public string? StateCode { get; set; }
+
+    public virtual ICollection<TblAddress> TblAddresses { get; set; } = new List<TblAddress>();
+
+    public virtual ICollection<TblVendor> TblVendors { get; set; } = new List<TblVendor>();
 }

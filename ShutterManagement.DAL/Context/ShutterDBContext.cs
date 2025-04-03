@@ -297,6 +297,9 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.Id)
                 .HasDefaultValueSql("(newid())")
                 .HasColumnName("id");
+            entity.Property(e => e.StateCode)
+                .HasMaxLength(100)
+                .IsUnicode(false);
             entity.Property(e => e.StateName).HasMaxLength(100);
         });
 
@@ -349,6 +352,10 @@ public partial class ShutterDBContext : DbContext
             entity.HasOne(d => d.Contact).WithMany(p => p.TblAddresses)
                 .HasForeignKey(d => d.ContactId)
                 .HasConstraintName("FK__TblAddres__Conta__59C55456");
+
+            entity.HasOne(d => d.StateNavigation).WithMany(p => p.TblAddresses)
+                .HasForeignKey(d => d.State)
+                .HasConstraintName("FK_MstState");
 
             entity.HasOne(d => d.Tenant).WithMany(p => p.TblAddresses)
                 .HasForeignKey(d => d.TenantId)
@@ -1653,9 +1660,6 @@ public partial class ShutterDBContext : DbContext
                 .HasMaxLength(100)
                 .IsUnicode(false);
             entity.Property(e => e.PhoneNumber).HasMaxLength(200);
-            entity.Property(e => e.State)
-                .HasMaxLength(200)
-                .IsUnicode(false);
             entity.Property(e => e.StreetAddress)
                 .HasMaxLength(200)
                 .IsUnicode(false);
@@ -1665,6 +1669,10 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.VendorCode).HasMaxLength(100);
             entity.Property(e => e.VendorName).HasMaxLength(255);
             entity.Property(e => e.ZipCode).HasMaxLength(200);
+
+            entity.HasOne(d => d.StateNavigation).WithMany(p => p.TblVendors)
+                .HasForeignKey(d => d.State)
+                .HasConstraintName("FK_tblvendor_tblstate");
 
             entity.HasOne(d => d.Tenant).WithMany(p => p.TblVendors)
                 .HasForeignKey(d => d.TenantId)

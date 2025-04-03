@@ -49,10 +49,10 @@ namespace ShutterManagement.Core.ViewModels.Request
         [RegularExpression("^[\\p{L} .'-]+$", ErrorMessage = AppConstant.AlphabaticalError)]
         public string? City { get; set; }
         [DefaultValue("")]
-        [Required]
-        [MaxLength(100)]
-        [RegularExpression("^[\\p{L} .'-]+$", ErrorMessage = AppConstant.AlphabaticalError)]
-        public string? State { get; set; }
+        //[Required]
+        //[MaxLength(100)]
+        //[RegularExpression("^[\\p{L} .'-]+$", ErrorMessage = AppConstant.AlphabaticalError)]
+        public Guid? StateId { get; set; }
 
         [Required]
         [MaxLength(6),MinLength(5)]

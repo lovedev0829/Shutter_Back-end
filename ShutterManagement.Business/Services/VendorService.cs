@@ -101,7 +101,7 @@ namespace ShutterManagement.Business.Services
                     LastName = model?.LastName?.Trim() ?? "",
                     Email = model.Email.Trim()??"",
                     PhoneNumber = model.PhoneNumber.Trim() ?? "",
-                    State = model.State.Trim()??"",
+                    State = model.StateId,
                     City = model.City.Trim() ?? "",
                     ZipCode = model.ZipCode.Trim()??"",
                     StreetAddress = model.StreetAddress.Trim() ?? "",
@@ -195,7 +195,7 @@ namespace ShutterManagement.Business.Services
                                     (x.Email ?? "").Contains(filter.SearchValue.Trim()) ||
                                     (x.PhoneNumber ?? "").Contains(filter.SearchValue.Trim()) ||
                                     (x.City ?? "").Contains(filter.SearchValue.Trim()) ||
-                                    (x.State ?? "").Contains(filter.SearchValue.Trim()) ||
+                                    //(x.sta ?? "").Contains(filter.SearchValue.Trim()) ||
                                     (x.StreetAddress ?? "").Contains(filter.SearchValue.Trim()) ||
                                     (x.VendorCode ?? "").Contains(filter.SearchValue.Trim()) ||
                                     (x.ZipCode ?? "").Contains(filter.SearchValue.Trim())
@@ -213,7 +213,8 @@ namespace ShutterManagement.Business.Services
                         FirstName = x.FirstName??"",
                         LastName = x.LastName ?? "",
                         City = x.City??"",
-                        State = x.State ?? "",
+                        StateName= dbContext.MstStates.Where(s => s.Id == x.State).Select(y => y.StateName ?? "").FirstOrDefault()??"",
+                        StateId=x.State,
                         ZipCode = x.ZipCode ?? "",  
                         Email = x.Email ?? "",
                         StreetAddress = x.StreetAddress ??"",
@@ -296,7 +297,7 @@ namespace ShutterManagement.Business.Services
                         vendor.PhoneNumber = model.PhoneNumber??"";
                         vendor.StreetAddress = model.StreetAddress ?? "";
                         vendor.City = model.City??"";
-                        vendor.State = model.State ?? "";
+                        vendor.State = model.StateId;
                         vendor.ZipCode = model.ZipCode ?? "";
                         vendor.CompanyName = model.CompanyName ?? "";
                         vendor.ModifiedBy = AppConstant.LoggedInUserID;

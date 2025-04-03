@@ -34,6 +34,7 @@ namespace ShutterManagement.Business.Services
                 {
                     StateId = x.Id,
                     StateName = x.StateName,
+                    StateCode = x.StateCode,
                     IsActive = x.IsActive,
                 }).ToList();
                 responseVm.IsSuccess = true;

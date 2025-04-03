@@ -24,6 +24,7 @@ namespace ShutterManagement.Core.ViewModels.Response
 
         public string? FirstName { get; set; }
         public string? LastName { get; set; }
+        public string? CompanyName { get; set; }
 
         public string? Notes { get; set; }
         public Guid? ProductType { get; set; }

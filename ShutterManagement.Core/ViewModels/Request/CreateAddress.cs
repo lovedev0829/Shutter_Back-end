@@ -35,11 +35,11 @@ namespace ShutterManagement.Core.ViewModels.Request
         public string? City { get; set; }
 
         [Required]
-        [MaxLength(50)]
-        [RegularExpression("^[\\p{L} .'-]+$", ErrorMessage = AppConstant.AlphabaticalError)]
-        [DefaultValue("")]
+        //[MaxLength(50)]
+        //[RegularExpression("^[\\p{L} .'-]+$", ErrorMessage = AppConstant.AlphabaticalError)]
+        //[DefaultValue("")]
       
-        public Guid? State { get; set; }
+        public Guid? StateId { get; set; }
 
         [Required]
         [MaxLength(6),MinLength(5)]

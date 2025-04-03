@@ -283,6 +283,7 @@ namespace ShutterManagement.Business.Services
                                             VendorId = t2.VendorId,
                                             FirstName = t1.FirstName,
                                             LastName = t1.LastName,
+                                            CompanyName=t1.CompanyName,
                                             IsCutSheet = t2.IsCutSheet,
                                         }).ToList();
                     filter.SearchValue = filter.SearchValue?.Trim().ToLower();
@@ -300,6 +301,7 @@ namespace ShutterManagement.Business.Services
                                         || (x.ReorderLevel.ToString() ?? "").ToLower().Contains(filter.SearchValue)
                                         || (x.StockQuantity.ToString() ?? "").ToLower().Contains(filter.SearchValue)
                                         || (x.Notes.ToString() ?? "").ToLower().Contains(filter.SearchValue)
+                                        || (x.CompanyName.ToString() ?? "").ToLower().Contains(filter.SearchValue)
                                         || (x.SKU ?? "").ToLower().Contains(filter.SearchValue)
                                         || ((x.FirstName.ToLower() + " " + x.LastName.ToLower()) ?? "").Contains(filter.SearchValue) 
                                         || (x.FirstName.ToLower() ?? "").Contains(filter.SearchValue)

@@ -175,6 +175,7 @@ builder.Services.AddScoped<ISubtenantProductMarkup, SubtenantProductMarkup>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IGHLConfiguration, GHLConfigurationService>();
 builder.Services.AddScoped<IStripeConfiguration, StripeConfigurationService>();
+builder.Services.AddScoped<IStateService, StateService>();
 builder.Services.AddScoped<GoHighLevelOAuthService>();
 // Add services to the DI container
 builder.Services.AddHttpClient<GhlService>(); // Register HttpClient for GhlService

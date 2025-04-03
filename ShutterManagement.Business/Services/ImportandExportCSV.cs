@@ -397,7 +397,7 @@ namespace ShutterManagement.Business.Services
                         StreetAddress = record.BillingAddressVm.StreetAddress?.Trim(),
                         ZipCode = record.BillingAddressVm.ZipCode?.Trim(),
                         City = record.BillingAddressVm.City?.Trim(),
-                        State = record.BillingAddressVm.State?.Trim()
+                        StateName = record.BillingAddressVm.StateName?.Trim()
                     } : null,
                     TaxExemptionVm = record.TaxExemptionVm != null ? new TaxExemption
                     {
@@ -428,7 +428,7 @@ namespace ShutterManagement.Business.Services
                     StreetAddress = record.BillingAddressVm.StreetAddress?.Trim(),
                     ZipCode = record.BillingAddressVm.ZipCode?.Trim(),
                     City = record.BillingAddressVm.City?.Trim(),
-                    State = record.BillingAddressVm.State?.Trim()
+                    StateName = record.BillingAddressVm.StateName?.Trim()
                 } : null,
                 TaxExemptionVm = record.TaxExemptionVm != null ? new TaxExemption
                 {
@@ -678,7 +678,7 @@ namespace ShutterManagement.Business.Services
                         : "";
 
                     var line = $"{contact.ContactType},{contact.FirstName},{contact.LastName},{contact.PhoneNumber},{contact.Email},{contact.Website},{contact.Notes},{contact.Referral}," +
-                               $"{billingAddress.FirstName},{billingAddress.LastName},{billingAddress.PhoneNumber},{billingAddress.Email},{billingAddress.City},{billingAddress.State}," +
+                               $"{billingAddress.FirstName},{billingAddress.LastName},{billingAddress.PhoneNumber},{billingAddress.Email},{billingAddress.City},{billingAddress.StateName}," +
                                $"{billingAddress.ZipCode},{billingAddress.StreetAddress},{contact.taxExemptionVm?.EffectiveDate},{contact.taxExemptionVm?.ExpiryDate}";
 
                     csvBuilder.AppendLine(line);

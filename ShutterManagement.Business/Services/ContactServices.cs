@@ -798,7 +798,7 @@ namespace ShutterManagement.Business.Services
                         CreatedAt = contact.CreatedAt,
                         IsSubtenant = IsSubtenants,
                     };
-                    contacts.billingAddressVm = dbContext.TblAddresses
+                    contacts.billingAddressVm = dbContext.TblAddresses.Include(x=>x.StateNavigation)
                         .Where(x => x.AddressId == contact.PrimaryAddress
                         && x.IsDelete == false).Select(x => new BillingAddressVm
                         {
@@ -808,7 +808,8 @@ namespace ShutterManagement.Business.Services
                             FirstName = x.FirstName,
                             LastName = x.LastName,
                             PhoneNumber = x.Phone,
-                            State = dbContext.MstStates.Where(s => s.Id == x.State).Select(y => y.StateName ?? "").FirstOrDefault(),
+                            StateName = dbContext.MstStates.Where(s => s.Id == x.State).Select(y => y.StateName ?? "").FirstOrDefault(),
+                            StateId= x.State,
                             StreetAddress = x.StreetAddress,
                             ZipCode = x.ZipCode,
                         }).FirstOrDefault();
@@ -996,7 +997,7 @@ namespace ShutterManagement.Business.Services
                             Email = contactData.email,
                             PhoneNumber = contactData.phone,
                             City = contactData.location.city,
-                            State = contactData.location.state,
+                            StateName = contactData.location.state,
                             ZipCode = contactData.location.postalCode,
                             StreetAddress = contactData.location.address
                         };

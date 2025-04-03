@@ -11,6 +11,7 @@ namespace ShutterManagement.Core.ViewModels.Response
 
         public Guid? StateId { get; set; }
         public string? StateName { get; set; }
+        public string? StateCode { get; set; }
 
         public bool? IsActive { get; set; }
 

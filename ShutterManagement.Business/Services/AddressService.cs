@@ -48,7 +48,7 @@ namespace ShutterManagement.Business.Services
                         Label = model.Label,
                         StreetAddress = model.StreetAddress,
                         City = model.City,
-                        State = model.State,
+                        State = model.StateId,
                         ZipCode = model.ZipCode,
                         Notes = model.Notes,
                         AccessCode = model.AccessCode,
@@ -107,7 +107,7 @@ namespace ShutterManagement.Business.Services
                         AddressDetails.StreetAddress = model.StreetAddress;
                         AddressDetails.Notes = model.Notes;
                         AddressDetails.City = model.City;
-                        AddressDetails.State = model.State;
+                        AddressDetails.State = model.StateId;
                         AddressDetails.ZipCode = model.ZipCode;
                         AddressDetails.FirstName = model.FirstName;
                         AddressDetails.LastName = model.LastName;
@@ -222,7 +222,7 @@ namespace ShutterManagement.Business.Services
                                     || (x.Label ?? "").ToLower().Contains(filter.SearchValue.Trim())
                                     || (x.ZipCode ?? "").Contains(filter.SearchValue.Trim())
                                     || (x.City ?? "").ToLower().Contains(filter.SearchValue.Trim())
-                                    //|| (x.State ?? "").ToLower().Contains(filter.SearchValue.Trim())
+                                    //|| (x. ?? "").ToLower().Contains(filter.SearchValue.Trim())
                                     || (x.FirstName ?? "").ToLower().Contains(filter.SearchValue.Trim())
                                     || (x.LastName ?? "").ToLower().Contains(filter.SearchValue.Trim())
                                     || ((x.FirstName + " "  + x.LastName) ?? "").ToLower().Contains(filter.SearchValue.Trim())
@@ -241,7 +241,8 @@ namespace ShutterManagement.Business.Services
                     StreetAddress = x.StreetAddress,
                     Notes = x.Notes,
                     City = x.City,
-                    //State = x.State,
+                    StateName = dbContext.MstStates.Where(s => s.Id == x.State).Select(y => y.StateName ?? "").FirstOrDefault(),
+                    StateId=x.State,
                     ZipCode = x.ZipCode,
                     AccessCode = x.AccessCode,
                     FirstName = x.FirstName,

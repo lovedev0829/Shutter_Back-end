@@ -51,8 +51,8 @@ public class GoHighLevelOAuthService
             { "client_id", AppConstant.GHL_ClientId },              
             { "client_secret", AppConstant.GHL_ClientSecret },       
             { "code", authorizationCode },
-            { "redirect_uri", AppConstant.GHL_RedirectUri },        
-            { "grant_type", "authorization_code contacts.readonly" }  
+            { "redirect_uri", AppConstant.GHL_RedirectUri },
+            { "grant_type", "authorization_code" }
         });
 
         var response = await _httpClient.PostAsync(goHighLevelOAuthSettings.TokenUrl, tokenRequest);
@@ -74,11 +74,11 @@ public class GoHighLevelOAuthService
     {
         var tokenRequest = new FormUrlEncodedContent(new Dictionary<string, string>
         {
-            { "client_id", AppConstant.GHL_ClientId },
-            { "client_secret", AppConstant.GHL_ClientSecret },
-            { "refresh_token", refreshtoken },
-            { "redirect_uri", AppConstant.GHL_RedirectUri },
-            { "grant_type", "refresh_token" }
+            { "client_id", AppConstant.GHL_ClientId},
+            { "client_secret", AppConstant.GHL_ClientSecret},
+            { "refresh_token", refreshtoken},
+            { "redirect_uri", AppConstant.GHL_RedirectUri},
+            { "grant_type", "authorization_code"}
         });
 
         var response = await _httpClient.PostAsync(goHighLevelOAuthSettings.TokenUrl, tokenRequest);

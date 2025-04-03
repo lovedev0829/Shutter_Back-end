@@ -40,9 +40,9 @@ namespace ShutterManagement.Core.SPModel
         [DefaultValue("")]
         public string? City { get; set; } = string.Empty;
 
-        [Required]
-        [DefaultValue("")]
-        public string? State { get; set; } = string.Empty;
+        //[Required]
+        //[DefaultValue("")]
+        public string? StateName { get; set; } = string.Empty;
 
         public Guid? StateId { get; set; } = Guid.Empty;
         public string? StateCode { get; set; } = string.Empty;
