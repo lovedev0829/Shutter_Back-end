@@ -105,7 +105,7 @@ namespace ShutterManagement.GHL.Services
                 }
 
                 var existingStages = dBContext.TblGhlStages
-                    .Where(x => x.GhlPipelineId == targetPipeline.Id)
+                    .Where(x => x.GhlPipelineId == targetPipeline.Id && x.TenantId==AppConstant.LoggedInTenantId)
                     .ToList();
 
                 var existingStagesDict = existingStages.ToDictionary(x => x.GhlStageId, x => x);
