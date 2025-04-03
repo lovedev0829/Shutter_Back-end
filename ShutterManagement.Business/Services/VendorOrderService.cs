@@ -660,7 +660,7 @@ namespace ShutterManagement.Business.Services
                     JobName = jobDetails?.JobName ?? "N/A",
                     StreetAddress = vendorDetails.StreetAddress ?? "",
                     VendorCity = vendorDetails.City ?? "",
-                    VendorState = vendorDetails.State ?? "",
+                    VendorState = dbContext.MstStates.Where(s => s.Id == vendorDetails.State).Select(y => y.StateName ?? "").FirstOrDefault(),
                     VendorZipCode = vendorDetails.ZipCode ?? "",
                     MobilePhone = vendorDetails.PhoneNumber ?? "",
                     EmailAddress = vendorDetails.Email ?? "",

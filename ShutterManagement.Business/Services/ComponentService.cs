@@ -89,8 +89,8 @@ namespace ShutterManagement.Business.Services
                             {
                                 ComponentId = component.ComponentId,
                                 RawMaterialId = material.MaterialId,
-                                Quantity = material.Qty,
-                                WasteFactor = material.WasteFactor,
+                                Quantity = material.Qty??1,
+                                WasteFactor = material.WasteFactor??0,
                                 CreatedAt = DateTime.Now,
                                 CreatedBy = AppConstant.LoggedInUserID,
                                 IsActive = true,

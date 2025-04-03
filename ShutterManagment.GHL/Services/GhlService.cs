@@ -26,6 +26,7 @@ namespace ShutterManagement.GHL.Services
         private readonly ShutterDBContext dBContext;
         private readonly IHttpContextAccessor httpContextAccessor;
         private string BaseUrl = string.Empty;
+        private string accesstoken = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoQ2xhc3MiOiJMb2NhdGlvbiIsImF1dGhDbGFzc0lkIjoiUFRuSUNNTjBtS3IwM2t6SlFxUFEiLCJzb3VyY2UiOiJJTlRFR1JBVElPTiIsInNvdXJjZUlkIjoiNjdlMTFjNzJjOTBhMmY4MTIwMGNjMTJhLW04bXRzcXJuIiwiY2hhbm5lbCI6Ik9BVVRIIiwicHJpbWFyeUF1dGhDbGFzc0lkIjoiUFRuSUNNTjBtS3IwM2t6SlFxUFEiLCJvYXV0aE1ldGEiOnsic2NvcGVzIjpbImNvbnZlcnNhdGlvbnMvbWVzc2FnZS5yZWFkb25seSIsImNvbnZlcnNhdGlvbnMvbWVzc2FnZS53cml0ZSJdLCJjbGllbnQiOiI2N2UxMWM3MmM5MGEyZjgxMjAwY2MxMmEiLCJjbGllbnRLZXkiOiI2N2UxMWM3MmM5MGEyZjgxMjAwY2MxMmEtbThtdHNxcm4ifSwiaWF0IjoxNzQyOTg3NTQyLjIwMywiZXhwIjoxNzQzMDczOTQyLjIwM30.fMjXamfhw4jgfLo2tzDKJS1kA_S89MX02jPxTCheOv4UwJrIjd1DJD3RtW8FIpmOhEvrCaZGw5MKVzqczzzDrhGx3Q_dfJ3ZdMKzH_q8D4pgYKo0V7TlKXH6wp2mu63__iV7ZfWO2XxVFBS9zyg5O2fDYhx209owntBKEYK5DjDfnyxeuryzGBDTaAP7fCor_BFmlcgtpmHpKsy3XNV-faFY-Ha3-XTGN4VQwFv2JAkEKNshJmnBbuF2UdoKcWjCs2C4O62eicNGhj0KC-JelG81aTQr1rqHNC3jdEGT7FPSajkdpJuqzAfrWBitm4FE0QGVe7QVLonfVTzX_om0B8h3QsTtrHKWGyZXaddrtsV-1ssjeE9ojMM2qiyGnDE0VFTWcDicbySyB24bWK5x5VO1f79XpkSKZHgBYeU9vKtYaZcRVE3gcnKNKYT9wl82ARYVKmzHSYv5IEJfdq4epmL9TmuERuowW31aznFFgzuluFqED2dockpRUrDqZjtAklT-66RGex3Xfiu6SW3ImsKscZm5gmjUtAEEY0whoP4FIJf4VWFuId8DEmJhBKRSp2gJDqhro5yuNv_OxLdwOJK07N2AjhjW6TP7L856NJzJBUUR-KonLSuJ9C1tU0C8Y2BDioDEn-P0Qonp38aoCzSnmHQiaYnpv0iNnWoa6Ws";
 
         public GhlService(HttpClient httpClient, ShutterDBContext dBContext, IHttpContextAccessor _httpContextAccessor)
         {
@@ -184,19 +185,19 @@ namespace ShutterManagement.GHL.Services
 
                 if (config == null)
                 {
-                    return false; 
+                    return false;
                 }
 
-                config.LastSync = DateTime.Now;  
-                await dBContext.SaveChangesAsync(); 
+                config.LastSync = DateTime.Now;
+                await dBContext.SaveChangesAsync();
 
-                return true; 
+                return true;
             }
             catch (Exception ex)
             {
-               
+
                 FileLogger.Log($"Error updating LastSync: {ex.Message}");
-                return false; 
+                return false;
             }
         }
 
@@ -206,7 +207,7 @@ namespace ShutterManagement.GHL.Services
             try
             {
                 var gHLStages = dBContext.TblGhlStages
-                    .Where(x => x.TenantId == AppConstant.LoggedInTenantId).OrderBy(x=>x.StageOrder)
+                    .Where(x => x.TenantId == AppConstant.LoggedInTenantId).OrderBy(x => x.StageOrder)
                     .ToList();
 
                 var stageList = new List<PipelineAndStage>();
@@ -236,7 +237,7 @@ namespace ShutterManagement.GHL.Services
 
         private static string GetApiKey()
         {
-            return AppConstant.GHL_APIKey; 
+            return AppConstant.GHL_APIKey;
         }
 
         #endregion Start pipeLine and Stages Related Methods 
@@ -244,18 +245,29 @@ namespace ShutterManagement.GHL.Services
         #region Start Contact Related Methods
         public async Task<List<GhlContactVM>> GetContactsAsync()
         {
-            
-            using var httpClient = new HttpClient();
-            var requestUrl = $"{AppConstant.GHL_BaseAddress}contacts/";
-            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetApiKey());
-            var response = await httpClient.GetAsync(requestUrl);
-            response.EnsureSuccessStatusCode();
+            try
+            {
+                
+                var requestUrl = $"https://services.leadconnectorhq.com/v2/contacts";
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
+                _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                var response = await _httpClient.GetAsync(requestUrl);
+                response.EnsureSuccessStatusCode();
+                var json = await response.Content.ReadAsStringAsync();
+                var result = System.Text.Json.JsonSerializer.Deserialize<GhlContactResponse>(json, new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                });
 
-            var json = await response.Content.ReadAsStringAsync();
-            var result = System.Text.Json.JsonSerializer.Deserialize<GhlContactResponse>(json);
-            var result1 = GetClientIpAddress();
-            return result?.Contacts ?? new List<GhlContactVM>();
+                return result?.Contacts ?? new List<GhlContactVM>();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error fetching contacts: {ex.Message}");
+                return new List<GhlContactVM>();
+            }
         }
+
 
         public async Task<GhlContactSingleResponse> CreateContactAsync(GhlContactAdd contact)
         {
@@ -276,7 +288,7 @@ namespace ShutterManagement.GHL.Services
                 var contactJson = JsonConvert.SerializeObject(contactData);
                 var content = new StringContent(contactJson, Encoding.UTF8, "application/json");
 
-                var url = $"{AppConstant.GHL_BaseAddress}contacts/"; 
+                var url = $"{AppConstant.GHL_BaseAddress}contacts/";
 
                 var response = await httpClient.PostAsync(url, content);
 
@@ -320,13 +332,13 @@ namespace ShutterManagement.GHL.Services
                 var contactJson = JsonConvert.SerializeObject(contactData);
                 var content = new StringContent(contactJson, Encoding.UTF8, "application/json");
 
-                var url = $"{AppConstant.GHL_BaseAddress}contacts/{contactId}"; 
+                var url = $"{AppConstant.GHL_BaseAddress}contacts/{contactId}";
 
                 var response = await httpClient.PutAsync(url, content);
 
                 if (!response.IsSuccessStatusCode)
                 {
-                   FileLogger.Log($"Failed to update contact. Status code: {response.StatusCode}");
+                    FileLogger.Log($"Failed to update contact. Status code: {response.StatusCode}");
                     return null;
                 }
 
@@ -357,7 +369,7 @@ namespace ShutterManagement.GHL.Services
         public async Task<IResponseVm<string>> CreateOpportunityInGhl(TblJob job)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
-            
+
             var res = await GetGHLStages();
             var stage = res?.Data.FirstOrDefault();
             if (stage == null)
@@ -373,18 +385,18 @@ namespace ShutterManagement.GHL.Services
                 title = job.JobName,
                 status = "open",
                 stageId = job.GhlStageId,
-                email= IsContactExists?.Email,
-                phone= IsContactExists?.PhoneNumber,
-                monetaryValue= 122.22,
-                source= "public hh",
-                name= IsContactExists?.FirstName +" "+IsContactExists?.LastName,
-                companyName="Brain Technosys PVT LTd",
+                email = IsContactExists?.Email,
+                phone = IsContactExists?.PhoneNumber,
+                monetaryValue = 122.22,
+                source = "public hh",
+                name = IsContactExists?.FirstName + " " + IsContactExists?.LastName,
+                companyName = "Brain Technosys PVT LTd",
             };
 
             try
             {
-                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetApiKey());
-                var endpoint = $"{AppConstant.GHL_BaseAddress}pipelines/{stage.GhlPipelineId}/opportunities/";
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
+                var endpoint = $"{AppConstant.GHL_BaseAddress}/pipelines/{stage.GhlPipelineId}/opportunities/";
                 var opportunityJson = JsonConvert.SerializeObject(opportunityData);
                 var content = new StringContent(opportunityJson, Encoding.UTF8, "application/json");
                 var response = await _httpClient.PostAsync(endpoint, content);
@@ -410,13 +422,13 @@ namespace ShutterManagement.GHL.Services
                 if (existingJob != null)
                 {
                     existingJob.GhlOpportunityId = result.OpportunityId;
-                    existingJob.GhlContactId = result.Contact.ContactId; 
+                    existingJob.GhlContactId = result.Contact.ContactId;
                     await dBContext.SaveChangesAsync();
                 }
 
                 responseVm.IsSuccess = true;
                 responseVm.Message = "Opportunity added successfully.";
-                
+
             }
             catch (Exception ex)
             {
@@ -427,7 +439,7 @@ namespace ShutterManagement.GHL.Services
             return responseVm;
         }
 
-      
+
         public async Task<IResponseVm<List<Opportunity>>> GetOpportunitiesFromGhl()
         {
             IResponseVm<List<Opportunity>> responseVm = new ResponseVm<List<Opportunity>>();

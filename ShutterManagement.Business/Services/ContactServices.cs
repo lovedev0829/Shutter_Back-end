@@ -28,22 +28,23 @@ namespace ShutterManagement.Business.Services
         private readonly ITenantService tenantService;
         private readonly ITaxExemption taxExemptionService;
         private readonly ClaimsProperty claimsProperty;
-        private readonly GhlService ghlService;
         private readonly IGHLConfiguration gHLConfigurationService;
         private readonly ITenantBrandingService tenantBranding;
+        private readonly GHLService_v2 gHLService_V2;
 
         public ContactServices(ShutterDBContext context, IContactBillingService billingService,
             ITenantService tenantService, ITaxExemption taxExemptionService,
-            ClaimsProperty claimsProperty, GhlService ghlService,IGHLConfiguration gHLConfigurationService,ITenantBrandingService tenantBranding)
+            ClaimsProperty claimsProperty,IGHLConfiguration gHLConfigurationService,
+            ITenantBrandingService tenantBranding,GHLService_v2 gHLService_V2)
         {
             _context = context;
             this.billingService = billingService;
             this.tenantService = tenantService;
             this.taxExemptionService = taxExemptionService;
             this.claimsProperty = claimsProperty;
-            this.ghlService = ghlService;
             this.gHLConfigurationService = gHLConfigurationService;
             this.tenantBranding = tenantBranding;
+            this.gHLService_V2 = gHLService_V2;
         }
 
         public async Task<IResponseVm<string>> GetContactByEmailOrPhone(string email, string phone)
@@ -86,6 +87,15 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
+
+        public static string FormatPhoneNumber(string phoneNumber)
+        {
+            if (string.IsNullOrWhiteSpace(phoneNumber))
+                return string.Empty;
+
+            var match = Regex.Match(phoneNumber, @"^\+?\d{1}");
+            return match.Value == "+1" ? phoneNumber : "+1" + phoneNumber.TrimStart('+');
+        }
         public async Task<IResponseVm<string>> Create_Contact(Sp_Contact model)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
@@ -95,10 +105,7 @@ namespace ShutterManagement.Business.Services
                 var IsTenantExists = false;
                 if (model.PhoneNumber != null)
                 {
-                    var match = Regex.Match(model.PhoneNumber, @"^\+?\d{1}");
-                    model.PhoneNumber = match.Value == "+1"
-                                        ? model.PhoneNumber
-                                        : "+1" + model.PhoneNumber.TrimStart('+');
+                    model.PhoneNumber = FormatPhoneNumber(model.PhoneNumber);
                 }
                 FileLogger.Log($"Location id fetched {model.locationId}");
                 if (model.locationId != null)
@@ -228,7 +235,7 @@ namespace ShutterManagement.Business.Services
                                 Phone = model.BillingAddressVm?.PhoneNumber,
                                 Email = model.BillingAddressVm?.Email,
                                 City = model.BillingAddressVm?.City,
-                                State = model.BillingAddressVm?.State,
+                                State = model.BillingAddressVm?.StateId,
                                 ZipCode = model.BillingAddressVm?.ZipCode,
                                 StreetAddress = model.BillingAddressVm?.StreetAddress,
                                 CreatedAt = DateTime.Now,
@@ -256,17 +263,33 @@ namespace ShutterManagement.Business.Services
                                 IsDelete = false,
                             };
                             await taxExemptionService.Add(taxExemption1);
+                            responseVm.IsSuccess = true;
+                            responseVm.Message = AppConstant.InsertSuccessMsg;
                         }
                         if (model.GHLContactId == null)
                         {
-                            var ghlResponse = await SyncWithGHL(res, model);
-                            if (!ghlResponse.IsSuccess)
+                            var Checkghlresponse = await gHLConfigurationService.CheckGHLConfiguration();
+                            if (Checkghlresponse.IsSuccess)
                             {
-                                responseVm.Message = "Contact sync with GHL failed: " + ghlResponse.Message;
+                                var ghlResponse = await SyncWithGHL(res, model);
+                                if (ghlResponse.IsSuccess)
+                                {
+                                    responseVm.IsSuccess = true;
+                                    responseVm.Message = AppConstant.InsertSuccessMsg + ghlResponse.Message;
+                                }
+                                else
+                                { 
+                                  responseVm.Message = AppConstant.InsertSuccessMsg + ghlResponse.Message;
+                                }
                             }
+                            else
+                            {
+                                responseVm.IsSuccess = true;
+                                responseVm.Message = Checkghlresponse.Message;
+                            }
+
                         }
-                        responseVm.IsSuccess = true;
-                        responseVm.Message = AppConstant.InsertSuccessMsg;
+                        
                     }
                     else
                     {
@@ -294,10 +317,7 @@ namespace ShutterManagement.Business.Services
                 var IsTenantExists = false;
                 if (model.PhoneNumber != null)
                 {
-                    var match = Regex.Match(model.PhoneNumber, @"^\+?\d{1}");
-                    model.PhoneNumber = match.Value == "+1"
-                                        ? model.PhoneNumber
-                                        : "+1" + model.PhoneNumber.TrimStart('+');
+                    model.PhoneNumber = FormatPhoneNumber(model.PhoneNumber);
                 }
                 if (model.locationId != null)
                 {
@@ -423,7 +443,7 @@ namespace ShutterManagement.Business.Services
                                     contactBillingAddress.Phone = model.BillingAddressVm?.PhoneNumber;
                                     contactBillingAddress.Email = model.BillingAddressVm?.Email;
                                     contactBillingAddress.City = model.BillingAddressVm?.City;
-                                    contactBillingAddress.State = model.BillingAddressVm?.State;
+                                    contactBillingAddress.State = model.BillingAddressVm?.StateId;
                                     contactBillingAddress.ZipCode = model.BillingAddressVm?.ZipCode;
                                     contactBillingAddress.StreetAddress = model.BillingAddressVm?.StreetAddress;
                                     contactBillingAddress.UpdatedAt = DateTime.Now;
@@ -442,7 +462,7 @@ namespace ShutterManagement.Business.Services
                                         Phone = model.BillingAddressVm?.PhoneNumber,
                                         Email = model.BillingAddressVm?.Email,
                                         City = model.BillingAddressVm?.City,
-                                        State = model.BillingAddressVm?.State,
+                                        State = model.BillingAddressVm?.StateId,
                                         ZipCode = model.BillingAddressVm?.ZipCode,
                                         StreetAddress = model.BillingAddressVm?.StreetAddress,
                                         CreatedAt = DateTime.Now,
@@ -505,8 +525,17 @@ namespace ShutterManagement.Business.Services
                             Referral = model.Referral ?? string.Empty,
                             GHLContactId = model.GHLContactId ?? string.Empty,
                         };
-                        var ghlResponse = await SyncWithGHL(contact1, ghlContactAdd);
-
+                        var Checkghlresponse = await gHLConfigurationService.CheckGHLConfiguration();
+                        if (Checkghlresponse.IsSuccess)
+                        {
+                            var ghlResponse = await SyncWithGHL(contact1, ghlContactAdd);
+                            responseVm.IsSuccess = true;
+                            responseVm.Message = Checkghlresponse.Message;
+                        }
+                        else
+                         {
+                          responseVm.Message = Checkghlresponse.Message;
+                         }
                         responseVm.IsSuccess = true;
                         responseVm.Message = AppConstant.UpdateSuccessMsg;
                     }
@@ -570,7 +599,7 @@ namespace ShutterManagement.Business.Services
                 responseVm.Message = AppConstant.ExceptionError + ex.Message;
             }
             return responseVm;
-        }
+        }  
         public async Task<IResponseVm<string>> DeleteContact(Guid ContactId)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
@@ -716,7 +745,6 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-
         public async Task<IResponseVm<List<ContactsList>>> GetAll_Contact(Pagination filter, bool Role)
         {
             IResponseVm<List<ContactsList>> responseVm = new ResponseVm<List<ContactsList>>();
@@ -727,6 +755,7 @@ namespace ShutterManagement.Business.Services
                 List<ContactsList> ContactList = new List<ContactsList>();
                 if (filter.TenantId != "" && Role)
                 {
+                    
                     var IsRealtedTenant = tenantService.GetAllQuerable().Where(x => x.TenantId.ToString() == filter.TenantId && x.ParentTenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
                     if (IsRealtedTenant == null)
                     {
@@ -744,9 +773,11 @@ namespace ShutterManagement.Business.Services
                     Contacts = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId).OrderByDescending(x => x.CreatedAt).ToList();
                 }
 
-
+                
                 foreach (var contact in Contacts)
                 {
+                    
+
                     ContactsList contacts = new ContactsList
                     {
                         ContactId = contact.ContactId,
@@ -767,16 +798,18 @@ namespace ShutterManagement.Business.Services
                         CreatedAt = contact.CreatedAt,
                         IsSubtenant = IsSubtenants,
                     };
-                    contacts.billingAddressVm = dbContext.TblAddresses
+                    contacts.billingAddressVm = dbContext.TblAddresses.Include(x=>x.StateNavigation)
                         .Where(x => x.AddressId == contact.PrimaryAddress
                         && x.IsDelete == false).Select(x => new BillingAddressVm
                         {
+                             
                             City = x.City,
                             Email = x.Email,
                             FirstName = x.FirstName,
                             LastName = x.LastName,
                             PhoneNumber = x.Phone,
-                            State = x.State,
+                            StateName = dbContext.MstStates.Where(s => s.Id == x.State).Select(y => y.StateName ?? "").FirstOrDefault(),
+                            StateId= x.State,
                             StreetAddress = x.StreetAddress,
                             ZipCode = x.ZipCode,
                         }).FirstOrDefault();
@@ -833,7 +866,7 @@ namespace ShutterManagement.Business.Services
             try
             {
 
-                var ghlResponse = new GhlContactSingleResponse();
+                IResponseVm<GhlContactSingleResponse> ghlResponse = new ResponseVm<GhlContactSingleResponse>();
                 var ghlContactAdd = new GhlContactAdd
                 {
                     Id = contact.ContactId.ToString() ?? string.Empty,
@@ -850,25 +883,28 @@ namespace ShutterManagement.Business.Services
                 if (contact.GhlcontactId == null)
                 {
                     await gHLConfigurationService.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
-                    ghlResponse = await ghlService.CreateContactAsync(ghlContactAdd);
-                    if (ghlResponse != null)
+                    ghlResponse = await gHLService_V2.CreateContactAsync(ghlContactAdd);
+                    if (ghlResponse.IsSuccess)
                     {
                         var contactExist = (await GetById(contact.ContactId));
 
                         if (contactExist != null && contactExist.IsDelete == false)
                         {
-                            contactExist.GhlcontactId = ghlResponse.Contact.id;
+                            contactExist.GhlcontactId = ghlResponse.Data.Contact.id;
                             contactExist.LastSync = DateTime.Now;
                         }
                         var res = await Update(contactExist);
-
+                        responseVm.IsSuccess = true;
+                        responseVm.Message = "Contact synced successfully with GHL.";
                     }
-
+                    //responseVm.IsSuccess = true;
+                    //responseVm.Message = AppConstant.InsertSuccessMsg;
+                    return responseVm;
                 }
                 else
                 {
                     await gHLConfigurationService.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
-                    ghlResponse = await ghlService.UpdateContactAsync(contact.GhlcontactId, ghlContactAdd);
+                    ghlResponse = await gHLService_V2.UpdateContactAsync(contact.GhlcontactId, ghlContactAdd);
                 }
                 if (ghlResponse != null)
                 {
@@ -915,7 +951,7 @@ namespace ShutterManagement.Business.Services
                             Email = contactData.email,
                             PhoneNumber = contactData.phone,
                             City = contactData.location.city,
-                            State = contactData.location.state,
+                            //State = contactData.location.state,
                             ZipCode = contactData.location.postalCode,
                             StreetAddress = contactData.location.address
                         };
@@ -961,7 +997,7 @@ namespace ShutterManagement.Business.Services
                             Email = contactData.email,
                             PhoneNumber = contactData.phone,
                             City = contactData.location.city,
-                            State = contactData.location.state,
+                            StateName = contactData.location.state,
                             ZipCode = contactData.location.postalCode,
                             StreetAddress = contactData.location.address
                         };
@@ -986,211 +1022,223 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var getGHLContacts = await ghlService.GetContactsAsync();
-                if (getGHLContacts != null)
+                var Checkghlresponse = await gHLConfigurationService.CheckGHLConfiguration();
+                if (Checkghlresponse.IsSuccess)
                 {
-                    FileLogger.Log("GHL", getGHLContacts);
-                }
-                else
-                {
-                    FileLogger.Log("Exception occurred GHLContact is null.");
-                }
-                var getAppContacts = (await GetAll()).Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false).ToList();
-                
-                List<Sp_Contact> contactsToInsert = new List<Sp_Contact>();
-                List<GhlContactAdd> contactsToAddToGHL = new List<GhlContactAdd>(); 
-                List<GhlContactAdd> contactsUpdateToGHL = new List<GhlContactAdd>(); 
-                foreach (var ghlcontact in getGHLContacts)
-                {
-                    var existingContact = getAppContacts.FirstOrDefault(x => x.GhlcontactId == ghlcontact.id);
-
-                    if (existingContact != null) { 
-                        if (ghlcontact.dateUpdated > existingContact.UpdatedAt)
-                        {
-                            existingContact.FirstName = ghlcontact.firstName;
-                            existingContact.Email = ghlcontact.email;
-                            existingContact.PhoneNumber = ghlcontact.phone;
-                            existingContact.UpdatedAt = DateTime.Now;
-                            existingContact.ModifiedBy = AppConstant.LoggedInUserID;
-                            existingContact.LastSync = DateTime.Now;
-                            existingContact.ContactType = ghlcontact.type;
-                            FileLogger.Log("Updating Contact in application(Application ContactId).", existingContact.ContactId);
-                            FileLogger.Log("Updating Contact in application(GhlContactId).", existingContact.GhlcontactId);
-                            var res = await Update(existingContact);
-                            if (res == null) { FileLogger.Log("Exception occurred Updating Contact in application.",res); }
-                         }
-                        else
-                        {
-                            var ghlUpdatecontact = new GhlContactAdd
-                            {
-                                FirstName = existingContact.FirstName ?? "",
-                                LastName = existingContact.LastName ?? "",
-                                Phone = existingContact.PhoneNumber ?? "",
-                                Email = existingContact.Email ?? "",
-                                ContactType = existingContact.ContactType ?? "",
-                                GHLContactId = existingContact.GhlcontactId ?? ""
-                            };
-                            FileLogger.Log("Updating Contact in application(GhlContactId).", existingContact.GhlcontactId);
-                            var res = await ghlService.UpdateContactAsync(ghlUpdatecontact.GHLContactId, ghlUpdatecontact);
-                            if(res.Contact == null)
-                            { FileLogger.Log("Exception occurred Updating Contact in application.", res); }
-                        }
-                    }
-                    else if (existingContact == null)
+                    var getGHLContacts = await gHLService_V2.GetContactsAsync();
+                    if (getGHLContacts != null)
                     {
-                        var tenant = tenantService.GetAllQuerable()
-                            .Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false)
-                            .Select(x => x.BrandingInfo)
-                            .FirstOrDefault();
-
-                        var brandingInfo = tenantBranding.GetAllQuerable()
-                            .Where(x => x.Id == tenant && x.IsDelete == false)
-                            .FirstOrDefault();
-
-                        var newContact = new Sp_Contact
-                        {
-                            ContactType = ghlcontact.type,
-                            FirstName = ghlcontact.firstName,
-                            LastName = ghlcontact.lastName,
-                            Email = ghlcontact.email,
-                            PhoneNumber = ghlcontact.phone,
-                            locationId = ghlcontact.locationId,
-                            GHLContactId = ghlcontact.id,
-                            lastAsync = DateTime.Now,
-                        };
-
-                        if (brandingInfo != null)
-                        {
-                            newContact.BillingAddressVm = new BillingAddressVm
-                            {
-                                BillingFirstName = newContact.FirstName,
-                                BillingLastName = newContact.LastName,
-                                FirstName = newContact.FirstName,
-                                LastName = newContact.LastName,
-                                Email = newContact.Email,
-                                PhoneNumber = newContact.PhoneNumber,
-                                City = brandingInfo.City,
-                                State = brandingInfo.StreetAddress,
-                                ZipCode = brandingInfo.ZipCode,
-                                StreetAddress = brandingInfo.StreetAddress
-                            };
-                        }
-                        contactsToInsert.Add(newContact);
-                    }
-                }
-
-                foreach (var appContact in getAppContacts)
-                {
-                    if (string.IsNullOrEmpty(appContact.GhlcontactId)) 
-                    {
-                        var newContactToAddToGHL = new GhlContactAdd
-                        {
-                            FirstName = appContact.FirstName,
-                            LastName = appContact.LastName,
-                            Email = appContact.Email,
-                            Phone = appContact.PhoneNumber,
-                            ContactType = appContact.ContactType,
-                        };
-                        contactsToAddToGHL.Add(newContactToAddToGHL);
+                        FileLogger.Log("GHL", getGHLContacts);
                     }
                     else
                     {
-                       var existingGHLContact = getGHLContacts.FirstOrDefault(x => x.id == appContact.GhlcontactId);
-                        if (existingGHLContact != null)
+                        FileLogger.Log("Exception occurred GHLContact is null.");
+                    }
+                    var getAppContacts = (await GetAll()).Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false).ToList();
+
+                    List<Sp_Contact> contactsToInsert = new List<Sp_Contact>();
+                    List<GhlContactAdd> contactsToAddToGHL = new List<GhlContactAdd>();
+                    List<GhlContactAdd> contactsUpdateToGHL = new List<GhlContactAdd>();
+                    foreach (var ghlcontact in getGHLContacts)
+                    {
+                        var existingContact = getAppContacts.FirstOrDefault(x => x.GhlcontactId == ghlcontact.id);
+
+                        if (existingContact != null)
                         {
-                            if (existingGHLContact.dateUpdated < appContact.UpdatedAt)
+                            if (ghlcontact.dateUpdated > existingContact.UpdatedAt)
                             {
-                                var newContactToAddToGHL = new GhlContactAdd
-                                {
-                                    FirstName = existingGHLContact.firstName,
-                                    LastName = existingGHLContact.lastName,
-                                    Email = existingGHLContact.email,
-                                    Phone = existingGHLContact.phone,
-                                    ContactType = existingGHLContact.type,
-                                    GHLContactId = existingGHLContact.id
-                                };
-                                contactsUpdateToGHL.Add(newContactToAddToGHL);
+                                existingContact.FirstName = ghlcontact.firstName;
+                                existingContact.Email = ghlcontact.email;
+                                existingContact.PhoneNumber = ghlcontact.phone;
+                                existingContact.UpdatedAt = DateTime.Now;
+                                existingContact.ModifiedBy = AppConstant.LoggedInUserID;
+                                existingContact.LastSync = DateTime.Now;
+                                existingContact.ContactType = ghlcontact.type;
+                                FileLogger.Log("Updating Contact in application(Application ContactId).", existingContact.ContactId);
+                                FileLogger.Log("Updating Contact in application(GhlContactId).", existingContact.GhlcontactId);
+                                var res = await Update(existingContact);
+                                if (res == null) { FileLogger.Log("Exception occurred Updating Contact in application.", res); }
                             }
                             else
                             {
-                                var updatecontact = new UpdateContact
+                                var ghlUpdatecontact = new GhlContactAdd
                                 {
-                                    FirstName = existingGHLContact.firstName,
-                                    LastName = existingGHLContact.lastName,
-                                    Email = existingGHLContact.email,
-                                    PhoneNumber = existingGHLContact.phone,
-                                    ContactType = existingGHLContact.type,
-                                    GHLContactId = existingGHLContact.id,
-                                    lastAsync = DateTime.Now
+                                    FirstName = existingContact.FirstName ?? "",
+                                    LastName = existingContact.LastName ?? "",
+                                    Phone = existingContact.PhoneNumber ?? "",
+                                    Email = existingContact.Email ?? "",
+                                    ContactType = existingContact.ContactType ?? "",
+                                    GHLContactId = existingContact.GhlcontactId ?? ""
                                 };
-                                FileLogger.Log("Updating Contact in application(Application ContactId).", updatecontact.GHLContactId);
-                                var res = await Update_Contact(updatecontact);
-                                if(res.IsSuccess = false)
-                                { FileLogger.Log("Exception occurred Updating Contact in application.", res.Message); }
-                            }
-                        }
-                        else
-                        {
-                            FileLogger.Log("Contact is Deleting from the application(Application ContactId), as not present in GHL.", appContact.ContactId);
-                            var res = await DeleteContact(appContact.ContactId);
-                            if(!res.IsSuccess)
-                            { FileLogger.Log("Exception occurred while Deleting Contact in application.", res.Message); }
-                        }
-                    }
-                }
-                if (contactsToInsert.Any())
-                {
-                    foreach (var contact in contactsToInsert)
-                    {
-                        var res = await Create_Contact(contact);
-                        if (!res.IsSuccess) { FileLogger.Log("Exception occurred Creating Contact in application.",res.Message); }
-                    }
-                }
-                if (contactsToAddToGHL.Any())
-                {
-                    foreach (var contact in contactsToAddToGHL)
-                    {
-                        if (contact.GHLContactId == null)
-                        {
-                           
-                            FileLogger.Log("Creating bulk Contact in GHL(GhlContactId).", contact);
-                            var res = await ghlService.CreateContactAsync(contact);
-                            if(res.Contact != null)
-                            {
-                            var contactExist = (await GetAll()).Where(x => x.Email == contact.Email).FirstOrDefault();
-                                if (contactExist != null)
+                                FileLogger.Log("Updating Contact in application(GhlContactId).", existingContact.GhlcontactId);
+                                var res = await gHLService_V2.UpdateContactAsync(ghlUpdatecontact.GHLContactId, ghlUpdatecontact);
+                                if (res == null)
                                 {
-                                    contactExist.GhlcontactId = res.Contact.id;
-                                    contactExist.LastSync = DateTime.Now;
+                                    FileLogger.Log("Exception occurred: Response object is null.");
                                 }
-                                await Update(contactExist);
+                                else if (!res.IsSuccess)
+                                {
+                                    FileLogger.Log("Exception occurred: Contact is null.", res);
+                                }
 
                             }
-                            if(res.Contact == null)
-                            { FileLogger.Log("Exception occurred Creating bulk Contact in GHL.", res); }
+                        }
+                        else if (existingContact == null)
+                        {
+                            var tenant = tenantService.GetAllQuerable()
+                                .Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false)
+                                .Select(x => x.BrandingInfo)
+                                .FirstOrDefault();
+
+                            var brandingInfo = tenantBranding.GetAllQuerable()
+                                .Where(x => x.Id == tenant && x.IsDelete == false)
+                                .FirstOrDefault();
+
+                            var newContact = new Sp_Contact
+                            {
+                                ContactType = ghlcontact.type,
+                                FirstName = ghlcontact.firstName,
+                                LastName = ghlcontact.lastName,
+                                Email = ghlcontact.email,
+                                PhoneNumber = ghlcontact.phone,
+                                locationId = ghlcontact.locationId,
+                                GHLContactId = ghlcontact.id,
+                                lastAsync = DateTime.Now,
+                            };
+
+                            if (brandingInfo != null)
+                            {
+                                newContact.BillingAddressVm = new BillingAddressVm
+                                {
+                                    BillingFirstName = newContact.FirstName,
+                                    BillingLastName = newContact.LastName,
+                                    FirstName = newContact.FirstName,
+                                    LastName = newContact.LastName,
+                                    Email = newContact.Email,
+                                    PhoneNumber = newContact.PhoneNumber,
+                                    City = brandingInfo.City,
+                                    //State = brandingInfo.StreetAddress,
+                                    ZipCode = brandingInfo.ZipCode,
+                                    StreetAddress = brandingInfo.StreetAddress
+                                };
+                            }
+                            contactsToInsert.Add(newContact);
+                        }
+                    }
+
+                    foreach (var appContact in getAppContacts)
+                    {
+                        if (string.IsNullOrEmpty(appContact.GhlcontactId))
+                        {
+                            var newContactToAddToGHL = new GhlContactAdd
+                            {
+                                FirstName = appContact.FirstName,
+                                LastName = appContact.LastName,
+                                Email = appContact.Email,
+                                Phone = appContact.PhoneNumber,
+                                ContactType = appContact.ContactType,
+                            };
+                            contactsToAddToGHL.Add(newContactToAddToGHL);
                         }
                         else
                         {
-                            FileLogger.Log("Updating Contact in GHL.", contact.GHLContactId);
-                            var res = await ghlService.UpdateContactAsync(contact.GHLContactId, contact);
-                            if (res.Contact == null)
-                            { FileLogger.Log("Updating Contact in GHL.", contact.GHLContactId); }
-
+                            var existingGHLContact = getGHLContacts.FirstOrDefault(x => x.id == appContact.GhlcontactId);
+                            if (existingGHLContact != null)
+                            {
+                                if (existingGHLContact.dateUpdated < appContact.UpdatedAt)
+                                {
+                                    var newContactToAddToGHL = new GhlContactAdd
+                                    {
+                                        FirstName = existingGHLContact.firstName,
+                                        LastName = existingGHLContact.lastName,
+                                        Email = existingGHLContact.email,
+                                        Phone = existingGHLContact.phone,
+                                        ContactType = existingGHLContact.type,
+                                        GHLContactId = existingGHLContact.id
+                                    };
+                                    contactsUpdateToGHL.Add(newContactToAddToGHL);
+                                }
+                                else
+                                {
+                                    var updatecontact = new UpdateContact
+                                    {
+                                        FirstName = existingGHLContact.firstName,
+                                        LastName = existingGHLContact.lastName,
+                                        Email = existingGHLContact.email,
+                                        PhoneNumber = existingGHLContact.phone,
+                                        ContactType = existingGHLContact.type,
+                                        GHLContactId = existingGHLContact.id,
+                                        lastAsync = DateTime.Now
+                                    };
+                                    FileLogger.Log("Updating Contact in application(Application ContactId).", updatecontact.GHLContactId);
+                                    var res = await Update_Contact(updatecontact);
+                                    if (res.IsSuccess = false)
+                                    { FileLogger.Log("Exception occurred Updating Contact in application.", res.Message); }
+                                }
+                            }
+                            else
+                            {
+                                FileLogger.Log("Contact is Deleting from the application(Application ContactId), as not present in GHL.", appContact.ContactId);
+                                var res = await DeleteContact(appContact.ContactId);
+                                if (!res.IsSuccess)
+                                { FileLogger.Log("Exception occurred while Deleting Contact in application.", res.Message); }
+                            }
                         }
                     }
-                }
-                var isUpdated = await ghlService.UpdateLastSyncConfigurationAsync();
+                    if (contactsToInsert.Any())
+                    {
+                        foreach (var contact in contactsToInsert)
+                        {
+                            var res = await Create_Contact(contact);
+                            if (!res.IsSuccess) { FileLogger.Log("Exception occurred Creating Contact in application.", res.Message); }
+                        }
+                    }
+                    if (contactsToAddToGHL.Any())
+                    {
+                        foreach (var contact in contactsToAddToGHL)
+                        {
+                            if (contact?.GHLContactId == null)
+                            {
 
-                if (!isUpdated)
-                {
-                    FileLogger.Log("Updating Contact in GHL.", isUpdated);
-                    responseVm.Message = "Error: Configuration not found or update failed.";
-                    return responseVm;
-                }
+                                FileLogger.Log("Creating bulk Contact in GHL(GhlContactId).", contact);
+                                var res = await gHLService_V2.CreateContactAsync(contact);
+                                if (res.IsSuccess)
+                                {
+                                    var contactExist = (await GetAll()).Where(x => x.Email == contact.Email).FirstOrDefault();
+                                    if (contactExist != null)
+                                    {
+                                        contactExist.GhlcontactId = res.Data.Contact.id;
+                                        contactExist.LastSync = DateTime.Now;
+                                    }
+                                    await Update(contactExist);
 
-                responseVm.IsSuccess = true;
-                responseVm.Message = "All contacts synced successfully.";
-                responseVm.Data = "Synced successful.";
+                                }
+                                if (!res.IsSuccess)
+                                { FileLogger.Log("Exception occurred Creating bulk Contact in GHL.", res); }
+                            }
+                            else
+                            {
+                                FileLogger.Log("Updating Contact in GHL.", contact.GHLContactId);
+                                var res = await gHLService_V2.UpdateContactAsync(contact.GHLContactId, contact);
+                                if (!res.IsSuccess)
+                                { FileLogger.Log("Updating Contact in GHL.", contact.GHLContactId); }
+
+                            }
+                        }
+                    }
+                    var isUpdated = await gHLService_V2.UpdateLastSyncConfigurationAsync();
+
+                    if (!isUpdated)
+                    {
+                        FileLogger.Log("Updating Contact in GHL.", isUpdated);
+                        responseVm.Message = "Error: Configuration not found or update failed.";
+                        return responseVm;
+                    }
+
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = "All contacts synced successfully.";
+                    responseVm.Data = "Synced successful.";
+                }
             }
             catch (Exception ex)
             {

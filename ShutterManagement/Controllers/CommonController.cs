@@ -19,6 +19,9 @@ using System.Text.Json.Serialization;
 using System.Text.Json;
 using ShutterManagement.GHL.Services;
 using ShutterManagment.GHL.ViewModel.Response;
+using ShutterManagement.GHLv2;
+using System.Runtime.InteropServices;
+using ShutterManagment.GHL.ViewModel.Request;
 
 namespace ShutterManagement.Controllers
 {
@@ -62,6 +65,9 @@ namespace ShutterManagement.Controllers
         private readonly IStripeConfiguration stripeConfiguration;
         private readonly GhlService ghlService;
         private readonly IPaymentsService paymentsService;
+        private readonly GHLService_v2 gHLService_V2;
+        private readonly IJobSchedule jobSchedule;
+        private readonly IStateService stateService;
         private readonly IAuthService authService;
 
         public CommonController(IMasterCreate masterCreate, 
@@ -77,7 +83,7 @@ namespace ShutterManagement.Controllers
             ITaxRate taxService,IEstimateService estimateService, IAuthService authService,
             IEstimationBreakdownService estimationBreakdownService, ILocationService locationService,
            IDashboard dashboard, INotificationService notification, IGHLConfiguration gHLConfiguration,IStripeConfiguration stripeConfiguration,
-           GhlService ghlService ,IPaymentsService paymentsService)
+           GhlService ghlService ,IPaymentsService paymentsService ,GHLService_v2 gHLService_V2,IJobSchedule jobSchedule,IStateService stateService)
         {
             this.masterCreate = masterCreate;
             this.fileUpload = fileUpload;
@@ -124,6 +130,9 @@ namespace ShutterManagement.Controllers
             this.stripeConfiguration = stripeConfiguration;
             this.ghlService = ghlService;
             this.paymentsService = paymentsService;
+            this.gHLService_V2 = gHLService_V2;
+            this.jobSchedule = jobSchedule;
+            this.stateService = stateService;
         }
 
 
@@ -746,9 +755,11 @@ namespace ShutterManagement.Controllers
         [Route("SaveStageGHLToDB")]
         public async Task<IActionResult> GetPipeline()
         {
-            var pipelineData = await ghlService.GetAndSaveDefaultPipelineAndStage();
+            // var pipelineData = await ghlService.GetAndSaveDefaultPipelineAndStage();
+            await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInUserID.ToString());  
+            var pipelineData_v2 = await gHLService_V2.GetAllPipelinesWithStagesAsync();
 
-            if (pipelineData == null)
+            if (pipelineData_v2 == null)
             {
                 return NotFound("Pipeline not found");
             }
@@ -760,7 +771,7 @@ namespace ShutterManagement.Controllers
                 WriteIndented = true
             };
 
-            var json = JsonSerializer.Serialize(pipelineData, options);
+            var json = JsonSerializer.Serialize(pipelineData_v2, options);
             return Ok(json);
         }
 
@@ -787,13 +798,16 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> SyncAllData()
         {
             await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
-            var pipelineResult = await ghlService.GetAndSaveDefaultPipelineAndStage();
+            //var pipelineResult = await ghlService.GetAndSaveDefaultPipelineAndStage();
+            var pipelineResult = await gHLService_V2.GetAndSaveDefaultPipelineAndStage();
             var contact = await contactService.ContactSync();
             var opportunityResult = await jobService.SyncOpportunitiesFromGhl();
+            var appointment = await jobSchedule.AppointmentSync();
 
             bool isSuccess = pipelineResult.IsSuccess && opportunityResult.IsSuccess;
             string message = isSuccess ? "Synchronization completed successfully." :
-                                         $"Pipeline: {pipelineResult.Message}, Opportunities: {opportunityResult.Message}";
+                                         $"Pipeline: {pipelineResult.Message}, Opportunities: {opportunityResult.Message},Contact : {contact.Message} ," +
+                                         $"Appointment : {appointment.Message}";
             var response = new
             {
                 IsSuccess = isSuccess,
@@ -812,31 +826,77 @@ namespace ShutterManagement.Controllers
 
         [HttpGet]
         [Route("GenerateToken")]
+        [AllowAnonymous]
         public async Task<IActionResult> GenerateToken()
         {
             var result =await authService.GenerateToken();
             return Ok(result);
         }
+        [HttpGet]
+        [Route("GoHighLevelAuthorization")]
+        public async Task<IActionResult> GoHighLevelAuthorization()
+        {
+            var authorizationUrl =await gHLConfiguration.GetOauthGHL();
+            return Ok(authorizationUrl);
+        }
 
+        [HttpGet]
+        [Route("GetUserAsync")]
+        public async Task<IActionResult> GetUserAsync()
+        {
+            await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
+            var authorizationUrl = await gHLService_V2.GetUsersAsync();
+            return Ok(authorizationUrl);
+        }
 
+        //[HttpPost]
+        //[Route("VerifyGoHighLevel")]
+        //public async Task<IActionResult> GetAuthorizationUrl(string refreshtoken)
+        //{
+        //    var accessToken = await ghlService.GetAccessToken(refreshtoken);
+        //    Console.WriteLine("Access Token: " + accessToken);
+        //    return Ok(accessToken);
 
-            //[HttpGet]
-            //[Route("ghlsync")]
-            //public async Task<IActionResult> GHLSync()
-            //{
-            //    var result = await jobService.SyncOpportunitiesFromGhl();
-            //    return Ok(result);
-            //}
+        //}
 
-            //[HttpPost("HandleOpportunityWebhook")]
-            //[AllowAnonymous]
-            //public async Task<IActionResult> HandleOpportunityWebhook([FromBody] GhlOpportunityWebhookModel webhookData)
-            //{
-            //    var response = await jobser.ProcessGhlOpportunityWebhook(webhookData);
-            //    return response.IsSuccess ? Ok(response) : BadRequest(response);
-            //}
-
-
+        [HttpPost]
+        [Route("GHLAppointment")]
+        public async Task<IActionResult> GHLAppointment(GHLAppointmentAdd appointment)
+        {
+            await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
+            var accessToken = await gHLService_V2.CreateAppointmentAsync(appointment);
+            return Ok(accessToken);
 
         }
+
+
+
+        //[HttpGet]
+        //[Route("ghlsync")]
+        //public async Task<IActionResult> GHLSync()
+        //{
+        //    var result = await jobService.SyncOpportunitiesFromGhl();
+        //    return Ok(result);
+        //}
+
+        //[HttpPost("HandleOpportunityWebhook")]
+        //[AllowAnonymous]
+        //public async Task<IActionResult> HandleOpportunityWebhook([FromBody] GhlOpportunityWebhookModel webhookData)
+        //{
+        //    var response = await jobser.ProcessGhlOpportunityWebhook(webhookData);
+        //    return response.IsSuccess ? Ok(response) : BadRequest(response);
+        //}
+
+
+        [HttpGet]
+        [Route("GetAllState")]
+        public async Task<IActionResult> GetAllState()
+        {
+            var res = await stateService.GetAll(filter);
+            res.Data = res.Data.Where(x => x.IsActive == true).ToList();
+            return Ok(res);
+        }
+
+
+    }
     }

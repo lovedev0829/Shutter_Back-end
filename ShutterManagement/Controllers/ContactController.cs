@@ -17,6 +17,7 @@ using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace ShutterManagement.Controllers
@@ -26,14 +27,12 @@ namespace ShutterManagement.Controllers
     public class ContactController : ControllerBase
     {
         private readonly IContactService _contactService;
-        private readonly GhlService ghlService;
         private readonly IGHLConfiguration gHLConfiguration;
         private readonly IAuthService authService;
 
-        public ContactController(IContactService contactService,GhlService ghlService,IGHLConfiguration gHLConfiguration,IAuthService authService)
+        public ContactController(IContactService contactService,IGHLConfiguration gHLConfiguration,IAuthService authService)
         {
             _contactService = contactService;
-            this.ghlService = ghlService;
             this.gHLConfiguration = gHLConfiguration;
             this.authService = authService;
         }
@@ -103,14 +102,14 @@ namespace ShutterManagement.Controllers
         }
 
 
-        [HttpGet("GHLContact")]
-        [Authorize]
-        public async Task<IActionResult> GHLContact()
-        {
-            await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
-            var res = await ghlService.GetContactsAsync();
-            return Ok(res);
-        }
+        //[HttpGet("GHLContact")]
+        //[Authorize]
+        //public async Task<IActionResult> GHLContact()
+        //{
+        //    await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
+        //    var res = await ghlser.GetContactsAsync();
+        //    return Ok(res);
+        //}
 
         [HttpPost("ContactFromGHL")]
         public async Task<IActionResult> ContactFromGHL(GHLContactTrigger contactData)
@@ -157,6 +156,8 @@ namespace ShutterManagement.Controllers
             }
         }
 
+
+           
 
         [HttpPost("UpdateContactFromGHL")]
         public async Task<IActionResult> UpdateContactFromGHL(GHLContactTrigger contactData)

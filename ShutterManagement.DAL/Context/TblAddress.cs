@@ -13,8 +13,6 @@ public partial class TblAddress
 
     public string? City { get; set; }
 
-    public string? State { get; set; }
-
     public string? ZipCode { get; set; }
 
     public DateTime? CreatedAt { get; set; }
@@ -47,7 +45,11 @@ public partial class TblAddress
 
     public string? LastName { get; set; }
 
+    public Guid? State { get; set; }
+
     public virtual TblContact? Contact { get; set; }
+
+    public virtual MstState? StateNavigation { get; set; }
 
     public virtual ICollection<TblEstimateWindow> TblEstimateWindows { get; set; } = new List<TblEstimateWindow>();
 

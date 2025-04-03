@@ -17,7 +17,8 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? StreetAddress { get; set; }
         public string? Notes { get; set; }
         public string? City { get; set; }
-        public string? State { get; set; }
+        public Guid? StateId { get; set; }
+        public string? StateName { get; set; }
         public string? ZipCode { get; set; }
         public string? AccessCode { get; set; }
         public string? FirstName { get; set; }

@@ -15,6 +15,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public decimal? UnitCost { get; set; }
 
         public string? UnitOfMeasurement { get; set; }
+        public decimal? Non_Rated_UnitCost { get; set; }
 
         public decimal? StockQuantity { get; set; }
 
@@ -22,7 +23,8 @@ namespace ShutterManagement.Core.ViewModels.Response
 
         public Guid? VendorId { get; set; }
 
-        public string? VendorName { get; set; }
+        public string? FirstName { get; set; }
+        public string? LastName { get; set; }
         public string? VendorCode { get; set; }
         public string? ProductTypeName { get; set; }
 

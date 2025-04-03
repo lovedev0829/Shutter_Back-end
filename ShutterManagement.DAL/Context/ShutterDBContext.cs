@@ -35,6 +35,8 @@ public partial class ShutterDBContext : DbContext
 
     public virtual DbSet<MstRegion> MstRegions { get; set; }
 
+    public virtual DbSet<MstState> MstStates { get; set; }
+
     public virtual DbSet<MstUnitofMeasurement> MstUnitofMeasurements { get; set; }
 
     public virtual DbSet<TblAddress> TblAddresses { get; set; }
@@ -286,6 +288,21 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.RegionName).HasMaxLength(200);
         });
 
+        modelBuilder.Entity<MstState>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__MstState__3213E83FEB8BE5D3");
+
+            entity.ToTable("MstState", "dbo");
+
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("(newid())")
+                .HasColumnName("id");
+            entity.Property(e => e.StateCode)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.StateName).HasMaxLength(100);
+        });
+
         modelBuilder.Entity<MstUnitofMeasurement>(entity =>
         {
             entity.HasKey(e => e.UnitofMeasurementId).HasName("PK__MstUnito__21E7C5537FB3558A");
@@ -325,7 +342,7 @@ public partial class ShutterDBContext : DbContext
                 .HasMaxLength(50)
                 .IsUnicode(false);
             entity.Property(e => e.Phone).HasMaxLength(128);
-            entity.Property(e => e.State).HasMaxLength(100);
+            entity.Property(e => e.State).HasDefaultValueSql("(newid())");
             entity.Property(e => e.StreetAddress).HasMaxLength(128);
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(getdate())")
@@ -335,6 +352,10 @@ public partial class ShutterDBContext : DbContext
             entity.HasOne(d => d.Contact).WithMany(p => p.TblAddresses)
                 .HasForeignKey(d => d.ContactId)
                 .HasConstraintName("FK__TblAddres__Conta__59C55456");
+
+            entity.HasOne(d => d.StateNavigation).WithMany(p => p.TblAddresses)
+                .HasForeignKey(d => d.State)
+                .HasConstraintName("FK_MstState");
 
             entity.HasOne(d => d.Tenant).WithMany(p => p.TblAddresses)
                 .HasForeignKey(d => d.TenantId)
@@ -770,10 +791,15 @@ public partial class ShutterDBContext : DbContext
             entity.ToTable("TblGHLConfiguration", "dbo");
 
             entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.AccessExpirationtime).HasColumnType("datetime");
+            entity.Property(e => e.AccessToken).HasColumnName("Access_token");
             entity.Property(e => e.Apikey).HasColumnName("APIkey");
             entity.Property(e => e.LastSync)
                 .HasColumnType("datetime")
                 .HasColumnName("lastSync");
+            entity.Property(e => e.RedirectUri).HasColumnName("RedirectURI");
+            entity.Property(e => e.RefreshExpirationtime).HasColumnType("datetime");
+            entity.Property(e => e.RefreshToken).HasColumnName("Refresh_token");
         });
 
         modelBuilder.Entity<TblInvoice>(entity =>
@@ -956,6 +982,8 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.JobScheduleId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
             entity.Property(e => e.EndDate).HasColumnType("datetime");
+            entity.Property(e => e.GhlEventId).HasColumnName("GHL_EventId");
+            entity.Property(e => e.LasSync).HasColumnType("datetime");
             entity.Property(e => e.StartDate).HasColumnType("datetime");
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
 
@@ -1203,6 +1231,9 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.PaymentDate).HasColumnType("datetime");
             entity.Property(e => e.PaymentDueDate).HasColumnType("datetime");
             entity.Property(e => e.PaymentMethod)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.PaymentTypeStatus)
                 .HasMaxLength(100)
                 .IsUnicode(false);
             entity.Property(e => e.Status)
@@ -1611,6 +1642,9 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.City)
                 .HasMaxLength(200)
                 .IsUnicode(false);
+            entity.Property(e => e.CompanyName)
+                .HasMaxLength(100)
+                .IsUnicode(false);
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
@@ -1626,9 +1660,6 @@ public partial class ShutterDBContext : DbContext
                 .HasMaxLength(100)
                 .IsUnicode(false);
             entity.Property(e => e.PhoneNumber).HasMaxLength(200);
-            entity.Property(e => e.State)
-                .HasMaxLength(200)
-                .IsUnicode(false);
             entity.Property(e => e.StreetAddress)
                 .HasMaxLength(200)
                 .IsUnicode(false);
@@ -1638,6 +1669,10 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.VendorCode).HasMaxLength(100);
             entity.Property(e => e.VendorName).HasMaxLength(255);
             entity.Property(e => e.ZipCode).HasMaxLength(200);
+
+            entity.HasOne(d => d.StateNavigation).WithMany(p => p.TblVendors)
+                .HasForeignKey(d => d.State)
+                .HasConstraintName("FK_tblvendor_tblstate");
 
             entity.HasOne(d => d.Tenant).WithMany(p => p.TblVendors)
                 .HasForeignKey(d => d.TenantId)

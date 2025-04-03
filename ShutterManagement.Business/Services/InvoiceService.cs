@@ -488,7 +488,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                await stripeConfiguration.GetStripeConfiguration(AppConstant.LoggedInTenantId.ToString());
+                
 
                 FileLogger.Log($"Stripe Configuration{AppConstant.LoggedInTenantId.ToString()}");
                 var isTenantValid = await tenantService.AnyAsync(x =>
@@ -499,7 +499,8 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.AccessDenied;
                     return responseVm;
                 }
-               // Guid? templateId = Guid.Parse("3A49D48B-CA1D-4E0E-9E1F-A22E7529EF47");
+                // Guid? templateId = Guid.Parse("3A49D48B-CA1D-4E0E-9E1F-A22E7529EF47");
+                await stripeConfiguration.GetStripeConfiguration(AppConstant.LoggedInTenantId.ToString());
 
                 var invoiceTemplate = dbContext.TblTemplates.FirstOrDefault(c =>
                     c.TemplateCategory == EnumValue.GetEnumValue(EmailTemplateType.EstimatePDF)  &&
@@ -562,7 +563,7 @@ namespace ShutterManagement.Business.Services
                     PreparedBy = userDetails?.FirstName + " " + userDetails?.LastName,
                     CustomerId = customerDetails?.ContactUniqueId ?? "",
                     CustomerCity = customerDetails?.billingAddressVm?.City ?? "",
-                    CustomerState = customerDetails?.billingAddressVm?.State ?? "",
+                   // CustomerState = customerDetails?.billingAddressVm?.State ?? "",
                     CustomerZipCode = customerDetails?.billingAddressVm?.ZipCode ?? "",
                     HomePhone = customerDetails?.billingAddressVm?.PhoneNumber ?? "",
                     CompanyStreetAddress = tenantInfoDetails?.StreetAddress ?? "",
@@ -819,7 +820,7 @@ namespace ShutterManagement.Business.Services
                         PreparedBy = userDetails?.FirstName + " " + userDetails?.LastName,
                         CustomerId = customerDetails?.ContactUniqueId ?? "",
                         CustomerCity = customerDetails?.billingAddressVm?.City ?? "",
-                        CustomerState = customerDetails?.billingAddressVm?.State ?? "",
+                       // CustomerState = customerDetails?.billingAddressVm?.State ?? "",
                         CustomerZipCode = customerDetails?.billingAddressVm?.ZipCode ?? "",
                         HomePhone = customerDetails?.billingAddressVm?.PhoneNumber ?? "",
                         CompanyStreetAddress = tenantInfoDetails?.StreetAddress ?? "",
@@ -870,24 +871,17 @@ namespace ShutterManagement.Business.Services
 
                     var InvoicepdfBase64 = Convert.ToBase64String(pdfBytesInvoice);
 
-                    // Generate Invoice Payment Link
-                    // string paymentLink = $"{AppConstant.UIBaseURL}contacts/invoice/payment/{invoiceDetails?.InvoiceId}";
-
-                    // Construct Invoice Email Body
-
-                    // Generate Stripe Payment Link
-
-                    // Generate Stripe Payment Link
                     string paymentLink = string.Empty;
+                    bool isStripeConfigured = !string.IsNullOrEmpty(AppConstant.Stripe_SecretKey) && IsStripeApiKeyValid();
+                    bool isPaymentLinkGenerated = false;
 
-                    if (invoiceDetails.BalanceDue > 0)
+                    if (invoiceDetails.BalanceDue > 0 && IsStripeApiKeyValid())
                     {
                         TblPayment tblPayments = new TblPayment
                         {
                             PaymentId = Guid.NewGuid(),
                             InvoiceId = model.InvoiceId,
                             PaymentDate = DateTime.Now,
-                            // PaymentDueDate = model.PaymentDueDate,
                             Amount = invoiceDetails.BalanceDue,
                             PaymentMethod = "",
                             TransactionId = "",
@@ -902,65 +896,63 @@ namespace ShutterManagement.Business.Services
 
                         await dbContext.TblPayments.AddAsync(tblPayments);
                         await dbContext.SaveChangesAsync();
-                        FileLogger.Log($"Payment Response: {tblPayments}");
+                        FileLogger.Log($"Payment Record Created: {tblPayments.PaymentId}");
 
-                        //var newPayment = new CreatePayments
-                        //{
-                        //    InvoiceId = invoiceDetails.InvoiceId,
-                        //    PaymentDate = DateTime.Now,
-                        //    Amount = invoiceDetails.BalanceDue ?? 0m, 
-                        //    PaymentMethod = "email send ",
-                        //    TransactionId = "static",
-                        //    Notes = "Email Send Notes ",
-                        //    PaymentStatus = PaymentStatus.Unpaid,
-                        //};
-
-                        //var paymentResponse = await paymentsService.CreatePayment(newPayment);
-
-
-                        var paymentRequest = new PaymentRequest
+                        if (isStripeConfigured)
                         {
-                            CustomerEmail = customerDetails.Email,
-                            ProductName = $"Invoice Payment - {invoiceDetails?.InvoiceNumber}",
-                            Amount = (long)(invoiceDetails?.BalanceDue * 100), // Convert to cents
-                            Quantity = 1,
-                            InvoiceId = invoiceDetails?.InvoiceId.ToString(),
-                            PaymentId = tblPayments?.PaymentId.ToString(),
-                        };
+                            var paymentRequest = new PaymentRequest
+                            {
+                                CustomerEmail = customerDetails.Email,
+                                ProductName = $"Invoice Payment - {invoiceDetails?.InvoiceNumber}",
+                                Amount = (long)(invoiceDetails?.BalanceDue * 100), // Convert to cents
+                                Quantity = 1,
+                                InvoiceId = invoiceDetails?.InvoiceId.ToString(),
+                                PaymentId = tblPayments?.PaymentId.ToString(),
+                            };
 
-                         paymentLink = _stripeService.CreateCheckoutSession(paymentRequest);
-                         FileLogger.Log($"Payment Link: {paymentLink}");
-
+                            paymentLink = _stripeService.CreateCheckoutSession(paymentRequest);
+                            isPaymentLinkGenerated = !string.IsNullOrEmpty(paymentLink);
+                            FileLogger.Log($"Payment Link Generated: {paymentLink}");
+                        }
+                        else
+                        {
+                            FileLogger.Log("Stripe credentials are missing. Payment link cannot be generated.");
+                        }
                     }
+
+                    var paymentMessage = isPaymentLinkGenerated
+                        ? $"You can make the payment for your invoice <strong>{invoiceDetails?.InvoiceNumber}</strong> by clicking the link below:"
+                        : $"<strong>Note:</strong> Online payment is currently unavailable . Please contact support {tenantInfoDetails?.Email??""}";
 
                     var emailBody = $@"
 <div style='max-width: 600px; margin: auto; background: #fff; border-radius: 8px; box-shadow: 0px 0px 10px rgba(0,0,0,0.1); padding: 20px; font-family: Arial, sans-serif; color: #333;'>
 
-    <!-- Header -->
     <div style='background: #007bff; color: #fff; text-align: center; padding: 15px; border-radius: 8px 8px 0 0;'>
         <h2 style='margin: 0; font-size: 20px;'>Invoice Details</h2>
     </div>
 
-    <!-- Content -->
     <div style='padding: 20px;'>
         <p style='font-size: 16px; margin: 10px 0;'><strong>Dear {customerDetails?.FirstName + " " + customerDetails?.LastName},</strong></p>
         <p style='font-size: 14px; margin: 10px 0;'>Please find your invoice attached for your reference.</p>
 
-        <!-- Invoice Details -->
         <div style='background: #e9ecef; padding: 15px; border-radius: 5px; margin: 15px 0;'>
             <p style='margin: 5px 0; font-size: 14px;'><strong>Total Amount:</strong> {invoiceDetails?.TotalAmount}</p>
             <p style='margin: 5px 0; font-size: 14px;'><strong>Due Amount:</strong> {invoiceDetails?.BalanceDue}</p>
         </div>
 
-        <!-- Payment Link -->
-        <p style='font-size: 14px; margin: 15px 0;'>You can make the payment for your invoice <strong>{invoiceDetails?.InvoiceNumber}</strong> by clicking the link below:</p>
+        <p style='font-size: 14px; margin: 15px 0;'>{paymentMessage}</p>";
+
+                    if (isPaymentLinkGenerated)
+                    {
+                        emailBody += $@"
         <div style='text-align: center; margin: 20px 0;'>
             <a href='{paymentLink}' style='background: #28a745; color: #fff; padding: 12px 20px; text-decoration: none; font-size: 14px; border-radius: 5px; display: inline-block;'>Pay Now</a>
-        </div>
+        </div>";
+                    }
 
+                    emailBody += $@"
         <hr style='border: 0; height: 1px; background: #ddd; margin: 20px 0;'>
 
-        <!-- Footer -->
         <p style='font-size: 14px; text-align: center;'>Thank you for your business!</p>
 
         <div style='text-align: center; margin: 15px 0;'>
@@ -972,7 +964,6 @@ namespace ShutterManagement.Business.Services
         <p style='text-align: center; font-size: 14px;'>Shutter Management and Estimation System</p>
     </div>
 </div>";
-
 
                     var emailAttachment = new EmailAttachment
                     {
@@ -989,9 +980,13 @@ namespace ShutterManagement.Business.Services
                     );
 
                     responseVm.IsSuccess = true;
-                    responseVm.Message = "Invoice email sent successfully.";
-                    FileLogger.Log($"Invoice File Path for payment {InvicesavePath}");
+                    responseVm.Message = isStripeConfigured
+                        ? "Invoice email sent successfully with payment link."
+                        : "Invoice email sent successfully, but Stripe credentials are missing Or Invalid. Payment link not included.";
+
+                    FileLogger.Log($"Invoice Email Status: {responseVm.Message}");
                     System.IO.File.Delete(InvicesavePath);
+
                 }
 
                 else if (model.DocumentType == EstimateDocumentType.DownloadPDF)
@@ -1252,7 +1247,45 @@ namespace ShutterManagement.Business.Services
             return filteredInvoices;
         }
 
+        #region Validate Stripe API Key 
+        public static bool IsStripeApiKeyValid()
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(AppConstant.Stripe_SecretKey))
+                {
+                    FileLogger.Log("Stripe API Key is missing.");
+                    return false;
+                }
 
+                StripeConfiguration.ApiKey = AppConstant.Stripe_SecretKey;
+
+                var service = new BalanceService();
+                var balance = service.Get(); 
+
+                FileLogger.Log("Stripe API Key validation successful.");
+                return true; 
+            }
+            catch (StripeException stripeEx)
+            {
+                if (stripeEx.StripeError != null)
+                {
+                    FileLogger.Log($"Stripe API Key Validation Failed: {stripeEx.StripeError.Message} (Code: {stripeEx.StripeError.Code})");
+                }
+                else
+                {
+                    FileLogger.Log($"Stripe API Key Validation Failed: {stripeEx.Message}");
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Log($"Unexpected Error During Stripe API Key Validation: {ex.Message}");
+                return false;
+            }
+        }
+
+        #endregion Validate Stripe API Key 
 
 
         #endregion Invoice_Generate_Methods
