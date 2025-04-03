@@ -47,13 +47,13 @@ public class GoHighLevelOAuthService
     public async Task<TokenResponse> GetRefreshToken(string authorizationCode)
     {
         var tokenRequest = new FormUrlEncodedContent(new Dictionary<string, string>
-        {
-            { "client_id", AppConstant.GHL_ClientId },              
-            { "client_secret", AppConstant.GHL_ClientSecret },       
-            { "code", authorizationCode },
-            { "redirect_uri", AppConstant.GHL_RedirectUri },
-            { "grant_type", "authorization_code" }
-        });
+    {
+        { "client_id", AppConstant.GHL_ClientId },
+        { "client_secret", AppConstant.GHL_ClientSecret },
+        { "code", authorizationCode },
+        { "redirect_uri", AppConstant.GHL_RedirectUri },
+        { "grant_type", "authorization_code contacts.readonly" }
+    });
 
         var response = await _httpClient.PostAsync(goHighLevelOAuthSettings.TokenUrl, tokenRequest);
 
@@ -61,7 +61,7 @@ public class GoHighLevelOAuthService
         {
             var responseContent = await response.Content.ReadAsStringAsync();
             var tokenData = JsonConvert.DeserializeObject<TokenResponse>(responseContent);
-            return tokenData; 
+            return tokenData;
         }
         else
         {
@@ -73,13 +73,13 @@ public class GoHighLevelOAuthService
     public async Task<TokenResponse> GetAccessToken(string refreshtoken)
     {
         var tokenRequest = new FormUrlEncodedContent(new Dictionary<string, string>
-        {
-            { "client_id", AppConstant.GHL_ClientId},
-            { "client_secret", AppConstant.GHL_ClientSecret},
-            { "refresh_token", refreshtoken},
-            { "redirect_uri", AppConstant.GHL_RedirectUri},
-            { "grant_type", "authorization_code"}
-        });
+    {
+        { "client_id", AppConstant.GHL_ClientId },
+        { "client_secret", AppConstant.GHL_ClientSecret },
+        { "refresh_token", refreshtoken },
+        { "redirect_uri", AppConstant.GHL_RedirectUri },
+        { "grant_type", "refresh_token" }
+    });
 
         var response = await _httpClient.PostAsync(goHighLevelOAuthSettings.TokenUrl, tokenRequest);
 

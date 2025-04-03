@@ -10,6 +10,6 @@ namespace ShutterManagement.GHLv2
     public class GoHighLevelOAuthSettings
     {
         public string? AuthorizationUrl { get; set; }
-        public string? TokenUrl { get; set; } = "https://services.leadconnectorhq.com/oauth/token";
+        public string? TokenUrl { get; set; }
     }
 }

@@ -284,10 +284,10 @@ namespace ShutterManagement.Business.Services
                             }
                             else
                             {
-                                responseVm.IsSuccess = true; 
+                                responseVm.IsSuccess = true;
                                 responseVm.Message = Checkghlresponse.Message;
                             }
-                            
+
                         }
                         
                     }
@@ -873,7 +873,7 @@ namespace ShutterManagement.Business.Services
                     FirstName = model.FirstName ?? string.Empty,
                     LastName = model.LastName ?? string.Empty,
                     Email = model.Email ?? string.Empty,
-                   // Phone = model.PhoneNumber ?? string.Empty,
+                    Phone = model.PhoneNumber ?? string.Empty,
                     Notes = model.Notes ?? string.Empty,
                     ContactType = model.ContactType ?? string.Empty,
                     Website = model.Website ?? string.Empty,
