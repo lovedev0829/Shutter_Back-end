@@ -637,9 +637,9 @@ namespace ShutterManagement.GHL.Services
 
                 var contactData = new
                 {
-                    calendarId = calendarId,
-                    startTime = appointment.startTime,
-                    endTime = appointment.endtime,
+                    calendarId = calendarId??"",
+                    startTime = appointment.startTime??"",
+                    endTime = appointment.endtime??"",
                     title = "Test Event Updated",
                     meetingLocationType = "default",
                     appointmentStatus = "new",

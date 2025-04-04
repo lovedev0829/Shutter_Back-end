@@ -419,10 +419,10 @@ namespace ShutterManagement.Business.Services
                           string formattedstartDateend = FormatDateTimeWithOffset(item.EndDate, item.DayEndDateTime);
                           var appointment = new GHLAppointmentAdd
                           {
-                            contactId = contactId,
-                            startTime = formattedstartDate,
-                            endtime = formattedstartDateend,
-                            locationId = AppConstant.GHL_Locationd,
+                            contactId = contactId??"",
+                            startTime = formattedstartDate??"",
+                            endtime = formattedstartDateend ?? "",
+                            locationId = AppConstant.GHL_Locationd??"",
                           };
                           var ghlResponse = await gHLService_V2.UpdateAppointmentAsync(item.GhlEventId, appointment);
                           if(!ghlResponse.IsSuccess)
