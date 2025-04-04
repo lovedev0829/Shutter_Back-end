@@ -125,6 +125,7 @@ namespace ShutterManagement.Business.Services
                             gHLConfiguration.AccessToken = res?.Result.AccessToken ?? "";
                             gHLConfiguration.AccessExpirationtime = DateTime.Now.AddDays(1);
                             gHLConfiguration.RefreshExpirationtime = DateTime.Now.AddDays(365);
+                            gHLConfiguration.LastSync= DateTime.Now;
                             await Update(gHLConfiguration);
                         }
                     }
