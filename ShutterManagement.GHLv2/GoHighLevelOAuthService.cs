@@ -51,6 +51,7 @@ public class GoHighLevelOAuthService
     // Step 2: Exchange the authorization code for an access token
     public async Task<TokenResponse> GetRefreshToken(string authorizationCode)
     {
+
         var tokenRequest = new FormUrlEncodedContent(new Dictionary<string, string>
     {
         { "client_id", configuration["GoHighLevelOAuthSettings:ClientId"] ?? ""},
@@ -59,8 +60,7 @@ public class GoHighLevelOAuthService
         { "redirect_uri", configuration["GoHighLevelOAuthSettings:RedirectUri"] ?? ""},
         { "grant_type", "authorization_code" }
     });
-
-        var response = await _httpClient.PostAsync(goHighLevelOAuthSettings.TokenUrl, tokenRequest);
+        var response = await _httpClient.PostAsync(configuration["GoHighLevelOAuthSettings:TokenUrl"] ?? "", tokenRequest);
 
         if (response.IsSuccessStatusCode)
         {
@@ -79,14 +79,14 @@ public class GoHighLevelOAuthService
     {
         var tokenRequest = new FormUrlEncodedContent(new Dictionary<string, string>
     {
-        { "client_id", AppConstant.GHL_ClientId },
-        { "client_secret", AppConstant.GHL_ClientSecret },
+        { "client_id", configuration["GoHighLevelOAuthSettings:ClientId"] ?? ""},
+        { "client_secret", configuration["GoHighLevelOAuthSettings:ClientSecret"] ?? ""},
         { "refresh_token", refreshtoken },
-        { "redirect_uri", AppConstant.GHL_RedirectUri },
+        { "redirect_uri", configuration["GoHighLevelOAuthSettings:RedirectUri"] ?? "" },
         { "grant_type", "refresh_token" }
     });
 
-        var response = await _httpClient.PostAsync(goHighLevelOAuthSettings.TokenUrl, tokenRequest);
+        var response = await _httpClient.PostAsync(configuration["GoHighLevelOAuthSettings:TokenUrl"] ?? "", tokenRequest);
 
         if (response.IsSuccessStatusCode)
         {
