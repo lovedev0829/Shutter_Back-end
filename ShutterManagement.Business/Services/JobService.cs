@@ -799,22 +799,23 @@ namespace ShutterManagement.Business.Services
                         ContactId = model.ContactId,
                         JobName = model.JobName?.Trim(),
                         JobType = model.JobType,
-                        AssignedPersonnel = model.AssignedPersonnel,
+                        AssignedPersonnel = model.AssignedPersonnel ?? Guid.Empty, 
                         ScheduledDate = model.ScheduledDate,
                         JobStatus = jobStatus,
-                        Notes = model.Notes ?? "",
+                        Notes = model.Notes ?? string.Empty,
                         AttachmentAny = arrayString,
                         JobUniqueId = generateUnique,
-                        GhlStageId = model.GHL_StageId,
-                        GhlStageName = stage?.GhlStageName?.Trim() ?? "",
-                        GhlContactId=model.GHL_ContactId??"",
+                        GhlStageId = model.GHL_StageId ?? Guid.Empty, 
+                        GhlStageName = stage?.GhlStageName?.Trim() ?? string.Empty,
+                        GhlContactId = model.GHL_ContactId ?? string.Empty,
                         TenantId = TenantId,
                         IsActive = true,
                         IsDelete = false,
                         CreatedAt = DateTime.Now,
-                        CreatedBy = AppConstant.LoggedInUserID ?? Guid.Empty
+                        CreatedBy = AppConstant.LoggedInUserID ?? Guid.Empty 
                     };
-                        var res = await Add(job);
+
+                    var res = await Add(job);
                         responseVm.IsSuccess = true;
                         responseVm.Message = AppConstant.InsertSuccessMsg;
                         if (responseVm.IsSuccess)
@@ -1023,7 +1024,7 @@ namespace ShutterManagement.Business.Services
                                    {
                                        IsActive = t2.IsActive,
                                        JobId = t2.JobId,
-                                       JobName = t2.JobName,
+                                       JobName = t2.JobName??"",
                                        ContactId = t2.ContactId,
                                        ContactFirstName = t6.FirstName,
                                        ContactLasttName = t6.LastName,
@@ -1043,7 +1044,7 @@ namespace ShutterManagement.Business.Services
                                        //State = dbContext.MstStates.Where(s => s.Id == t1.State).Select(y => y.StateName ?? "").FirstOrDefault(),
                                        ZipCode = t1.ZipCode,
                                        JobUniqueCode = t2.JobUniqueId,
-                                       GHL_StageId = t2.GhlStageId,
+                                       GHL_StageId = t2.GhlStageId ?? Guid.Empty,
                                        GHL_StageName = t2.GhlStageName??"",
                                    }).ToList();
                     filter.SearchValue = filter.SearchValue?.Trim().ToLower();

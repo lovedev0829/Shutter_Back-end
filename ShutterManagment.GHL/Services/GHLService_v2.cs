@@ -436,11 +436,9 @@ namespace ShutterManagement.GHL.Services
                     pipelineId = stage.GhlPipelineId,
                     locationId = AppConstant.GHL_Locationd,
                     name = job.JobName ?? "Unnamed Job",
-                    pipelineStageId = job.GhlStageId,
+                    pipelineStageId = job.GhlStageId.ToString()??"",
                     status = "open",
                     contactId = contact.GhlcontactId,
-                    monetaryValue = 220,
-                    assignedTo = "d8heZIvtIbd5OphFusfb",
                 };
 
                 var requestUrl = $"{AppConstant.GHL_BaseAddress}/opportunities/";

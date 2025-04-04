@@ -101,7 +101,7 @@ namespace ShutterManagement.Business.Services
                     LastName = model?.LastName?.Trim() ?? "",
                     Email = model.Email.Trim()??"",
                     PhoneNumber = model.PhoneNumber.Trim() ?? "",
-                    State = model.StateId,
+                    State = model.StateId != null ? model.StateId : null,
                     City = model.City.Trim() ?? "",
                     ZipCode = model.ZipCode.Trim()??"",
                     StreetAddress = model.StreetAddress.Trim() ?? "",
@@ -297,7 +297,7 @@ namespace ShutterManagement.Business.Services
                         vendor.PhoneNumber = model.PhoneNumber??"";
                         vendor.StreetAddress = model.StreetAddress ?? "";
                         vendor.City = model.City??"";
-                        vendor.State = model.StateId;
+                        vendor.State = model.StateId != null ? model.StateId : null;
                         vendor.ZipCode = model.ZipCode ?? "";
                         vendor.CompanyName = model.CompanyName ?? "";
                         vendor.ModifiedBy = AppConstant.LoggedInUserID;
