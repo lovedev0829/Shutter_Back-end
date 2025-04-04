@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core;
 using ShutterManagement.Core.Common;
@@ -19,11 +20,13 @@ namespace ShutterManagement.Business.Services
     {
         private readonly ClaimsProperty claimsProperty;
         private readonly GoHighLevelOAuthService goHighLevelOAuthService;
+        private readonly IConfiguration configuration;
 
-        public GHLConfigurationService(ClaimsProperty claimsProperty, GoHighLevelOAuthService goHighLevelOAuthService)
+        public GHLConfigurationService(ClaimsProperty claimsProperty, GoHighLevelOAuthService goHighLevelOAuthService, IConfiguration configuration)
         {
             this.claimsProperty = claimsProperty;
             this.goHighLevelOAuthService = goHighLevelOAuthService;
+            this.configuration = configuration;
         }
 
         //This method to set the GHLConfiguration in AppConstant...
@@ -37,17 +40,18 @@ namespace ShutterManagement.Business.Services
             FileLogger.Log("details GHl: ", details);
             if (details != null)
             {
-                AppConstant.GHL_BaseAddress = details.BaseAddress;
-                AppConstant.GHL_APIKey = details.Apikey;
-                AppConstant.GHL_PipelineId = details.PipelineId;
-                AppConstant.GHL_Locationd = details.LocationId;
+                AppConstant.GHL_BaseAddress = details.BaseAddress??"";
+                AppConstant.GHL_APIKey = details.Apikey??"";
+                AppConstant.GHL_PipelineId = details.PipelineId ?? "";
+                AppConstant.GHL_Locationd = details.LocationId??"";
                 AppConstant.LoggedInTenantId = details.TenantId;
-                AppConstant.GHL_AccessToken = details.AccessToken;
-                AppConstant.GHL_RefreshToken = details.RefreshToken;
-                AppConstant.GHL_CalendarName = details.CalendarName;
-                AppConstant.GHL_ClientId = details.ClientId;
-                AppConstant.GHL_ClientSecret = details.ClientSecret;
-                AppConstant.GHL_RedirectUri = details.RedirectUri;
+                AppConstant.GHL_AccessToken = details.AccessToken ?? "";
+                AppConstant.GHL_RefreshToken = details.RefreshToken ??"";
+                AppConstant.GHL_CalendarName = details.CalendarName ?? "";
+                // Fetch ClientId and ClientSecret from appsettings.json
+                AppConstant.GHL_ClientId = configuration["GoHighLevelOAuthSettings:ClientId"] ?? "";
+                AppConstant.GHL_ClientSecret = configuration["GoHighLevelOAuthSettings:ClientSecret"] ?? "";
+                AppConstant.GHL_RedirectUri = configuration["GoHighLevelOAuthSettings:RedirectUri"] ?? "";
             }
         }
 
@@ -59,15 +63,15 @@ namespace ShutterManagement.Business.Services
                 var IsGHLConfigurationTenantExist = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
                 if (IsGHLConfigurationTenantExist != null)
                 {
-                    IsGHLConfigurationTenantExist.Apikey = gHLConfiguration.APIkey;
-                    IsGHLConfigurationTenantExist.LocationId = gHLConfiguration.LocationId;
-                    IsGHLConfigurationTenantExist.PipelineId = gHLConfiguration.PipelineId;
-                    IsGHLConfigurationTenantExist.BaseAddress = gHLConfiguration.BaseAddress;
-                    IsGHLConfigurationTenantExist.GeneratedToken = gHLConfiguration.GeneratedToken;
-                    IsGHLConfigurationTenantExist.CalendarName = gHLConfiguration.CalendarName;
-                    IsGHLConfigurationTenantExist.RedirectUri  = gHLConfiguration.RedirectURI;
-                    IsGHLConfigurationTenantExist.ClientSecret = gHLConfiguration.ClientSecret;
-                    IsGHLConfigurationTenantExist.ClientId = gHLConfiguration.ClientId;
+                    IsGHLConfigurationTenantExist.Apikey = gHLConfiguration.APIkey??"";
+                    IsGHLConfigurationTenantExist.LocationId = gHLConfiguration.LocationId ?? "";
+                    IsGHLConfigurationTenantExist.PipelineId = gHLConfiguration.PipelineId??"";
+                    IsGHLConfigurationTenantExist.BaseAddress = gHLConfiguration.BaseAddress ?? "";
+                    IsGHLConfigurationTenantExist.GeneratedToken = gHLConfiguration.GeneratedToken??"";
+                    IsGHLConfigurationTenantExist.CalendarName = gHLConfiguration.CalendarName ?? "";
+                    AppConstant.GHL_ClientId = configuration["GoHighLevelOAuthSettings:ClientId"] ?? "";
+                    AppConstant.GHL_ClientSecret =configuration["GoHighLevelOAuthSettings:ClientSecret"] ?? "";
+                    AppConstant.GHL_RedirectUri = configuration["GHLSettings:RedirectUri"] ?? "";
 
                     var res = await Update(IsGHLConfigurationTenantExist);
                     responseVm.IsSuccess = true;
@@ -77,17 +81,17 @@ namespace ShutterManagement.Business.Services
                 {
                     TblGhlconfiguration tblGhlconfiguration = new TblGhlconfiguration()
                     {
-                        PipelineId = gHLConfiguration.PipelineId,
-                        BaseAddress = gHLConfiguration.BaseAddress,
-                        LocationId = gHLConfiguration.LocationId,
-                        Apikey = gHLConfiguration.APIkey,
+                        PipelineId = gHLConfiguration.PipelineId ?? "",
+                        BaseAddress = gHLConfiguration.BaseAddress??"",
+                        LocationId = gHLConfiguration.LocationId ?? "",
+                        Apikey = gHLConfiguration.APIkey??"",
                         TenantId = AppConstant.LoggedInTenantId,
                         LastSync = DateTime.Now,
-                        GeneratedToken = gHLConfiguration.GeneratedToken,
-                        CalendarName = gHLConfiguration.CalendarName,
-                        ClientId = gHLConfiguration.ClientId,
-                        ClientSecret = gHLConfiguration.ClientSecret,
-                        RedirectUri = gHLConfiguration.RedirectURI,
+                        GeneratedToken = gHLConfiguration.GeneratedToken ??"",
+                        CalendarName = gHLConfiguration.CalendarName ?? "",
+                        ClientId = configuration["GoHighLevelOAuthSettings:ClientId"] ?? "",
+                        ClientSecret = configuration["GoHighLevelOAuthSettings:ClientSecret"] ?? "",
+                        RedirectUri = configuration["GHLSettings:RedirectUri"] ?? "",
                     };
                     var res1 = await Add(tblGhlconfiguration);
                     responseVm.IsSuccess = true;
@@ -109,17 +113,29 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var gHLConfiguration = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
-                if (code != null)
+                var Checkghlresponse = await CheckGHLConfiguration();
+                if (!Checkghlresponse.IsSuccess)
                 {
-                    var res = goHighLevelOAuthService.GetRefreshToken(code);
-                    if (res != null)
+                    if (code != null)
                     {
-                        gHLConfiguration.RefreshToken = res.Result.RefreshToken;
-                        gHLConfiguration.AccessToken = res.Result.AccessToken;
-                        gHLConfiguration.AccessExpirationtime = DateTime.Now.AddDays(1);
-                        gHLConfiguration.RefreshExpirationtime = DateTime.Now.AddDays(365);
-                        await Update(gHLConfiguration);
+                        var res = goHighLevelOAuthService.GetRefreshToken(code);
+                        if (res != null)
+                        {
+                            gHLConfiguration.RefreshToken = res?.Result.RefreshToken ?? "";
+                            gHLConfiguration.AccessToken = res?.Result.AccessToken ?? "";
+                            gHLConfiguration.AccessExpirationtime = DateTime.Now.AddDays(1);
+                            gHLConfiguration.RefreshExpirationtime = DateTime.Now.AddDays(365);
+                            await Update(gHLConfiguration);
+                        }
                     }
+                    else
+                    {
+                        responseVm.Message = "Please Enter Code ";
+                    }
+                }
+                else
+                {
+                    responseVm.Message = Checkghlresponse.Message;
                 }
                 responseVm.Data = new GetGHLConfiguration
                 {
@@ -136,6 +152,7 @@ namespace ShutterManagement.Business.Services
                 };
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.FetchSuccessMsg;
+                
 
             }
             catch (Exception ex)
@@ -189,12 +206,12 @@ namespace ShutterManagement.Business.Services
                             //}
 
                             var res1 = goHighLevelOAuthService.GetAccessToken(isExist.RefreshToken);
-                            if (res != null)
+                            if (res1 != null)
                             {
                                 isExist.AccessExpirationtime = DateTime.Now.AddDays(1);
                                 isExist.RefreshExpirationtime = DateTime.Now.AddDays(365);
-                                isExist.RefreshToken = res1.Result.RefreshToken;
-                                isExist.AccessToken = res1.Result.AccessToken;
+                                isExist.RefreshToken = res1.Result.RefreshToken??"";
+                                isExist.AccessToken = res1.Result.AccessToken ?? "";
                                 await Update(isExist);
                             }
                             response.IsSuccess = true;

@@ -8,6 +8,7 @@ using Newtonsoft.Json;
 using ShutterManagement.GHLv2;
 using Microsoft.Extensions.Options;
 using ShutterManagement.Core;
+using Microsoft.Extensions.Configuration;
 
 
 public class GoHighLevelOAuthService
@@ -20,20 +21,24 @@ public class GoHighLevelOAuthService
 
     private readonly HttpClient _httpClient;
     private readonly GoHighLevelOAuthSettings goHighLevelOAuthSettings;
+    private readonly IConfiguration configuration;
 
-    public GoHighLevelOAuthService(IOptions<GoHighLevelOAuthSettings> goHighLevelOAuthSettings)
+    public GoHighLevelOAuthService(IOptions<GoHighLevelOAuthSettings> goHighLevelOAuthSettings, IConfiguration configuration)
     {
         _httpClient = new HttpClient();
         this.goHighLevelOAuthSettings = goHighLevelOAuthSettings.Value;
+        this.configuration = configuration;
     }
 
+    //ClientId = configuration["GoHighLevelOAuthSettings:ClientId"] ?? "",
+    //                    ClientSecret = configuration["GoHighLevelOAuthSettings:ClientSecret"] ?? "",
     // Step 1: Get the Authorization URL for the user to log in
     public string GetAuthorizationUrl()
     {
         var queryParams = new Dictionary<string, string>
         {
-            { "client_id", AppConstant.GHL_ClientId },
-            { "redirect_uri", AppConstant.GHL_RedirectUri },
+            { "client_id", configuration["GoHighLevelOAuthSettings:ClientId"] ?? "" },
+            { "redirect_uri",  configuration["GoHighLevelOAuthSettings:RedirectUri"] ?? ""},
             { "response_type", "code" },
             { "scope", "conversations/message.readonly conversations/message.write contacts.readonly contacts.write opportunities.readonly opportunities.write calendars.readonly " +
             "calendars.write calendars/events.readonly calendars/events.write calendars/groups.readonly calendars/groups.write calendars/resources.readonly calendars/resources.write users.readonly" } 
@@ -48,11 +53,11 @@ public class GoHighLevelOAuthService
     {
         var tokenRequest = new FormUrlEncodedContent(new Dictionary<string, string>
     {
-        { "client_id", AppConstant.GHL_ClientId },
-        { "client_secret", AppConstant.GHL_ClientSecret },
+        { "client_id", configuration["GoHighLevelOAuthSettings:ClientId"] ?? ""},
+        { "client_secret", configuration["GoHighLevelOAuthSettings:ClientSecret"] ?? ""},
         { "code", authorizationCode },
-        { "redirect_uri", AppConstant.GHL_RedirectUri },
-        { "grant_type", "authorization_code contacts.readonly" }
+        { "redirect_uri", configuration["GoHighLevelOAuthSettings:RedirectUri"] ?? ""},
+        { "grant_type", "authorization_code" }
     });
 
         var response = await _httpClient.PostAsync(goHighLevelOAuthSettings.TokenUrl, tokenRequest);

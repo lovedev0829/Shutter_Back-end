@@ -897,6 +897,14 @@ namespace ShutterManagement.Controllers
             return Ok(res);
         }
 
+        [HttpGet]
+        [Route("GetAccessToken")]
+        public async Task<IActionResult> GetAccessToken(string? code)
+        {
+            var res =  gHLConfiguration.GetGHLConfigurations(code);
+            return Ok(res);
+        }
+
 
     }
     }

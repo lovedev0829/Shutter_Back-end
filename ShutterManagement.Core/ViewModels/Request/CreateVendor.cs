@@ -40,13 +40,13 @@ namespace ShutterManagement.Core.ViewModels.Request
         public string? PhoneNumber { get; set; }
 
         //[Required]
-        [DefaultValue("")]
-        [MaxLength(200)]
+        //[DefaultValue("")]
+        //[MaxLength(200)]
         public string? StreetAddress { get; set; }
-        [DefaultValue("")]
-        //[Required]
-        [MaxLength(100)]
-        [RegularExpression("^[\\p{L} .'-]+$", ErrorMessage = AppConstant.AlphabaticalError)]
+        //[DefaultValue("")]
+        ////[Required]
+        //[MaxLength(100)]
+        //[RegularExpression("^[\\p{L} .'-]+$", ErrorMessage = AppConstant.AlphabaticalError)]
         public string? City { get; set; }
         [DefaultValue("")]
         //[Required]
@@ -54,10 +54,10 @@ namespace ShutterManagement.Core.ViewModels.Request
         //[RegularExpression("^[\\p{L} .'-]+$", ErrorMessage = AppConstant.AlphabaticalError)]
         public Guid? StateId { get; set; }
 
-        [Required]
-        [MaxLength(6),MinLength(5)]
-        [RegularExpression(@"^\d{5,6}$", ErrorMessage = AppConstant.ZipCodeError)]
-        [DefaultValue("")]
+        //[Required]
+        //[MaxLength(6),MinLength(5)]
+        //[RegularExpression(@"^\d{5,6}$", ErrorMessage = AppConstant.ZipCodeError)]
+        //[DefaultValue("")]
         public string? ZipCode { get; set; }
 
         //[Required]
