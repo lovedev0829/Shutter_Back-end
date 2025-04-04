@@ -212,6 +212,7 @@ namespace ShutterManagement.Business.Services
                                 isExist.RefreshExpirationtime = DateTime.Now.AddDays(365);
                                 isExist.RefreshToken = res1.Result.RefreshToken??"";
                                 isExist.AccessToken = res1.Result.AccessToken ?? "";
+                                isExist.LastSync= DateTime.Now;
                                 await Update(isExist);
                             }
                             response.IsSuccess = true;

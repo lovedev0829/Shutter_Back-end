@@ -45,7 +45,7 @@ public class GoHighLevelOAuthService
         };
 
         var queryString = string.Join("&", queryParams.Select(kvp => $"{kvp.Key}={Uri.EscapeDataString(kvp.Value)}"));
-        return $"{goHighLevelOAuthSettings.AuthorizationUrl}?{queryString}";
+        return $"{configuration["GoHighLevelOAuthSettings:AuthorizationUrl"] ?? ""}?{queryString}";
     }
 
     // Step 2: Exchange the authorization code for an access token
