@@ -113,9 +113,9 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var gHLConfiguration = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
-                var Checkghlresponse = await CheckGHLConfiguration();
-                if (!Checkghlresponse.IsSuccess)
-                {
+                //var Checkghlresponse = await CheckGHLConfiguration();
+                //if (!Checkghlresponse.IsSuccess)
+                //{
                     if (code != null)
                     {
                         var res = goHighLevelOAuthService.GetRefreshToken(code);
@@ -133,11 +133,11 @@ namespace ShutterManagement.Business.Services
                     {
                         responseVm.Message = "Please Enter Code ";
                     }
-                }
-                else
-                {
-                    responseVm.Message = Checkghlresponse.Message;
-                }
+                //}
+                //else
+                //{
+                //    responseVm.Message = Checkghlresponse.Message;
+                //}
                 responseVm.Data = new GetGHLConfiguration
                 {
                     APIkey = gHLConfiguration?.Apikey ?? "",
