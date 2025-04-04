@@ -116,7 +116,9 @@ namespace ShutterManagement.Business.Services
                 //var Checkghlresponse = await CheckGHLConfiguration();
                 //if (!Checkghlresponse.IsSuccess)
                 //{
-                    if (code != null)
+                if (code != null)
+                {
+                    try
                     {
                         var res = goHighLevelOAuthService.GetRefreshToken(code);
                         if (res != null)
@@ -125,14 +127,22 @@ namespace ShutterManagement.Business.Services
                             gHLConfiguration.AccessToken = res?.Result.AccessToken ?? "";
                             gHLConfiguration.AccessExpirationtime = DateTime.Now.AddDays(1);
                             gHLConfiguration.RefreshExpirationtime = DateTime.Now.AddDays(365);
-                            gHLConfiguration.LastSync= DateTime.Now;
+                            gHLConfiguration.LastSync = DateTime.Now;
                             await Update(gHLConfiguration);
                         }
                     }
-                    else
+                    catch (Exception ex)
                     {
-                        responseVm.Message = "Please Enter Code ";
+                        responseVm.Message = $"An error occurred: {ex.Message}";
+                        // Log the exception if logging is available
+                        // logger.LogError(ex, "Error while getting refresh token");
                     }
+                }
+                else
+                {
+                    responseVm.Message = "Please Enter Code";
+                }
+
                 //}
                 //else
                 //{
