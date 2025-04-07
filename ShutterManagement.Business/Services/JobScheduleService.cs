@@ -408,6 +408,12 @@ namespace ShutterManagement.Business.Services
                 {
                     var jobschedule = GetAllQuerable().Where(x => x.TenantId.ToString().ToLower() == AppConstant.LoggedInTenantId.ToString().ToLower()
                     && x.IsDelete == false).ToList();
+                    if(jobschedule == null)
+                    {
+                        responseVm.IsSuccess = false;
+                        responseVm.Message = "Appointment not Found In Application";
+                        return responseVm;
+                    }
                     foreach(var item in jobschedule)
                     {
                         if(item.GhlEventId != null)
