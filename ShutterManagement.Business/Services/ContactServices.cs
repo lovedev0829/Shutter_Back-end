@@ -216,6 +216,21 @@ namespace ShutterManagement.Business.Services
                         // Add Billing Address
                         if (!model.IsBillingAddressSameAsAddress)
                         {
+
+                            Guid? stateId = null;
+
+                            // Validate and assign StateId only if it exists in MstState
+                            if (model.BillingAddressVm?.StateId != null &&
+                                model.BillingAddressVm.StateId != Guid.Empty)
+                            {
+                                var isValidState = await dbContext.MstStates
+                                    .AnyAsync(s => s.Id == model.BillingAddressVm.StateId);
+
+                                if (isValidState)
+                                {
+                                    stateId = model.BillingAddressVm.StateId;
+                                }
+                            }
                             TblAddress address = new TblAddress
                             {
                                 AddressId = Guid.NewGuid(),
@@ -226,7 +241,7 @@ namespace ShutterManagement.Business.Services
                                 Phone = model.BillingAddressVm?.PhoneNumber,
                                 Email = model.BillingAddressVm?.Email,
                                 City = model.BillingAddressVm?.City,
-                                State = model.BillingAddressVm?.StateId,
+                                State = stateId,
                                 ZipCode = model.BillingAddressVm?.ZipCode,
                                 StreetAddress = model.BillingAddressVm?.StreetAddress,
                                 CreatedAt = DateTime.Now,
@@ -431,12 +446,28 @@ namespace ShutterManagement.Business.Services
 
                                 if (contactBillingAddress != null)
                                 {
+                                    Guid? stateId = null;
+
+                                    // Validate and assign StateId only if it exists in MstState
+                                    if (model.BillingAddressVm?.StateId != null &&
+                                        model.BillingAddressVm.StateId != Guid.Empty)
+                                    {
+                                        var isValidState = await dbContext.MstStates
+                                            .AnyAsync(s => s.Id == model.BillingAddressVm.StateId);
+
+                                        if (isValidState)
+                                        {
+                                            stateId = model.BillingAddressVm.StateId;
+                                        }
+                                    }
+
+
                                     contactBillingAddress.FirstName = model.BillingAddressVm?.FirstName;
                                     contactBillingAddress.LastName = model.BillingAddressVm?.LastName;
                                     contactBillingAddress.Phone = model.BillingAddressVm?.PhoneNumber;
                                     contactBillingAddress.Email = model.BillingAddressVm?.Email;
                                     contactBillingAddress.City = model.BillingAddressVm?.City;
-                                    contactBillingAddress.State = model.BillingAddressVm?.StateId;
+                                    contactBillingAddress.State = stateId;
                                     contactBillingAddress.ZipCode = model.BillingAddressVm?.ZipCode;
                                     contactBillingAddress.StreetAddress = model.BillingAddressVm?.StreetAddress;
                                     contactBillingAddress.UpdatedAt = DateTime.Now;
@@ -446,6 +477,20 @@ namespace ShutterManagement.Business.Services
                                 }
                                 else
                                 {
+                                    Guid? stateId = null;
+
+                                    // Validate and assign StateId only if it exists in MstState
+                                    if (model.BillingAddressVm?.StateId != null &&
+                                        model.BillingAddressVm.StateId != Guid.Empty)
+                                    {
+                                        var isValidState = await dbContext.MstStates
+                                            .AnyAsync(s => s.Id == model.BillingAddressVm.StateId);
+
+                                        if (isValidState)
+                                        {
+                                            stateId = model.BillingAddressVm.StateId;
+                                        }
+                                    }
                                     TblAddress CreateContactBillingAddress = new TblAddress
                                     {
                                         AddressId = Guid.NewGuid(),
@@ -455,7 +500,7 @@ namespace ShutterManagement.Business.Services
                                         Phone = model.BillingAddressVm?.PhoneNumber,
                                         Email = model.BillingAddressVm?.Email,
                                         City = model.BillingAddressVm?.City,
-                                        State = model.BillingAddressVm?.StateId,
+                                        State = stateId,
                                         ZipCode = model.BillingAddressVm?.ZipCode,
                                         StreetAddress = model.BillingAddressVm?.StreetAddress,
                                         CreatedAt = DateTime.Now,
@@ -1182,29 +1227,29 @@ namespace ShutterManagement.Business.Services
                     {
                         foreach (var contact in contactsToInsert)
                         {
-                            if (string.IsNullOrEmpty(contact.GHLContactId))
-                            {
+                            //if (string.IsNullOrEmpty(contact.GHLContactId))
+                            //{
                                 var res = await Create_Contact(contact);
                                 if (!res.IsSuccess) { FileLogger.Log("Exception occurred Creating Contact in application.", res.Message); }
-                            }
-                            else
-                            {
-                                var ghlContactAdd = new UpdateContact
-                                {
-                                    FirstName = contact.FirstName ?? string.Empty,
-                                    LastName = contact.LastName ?? string.Empty,
-                                    Email = contact.Email ?? string.Empty,
-                                    PhoneNumber = contact.PhoneNumber ?? string.Empty,
-                                    Notes = contact.Notes ?? string.Empty,
-                                    ContactType = contact.ContactType ?? string.Empty,
-                                    Website = contact.Website ?? string.Empty,
-                                    Referral = contact.Referral ?? string.Empty,
-                                    GHLContactId = contact.GHLContactId ?? string.Empty,
-                                    locationId = contact.locationId ?? string.Empty,
-                                };
-                                var res = await Update_Contact(ghlContactAdd);
-                                if (!res.IsSuccess) { FileLogger.Log("Exception occurred Updating Contact in application.", res.Message); }
-                            }
+                            //}
+                            //else
+                            //{
+                            //    var ghlContactAdd = new UpdateContact
+                            //    {
+                            //        FirstName = contact.FirstName ?? string.Empty,
+                            //        LastName = contact.LastName ?? string.Empty,
+                            //        Email = contact.Email ?? string.Empty,
+                            //        PhoneNumber = contact.PhoneNumber ?? string.Empty,
+                            //        Notes = contact.Notes ?? string.Empty,
+                            //        ContactType = contact.ContactType ?? string.Empty,
+                            //        Website = contact.Website ?? string.Empty,
+                            //        Referral = contact.Referral ?? string.Empty,
+                            //        GHLContactId = contact.GHLContactId ?? string.Empty,
+                            //        locationId = contact.locationId ?? string.Empty,
+                            //    };
+                            //    var res = await Update_Contact(ghlContactAdd);
+                            //    if (!res.IsSuccess) { FileLogger.Log("Exception occurred Updating Contact in application.", res.Message); }
+                            //}
                         }
                     }
                     if (contactsToAddToGHL.Any())

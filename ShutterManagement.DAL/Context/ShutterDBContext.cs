@@ -342,7 +342,6 @@ public partial class ShutterDBContext : DbContext
                 .HasMaxLength(50)
                 .IsUnicode(false);
             entity.Property(e => e.Phone).HasMaxLength(128);
-            entity.Property(e => e.State).HasDefaultValueSql("(newid())");
             entity.Property(e => e.StreetAddress).HasMaxLength(128);
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(getdate())")
@@ -355,7 +354,7 @@ public partial class ShutterDBContext : DbContext
 
             entity.HasOne(d => d.StateNavigation).WithMany(p => p.TblAddresses)
                 .HasForeignKey(d => d.State)
-                .HasConstraintName("FK_MstState");
+                .HasConstraintName("FK__TblAddres__State__58DC1D15");
 
             entity.HasOne(d => d.Tenant).WithMany(p => p.TblAddresses)
                 .HasForeignKey(d => d.TenantId)

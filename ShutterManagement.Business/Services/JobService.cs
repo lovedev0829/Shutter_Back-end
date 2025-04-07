@@ -483,10 +483,10 @@ namespace ShutterManagement.Business.Services
                             await Create(createJobModel);
                         }
                     }
-                    FileLogger.Log("Synchronization completed successfully.");
+                    FileLogger.Log("All Jobs synced completed successfully..");
                     responseVm.Data = opportunities.Data;
                     responseVm.IsSuccess = true;
-                    responseVm.Message = "Synchronization completed successfully.";
+                    responseVm.Message = "All Jobs synced completed successfully.";
                 }
             }
             catch (Exception ex)
