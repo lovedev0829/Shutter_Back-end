@@ -1,6 +1,5 @@
-﻿2025-04-04 19:33:58 : Base Address from Constr Base: 
-
-23 15:05:18 : Success: Coupons fetched successfully.
+﻿2024-12-23 15:04:17 : Start: Fetching all coupons.
+2024-12-23 15:05:18 : Success: Coupons fetched successfully.
 2024-12-23 15:06:53 : Start: Fetching all coupons.
 2024-12-23 15:06:57 : Success: Coupons fetched successfully.
 2024-12-23 15:11:22 : Start: Fetching all coupons.

@@ -110,7 +110,7 @@ namespace ShutterManagement.Business.Services
                 FileLogger.Log($"Location id fetched {model.locationId}");
                 if (model.locationId != null)
                 {
-                    await gHLConfigurationService.GetGHLConfiguration(model.locationId);
+                    //await gHLConfigurationService.GetGHLConfiguration(model.locationId);
                     TenantId = (Guid)AppConstant.LoggedInTenantId;
                     FileLogger.Log($"Location id fetched {model.locationId}");
                     if (TenantId != null)
@@ -128,7 +128,7 @@ namespace ShutterManagement.Business.Services
 
                 if (IsTenantExists)
                 {
-                    await gHLConfigurationService.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
+                    //await gHLConfigurationService.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
                     var IsContactExists = GetAllQuerable()
                         .Where(c => (c.Email == model.Email || c.PhoneNumber == model.PhoneNumber)
                         && c.TenantId == TenantId
@@ -136,6 +136,7 @@ namespace ShutterManagement.Business.Services
 
                     if (IsContactExists.Count > 0)
                     {
+                        //If Contact is already exists in Shutter DB then update the GHL Contact if GHLContactId is not null
                         if (model.GHLContactId != null)
                         {
                             var ghlContactAdd = new UpdateContact
@@ -154,19 +155,26 @@ namespace ShutterManagement.Business.Services
                             };
                             var result = Update_Contact(ghlContactAdd);
                         }
-                        responseVm.Message = $"Email {model.Email} or Phone {model.PhoneNumber} " + AppConstant.AlreadyExists;
-                        return responseVm;
+                        else
+                        {
+                            responseVm.Message = $"Email {model.Email} or Phone {model.PhoneNumber} " + AppConstant.AlreadyExists;
+                            return responseVm;
+                        }
                     }
+                    //for Billing address
                     if (!model.IsBillingAddressSameAsAddress && model.BillingAddressVm == null)
                     {
                         responseVm.Message = "Billing details required.";
                         return responseVm;
                     }
-                    if (model.TaxExemptionVm.ExpiryDate < model.TaxExemptionVm.EffectiveDate)
+                    //for Tax exemption
+                    if (model.TaxExemptionVm != null && model.TaxExemptionVm.ExpiryDate < model.TaxExemptionVm.EffectiveDate)
                     {
                         responseVm.Message = "ExpiryDate must be greater than EffectiveDate.";
                         return responseVm;
                     }
+
+                    //generate unique version
                     int Version = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt)
                         .Select(p => (p.ContactUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries).Length == 3 ? Convert.ToInt32(p.ContactUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries)[2]) : 0)).FirstOrDefault();
                     Version += 1;
@@ -205,26 +213,9 @@ namespace ShutterManagement.Business.Services
 
                     if (res.ContactId != Guid.Empty)
                     {
+                        // Add Billing Address
                         if (!model.IsBillingAddressSameAsAddress)
                         {
-
-                            //TblContactBillingAddress CreateContactBillingAddress = new TblContactBillingAddress
-                            //{
-                            //    ContactId = res.ContactId,
-                            //    FirstName = model.BillingAddressVm?.FirstName,
-                            //    LastName = model.BillingAddressVm?.LastName,
-                            //    PhoneNumber = model.BillingAddressVm?.PhoneNumber,
-                            //    Email = model.BillingAddressVm?.Email,
-                            //    City = model.BillingAddressVm?.City,
-                            //    State = model.BillingAddressVm?.State,
-                            //    ZipCode = model.BillingAddressVm?.ZipCode,
-                            //    StreetAddress = model.BillingAddressVm?.StreetAddress,
-                            //    CreatedAt = DateTime.Now,
-                            //    IsActive = true,
-                            //    IsDelete = false
-                            //};
-                            //await billingService.Add(CreateContactBillingAddress);
-
                             TblAddress address = new TblAddress
                             {
                                 AddressId = Guid.NewGuid(),
@@ -244,11 +235,13 @@ namespace ShutterManagement.Business.Services
                                 TenantId = TenantId,
                                 CreatedBy = AppConstant.LoggedInUserID
                             };
-                            await dbContext.TblAddresses.AddAsync(address);
-                            dbContext.SaveChanges();
+                            dbContext.TblAddresses.Add(address);
+                            await dbContext.SaveChangesAsync();
                             res.PrimaryAddress = address.AddressId;
                             await Update(res);
                         }
+
+                        //Add Tax Exemption
                         if (!model.IsTaxExemption)
                         {
                             string arrayString = string.Join(", ", model.TaxExemptionVm?.ExemptionCertificate);
@@ -1189,8 +1182,29 @@ namespace ShutterManagement.Business.Services
                     {
                         foreach (var contact in contactsToInsert)
                         {
-                            var res = await Create_Contact(contact);
-                            if (!res.IsSuccess) { FileLogger.Log("Exception occurred Creating Contact in application.", res.Message); }
+                            if (string.IsNullOrEmpty(contact.GHLContactId))
+                            {
+                                var res = await Create_Contact(contact);
+                                if (!res.IsSuccess) { FileLogger.Log("Exception occurred Creating Contact in application.", res.Message); }
+                            }
+                            else
+                            {
+                                var ghlContactAdd = new UpdateContact
+                                {
+                                    FirstName = contact.FirstName ?? string.Empty,
+                                    LastName = contact.LastName ?? string.Empty,
+                                    Email = contact.Email ?? string.Empty,
+                                    PhoneNumber = contact.PhoneNumber ?? string.Empty,
+                                    Notes = contact.Notes ?? string.Empty,
+                                    ContactType = contact.ContactType ?? string.Empty,
+                                    Website = contact.Website ?? string.Empty,
+                                    Referral = contact.Referral ?? string.Empty,
+                                    GHLContactId = contact.GHLContactId ?? string.Empty,
+                                    locationId = contact.locationId ?? string.Empty,
+                                };
+                                var res = await Update_Contact(ghlContactAdd);
+                                if (!res.IsSuccess) { FileLogger.Log("Exception occurred Updating Contact in application.", res.Message); }
+                            }
                         }
                     }
                     if (contactsToAddToGHL.Any())
@@ -1205,9 +1219,9 @@ namespace ShutterManagement.Business.Services
                                 if (res.IsSuccess)
                                 {
                                     var contactExist = (await GetAll()).Where(x => x.Email == contact.Email).FirstOrDefault();
-                                    if (contactExist != null)
+                                    if (contactExist != null && res?.Data?.Contact?.id!=null)
                                     {
-                                        contactExist.GhlcontactId = res.Data.Contact.id;
+                                        contactExist.GhlcontactId = res?.Data?.Contact?.id??"";
                                         contactExist.LastSync = DateTime.Now;
                                     }
                                     await Update(contactExist);
