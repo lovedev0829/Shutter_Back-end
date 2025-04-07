@@ -150,11 +150,7 @@ namespace ShutterManagement.Business.Services
                         return responseVm;
                     }
                 }
-                else
-                {
-                    responseVm.Message = "Please enter a valid code.";
-                    return responseVm; 
-                }
+               
 
                 responseVm.Data = new GetGHLConfiguration
                 {
