@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Azure;
 using Microsoft.Extensions.Configuration;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core;
@@ -248,5 +249,82 @@ namespace ShutterManagement.Business.Services
             }
             return response;
         }
+
+
+        public async Task<IResponseVm<string>> MapGHLStagesStages(StageMappingRequest request)
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+
+            try
+            {
+                foreach (var stagemapping in request.Mappings)
+                {
+                    var existingMapping = dbContext.TblGhlStagesmappings
+                        .FirstOrDefault(x =>
+                            x.TenantId == AppConstant.LoggedInTenantId &&
+                            x.StatusId == stagemapping.StatusId);
+
+                    if (existingMapping != null)
+                    {
+                        dbContext.TblGhlStagesmappings.Remove(existingMapping);
+                    }
+
+                    TblGhlStagesmapping newMapping = new TblGhlStagesmapping()
+                    {
+                        Id = Guid.NewGuid(),
+                        StageId = stagemapping.StageId ?? Guid.Empty,
+                        StatusId = stagemapping.StatusId ?? Guid.Empty,
+                        TenantId = AppConstant.LoggedInTenantId
+                    };
+
+                    await dbContext.TblGhlStagesmappings.AddAsync(newMapping);
+                }
+
+                await dbContext.SaveChangesAsync();
+
+                responseVm.IsSuccess = true;
+                responseVm.Message = AppConstant.InsertSuccessMsg;
+            }
+            catch (Exception ex)
+            {
+                responseVm.IsSuccess = false;
+                responseVm.Message += ex.Message;
+            }
+
+            return responseVm;
+        }
+
+
+
+        public async Task<IResponseVm<List<StageMapping>>> GetGHLStagesMappings()
+        {
+            IResponseVm<List<StageMapping>> responseVm = new ResponseVm<List<StageMapping>>();
+
+            try
+            {
+                var mappings =  dbContext.TblGhlStagesmappings
+                    .Where(x => x.TenantId == AppConstant.LoggedInTenantId)
+                    .Select(x => new StageMapping
+                    {
+                        StageId = x.StageId,
+                        StatusId = x.StatusId,
+                    })
+                    .ToList();
+
+                responseVm.IsSuccess = true;
+                responseVm.Message = "Mappings fetched successfully.";
+                responseVm.Data = mappings;
+            }
+            catch (Exception ex)
+            {
+                responseVm.IsSuccess = false;
+                responseVm.Message = $"Error: {ex.Message}";
+            }
+
+            return responseVm;
+        }
+
+
+
     }
 }

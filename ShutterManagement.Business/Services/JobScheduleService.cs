@@ -408,9 +408,9 @@ namespace ShutterManagement.Business.Services
                 {
                     var jobschedule = GetAllQuerable().Where(x => x.TenantId.ToString().ToLower() == AppConstant.LoggedInTenantId.ToString().ToLower()
                     && x.IsDelete == false).ToList();
-                    if(jobschedule == null)
+                    if(jobschedule.Count==0)
                     {
-                        responseVm.IsSuccess = false;
+                        responseVm.IsSuccess = true;
                         responseVm.Message = "Appointment not Found In Application";
                         return responseVm;
                     }

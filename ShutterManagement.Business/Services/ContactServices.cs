@@ -110,7 +110,7 @@ namespace ShutterManagement.Business.Services
                 FileLogger.Log($"Location id fetched {model.locationId}");
                 if (model.locationId != null)
                 {
-                    //await gHLConfigurationService.GetGHLConfiguration(model.locationId);
+                    await gHLConfigurationService.GetGHLConfiguration(model.locationId);
                     TenantId = (Guid)AppConstant.LoggedInTenantId;
                     FileLogger.Log($"Location id fetched {model.locationId}");
                     if (TenantId != null)

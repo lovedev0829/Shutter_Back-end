@@ -914,6 +914,21 @@ namespace ShutterManagement.Controllers
             return Ok(res);
         }
 
+        [HttpPost("GHLStagesMapping")]
+        [Authorize(Roles = "GHLEdit")]
+        public async Task<IActionResult> GHLStagesMapping([FromBody] StageMappingRequest input)
+        {
+            var result = await gHLConfiguration.MapGHLStagesStages(input);
+            return Ok(result);
+        }
+        [HttpGet("GetallStagesMapping")]
+        public async Task<IActionResult> GetallStagesMapping()
+        {
+            var result = await gHLConfiguration.GetGHLStagesMappings();
+            return Ok(result);
+        }
+
+
 
     }
-    }
+}

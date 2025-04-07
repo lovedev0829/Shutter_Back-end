@@ -69,6 +69,8 @@ public partial class ShutterDBContext : DbContext
 
     public virtual DbSet<TblGhlStage> TblGhlStages { get; set; }
 
+    public virtual DbSet<TblGhlStagesmapping> TblGhlStagesmappings { get; set; }
+
     public virtual DbSet<TblGhlconfiguration> TblGhlconfigurations { get; set; }
 
     public virtual DbSet<TblInvoice> TblInvoices { get; set; }
@@ -781,6 +783,17 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.GhlStageId).HasColumnName("GHL_StageId");
             entity.Property(e => e.GhlStageName).HasColumnName("GHL_StageName");
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+        });
+
+        modelBuilder.Entity<TblGhlStagesmapping>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__TblGHlSt__3213E83F082DBD6A");
+
+            entity.ToTable("TblGHlStagesmapping", "dbo");
+
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("(newid())")
+                .HasColumnName("id");
         });
 
         modelBuilder.Entity<TblGhlconfiguration>(entity =>
