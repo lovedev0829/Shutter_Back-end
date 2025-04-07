@@ -306,8 +306,8 @@ namespace ShutterManagement.Business.Services
                     .Where(x => x.TenantId == AppConstant.LoggedInTenantId)
                     .Select(x => new StageMapping
                     {
-                        StageId = x.StageId,
-                        StatusId = x.StatusId,
+                        StageId = x.StageId??Guid.Empty,
+                        StatusId = x.StatusId ?? Guid.Empty,
                     })
                     .ToList();
 
