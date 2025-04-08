@@ -899,47 +899,38 @@ namespace ShutterManagement.Business.Services
 
                     if (invoiceDetails.BalanceDue > 0 && IsStripeApiKeyValid())
                     {
-                        TblPayment tblPayments = new TblPayment
-                        {
-                            PaymentId = Guid.NewGuid(),
-                            InvoiceId = model.InvoiceId,
-                            PaymentDate = DateTime.Now,
-                            Amount = invoiceDetails.BalanceDue,
-                            PaymentMethod = "",
-                            TransactionId = "",
-                            Notes = "",
-                            Status = EnumValue.GetEnumValue(PaymentStatus.Unpaid),
-                            CreatedAt = DateTime.Now,
-                            TenantId = AppConstant.LoggedInTenantId,
-                            CreatedBy = AppConstant.LoggedInUserID,
-                            IsActive = true,
-                            IsDelete = false
-                        };
+                        
+                        var Payment = dbContext.TblPayments.Where(x => x.InvoiceId == model.InvoiceId && x.PaymentTypeStatus == EnumValue.GetEnumValue(PaymentStatus.Draft)).FirstOrDefault();
 
-                        await dbContext.TblPayments.AddAsync(tblPayments);
-                        await dbContext.SaveChangesAsync();
-                        FileLogger.Log($"Payment Record Created: {tblPayments.PaymentId}");
-
-                        if (isStripeConfigured)
+                        if (Payment != null)
                         {
-                            var paymentRequest = new PaymentRequest
+                            if (isStripeConfigured)
                             {
-                                CustomerEmail = customerDetails.Email,
-                                ProductName = $"Invoice Payment - {invoiceDetails?.InvoiceNumber}",
-                                Amount = (long)(invoiceDetails?.BalanceDue * 100), // Convert to cents
-                                Quantity = 1,
-                                InvoiceId = invoiceDetails?.InvoiceId.ToString(),
-                                PaymentId = tblPayments?.PaymentId.ToString(),
-                            };
+                                var paymentRequest = new PaymentRequest
+                                {
+                                    CustomerEmail = customerDetails.Email,
+                                    ProductName = $"Invoice Payment - {invoiceDetails?.InvoiceNumber}",
+                                    Amount = (long)(invoiceDetails?.BalanceDue * 100),
+                                    Quantity = 1,
+                                    InvoiceId = invoiceDetails?.InvoiceId.ToString(),
+                                    PaymentId = Payment?.PaymentId.ToString(),
+                                };
 
-                            paymentLink = _stripeService.CreateCheckoutSession(paymentRequest);
-                            isPaymentLinkGenerated = !string.IsNullOrEmpty(paymentLink);
-                            FileLogger.Log($"Payment Link Generated: {paymentLink}");
+                                paymentLink = _stripeService.CreateCheckoutSession(paymentRequest);
+                                isPaymentLinkGenerated = !string.IsNullOrEmpty(paymentLink);
+                                FileLogger.Log($"Payment Link Generated: {paymentLink}");
+                            }
+                            else
+                            {
+                                FileLogger.Log("Stripe credentials are missing. Payment link cannot be generated.");
+                            }
                         }
                         else
                         {
-                            FileLogger.Log("Stripe credentials are missing. Payment link cannot be generated.");
+                            FileLogger.Log($"Payment Not Found Those payment created time on Invoice.{Payment}");
                         }
+
+
                     }
 
                     var paymentMessage = isPaymentLinkGenerated
