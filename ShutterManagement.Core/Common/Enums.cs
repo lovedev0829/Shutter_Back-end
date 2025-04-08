@@ -131,8 +131,13 @@ namespace ShutterManagement.Core.Common
         [EnumMember(Value = "Unpaid")]
         Unpaid,
         [EnumMember(Value = "Paid")]
-        Paid
+        Paid,
+        [EnumMember(Value = "Draft")]
+        Draft,
+        [EnumMember(Value = "Manual")]
+        Manual
     }
+
 
     public enum EmailTemplateType
     {
