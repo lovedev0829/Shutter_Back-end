@@ -12,4 +12,6 @@ public partial class TblGhlStagesmapping
     public Guid? StageId { get; set; }
 
     public Guid? TenantId { get; set; }
+
+    public DateTime? CreatedAt { get; set; }
 }

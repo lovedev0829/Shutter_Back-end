@@ -274,6 +274,7 @@ namespace ShutterManagement.Business.Services
                         Id = Guid.NewGuid(),
                         StageId = stagemapping.StageId ?? Guid.Empty,
                         StatusId = stagemapping.StatusId ?? Guid.Empty,
+                        CreatedAt = DateTime.Now,
                         TenantId = AppConstant.LoggedInTenantId
                     };
 
@@ -308,7 +309,8 @@ namespace ShutterManagement.Business.Services
                     {
                         StageId = x.StageId??Guid.Empty,
                         StatusId = x.StatusId ?? Guid.Empty,
-                    })
+                        CreatedAt = x.CreatedAt
+                    }).OrderBy(x => x.CreatedAt)
                     .ToList();
 
                 responseVm.IsSuccess = true;
