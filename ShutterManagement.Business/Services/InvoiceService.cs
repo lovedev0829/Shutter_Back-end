@@ -900,7 +900,7 @@ namespace ShutterManagement.Business.Services
                     if (invoiceDetails.BalanceDue > 0 && IsStripeApiKeyValid())
                     {
                         
-                        var Payment = dbContext.TblPayments.Where(x => x.InvoiceId == model.InvoiceId && x.PaymentTypeStatus == EnumValue.GetEnumValue(PaymentStatus.Draft)).FirstOrDefault();
+                        var Payment = dbContext.TblPayments.Where(x => x.InvoiceId == model.InvoiceId && x.PaymentTypeStatus == EnumValue.GetEnumValue(PaymentStatus.Draft) && x.Status == EnumValue.GetEnumValue(PaymentStatus.Unpaid)).FirstOrDefault();
 
                         if (Payment != null)
                         {
