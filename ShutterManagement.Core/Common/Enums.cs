@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore.Infrastructure;
+using Stripe;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
@@ -81,6 +83,34 @@ namespace ShutterManagement.Core.Common
         [EnumMember(Value = "VEN")]
         Vendor
     }
+//    Completed
+//New
+//Installation Scheduled
+//In-Production
+//Won
+//Appointment Scheduled
+//Quote Sent
+
+    // JobStatus Enum Value
+    public enum JobStatus
+    {
+        [EnumMember(Value = "New")]
+        New,
+        [EnumMember(Value = "Appointment Scheduled")]
+        Appointment_Scheduled,
+        [EnumMember(Value = "Quote Sent")]
+        Quote_Sent,
+        [EnumMember(Value = "Won")]
+        Won,
+        [EnumMember(Value = "In-Production")]
+        In_Production,
+        [EnumMember(Value = "Installation Scheduled")]
+        Installation_Scheduled,
+        [EnumMember(Value = "Completed")]
+        Completed
+    }
+
+
 
     public enum Estimation
     {
