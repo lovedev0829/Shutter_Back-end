@@ -69,9 +69,9 @@ namespace ShutterManagement.Business.Services
                                 })
                             .ToList();
 
-                Data = statusCounts.Where(x=>x.JobStatusName == "Lost" || x.JobStatusName == "Won").Select(x => new StatusCountVm
+                Data = statusCounts.Where(x=>x.JobStatusName == "In-Production" || x.JobStatusName == "Installation Scheduled").Select(x => new StatusCountVm
                 {
-                    Label = x.JobStatusName.Replace("Lost", "In Lost").Replace("Won", "Won Jobs"),
+                    Label = x.JobStatusName.Replace("In-Production", "In Production").Replace("Installation Scheduled", "Installation Scheduled"),
                     Image = x.Icon,
                     Count = x.TenantId.Where(x => x == AppConstant.LoggedInTenantId).Count().ToString(),
                     Url=$"/job/{x.JobStatusId}"

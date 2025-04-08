@@ -483,10 +483,10 @@ namespace ShutterManagement.Business.Services
                             await Create(createJobModel);
                         }
                     }
-                    FileLogger.Log("Synchronization completed successfully.");
+                    FileLogger.Log("All Jobs synced completed successfully..");
                     responseVm.Data = opportunities.Data;
                     responseVm.IsSuccess = true;
-                    responseVm.Message = "Synchronization completed successfully.";
+                    responseVm.Message = "All Jobs synced completed successfully.";
                 }
             }
             catch (Exception ex)
@@ -773,7 +773,7 @@ namespace ShutterManagement.Business.Services
                     IsAddressExist = await address.AnyAsync(x => x.AddressId.ToString().ToLower() == model.AddressId.ToString().ToLower() && x.ContactId.ToString().ToLower() == model.ContactId.ToString().ToLower()
                     && x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false);
                     stage = _context.TblGhlStages.Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.GhlStageId == model.GHL_StageId.ToString()).FirstOrDefault();
-                    jobStatus = _context.MstJobStatuses.Where(s => s.JobStatusName == "open" && s.IsActive == true).Select(x=> x.JobStatusId).FirstOrDefault();
+                    jobStatus = _context.MstJobStatuses.Where(s => s.JobStatusName == EnumValue.GetEnumValue(JobStatus.New) && s.IsActive == true).Select(x=> x.JobStatusId).FirstOrDefault();
                 }
                     if (!IsTenantValid)
                     {
@@ -831,10 +831,6 @@ namespace ShutterManagement.Business.Services
                                 FileLogger.Log($"Start: Creating CreateOpportunityInGhl : {responseghl.Message}");
                                 FileLogger.Log($"Start: Creating CreateOpportunityInGhl : {responseghl.IsSuccess}");
                                 FileLogger.Log($"Start: Creating CreateOpportunityInGhl : {responseghl.Data}");
-                            }
-                            else
-                            {
-                                responseVm.Message = Checkghlresponse.Message;
                             }
                         }
                         else

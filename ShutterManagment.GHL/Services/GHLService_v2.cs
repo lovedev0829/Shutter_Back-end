@@ -360,7 +360,7 @@ namespace ShutterManagement.GHL.Services
                     lastName = contact.LastName,
                     email = contact.Email,
                     phone = contact.Phone,
-                    locationId = AppConstant.GHL_Locationd,
+                    //locationId = AppConstant.GHL_Locationd,
                 };
 
                 var requestUrl = $"{AppConstant.GHL_BaseAddress}/contacts/{contactId}";

@@ -5,6 +5,7 @@ using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Business.Services;
 using ShutterManagement.Core.Common;
 using ShutterManagement.Core.SPModel;
+using ShutterManagement.Core.ViewModels;
 using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.Core.ViewModels.Response;
 using ShutterManagement.Services;
@@ -22,13 +23,16 @@ namespace ShutterManagement.Controllers
         private readonly IContactService contactService;
         private readonly IAuthService authService;
         private readonly IGHLConfiguration gHLConfiguration;
+        private readonly IAppointmentScheduleService appointmentScheduleService;
 
-        public JobController(IJobService jobService,IContactService contactService,IAuthService authService,IGHLConfiguration gHLConfiguration)
+        public JobController(IJobService jobService,IContactService contactService
+            ,IAuthService authService,IGHLConfiguration gHLConfiguration ,IAppointmentScheduleService appointmentScheduleService)
         {
             this.jobService = jobService;
             this.contactService = contactService;
             this.authService = authService;
             this.gHLConfiguration = gHLConfiguration;
+            this.appointmentScheduleService = appointmentScheduleService;
         }
 
 
@@ -177,5 +181,23 @@ namespace ShutterManagement.Controllers
             }
         }
 
+        [HttpPost]
+        [Route("CreateAppointment")]
+        [Authorize(Roles = "JobEdit")]
+        public async Task<IActionResult> CreateAppointmentSchedule(CreateAppointment model)
+        {
+            var result = await appointmentScheduleService.CreateAppointmentSchedule(model);
+            return Ok(result);
+        }
+
+        [HttpGet]
+        [Route("GetAppointment")]
+        [Authorize(Roles = "JobView")]
+        public async Task<IActionResult> GetAppointment(Guid? JobId)
+        {
+            var result = await appointmentScheduleService.GetAppointmentSchedule(JobId);
+            return Ok(result);
+
+        }
     }
 }

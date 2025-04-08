@@ -41,6 +41,8 @@ public partial class ShutterDBContext : DbContext
 
     public virtual DbSet<TblAddress> TblAddresses { get; set; }
 
+    public virtual DbSet<TblAppointmentSchedule> TblAppointmentSchedules { get; set; }
+
     public virtual DbSet<TblComponent> TblComponents { get; set; }
 
     public virtual DbSet<TblComponentMaterial> TblComponentMaterials { get; set; }
@@ -68,6 +70,8 @@ public partial class ShutterDBContext : DbContext
     public virtual DbSet<TblExpression> TblExpressions { get; set; }
 
     public virtual DbSet<TblGhlStage> TblGhlStages { get; set; }
+
+    public virtual DbSet<TblGhlStagesmapping> TblGhlStagesmappings { get; set; }
 
     public virtual DbSet<TblGhlconfiguration> TblGhlconfigurations { get; set; }
 
@@ -342,7 +346,6 @@ public partial class ShutterDBContext : DbContext
                 .HasMaxLength(50)
                 .IsUnicode(false);
             entity.Property(e => e.Phone).HasMaxLength(128);
-            entity.Property(e => e.State).HasDefaultValueSql("(newid())");
             entity.Property(e => e.StreetAddress).HasMaxLength(128);
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(getdate())")
@@ -355,11 +358,35 @@ public partial class ShutterDBContext : DbContext
 
             entity.HasOne(d => d.StateNavigation).WithMany(p => p.TblAddresses)
                 .HasForeignKey(d => d.State)
-                .HasConstraintName("FK_MstState");
+                .HasConstraintName("FK__TblAddres__State__58DC1D15");
 
             entity.HasOne(d => d.Tenant).WithMany(p => p.TblAddresses)
                 .HasForeignKey(d => d.TenantId)
                 .HasConstraintName("FK__TblAddres__Tenan__3FD07829");
+        });
+
+        modelBuilder.Entity<TblAppointmentSchedule>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__TblAppoi__3213E83F377B440E");
+
+            entity.ToTable("TblAppointmentSchedule", "dbo");
+
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("(newid())")
+                .HasColumnName("id");
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.Description)
+                .HasMaxLength(200)
+                .IsUnicode(false);
+            entity.Property(e => e.ScheduleDateTime).HasColumnType("datetime");
+            entity.Property(e => e.Title)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+
+            entity.HasOne(d => d.Job).WithMany(p => p.TblAppointmentSchedules)
+                .HasForeignKey(d => d.JobId)
+                .HasConstraintName("FK__TblAppoin__JobId__6ECB5E34");
         });
 
         modelBuilder.Entity<TblComponent>(entity =>
@@ -782,6 +809,18 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.GhlStageId).HasColumnName("GHL_StageId");
             entity.Property(e => e.GhlStageName).HasColumnName("GHL_StageName");
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+        });
+
+        modelBuilder.Entity<TblGhlStagesmapping>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__TblGHlSt__3213E83F082DBD6A");
+
+            entity.ToTable("TblGHlStagesmapping", "dbo");
+
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("(newid())")
+                .HasColumnName("id");
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
         });
 
         modelBuilder.Entity<TblGhlconfiguration>(entity =>

@@ -1,4 +1,4 @@
-2024-12-23 15:04:17 : Start: Fetching all coupons.
+﻿2024-12-23 15:04:17 : Start: Fetching all coupons.
 2024-12-23 15:05:18 : Success: Coupons fetched successfully.
 2024-12-23 15:06:53 : Start: Fetching all coupons.
 2024-12-23 15:06:57 : Success: Coupons fetched successfully.

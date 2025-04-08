@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Azure;
 using Microsoft.Extensions.Configuration;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core;
@@ -112,42 +113,46 @@ namespace ShutterManagement.Business.Services
             IResponseVm<GetGHLConfiguration> responseVm = new ResponseVm<GetGHLConfiguration>();
             try
             {
-                var gHLConfiguration = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
-                //var Checkghlresponse = await CheckGHLConfiguration();
-                //if (!Checkghlresponse.IsSuccess)
-                //{
+
+                var gHLConfiguration = GetAllQuerable().FirstOrDefault(x => x.TenantId == AppConstant.LoggedInTenantId);
+
+                if (gHLConfiguration == null)
+                {
+                    responseVm.Message = "Configuration not found for the current tenant.";
+                    return responseVm; 
+                }
+
                 if (code != null)
                 {
                     try
                     {
-                        var res = goHighLevelOAuthService.GetRefreshToken(code);
+                        var res = await goHighLevelOAuthService.GetRefreshToken(code);
                         if (res != null)
                         {
-                            gHLConfiguration.RefreshToken = res?.Result.RefreshToken ?? "";
-                            gHLConfiguration.AccessToken = res?.Result.AccessToken ?? "";
+                            // Update the gHLConfiguration with new tokens and expiration times
+                            gHLConfiguration.RefreshToken = res?.RefreshToken ?? "";
+                            gHLConfiguration.AccessToken = res?.AccessToken ?? "";
                             gHLConfiguration.AccessExpirationtime = DateTime.Now.AddDays(1);
                             gHLConfiguration.RefreshExpirationtime = DateTime.Now.AddDays(365);
                             gHLConfiguration.LastSync = DateTime.Now;
+
+                            // Save the updated configuration
                             await Update(gHLConfiguration);
+                        }
+                        else
+                        {
+                            responseVm.Message = "Failed to retrieve refresh token.";
+                            return responseVm;
                         }
                     }
                     catch (Exception ex)
                     {
-                        responseVm.Message = $"An error occurred: {ex.Message}";
-                        // Log the exception if logging is available
-                        // logger.LogError(ex, "Error while getting refresh token");
+                        responseVm.Message = $"An error occurred while retrieving the refresh token: {ex.Message}";
+                        return responseVm;
                     }
                 }
-                else
-                {
-                    responseVm.Message = "Please Enter Code";
-                }
+               
 
-                //}
-                //else
-                //{
-                //    responseVm.Message = Checkghlresponse.Message;
-                //}
                 responseVm.Data = new GetGHLConfiguration
                 {
                     APIkey = gHLConfiguration?.Apikey ?? "",
@@ -155,24 +160,26 @@ namespace ShutterManagement.Business.Services
                     LocationId = gHLConfiguration?.LocationId ?? "",
                     PipelineId = gHLConfiguration?.PipelineId ?? "",
                     LastSync = gHLConfiguration?.LastSync ?? DateTime.Now,
-                    CalendarName = gHLConfiguration.CalendarName ?? "",
+                    CalendarName = gHLConfiguration?.CalendarName ?? "",
                     GeneratedToken = gHLConfiguration?.GeneratedToken ?? "",
                     ClientId = gHLConfiguration?.ClientId ?? "",
                     ClientSecret = gHLConfiguration?.ClientSecret ?? "",
-                    RedirectURI =gHLConfiguration?.RedirectUri ?? "",
+                    RedirectURI = gHLConfiguration?.RedirectUri ?? "",
                 };
+
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.FetchSuccessMsg;
-                
-
             }
             catch (Exception ex)
             {
-                responseVm.Message += ex.Message;
+                responseVm.Message = $"An unexpected error occurred: {ex.Message}";
+                // Optionally log the error for further investigation
+                // logger.LogError(ex, "Error in GetGHLConfigurations API");
             }
-            return responseVm;
 
+            return responseVm;
         }
+
 
         public async Task<IResponseVm<string>> GetOauthGHL()
         {
@@ -242,5 +249,84 @@ namespace ShutterManagement.Business.Services
             }
             return response;
         }
+
+
+        public async Task<IResponseVm<string>> MapGHLStagesStages(StageMappingRequest request)
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+
+            try
+            {
+                foreach (var stagemapping in request.Mappings)
+                {
+                    var existingMapping = dbContext.TblGhlStagesmappings
+                        .FirstOrDefault(x =>
+                            x.TenantId == AppConstant.LoggedInTenantId &&
+                            x.StatusId == stagemapping.StatusId);
+
+                    if (existingMapping != null)
+                    {
+                        dbContext.TblGhlStagesmappings.Remove(existingMapping);
+                    }
+
+                    TblGhlStagesmapping newMapping = new TblGhlStagesmapping()
+                    {
+                        Id = Guid.NewGuid(),
+                        StageId = stagemapping.StageId ?? Guid.Empty,
+                        StatusId = stagemapping.StatusId ?? Guid.Empty,
+                        CreatedAt = DateTime.Now,
+                        TenantId = AppConstant.LoggedInTenantId
+                    };
+
+                    await dbContext.TblGhlStagesmappings.AddAsync(newMapping);
+                }
+
+                await dbContext.SaveChangesAsync();
+
+                responseVm.IsSuccess = true;
+                responseVm.Message = AppConstant.InsertSuccessMsg;
+            }
+            catch (Exception ex)
+            {
+                responseVm.IsSuccess = false;
+                responseVm.Message += ex.Message;
+            }
+
+            return responseVm;
+        }
+
+
+
+        public async Task<IResponseVm<List<StageMapping>>> GetGHLStagesMappings()
+        {
+            IResponseVm<List<StageMapping>> responseVm = new ResponseVm<List<StageMapping>>();
+
+            try
+            {
+                var mappings =  dbContext.TblGhlStagesmappings
+                    .Where(x => x.TenantId == AppConstant.LoggedInTenantId)
+                    .Select(x => new StageMapping
+                    {
+                        StageId = x.StageId??Guid.Empty,
+                        StatusId = x.StatusId ?? Guid.Empty,
+                        CreatedAt = x.CreatedAt
+                    }).OrderBy(x => x.CreatedAt)
+                    .ToList();
+
+                responseVm.IsSuccess = true;
+                responseVm.Message = "Mappings fetched successfully.";
+                responseVm.Data = mappings;
+            }
+            catch (Exception ex)
+            {
+                responseVm.IsSuccess = false;
+                responseVm.Message = $"Error: {ex.Message}";
+            }
+
+            return responseVm;
+        }
+
+
+
     }
 }

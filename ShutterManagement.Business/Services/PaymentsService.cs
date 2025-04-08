@@ -161,6 +161,7 @@ namespace ShutterManagement.Business.Services
                     TransactionId = model?.TransactionId?.Trim(),
                     Notes = model?.Notes,
                     Status = EnumValue.GetEnumValue(model.PaymentStatus),
+                    PaymentTypeStatus = EnumValue.GetEnumValue(PaymentStatus.Manual),
                     CreatedAt = DateTime.Now,
                     TenantId = AppConstant.LoggedInTenantId,
                     CreatedBy = AppConstant.LoggedInUserID,

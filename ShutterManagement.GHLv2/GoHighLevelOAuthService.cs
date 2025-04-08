@@ -51,29 +51,67 @@ public class GoHighLevelOAuthService
     // Step 2: Exchange the authorization code for an access token
     public async Task<TokenResponse> GetRefreshToken(string authorizationCode)
     {
-
-        var tokenRequest = new FormUrlEncodedContent(new Dictionary<string, string>
-    {
-        { "client_id", configuration["GoHighLevelOAuthSettings:ClientId"] ?? ""},
-        { "client_secret", configuration["GoHighLevelOAuthSettings:ClientSecret"] ?? ""},
-        { "code", authorizationCode },
-        { "redirect_uri", configuration["GoHighLevelOAuthSettings:RedirectUri"] ?? ""},
-        { "grant_type", "authorization_code" }
-    });
-        var response = await _httpClient.PostAsync(configuration["GoHighLevelOAuthSettings:TokenUrl"] ?? "", tokenRequest);
-
-        if (response.IsSuccessStatusCode)
+        try
         {
-            var responseContent = await response.Content.ReadAsStringAsync();
-            var tokenData = JsonConvert.DeserializeObject<TokenResponse>(responseContent);
-            return tokenData;
+            // Create the form data for the token request
+            var tokenRequest = new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            { "client_id", configuration["GoHighLevelOAuthSettings:ClientId"] ?? "" },
+            { "client_secret", configuration["GoHighLevelOAuthSettings:ClientSecret"] ?? "" },
+            { "code", authorizationCode },
+            { "redirect_uri", configuration["GoHighLevelOAuthSettings:RedirectUri"] ?? "" },
+            { "grant_type", "authorization_code" }
+        });
+
+            // Perform the POST request to the token URL
+            var response = await _httpClient.PostAsync(configuration["GoHighLevelOAuthSettings:TokenUrl"] ?? "", tokenRequest);
+
+            // Check if the response is successful
+            if (response.IsSuccessStatusCode)
+            {
+                var responseContent = await response.Content.ReadAsStringAsync();
+
+                try
+                {
+                    // Try deserializing the response content
+                    var tokenData = JsonConvert.DeserializeObject<TokenResponse>(responseContent);
+                    if (tokenData == null)
+                    {
+                        throw new Exception("Token response is null. The response content could not be deserialized properly.");
+                    }
+
+                    return tokenData;
+                }
+                catch (JsonException jsonEx)
+                {
+                    // Log the deserialization error
+                    //logger.LogError(jsonEx, "Error deserializing the token response content.");
+                    throw new Exception("Error deserializing the token response.", jsonEx);
+                }
+            }
+            else
+            {
+                // If the response is not successful, log the error and return null
+                var errorContent = await response.Content.ReadAsStringAsync();
+                // Optionally log the error response content for debugging
+                //logger.LogError($"Failed to get refresh token. StatusCode: {response.StatusCode}, Error: {errorContent}");
+                return null;
+            }
         }
-        else
+        catch (HttpRequestException httpEx)
         {
-            var errorContent = await response.Content.ReadAsStringAsync();
-            return null;
+            // Handle network-related exceptions (e.g., no internet connection)
+            //logger.LogError(httpEx, "Network error while calling the GoHighLevel OAuth service.");
+            throw new Exception("A network error occurred while requesting the token.", httpEx);
+        }
+        catch (Exception ex)
+        {
+            // Catch all other exceptions
+            //logger.LogError(ex, "An error occurred while getting the refresh token.");
+            throw new Exception("An error occurred while retrieving the refresh token.", ex);
         }
     }
+
     // Step 3: Exchange the refreshtoken for an access token
     public async Task<TokenResponse> GetAccessToken(string refreshtoken)
     {

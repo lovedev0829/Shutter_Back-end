@@ -804,15 +804,24 @@ namespace ShutterManagement.Controllers
             var opportunityResult = await jobService.SyncOpportunitiesFromGhl();
             var appointment = await jobSchedule.AppointmentSync();
 
-            bool isSuccess = pipelineResult.IsSuccess && opportunityResult.IsSuccess;
-            string message = isSuccess ? "Synchronization completed successfully." :
-                                         $"Pipeline: {pipelineResult.Message}, Opportunities: {opportunityResult.Message},Contact : {contact.Message} ," +
-                                         $"Appointment : {appointment.Message}";
+            string combinedMessage = string.Join(", ", new[]
+            {
+            pipelineResult.Message,
+            contact.Message,
+            opportunityResult.Message,
+            appointment.Message
+            });
+
             var response = new
             {
-                IsSuccess = isSuccess,
-                Message = message
+                IsSuccess = pipelineResult.IsSuccess &&
+                            contact.IsSuccess &&
+                            opportunityResult.IsSuccess &&
+                            appointment.IsSuccess,
+                Message = combinedMessage
             };
+
+
             return Ok(response);
         }
 
@@ -905,6 +914,21 @@ namespace ShutterManagement.Controllers
             return Ok(res);
         }
 
+        [HttpPost("GHLStagesMapping")]
+        [Authorize(Roles = "GHLEdit")]
+        public async Task<IActionResult> GHLStagesMapping([FromBody] StageMappingRequest input)
+        {
+            var result = await gHLConfiguration.MapGHLStagesStages(input);
+            return Ok(result);
+        }
+        [HttpGet("GetallStagesMapping")]
+        public async Task<IActionResult> GetallStagesMapping()
+        {
+            var result = await gHLConfiguration.GetGHLStagesMappings();
+            return Ok(result);
+        }
+
+
 
     }
-    }
+}

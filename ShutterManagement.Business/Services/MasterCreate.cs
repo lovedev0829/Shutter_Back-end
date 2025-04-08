@@ -254,22 +254,22 @@ namespace ShutterManagement.Business.Services
 
                 if (brandinginfo != null)
                 {
-                    var IsEmailExists = await tenantBrandingService.AnyAsync(x=>x.Email == updatesetting.Email && x.Id != brandinginfo.Id);
-                    if (IsEmailExists)
-                    {
-                        result.Message = "Email " + AppConstant.AlreadyExists;
-                        return result;
-                    }
-                    brandinginfo.Logo = updatesetting.Logo;
-                    brandinginfo.PrimaryColor = updatesetting.PrimaryColor;
-                    brandinginfo.SecondaryColor = updatesetting.SecondaryColor;
-                    brandinginfo.Email = updatesetting.Email;
-                    brandinginfo.PhoneNumber = updatesetting.PhoneNumber;
-                    brandinginfo.CompanyName = updatesetting.CompanyName;
-                    brandinginfo.StreetAddress = updatesetting.StreetAddress;
-                    brandinginfo.City = updatesetting.City;
-                    brandinginfo.Country = updatesetting.Country;
-                    brandinginfo.ZipCode = updatesetting.ZipCode;
+                    //var IsEmailExists = await tenantBrandingService.AnyAsync(x=>x.Email == updatesetting.Email && x.Id != brandinginfo.Id);
+                    //if (IsEmailExists)
+                    //{
+                    //    result.Message = "Email " + AppConstant.AlreadyExists;
+                    //    return result;
+                    //}
+                    brandinginfo.Logo = updatesetting.Logo??"";
+                    brandinginfo.PrimaryColor = updatesetting.PrimaryColor??"";
+                    brandinginfo.SecondaryColor = updatesetting.SecondaryColor ?? "";
+                    brandinginfo.Email = updatesetting.Email??"";
+                    brandinginfo.PhoneNumber = updatesetting.PhoneNumber ?? "";
+                    brandinginfo.CompanyName = updatesetting.CompanyName??"";
+                    brandinginfo.StreetAddress = updatesetting.StreetAddress ?? "";
+                    brandinginfo.City = updatesetting.City??"";
+                    brandinginfo.Country = updatesetting.Country??"";
+                    brandinginfo.ZipCode = updatesetting.ZipCode??"";
                     brandinginfo.Markup = updatesetting.Markup;
                     var res = tenantBrandingService.Update(brandinginfo);
                     result.IsSuccess = true;
