@@ -1,5 +1,6 @@
 ﻿using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core;
+using ShutterManagement.Core.Common;
 using ShutterManagement.Core.ViewModels;
 using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.Core.ViewModels.Response;
@@ -19,11 +20,15 @@ namespace ShutterManagement.Business.Services
     {
         private readonly ITenantService tenantService;
         private readonly ClaimsProperty claimsProperty;
+        private readonly JobStatusAndStageMapping statusAndStageMapping;
+        private readonly IGHLConfiguration gHLConfiguration;
 
-        public AppointmentScheduleService(ITenantService tenantService,ClaimsProperty claimsProperty)
+        public AppointmentScheduleService(ITenantService tenantService,ClaimsProperty claimsProperty,JobStatusAndStageMapping statusAndStageMapping,IGHLConfiguration gHLConfiguration)
         {
             this.tenantService = tenantService;
             this.claimsProperty = claimsProperty;
+            this.statusAndStageMapping = statusAndStageMapping;
+            this.gHLConfiguration = gHLConfiguration;
         }
 
         public async Task<IResponseVm<string>> CreateAppointmentSchedule(CreateAppointment model)
@@ -76,6 +81,36 @@ namespace ShutterManagement.Business.Services
                     var res = await Add(tblAppointmentSchedule);
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.InsertSuccessMsg;
+                    if (responseVm.IsSuccess)
+                    {
+                        await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
+                        var StatusResponse = await  statusAndStageMapping.GetJobStatusByName(EnumValue.GetEnumValue(JobStatus.Appointment_Scheduled));
+                        if (StatusResponse == null)
+                        {
+                            responseVm.IsSuccess = false;
+                            responseVm.Message = "Job Status" + AppConstant.NoDataFound;
+                            return responseVm;
+                        }
+                         var JobstatusResponse = await statusAndStageMapping.UpdateJobStatus(tblAppointmentSchedule?.JobId, StatusResponse?.Data?.JobStatusId);
+
+                        var StageResponse = await statusAndStageMapping.GetGHLStagesMappingsById(StatusResponse?.Data?.JobStatusId);
+                        if(!StageResponse.IsSuccess)
+                        {
+                            responseVm.IsSuccess = false;
+                            responseVm.Message = "Stage Mapping" + AppConstant.NoDataFound;
+                            return responseVm;
+                        }
+
+                        var GHlOpportunityId = await statusAndStageMapping.GetGHLOpportunityIdByJobId(tblAppointmentSchedule?.JobId);
+                        if (GHlOpportunityId == null)
+                        {
+                            responseVm.IsSuccess = false;
+                            responseVm.Message = "GHlOpportunityId" + AppConstant.NoDataFound;
+                            return responseVm;
+                        }
+                        var updateResponse = await statusAndStageMapping.UpdateOpportunityStage(GHlOpportunityId.Data, StageResponse?.Data?.StageId.ToString());
+                    } 
+                   
                 }
             }
             catch (Exception ex)
