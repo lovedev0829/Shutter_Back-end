@@ -41,7 +41,7 @@ namespace ShutterManagement.Business.Services
             FileLogger.Log("details GHl: ", details);
             if (details != null)
             {
-                AppConstant.GHL_BaseAddress = details.BaseAddress??"";
+                AppConstant.GHL_BaseAddress = configuration["GoHighLevelOAuthSettings:BaseUrl"] ?? "";
                 AppConstant.GHL_APIKey = details.Apikey??"";
                 AppConstant.GHL_PipelineId = details.PipelineId ?? "";
                 AppConstant.GHL_Locationd = details.LocationId??"";

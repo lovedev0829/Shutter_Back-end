@@ -49,13 +49,8 @@ namespace ShutterManagement.GHL.Services
         {
             try
             {
-                var baseUrl = dBContext.TblGhlconfigurations.Where(x=>x.TenantId==AppConstant.LoggedInTenantId).Select(y=>y.BaseAddress).FirstOrDefault();
-                if (string.IsNullOrEmpty(baseUrl))
-                {
-                    throw new Exception("Base URL is not configured.");
-                }
-
-                var requestUrl = $"{baseUrl}/opportunities/pipelines?locationId={AppConstant.GHL_Locationd}";
+                
+                var requestUrl = $"{AppConstant.GHL_BaseAddress}/opportunities/pipelines?locationId={AppConstant.GHL_Locationd}";
                 using var requestMessage = new HttpRequestMessage(HttpMethod.Get, requestUrl);
                 requestMessage.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
                 requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
