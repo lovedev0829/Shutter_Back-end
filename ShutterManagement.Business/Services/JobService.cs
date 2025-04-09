@@ -775,7 +775,7 @@ namespace ShutterManagement.Business.Services
                     IsAddressExist = await address.AnyAsync(x => x.AddressId.ToString().ToLower() == model.AddressId.ToString().ToLower() && x.ContactId.ToString().ToLower() == model.ContactId.ToString().ToLower()
                     && x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false);
                     stage = _context.TblGhlStages.Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.GhlStageId == model.GHL_StageId.ToString()).FirstOrDefault();
-                    jobStatus = _context.MstJobStatuses.Where(s => s.JobStatusName == EnumValue.GetEnumValue(JobStatus.New) && s.IsActive == true).Select(x=> x.JobStatusId).FirstOrDefault();
+                    jobStatus = _context.MstJobStatuses.Where(s => s.JobStatusName.ToLower() == EnumValue.GetEnumValue(JobStatus.New).ToLower() && s.IsActive == true).Select(x=> x.JobStatusId).FirstOrDefault();
                 }
                     if (!IsTenantValid)
                     {
