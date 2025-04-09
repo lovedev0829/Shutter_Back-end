@@ -374,6 +374,8 @@ namespace ShutterManagement.Business.Services
 
             try
             {
+                await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
+
                 var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration();
                 if (Checkghlresponse.IsSuccess)
                 {
