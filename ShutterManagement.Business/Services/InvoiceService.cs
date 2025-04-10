@@ -45,11 +45,13 @@ namespace ShutterManagement.Business.Services
         public Pagination filter = new Pagination();
         private readonly StripeService _stripeService;
         private readonly IStripeConfiguration stripeConfiguration;
+        private readonly JobStatusAndStageMapping statusAndStageMapping;
 
         public InvoiceService(ITenantService tenantService, IInvoicePaymentService invoicePaymentService,
             IHostEnvironment environment, IConverter converter ,IContactService contactService 
             ,IEstimateService estimateService, ITenantBrandingService tenantBrandingService,IUserService userService 
-            ,IJobService jobService,IOrderService orderService,StripeService stripeService ,IStripeConfiguration stripeConfiguration)
+            ,IJobService jobService,IOrderService orderService,StripeService stripeService ,
+            IStripeConfiguration stripeConfiguration,JobStatusAndStageMapping statusAndStageMapping)
         {
             this.tenantService = tenantService;
             this.invoicePaymentService = invoicePaymentService;
@@ -63,6 +65,7 @@ namespace ShutterManagement.Business.Services
             this.orderService = orderService;
             _stripeService = stripeService;
             this.stripeConfiguration = stripeConfiguration;
+            this.statusAndStageMapping = statusAndStageMapping;
         }
 
         #region Create  update ActiveInActive Delete Getall
@@ -230,6 +233,18 @@ namespace ShutterManagement.Business.Services
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.InsertSuccessMsg;
 
+                if (responseVm.IsSuccess)
+                {
+                    var jobStatusName = EnumValue.GetEnumValue(JobStatus.In_Production);
+                    var updateResponse = await statusAndStageMapping.UpdateOpportunityAndJobStatus(tblInvoice?.JobId ?? Guid.Empty, jobStatusName);
+
+                    if (!updateResponse.IsSuccess)
+                    {
+                        responseVm.IsSuccess = false;
+                        responseVm.Message = updateResponse.Message;
+                        return responseVm;
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -653,6 +668,21 @@ namespace ShutterManagement.Business.Services
                     IsEstimateExists.UpdatedAt = DateTime.Now;
                     IsEstimateExists.ModifiedBy = AppConstant.LoggedInUserID;
                     await estimateService.Update(IsEstimateExists);
+
+                    if(AppConstant.GHL_AccessToken !=null && AppConstant.GHL_RefreshToken !=null)
+                    {
+                        var jobStatusName = EnumValue.GetEnumValue(JobStatus.Quote_Sent);
+                        var updateResponse = await statusAndStageMapping.UpdateOpportunityAndJobStatus(IsEstimateExists?.JobId ?? Guid.Empty, jobStatusName);
+
+                        if (!updateResponse.IsSuccess)
+                        {
+                            responseVm.IsSuccess = false;
+                            responseVm.Message = updateResponse.Message;
+                            return responseVm;
+                        }
+                    }
+                        
+                    
 
                     string approvalEmailLink = $"{AppConstant.UIBaseURL}contacts/estimate/preview/{IsEstimateExists?.EstimateId}";
 

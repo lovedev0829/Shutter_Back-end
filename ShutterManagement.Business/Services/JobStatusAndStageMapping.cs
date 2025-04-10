@@ -128,13 +128,19 @@ namespace ShutterManagement.Business.Services
         }
 
         #region Update Opportunity Status
-        public async Task<IResponseVm<string>> UpdateOpportunityStage(string opportunityId, string stageId)
+        public async Task<IResponseVm<string>> UpdateOpportunityStage(string opportunityId, Guid? stageId)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
                 await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
-
+                
+                if (stageId == Guid.Empty || stageId == null)
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = "Stage ID is not valid.";
+                    return responseVm;
+                }
                 var opportunityData = new
                 {
                     pipelineStageId = stageId,
@@ -171,7 +177,7 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        public async Task<IResponseVm<string>> UpdateJobStatus(Guid? jobId, Guid? statusId)
+        public async Task<IResponseVm<string>> UpdateJobStatus(Guid? jobId, Guid? statusId,Guid? Stageid)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
@@ -180,6 +186,10 @@ namespace ShutterManagement.Business.Services
                 if (job != null)
                 {
                     job.JobStatus = statusId;
+                    if(Stageid != Guid.Empty && Stageid != null)
+                    {
+                        job.GhlStageId = Stageid;
+                    }
                     dBContext.SaveChanges();
                     responseVm.IsSuccess = true;
                     responseVm.Message = "Job status updated successfully.";
@@ -198,6 +208,56 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
+
+
+        public async Task<IResponseVm<string>> UpdateOpportunityAndJobStatus(Guid? jobId, string? jobStatusName)
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+
+            try
+            {
+                var opportunityResponse = await GetGHLOpportunityIdByJobId(jobId);
+                if (!opportunityResponse.IsSuccess || string.IsNullOrEmpty(opportunityResponse.Data))
+                    return new ResponseVm<string> { IsSuccess = false, Message = "Opportunity ID not found for this Job." };
+
+                string opportunityId = opportunityResponse.Data;
+
+                var statusResponse = await GetJobStatusByName(jobStatusName);
+                if (!statusResponse.IsSuccess)
+                    return new ResponseVm<string> { IsSuccess = false, Message = "Job status not found." };
+
+                var jobStatus = statusResponse.Data;
+
+                var stageResponse = await GetGHLStagesMappingsById(jobStatus.JobStatusId);
+                if (!stageResponse.IsSuccess)
+                    return new ResponseVm<string> { IsSuccess = false, Message = "Stage mapping not found for the provided status." };
+
+                var stageMapping = stageResponse?.Data;
+                if (stageMapping?.StageId != null && stageMapping?.StageId != Guid.Empty)
+                {
+                    var updateGhlResponse = await UpdateOpportunityStage(opportunityId, stageMapping?.StageId);
+                    if (!updateGhlResponse.IsSuccess)
+                        return new ResponseVm<string> { IsSuccess = false, Message = updateGhlResponse.Message };
+                }
+                
+                var updateJobResponse = await UpdateJobStatus(jobId, jobStatus.JobStatusId, stageMapping?.StageId);
+                if (!updateJobResponse.IsSuccess)
+                    return new ResponseVm<string> { IsSuccess = false, Message = updateJobResponse.Message };
+
+                responseVm.IsSuccess = true;
+                responseVm.Message = "Opportunity and Job status updated successfully.";
+            }
+            catch (Exception ex)
+            {
+                responseVm.IsSuccess = false;
+                responseVm.Message = $"Exception occurred: {ex.Message}";
+            }
+
+            return responseVm;
+        }
+
+
+
 
         #endregion Update Opportunity Status
     }

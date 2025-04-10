@@ -83,34 +83,17 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.InsertSuccessMsg;
                     if (responseVm.IsSuccess)
                     {
-                        await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
-                        var StatusResponse = await  statusAndStageMapping.GetJobStatusByName(EnumValue.GetEnumValue(JobStatus.Appointment_Scheduled));
-                        if (StatusResponse == null)
-                        {
-                            responseVm.IsSuccess = false;
-                            responseVm.Message = "Job Status" + AppConstant.NoDataFound;
-                            return responseVm;
-                        }
-                         var JobstatusResponse = await statusAndStageMapping.UpdateJobStatus(tblAppointmentSchedule?.JobId, StatusResponse?.Data?.JobStatusId);
+                        var jobStatusName = EnumValue.GetEnumValue(JobStatus.Appointment_Scheduled);
+                        var updateResponse = await statusAndStageMapping.UpdateOpportunityAndJobStatus(tblAppointmentSchedule?.JobId ?? Guid.Empty, jobStatusName);
 
-                        var StageResponse = await statusAndStageMapping.GetGHLStagesMappingsById(StatusResponse?.Data?.JobStatusId);
-                        if(!StageResponse.IsSuccess)
+                        if (!updateResponse.IsSuccess)
                         {
                             responseVm.IsSuccess = false;
-                            responseVm.Message = "Stage Mapping" + AppConstant.NoDataFound;
+                            responseVm.Message = updateResponse.Message;
                             return responseVm;
                         }
+                    }
 
-                        var GHlOpportunityId = await statusAndStageMapping.GetGHLOpportunityIdByJobId(tblAppointmentSchedule?.JobId);
-                        if (GHlOpportunityId == null)
-                        {
-                            responseVm.IsSuccess = false;
-                            responseVm.Message = "GHlOpportunityId" + AppConstant.NoDataFound;
-                            return responseVm;
-                        }
-                        var updateResponse = await statusAndStageMapping.UpdateOpportunityStage(GHlOpportunityId.Data, StageResponse?.Data?.StageId.ToString());
-                    } 
-                   
                 }
             }
             catch (Exception ex)
