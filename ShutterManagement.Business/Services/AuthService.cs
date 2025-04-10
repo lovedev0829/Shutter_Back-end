@@ -574,6 +574,56 @@ namespace ShutterManagement.Services
             return result;
         }
 
+        public async Task<IResponseVm<string>> GenerateLetterOnlyUniqueCodeAsync(string code)
+        {
+            IResponseVm<string> response = new ResponseVm<string>();
+
+            if (string.IsNullOrWhiteSpace(code))
+            {
+                response.IsSuccess = false;
+                response.Message = "Input cannot be empty";
+                return response;
+            }
+
+            string cleaned = new string(code.Where(char.IsLetter).ToArray()).ToUpperInvariant();
+            string baseCode = cleaned.Length >= 6 ? cleaned.Substring(0, 6) : cleaned.PadRight(6, 'X');
+            string finalCode = baseCode;
+
+            int attempt = 0;
+            int maxAttempts = 50;
+            Random rng = new Random();
+
+            try
+            {
+                while (attempt < maxAttempts)
+                {
+                    bool isCodeExists = await tenantService.AnyAsync(x => x.IsActive == true && x.IsDelete == false && x.Code == finalCode);
+                    if (!isCodeExists)
+                        break;
+
+                    var extraLetters = new string(Enumerable.Repeat("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 4)
+                                                  .Select(s => s[rng.Next(s.Length)]).ToArray());
+
+                    int lengthToUse = Math.Min(10 - baseCode.Length, extraLetters.Length);
+                    finalCode = (baseCode + extraLetters.Substring(0, lengthToUse)).Substring(0, 10);
+
+                    attempt++;
+                }
+
+                response.IsSuccess = true;
+                response.Message = "Unique code generated successfully.";
+                response.Data = finalCode;
+            }
+            catch (Exception ex)
+            {
+                response.IsSuccess = false;
+                response.Message = $"Error occurred while generating code: {ex.Message}";
+            }
+
+            return response;
+        }
+
+
     }
 
 

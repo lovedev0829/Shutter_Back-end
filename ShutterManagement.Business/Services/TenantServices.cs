@@ -454,9 +454,5 @@ namespace ShutterManagement.Business.Services
 
         }
 
-
-       
-
-
     }
 }

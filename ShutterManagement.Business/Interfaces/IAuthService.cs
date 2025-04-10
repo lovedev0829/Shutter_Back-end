@@ -17,5 +17,7 @@ namespace ShutterManagement.Services
         Task<IResponseVm<string>> VerifyForgetPassword(VerifyPassword verifyPassword);
         Task<IResponseVm<string>> GenerateToken();
         IResponseVm<string> ReadTokenDetails(string token);
+
+        Task<IResponseVm<string>> GenerateLetterOnlyUniqueCodeAsync(string code);
     }
 }
