@@ -18,6 +18,6 @@ namespace ShutterManagement.Services
         Task<IResponseVm<string>> GenerateToken();
         IResponseVm<string> ReadTokenDetails(string token);
 
-        Task<IResponseVm<string>> GenerateLetterOnlyUniqueCodeAsync(string code);
+        Task<IResponseVm<Dictionary<string, string>>> GenerateLetterOnlyUniqueCodeAsync(string code);
     }
 }
