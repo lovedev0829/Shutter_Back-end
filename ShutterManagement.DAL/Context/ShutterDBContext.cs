@@ -87,6 +87,8 @@ public partial class ShutterDBContext : DbContext
 
     public virtual DbSet<TblJobSchedule> TblJobSchedules { get; set; }
 
+    public virtual DbSet<TblJobStageStatusAutomAtionHistory> TblJobStageStatusAutomAtionHistories { get; set; }
+
     public virtual DbSet<TblJobStatus> TblJobStatuses { get; set; }
 
     public virtual DbSet<TblLocation> TblLocations { get; set; }
@@ -1041,6 +1043,16 @@ public partial class ShutterDBContext : DbContext
             entity.HasOne(d => d.User).WithMany(p => p.TblJobSchedules)
                 .HasForeignKey(d => d.UserId)
                 .HasConstraintName("FK__TblJobSch__UserI__4C214075");
+        });
+
+        modelBuilder.Entity<TblJobStageStatusAutomAtionHistory>(entity =>
+        {
+            entity.HasKey(e => e.HistoryId).HasName("PK__TblJobSt__4D7B4ABDB0385C6F");
+
+            entity.ToTable("TblJobStageStatusAutomAtionHistory");
+
+            entity.Property(e => e.HistoryId).ValueGeneratedNever();
+            entity.Property(e => e.ChangedAt).HasColumnType("datetime");
         });
 
         modelBuilder.Entity<TblJobStatus>(entity =>
