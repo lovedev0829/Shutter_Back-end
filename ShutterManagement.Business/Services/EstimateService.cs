@@ -61,6 +61,8 @@ namespace ShutterManagement.Business.Services
         private readonly ITenantBrandingService tenantBrandingService;
         private readonly INotificationService notification;
         private readonly IMstProductType mstProductType;
+        private readonly JobStatusAndStageMapping statusAndStageMapping;
+        private readonly IGHLConfiguration gHLConfiguration;
         List<Guid> expressionList = new List<Guid>();
 
         public EstimateService(ShutterDBContext context,
@@ -89,7 +91,7 @@ namespace ShutterManagement.Business.Services
             IRegion region, ITaxExemption taxExemption, IDiscountService discountservice,
             ISubtenantProductMarkup subtenantProductMarkup, ITenantBrandingService tenantBrandingService,
             INotificationService notification
-            ,IMstProductType mstProductType 
+            ,IMstProductType mstProductType ,JobStatusAndStageMapping statusAndStageMapping,IGHLConfiguration gHLConfiguration
             )
         {
             _context = context;
@@ -123,6 +125,8 @@ namespace ShutterManagement.Business.Services
             this.tenantBrandingService = tenantBrandingService;
             this.notification = notification;
             this.mstProductType = mstProductType;
+            this.statusAndStageMapping = statusAndStageMapping;
+            this.gHLConfiguration = gHLConfiguration;
         }
 
         public async Task<IResponseVm<string>> ActiveInActiveEstimate(Guid EstimateId)
@@ -297,6 +301,8 @@ namespace ShutterManagement.Business.Services
 
                     }
                 }
+
+                 
 
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.UpdateSuccessMsg;
@@ -872,6 +878,26 @@ namespace ShutterManagement.Business.Services
                     if (responseVm.IsSuccess)
                     {
                         var EstimateName = GetAllQuerable().Where(x => x.EstimateId == EstimationId && x.IsDelete == false).Select(x => x.EstimateName).FirstOrDefault();
+
+                        // update job status and stage 
+
+                        if (responseVm.IsSuccess)
+                        {
+                            if (NewEstimationStatus == Estimation.Approved)
+                            {
+                                var jobStatusName = EnumValue.GetEnumValue(JobStatus.Won);
+                                var updateResponse = await statusAndStageMapping.UpdateOpportunityAndJobStatus(EstimationStatus?.JobId ?? Guid.Empty, jobStatusName);
+
+                                if (!updateResponse.IsSuccess)
+                                {
+                                    responseVm.IsSuccess = false;
+                                    responseVm.Message = updateResponse.Message;
+                                    return responseVm;
+                                }
+                            }
+                            
+                        }
+
                         CreateNotification notification1 = new CreateNotification()
                         {
                             UserId = AppConstant.LoggedInUserID,

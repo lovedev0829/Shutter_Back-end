@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 using Azure;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core;
@@ -325,6 +327,44 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
+
+        public async Task<IResponseVm<StageMapping>> GetGHLStagesMappingsById(Guid statusId)
+        {
+            IResponseVm<StageMapping> responseVm = new ResponseVm<StageMapping>();
+
+            try
+            {
+                var mapping = dbContext.TblGhlStagesmappings
+                    .Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.StatusId == statusId)
+                    .Select(x => new StageMapping
+                    {
+                        StageId = x.StageId ?? Guid.Empty,
+                        StatusId = x.StatusId ?? Guid.Empty,
+                        CreatedAt = x.CreatedAt
+                    }).FirstOrDefault();
+
+                if (mapping != null)
+                {
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = "Mapping fetched successfully.";
+                    responseVm.Data = mapping;
+                }
+                else
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = "Mapping not found.";
+                }
+            }
+            catch (Exception ex)
+            {
+                responseVm.IsSuccess = false;
+                responseVm.Message = $"Error: {ex.Message}";
+            }
+
+            return responseVm;
+        }
+
+
 
 
 

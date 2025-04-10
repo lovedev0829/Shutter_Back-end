@@ -928,6 +928,14 @@ namespace ShutterManagement.Controllers
             return Ok(result);
         }
 
+        [HttpPost]
+        [Route("GenerateCode")]
+        public async Task<IActionResult> GenerateCode(string code)
+        {
+            var result = await authService.GenerateLetterOnlyUniqueCodeAsync(code);
+            return Ok(result);
+        }
+
 
 
     }

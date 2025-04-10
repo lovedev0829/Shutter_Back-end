@@ -22,6 +22,7 @@ using Microsoft.AspNetCore.Mvc;
 using ShutterManagment.GHL.ViewModel.Request;
 using System.Diagnostics.Contracts;
 using Org.BouncyCastle.Asn1.X509.Qualified;
+using ShutterManagement.Core.SPModel;
 
 namespace ShutterManagement.Business.Services
 {
@@ -36,10 +37,12 @@ namespace ShutterManagement.Business.Services
         //private readonly GhlService ghlService;
         private readonly IContactService contact;
         private readonly GHLService_v2 gHLService_V2;
+        private readonly JobStatusAndStageMapping statusAndStageMapping;
         private  string BaseUrl = AppConstant.GHL_BaseAddress;
 
         public JobService(ShutterDBContext context, ClaimsProperty claimsProperty, IAddress address,
-            ITenantService tenantService,INotificationService notification, IGHLConfiguration gHLConfiguration,IContactService contact,GHLService_v2 gHLService_V2)
+            ITenantService tenantService,INotificationService notification, IGHLConfiguration gHLConfiguration,
+            IContactService contact,GHLService_v2 gHLService_V2,JobStatusAndStageMapping statusAndStageMapping)
         {
             _context = context;
             this.claimsProperty = claimsProperty;
@@ -50,6 +53,7 @@ namespace ShutterManagement.Business.Services
 
             this.contact = contact;
             this.gHLService_V2 = gHLService_V2;
+            this.statusAndStageMapping = statusAndStageMapping;
         }
 
         private static string GetApiKey()
@@ -545,6 +549,8 @@ namespace ShutterManagement.Business.Services
 
             try
             {
+                await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
+
                 if (string.IsNullOrEmpty(job.GhlOpportunityId))
                 {
                     responseVm.IsSuccess = false;
@@ -585,11 +591,8 @@ namespace ShutterManagement.Business.Services
 
                 var ghlOpportunityModel = new
                 {
-                    pipelineId = targetPipeline.GhlPipelineId,
                     name = job.JobName,
                     pipelineStageId = job.GhlStageId,
-                    status = jobStatusName.ToLower() ?? "open",
-                    monetaryValue = 220, 
                   
                 };
 
@@ -597,7 +600,7 @@ namespace ShutterManagement.Business.Services
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
                 client.DefaultRequestHeaders.Add("Version", "2021-07-28");
 
-                var url = $"{BaseUrl}/opportunities/{job.GhlOpportunityId}";
+                var url = $"{AppConstant.GHL_BaseAddress}/opportunities/{job.GhlOpportunityId}";
                 var content = new StringContent(JsonConvert.SerializeObject(ghlOpportunityModel), Encoding.UTF8, "application/json");
 
                 var response = await client.PutAsync(url, content);
@@ -745,7 +748,7 @@ namespace ShutterManagement.Business.Services
                 var TenantId = Guid.Empty;
                 var IsTenantValid = false;
                 TblGhlStage stage = new TblGhlStage();
-                var jobStatus = Guid.Empty;
+                Guid? jobStatus = Guid.Empty;
                 if (model.locationId != null)
                 {
                     await gHLConfiguration.GetGHLConfiguration(model.locationId);
@@ -774,8 +777,16 @@ namespace ShutterManagement.Business.Services
                     TenantId = (Guid)AppConstant.LoggedInTenantId;
                     IsAddressExist = await address.AnyAsync(x => x.AddressId.ToString().ToLower() == model.AddressId.ToString().ToLower() && x.ContactId.ToString().ToLower() == model.ContactId.ToString().ToLower()
                     && x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false);
-                    stage = _context.TblGhlStages.Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.GhlStageId == model.GHL_StageId.ToString()).FirstOrDefault();
-                    jobStatus = _context.MstJobStatuses.Where(s => s.JobStatusName.ToLower() == EnumValue.GetEnumValue(JobStatus.New).ToLower() && s.IsActive == true).Select(x=> x.JobStatusId).FirstOrDefault();
+                    //stage = _context.TblGhlStages.Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.GhlStageId == model.GHL_StageId.ToString()).FirstOrDefault();
+                    //jobStatus = _context.MstJobStatuses.Where(s => s.JobStatusName.ToLower() == EnumValue.GetEnumValue(JobStatus.New).ToLower() && s.IsActive == true).Select(x=> x.JobStatusId).FirstOrDefault();
+
+                    var JobStatusResponse = await statusAndStageMapping.GetJobStatusByName(EnumValue.GetEnumValue(JobStatus.New));
+                    if(JobStatusResponse.IsSuccess)
+                    {
+                        jobStatus = JobStatusResponse.Data.JobStatusId;
+                    }
+                    
+
                 }
                     if (!IsTenantValid)
                     {
@@ -787,7 +798,8 @@ namespace ShutterManagement.Business.Services
                     Version += 1;
                     var generateUnique = GenerateUniqueId.GenerateUniqueIds(ModuleName.Job, AppConstant.LoggedInCompanyCode, Version);
                     bool IsjobNameExists = await AnyAsync(x => x.JobName == model.JobName.Trim() && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId && x.ContactId == model.ContactId);
-                    if (IsjobNameExists)
+                    var StageResponse = await statusAndStageMapping.GetGHLStagesMappingsById(jobStatus);
+                if (IsjobNameExists)
                     {
                         responseVm.Message = "JobName" + AppConstant.AlreadyExists;
                         return responseVm;
@@ -807,7 +819,7 @@ namespace ShutterManagement.Business.Services
                         Notes = model.Notes ?? string.Empty,
                         AttachmentAny = arrayString,
                         JobUniqueId = generateUnique,
-                        GhlStageId = model.GHL_StageId ?? Guid.Empty, 
+                        GhlStageId = StageResponse?.Data?.StageId, 
                         GhlStageName = stage?.GhlStageName?.Trim() ?? string.Empty,
                         GhlContactId = model.GHL_ContactId ?? string.Empty,
                         TenantId = TenantId,
@@ -1303,6 +1315,8 @@ namespace ShutterManagement.Business.Services
                                   from t5 in jobStatus.DefaultIfEmpty()
                                   join t6 in _context.TblContacts on t2.ContactId equals t6.ContactId into contact
                                   from t6 in contact.DefaultIfEmpty()
+                                  join s in  _context.MstStates on t1.State equals s.Id into state
+                                  from s in state.DefaultIfEmpty()
                                   where t6.IsDelete == false && t6.IsActive == true && t2.IsActive == true && t2.IsDelete == false && t2.TenantId == AppConstant.LoggedInTenantId || subTenantlist.Contains((Guid)t2.TenantId)
                                          select new GetAllJobsSubtenant_tenant
                                          {
@@ -1327,7 +1341,7 @@ namespace ShutterManagement.Business.Services
                                              Label = t1.Label,
                                              StreetAddress = t1.StreetAddress,
                                              City = t1.City,
-                                            // State = dbContext.MstStates.Where(s => s.Id == t1.State).Select(y => y.StateName ?? "").FirstOrDefault(),
+                                             State = s.StateName??"",
                                              ZipCode = t1.ZipCode,
                                              JobUniqueCode = t2.JobUniqueId,
                                              CreatedBy = t2.CreatedBy.ToString(),

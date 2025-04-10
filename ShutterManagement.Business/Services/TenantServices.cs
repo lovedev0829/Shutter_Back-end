@@ -89,6 +89,7 @@ namespace ShutterManagement.Business.Services
                     new SqlParameter("@SecondaryColor", SqlDbType.NVarChar) { SqlValue = model.SecondaryColor },
                     new SqlParameter("@StreetAddress", SqlDbType.NVarChar) { SqlValue = model.StreetAddress },
                //     new SqlParameter("@Markup", SqlDbType.NVarChar) { SqlValue = model.Markup },
+                    new SqlParameter("@InvoicePrefix", SqlDbType.NVarChar) { SqlValue = model.InvoicePrefix },
                     new SqlParameter("@City", SqlDbType.NVarChar) { SqlValue = model.City },
                     new SqlParameter("@Country", SqlDbType.NVarChar) { SqlValue = model.Country },
                     new SqlParameter("@ZipCode", SqlDbType.NVarChar) { SqlValue = model.ZipCode },
@@ -453,10 +454,6 @@ namespace ShutterManagement.Business.Services
             return responseVm;
 
         }
-
-
-       
-
 
     }
 }

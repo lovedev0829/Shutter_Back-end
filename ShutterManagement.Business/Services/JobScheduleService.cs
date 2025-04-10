@@ -25,14 +25,16 @@ namespace ShutterManagement.Business.Services
         private readonly ClaimsProperty claimsProperty;
         private readonly IGHLConfiguration gHLConfiguration;
         private readonly GHLService_v2 gHLService_V2;
+        private readonly JobStatusAndStageMapping statusAndStageMapping;
 
         public JobScheduleService(ITenantService tenantService,ClaimsProperty claimsProperty,
-            IGHLConfiguration gHLConfiguration,GHLService_v2 gHLService_V2)
+            IGHLConfiguration gHLConfiguration,GHLService_v2 gHLService_V2,JobStatusAndStageMapping statusAndStageMapping)
         {
             this.tenantService = tenantService;
             this.claimsProperty = claimsProperty;
             this.gHLConfiguration = gHLConfiguration;
             this.gHLService_V2 = gHLService_V2;
+            this.statusAndStageMapping = statusAndStageMapping;
         }
 
         public async Task<IResponseVm<string>> ActiveInActive(Guid JobScheduleId)
@@ -152,6 +154,20 @@ namespace ShutterManagement.Business.Services
                 }
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.InsertSuccessMsg;
+
+                if (responseVm.IsSuccess)
+                {
+                    var jobStatusName = EnumValue.GetEnumValue(JobStatus.Installation_Scheduled);
+                    var updateResponse = await statusAndStageMapping.UpdateOpportunityAndJobStatus(tblJobSchedule?.JobId ?? Guid.Empty, jobStatusName);
+
+                    if (!updateResponse.IsSuccess)
+                    {
+                        responseVm.IsSuccess = false;
+                        responseVm.Message = updateResponse.Message;
+                        return responseVm;
+                    }
+                }
+
 
             }
             catch (Exception ex)

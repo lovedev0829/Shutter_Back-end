@@ -178,6 +178,7 @@ builder.Services.AddScoped<IStripeConfiguration, StripeConfigurationService>();
 builder.Services.AddScoped<IStateService, StateService>();
 builder.Services.AddScoped<IAppointmentScheduleService, AppointmentScheduleService>();
 builder.Services.AddScoped<GoHighLevelOAuthService>();
+builder.Services.AddScoped<JobStatusAndStageMapping>();
 // Add services to the DI container
 builder.Services.AddHttpClient<GhlService>(); // Register HttpClient for GhlService
 builder.Services.AddScoped<GhlService>(); // Register GhlService as a scoped dependency

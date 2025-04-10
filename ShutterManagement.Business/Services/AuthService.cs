@@ -574,6 +574,96 @@ namespace ShutterManagement.Services
             return result;
         }
 
+        public async Task<IResponseVm<Dictionary<string, string>>> GenerateLetterOnlyUniqueCodeAsync(string inputName)
+        {
+            IResponseVm<Dictionary<string, string>> response = new ResponseVm<Dictionary<string, string>>();
+
+            if (string.IsNullOrWhiteSpace(inputName))
+            {
+                response.IsSuccess = false;
+                response.Message = "Input cannot be empty";
+                return response;
+            }
+
+            string cleaned = new string(inputName.Where(char.IsLetter).ToArray()).ToUpperInvariant();
+            if (string.IsNullOrEmpty(cleaned))
+            {
+                response.IsSuccess = false;
+                response.Message = "No valid letters found in input.";
+                return response;
+            }
+
+            Random rng = new Random();
+            int attempt = 0;
+            int maxAttempts = 50;
+
+            string code = "";
+            string invoicePrefix = "";
+
+            try
+            {
+                // Generate Unique Code (6–10 letters)
+                string baseCode = cleaned.Length >= 6 ? cleaned.Substring(0, 6) : cleaned.PadRight(6, 'X');
+                code = baseCode;
+
+                while (attempt < maxAttempts)
+                {
+                    bool isCodeExists = await tenantService.AnyAsync(x => x.IsActive==true && x.IsDelete == false && x.Code == code);
+                    if (!isCodeExists)
+                        break;
+
+                    var extraLetters = new string(Enumerable.Repeat("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 4)
+                                                  .Select(s => s[rng.Next(s.Length)]).ToArray());
+
+                    int lengthToUse = Math.Min(10 - baseCode.Length, extraLetters.Length);
+                    code = (baseCode + extraLetters.Substring(0, lengthToUse)).Substring(0, 10);
+                    attempt++;
+                }
+
+                // Generate Unique InvoicePrefix from input but ensure it's different from Code
+                attempt = 0;
+                while (attempt < maxAttempts)
+                {
+                    var shuffled = new string(cleaned.OrderBy(_ => rng.Next()).ToArray());
+                    var candidate = shuffled.Length >= 4 ? shuffled.Substring(0, 4) : shuffled.PadRight(4, 'Z');
+
+                    if (candidate != code)
+                    {
+                        bool isPrefixExists = await dbContext.TblTenantBrandingInfos
+                            .AnyAsync(x => x.IsActive==true && x.IsDelete== false && x.InvoicePrefix == candidate);
+
+                        if (!isPrefixExists)
+                        {
+                            invoicePrefix = candidate;
+                            break;
+                        }
+                    }
+
+                    attempt++;
+                }
+
+                response.IsSuccess = true;
+                response.Message = "Unique codes generated successfully.";
+                response.Data = new Dictionary<string, string>
+        {
+            { "Code", code },
+            { "InvoicePrefix", invoicePrefix }
+        };
+            }
+            catch (Exception ex)
+            {
+                response.IsSuccess = false;
+                response.Message = $"Error occurred while generating codes: {ex.Message}";
+            }
+
+            return response;
+        }
+
+
+
+
+
+
     }
 
 
