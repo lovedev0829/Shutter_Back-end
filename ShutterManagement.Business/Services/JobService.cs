@@ -22,6 +22,7 @@ using Microsoft.AspNetCore.Mvc;
 using ShutterManagment.GHL.ViewModel.Request;
 using System.Diagnostics.Contracts;
 using Org.BouncyCastle.Asn1.X509.Qualified;
+using ShutterManagement.Core.SPModel;
 
 namespace ShutterManagement.Business.Services
 {
@@ -1314,6 +1315,8 @@ namespace ShutterManagement.Business.Services
                                   from t5 in jobStatus.DefaultIfEmpty()
                                   join t6 in _context.TblContacts on t2.ContactId equals t6.ContactId into contact
                                   from t6 in contact.DefaultIfEmpty()
+                                  join s in  _context.MstStates on t1.State equals s.Id into state
+                                  from s in state.DefaultIfEmpty()
                                   where t6.IsDelete == false && t6.IsActive == true && t2.IsActive == true && t2.IsDelete == false && t2.TenantId == AppConstant.LoggedInTenantId || subTenantlist.Contains((Guid)t2.TenantId)
                                          select new GetAllJobsSubtenant_tenant
                                          {
@@ -1338,7 +1341,7 @@ namespace ShutterManagement.Business.Services
                                              Label = t1.Label,
                                              StreetAddress = t1.StreetAddress,
                                              City = t1.City,
-                                            // State = dbContext.MstStates.Where(s => s.Id == t1.State).Select(y => y.StateName ?? "").FirstOrDefault(),
+                                             State = s.StateName??"",
                                              ZipCode = t1.ZipCode,
                                              JobUniqueCode = t2.JobUniqueId,
                                              CreatedBy = t2.CreatedBy.ToString(),
