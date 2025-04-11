@@ -33,7 +33,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsStripeConfigurationTenantExist = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
+                var IsStripeConfigurationTenantExist = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete ==false).FirstOrDefault();
                 if (IsStripeConfigurationTenantExist != null)
                 {
                     IsStripeConfigurationTenantExist.SecretKey = StripeConfiguration.SecretKey;
@@ -59,6 +59,8 @@ namespace ShutterManagement.Business.Services
                         CancelUrl = StripeConfiguration.cancelUrl,
                         WebhookSecret=StripeConfiguration.WebhookSecret,
                         TenantId = AppConstant.LoggedInTenantId,
+                        IsDelete= false,
+                        IsActive=true,
                         CreatedAt = DateTime.Now,
                     };
                     var res1 = await Add(tblstripeconfiguration);
@@ -79,7 +81,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<StripeConfigurationVm> responseVm = new ResponseVm<StripeConfigurationVm>();
             try
             {
-                var StripeConfigurationVm = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
+                var StripeConfigurationVm = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false).FirstOrDefault();
                 responseVm.Data = new StripeConfigurationVm
                 {
                     Id = StripeConfigurationVm?.Id,
