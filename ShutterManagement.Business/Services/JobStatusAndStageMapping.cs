@@ -20,13 +20,13 @@ namespace ShutterManagement.Business.Services
     {
         private readonly ShutterDBContext dBContext;
         private readonly IGHLConfiguration gHLConfiguration;
-        private readonly JobStageStatusAutomationHistoryRepository statusAutomationHistoryRepository;
+        private readonly IjobStageStatusAutomAtionHistory automAtionHistory;
 
-        public JobStatusAndStageMapping(ShutterDBContext dBContext,IGHLConfiguration gHLConfiguration,JobStageStatusAutomationHistoryRepository  statusAutomationHistoryRepository)
+        public JobStatusAndStageMapping(ShutterDBContext dBContext,IGHLConfiguration gHLConfiguration,IjobStageStatusAutomAtionHistory automAtionHistory)
         {
             this.dBContext = dBContext;
             this.gHLConfiguration = gHLConfiguration;
-            this.statusAutomationHistoryRepository = statusAutomationHistoryRepository;
+            this.automAtionHistory = automAtionHistory;
         }
 
         public async Task<IResponseVm<string>> GetGHLOpportunityIdByJobId(Guid? jobId)
@@ -252,7 +252,7 @@ namespace ShutterManagement.Business.Services
                 if (job != null)
                 {
                 
-                        var res = await SaveFullJobHistoryAsync(job);
+                        var res = await automAtionHistory.SaveHistory(job);
                     
                   
                 }
@@ -271,42 +271,6 @@ namespace ShutterManagement.Business.Services
 
 
 
-        public async Task<IResponseVm<string>> SaveFullJobHistoryAsync(TblJob job)
-        {
-            IResponseVm<string> responseVm = new ResponseVm<string>();
-
-            try
-            {
-                if (job == null)
-                {
-                    responseVm.IsSuccess = false;
-                    responseVm.Message = "Job data is null.";
-                    return responseVm;
-                }
-
-                var history = new TblJobStageStatusAutomAtionHistory
-                {
-                    HistoryId = Guid.NewGuid(),
-                    JobJson = JsonConvert.SerializeObject(job),
-                    ChangedBy = AppConstant.LoggedInTenantId,
-                    ChangedAt = DateTime.UtcNow,
-                    TenantId = AppConstant.LoggedInTenantId
-                };
-
-                var res =await statusAutomationHistoryRepository.Add(history);
-                responseVm.IsSuccess = true;
-                responseVm.Message = "Job history saved successfully.";
-            }
-            catch (Exception ex)
-            {
-                responseVm.IsSuccess = false;
-                responseVm.Message = $"Error saving job history: {ex.Message}";
-                responseVm.Data = null;
-
-            }
-
-            return responseVm;
-        }
 
 
 
