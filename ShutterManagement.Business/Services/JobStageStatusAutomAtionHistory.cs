@@ -31,9 +31,9 @@ namespace ShutterManagement.Business.Services
                 var history = new TblJobStageStatusAutomAtionHistory
                 {
                     HistoryId = Guid.NewGuid(),
-                    JobJson = JsonConvert.SerializeObject(job),
+                    JobJson = JsonConvert.SerializeObject(job)??"",
                     ChangedBy = AppConstant.LoggedInTenantId,
-                    ChangedAt = DateTime.UtcNow,
+                    ChangedAt = DateTime.Now,
                     TenantId = AppConstant.LoggedInTenantId
                 };
 
