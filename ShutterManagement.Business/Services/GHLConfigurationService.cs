@@ -161,7 +161,7 @@ namespace ShutterManagement.Business.Services
                     BaseAddress = gHLConfiguration?.BaseAddress ?? "",
                     LocationId = gHLConfiguration?.LocationId ?? "",
                     PipelineId = gHLConfiguration?.PipelineId ?? "",
-                    LastSync = gHLConfiguration?.LastSync ?? DateTime.Now,
+                    LastSync = gHLConfiguration?.LastSync ?? null,
                     CalendarName = gHLConfiguration?.CalendarName ?? "",
                     GeneratedToken = gHLConfiguration?.GeneratedToken ?? "",
                     ClientId = gHLConfiguration?.ClientId ?? "",
