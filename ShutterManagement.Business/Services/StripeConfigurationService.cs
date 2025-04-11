@@ -52,6 +52,7 @@ namespace ShutterManagement.Business.Services
                 {
                     TblStripeConfiguration tblstripeconfiguration = new TblStripeConfiguration()
                     {
+                        Id= Guid.NewGuid(),
                         SecretKey = StripeConfiguration.SecretKey,
                         PublishableKey = StripeConfiguration.PublishableKey,
                         SuccessUrl = StripeConfiguration.successUrl,
@@ -81,7 +82,7 @@ namespace ShutterManagement.Business.Services
                 var StripeConfigurationVm = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
                 responseVm.Data = new StripeConfigurationVm
                 {
-                    //Id = StripeConfigurationVm.Id,
+                    Id = StripeConfigurationVm?.Id,
                     SecretKey = StripeConfigurationVm?.SecretKey??"",
                     PublishableKey = StripeConfigurationVm?.PublishableKey??"",
                     successUrl = StripeConfigurationVm?.SuccessUrl ?? "",

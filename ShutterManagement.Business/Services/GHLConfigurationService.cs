@@ -84,6 +84,7 @@ namespace ShutterManagement.Business.Services
                 {
                     TblGhlconfiguration tblGhlconfiguration = new TblGhlconfiguration()
                     {
+                        Id=Guid.NewGuid(),
                         PipelineId = gHLConfiguration.PipelineId ?? "",
                         BaseAddress = gHLConfiguration.BaseAddress??"",
                         LocationId = gHLConfiguration.LocationId ?? "",
@@ -157,6 +158,7 @@ namespace ShutterManagement.Business.Services
 
                 responseVm.Data = new GetGHLConfiguration
                 {
+                    Id=Guid.NewGuid(),
                     APIkey = gHLConfiguration?.Apikey ?? "",
                     BaseAddress = gHLConfiguration?.BaseAddress ?? "",
                     LocationId = gHLConfiguration?.LocationId ?? "",
