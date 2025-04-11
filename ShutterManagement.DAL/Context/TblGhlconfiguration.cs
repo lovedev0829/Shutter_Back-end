@@ -36,4 +36,10 @@ public partial class TblGhlconfiguration
     public string? ClientSecret { get; set; }
 
     public string? RedirectUri { get; set; }
+
+    public bool? IsActive { get; set; }
+
+    public bool? IsDelete { get; set; }
+
+    public Guid? ModifiedBy { get; set; }
 }

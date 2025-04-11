@@ -171,6 +171,16 @@ namespace ShutterManagement.Core.Common
         [EnumMember(Value = "User")]
         User
     }
+
+
+    public enum DeleteType
+    {
+        [EnumMember(Value = "Stripe")]
+        Stripe,
+        [EnumMember(Value = "GHL")]
+        GHL
+    }
+
     public static class EnumValue
     {
         public static string GetEnumValue<T>(T enumValue) where T : Enum

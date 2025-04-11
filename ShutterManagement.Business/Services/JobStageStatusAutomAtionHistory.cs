@@ -45,7 +45,6 @@ namespace ShutterManagement.Business.Services
             {
                 responseVm.IsSuccess = false;
                 responseVm.Message = $"Error saving job history: {ex.Message}";
-                responseVm.Data = null;
 
             }
 

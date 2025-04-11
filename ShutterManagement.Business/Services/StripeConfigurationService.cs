@@ -126,7 +126,40 @@ namespace ShutterManagement.Business.Services
                 FileLogger.Log("No Stripe configuration found for Tenant ID:", tenantId);
             }
         }
+
+
+        public async Task<IResponseVm<string>> DeleteStripeConfiguration(Guid? configurationid)
+        {
+            IResponseVm<string> result = new ResponseVm<string>();
+            try
+            {
+                var IsStripeConfiExists = GetAllQuerable().Where(x => x.IsDelete == false && x.Id == configurationid &&
+                x.TenantId == AppConstant.LoggedInTenantId
+                ).FirstOrDefault();
+                if(IsStripeConfiExists!=null)
+                {
+                    IsStripeConfiExists.IsActive = false;
+                    IsStripeConfiExists.IsDelete = true;
+                    IsStripeConfiExists.ModifiedBy = AppConstant.LoggedInUserID;
+                    var res = await Update(IsStripeConfiExists);
+                    result.IsSuccess = true;
+                    result.Message = AppConstant.DeleteSuccessMsg;
+                }
+                else
+                {
+                    result.Message = AppConstant.NoUserFound;
+                }
+            }
+            catch (Exception ex)
+            {
+                result.Message = AppConstant.ExceptionError + ex.Message;
+            }
+            return result;
+        }
+
+
+
     }
-    }
+}
 
 

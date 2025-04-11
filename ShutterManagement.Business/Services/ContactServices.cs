@@ -125,6 +125,14 @@ namespace ShutterManagement.Business.Services
                     TenantId = (Guid)AppConstant.LoggedInTenantId;
                     FileLogger.Log($"Tenant Id id fetched {TenantId}");
                 }
+                if(!model.IsTaxExemption)
+                {
+                    if(model.TaxExemptionVm.EffectiveDate == null && model.TaxExemptionVm.ExpiryDate == null)
+                    {
+                        responseVm.Message = "Please Fill TaxExemption Details.";
+                        return responseVm;
+                    }
+                }
 
                 if (IsTenantExists)
                 {

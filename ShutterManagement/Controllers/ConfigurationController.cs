@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using ShutterManagement.Business.Interfaces;
+using ShutterManagement.Core.Common;
 using ShutterManagement.Core.ViewModels.Request;
 
 namespace ShutterManagement.Controllers
@@ -59,6 +60,28 @@ namespace ShutterManagement.Controllers
             return Ok(res);
         }
 
-        
+        [HttpPost]
+        [Route("DeleteConfiguration")]
+        [Authorize(Roles = "StripeEdit,GHLEdit")]
+        public async Task<IActionResult> DeleteStripeOrGHLConfiguration(DeleteType deleteType, Guid? configurationId)
+        {
+            if (deleteType == DeleteType.Stripe)
+            {
+                var stripeResponse = await stripeConfiguration.DeleteStripeConfiguration(configurationId);
+                return Ok(stripeResponse);
+            }
+            else if (deleteType == DeleteType.GHL)
+            {
+                var ghlResponse = await gHLConfiguration.DeleteGHLConfiguration(configurationId);
+                return Ok(ghlResponse);
+            }
+
+            return BadRequest("Invalid delete type.");
+        }
+
+
+
+
+
     }
 }

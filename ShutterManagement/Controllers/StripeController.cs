@@ -39,9 +39,10 @@ namespace ShutterManagement.Controllers
         {
             try
             {
+                FileLogger.Log($"Received Stripe Webhook:");
                 var json = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();
                 var stripeEvent = EventUtility.ParseEvent(json);
-
+                FileLogger.Log($"Received Stripe Webhook Event: {stripeEvent.Type}");
                 // Log the received webhook
                 FileLogger.Log($"Received Stripe Webhook Event: {stripeEvent.Type}");
 
