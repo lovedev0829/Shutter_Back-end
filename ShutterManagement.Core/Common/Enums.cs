@@ -83,13 +83,6 @@ namespace ShutterManagement.Core.Common
         [EnumMember(Value = "VEN")]
         Vendor
     }
-//    Completed
-//New
-//Installation Scheduled
-//In-Production
-//Won
-//Appointment Scheduled
-//Quote Sent
 
     // JobStatus Enum Value
     public enum JobStatus

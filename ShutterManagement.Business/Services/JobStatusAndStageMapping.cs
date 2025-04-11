@@ -11,6 +11,8 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 using ShutterManagement.Business.Interfaces;
+using Microsoft.EntityFrameworkCore;
+using Azure;
 
 namespace ShutterManagement.Business.Services
 {
@@ -18,11 +20,13 @@ namespace ShutterManagement.Business.Services
     {
         private readonly ShutterDBContext dBContext;
         private readonly IGHLConfiguration gHLConfiguration;
+        private readonly JobStageStatusAutomationHistoryRepository statusAutomationHistoryRepository;
 
-        public JobStatusAndStageMapping(ShutterDBContext dBContext,IGHLConfiguration gHLConfiguration)
+        public JobStatusAndStageMapping(ShutterDBContext dBContext,IGHLConfiguration gHLConfiguration,JobStageStatusAutomationHistoryRepository  statusAutomationHistoryRepository)
         {
             this.dBContext = dBContext;
             this.gHLConfiguration = gHLConfiguration;
+            this.statusAutomationHistoryRepository = statusAutomationHistoryRepository;
         }
 
         public async Task<IResponseVm<string>> GetGHLOpportunityIdByJobId(Guid? jobId)
@@ -244,10 +248,13 @@ namespace ShutterManagement.Business.Services
                 if (!updateJobResponse.IsSuccess)
                     return new ResponseVm<string> { IsSuccess = false, Message = updateJobResponse.Message };
 
-                var job = dBContext.TblJobs.FirstOrDefault(x => x.JobId == jobId && x.IsActive == true);
+                var job = dBContext.TblJobs.Where(x => x.JobId == jobId && x.IsActive == true).FirstOrDefault();
                 if (job != null)
                 {
-                    await SaveFullJobHistoryAsync(job);
+                
+                        var res = await SaveFullJobHistoryAsync(job);
+                    
+                  
                 }
 
                 responseVm.IsSuccess = true;
@@ -264,20 +271,43 @@ namespace ShutterManagement.Business.Services
 
 
 
-        public async Task SaveFullJobHistoryAsync(TblJob job)
+        public async Task<IResponseVm<string>> SaveFullJobHistoryAsync(TblJob job)
         {
-            var history = new TblJobStageStatusAutomAtionHistory
-            {
-                HistoryId = Guid.NewGuid(),
-                JobJson = JsonConvert.SerializeObject(job),
-                ChangedBy = AppConstant.LoggedInTenantId, 
-                ChangedAt = DateTime.Now,
-                TenantId = AppConstant.LoggedInTenantId
-            };
+            IResponseVm<string> responseVm = new ResponseVm<string>();
 
-            await dBContext.TblJobStageStatusAutomAtionHistories.AddAsync(history);
-            await dBContext.SaveChangesAsync();
+            try
+            {
+                if (job == null)
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = "Job data is null.";
+                    return responseVm;
+                }
+
+                var history = new TblJobStageStatusAutomAtionHistory
+                {
+                    HistoryId = Guid.NewGuid(),
+                    JobJson = JsonConvert.SerializeObject(job),
+                    ChangedBy = AppConstant.LoggedInTenantId,
+                    ChangedAt = DateTime.UtcNow,
+                    TenantId = AppConstant.LoggedInTenantId
+                };
+
+                var res =await statusAutomationHistoryRepository.Add(history);
+                responseVm.IsSuccess = true;
+                responseVm.Message = "Job history saved successfully.";
+            }
+            catch (Exception ex)
+            {
+                responseVm.IsSuccess = false;
+                responseVm.Message = $"Error saving job history: {ex.Message}";
+                responseVm.Data = null;
+
+            }
+
+            return responseVm;
         }
+
 
 
         #endregion Update Opportunity Status
