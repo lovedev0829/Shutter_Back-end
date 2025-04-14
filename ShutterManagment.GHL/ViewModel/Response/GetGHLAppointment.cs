@@ -97,6 +97,7 @@ namespace ShutterManagment.GHL.ViewModel.Response
     public class GetGHLAppointment
     {
         public List<Calendar> calendars { get; set; }
+        public List<TeamMember> teamMembers { get; set; }
         public string traceId { get; set; }
     }
 

@@ -43,6 +43,8 @@ public partial class TblUser
 
     public string? ForgetPassword { get; set; }
 
+    public string? GhlUserId { get; set; }
+
     public virtual MstJobTitle? JobTitle { get; set; }
 
     public virtual ICollection<TblJobSchedule> TblJobSchedules { get; set; } = new List<TblJobSchedule>();

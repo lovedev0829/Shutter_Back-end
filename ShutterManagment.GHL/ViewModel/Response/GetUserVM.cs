@@ -73,6 +73,7 @@ namespace ShutterManagment.GHL.ViewModel.Response
         public string role { get; set; }
         public List<string> locationIds { get; set; }
     }
+    
 
     public class User
     {
@@ -81,6 +82,9 @@ namespace ShutterManagment.GHL.ViewModel.Response
         public string firstName { get; set; }
         public string lastName { get; set; }
         public string email { get; set; }
+        // Add these fields for calendar info
+        public string? CalendarId { get; set; }
+        public string? CalendarName { get; set; }
         public Permissions permissions { get; set; }
         public Roles roles { get; set; }
         public List<string> scopes { get; set; }
@@ -89,6 +93,9 @@ namespace ShutterManagment.GHL.ViewModel.Response
         public bool deleted { get; set; }
         public string membershipContactId { get; set; }
         public string freshdeskContactId { get; set; }
+        public List<Calendar> Calendars { get; set; } // <-- Add this
+
+        
     }
 
 }

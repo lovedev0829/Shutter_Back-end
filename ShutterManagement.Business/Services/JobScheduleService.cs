@@ -108,6 +108,7 @@ namespace ShutterManagement.Business.Services
                     JobTitleId = model.JobTitleId,
                     UserId = model.UserId,
                     JobId = model.JobId,
+                    GhlUserId = model.GhlUserId,
                     EstimateId=model.EstimateId,
                     StartDate = model?.StartDate,
                     EndDate = model?.EndDate,
@@ -132,11 +133,13 @@ namespace ShutterManagement.Business.Services
 
                     var appointment = new GHLAppointmentAdd
                     {
+                        Title ="Shutter Installation Appointment",
                         contactId = contactId,
                         startTime = formattedstartDate,
                         endtime = formattedstartDateend,
                         locationId = AppConstant.GHL_Locationd,
-                        ignoreDateRange = false,
+                        assignedUserId = tblJobSchedule.GhlUserId,
+                        ignoreDateRange = true,
                     };
                     var ghlResponse = await gHLService_V2.CreateAppointmentAsync(appointment);
                     if(ghlResponse != null)
@@ -253,7 +256,9 @@ namespace ShutterManagement.Business.Services
                                            JobTitleId = i.JobTitleId,
                                            JobTitle= jt.JobTitleName ?? "", 
                                            UserId = i.UserId,
+                                           GhlUserId = i.GhlUserId ?? "",
                                            JobId = i.JobId,
+                                           GhlUserName=dbContext.TblGhlUsers.Where(x => x.GhlUserId == i.GhlUserId).Select(x => x.GhlUserName).FirstOrDefault() ?? "",
                                            UserFullname = u.FirstName+ " " +u.LastName ?? "",
                                            StartDate = i.StartDate,
                                            EndDate = i.EndDate,
@@ -333,6 +338,7 @@ namespace ShutterManagement.Business.Services
 
                 JobSchedule.JobTitleId = model.JobTitleId;
                 JobSchedule.UserId = model.UserId;
+                JobSchedule.GhlUserId = model.GhlUserId;
                 JobSchedule.EstimateId = model.EstimateId;
                 JobSchedule.StartDate = model.StartDate;
                 JobSchedule.EndDate = model.EndDate;
@@ -355,10 +361,12 @@ namespace ShutterManagement.Business.Services
                         string formattedstartDateend = FormatDateTimeWithOffset(JobSchedule.EndDate, JobSchedule.DayEndDateTime);
                         var appointment = new GHLAppointmentAdd
                         {
+                            Title = "Shutter Installation Appointment",
                             contactId = contactId,
                             startTime = formattedstartDate,
                             endtime = formattedstartDateend,
                             locationId = AppConstant.GHL_Locationd,
+                            assignedUserId = model.GhlUserId,
                         };
                         var ghlResponse = await gHLService_V2.UpdateAppointmentAsync(JobSchedule.GhlEventId, appointment);
                     }
@@ -370,10 +378,13 @@ namespace ShutterManagement.Business.Services
                         string formattedstartDateend = FormatDateTimeWithOffset(JobSchedule.EndDate, JobSchedule.DayEndDateTime);
                         var appointment = new GHLAppointmentAdd
                         {
+                            Title = "Shutter Installation Appointment",
                             contactId = contactId,
                             startTime = formattedstartDate,
                             endtime = formattedstartDateend,
                             locationId = AppConstant.GHL_Locationd,
+                            assignedUserId = model.GhlUserId,
+                            ignoreDateRange = true,
                         };
                         var ghlResponse = await gHLService_V2.CreateAppointmentAsync(appointment);
                         if (ghlResponse != null)

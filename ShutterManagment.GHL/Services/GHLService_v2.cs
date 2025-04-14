@@ -580,6 +580,7 @@ namespace ShutterManagement.GHL.Services
 
                 var contactData = new
                 {
+                    title= appointment.Title??"",
                     calendarId = CalendarId,
                     contactId = appointment.contactId,
                     //contactId = "TYWPKcoMp715KTOPeCHb",
@@ -588,7 +589,8 @@ namespace ShutterManagement.GHL.Services
                     endTime = appointment.endtime,
                     ignoreDateRange = true,
                     meetingLocationType = "default",
-                    ignoreFreeSlotValidation = false,
+                    ignoreFreeSlotValidation = true,
+                    assignedUserId= appointment.assignedUserId,
                 };
 
                 var requestUrl = $"{AppConstant.GHL_BaseAddress}/calendars/events/appointments";
@@ -650,14 +652,14 @@ namespace ShutterManagement.GHL.Services
 
                 var contactData = new
                 {
+                    title= appointment.Title ?? "",
+
                     calendarId = calendarId??"",
                     startTime = appointment.startTime??"",
                     endTime = appointment.endtime??"",
-                    title = "Test Event Updated",
-                    meetingLocationType = "default",
-                    appointmentStatus = "new",
                     ignoreDateRange = true,
-                    ignoreFreeSlotValidation = false,
+                    ignoreFreeSlotValidation = true,
+                    assignedUserId = appointment.assignedUserId,
                 };
 
                 var requestUrl = $"{AppConstant.GHL_BaseAddress}/calendars/events/appointments/{eventId}";
@@ -743,8 +745,10 @@ namespace ShutterManagement.GHL.Services
         }
         public async Task<List<User>> GetUsersAsync()
         {
+            var users = new List<User>();
             try
             {
+                
                 var requestUrl = $"{AppConstant.GHL_BaseAddress}/users/?locationId={AppConstant.GHL_Locationd}";
                 using var requestMessage = new HttpRequestMessage(HttpMethod.Get, requestUrl)
                 {
@@ -763,14 +767,252 @@ namespace ShutterManagement.GHL.Services
                 {
                     PropertyNamingPolicy = JsonNamingPolicy.CamelCase
                 });
-                return result?.users ?? new List<User>();
+
+                if (result?.users != null)
+                {
+                    users = result.users
+                        .Where(user =>
+                            user.Calendars != null &&
+                            user.Calendars.Any(c =>
+                                string.Equals(c.id.ToLower(), AppConstant.GHL_CalendarName.ToLower(), StringComparison.OrdinalIgnoreCase) ||
+                                string.Equals(c.name, AppConstant.GHL_CalendarName, StringComparison.OrdinalIgnoreCase)))
+                        .ToList();
+                }
             }
             catch (Exception ex)
             {
                 FileLogger.Log($"Error fetching users: {ex.Message}");
                 return new List<User>(); 
             }
+            return users;
         }
+
+        public async Task<IResponseVm<List<User>>> GetUsersByCalendarIdAsync()
+        {
+            var responseVm = new ResponseVm<List<User>>
+            {
+                Data = new List<User>()
+            };
+
+            try
+            {
+                var calendarRequestUrl = $"{AppConstant.GHL_BaseAddress}/calendars/?locationId={AppConstant.GHL_Locationd}";
+                using var calendarRequest = new HttpRequestMessage(HttpMethod.Get, calendarRequestUrl);
+                calendarRequest.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                calendarRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
+                calendarRequest.Headers.Add("Version", "2021-07-28");
+
+                var calendarResponse = await _httpClient.SendAsync(calendarRequest);
+                calendarResponse.EnsureSuccessStatusCode();
+
+                var calendarJson = await calendarResponse.Content.ReadAsStringAsync();
+                var calendarResult = System.Text.Json.JsonSerializer.Deserialize<GetGHLAppointment>(calendarJson, new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                });
+
+                var calendar = calendarResult?.calendars?.FirstOrDefault(c => c.name == AppConstant.GHL_CalendarName || c.id == AppConstant.GHL_CalendarName);
+                if (calendar == null || calendar.teamMembers == null || !calendar.teamMembers.Any())
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = "No matching calendar or team members found.";
+                    return responseVm;
+                }
+
+                var userIds = calendar.teamMembers.Select(tm => tm.userId).ToHashSet();
+
+                var userRequestUrl = $"{AppConstant.GHL_BaseAddress}/users/?locationId={AppConstant.GHL_Locationd}";
+                using var userRequest = new HttpRequestMessage(HttpMethod.Get, userRequestUrl);
+                userRequest.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                userRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
+                userRequest.Headers.Add("Version", "2021-07-28");
+
+                var userResponse = await _httpClient.SendAsync(userRequest);
+                userResponse.EnsureSuccessStatusCode();
+
+                var userJson = await userResponse.Content.ReadAsStringAsync();
+                var userResult = System.Text.Json.JsonSerializer.Deserialize<GetUserVM>(userJson, new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                });
+
+                if (userResult?.users != null)
+                {
+                    responseVm.Data = userResult.users
+                        .Where(u => userIds.Contains(u.id))
+                        .Select(u =>
+                        {
+                            u.CalendarId = calendar.id;
+                            u.CalendarName = calendar.name;
+                            return u;
+                        })
+                        .ToList();
+
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = "Users fetched successfully.";
+
+                    if (responseVm.IsSuccess)
+                    {
+                        var usersyncResponse=await SaveOrUpdateGHLUsersAsync(responseVm.Data);
+                        if(usersyncResponse.IsSuccess)
+                        {
+
+                           responseVm.Message = "GHL Users synced successfully.";
+                        }
+                        else
+                        {
+                            responseVm.IsSuccess = false;
+                            responseVm.Message = usersyncResponse.Message;
+                        }
+                    }
+                }
+
+
+                else
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = "No users found in response.";
+                }
+            }
+            catch (HttpRequestException httpEx)
+            {
+                FileLogger.Log($"HTTP error in GetUsersByCalendarIdAsync: {httpEx.Message}");
+                responseVm.IsSuccess = false;
+                responseVm.Message = $"HTTP error: {httpEx.Message}";
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Log($"Unexpected error in GetUsersByCalendarIdAsync: {ex.Message}");
+                responseVm.IsSuccess = false;
+                responseVm.Message = $"Unexpected error: {ex.Message}";
+            }
+
+            return responseVm;
+        }
+
+
+
+        public async Task<IResponseVm<string>> SaveOrUpdateGHLUsersAsync(List<User> users)
+        {
+            var responseVm = new ResponseVm<string>();
+            var now = DateTime.Now;
+
+            try
+            {
+                foreach (var user in users)
+                {
+                    var existingUser = await dBContext.TblGhlUsers
+                        .FirstOrDefaultAsync(u =>
+                            u.GhlUserId == user.id &&
+                            u.TenantId == AppConstant.LoggedInTenantId &&
+                            u.IsActive == true &&
+                            u.IsDelete == false);
+
+                    if (existingUser != null)
+                    {
+                        existingUser.GhlUserName = user.name;
+                        existingUser.GhlFirstName = user.firstName;
+                        existingUser.GhlLastName = user.lastName;
+                        existingUser.GhlEmail = user.email;
+                        existingUser.GhlCalendarId = user.CalendarId;
+                        existingUser.GhlCalendarName = user.CalendarName;
+                        existingUser.GhlLastSync = now;
+                        existingUser.UpdatedAt = now;
+                        existingUser.ModifiedBy = AppConstant.LoggedInUserID;
+                    }
+                    else
+                    {
+                        var newUser = new TblGhlUser
+                        {
+                            Id = Guid.NewGuid(),
+                            GhlUserId = user.id,
+                            GhlUserName = user.name,
+                            GhlFirstName = user.firstName,
+                            GhlLastName = user.lastName,
+                            GhlEmail = user.email,
+                            GhlCalendarId = user.CalendarId,
+                            GhlCalendarName = user.CalendarName,
+                            GhlLastSync = now,
+                            TenantId = AppConstant.LoggedInTenantId,
+                            CreatedBy = AppConstant.LoggedInUserID,
+                            UpdatedAt = now,
+                            ModifiedBy = AppConstant.LoggedInUserID,
+                            IsActive = true,
+                            IsDelete = false
+                        };
+
+                        await dBContext.TblGhlUsers.AddAsync(newUser);
+                    }
+
+                    if (!string.IsNullOrEmpty(user.email))
+                    {
+                        var systemUser = await dBContext.TblUsers
+                            .FirstOrDefaultAsync(u =>
+                                u.Email == user.email &&
+                                u.TenantId == AppConstant.LoggedInTenantId &&
+                                u.IsActive == true &&
+                                u.IsDelete == false);
+
+                        if (systemUser != null)
+                        {
+                            systemUser.GhlUserId = user.id;
+                            systemUser.ModifiedAt = now;
+                            systemUser.ModifiedBy = AppConstant.LoggedInUserID;
+                        }
+                    }
+                }
+
+                await dBContext.SaveChangesAsync();
+
+                responseVm.IsSuccess = true;
+                responseVm.Data = "GHL users saved or updated successfully.";
+                responseVm.Message = "GHL Users successfully synced.";
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Log($"Error in SaveOrUpdateGHLUsersAsync: {ex.Message}");
+                responseVm.IsSuccess = false;
+                responseVm.Message = "An error occurred while saving GHL users.";
+            }
+
+            return responseVm;
+        }
+
+
+        public async Task<IResponseVm<List<TblGhlUser>>> GetGHLUsersByCalendarId()
+        {
+            IResponseVm<List<TblGhlUser>> responseVm = new ResponseVm<List<TblGhlUser>>();
+
+            try
+            {
+
+                var users = await dBContext.TblGhlUsers
+                    .Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.GhlCalendarId == AppConstant.GHL_CalendarName ||  x.GhlCalendarName == AppConstant.GHL_CalendarName)
+                    .ToListAsync();
+
+                if (users != null && users.Count > 0)
+                {
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = "Users fetched successfully.";
+                    responseVm.Data = users;
+                }
+                else
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = "No users found.";
+                }
+            }
+            catch (Exception ex)
+            {
+                responseVm.IsSuccess = false;
+                responseVm.Message = $"Error: {ex.Message}";
+            }
+
+            return responseVm;
+        }
+
+
+
 
         public async Task<IResponseVm<StageMapping>> GetGHLStagesMappingsById(Guid? JobstatusId)
         {

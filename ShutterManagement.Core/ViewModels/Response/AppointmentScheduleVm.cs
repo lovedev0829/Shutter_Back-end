@@ -17,6 +17,9 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? Title { get; set; }
         public string? Description { get; set; }
 
+        public string? GhlUserId { get; set; }
+        public string? GhlUserName { get; set; }
+
 
     }
 }

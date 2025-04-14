@@ -73,6 +73,8 @@ public partial class ShutterDBContext : DbContext
 
     public virtual DbSet<TblGhlStagesmapping> TblGhlStagesmappings { get; set; }
 
+    public virtual DbSet<TblGhlUser> TblGhlUsers { get; set; }
+
     public virtual DbSet<TblGhlconfiguration> TblGhlconfigurations { get; set; }
 
     public virtual DbSet<TblInvoice> TblInvoices { get; set; }
@@ -380,6 +382,13 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.Description)
                 .HasMaxLength(200)
                 .IsUnicode(false);
+            entity.Property(e => e.GhlEventId)
+                .HasMaxLength(100)
+                .HasColumnName("GHL_EventId");
+            entity.Property(e => e.GhlUserId)
+                .HasMaxLength(100)
+                .HasColumnName("GHL_UserId");
+            entity.Property(e => e.LastSync).HasColumnType("datetime");
             entity.Property(e => e.ScheduleDateTime).HasColumnType("datetime");
             entity.Property(e => e.Title)
                 .HasMaxLength(100)
@@ -825,6 +834,40 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
         });
 
+        modelBuilder.Entity<TblGhlUser>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__tblGHL_U__3214EC0715BD3216");
+
+            entity.ToTable("tblGHL_Users", "dbo");
+
+            entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.GhlCalendarId)
+                .HasMaxLength(100)
+                .HasColumnName("GHL_CalendarId");
+            entity.Property(e => e.GhlCalendarName)
+                .HasMaxLength(100)
+                .HasColumnName("GHL_CalendarName");
+            entity.Property(e => e.GhlEmail)
+                .HasMaxLength(100)
+                .HasColumnName("GHL_Email");
+            entity.Property(e => e.GhlFirstName)
+                .HasMaxLength(100)
+                .HasColumnName("GHL_FirstName");
+            entity.Property(e => e.GhlLastName)
+                .HasMaxLength(100)
+                .HasColumnName("GHL_LastName");
+            entity.Property(e => e.GhlLastSync)
+                .HasColumnType("datetime")
+                .HasColumnName("GHL_lastSync");
+            entity.Property(e => e.GhlUserId)
+                .HasMaxLength(100)
+                .HasColumnName("GHL_UserId");
+            entity.Property(e => e.GhlUserName)
+                .HasMaxLength(100)
+                .HasColumnName("GHL_UserName");
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+        });
+
         modelBuilder.Entity<TblGhlconfiguration>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK__TblGHLCo__3214EC074F1C0B7E");
@@ -1024,6 +1067,9 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
             entity.Property(e => e.EndDate).HasColumnType("datetime");
             entity.Property(e => e.GhlEventId).HasColumnName("GHL_EventId");
+            entity.Property(e => e.GhlUserId)
+                .HasMaxLength(100)
+                .HasColumnName("GHL_UserId");
             entity.Property(e => e.LasSync).HasColumnType("datetime");
             entity.Property(e => e.StartDate).HasColumnType("datetime");
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
@@ -1637,6 +1683,9 @@ public partial class ShutterDBContext : DbContext
                 .HasMaxLength(100)
                 .IsUnicode(false);
             entity.Property(e => e.ForgetPassword).IsUnicode(false);
+            entity.Property(e => e.GhlUserId)
+                .HasMaxLength(100)
+                .HasColumnName("GHL_UserId");
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
             entity.Property(e => e.LastName)

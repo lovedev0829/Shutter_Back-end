@@ -36,7 +36,7 @@ namespace ShutterManagement.Business.Services
         public async Task GetGHLConfiguration(string Id)
         {
             FileLogger.Log("details GHl ID: ", Id);
-
+            var Checkghlresponse = await CheckGHLConfiguration();
             var details = GetAllQuerable()
                    .Where(x => x.LocationId == Id || x.TenantId.ToString().ToLower() == Id.ToLower())
                    .FirstOrDefault();
@@ -56,6 +56,7 @@ namespace ShutterManagement.Business.Services
                 AppConstant.GHL_ClientSecret = configuration["GoHighLevelOAuthSettings:ClientSecret"] ?? "";
                 AppConstant.GHL_RedirectUri = configuration["GoHighLevelOAuthSettings:RedirectUri"] ?? "";
             }
+            
         }
 
         public async Task<IResponseVm<string>> GHLConfiguration(GHLConfiguration gHLConfiguration)

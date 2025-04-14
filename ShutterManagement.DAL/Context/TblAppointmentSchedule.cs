@@ -29,5 +29,11 @@ public partial class TblAppointmentSchedule
 
     public string? Description { get; set; }
 
+    public string? GhlUserId { get; set; }
+
+    public DateTime? LastSync { get; set; }
+
+    public string? GhlEventId { get; set; }
+
     public virtual TblJob? Job { get; set; }
 }
