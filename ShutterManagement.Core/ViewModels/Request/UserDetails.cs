@@ -36,7 +36,9 @@ namespace ShutterManagement.Core.ViewModels.Request
         [RegularExpression(@"^\d{10}$", ErrorMessage = "Phone number must be exactly 10 digits.")]
 
         public string? Phone { get; set; }
-       
+
+        public string? GhlUserId { get; set; }
+
 
         [DefaultValue("")]
         [Required]

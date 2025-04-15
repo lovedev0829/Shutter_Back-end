@@ -484,6 +484,9 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.Name).HasMaxLength(255);
             entity.Property(e => e.PhoneNumber).HasMaxLength(50);
             entity.Property(e => e.Referral).HasMaxLength(100);
+            entity.Property(e => e.Suffix)
+                .HasMaxLength(100)
+                .IsUnicode(false);
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
@@ -1628,6 +1631,9 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.LastName).HasMaxLength(128);
             entity.Property(e => e.MiddleName).HasMaxLength(128);
             entity.Property(e => e.ModifiedBy).HasColumnName("ModifiedBY");
+            entity.Property(e => e.Suffix)
+                .HasMaxLength(100)
+                .IsUnicode(false);
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
@@ -1688,6 +1694,7 @@ public partial class ShutterDBContext : DbContext
                 .HasColumnName("GHL_UserId");
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
+            entity.Property(e => e.IsTenantAdmin).HasDefaultValue(false);
             entity.Property(e => e.LastName)
                 .HasMaxLength(50)
                 .IsUnicode(false);
@@ -1699,6 +1706,9 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.Pwd)
                 .HasMaxLength(128)
                 .HasColumnName("pwd");
+            entity.Property(e => e.Suffix)
+                .HasMaxLength(100)
+                .IsUnicode(false);
             entity.Property(e => e.Token).HasMaxLength(500);
             entity.Property(e => e.Username)
                 .HasMaxLength(128)

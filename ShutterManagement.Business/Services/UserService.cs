@@ -91,6 +91,7 @@ namespace ShutterManagement.Services
                         MiddleName = UserDetails.MiddleName,
                         LastName = UserDetails.LastName,
                         Username = UserDetails.Email,
+                        GhlUserId = UserDetails.GhlUserId??"",
                         Email = UserDetails.Email,
                         Pwd = HashPassword,
                         JobTitleId = string.IsNullOrEmpty(UserDetails.JobTitle) ? null : Guid.Parse(UserDetails.JobTitle),
@@ -240,6 +241,7 @@ namespace ShutterManagement.Services
                         UpdateUserDetails.MiddleName = UserDetails.MiddleName;
                         UpdateUserDetails.LastName = UserDetails.LastName;
                         UpdateUserDetails.Username = UserDetails.Email;
+                        UpdateUserDetails.GhlUserId = UserDetails.GhlUserId;
                         UpdateUserDetails.Email = UserDetails.Email;
                         UpdateUserDetails.JobTitleId = string.IsNullOrEmpty(UserDetails?.JobTitle) ? (Guid?)null: (Guid.TryParse(UserDetails.JobTitle, out var parsedGuid) ? parsedGuid : (Guid?)null);
                         UpdateUserDetails.Phone = UserDetails.Phone;
@@ -412,6 +414,7 @@ namespace ShutterManagement.Services
                         FirstName = user.FirstName,
                         MiddleName = user.MiddleName,
                         LastName = user.LastName,
+                        GhlUserId=user.GhlUserId,
                         Email = user.Email,
                         UserId = user.Id,
                         UserName = user.Username,
@@ -430,6 +433,9 @@ namespace ShutterManagement.Services
                         .Where(x => x.Id == UserRoleId
                         && x.IsActive == true && x.IsDelete == false)
                         .Select(x => x.RoleName).FirstOrDefault();
+                    var GhlUserName = dbContext.TblGhlUsers
+                        .Where(x => x.GhlUserId == users.GhlUserId).Select(x => x.GhlUserName).FirstOrDefault();
+                    users.GhlUserName = GhlUserName;
 
                     UsersList.Add(users);
                 }
