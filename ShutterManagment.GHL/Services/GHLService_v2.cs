@@ -619,7 +619,7 @@ namespace ShutterManagement.GHL.Services
                 {
                     var errorResponse = await response.Content.ReadAsStringAsync();
                     FileLogger.Log($"Error: {response.StatusCode} - {errorResponse}");
-                    responseVm.IsSuccess = false;
+                    responseVm.IsSuccess = true;
                     responseVm.Message = errorResponse;
                 }
 

@@ -872,7 +872,7 @@ namespace ShutterManagement.Controllers
         }
 
         [HttpGet]
-        [Route("GetUserAsync")]
+        [Route("UserSync")]
         public async Task<IActionResult> GetUserAsync()
         {
             await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
