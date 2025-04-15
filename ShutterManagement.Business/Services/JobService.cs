@@ -598,7 +598,7 @@ namespace ShutterManagement.Business.Services
 
                 using var client = new HttpClient();
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
-                client.DefaultRequestHeaders.Add("Version", "2021-07-28");
+                client.DefaultRequestHeaders.Add("Version", AppConstant.GHL_Version);
 
                 var url = $"{AppConstant.GHL_BaseAddress}/opportunities/{job.GhlOpportunityId}";
                 var content = new StringContent(JsonConvert.SerializeObject(ghlOpportunityModel), Encoding.UTF8, "application/json");
@@ -1326,6 +1326,7 @@ namespace ShutterManagement.Business.Services
                                              ContactId = t2.ContactId,
                                              ContactFirstName = t6.FirstName,
                                              ContactLastName = t6.LastName,
+                                             Suffix = t6.Suffix??"",
                                              ContactEmail = t6.Email,
                                              ContactPhone = t6.PhoneNumber,
                                              AddressId = t2.AddressId,

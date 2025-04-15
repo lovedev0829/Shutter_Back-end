@@ -33,7 +33,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsStripeConfigurationTenantExist = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
+                var IsStripeConfigurationTenantExist = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete ==false).FirstOrDefault();
                 if (IsStripeConfigurationTenantExist != null)
                 {
                     IsStripeConfigurationTenantExist.SecretKey = StripeConfiguration.SecretKey;
@@ -52,12 +52,15 @@ namespace ShutterManagement.Business.Services
                 {
                     TblStripeConfiguration tblstripeconfiguration = new TblStripeConfiguration()
                     {
+                        Id= Guid.NewGuid(),
                         SecretKey = StripeConfiguration.SecretKey,
                         PublishableKey = StripeConfiguration.PublishableKey,
                         SuccessUrl = StripeConfiguration.successUrl,
                         CancelUrl = StripeConfiguration.cancelUrl,
                         WebhookSecret=StripeConfiguration.WebhookSecret,
                         TenantId = AppConstant.LoggedInTenantId,
+                        IsDelete= false,
+                        IsActive=true,
                         CreatedAt = DateTime.Now,
                     };
                     var res1 = await Add(tblstripeconfiguration);
@@ -78,10 +81,10 @@ namespace ShutterManagement.Business.Services
             IResponseVm<StripeConfigurationVm> responseVm = new ResponseVm<StripeConfigurationVm>();
             try
             {
-                var StripeConfigurationVm = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
+                var StripeConfigurationVm = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false).FirstOrDefault();
                 responseVm.Data = new StripeConfigurationVm
                 {
-                    //Id = StripeConfigurationVm.Id,
+                    Id = StripeConfigurationVm?.Id,
                     SecretKey = StripeConfigurationVm?.SecretKey??"",
                     PublishableKey = StripeConfigurationVm?.PublishableKey??"",
                     successUrl = StripeConfigurationVm?.SuccessUrl ?? "",
@@ -126,7 +129,40 @@ namespace ShutterManagement.Business.Services
                 FileLogger.Log("No Stripe configuration found for Tenant ID:", tenantId);
             }
         }
+
+
+        public async Task<IResponseVm<string>> DeleteStripeConfiguration(Guid? configurationid)
+        {
+            IResponseVm<string> result = new ResponseVm<string>();
+            try
+            {
+                var IsStripeConfiExists = GetAllQuerable().Where(x => x.IsDelete == false && x.Id == configurationid &&
+                x.TenantId == AppConstant.LoggedInTenantId
+                ).FirstOrDefault();
+                if(IsStripeConfiExists!=null)
+                {
+                    IsStripeConfiExists.IsActive = false;
+                    IsStripeConfiExists.IsDelete = true;
+                    IsStripeConfiExists.ModifiedBy = AppConstant.LoggedInUserID;
+                    var res = await Update(IsStripeConfiExists);
+                    result.IsSuccess = true;
+                    result.Message = AppConstant.DeleteSuccessMsg;
+                }
+                else
+                {
+                    result.Message = AppConstant.NoUserFound;
+                }
+            }
+            catch (Exception ex)
+            {
+                result.Message = AppConstant.ExceptionError + ex.Message;
+            }
+            return result;
+        }
+
+
+
     }
-    }
+}
 
 

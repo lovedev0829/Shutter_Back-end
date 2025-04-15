@@ -27,5 +27,7 @@ namespace ShutterManagement.Business.Interfaces
 
 
         Task<IResponseVm<List<StageMapping>>> GetGHLStagesMappings();
+
+        Task<IResponseVm<string>> DeleteGHLConfiguration(Guid? configurationid);
     }
 }

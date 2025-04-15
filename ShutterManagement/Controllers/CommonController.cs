@@ -179,9 +179,20 @@ namespace ShutterManagement.Controllers
         [Route("GetAllAssignedPerson")]
         public async Task<IActionResult> GetAllAssignedPerson()
         {
-            var res = await userService.GetAll(filter);
-            res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
-            return Ok(res);
+            await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
+            var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration();
+            if (Checkghlresponse.IsSuccess)
+            {
+                var UserGHLs = await userService.GetAll(filter);
+                UserGHLs.Data = UserGHLs?.Data?.Where(x => x.IsActive == true && x.GhlUserId!=null).ToList();
+                return Ok(UserGHLs);
+            }
+            else
+            {
+                var res = await userService.GetAll(filter);
+                res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
+                return Ok(res);
+            }
         }
         [HttpGet]
         [Route("GetAllJobStatus")]
@@ -798,31 +809,42 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> SyncAllData()
         {
             await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
-            //var pipelineResult = await ghlService.GetAndSaveDefaultPipelineAndStage();
-            var pipelineResult = await gHLService_V2.GetAndSaveDefaultPipelineAndStage();
-            var contact = await contactService.ContactSync();
-            var opportunityResult = await jobService.SyncOpportunitiesFromGhl();
-            var appointment = await jobSchedule.AppointmentSync();
-
-            string combinedMessage = string.Join(", ", new[]
+            var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration();
+            if (Checkghlresponse.IsSuccess)
             {
-            pipelineResult.Message,
-            contact.Message,
-            opportunityResult.Message,
-            appointment.Message
-            });
+                var pipelineResult = await gHLService_V2.GetAndSaveDefaultPipelineAndStage();
+                var contact = await contactService.ContactSync();
+                var opportunityResult = await jobService.SyncOpportunitiesFromGhl();
+                var appointment = await jobSchedule.AppointmentSync();
+                var users = await gHLService_V2.GetUsersByCalendarIdAsync();
 
-            var response = new
+                string combinedMessage = string.Join(", ", new[]
+                {
+                pipelineResult.Message,
+                contact.Message,
+                opportunityResult.Message,
+                appointment.Message,
+                users.Message
+                });
+
+                var response = new
+                {
+                    IsSuccess = pipelineResult.IsSuccess &&
+                                contact.IsSuccess &&
+                                opportunityResult.IsSuccess &&
+                                appointment.IsSuccess &&
+                                users.IsSuccess,
+                    Message = combinedMessage
+                };
+
+
+                return Ok(response);
+            }
+            else
             {
-                IsSuccess = pipelineResult.IsSuccess &&
-                            contact.IsSuccess &&
-                            opportunityResult.IsSuccess &&
-                            appointment.IsSuccess,
-                Message = combinedMessage
-            };
-
-
-            return Ok(response);
+                return BadRequest(Checkghlresponse);
+            }
+            
         }
 
         [HttpGet]
@@ -854,8 +876,9 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> GetUserAsync()
         {
             await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
-            var authorizationUrl = await gHLService_V2.GetUsersAsync();
-            return Ok(authorizationUrl);
+           // var authorizationUrl = await gHLService_V2.GetUsersAsync();
+            var users = await gHLService_V2.GetUsersByCalendarIdAsync();
+            return Ok(users);
         }
 
         //[HttpPost]
@@ -933,6 +956,15 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> GenerateCode(string code)
         {
             var result = await authService.GenerateLetterOnlyUniqueCodeAsync(code);
+            return Ok(result);
+        }
+
+        [HttpGet]
+        [Route("GetAllGHL_Users")]
+        public async Task<IActionResult> GetAllGHL_Users()
+        {
+            await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
+            var result = await gHLService_V2.GetGHLUsersByCalendarId();
             return Ok(result);
         }
 

@@ -8,6 +8,7 @@ namespace ShutterManagement.Core.ViewModels.Response
 {
     public class GetGHLConfiguration
     {
+        public Guid? Id { get; set; }
         public string? APIkey { get; set; }
         public string? PipelineId { get; set; }
         public string? LocationId { get; set; }

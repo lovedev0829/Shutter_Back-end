@@ -101,13 +101,16 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
                 
+                var ghlUserId = dbContext.TblUsers.Where(x => x.Id == model.UserId).Select(x => x.GhlUserId).FirstOrDefault();
+                
 
                 TblJobSchedule tblJobSchedule = new TblJobSchedule
                 {
                     JobScheduleId = Guid.NewGuid(),
                     JobTitleId = model.JobTitleId,
-                    UserId = model.UserId,
+                    UserId = model.UserId?? null,
                     JobId = model.JobId,
+                    GhlUserId = ghlUserId ?? "",
                     EstimateId=model.EstimateId,
                     StartDate = model?.StartDate,
                     EndDate = model?.EndDate,
@@ -132,11 +135,13 @@ namespace ShutterManagement.Business.Services
 
                     var appointment = new GHLAppointmentAdd
                     {
+                        Title ="Shutter Installation Appointment",
                         contactId = contactId,
                         startTime = formattedstartDate,
                         endtime = formattedstartDateend,
                         locationId = AppConstant.GHL_Locationd,
-                        ignoreDateRange = false,
+                        assignedUserId = tblJobSchedule.GhlUserId??"",
+                        ignoreDateRange = true,
                     };
                     var ghlResponse = await gHLService_V2.CreateAppointmentAsync(appointment);
                     if(ghlResponse != null)
@@ -253,7 +258,9 @@ namespace ShutterManagement.Business.Services
                                            JobTitleId = i.JobTitleId,
                                            JobTitle= jt.JobTitleName ?? "", 
                                            UserId = i.UserId,
+                                           GhlUserId = i.GhlUserId ?? "",
                                            JobId = i.JobId,
+                                           GhlUserName =dbContext.TblGhlUsers.Where(x => x.GhlUserId == i.GhlUserId).Select(x => x.GhlUserName).FirstOrDefault() ?? "",
                                            UserFullname = u.FirstName+ " " +u.LastName ?? "",
                                            StartDate = i.StartDate,
                                            EndDate = i.EndDate,
@@ -330,9 +337,11 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.NoDataFound;
                     return responseVm;
                 }
+                var ghlUserId = dbContext.TblUsers.Where(x => x.Id == model.UserId).Select(x => x.GhlUserId).FirstOrDefault();
 
                 JobSchedule.JobTitleId = model.JobTitleId;
                 JobSchedule.UserId = model.UserId;
+                JobSchedule.GhlUserId = ghlUserId ?? "";
                 JobSchedule.EstimateId = model.EstimateId;
                 JobSchedule.StartDate = model.StartDate;
                 JobSchedule.EndDate = model.EndDate;
@@ -355,10 +364,12 @@ namespace ShutterManagement.Business.Services
                         string formattedstartDateend = FormatDateTimeWithOffset(JobSchedule.EndDate, JobSchedule.DayEndDateTime);
                         var appointment = new GHLAppointmentAdd
                         {
+                            Title = "Shutter Installation Appointment",
                             contactId = contactId,
                             startTime = formattedstartDate,
                             endtime = formattedstartDateend,
                             locationId = AppConstant.GHL_Locationd,
+                            assignedUserId = model.GhlUserId ?? "",
                         };
                         var ghlResponse = await gHLService_V2.UpdateAppointmentAsync(JobSchedule.GhlEventId, appointment);
                     }
@@ -370,10 +381,13 @@ namespace ShutterManagement.Business.Services
                         string formattedstartDateend = FormatDateTimeWithOffset(JobSchedule.EndDate, JobSchedule.DayEndDateTime);
                         var appointment = new GHLAppointmentAdd
                         {
+                            Title = "Shutter Installation Appointment",
                             contactId = contactId,
                             startTime = formattedstartDate,
                             endtime = formattedstartDateend,
                             locationId = AppConstant.GHL_Locationd,
+                            assignedUserId = model.GhlUserId,
+                            ignoreDateRange = true,
                         };
                         var ghlResponse = await gHLService_V2.CreateAppointmentAsync(appointment);
                         if (ghlResponse != null)

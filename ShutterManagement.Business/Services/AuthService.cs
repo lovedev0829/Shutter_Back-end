@@ -574,6 +574,7 @@ namespace ShutterManagement.Services
             return result;
         }
 
+
         public async Task<IResponseVm<Dictionary<string, string>>> GenerateLetterOnlyUniqueCodeAsync(string inputName)
         {
             IResponseVm<Dictionary<string, string>> response = new ResponseVm<Dictionary<string, string>>();
@@ -581,65 +582,96 @@ namespace ShutterManagement.Services
             if (string.IsNullOrWhiteSpace(inputName))
             {
                 response.IsSuccess = false;
-                response.Message = "Input cannot be empty";
+                response.Message = "Input cannot be empty.";
                 return response;
             }
 
-            string cleaned = new string(inputName.Where(char.IsLetter).ToArray()).ToUpperInvariant();
-            if (string.IsNullOrEmpty(cleaned))
+            // Clean input: Only letters
+            string cleaned = new string(inputName.Where(char.IsLetter).ToArray());
+            if (string.IsNullOrEmpty(cleaned) || cleaned.Length < 3)
             {
                 response.IsSuccess = false;
-                response.Message = "No valid letters found in input.";
+                response.Message = "Input must contain at least 3 valid letters.";
                 return response;
             }
-
-            Random rng = new Random();
-            int attempt = 0;
-            int maxAttempts = 50;
 
             string code = "";
             string invoicePrefix = "";
+            int attempt = 0;
+            const int maxAttempts = 50;
 
             try
             {
-                // Generate Unique Code (6–10 letters)
-                string baseCode = cleaned.Length >= 6 ? cleaned.Substring(0, 6) : cleaned.PadRight(6, 'X');
-                code = baseCode;
+                Random rng = new Random();
 
+                // Try generating unique lowercase code
                 while (attempt < maxAttempts)
                 {
-                    bool isCodeExists = await tenantService.AnyAsync(x => x.IsActive==true && x.IsDelete == false && x.Code == code);
-                    if (!isCodeExists)
-                        break;
+                    string shuffled = new string(cleaned.OrderBy(_ => rng.Next()).ToArray());
+                    string candidateCode = shuffled.Substring(0, Math.Min(10, shuffled.Length)).ToLowerInvariant();
 
-                    var extraLetters = new string(Enumerable.Repeat("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 4)
-                                                  .Select(s => s[rng.Next(s.Length)]).ToArray());
-
-                    int lengthToUse = Math.Min(10 - baseCode.Length, extraLetters.Length);
-                    code = (baseCode + extraLetters.Substring(0, lengthToUse)).Substring(0, 10);
-                    attempt++;
-                }
-
-                // Generate Unique InvoicePrefix from input but ensure it's different from Code
-                attempt = 0;
-                while (attempt < maxAttempts)
-                {
-                    var shuffled = new string(cleaned.OrderBy(_ => rng.Next()).ToArray());
-                    var candidate = shuffled.Length >= 4 ? shuffled.Substring(0, 4) : shuffled.PadRight(4, 'Z');
-
-                    if (candidate != code)
+                    if (candidateCode.Length < 3)
                     {
-                        bool isPrefixExists = await dbContext.TblTenantBrandingInfos
-                            .AnyAsync(x => x.IsActive==true && x.IsDelete== false && x.InvoicePrefix == candidate);
+                        attempt++;
+                        continue;
+                    }
 
-                        if (!isPrefixExists)
-                        {
-                            invoicePrefix = candidate;
-                            break;
-                        }
+                    bool isCodeExists = await tenantService.AnyAsync(x =>
+                        x.IsActive == true && x.IsDelete == false && x.Code == candidateCode);
+
+                    if (!isCodeExists)
+                    {
+                        code = candidateCode;
+                        break;
                     }
 
                     attempt++;
+                }
+
+                if (string.IsNullOrEmpty(code))
+                {
+                    response.IsSuccess = false;
+                    response.Message = "Failed to generate a unique code.";
+                    return response;
+                }
+
+                // Reset attempt for prefix
+                attempt = 0;
+
+                while (attempt < maxAttempts)
+                {
+                    string shuffled = new string(cleaned.OrderBy(_ => rng.Next()).ToArray());
+                    string candidatePrefix = shuffled.Substring(0, Math.Min(10, shuffled.Length)).ToUpperInvariant();
+
+                    if (candidatePrefix.Length < 3)
+                    {
+                        attempt++;
+                        continue;
+                    }
+
+                    bool isPrefixExists = await dbContext.TblTenantBrandingInfos.AnyAsync(x =>
+                        x.IsActive == true && x.IsDelete == false && x.InvoicePrefix == candidatePrefix);
+
+                    string lowerPrefix = candidatePrefix.ToLowerInvariant();
+
+                    bool conflicts = lowerPrefix == code ||
+                                     code.StartsWith(lowerPrefix.Substring(0, 3)) ||
+                                     code.EndsWith(lowerPrefix.Substring(lowerPrefix.Length - 3, 3));
+
+                    if (!isPrefixExists && !conflicts)
+                    {
+                        invoicePrefix = candidatePrefix;
+                        break;
+                    }
+
+                    attempt++;
+                }
+
+                if (string.IsNullOrEmpty(invoicePrefix))
+                {
+                    response.IsSuccess = false;
+                    response.Message = "Failed to generate a valid unique invoice prefix.";
+                    return response;
                 }
 
                 response.IsSuccess = true;
@@ -658,6 +690,8 @@ namespace ShutterManagement.Services
 
             return response;
         }
+
+
 
 
 

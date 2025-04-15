@@ -33,6 +33,8 @@ public partial class TblTenant
 
     public Guid? ModifiedBy { get; set; }
 
+    public string? Suffix { get; set; }
+
     public virtual TblTenantBrandingInfo? BrandingInfoNavigation { get; set; }
 
     public virtual ICollection<TblTenant> InverseParentTenant { get; set; } = new List<TblTenant>();

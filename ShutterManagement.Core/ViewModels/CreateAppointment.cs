@@ -17,6 +17,8 @@ namespace ShutterManagement.Core.ViewModels
 
         [Required]
         public string? Title { get; set; }
+        public string? GhlUserId { get; set; }
+        public Guid? UserId { get; set; }
         public string? Description { get; set; }
 
     }

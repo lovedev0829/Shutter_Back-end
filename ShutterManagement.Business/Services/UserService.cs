@@ -91,6 +91,8 @@ namespace ShutterManagement.Services
                         MiddleName = UserDetails.MiddleName,
                         LastName = UserDetails.LastName,
                         Username = UserDetails.Email,
+                        GhlUserId = UserDetails.GhlUserId??"",
+                        Suffix=UserDetails.Suffix??"",
                         Email = UserDetails.Email,
                         Pwd = HashPassword,
                         JobTitleId = string.IsNullOrEmpty(UserDetails.JobTitle) ? null : Guid.Parse(UserDetails.JobTitle),
@@ -100,6 +102,7 @@ namespace ShutterManagement.Services
                         TenantId = AppConstant.LoggedInTenantId,
                         IsActive = true,
                         IsDelete = false,
+                        IsTenantAdmin = false
                     };
                     var res = await Add(tblUser);
                     if (res.Id != Guid.Empty)
@@ -240,11 +243,14 @@ namespace ShutterManagement.Services
                         UpdateUserDetails.MiddleName = UserDetails.MiddleName;
                         UpdateUserDetails.LastName = UserDetails.LastName;
                         UpdateUserDetails.Username = UserDetails.Email;
+                        UpdateUserDetails.GhlUserId = UserDetails.GhlUserId;
+                        UpdateUserDetails.Suffix = UserDetails.Suffix??"";
                         UpdateUserDetails.Email = UserDetails.Email;
                         UpdateUserDetails.JobTitleId = string.IsNullOrEmpty(UserDetails?.JobTitle) ? (Guid?)null: (Guid.TryParse(UserDetails.JobTitle, out var parsedGuid) ? parsedGuid : (Guid?)null);
                         UpdateUserDetails.Phone = UserDetails.Phone;
                         UpdateUserDetails.ModifiedAt = DateTime.Now;
                         UpdateUserDetails.ModifiedBy = AppConstant.LoggedInUserID;
+                        UpdateUserDetails.IsTenantAdmin = UpdateUserDetails.IsTenantAdmin != null ? UpdateUserDetails.IsTenantAdmin : false ;
                         if (!string.IsNullOrEmpty(UserDetails.Password))
                         {
                             UpdateUserDetails.Pwd = AesEncryptionHelper.Encrypt(UserDetails.Password);
@@ -302,7 +308,8 @@ namespace ShutterManagement.Services
                     result.Message = AppConstant.AccessDenied;
                     return result;
                 }
-                var IsUserExists = GetAllQuerable().Where(x => x.IsDelete == false &&
+                        
+                var IsUserExists = GetAllQuerable().Where(x => x.IsDelete == false && x.IsTenantAdmin == false &&
                 x.Id == Guid.Parse(UserId)
                 && x.TenantId == AppConstant.LoggedInTenantId
                 );
@@ -347,7 +354,7 @@ namespace ShutterManagement.Services
                     result.Message = AppConstant.AccessDenied;
                     return result;
                 }
-                var IsUserExists = GetAllQuerable().Where(x => x.IsDelete == false &&
+                var IsUserExists = GetAllQuerable().Where(x => x.IsDelete == false && x.IsTenantAdmin == false &&
                 x.Id == Guid.Parse(UserId)
                 && x.TenantId == AppConstant.LoggedInTenantId
                 );
@@ -402,7 +409,7 @@ namespace ShutterManagement.Services
                 }
                 else
                 {
-                    Users = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId).OrderByDescending(x => x.CreatedAt).ToList();
+                    Users = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId && x.IsTenantAdmin == false).OrderByDescending(x => x.CreatedAt).ToList();
                 }
                 Users = Users.Where(x => x.Id != AppConstant.LoggedInUserID ).ToList();
                 foreach (var user in Users)
@@ -412,6 +419,8 @@ namespace ShutterManagement.Services
                         FirstName = user.FirstName,
                         MiddleName = user.MiddleName,
                         LastName = user.LastName,
+                        GhlUserId=user.GhlUserId,
+                        Suffix=user.Suffix??"",
                         Email = user.Email,
                         UserId = user.Id,
                         UserName = user.Username,
@@ -430,6 +439,9 @@ namespace ShutterManagement.Services
                         .Where(x => x.Id == UserRoleId
                         && x.IsActive == true && x.IsDelete == false)
                         .Select(x => x.RoleName).FirstOrDefault();
+                    var GhlUserName = dbContext.TblGhlUsers
+                        .Where(x => x.GhlUserId == users.GhlUserId).Select(x => x.GhlUserName).FirstOrDefault();
+                    users.GhlUserName = GhlUserName;
 
                     UsersList.Add(users);
                 }

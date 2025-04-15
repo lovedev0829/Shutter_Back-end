@@ -84,9 +84,9 @@ namespace ShutterManagement.Business.Services
                 }
                 if (model.InvoicePrefix != "")
                 {
-                    if (model.InvoicePrefix.Length != 4)
+                    if (model.InvoicePrefix.Length < 3)
                     {
-                        responseVm.Message = "4 characters is Mandatory.";
+                        responseVm.Message = "3 characters is Mandatory.";
                         return responseVm;
                     }
                 }
@@ -103,6 +103,7 @@ namespace ShutterManagement.Business.Services
                         new SqlParameter("@FirstName", SqlDbType.NVarChar) { SqlValue = model.FirstName },
                         new SqlParameter("@MiddleName", SqlDbType.NVarChar) { SqlValue = model.MiddleName },
                         new SqlParameter("@LastName", SqlDbType.NVarChar) { SqlValue = model.LastName },
+                        new SqlParameter("@Suffix", SqlDbType.NVarChar) { SqlValue = model.Suffix??"" },
                         new SqlParameter("@Code", SqlDbType.NVarChar) { SqlValue = model.Code },
                         new SqlParameter("@URL", SqlDbType.NVarChar) { SqlValue = model.URL },
                         new SqlParameter("@Email", SqlDbType.NVarChar) { SqlValue = model.Email },
@@ -200,7 +201,7 @@ namespace ShutterManagement.Business.Services
 
                 WelcomeEmailModel welcomemodel = new WelcomeEmailModel
                 {
-                    Name = model.FirstName + " " + model.LastName ?? "",
+                    Name = model.FirstName + " " + model.LastName ?? "" + model.Suffix??"",
                     UserName = model.Email ?? "",
                     Password = model.Password ?? "",
                     CompanyName = tenantInfoDetails?.CompanyName ?? "",
@@ -270,9 +271,9 @@ namespace ShutterManagement.Business.Services
 
                     if (model.InvoicePrefix != "")
                     {
-                        if (model.InvoicePrefix.Length != 4)
+                        if (model.InvoicePrefix.Length < 3)
                         {
-                            responseVm.Message = "4 characters is Mandatory.";
+                            responseVm.Message = "3 characters is Mandatory.";
                             return responseVm;
                         }
                     }
@@ -287,6 +288,7 @@ namespace ShutterManagement.Business.Services
                     new SqlParameter("@FirstName", SqlDbType.NVarChar) { SqlValue = model.FirstName },
                     new SqlParameter("@MiddleName", SqlDbType.NVarChar) { SqlValue = model.MiddleName },
                     new SqlParameter("@LastName", SqlDbType.NVarChar) { SqlValue = model.LastName },
+                    new SqlParameter("@Suffix", SqlDbType.NVarChar) { SqlValue = model.Suffix??"" },
                     new SqlParameter("@Code", SqlDbType.NVarChar) { SqlValue = model.Code },
                     new SqlParameter("@URL", SqlDbType.NVarChar) { SqlValue = model.URL },
                     new SqlParameter("@Email", SqlDbType.NVarChar) { SqlValue = model.Email },
@@ -459,6 +461,7 @@ namespace ShutterManagement.Business.Services
                         FirstName = x.FirstName,
                         MiddleName = x.MiddleName,
                         LastName = x.LastName,
+                        Suffix=x.Suffix??"",
                         Code = x.Code,
                         URL = x.Url,
                         Email = x.BrandingInfoNavigation.Email,
@@ -485,6 +488,7 @@ namespace ShutterManagement.Business.Services
                             data[i].UserFirstName = UserDetails.FirstName;
                             data[i].UserMiddleName = UserDetails.MiddleName;
                             data[i].UserLastName = UserDetails.LastName;
+                            data[i].Suffix = UserDetails.Suffix;
                             data[i].UserPhoneNumber = UserDetails.Phone;
                             data[i].UserEmail = UserDetails.Email;
                         }

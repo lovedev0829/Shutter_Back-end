@@ -41,6 +41,8 @@ public partial class TblJobSchedule
 
     public DateTime? LasSync { get; set; }
 
+    public string? GhlUserId { get; set; }
+
     public virtual TblEstimate? Estimate { get; set; }
 
     public virtual TblJob? Job { get; set; }

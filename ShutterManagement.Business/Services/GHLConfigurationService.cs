@@ -36,7 +36,7 @@ namespace ShutterManagement.Business.Services
         public async Task GetGHLConfiguration(string Id)
         {
             FileLogger.Log("details GHl ID: ", Id);
-
+            var Checkghlresponse = await CheckGHLConfiguration();
             var details = GetAllQuerable()
                    .Where(x => x.LocationId == Id || x.TenantId.ToString().ToLower() == Id.ToLower())
                    .FirstOrDefault();
@@ -56,6 +56,7 @@ namespace ShutterManagement.Business.Services
                 AppConstant.GHL_ClientSecret = configuration["GoHighLevelOAuthSettings:ClientSecret"] ?? "";
                 AppConstant.GHL_RedirectUri = configuration["GoHighLevelOAuthSettings:RedirectUri"] ?? "";
             }
+            
         }
 
         public async Task<IResponseVm<string>> GHLConfiguration(GHLConfiguration gHLConfiguration)
@@ -63,7 +64,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsGHLConfigurationTenantExist = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
+                var IsGHLConfigurationTenantExist = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false).FirstOrDefault();
                 if (IsGHLConfigurationTenantExist != null)
                 {
                     IsGHLConfigurationTenantExist.Apikey = gHLConfiguration.APIkey??"";
@@ -72,6 +73,7 @@ namespace ShutterManagement.Business.Services
                     IsGHLConfigurationTenantExist.BaseAddress = gHLConfiguration.BaseAddress ?? "";
                     IsGHLConfigurationTenantExist.GeneratedToken = gHLConfiguration.GeneratedToken??"";
                     IsGHLConfigurationTenantExist.CalendarName = gHLConfiguration.CalendarName ?? "";
+                    IsGHLConfigurationTenantExist.TenantId = AppConstant.LoggedInTenantId;
                     AppConstant.GHL_ClientId = configuration["GoHighLevelOAuthSettings:ClientId"] ?? "";
                     AppConstant.GHL_ClientSecret =configuration["GoHighLevelOAuthSettings:ClientSecret"] ?? "";
                     AppConstant.GHL_RedirectUri = configuration["GHLSettings:RedirectUri"] ?? "";
@@ -84,12 +86,15 @@ namespace ShutterManagement.Business.Services
                 {
                     TblGhlconfiguration tblGhlconfiguration = new TblGhlconfiguration()
                     {
+                        Id=Guid.NewGuid(),
                         PipelineId = gHLConfiguration.PipelineId ?? "",
                         BaseAddress = gHLConfiguration.BaseAddress??"",
                         LocationId = gHLConfiguration.LocationId ?? "",
                         Apikey = gHLConfiguration.APIkey??"",
                         TenantId = AppConstant.LoggedInTenantId,
                         LastSync = DateTime.Now,
+                        IsDelete = false,
+                        IsActive = true,
                         GeneratedToken = gHLConfiguration.GeneratedToken ??"",
                         CalendarName = gHLConfiguration.CalendarName ?? "",
                         ClientId = configuration["GoHighLevelOAuthSettings:ClientId"] ?? "",
@@ -116,7 +121,7 @@ namespace ShutterManagement.Business.Services
             try
             {
 
-                var gHLConfiguration = GetAllQuerable().FirstOrDefault(x => x.TenantId == AppConstant.LoggedInTenantId);
+                var gHLConfiguration = GetAllQuerable().Where(x=>x.TenantId==AppConstant.LoggedInTenantId && x.IsDelete==false).FirstOrDefault();
 
                 if (gHLConfiguration == null)
                 {
@@ -136,6 +141,7 @@ namespace ShutterManagement.Business.Services
                             gHLConfiguration.AccessToken = res?.AccessToken ?? "";
                             gHLConfiguration.AccessExpirationtime = DateTime.Now.AddDays(1);
                             gHLConfiguration.RefreshExpirationtime = DateTime.Now.AddDays(365);
+                            gHLConfiguration.TenantId= AppConstant.LoggedInTenantId;
                             gHLConfiguration.LastSync = DateTime.Now;
 
                             // Save the updated configuration
@@ -157,11 +163,12 @@ namespace ShutterManagement.Business.Services
 
                 responseVm.Data = new GetGHLConfiguration
                 {
+                    Id= gHLConfiguration.Id,
                     APIkey = gHLConfiguration?.Apikey ?? "",
                     BaseAddress = gHLConfiguration?.BaseAddress ?? "",
                     LocationId = gHLConfiguration?.LocationId ?? "",
                     PipelineId = gHLConfiguration?.PipelineId ?? "",
-                    LastSync = gHLConfiguration?.LastSync ?? DateTime.Now,
+                    LastSync = gHLConfiguration?.LastSync ?? null,
                     CalendarName = gHLConfiguration?.CalendarName ?? "",
                     GeneratedToken = gHLConfiguration?.GeneratedToken ?? "",
                     ClientId = gHLConfiguration?.ClientId ?? "",
@@ -210,7 +217,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 bool res = false;
-                var isExist = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
+                var isExist = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete==false).FirstOrDefault();
                 if (isExist != null)
                 {
                     if (isExist.AccessExpirationtime > DateTime.Now && isExist.RefreshExpirationtime > DateTime.Now)
@@ -242,7 +249,11 @@ namespace ShutterManagement.Business.Services
                         {
                             response.Message = "User need to verify GoHighLevelConfiguration.";
                         }
-                    }
+                }
+                else
+                {
+                    response.Message = "GoHighLevel Configuration. Not Found.";
+                }
                 
             }
             catch(Exception ex)
@@ -362,6 +373,36 @@ namespace ShutterManagement.Business.Services
             }
 
             return responseVm;
+        }
+
+
+        public async Task<IResponseVm<string>> DeleteGHLConfiguration(Guid? configurationid)
+        {
+            IResponseVm<string> result = new ResponseVm<string>();
+            try
+            {
+                var IsStripeConfiExists = GetAllQuerable().Where(x => x.IsDelete == false && x.Id == configurationid &&
+                x.TenantId == AppConstant.LoggedInTenantId
+                ).FirstOrDefault();
+                if (IsStripeConfiExists != null)
+                {
+                    IsStripeConfiExists.IsActive = false;
+                    IsStripeConfiExists.IsDelete = true;
+                    IsStripeConfiExists.ModifiedBy = AppConstant.LoggedInUserID;
+                    var res = await Update(IsStripeConfiExists);
+                    result.IsSuccess = true;
+                    result.Message = AppConstant.DeleteSuccessMsg;
+                }
+                else
+                {
+                    result.Message = AppConstant.NoUserFound;
+                }
+            }
+            catch (Exception ex)
+            {
+                result.Message = AppConstant.ExceptionError + ex.Message;
+            }
+            return result;
         }
 
 

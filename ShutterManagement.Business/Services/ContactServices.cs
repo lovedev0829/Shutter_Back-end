@@ -125,6 +125,14 @@ namespace ShutterManagement.Business.Services
                     TenantId = (Guid)AppConstant.LoggedInTenantId;
                     FileLogger.Log($"Tenant Id id fetched {TenantId}");
                 }
+                if(!model.IsTaxExemption)
+                {
+                    if(model.TaxExemptionVm.EffectiveDate == null && model.TaxExemptionVm.ExpiryDate == null)
+                    {
+                        responseVm.Message = "Please Fill TaxExemption Details.";
+                        return responseVm;
+                    }
+                }
 
                 if (IsTenantExists)
                 {
@@ -144,6 +152,7 @@ namespace ShutterManagement.Business.Services
                                 //Id = contact1.GhlcontactId.ToString() ?? string.Empty,
                                 FirstName = model.FirstName ?? string.Empty,
                                 LastName = model.LastName ?? string.Empty,
+                                Suffix = model.Suffix ?? string.Empty,
                                 Email = model.Email ?? string.Empty,
                                 PhoneNumber = model.PhoneNumber ?? string.Empty,
                                 Notes = model.Notes ?? string.Empty,
@@ -187,6 +196,7 @@ namespace ShutterManagement.Business.Services
                         ContactType = model.ContactType,
                         FirstName = model.FirstName,
                         LastName = model.LastName,
+                        Suffix = model.Suffix,
                         // Name = model.Name,
                         PhoneNumber = model.PhoneNumber,
                         Email = model.Email,
@@ -368,6 +378,7 @@ namespace ShutterManagement.Business.Services
                             contact.ContactType = model.ContactType;
                             contact.FirstName = model.FirstName;
                             contact.LastName = model.LastName;
+                            contact.Suffix = model.Suffix;
                             contact.PhoneNumber = model.PhoneNumber;
                             contact.Email = model.Email;
                             contact.Website = model.Website;
@@ -388,6 +399,7 @@ namespace ShutterManagement.Business.Services
                                 ContactType = model.ContactType,
                                 FirstName = model.FirstName,
                                 LastName = model.LastName,
+                                Suffix=model.Suffix,
                                 Email = model.Email,
                                 PhoneNumber = model.PhoneNumber,
                                 lastAsync = model.lastAsync,
@@ -426,6 +438,7 @@ namespace ShutterManagement.Business.Services
                             contact1.ContactType = model.ContactType;
                             contact1.FirstName = model.FirstName;
                             contact1.LastName = model.LastName;
+                            contact1.Suffix = model.Suffix;
                             contact1.PhoneNumber = model.PhoneNumber;
                             contact1.Email = model.Email;
                             contact1.Website = model.Website;
@@ -555,6 +568,7 @@ namespace ShutterManagement.Business.Services
                             //Id = contact1.GhlcontactId.ToString() ?? string.Empty,
                             FirstName = model.FirstName ?? string.Empty,
                             LastName = model.LastName ?? string.Empty,
+                            Suffix = model.Suffix ?? string.Empty,
                             Email = model.Email ?? string.Empty,
                             PhoneNumber = model.PhoneNumber ?? string.Empty,
                             Notes = model.Notes ?? string.Empty,
@@ -824,6 +838,7 @@ namespace ShutterManagement.Business.Services
                         PhoneNumber = contact.PhoneNumber ?? "",
                         FirstName = contact.FirstName ?? "",
                         LastName = contact.LastName ?? "",
+                        Suffix = contact.Suffix ?? "",
                         Website = contact.Website ?? "",
                         Notes = contact.Notes ?? "",
                         Referral = contact.Referral ?? "",
