@@ -157,7 +157,7 @@ namespace ShutterManagement.Business.Services
                 using var httpClient = new HttpClient();
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
                 httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                httpClient.DefaultRequestHeaders.Add("Version", "2021-07-28");
+                httpClient.DefaultRequestHeaders.Add("Version", AppConstant.GHL_Version);
 
                 HttpResponseMessage response = await httpClient.PutAsync(requestUrl, content);
                 string jsonResponse = await response.Content.ReadAsStringAsync();
