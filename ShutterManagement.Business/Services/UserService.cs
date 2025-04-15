@@ -100,6 +100,7 @@ namespace ShutterManagement.Services
                         TenantId = AppConstant.LoggedInTenantId,
                         IsActive = true,
                         IsDelete = false,
+                        IsTenantAdmin = false
                     };
                     var res = await Add(tblUser);
                     if (res.Id != Guid.Empty)
@@ -245,6 +246,7 @@ namespace ShutterManagement.Services
                         UpdateUserDetails.Phone = UserDetails.Phone;
                         UpdateUserDetails.ModifiedAt = DateTime.Now;
                         UpdateUserDetails.ModifiedBy = AppConstant.LoggedInUserID;
+                        UpdateUserDetails.IsTenantAdmin = UpdateUserDetails.IsTenantAdmin != null ? UpdateUserDetails.IsTenantAdmin : false ;
                         if (!string.IsNullOrEmpty(UserDetails.Password))
                         {
                             UpdateUserDetails.Pwd = AesEncryptionHelper.Encrypt(UserDetails.Password);
@@ -302,7 +304,8 @@ namespace ShutterManagement.Services
                     result.Message = AppConstant.AccessDenied;
                     return result;
                 }
-                var IsUserExists = GetAllQuerable().Where(x => x.IsDelete == false &&
+                        
+                var IsUserExists = GetAllQuerable().Where(x => x.IsDelete == false && x.IsTenantAdmin == false &&
                 x.Id == Guid.Parse(UserId)
                 && x.TenantId == AppConstant.LoggedInTenantId
                 );
@@ -347,7 +350,7 @@ namespace ShutterManagement.Services
                     result.Message = AppConstant.AccessDenied;
                     return result;
                 }
-                var IsUserExists = GetAllQuerable().Where(x => x.IsDelete == false &&
+                var IsUserExists = GetAllQuerable().Where(x => x.IsDelete == false && x.IsTenantAdmin == false &&
                 x.Id == Guid.Parse(UserId)
                 && x.TenantId == AppConstant.LoggedInTenantId
                 );
@@ -402,7 +405,7 @@ namespace ShutterManagement.Services
                 }
                 else
                 {
-                    Users = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId).OrderByDescending(x => x.CreatedAt).ToList();
+                    Users = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId && IsTenantAdmin == false).OrderByDescending(x => x.CreatedAt).ToList();
                 }
                 Users = Users.Where(x => x.Id != AppConstant.LoggedInUserID ).ToList();
                 foreach (var user in Users)
