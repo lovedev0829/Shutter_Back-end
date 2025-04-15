@@ -29,6 +29,7 @@ namespace ShutterManagement.Core.ViewModels.Response
    
         public Guid? JobStatus { get; set; }
         public string? JobStatusName { get; set; }
+        public string? Suffix { get; set; }
 
         public string? Notes { get; set; }
         public string[]? AttachmentsAny { get; set; } = new string[] {};

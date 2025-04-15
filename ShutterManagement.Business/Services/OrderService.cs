@@ -836,6 +836,7 @@ namespace ShutterManagement.Business.Services
                 var contactDetails = contactService.GetAllQuerable().Where(x => x.ContactId == jobDetails).FirstOrDefault();
                 e.FirstContactName = (contactDetails?.FirstName ??"");
                 e.LastContactName = (contactDetails?.LastName ??"");
+                e.Suffix = (contactDetails?.Suffix??"");
                 e.ContactId = (contactDetails?.ContactId);
 
                 var userdetails = dbContext.TblUsers
