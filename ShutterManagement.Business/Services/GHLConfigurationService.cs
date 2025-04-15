@@ -217,7 +217,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 bool res = false;
-                var isExist = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
+                var isExist = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete==false).FirstOrDefault();
                 if (isExist != null)
                 {
                     if (isExist.AccessExpirationtime > DateTime.Now && isExist.RefreshExpirationtime > DateTime.Now)
@@ -249,7 +249,11 @@ namespace ShutterManagement.Business.Services
                         {
                             response.Message = "User need to verify GoHighLevelConfiguration.";
                         }
-                    }
+                }
+                else
+                {
+                    response.Message = "GoHighLevel Configuration. Not Found.";
+                }
                 
             }
             catch(Exception ex)

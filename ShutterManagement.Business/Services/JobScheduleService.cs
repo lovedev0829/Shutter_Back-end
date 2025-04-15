@@ -106,9 +106,9 @@ namespace ShutterManagement.Business.Services
                 {
                     JobScheduleId = Guid.NewGuid(),
                     JobTitleId = model.JobTitleId,
-                    UserId = model.UserId,
+                    UserId = model.UserId?? null,
                     JobId = model.JobId,
-                    GhlUserId = model.GhlUserId,
+                    GhlUserId = model.GhlUserId??"",
                     EstimateId=model.EstimateId,
                     StartDate = model?.StartDate,
                     EndDate = model?.EndDate,
@@ -138,7 +138,7 @@ namespace ShutterManagement.Business.Services
                         startTime = formattedstartDate,
                         endtime = formattedstartDateend,
                         locationId = AppConstant.GHL_Locationd,
-                        assignedUserId = tblJobSchedule.GhlUserId,
+                        assignedUserId = tblJobSchedule.GhlUserId??"",
                         ignoreDateRange = true,
                     };
                     var ghlResponse = await gHLService_V2.CreateAppointmentAsync(appointment);
@@ -338,7 +338,7 @@ namespace ShutterManagement.Business.Services
 
                 JobSchedule.JobTitleId = model.JobTitleId;
                 JobSchedule.UserId = model.UserId;
-                JobSchedule.GhlUserId = model.GhlUserId;
+                JobSchedule.GhlUserId = model.GhlUserId ?? "";
                 JobSchedule.EstimateId = model.EstimateId;
                 JobSchedule.StartDate = model.StartDate;
                 JobSchedule.EndDate = model.EndDate;
@@ -366,7 +366,7 @@ namespace ShutterManagement.Business.Services
                             startTime = formattedstartDate,
                             endtime = formattedstartDateend,
                             locationId = AppConstant.GHL_Locationd,
-                            assignedUserId = model.GhlUserId,
+                            assignedUserId = model.GhlUserId ?? "",
                         };
                         var ghlResponse = await gHLService_V2.UpdateAppointmentAsync(JobSchedule.GhlEventId, appointment);
                     }

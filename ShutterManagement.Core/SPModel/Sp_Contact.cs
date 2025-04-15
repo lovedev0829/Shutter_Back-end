@@ -35,6 +35,7 @@ namespace ShutterManagement.Core.SPModel
         [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabaticalError)]
         [DefaultValue("")]
         public string? LastName { get; set; }
+        public string? Suffix { get; set; }
         [Required]
         [RegularExpression(@"^\+?1?\d{10}$", ErrorMessage = "Phone number must start with 1 followed by 11 digits.")]
         [DefaultValue("")]

@@ -31,6 +31,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         [StringLength(10, MinimumLength = 3)]
         [DefaultValue("")]
         public string? Code { get; set; }
+        public string? Suffix { get; set; }
         [Required]
         [MaxLength(100)]
         public string? URL { get; set; }
@@ -124,7 +125,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         public string? ZipCode { get; set; }
 
         [DefaultValue("")]
-       // [MinLength(4),MaxLength(4)]
+        [MinLength(3),MaxLength(3)]
         public string? InvoicePrefix { get; set; }
 
         //[DefaultValue(0)]

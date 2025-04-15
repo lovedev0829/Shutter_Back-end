@@ -17,6 +17,8 @@ namespace ShutterManagement
             AppConstant.SMTPPort = Configuration["SMTPDetails:SMTPPort"] ?? "";
             AppConstant.SMTPPassword = Configuration["SMTPDetails:SMTPPassword"] ?? "";
             AppConstant.SMTPUsername = Configuration["SMTPDetails:SMTPUsername"] ?? "";
+
+            AppConstant.GHL_Version= Configuration["GoHighLevelOAuthSettings:Version"] ?? "";
             //AppConstant.IsAdminRolesShow = Convert.ToBoolean(Configuration["IsAdminRolesShow"] ?? "false");
         }
     }

@@ -117,6 +117,7 @@ namespace ShutterManagement.Core
         public static string GHL_ClientSecret { get; set; } = string.Empty;
         public static string GHL_ClientId { get; set; } = string.Empty;
         public static string GHL_RedirectUri { get; set; } = string.Empty;
+        public static string GHL_Version { get; set; } = string.Empty;
         //Stripe Configuration
 
         public static string Stripe_SecretKey { get; set; } = string.Empty;

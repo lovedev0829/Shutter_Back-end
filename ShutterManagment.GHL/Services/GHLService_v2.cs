@@ -55,7 +55,7 @@ namespace ShutterManagement.GHL.Services
                 using var requestMessage = new HttpRequestMessage(HttpMethod.Get, requestUrl);
                 requestMessage.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
                 requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
-                requestMessage.Headers.Add("Version", "2021-07-28");
+                requestMessage.Headers.Add("Version", AppConstant.GHL_Version);
                 //_httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
                 HttpResponseMessage response = await _httpClient.SendAsync(requestMessage);
                 response.EnsureSuccessStatusCode();
@@ -261,7 +261,7 @@ namespace ShutterManagement.GHL.Services
                 using var requestMessage = new HttpRequestMessage(HttpMethod.Get, requestUrl);
                 requestMessage.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
                 requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
-                requestMessage.Headers.Add("Version", "2021-07-28");
+                requestMessage.Headers.Add("Version", AppConstant.GHL_Version);
                 HttpResponseMessage response = await _httpClient.SendAsync(requestMessage);
                 response.EnsureSuccessStatusCode();
 
@@ -315,7 +315,7 @@ namespace ShutterManagement.GHL.Services
                 using var httpClient = new HttpClient();
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
                 httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                httpClient.DefaultRequestHeaders.Add("Version", "2021-07-28");
+                httpClient.DefaultRequestHeaders.Add("Version", AppConstant.GHL_Version);
 
                 HttpResponseMessage response = await httpClient.PostAsync(requestUrl, content);
                 string jsonResponse = await response.Content.ReadAsStringAsync();
@@ -372,7 +372,7 @@ namespace ShutterManagement.GHL.Services
                 using var httpClient = new HttpClient();
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
                 httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                httpClient.DefaultRequestHeaders.Add("Version", "2021-07-28");
+                httpClient.DefaultRequestHeaders.Add("Version", AppConstant.GHL_Version);
 
                 HttpResponseMessage response = await httpClient.PutAsync(requestUrl, content);
                 string jsonResponse = await response.Content.ReadAsStringAsync();
@@ -460,7 +460,7 @@ namespace ShutterManagement.GHL.Services
                 using var httpClient = new HttpClient();
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
                 httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                httpClient.DefaultRequestHeaders.Add("Version", "2021-07-28");
+                httpClient.DefaultRequestHeaders.Add("Version", AppConstant.GHL_Version);
 
                 HttpResponseMessage response = await httpClient.PostAsync(requestUrl, content);
                 string jsonResponse = await response.Content.ReadAsStringAsync();
@@ -538,7 +538,7 @@ namespace ShutterManagement.GHL.Services
                 string url = $"{AppConstant.GHL_BaseAddress}/opportunities/search?location_id={AppConstant.GHL_Locationd}";
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
-                client.DefaultRequestHeaders.Add("Version", "2021-07-28");
+                client.DefaultRequestHeaders.Add("Version", AppConstant.GHL_Version);
 
                 HttpResponseMessage response = await client.GetAsync(url);
                 string responseBody = await response.Content.ReadAsStringAsync();
@@ -582,15 +582,15 @@ namespace ShutterManagement.GHL.Services
                 {
                     title= appointment.Title??"",
                     calendarId = CalendarId,
-                    contactId = appointment.contactId,
+                    contactId = appointment.contactId??"",
                     //contactId = "TYWPKcoMp715KTOPeCHb",
-                    startTime = appointment.startTime,
-                    locationId = appointment.locationId,
+                    startTime = appointment.startTime??"",
+                    locationId = appointment.locationId??"",
                     endTime = appointment.endtime,
                     ignoreDateRange = true,
                     meetingLocationType = "default",
                     ignoreFreeSlotValidation = true,
-                    assignedUserId= appointment.assignedUserId,
+                    assignedUserId= appointment.assignedUserId??"",
                 };
 
                 var requestUrl = $"{AppConstant.GHL_BaseAddress}/calendars/events/appointments";
@@ -611,7 +611,7 @@ namespace ShutterManagement.GHL.Services
                 // Set headers (authorization and versioning)
                 requestMessage.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
                 requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
-                requestMessage.Headers.Add("Version", "2021-07-28");
+                requestMessage.Headers.Add("Version", AppConstant.GHL_Version);
 
                 var response = await httpClient.SendAsync(requestMessage);
 
@@ -659,7 +659,7 @@ namespace ShutterManagement.GHL.Services
                     endTime = appointment.endtime??"",
                     ignoreDateRange = true,
                     ignoreFreeSlotValidation = true,
-                    assignedUserId = appointment.assignedUserId,
+                    assignedUserId = appointment.assignedUserId??"",
                 };
 
                 var requestUrl = $"{AppConstant.GHL_BaseAddress}/calendars/events/appointments/{eventId}";
@@ -712,7 +712,7 @@ namespace ShutterManagement.GHL.Services
                 // Set the necessary headers (Authorization and Version)
                 requestMessage.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
                 requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
-                requestMessage.Headers.Add("Version", "2021-07-28");
+                requestMessage.Headers.Add("Version", AppConstant.GHL_Version);
 
                 // Send the request using the _httpClient
                 HttpResponseMessage response = await _httpClient.SendAsync(requestMessage);
@@ -758,7 +758,7 @@ namespace ShutterManagement.GHL.Services
                 Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken),
                 }
                 };
-                requestMessage.Headers.Add("Version", "2021-07-28");
+                requestMessage.Headers.Add("Version", AppConstant.GHL_Version);
                 HttpResponseMessage response = await _httpClient.SendAsync(requestMessage);
                 response.EnsureSuccessStatusCode();
                 var json = await response.Content.ReadAsStringAsync();
@@ -800,7 +800,7 @@ namespace ShutterManagement.GHL.Services
                 using var calendarRequest = new HttpRequestMessage(HttpMethod.Get, calendarRequestUrl);
                 calendarRequest.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
                 calendarRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
-                calendarRequest.Headers.Add("Version", "2021-07-28");
+                calendarRequest.Headers.Add("Version", AppConstant.GHL_Version);
 
                 var calendarResponse = await _httpClient.SendAsync(calendarRequest);
                 calendarResponse.EnsureSuccessStatusCode();
@@ -825,7 +825,7 @@ namespace ShutterManagement.GHL.Services
                 using var userRequest = new HttpRequestMessage(HttpMethod.Get, userRequestUrl);
                 userRequest.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
                 userRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
-                userRequest.Headers.Add("Version", "2021-07-28");
+                userRequest.Headers.Add("Version", AppConstant.GHL_Version);
 
                 var userResponse = await _httpClient.SendAsync(userRequest);
                 userResponse.EnsureSuccessStatusCode();
@@ -903,7 +903,7 @@ namespace ShutterManagement.GHL.Services
                 {
                     var existingUser = await dBContext.TblGhlUsers
                         .FirstOrDefaultAsync(u =>
-                            u.GhlUserId == user.id &&
+                            u.GhlEmail == user.email &&
                             u.TenantId == AppConstant.LoggedInTenantId &&
                             u.IsActive == true &&
                             u.IsDelete == false);

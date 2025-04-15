@@ -798,34 +798,42 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> SyncAllData()
         {
             await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
-            //var pipelineResult = await ghlService.GetAndSaveDefaultPipelineAndStage();
-            var pipelineResult = await gHLService_V2.GetAndSaveDefaultPipelineAndStage();
-            var contact = await contactService.ContactSync();
-            var opportunityResult = await jobService.SyncOpportunitiesFromGhl();
-            var appointment = await jobSchedule.AppointmentSync();
-            var users = await gHLService_V2.GetUsersByCalendarIdAsync();
-
-            string combinedMessage = string.Join(", ", new[]
+            var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration();
+            if (Checkghlresponse.IsSuccess)
             {
-            pipelineResult.Message,
-            contact.Message,
-            opportunityResult.Message,
-            appointment.Message,
-            users.Message
-            });
+                var pipelineResult = await gHLService_V2.GetAndSaveDefaultPipelineAndStage();
+                var contact = await contactService.ContactSync();
+                var opportunityResult = await jobService.SyncOpportunitiesFromGhl();
+                var appointment = await jobSchedule.AppointmentSync();
+                var users = await gHLService_V2.GetUsersByCalendarIdAsync();
 
-            var response = new
+                string combinedMessage = string.Join(", ", new[]
+                {
+                pipelineResult.Message,
+                contact.Message,
+                opportunityResult.Message,
+                appointment.Message,
+                users.Message
+                });
+
+                var response = new
+                {
+                    IsSuccess = pipelineResult.IsSuccess &&
+                                contact.IsSuccess &&
+                                opportunityResult.IsSuccess &&
+                                appointment.IsSuccess &&
+                                users.IsSuccess,
+                    Message = combinedMessage
+                };
+
+
+                return Ok(response);
+            }
+            else
             {
-                IsSuccess = pipelineResult.IsSuccess &&
-                            contact.IsSuccess &&
-                            opportunityResult.IsSuccess &&
-                            appointment.IsSuccess &&
-                            users.IsSuccess,
-                Message = combinedMessage
-            };
-
-
-            return Ok(response);
+                return BadRequest(Checkghlresponse);
+            }
+            
         }
 
         [HttpGet]

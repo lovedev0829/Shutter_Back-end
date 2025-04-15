@@ -17,7 +17,9 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? MiddleName { get; set; }
        
         public string? LastName { get; set; }
-      
+        public string? Suffix { get; set; }
+
+
         public string? Code { get; set; }
       
         public string? URL { get; set; }
