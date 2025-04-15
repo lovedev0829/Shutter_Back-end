@@ -101,6 +101,8 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
                 
+                var ghlUserId = dbContext.TblUsers.Where(x => x.Id == model.UserId).Select(x => x.GhlUserId).FirstOrDefault();
+                
 
                 TblJobSchedule tblJobSchedule = new TblJobSchedule
                 {
@@ -108,7 +110,7 @@ namespace ShutterManagement.Business.Services
                     JobTitleId = model.JobTitleId,
                     UserId = model.UserId?? null,
                     JobId = model.JobId,
-                    GhlUserId = model.GhlUserId??"",
+                    GhlUserId = ghlUserId ?? "",
                     EstimateId=model.EstimateId,
                     StartDate = model?.StartDate,
                     EndDate = model?.EndDate,
@@ -258,7 +260,7 @@ namespace ShutterManagement.Business.Services
                                            UserId = i.UserId,
                                            GhlUserId = i.GhlUserId ?? "",
                                            JobId = i.JobId,
-                                           GhlUserName=dbContext.TblGhlUsers.Where(x => x.GhlUserId == i.GhlUserId).Select(x => x.GhlUserName).FirstOrDefault() ?? "",
+                                           GhlUserName =dbContext.TblGhlUsers.Where(x => x.GhlUserId == i.GhlUserId).Select(x => x.GhlUserName).FirstOrDefault() ?? "",
                                            UserFullname = u.FirstName+ " " +u.LastName ?? "",
                                            StartDate = i.StartDate,
                                            EndDate = i.EndDate,
@@ -335,10 +337,11 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.NoDataFound;
                     return responseVm;
                 }
+                var ghlUserId = dbContext.TblUsers.Where(x => x.Id == model.UserId).Select(x => x.GhlUserId).FirstOrDefault();
 
                 JobSchedule.JobTitleId = model.JobTitleId;
                 JobSchedule.UserId = model.UserId;
-                JobSchedule.GhlUserId = model.GhlUserId ?? "";
+                JobSchedule.GhlUserId = ghlUserId ?? "";
                 JobSchedule.EstimateId = model.EstimateId;
                 JobSchedule.StartDate = model.StartDate;
                 JobSchedule.EndDate = model.EndDate;

@@ -39,6 +39,7 @@ namespace ShutterManagement.Core.ViewModels.Request
 
         public string? GhlUserId { get; set; }
 
+        public string? Suffix { get; set; }
 
         [DefaultValue("")]
         [Required]

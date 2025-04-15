@@ -398,6 +398,10 @@ public partial class ShutterDBContext : DbContext
             entity.HasOne(d => d.Job).WithMany(p => p.TblAppointmentSchedules)
                 .HasForeignKey(d => d.JobId)
                 .HasConstraintName("FK__TblAppoin__JobId__6ECB5E34");
+
+            entity.HasOne(d => d.User).WithMany(p => p.TblAppointmentSchedules)
+                .HasForeignKey(d => d.UserId)
+                .HasConstraintName("FK__TblAppoin__UserI__261B931E");
         });
 
         modelBuilder.Entity<TblComponent>(entity =>

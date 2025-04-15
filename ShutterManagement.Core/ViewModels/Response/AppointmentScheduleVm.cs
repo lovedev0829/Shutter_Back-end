@@ -9,6 +9,7 @@ namespace ShutterManagement.Core.ViewModels.Response
     public class AppointmentScheduleVm
     {
         public Guid? JobId { get; set; }
+        public Guid? UserId { get; set; }
 
         public DateTime? ScheduleDateTime { get; set; }
 

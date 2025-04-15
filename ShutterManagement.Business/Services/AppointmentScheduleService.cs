@@ -50,6 +50,7 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.TenantNotFound;
                     return responseVm;
                 }
+                var ghlUserId = dbContext.TblUsers.Where(x => x.Id == model.UserId).Select(x => x.GhlUserId).FirstOrDefault();
 
                 var IsExist = GetAllQuerable().Where(x => x.JobId == model.JobId && x.IsActive == true && x.IsDelete == false).FirstOrDefault();
                 if (IsExist != null)
@@ -58,7 +59,8 @@ namespace ShutterManagement.Business.Services
                     IsExist.ScheduleDateTime = model.ScheduleDateTime;
                     IsExist.Title= model?.Title?.Trim()??"";
                     IsExist.Description= model?.Description?.Trim() ?? "";
-                    IsExist.GhlUserId= model?.GhlUserId??"";
+                    IsExist.GhlUserId= ghlUserId ?? "";
+                    IsExist.UserId= model?.UserId ?? null;
                     IsExist.UpdatedAt = DateTime.Now;
                     IsExist.ModifiedBy = AppConstant.LoggedInUserID;
 
@@ -89,14 +91,12 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.InsertSuccessMsg;
                     if (responseVm.IsSuccess)
                     {
+                        await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
                         var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration();
                        if(Checkghlresponse.IsSuccess)
                         {
                             var jobStatusName = EnumValue.GetEnumValue(JobStatus.Appointment_Scheduled);
                             var updateResponse = await statusAndStageMapping.UpdateOpportunityAndJobStatus(tblAppointmentSchedule?.JobId ?? Guid.Empty, jobStatusName);
-
-                            await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
-
                             var contactId = dbContext.TblJobs.Where(x => x.JobId.ToString().ToLower() == res.JobId.ToString().ToLower() && x.IsDelete == false).Select(x => x.GhlContactId).FirstOrDefault();
 
                             string formattedSchedule = FormatDateTimeWithOffset(model?.ScheduleDateTime);
@@ -151,7 +151,8 @@ namespace ShutterManagement.Business.Services
                     .Where(x => x.JobId==JobId &&  x.TenantId == AppConstant.LoggedInTenantId)
                     .Select(x => new AppointmentScheduleVm
                     {
-                        JobId = x.JobId ?? Guid.Empty,
+                        JobId = x.JobId ?? null,
+                        UserId = x.UserId ?? null,
                         GhlUserId=x.GhlUserId??"",
                         GhlUserName = dbContext.TblGhlUsers.Where(y=>y.GhlUserId==x.GhlUserId && y.IsActive==true && y.IsDelete==false).Select(s=>s.GhlUserName).FirstOrDefault(), 
                         ScheduleDateTime = x.ScheduleDateTime,

@@ -399,6 +399,7 @@ namespace ShutterManagement.Business.Services
                                 ContactType = model.ContactType,
                                 FirstName = model.FirstName,
                                 LastName = model.LastName,
+                                Suffix=model.Suffix,
                                 Email = model.Email,
                                 PhoneNumber = model.PhoneNumber,
                                 lastAsync = model.lastAsync,
@@ -437,6 +438,7 @@ namespace ShutterManagement.Business.Services
                             contact1.ContactType = model.ContactType;
                             contact1.FirstName = model.FirstName;
                             contact1.LastName = model.LastName;
+                            contact1.Suffix = model.Suffix;
                             contact1.PhoneNumber = model.PhoneNumber;
                             contact1.Email = model.Email;
                             contact1.Website = model.Website;

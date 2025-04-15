@@ -92,6 +92,7 @@ namespace ShutterManagement.Services
                         LastName = UserDetails.LastName,
                         Username = UserDetails.Email,
                         GhlUserId = UserDetails.GhlUserId??"",
+                        Suffix=UserDetails.Suffix??"",
                         Email = UserDetails.Email,
                         Pwd = HashPassword,
                         JobTitleId = string.IsNullOrEmpty(UserDetails.JobTitle) ? null : Guid.Parse(UserDetails.JobTitle),
@@ -243,6 +244,7 @@ namespace ShutterManagement.Services
                         UpdateUserDetails.LastName = UserDetails.LastName;
                         UpdateUserDetails.Username = UserDetails.Email;
                         UpdateUserDetails.GhlUserId = UserDetails.GhlUserId;
+                        UpdateUserDetails.Suffix = UserDetails.Suffix??"";
                         UpdateUserDetails.Email = UserDetails.Email;
                         UpdateUserDetails.JobTitleId = string.IsNullOrEmpty(UserDetails?.JobTitle) ? (Guid?)null: (Guid.TryParse(UserDetails.JobTitle, out var parsedGuid) ? parsedGuid : (Guid?)null);
                         UpdateUserDetails.Phone = UserDetails.Phone;
@@ -418,6 +420,7 @@ namespace ShutterManagement.Services
                         MiddleName = user.MiddleName,
                         LastName = user.LastName,
                         GhlUserId=user.GhlUserId,
+                        Suffix=user.Suffix??"",
                         Email = user.Email,
                         UserId = user.Id,
                         UserName = user.Username,

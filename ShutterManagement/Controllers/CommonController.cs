@@ -179,9 +179,20 @@ namespace ShutterManagement.Controllers
         [Route("GetAllAssignedPerson")]
         public async Task<IActionResult> GetAllAssignedPerson()
         {
-            var res = await userService.GetAll(filter);
-            res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
-            return Ok(res);
+            await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
+            var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration();
+            if (Checkghlresponse.IsSuccess)
+            {
+                var UserGHLs = await userService.GetAll(filter);
+                UserGHLs.Data = UserGHLs?.Data?.Where(x => x.IsActive == true && x.GhlUserId!=null).ToList();
+                return Ok(UserGHLs);
+            }
+            else
+            {
+                var res = await userService.GetAll(filter);
+                res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
+                return Ok(res);
+            }
         }
         [HttpGet]
         [Route("GetAllJobStatus")]

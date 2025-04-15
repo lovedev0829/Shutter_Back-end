@@ -1326,6 +1326,7 @@ namespace ShutterManagement.Business.Services
                                              ContactId = t2.ContactId,
                                              ContactFirstName = t6.FirstName,
                                              ContactLastName = t6.LastName,
+                                             Suffix = t6.Suffix??"",
                                              ContactEmail = t6.Email,
                                              ContactPhone = t6.PhoneNumber,
                                              AddressId = t2.AddressId,

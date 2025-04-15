@@ -51,6 +51,8 @@ public partial class TblUser
 
     public virtual MstJobTitle? JobTitle { get; set; }
 
+    public virtual ICollection<TblAppointmentSchedule> TblAppointmentSchedules { get; set; } = new List<TblAppointmentSchedule>();
+
     public virtual ICollection<TblJobSchedule> TblJobSchedules { get; set; } = new List<TblJobSchedule>();
 
     public virtual ICollection<TblUserRole> TblUserRoles { get; set; } = new List<TblUserRole>();

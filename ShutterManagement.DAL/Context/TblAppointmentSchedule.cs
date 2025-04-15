@@ -35,5 +35,9 @@ public partial class TblAppointmentSchedule
 
     public string? GhlEventId { get; set; }
 
+    public Guid? UserId { get; set; }
+
     public virtual TblJob? Job { get; set; }
+
+    public virtual TblUser? User { get; set; }
 }

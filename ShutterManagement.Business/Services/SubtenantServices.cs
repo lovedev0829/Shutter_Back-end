@@ -84,9 +84,9 @@ namespace ShutterManagement.Business.Services
                 }
                 if (model.InvoicePrefix != "")
                 {
-                    if (model.InvoicePrefix.Length != 4)
+                    if (model.InvoicePrefix.Length < 3)
                     {
-                        responseVm.Message = "4 characters is Mandatory.";
+                        responseVm.Message = "3 characters is Mandatory.";
                         return responseVm;
                     }
                 }
@@ -271,9 +271,9 @@ namespace ShutterManagement.Business.Services
 
                     if (model.InvoicePrefix != "")
                     {
-                        if (model.InvoicePrefix.Length != 4)
+                        if (model.InvoicePrefix.Length < 3)
                         {
-                            responseVm.Message = "4 characters is Mandatory.";
+                            responseVm.Message = "3 characters is Mandatory.";
                             return responseVm;
                         }
                     }
@@ -488,6 +488,7 @@ namespace ShutterManagement.Business.Services
                             data[i].UserFirstName = UserDetails.FirstName;
                             data[i].UserMiddleName = UserDetails.MiddleName;
                             data[i].UserLastName = UserDetails.LastName;
+                            data[i].Suffix = UserDetails.Suffix;
                             data[i].UserPhoneNumber = UserDetails.Phone;
                             data[i].UserEmail = UserDetails.Email;
                         }

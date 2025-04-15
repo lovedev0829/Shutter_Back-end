@@ -125,7 +125,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         public string? ZipCode { get; set; }
 
         [DefaultValue("")]
-        [MinLength(3),MaxLength(3)]
+        //[MinLength(3),MaxLength(3)]
         public string? InvoicePrefix { get; set; }
 
         //[DefaultValue(0)]
