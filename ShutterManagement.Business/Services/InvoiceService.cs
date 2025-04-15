@@ -1251,6 +1251,7 @@ namespace ShutterManagement.Business.Services
                                      IsActive = i.IsActive,
                                      ContactFirstName = c.FirstName,
                                      ContactLastName = c.LastName,
+                                     Suffix = c.Suffix??"",
                                      TenantId=i.TenantId
                                  }).ToList();
 

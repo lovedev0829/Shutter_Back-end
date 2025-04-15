@@ -20,6 +20,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public Guid? taxRateId { get; set; }
         public string? Region { get; set; }
         public decimal? TaxRate { get; set; }
+        public string? Suffix { get; set; }
 
         public decimal? additionalCost { get; set; }
         public string? EstimateName { get; set; }

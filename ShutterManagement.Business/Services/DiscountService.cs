@@ -191,9 +191,11 @@ namespace ShutterManagement.Business.Services
             ).ToList();
                 foreach (var item in DiscountList)
                 {
-                    var customerData = contactService.GetAllQuerable().Where(x => x.ContactId == item.CustomerId && x.IsDelete == false).Select(x => new { x.FirstName ,x.LastName}  ).FirstOrDefault();
+                    var customerData = contactService.GetAllQuerable().Where(x => x.ContactId == item.CustomerId && x.IsDelete == false).Select(x => new { x.FirstName ,x.LastName,x.Suffix}  ).FirstOrDefault();
                     item.FirstName = customerData?.FirstName ??"";
                     item.LastName = customerData?.LastName??"";
+                    item.Suffix=customerData?.Suffix??"";
+                   
                 }
 
 

@@ -1071,6 +1071,7 @@ namespace ShutterManagement.Business.Services
                                    JobType = j4.JobTypeName,
                                    FirstName = con.FirstName,
                                    LastName = con.LastName,
+                                   Suffix = con.Suffix??"",
                                    JobStatus = j1.JobStatus.ToString().ToLower(),
                                    AssignedPersonnel = j5.FirstName + " " + j5.LastName,
                                    Address = j3.StreetAddress + " " + j3.City + " " + j3.State + " " + j3.ZipCode,

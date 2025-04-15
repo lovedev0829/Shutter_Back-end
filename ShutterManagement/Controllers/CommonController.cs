@@ -872,13 +872,19 @@ namespace ShutterManagement.Controllers
         }
 
         [HttpGet]
-        [Route("GetUserAsync")]
+        [Route("UserSync")]
         public async Task<IActionResult> GetUserAsync()
         {
             await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
-           // var authorizationUrl = await gHLService_V2.GetUsersAsync();
-            var users = await gHLService_V2.GetUsersByCalendarIdAsync();
-            return Ok(users);
+            // var authorizationUrl = await gHLService_V2.GetUsersAsync();
+            var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration();
+            if (Checkghlresponse.IsSuccess)
+            {
+                var users = await gHLService_V2.GetUsersByCalendarIdAsync();
+                users.Data = users.Data = null;
+                return Ok(users);
+            }
+            return BadRequest(Checkghlresponse);
         }
 
         //[HttpPost]
