@@ -113,14 +113,12 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-
         //This method is to get the GHL configuration...
         public async Task<IResponseVm<GetGHLConfiguration>> GetGHLConfigurations(string? code)
         {
             IResponseVm<GetGHLConfiguration> responseVm = new ResponseVm<GetGHLConfiguration>();
             try
             {
-
                 var gHLConfiguration = GetAllQuerable().Where(x=>x.TenantId==AppConstant.LoggedInTenantId && x.IsDelete==false).FirstOrDefault();
 
                 if (gHLConfiguration == null)
@@ -163,8 +161,6 @@ namespace ShutterManagement.Business.Services
                         return responseVm;
                     }
                 }
-               
-
                 responseVm.Data = new GetGHLConfiguration
                 {
                     Id= gHLConfiguration.Id,
@@ -194,7 +190,6 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
-
 
         public async Task<IResponseVm<string>> GetOauthGHL()
         {
@@ -269,7 +264,6 @@ namespace ShutterManagement.Business.Services
             return response;
         }
 
-
         public async Task<IResponseVm<string>> MapGHLStagesStages(StageMappingRequest request)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
@@ -313,8 +307,6 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
-
-
 
         public async Task<IResponseVm<List<StageMapping>>> GetGHLStagesMappings()
         {
@@ -380,7 +372,6 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
-
 
         public async Task<IResponseVm<string>> DeleteGHLConfiguration(Guid? configurationid)
         {

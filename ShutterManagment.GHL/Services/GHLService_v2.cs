@@ -760,7 +760,6 @@ namespace ShutterManagement.GHL.Services
             var users = new List<User>();
             try
             {
-                
                 var requestUrl = $"{AppConstant.GHL_BaseAddress}/users/?locationId={AppConstant.GHL_Locationd}";
                 using var requestMessage = new HttpRequestMessage(HttpMethod.Get, requestUrl)
                 {
@@ -899,7 +898,6 @@ namespace ShutterManagement.GHL.Services
             return responseVm;
         }
 
-
         public async Task<IResponseVm<string>> SaveOrUpdateGHLUsersAsync(List<User> users)
         {
             var responseVm = new ResponseVm<string>();
@@ -985,7 +983,6 @@ namespace ShutterManagement.GHL.Services
 
             return responseVm;
         }
-
 
         public async Task<IResponseVm<List<TblGhlUser>>> GetGHLUsersByCalendarId()
         {
