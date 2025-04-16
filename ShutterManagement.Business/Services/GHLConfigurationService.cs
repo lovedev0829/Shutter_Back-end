@@ -74,9 +74,9 @@ namespace ShutterManagement.Business.Services
                     IsGHLConfigurationTenantExist.GeneratedToken = gHLConfiguration.GeneratedToken??"";
                     IsGHLConfigurationTenantExist.CalendarName = gHLConfiguration.CalendarName ?? "";
                     IsGHLConfigurationTenantExist.TenantId = AppConstant.LoggedInTenantId;
-                    AppConstant.GHL_ClientId = configuration["GoHighLevelOAuthSettings:ClientId"] ?? "";
-                    AppConstant.GHL_ClientSecret =configuration["GoHighLevelOAuthSettings:ClientSecret"] ?? "";
-                    AppConstant.GHL_RedirectUri = configuration["GHLSettings:RedirectUri"] ?? "";
+                    AppConstant.GHL_ClientId = AppConstant.GHL_Marketplace_ClientId ?? "";
+                    AppConstant.GHL_ClientSecret = AppConstant.GHL_Marketplace_ClientSecret ?? "";
+                    AppConstant.GHL_RedirectUri = AppConstant.GHL_Marketplace_RedirectUri ?? "";
 
                     var res = await Update(IsGHLConfigurationTenantExist);
                     responseVm.IsSuccess = true;
@@ -97,9 +97,9 @@ namespace ShutterManagement.Business.Services
                         IsActive = true,
                         GeneratedToken = gHLConfiguration.GeneratedToken ??"",
                         CalendarName = gHLConfiguration.CalendarName ?? "",
-                        ClientId = configuration["GoHighLevelOAuthSettings:ClientId"] ?? "",
-                        ClientSecret = configuration["GoHighLevelOAuthSettings:ClientSecret"] ?? "",
-                        RedirectUri = configuration["GHLSettings:RedirectUri"] ?? "",
+                        ClientId = AppConstant.GHL_Marketplace_ClientId ?? "",
+                        ClientSecret = AppConstant.GHL_Marketplace_ClientSecret ?? "",
+                        RedirectUri = AppConstant.GHL_Marketplace_RedirectUri ?? "",
                     };
                     var res1 = await Add(tblGhlconfiguration);
                     responseVm.IsSuccess = true;
