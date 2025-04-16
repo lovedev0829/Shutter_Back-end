@@ -134,6 +134,7 @@ namespace ShutterManagement.Business.Services
                     try
                     {
                         var res = await goHighLevelOAuthService.GetRefreshToken(code);
+                        FileLogger.Log($"This is the Refresh Token Rsponse{res}");
                         if (res != null)
                         {
                             // Update the gHLConfiguration with new tokens and expiration times
@@ -146,15 +147,18 @@ namespace ShutterManagement.Business.Services
 
                             // Save the updated configuration
                             await Update(gHLConfiguration);
+                            FileLogger.Log($"Configuration Updated Successfully  in link to ghl");
                         }
                         else
                         {
                             responseVm.Message = "Failed to retrieve refresh token.";
+                            FileLogger.Log($"Failed to retrieve refresh token in link to ghl{responseVm}");
                             return responseVm;
                         }
                     }
                     catch (Exception ex)
                     {
+                        FileLogger.Log($"Failed to retrieve refresh token in link to ghl {ex.Message}");
                         responseVm.Message = $"An error occurred while retrieving the refresh token: {ex.Message}";
                         return responseVm;
                     }
@@ -175,6 +179,7 @@ namespace ShutterManagement.Business.Services
                     ClientSecret = gHLConfiguration?.ClientSecret ?? "",
                     RedirectURI = gHLConfiguration?.RedirectUri ?? "",
                 };
+                FileLogger.Log($"Failed to retrieve refresh token in link to ghl{responseVm?.Data}");
 
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.FetchSuccessMsg;
@@ -184,6 +189,7 @@ namespace ShutterManagement.Business.Services
                 responseVm.Message = $"An unexpected error occurred: {ex.Message}";
                 // Optionally log the error for further investigation
                 // logger.LogError(ex, "Error in GetGHLConfigurations API");
+                FileLogger.Log($"Failed to retrieve refresh token in link to ghl {ex.Message}");
             }
 
             return responseVm;

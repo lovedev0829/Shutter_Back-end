@@ -9,6 +9,7 @@ using ShutterManagement.GHLv2;
 using Microsoft.Extensions.Options;
 using ShutterManagement.Core;
 using Microsoft.Extensions.Configuration;
+using ShutterManagement.Core.Common;
 
 
 public class GoHighLevelOAuthService
@@ -66,11 +67,12 @@ public class GoHighLevelOAuthService
             // Perform the POST request to the token URL
             var response = await _httpClient.PostAsync(configuration["GoHighLevelOAuthSettings:TokenUrl"] ?? "", tokenRequest);
 
+            FileLogger.Log($"This is the Logs of Refesh token {response}");
             // Check if the response is successful
             if (response.IsSuccessStatusCode)
             {
                 var responseContent = await response.Content.ReadAsStringAsync();
-
+                FileLogger.Log($"This is the Logs of Refesh token {response}");
                 try
                 {
                     // Try deserializing the response content
