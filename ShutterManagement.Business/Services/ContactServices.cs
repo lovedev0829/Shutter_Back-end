@@ -828,10 +828,10 @@ namespace ShutterManagement.Business.Services
                     Contacts = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId).OrderByDescending(x => x.CreatedAt).ToList();
                 }
 
-                
+
                 foreach (var contact in Contacts)
                 {
-                    
+
 
                     ContactsList contacts = new ContactsList
                     {
@@ -846,7 +846,7 @@ namespace ShutterManagement.Business.Services
                         Notes = contact.Notes ?? "",
                         Referral = contact.Referral ?? "",
                         ContactUniqueId = contact.ContactUniqueId ?? "",
-                        PrimaryAddress = contact.PrimaryAddress,
+                        PrimaryAddress = contact.PrimaryAddress ?? null,
                         IsTaxExemption = contact.IsTaxExemption ?? false,
                         IsBillingAddressSameAsAddress = contact.IsBillingAddressSameAsAddress,
                         IsActive = contact.IsActive,
@@ -854,29 +854,32 @@ namespace ShutterManagement.Business.Services
                         CreatedAt = contact.CreatedAt,
                         IsSubtenant = IsSubtenants,
                     };
-                    contacts.billingAddressVm = dbContext.TblAddresses.Include(x=>x.StateNavigation)
+                    contacts.billingAddressVm = dbContext.TblAddresses.Include(x => x.StateNavigation)
                         .Where(x => x.AddressId == contact.PrimaryAddress
                         && x.IsDelete == false).Select(x => new BillingAddressVm
                         {
-                             
-                            City = x.City,
-                            Email = x.Email,
-                            FirstName = x.FirstName,
-                            LastName = x.LastName,
-                            PhoneNumber = x.Phone,
-                            StateName = dbContext.MstStates.Where(s => s.Id == x.State).Select(y => y.StateName ?? "").FirstOrDefault(),
-                            StateId= x.State,
-                            StreetAddress = x.StreetAddress,
-                            ZipCode = x.ZipCode,
+
+                            City = x.City ?? "",
+                            Email = x.Email ?? "",
+                            FirstName = x.FirstName ?? "",
+                            LastName = x.LastName ?? "",
+                            PhoneNumber = x.Phone ?? "",
+                            StateName = dbContext.MstStates.Where(s => s.Id == x.State).Select(y => y.StateName ?? "").FirstOrDefault() ?? "",
+                            StateId = x.State ?? null,
+                            StreetAddress = x.StreetAddress ?? "",
+                            ZipCode = x.ZipCode ?? "",
                         }).FirstOrDefault();
-                    contacts.taxExemptionVm = taxExemptionService.GetAllQuerable()
+                    var taxExemption = taxExemptionService.GetAllQuerable()
                         .Where(x => x.ContactId == contact.ContactId
-                        && x.IsDelete == false).Select(x => new TaxExemption
-                        {
-                            EffectiveDate = x.EffectiveDate,
-                            ExemptionCertificate = x.ExemptionCertificate.Split(",", StringSplitOptions.RemoveEmptyEntries).ToArray(),
-                            ExpiryDate = x.ExpiryDate
-                        }).FirstOrDefault();
+                        && x.IsDelete == false).FirstOrDefault();
+                    if (taxExemption != null) { 
+                    contacts.taxExemptionVm = new TaxExemption
+                    {
+                        EffectiveDate = taxExemption.EffectiveDate ?? null,
+                        ExemptionCertificate = taxExemption.ExemptionCertificate.Split(",", StringSplitOptions.RemoveEmptyEntries).ToArray() ?? null,
+                        ExpiryDate = taxExemption.ExpiryDate ?? null
+                    };
+                }
                     ContactList.Add(contacts);
                 }
                 filter.SearchValue = filter.SearchValue.Trim().ToLower();
