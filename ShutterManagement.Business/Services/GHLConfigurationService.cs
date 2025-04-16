@@ -52,9 +52,9 @@ namespace ShutterManagement.Business.Services
                 AppConstant.GHL_RefreshToken = details.RefreshToken ??"";
                 AppConstant.GHL_CalendarName = details.CalendarName ?? "";
                 // Fetch ClientId and ClientSecret from appsettings.json
-                AppConstant.GHL_ClientId = configuration["GoHighLevelOAuthSettings:ClientId"] ?? "";
-                AppConstant.GHL_ClientSecret = configuration["GoHighLevelOAuthSettings:ClientSecret"] ?? "";
-                AppConstant.GHL_RedirectUri = configuration["GoHighLevelOAuthSettings:RedirectUri"] ?? "";
+                AppConstant.GHL_ClientId = AppConstant.GHL_Marketplace_ClientId ?? "";
+                AppConstant.GHL_ClientSecret = AppConstant.GHL_Marketplace_ClientSecret ?? "";
+                AppConstant.GHL_RedirectUri = AppConstant.GHL_Marketplace_RedirectUri ?? "";
             }
             
         }
