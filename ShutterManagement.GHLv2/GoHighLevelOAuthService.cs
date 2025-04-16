@@ -10,6 +10,9 @@ using Microsoft.Extensions.Options;
 using ShutterManagement.Core;
 using Microsoft.Extensions.Configuration;
 using ShutterManagement.Core.Common;
+using ShutterManagement.Core.ViewModels;
+using Azure;
+using static System.Net.WebRequestMethods;
 
 
 public class GoHighLevelOAuthService
@@ -50,11 +53,13 @@ public class GoHighLevelOAuthService
     }
 
     // Step 2: Exchange the authorization code for an access token
-    public async Task<TokenResponse> GetRefreshToken(string authorizationCode)
+
+    public async Task<IResponseVm<TokenResponse>> GetRefreshToken(string authorizationCode)
     {
+        var responseVm = new ResponseVm<TokenResponse>();
+
         try
         {
-            // Create the form data for the token request
             var tokenRequest = new FormUrlEncodedContent(new Dictionary<string, string>
         {
             { "client_id", configuration["GoHighLevelOAuthSettings:ClientId"] ?? "" },
@@ -64,83 +69,196 @@ public class GoHighLevelOAuthService
             { "grant_type", "authorization_code" }
         });
 
-            // Perform the POST request to the token URL
             var response = await _httpClient.PostAsync(configuration["GoHighLevelOAuthSettings:TokenUrl"] ?? "", tokenRequest);
 
-            FileLogger.Log($"This is the Logs of Refesh token {response}");
-            // Check if the response is successful
+            FileLogger.Log($"This is the Logs of Refresh token response: {response}");
+
+            var responseContent = await response.Content.ReadAsStringAsync();
+            FileLogger.Log($"This is the Logs of Refresh token content: {responseContent}");
+
             if (response.IsSuccessStatusCode)
             {
-                var responseContent = await response.Content.ReadAsStringAsync();
-                FileLogger.Log($"This is the Logs of Refesh token {response}");
                 try
                 {
-                    // Try deserializing the response content
                     var tokenData = JsonConvert.DeserializeObject<TokenResponse>(responseContent);
-                    if (tokenData == null)
-                    {
-                        throw new Exception("Token response is null. The response content could not be deserialized properly.");
-                    }
 
-                    return tokenData;
+                    if (tokenData != null)
+                    {
+                        responseVm.IsSuccess = true;
+                        responseVm.Message = "Token retrieved successfully.";
+                        responseVm.Data = tokenData;
+                        FileLogger.Log($"Token retrieved successfully.: {tokenData}");
+                    }
+                    else
+                    {
+                        responseVm.IsSuccess = false;
+                        responseVm.Message = "Token response is null. Could not deserialize properly.";
+                        FileLogger.Log($"Token response is null. Could not deserialize properly");
+                    }
                 }
                 catch (JsonException jsonEx)
                 {
-                    // Log the deserialization error
-                    //logger.LogError(jsonEx, "Error deserializing the token response content.");
-                    throw new Exception("Error deserializing the token response.", jsonEx);
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = $"Error deserializing the token response: {jsonEx.Message}";
+                    FileLogger.Log($"Error deserializing the token response: {jsonEx.Message}");
                 }
             }
             else
             {
-                // If the response is not successful, log the error and return null
-                var errorContent = await response.Content.ReadAsStringAsync();
-                // Optionally log the error response content for debugging
-                //logger.LogError($"Failed to get refresh token. StatusCode: {response.StatusCode}, Error: {errorContent}");
-                return null;
+                responseVm.IsSuccess = false;
+                responseVm.Message = $"Failed to get token. StatusCode: {response.StatusCode}, Error: {responseContent}";
             }
         }
         catch (HttpRequestException httpEx)
         {
-            // Handle network-related exceptions (e.g., no internet connection)
-            //logger.LogError(httpEx, "Network error while calling the GoHighLevel OAuth service.");
-            throw new Exception("A network error occurred while requesting the token.", httpEx);
+            responseVm.IsSuccess = false;
+            responseVm.Message = $"Network error while requesting token: {httpEx.Message}";
+            FileLogger.Log($"Network error while requesting token: {httpEx.Message}");
         }
         catch (Exception ex)
         {
-            // Catch all other exceptions
-            //logger.LogError(ex, "An error occurred while getting the refresh token.");
-            throw new Exception("An error occurred while retrieving the refresh token.", ex);
+            responseVm.IsSuccess = false;
+            responseVm.Message = $"An error occurred while retrieving the refresh token: {ex.Message}";
         }
+
+        return responseVm;
     }
+
+
+
+    //public async Task<TokenResponse> GetRefreshToken(string authorizationCode)
+    //{
+    //    try
+    //    {
+    //        // Create the form data for the token request
+    //        var tokenRequest = new FormUrlEncodedContent(new Dictionary<string, string>
+    //    {
+    //        { "client_id", configuration["GoHighLevelOAuthSettings:ClientId"] ?? "" },
+    //        { "client_secret", configuration["GoHighLevelOAuthSettings:ClientSecret"] ?? "" },
+    //        { "code", authorizationCode },
+    //        { "redirect_uri", configuration["GoHighLevelOAuthSettings:RedirectUri"] ?? "" },
+    //        { "grant_type", "authorization_code" }
+    //    });
+
+    //        // Perform the POST request to the token URL
+    //        var response = await _httpClient.PostAsync(configuration["GoHighLevelOAuthSettings:TokenUrl"] ?? "", tokenRequest);
+
+    //        FileLogger.Log($"This is the Logs of Refesh token {response}");
+    //        // Check if the response is successful
+    //        if (response.IsSuccessStatusCode)
+    //        {
+    //            var responseContent = await response.Content.ReadAsStringAsync();
+    //            FileLogger.Log($"This is the Logs of Refesh token {response}");
+    //            try
+    //            {
+    //                // Try deserializing the response content
+    //                var tokenData = JsonConvert.DeserializeObject<TokenResponse>(responseContent);
+    //                if (tokenData == null)
+    //                {
+    //                    throw new Exception("Token response is null. The response content could not be deserialized properly.");
+    //                }
+
+    //                return tokenData;
+    //            }
+    //            catch (JsonException jsonEx)
+    //            {
+    //                // Log the deserialization error
+    //                //logger.LogError(jsonEx, "Error deserializing the token response content.");
+    //                throw new Exception("Error deserializing the token response.", jsonEx);
+    //            }
+    //        }
+    //        else
+    //        {
+    //            // If the response is not successful, log the error and return null
+    //            var errorContent = await response.Content.ReadAsStringAsync();
+    //            // Optionally log the error response content for debugging
+    //            //logger.LogError($"Failed to get refresh token. StatusCode: {response.StatusCode}, Error: {errorContent}");
+    //            return null;
+    //        }
+    //    }
+    //    catch (HttpRequestException httpEx)
+    //    {
+    //        // Handle network-related exceptions (e.g., no internet connection)
+    //        //logger.LogError(httpEx, "Network error while calling the GoHighLevel OAuth service.");
+    //        throw new Exception("A network error occurred while requesting the token.", httpEx);
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        // Catch all other exceptions
+    //        //logger.LogError(ex, "An error occurred while getting the refresh token.");
+    //        throw new Exception("An error occurred while retrieving the refresh token.", ex);
+    //    }
+    //}
 
     // Step 3: Exchange the refreshtoken for an access token
-    public async Task<TokenResponse> GetAccessToken(string refreshtoken)
+    public async Task<IResponseVm<TokenResponse>> GetAccessToken(string refreshtoken)
     {
-        var tokenRequest = new FormUrlEncodedContent(new Dictionary<string, string>
-    {
-        { "client_id", configuration["GoHighLevelOAuthSettings:ClientId"] ?? ""},
-        { "client_secret", configuration["GoHighLevelOAuthSettings:ClientSecret"] ?? ""},
-        { "refresh_token", refreshtoken },
-        { "redirect_uri", configuration["GoHighLevelOAuthSettings:RedirectUri"] ?? "" },
-        { "grant_type", "refresh_token" }
-    });
+        var responseVm = new ResponseVm<TokenResponse>();
 
-        var response = await _httpClient.PostAsync(configuration["GoHighLevelOAuthSettings:TokenUrl"] ?? "", tokenRequest);
-
-        if (response.IsSuccessStatusCode)
+        try
         {
+            var tokenRequest = new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            { "client_id", configuration["GoHighLevelOAuthSettings:ClientId"] ?? "" },
+            { "client_secret", configuration["GoHighLevelOAuthSettings:ClientSecret"] ?? "" },
+            { "refresh_token", refreshtoken },
+            { "redirect_uri", configuration["GoHighLevelOAuthSettings:RedirectUri"] ?? "" },
+            { "grant_type", "refresh_token" }
+        });
+
+            var response = await _httpClient.PostAsync(configuration["GoHighLevelOAuthSettings:TokenUrl"] ?? "", tokenRequest);
+
+            FileLogger.Log($"Access token response: {response}");
+
             var responseContent = await response.Content.ReadAsStringAsync();
-            var tokenData = JsonConvert.DeserializeObject<TokenResponse>(responseContent);
-            return tokenData;
+            FileLogger.Log($"Access token content: {responseContent}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var tokenData = JsonConvert.DeserializeObject<TokenResponse>(responseContent);
+
+                if (tokenData != null)
+                {
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = "Access token retrieved successfully.";
+                    responseVm.Data = tokenData;
+                    FileLogger.Log($"Access token retrieved successfully.: {tokenData}");
+                }
+                else
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = "Failed to deserialize access token response.";
+                }
+            }
+            else
+            {
+                responseVm.IsSuccess = false;
+                responseVm.Message = $"Failed to get access token. StatusCode: {response.StatusCode}, Error: {responseContent}";
+                FileLogger.Log($"Failed to get access token. StatusCode: {response.StatusCode}, Error: {responseContent}");
+            }
         }
-        else
+        catch (HttpRequestException httpEx)
         {
-            var errorContent = await response.Content.ReadAsStringAsync();
-            throw new Exception($"Error retrieving access token: {errorContent}");
-            return null;
+            responseVm.IsSuccess = false;
+            responseVm.Message = $"Network error while requesting access token: {httpEx.Message}";
+            FileLogger.Log($"Network error while requesting access token: {httpEx.Message}");
         }
+        catch (JsonException jsonEx)
+        {
+            responseVm.IsSuccess = false;
+            responseVm.Message = $"Error deserializing access token response: {jsonEx.Message}";
+            FileLogger.Log($"Error deserializing access token response: {jsonEx.Message}");
+        }
+        catch (Exception ex)
+        {
+            responseVm.IsSuccess = false;
+            responseVm.Message = $"Unexpected error occurred while retrieving access token: {ex.Message}";
+            FileLogger.Log($"Unexpected error occurred while retrieving access token: {ex.Message}");
+        }
+
+        return responseVm;
     }
+
 
 
     //public class GoHighLevelApiService
@@ -192,7 +310,7 @@ public class GoHighLevelOAuthService
     //}
 
 
-   
+
 
 
 
