@@ -138,8 +138,8 @@ namespace ShutterManagement.Business.Services
                         if (res != null)
                         {
                             // Update the gHLConfiguration with new tokens and expiration times
-                            gHLConfiguration.RefreshToken = res?.RefreshToken ?? "";
-                            gHLConfiguration.AccessToken = res?.AccessToken ?? "";
+                            gHLConfiguration.RefreshToken = res.Data?.RefreshToken ?? "";
+                            gHLConfiguration.AccessToken = res.Data?.AccessToken ?? "";
                             gHLConfiguration.AccessExpirationtime = DateTime.Now.AddDays(1);
                             gHLConfiguration.RefreshExpirationtime = DateTime.Now.AddDays(365);
                             gHLConfiguration.TenantId= AppConstant.LoggedInTenantId;
@@ -243,8 +243,8 @@ namespace ShutterManagement.Business.Services
                             {
                                 isExist.AccessExpirationtime = DateTime.Now.AddDays(1);
                                 isExist.RefreshExpirationtime = DateTime.Now.AddDays(365);
-                                isExist.RefreshToken = res1.Result.RefreshToken??"";
-                                isExist.AccessToken = res1.Result.AccessToken ?? "";
+                                isExist.RefreshToken = res1?.Result?.Data?.RefreshToken??"";
+                                isExist.AccessToken = res1?.Result?.Data?.AccessToken ?? "";
                                 isExist.LastSync= DateTime.Now;
                                 await Update(isExist);
                             }
