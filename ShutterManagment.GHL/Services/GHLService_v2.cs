@@ -14,6 +14,7 @@ using ShutterManagement.Core.ViewModels.Response;
 using ShutterManagement.DAL.Context;
 using ShutterManagment.GHL.ViewModel.Request;
 using ShutterManagment.GHL.ViewModel.Response;
+//using System.Globalization;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -574,9 +575,14 @@ namespace ShutterManagement.GHL.Services
             IResponseVm<GHLAppointment> responseVm = new ResponseVm<GHLAppointment>();
             try
             {
-
-                var CalendarId = GetAppointmentsAsync().Result.Where(x => x.name.ToLower() == AppConstant.GHL_CalendarName.ToLower() || x.id.ToLower() == AppConstant.GHL_CalendarName.ToLower()).Select(x=> x.id).FirstOrDefault();
+                var CalendarId = GetCalendarAsync().Result.Where(x => x.name.ToLower() == AppConstant.GHL_CalendarName.ToLower() || x.id.ToLower() == AppConstant.GHL_CalendarName.ToLower()).Select(x=> x.id).FirstOrDefault();
                 FileLogger.Log($"Base Address from Create Appointment: {AppConstant.GHL_BaseAddress}");
+                if (CalendarId == null)
+                {
+                    responseVm.Message = "Calendar does not exist in GHL.";
+                    FileLogger.Log("Calendar does not exist in GHL.");
+                    return responseVm;
+                }
 
                 var contactData = new
                 {
@@ -643,17 +649,23 @@ namespace ShutterManagement.GHL.Services
             IResponseVm<GHLAppointment> responseVm = new ResponseVm<GHLAppointment>();
             try
             {
-                var calendarId = (await GetAppointmentsAsync())
+                var calendarId = (await GetCalendarAsync())
                                      .Where(x => x.name.ToLower() == AppConstant.GHL_CalendarName.ToLower() || x.id.ToLower() == AppConstant.GHL_CalendarName.ToLower())
                                      .Select(x => x.id)
                                      .FirstOrDefault();
+
+                if(calendarId == null)
+                {
+                    responseVm.Message = "Calendar does not exist in GHL.";
+                    FileLogger.Log("Calendar does not exist in GHL.");
+                    return responseVm;
+                }
 
                 FileLogger.Log($"Base Address from Update Appointment: {AppConstant.GHL_BaseAddress}");
 
                 var contactData = new
                 {
                     title= appointment.Title ?? "",
-
                     calendarId = calendarId??"",
                     startTime = appointment.startTime??"",
                     endTime = appointment.endtime??"",
@@ -698,7 +710,7 @@ namespace ShutterManagement.GHL.Services
 
         }
 
-        public async Task<List<Calendar>> GetAppointmentsAsync()
+        public async Task<List<Calendar>> GetCalendarAsync()
         {
             try
             {
@@ -866,8 +878,6 @@ namespace ShutterManagement.GHL.Services
                         }
                     }
                 }
-
-
                 else
                 {
                     responseVm.IsSuccess = false;
@@ -886,10 +896,8 @@ namespace ShutterManagement.GHL.Services
                 responseVm.IsSuccess = false;
                 responseVm.Message = $"Unexpected error: {ex.Message}";
             }
-
             return responseVm;
         }
-
 
 
         public async Task<IResponseVm<string>> SaveOrUpdateGHLUsersAsync(List<User> users)
@@ -1010,9 +1018,6 @@ namespace ShutterManagement.GHL.Services
 
             return responseVm;
         }
-
-
-
 
         public async Task<IResponseVm<StageMapping>> GetGHLStagesMappingsById(Guid? JobstatusId)
         {
