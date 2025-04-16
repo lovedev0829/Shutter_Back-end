@@ -71,6 +71,7 @@ namespace ShutterManagement.Business.Services
                 }
                 else
                 {
+                    var ghlUserIdAdd = dbContext.TblUsers.Where(x => x.Id == model.UserId).Select(x => x.GhlUserId).FirstOrDefault();
 
                     TblAppointmentSchedule tblAppointmentSchedule = new TblAppointmentSchedule
                     {
@@ -79,7 +80,7 @@ namespace ShutterManagement.Business.Services
                         ScheduleDateTime = model?.ScheduleDateTime,
                         Title = model?.Title?.Trim() ?? "",
                         Description = model?.Description?.Trim() ?? "",
-                        GhlUserId = model?.GhlUserId ?? "",
+                        GhlUserId = ghlUserIdAdd ?? "",
                         CreatedAt = DateTime.Now,
                         TenantId = AppConstant.LoggedInTenantId,
                         CreatedBy = AppConstant.LoggedInUserID,
