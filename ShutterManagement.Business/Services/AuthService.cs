@@ -76,6 +76,7 @@ namespace ShutterManagement.Services
                     FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
                     MiddleName = reader.GetString(reader.GetOrdinal("MiddleName")),
                     LastName = reader.GetString(reader.GetOrdinal("LastName")),
+                    suffix = reader.GetString(reader.GetOrdinal("suffix")),
                     Email = reader.GetString(reader.GetOrdinal("Email")),
                     TenantId = reader.GetGuid(reader.GetOrdinal("TenantId")),
                     ParentTenantId = reader.GetString(reader.GetOrdinal("ParentTenantId")),
@@ -199,6 +200,7 @@ namespace ShutterManagement.Services
                         URL = TenantHomePageData.Url,
                         FirstName = TenantHomePageData.FirstName,
                         LastName = TenantHomePageData.LastName,
+                        suffix=TenantHomePageData.Suffix,
                         MiddleName = TenantHomePageData.MiddleName,
                         Email = brandInfo.Email,
                         PhoneNumber = brandInfo.PhoneNumber,
@@ -284,6 +286,7 @@ namespace ShutterManagement.Services
                     {
                         UpdateUserDetails.FirstName = profileUpdate.FirstName;
                         UpdateUserDetails.LastName = profileUpdate.LastName;
+                        UpdateUserDetails.Suffix = profileUpdate.suffix;
                         //UpdateUserDetails.Username = profileUpdate.Email;
                         //UpdateUserDetails.Email = profileUpdate.Email;
                         UpdateUserDetails.Phone = profileUpdate.Phone;
@@ -331,6 +334,7 @@ namespace ShutterManagement.Services
                     {
                         FirstName = c.FirstName,
                         LastName = c.LastName,
+                        suffix=c.Suffix??"",
                         Email = c.Email,
                         UserName = c.Username,
                         Phone = c.Phone

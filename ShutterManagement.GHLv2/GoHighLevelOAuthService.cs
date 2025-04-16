@@ -41,8 +41,8 @@ public class GoHighLevelOAuthService
     {
         var queryParams = new Dictionary<string, string>
         {
-            { "client_id", configuration["GoHighLevelOAuthSettings:ClientId"] ?? "" },
-            { "redirect_uri",  configuration["GoHighLevelOAuthSettings:RedirectUri"] ?? ""},
+            { "client_id", AppConstant.GHL_Marketplace_ClientId ?? "" },
+            { "redirect_uri",  AppConstant.GHL_Marketplace_RedirectUri ?? ""},
             { "response_type", "code" },
             { "scope", "conversations/message.readonly conversations/message.write contacts.readonly contacts.write opportunities.readonly opportunities.write calendars.readonly " +
             "calendars.write calendars/events.readonly calendars/events.write calendars/groups.readonly calendars/groups.write calendars/resources.readonly calendars/resources.write users.readonly" } 
@@ -62,14 +62,14 @@ public class GoHighLevelOAuthService
         {
             var tokenRequest = new FormUrlEncodedContent(new Dictionary<string, string>
         {
-            { "client_id", configuration["GoHighLevelOAuthSettings:ClientId"] ?? "" },
-            { "client_secret", configuration["GoHighLevelOAuthSettings:ClientSecret"] ?? "" },
+            { "client_id", AppConstant.GHL_Marketplace_ClientId ?? "" },
+            { "client_secret", AppConstant.GHL_Marketplace_ClientSecret ?? "" },
             { "code", authorizationCode },
-            { "redirect_uri", configuration["GoHighLevelOAuthSettings:RedirectUri"] ?? "" },
+            { "redirect_uri", AppConstant.GHL_Marketplace_RedirectUri ?? "" },
             { "grant_type", "authorization_code" }
         });
 
-            var response = await _httpClient.PostAsync(configuration["GoHighLevelOAuthSettings:TokenUrl"] ?? "", tokenRequest);
+            var response = await _httpClient.PostAsync(AppConstant.GHL_Marketplace_TokenURL ?? "", tokenRequest);
 
             FileLogger.Log($"This is the Logs of Refresh token response: {response}");
 
@@ -199,14 +199,14 @@ public class GoHighLevelOAuthService
         {
             var tokenRequest = new FormUrlEncodedContent(new Dictionary<string, string>
         {
-            { "client_id", configuration["GoHighLevelOAuthSettings:ClientId"] ?? "" },
-            { "client_secret", configuration["GoHighLevelOAuthSettings:ClientSecret"] ?? "" },
+            { "client_id", AppConstant.GHL_Marketplace_ClientId ?? "" },
+            { "client_secret", AppConstant.GHL_Marketplace_ClientSecret ?? "" },
             { "refresh_token", refreshtoken },
-            { "redirect_uri", configuration["GoHighLevelOAuthSettings:RedirectUri"] ?? "" },
+            { "redirect_uri", AppConstant.GHL_Marketplace_RedirectUri ?? "" },
             { "grant_type", "refresh_token" }
         });
 
-            var response = await _httpClient.PostAsync(configuration["GoHighLevelOAuthSettings:TokenUrl"] ?? "", tokenRequest);
+            var response = await _httpClient.PostAsync(AppConstant.GHL_Marketplace_TokenURL ?? "", tokenRequest);
 
             FileLogger.Log($"Access token response: {response}");
 
