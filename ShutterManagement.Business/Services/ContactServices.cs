@@ -296,14 +296,16 @@ namespace ShutterManagement.Business.Services
                                     responseVm.Message = AppConstant.InsertSuccessMsg + ghlResponse.Message;
                                 }
                                 else
-                                { 
-                                  responseVm.Message = AppConstant.InsertSuccessMsg + ghlResponse.Message;
+                                {
+                                    responseVm.IsSuccess = true;
+                                    responseVm.Message = AppConstant.InsertSuccessMsg + ghlResponse.Message;
                                 }
                             }
                             else
                             {
-                                responseVm.IsSuccess = true;
-                                responseVm.Message = Checkghlresponse.Message;
+                                FileLogger.Log(Checkghlresponse.Message);
+                                //responseVm.IsSuccess = true;
+                                //responseVm.Message = Checkghlresponse.Message;
                             }
 
                         }
@@ -586,7 +588,8 @@ namespace ShutterManagement.Business.Services
                         }
                         else
                          {
-                          responseVm.Message = Checkghlresponse.Message;
+                            FileLogger.Log(Checkghlresponse.Message);
+                          //  responseVm.Message = Checkghlresponse.Message;
                          }
                         responseVm.IsSuccess = true;
                         responseVm.Message = AppConstant.UpdateSuccessMsg;
@@ -1133,7 +1136,6 @@ namespace ShutterManagement.Business.Services
                                 {
                                     FileLogger.Log("Exception occurred: Contact is null.", res);
                                 }
-
                             }
                         }
                         else if (existingContact == null)
