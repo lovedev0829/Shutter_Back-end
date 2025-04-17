@@ -135,7 +135,7 @@ namespace ShutterManagement.Business.Services
 
                     var appointment = new GHLAppointmentAdd
                     {
-                        Title ="Shutter Installation Appointment",
+                        Title = "Shutter Installation Appointment",
                         contactId = contactId,
                         startTime = formattedstartDate,
                         endtime = formattedstartDateend,
@@ -173,8 +173,6 @@ namespace ShutterManagement.Business.Services
                         //return responseVm;
                     }
                 }
-
-
             }
             catch (Exception ex)
             {

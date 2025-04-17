@@ -213,7 +213,6 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-
         public async Task<IResponseVm<string>> UpdateOpportunityAndJobStatus(Guid? jobId, string? jobStatusName)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
