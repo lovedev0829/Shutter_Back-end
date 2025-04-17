@@ -1252,7 +1252,7 @@ namespace ShutterManagement.Business.Services
             try
             {
 
-                var template = dbContext.TblTemplates
+                 var template = dbContext.TblTemplates
                     .FirstOrDefault(c => c.TemplateName == EnumValue.GetEnumValue(EstimateDocumentType.OrderSheet) && c.IsDelete==false);
 
                 if (template == null)
@@ -1303,12 +1303,13 @@ namespace ShutterManagement.Business.Services
                     CurrentDate = DateTime.Now.ToString("MM/dd/yyyy"),
                     CompanyName = brandingInfo?.CompanyName ?? "",
                     PhoneNo = brandingInfo?.PhoneNumber ?? "",
-                    Position = tenantDetails?.Suffix ?? ""
+                    Position = tenantDetails?.Suffix ?? "",
+                    CompanyLogo = brandingInfo?.Logo ?? "",
                 };
 
                 var finalHtml = ReplaceOrderSheetPlaceholders(template?.TemplateValue, model);
 
-
+  
 
                 var pdfBytes = GenerateInvoicePdf(finalHtml);
 
@@ -1329,7 +1330,7 @@ namespace ShutterManagement.Business.Services
                 responseVm.IsSuccess = true;
                 responseVm.Data = pdfBase64;
                 responseVm.Message = "Order sheet generated successfully.";
-                File.Delete(savePath); 
+                File.Delete(savePath);
             }
             catch (Exception ex)
             {
@@ -1355,7 +1356,7 @@ namespace ShutterManagement.Business.Services
         }
 
         public byte[] GenerateInvoicePdf(string htmlContent)
-        {
+            {
             var pdfDocument = new HtmlToPdfDocument
             {
                 GlobalSettings = new GlobalSettings
@@ -1374,4 +1375,5 @@ namespace ShutterManagement.Business.Services
 
     }
 }
+
 

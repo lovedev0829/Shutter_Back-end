@@ -8,6 +8,7 @@ namespace ShutterManagement.Core.ViewModels.Response
 {
     public class OrderSheetModel
     {
+        public string? CompanyLogo { get; set; }
         public string? CustomerName { get; set; }
         public string? JobName { get; set; }
         public string? Notes { get; set; }
