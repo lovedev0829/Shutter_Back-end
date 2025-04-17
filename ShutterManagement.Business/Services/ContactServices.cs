@@ -303,7 +303,9 @@ namespace ShutterManagement.Business.Services
                             }
                             if (!Checkghlresponse.IsSuccess)
                             {
-                                FileLogger.Log($"This is a check ghl access token response : {Checkghlresponse.Message}");
+                                responseVm.IsSuccess = true;
+                                responseVm.Message = AppConstant.InsertSuccessMsg;
+                                FileLogger.Log(Checkghlresponse.Message);
                                 //responseVm.IsSuccess = true;
                                 //responseVm.Message = Checkghlresponse.Message;
                             }
@@ -882,19 +884,19 @@ namespace ShutterManagement.Business.Services
                 }
                     ContactList.Add(contacts);
                 }
-                filter.SearchValue = filter.SearchValue.Trim().ToLower();
+                filter.SearchValue = filter?.SearchValue.Trim().ToLower();
                 var FilterRecords = ContactList
                                     .Where(x =>
-                                    (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
-                                    (filter.SearchValue != "" ?
-                                    ((x.Notes ?? "").Contains(filter.SearchValue)
-                                    || (x.ContactId.ToString().ToLower()).Contains(filter.SearchValue)
-                                    || (x.Email.ToLower() ?? "").Contains(filter.SearchValue)
-                                    || (x.Website.ToLower() ?? "").Contains(filter.SearchValue)
-                                    || (x.PhoneNumber ?? "").Contains(filter.SearchValue)
-                                    || ((x.FirstName.ToLower() + " " + x.LastName.ToLower()) ?? "").Contains(filter.SearchValue)
-                                    || (x.FirstName.ToLower() ?? "").Contains(filter.SearchValue)
-                                    || (x.LastName.ToLower() ?? "").Contains(filter.SearchValue)
+                                    (filter?.Status == 0 ? x.IsActive == false : (filter?.Status == 1 ? x.IsActive == true : true)) &&
+                                    (filter?.SearchValue != "" ?
+                                    ((x.Notes ?? "").Contains(filter?.SearchValue)
+                                    || (x.ContactId.ToString().ToLower()).Contains(filter?.SearchValue)
+                                    || (x.Email.ToLower() ?? "").Contains(filter?.SearchValue)
+                                    || (x.Website.ToLower() ?? "").Contains(filter?.SearchValue)
+                                    || (x.PhoneNumber ?? "").Contains(filter?.SearchValue)
+                                    || ((x.FirstName.ToLower() + " " + x.LastName.ToLower()) ?? "").Contains(filter?.SearchValue)
+                                    || (x.FirstName.ToLower() ?? "").Contains(filter?.SearchValue)
+                                    || (x.LastName.ToLower() ?? "").Contains(filter?.SearchValue)
                                     ) : true)).ToList();
 
                 var TakenRecords = Paginate.Pagination(FilterRecords, filter);

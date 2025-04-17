@@ -302,8 +302,6 @@ namespace ShutterManagement.Business.Services
                     }
                 }
 
-                 
-
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.UpdateSuccessMsg;
             }
@@ -891,9 +889,10 @@ namespace ShutterManagement.Business.Services
 
                                 if (!updateResponse.IsSuccess)
                                 {
-                                    responseVm.IsSuccess = false;
-                                    responseVm.Message = updateResponse.Message;
-                                    return responseVm;
+                                    FileLogger.Log(updateResponse.Message);
+                                   // responseVm.IsSuccess = false;
+                                    //responseVm.Message = updateResponse.Message;
+                                    //return responseVm;
                                 }
                             }
                             

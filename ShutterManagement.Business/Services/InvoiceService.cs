@@ -429,7 +429,6 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        
         public async Task<IResponseVm<string>> UpdateInvoice(UpdateInvoice updateInvoice)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();

@@ -792,8 +792,13 @@ namespace ShutterManagement.Controllers
         [Route("GetAllStages")]
         public async Task<IActionResult> GetStages()
         {
-            var result = await ghlService.GetGHLStages();
-            return Ok(result);
+            var res = await gHLConfiguration.CheckGHLConfiguration();
+            if(res.IsSuccess)
+            { 
+                var result = await ghlService.GetGHLStages();
+                return Ok(result);
+            }
+            return Ok(res);
         }
 
 
