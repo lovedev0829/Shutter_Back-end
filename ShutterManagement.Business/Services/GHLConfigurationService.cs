@@ -52,9 +52,9 @@ namespace ShutterManagement.Business.Services
                 AppConstant.GHL_RefreshToken = details.RefreshToken ??"";
                 AppConstant.GHL_CalendarName = details.CalendarName ?? "";
                 // Fetch ClientId and ClientSecret from appsettings.json
-                AppConstant.GHL_ClientId = configuration["GoHighLevelOAuthSettings:ClientId"] ?? "";
-                AppConstant.GHL_ClientSecret = configuration["GoHighLevelOAuthSettings:ClientSecret"] ?? "";
-                AppConstant.GHL_RedirectUri = configuration["GoHighLevelOAuthSettings:RedirectUri"] ?? "";
+                AppConstant.GHL_ClientId = AppConstant.GHL_Marketplace_ClientId ?? "";
+                AppConstant.GHL_ClientSecret = AppConstant.GHL_Marketplace_ClientSecret ?? "";
+                AppConstant.GHL_RedirectUri = AppConstant.GHL_Marketplace_RedirectUri ?? "";
             }
             
         }
@@ -74,9 +74,9 @@ namespace ShutterManagement.Business.Services
                     IsGHLConfigurationTenantExist.GeneratedToken = gHLConfiguration.GeneratedToken??"";
                     IsGHLConfigurationTenantExist.CalendarName = gHLConfiguration.CalendarName ?? "";
                     IsGHLConfigurationTenantExist.TenantId = AppConstant.LoggedInTenantId;
-                    AppConstant.GHL_ClientId = configuration["GoHighLevelOAuthSettings:ClientId"] ?? "";
-                    AppConstant.GHL_ClientSecret =configuration["GoHighLevelOAuthSettings:ClientSecret"] ?? "";
-                    AppConstant.GHL_RedirectUri = configuration["GHLSettings:RedirectUri"] ?? "";
+                    AppConstant.GHL_ClientId = AppConstant.GHL_Marketplace_ClientId ?? "";
+                    AppConstant.GHL_ClientSecret = AppConstant.GHL_Marketplace_ClientSecret ?? "";
+                    AppConstant.GHL_RedirectUri = AppConstant.GHL_Marketplace_RedirectUri ?? "";
 
                     var res = await Update(IsGHLConfigurationTenantExist);
                     responseVm.IsSuccess = true;
@@ -97,9 +97,9 @@ namespace ShutterManagement.Business.Services
                         IsActive = true,
                         GeneratedToken = gHLConfiguration.GeneratedToken ??"",
                         CalendarName = gHLConfiguration.CalendarName ?? "",
-                        ClientId = configuration["GoHighLevelOAuthSettings:ClientId"] ?? "",
-                        ClientSecret = configuration["GoHighLevelOAuthSettings:ClientSecret"] ?? "",
-                        RedirectUri = configuration["GHLSettings:RedirectUri"] ?? "",
+                        ClientId = AppConstant.GHL_Marketplace_ClientId ?? "",
+                        ClientSecret = AppConstant.GHL_Marketplace_ClientSecret ?? "",
+                        RedirectUri = AppConstant.GHL_Marketplace_RedirectUri ?? "",
                     };
                     var res1 = await Add(tblGhlconfiguration);
                     responseVm.IsSuccess = true;
@@ -113,14 +113,12 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-
         //This method is to get the GHL configuration...
         public async Task<IResponseVm<GetGHLConfiguration>> GetGHLConfigurations(string? code)
         {
             IResponseVm<GetGHLConfiguration> responseVm = new ResponseVm<GetGHLConfiguration>();
             try
             {
-
                 var gHLConfiguration = GetAllQuerable().Where(x=>x.TenantId==AppConstant.LoggedInTenantId && x.IsDelete==false).FirstOrDefault();
 
                 if (gHLConfiguration == null)
@@ -163,8 +161,6 @@ namespace ShutterManagement.Business.Services
                         return responseVm;
                     }
                 }
-               
-
                 responseVm.Data = new GetGHLConfiguration
                 {
                     Id= gHLConfiguration.Id,
@@ -194,7 +190,6 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
-
 
         public async Task<IResponseVm<string>> GetOauthGHL()
         {
@@ -269,7 +264,6 @@ namespace ShutterManagement.Business.Services
             return response;
         }
 
-
         public async Task<IResponseVm<string>> MapGHLStagesStages(StageMappingRequest request)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
@@ -313,8 +307,6 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
-
-
 
         public async Task<IResponseVm<List<StageMapping>>> GetGHLStagesMappings()
         {
@@ -380,7 +372,6 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
-
 
         public async Task<IResponseVm<string>> DeleteGHLConfiguration(Guid? configurationid)
         {

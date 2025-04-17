@@ -25,5 +25,7 @@ namespace ShutterManagement.Business.Interfaces
         Task<IResponseVm<dynamic>> ViewOrder(Guid OrderId);
         Task<IResponseVm<List<OrderList>>> GetAll_Order(Pagination filter);
 
+        Task<IResponseVm<string>> GenerateOrderSheet(Guid? orderId);
+
     }
 }

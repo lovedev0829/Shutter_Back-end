@@ -17,7 +17,10 @@ namespace ShutterManagement
             AppConstant.SMTPPort = Configuration["SMTPDetails:SMTPPort"] ?? "";
             AppConstant.SMTPPassword = Configuration["SMTPDetails:SMTPPassword"] ?? "";
             AppConstant.SMTPUsername = Configuration["SMTPDetails:SMTPUsername"] ?? "";
-
+            AppConstant.GHL_Marketplace_ClientId = Configuration["GoHighLevelOAuthSettings:ClientId"] ?? "";
+            AppConstant.GHL_Marketplace_ClientSecret = Configuration["GoHighLevelOAuthSettings:ClientSecret"] ?? "";
+            AppConstant.GHL_Marketplace_RedirectUri = Configuration["GoHighLevelOAuthSettings:RedirectUri"]  ?? "";
+            AppConstant.GHL_Marketplace_TokenURL = Configuration["GoHighLevelOAuthSettings:TokenUrl"] ?? "";
             AppConstant.GHL_Version= Configuration["GoHighLevelOAuthSettings:Version"] ?? "";
             //AppConstant.IsAdminRolesShow = Convert.ToBoolean(Configuration["IsAdminRolesShow"] ?? "false");
         }

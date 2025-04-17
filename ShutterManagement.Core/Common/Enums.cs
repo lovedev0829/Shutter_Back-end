@@ -64,7 +64,9 @@ namespace ShutterManagement.Core.Common
         [EnumMember(Value = "OrderForEmail")]
         OrderForEmail,
         [EnumMember(Value = "InvoicePaymentForEmail")]
-        InvoicePaymentForEmail
+        InvoicePaymentForEmail,
+        [EnumMember(Value = "OrderSheet")]
+        OrderSheet
     }
 
 

@@ -240,9 +240,10 @@ namespace ShutterManagement.Business.Services
 
                     if (!updateResponse.IsSuccess)
                     {
-                        responseVm.IsSuccess = false;
-                        responseVm.Message = updateResponse.Message;
-                        return responseVm;
+                        FileLogger.Log(updateResponse.Message);
+                        //responseVm.IsSuccess = false;
+                        //responseVm.Message = updateResponse.Message;
+                        //return responseVm;
                     }
                 }
             }
@@ -428,7 +429,6 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        
         public async Task<IResponseVm<string>> UpdateInvoice(UpdateInvoice updateInvoice)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
@@ -669,8 +669,7 @@ namespace ShutterManagement.Business.Services
                     IsEstimateExists.ModifiedBy = AppConstant.LoggedInUserID;
                     await estimateService.Update(IsEstimateExists);
 
-                    if(AppConstant.GHL_AccessToken !=null && AppConstant.GHL_RefreshToken !=null)
-                    {
+                    
                         var jobStatusName = EnumValue.GetEnumValue(JobStatus.Quote_Sent);
                         var updateResponse = await statusAndStageMapping.UpdateOpportunityAndJobStatus(IsEstimateExists?.JobId ?? Guid.Empty, jobStatusName);
 
@@ -680,7 +679,7 @@ namespace ShutterManagement.Business.Services
                             responseVm.Message = updateResponse.Message;
                             return responseVm;
                         }
-                    }
+                    
                         
                     
 

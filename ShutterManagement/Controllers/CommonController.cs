@@ -22,6 +22,7 @@ using ShutterManagment.GHL.ViewModel.Response;
 using ShutterManagement.GHLv2;
 using System.Runtime.InteropServices;
 using ShutterManagment.GHL.ViewModel.Request;
+using Microsoft.OpenApi.Extensions;
 
 namespace ShutterManagement.Controllers
 {
@@ -694,6 +695,7 @@ namespace ShutterManagement.Controllers
         {
             filter.Status = 1;
             filter.JobId=JobId?.ToLower();
+            filter.SearchValue = EnumValue.GetEnumValue(Estimation.GenerateOrder);
             var res = await estimateService.GetAll_Estimate(filter);
             return Ok(res);
         }
@@ -790,8 +792,13 @@ namespace ShutterManagement.Controllers
         [Route("GetAllStages")]
         public async Task<IActionResult> GetStages()
         {
-            var result = await ghlService.GetGHLStages();
-            return Ok(result);
+            var res = await gHLConfiguration.CheckGHLConfiguration();
+            if(res.IsSuccess)
+            { 
+                var result = await ghlService.GetGHLStages();
+                return Ok(result);
+            }
+            return Ok(res);
         }
 
 

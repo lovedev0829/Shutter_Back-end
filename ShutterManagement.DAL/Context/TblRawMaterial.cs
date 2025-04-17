@@ -43,6 +43,10 @@ public partial class TblRawMaterial
 
     public decimal? NonRatedUnitCost { get; set; }
 
+    public decimal? Length { get; set; }
+
+    public decimal? Width { get; set; }
+
     public virtual MstProductType? ProductTypeNavigation { get; set; }
 
     public virtual ICollection<TblComponentMaterial> TblComponentMaterials { get; set; } = new List<TblComponentMaterial>();

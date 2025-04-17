@@ -67,7 +67,30 @@ namespace ShutterManagement.Business.Services
                     await Update(IsExist);
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.UpdateSuccessMsg;
-                   
+                    if (responseVm.IsSuccess)
+                    {
+                        await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
+                        var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration();
+                        if (Checkghlresponse.IsSuccess)
+                        {
+          
+                            string formattedSchedule = FormatDateTimeWithOffset(model?.ScheduleDateTime);
+                            var appointment = new GHLAppointmentAdd
+                            {
+                                assignedUserId= IsExist.GhlUserId ?? "",
+                                startTime = formattedSchedule ?? "",
+                                locationId = AppConstant.GHL_Locationd ?? "",
+                                ignoreDateRange = true,
+                            };
+                            var ghlResponse = await gHLService_V2.UpdateAppointmentAsync(IsExist?.GhlEventId, appointment);
+                        }
+                        else
+                        {
+                            var jobStatusName = EnumValue.GetEnumValue(JobStatus.Appointment_Scheduled);
+                            var updateResponse = await statusAndStageMapping.UpdateOpportunityAndJobStatus(IsExist?.JobId ?? Guid.Empty, jobStatusName);
+                        }
+                    }
+
                 }
                 else
                 {
@@ -99,10 +122,7 @@ namespace ShutterManagement.Business.Services
                             var jobStatusName = EnumValue.GetEnumValue(JobStatus.Appointment_Scheduled);
                             var updateResponse = await statusAndStageMapping.UpdateOpportunityAndJobStatus(tblAppointmentSchedule?.JobId ?? Guid.Empty, jobStatusName);
                             var contactId = dbContext.TblJobs.Where(x => x.JobId.ToString().ToLower() == res.JobId.ToString().ToLower() && x.IsDelete == false).Select(x => x.GhlContactId).FirstOrDefault();
-
                             string formattedSchedule = FormatDateTimeWithOffset(model?.ScheduleDateTime);
-
-
                             var appointment = new GHLAppointmentAdd
                             {
                                 Title="Shutter Measurement Appointment",
@@ -125,12 +145,13 @@ namespace ShutterManagement.Business.Services
                                 responseVm.Message = updateResponse.Message;
                                 return responseVm;
                             }
+                       }
+                        else
+                        {
+                            var jobStatusName = EnumValue.GetEnumValue(JobStatus.Appointment_Scheduled);
+                            var updateResponse = await statusAndStageMapping.UpdateOpportunityAndJobStatus(tblAppointmentSchedule?.JobId ?? Guid.Empty, jobStatusName);
                         }
-                        
-
-                        
                     }
-
                 }
             }
             catch (Exception ex)
@@ -138,7 +159,6 @@ namespace ShutterManagement.Business.Services
                 responseVm.IsSuccess = false;
                 responseVm.Message = AppConstant.ExceptionError + ex.Message;
             }
-
             return responseVm;
         }
 
@@ -171,7 +191,6 @@ namespace ShutterManagement.Business.Services
                 responseVm.IsSuccess = false;
                 responseVm.Message = $"Error: {ex.Message}";
             }
-
             return responseVm;
         }
 

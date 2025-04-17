@@ -296,14 +296,18 @@ namespace ShutterManagement.Business.Services
                                     responseVm.Message = AppConstant.InsertSuccessMsg + ghlResponse.Message;
                                 }
                                 else
-                                { 
-                                  responseVm.Message = AppConstant.InsertSuccessMsg + ghlResponse.Message;
+                                {
+                                    responseVm.IsSuccess = true;
+                                    responseVm.Message = AppConstant.InsertSuccessMsg + ghlResponse.Message;
                                 }
                             }
-                            else
+                            if (!Checkghlresponse.IsSuccess)
                             {
                                 responseVm.IsSuccess = true;
-                                responseVm.Message = Checkghlresponse.Message;
+                                responseVm.Message = AppConstant.InsertSuccessMsg;
+                                FileLogger.Log(Checkghlresponse.Message);
+                                //responseVm.IsSuccess = true;
+                                //responseVm.Message = Checkghlresponse.Message;
                             }
 
                         }
@@ -586,7 +590,8 @@ namespace ShutterManagement.Business.Services
                         }
                         else
                          {
-                          responseVm.Message = Checkghlresponse.Message;
+                            FileLogger.Log(Checkghlresponse.Message);
+                          //  responseVm.Message = Checkghlresponse.Message;
                          }
                         responseVm.IsSuccess = true;
                         responseVm.Message = AppConstant.UpdateSuccessMsg;
@@ -805,7 +810,7 @@ namespace ShutterManagement.Business.Services
                 var IsSubtenants = false;
                 var Contacts = new List<TblContact>();
                 List<ContactsList> ContactList = new List<ContactsList>();
-                if (filter.TenantId != "" && Role)
+                if (filter?.TenantId != "" && Role)
                 {
                     
                     var IsRealtedTenant = tenantService.GetAllQuerable().Where(x => x.TenantId.ToString() == filter.TenantId && x.ParentTenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
@@ -825,10 +830,10 @@ namespace ShutterManagement.Business.Services
                     Contacts = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId).OrderByDescending(x => x.CreatedAt).ToList();
                 }
 
-                
+
                 foreach (var contact in Contacts)
                 {
-                    
+
 
                     ContactsList contacts = new ContactsList
                     {
@@ -843,7 +848,7 @@ namespace ShutterManagement.Business.Services
                         Notes = contact.Notes ?? "",
                         Referral = contact.Referral ?? "",
                         ContactUniqueId = contact.ContactUniqueId ?? "",
-                        PrimaryAddress = contact.PrimaryAddress,
+                        PrimaryAddress = contact.PrimaryAddress ?? null,
                         IsTaxExemption = contact.IsTaxExemption ?? false,
                         IsBillingAddressSameAsAddress = contact.IsBillingAddressSameAsAddress,
                         IsActive = contact.IsActive,
@@ -851,44 +856,47 @@ namespace ShutterManagement.Business.Services
                         CreatedAt = contact.CreatedAt,
                         IsSubtenant = IsSubtenants,
                     };
-                    contacts.billingAddressVm = dbContext.TblAddresses.Include(x=>x.StateNavigation)
+                    contacts.billingAddressVm = dbContext.TblAddresses.Include(x => x.StateNavigation)
                         .Where(x => x.AddressId == contact.PrimaryAddress
                         && x.IsDelete == false).Select(x => new BillingAddressVm
                         {
-                             
-                            City = x.City,
-                            Email = x.Email,
-                            FirstName = x.FirstName,
-                            LastName = x.LastName,
-                            PhoneNumber = x.Phone,
-                            StateName = dbContext.MstStates.Where(s => s.Id == x.State).Select(y => y.StateName ?? "").FirstOrDefault(),
-                            StateId= x.State,
-                            StreetAddress = x.StreetAddress,
-                            ZipCode = x.ZipCode,
+
+                            City = x.City ?? "",
+                            Email = x.Email ?? "",
+                            FirstName = x.FirstName ?? "",
+                            LastName = x.LastName ?? "",
+                            PhoneNumber = x.Phone ?? "",
+                            StateName = dbContext.MstStates.Where(s => s.Id == x.State).Select(y => y.StateName ?? "").FirstOrDefault() ?? "",
+                            StateId = x.State ?? null,
+                            StreetAddress = x.StreetAddress ?? "",
+                            ZipCode = x.ZipCode ?? "",
                         }).FirstOrDefault();
-                    contacts.taxExemptionVm = taxExemptionService.GetAllQuerable()
+                    var taxExemption = taxExemptionService.GetAllQuerable()
                         .Where(x => x.ContactId == contact.ContactId
-                        && x.IsDelete == false).Select(x => new TaxExemption
-                        {
-                            EffectiveDate = x.EffectiveDate,
-                            ExemptionCertificate = x.ExemptionCertificate.Split(",", StringSplitOptions.RemoveEmptyEntries).ToArray(),
-                            ExpiryDate = x.ExpiryDate
-                        }).FirstOrDefault();
+                        && x.IsDelete == false).FirstOrDefault();
+                    if (taxExemption != null) { 
+                    contacts.taxExemptionVm = new TaxExemption
+                    {
+                        EffectiveDate = taxExemption.EffectiveDate ?? null,
+                        ExemptionCertificate = taxExemption.ExemptionCertificate.Split(",", StringSplitOptions.RemoveEmptyEntries).ToArray() ?? null,
+                        ExpiryDate = taxExemption.ExpiryDate ?? null
+                    };
+                }
                     ContactList.Add(contacts);
                 }
-                filter.SearchValue = filter.SearchValue.Trim().ToLower();
+                filter.SearchValue = filter?.SearchValue.Trim().ToLower();
                 var FilterRecords = ContactList
                                     .Where(x =>
-                                    (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
-                                    (filter.SearchValue != "" ?
-                                    ((x.Notes ?? "").Contains(filter.SearchValue)
-                                    || (x.ContactId.ToString().ToLower()).Contains(filter.SearchValue)
-                                    || (x.Email.ToLower() ?? "").Contains(filter.SearchValue)
-                                    || (x.Website.ToLower() ?? "").Contains(filter.SearchValue)
-                                    || (x.PhoneNumber ?? "").Contains(filter.SearchValue)
-                                    || ((x.FirstName.ToLower() + " " + x.LastName.ToLower()) ?? "").Contains(filter.SearchValue)
-                                    || (x.FirstName.ToLower() ?? "").Contains(filter.SearchValue)
-                                    || (x.LastName.ToLower() ?? "").Contains(filter.SearchValue)
+                                    (filter?.Status == 0 ? x.IsActive == false : (filter?.Status == 1 ? x.IsActive == true : true)) &&
+                                    (filter?.SearchValue != "" ?
+                                    ((x.Notes ?? "").Contains(filter?.SearchValue)
+                                    || (x.ContactId.ToString().ToLower()).Contains(filter?.SearchValue)
+                                    || (x.Email.ToLower() ?? "").Contains(filter?.SearchValue)
+                                    || (x.Website.ToLower() ?? "").Contains(filter?.SearchValue)
+                                    || (x.PhoneNumber ?? "").Contains(filter?.SearchValue)
+                                    || ((x.FirstName.ToLower() + " " + x.LastName.ToLower()) ?? "").Contains(filter?.SearchValue)
+                                    || (x.FirstName.ToLower() ?? "").Contains(filter?.SearchValue)
+                                    || (x.LastName.ToLower() ?? "").Contains(filter?.SearchValue)
                                     ) : true)).ToList();
 
                 var TakenRecords = Paginate.Pagination(FilterRecords, filter);
@@ -1133,7 +1141,6 @@ namespace ShutterManagement.Business.Services
                                 {
                                     FileLogger.Log("Exception occurred: Contact is null.", res);
                                 }
-
                             }
                         }
                         else if (existingContact == null)
