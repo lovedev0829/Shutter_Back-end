@@ -301,9 +301,9 @@ namespace ShutterManagement.Business.Services
                                     responseVm.Message = AppConstant.InsertSuccessMsg + ghlResponse.Message;
                                 }
                             }
-                            else
+                            if (!Checkghlresponse.IsSuccess)
                             {
-                                FileLogger.Log(Checkghlresponse.Message);
+                                FileLogger.Log($"This is a check ghl access token response : {Checkghlresponse.Message}");
                                 //responseVm.IsSuccess = true;
                                 //responseVm.Message = Checkghlresponse.Message;
                             }
@@ -808,7 +808,7 @@ namespace ShutterManagement.Business.Services
                 var IsSubtenants = false;
                 var Contacts = new List<TblContact>();
                 List<ContactsList> ContactList = new List<ContactsList>();
-                if (filter.TenantId != "" && Role)
+                if (filter?.TenantId != "" && Role)
                 {
                     
                     var IsRealtedTenant = tenantService.GetAllQuerable().Where(x => x.TenantId.ToString() == filter.TenantId && x.ParentTenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
