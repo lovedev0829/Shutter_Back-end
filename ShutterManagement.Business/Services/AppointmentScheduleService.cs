@@ -104,6 +104,7 @@ namespace ShutterManagement.Business.Services
                         Title = model?.Title?.Trim() ?? "",
                         Description = model?.Description?.Trim() ?? "",
                         GhlUserId = ghlUserIdAdd ?? "",
+                        UserId=model?.UserId?? null,
                         CreatedAt = DateTime.Now,
                         TenantId = AppConstant.LoggedInTenantId,
                         CreatedBy = AppConstant.LoggedInUserID,
