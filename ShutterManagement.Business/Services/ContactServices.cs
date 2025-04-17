@@ -303,6 +303,8 @@ namespace ShutterManagement.Business.Services
                             }
                             else
                             {
+                                responseVm.IsSuccess = true;
+                                responseVm.Message = AppConstant.InsertSuccessMsg;
                                 FileLogger.Log(Checkghlresponse.Message);
                                 //responseVm.IsSuccess = true;
                                 //responseVm.Message = Checkghlresponse.Message;
