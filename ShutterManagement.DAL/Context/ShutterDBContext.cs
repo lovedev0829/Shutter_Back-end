@@ -1421,6 +1421,7 @@ public partial class ShutterDBContext : DbContext
                 .HasColumnType("datetime");
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
+            entity.Property(e => e.Length).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.MaterialName).HasMaxLength(255);
             entity.Property(e => e.NonRatedUnitCost)
                 .HasColumnType("decimal(10, 2)")
@@ -1437,6 +1438,7 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
+            entity.Property(e => e.Width).HasColumnType("decimal(10, 2)");
 
             entity.HasOne(d => d.ProductTypeNavigation).WithMany(p => p.TblRawMaterials)
                 .HasForeignKey(d => d.ProductType)
