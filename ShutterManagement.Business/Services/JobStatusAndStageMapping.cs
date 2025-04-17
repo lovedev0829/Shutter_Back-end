@@ -267,12 +267,6 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
-
-
-
-
-
-
         #endregion Update Opportunity Status
     }
 }
