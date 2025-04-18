@@ -1352,24 +1352,33 @@ namespace ShutterManagement.Business.Services
                 .Replace("{{CurrentDate}}", model.CurrentDate ?? "")
                 .Replace("{{CompanyName}}", model.CompanyName ?? "")
                 .Replace("{{PhoneNo}}", model.PhoneNo ?? "")
-                .Replace("{{Position}}", model.Position ?? "");
+                .Replace("{{Position}}", model.Position ?? "")
+                .Replace("{{logo}}", model.CompanyLogo ?? "");
         }
 
         public byte[] GenerateInvoicePdf(string htmlContent)
-            {
+        {
             var pdfDocument = new HtmlToPdfDocument
             {
                 GlobalSettings = new GlobalSettings
                 {
-                    ColorMode = DinkToPdf.ColorMode.Color,
-                    Orientation = Orientation.Portrait,
-                    PaperSize = DinkToPdf.PaperKind.B4
+                    ColorMode = ColorMode.Color,
+                    Orientation = Orientation.Landscape,
+                    PaperSize = PaperKind.A4,
+                    Margins = new MarginSettings { Top = 10, Bottom = 10 } 
                 },
-                Objects = { new ObjectSettings { HtmlContent = htmlContent } }
+                Objects = {
+            new ObjectSettings
+            {
+                HtmlContent = htmlContent,
+                WebSettings = { DefaultEncoding = "utf-8", LoadImages = true }
+            }
+        }
             };
 
             return converter.Convert(pdfDocument);
         }
+
 
 
 
