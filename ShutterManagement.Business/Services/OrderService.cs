@@ -1292,20 +1292,32 @@ namespace ShutterManagement.Business.Services
                 var brandingInfo = tenantBrandingService.GetAllQuerable()
                     .FirstOrDefault(x => x.Id == tenantDetails.BrandingInfo && x.IsActive == true && x.IsDelete == false);
 
-                var estimateDetails = dbContext.TblEstimates
-                    .FirstOrDefault(e => e.EstimateId == orderDetails.EstimateId && e.IsDelete==false);
+                var newestimate = estimateService.GetAll_Estimate(filter);
+                var EstimateRes = newestimate?.Result?.Data?.FirstOrDefault(x => x.EstimateId == orderDetails.EstimateId);
+
+                if (newestimate?.Result?.Data == null)
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = "Estimate " + AppConstant.NoDataFound;
+                    return responseVm;
+                }
+
+                var firstProduct = EstimateRes?.EstimateProductList?.FirstOrDefault();
+                var optionName = firstProduct?.Options?.FirstOrDefault() ?? "";
 
                 var model = new OrderSheetModel
                 {
                     CustomerName = $"{customerDetails?.FirstName} {customerDetails?.LastName}",
-                    JobName = orderDetails.OrderName,
-                    Notes = estimateDetails?.Notes ?? "",
+                    JobName = orderDetails?.OrderName,
+                    Notes = EstimateRes?.Notes ?? "",
                     CurrentDate = DateTime.Now.ToString("MM/dd/yyyy"),
                     CompanyName = brandingInfo?.CompanyName ?? "",
                     PhoneNo = brandingInfo?.PhoneNumber ?? "",
                     Position = tenantDetails?.Suffix ?? "",
                     CompanyLogo = brandingInfo?.Logo ?? "",
+                    OptionName = optionName??"NA",
                 };
+
 
                 var finalHtml = ReplaceOrderSheetPlaceholders(template?.TemplateValue, model);
 
@@ -1353,7 +1365,8 @@ namespace ShutterManagement.Business.Services
                 .Replace("{{CompanyName}}", model.CompanyName ?? "")
                 .Replace("{{PhoneNo}}", model.PhoneNo ?? "")
                 .Replace("{{Position}}", model.Position ?? "")
-                .Replace("{{logo}}", model.CompanyLogo ?? "");
+                .Replace("{{logo}}", model.CompanyLogo ?? "")
+                .Replace("{{OptionName}}", model.OptionName ?? "");
         }
 
         public byte[] GenerateInvoicePdf(string htmlContent)
