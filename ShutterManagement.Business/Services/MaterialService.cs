@@ -1,6 +1,8 @@
 ﻿using Azure;
+using Microsoft.Extensions.Configuration;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core;
+using ShutterManagement.Core.Common;
 using ShutterManagement.Core.ViewModels;
 using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.Core.ViewModels.Response;
@@ -290,6 +292,8 @@ namespace ShutterManagement.Business.Services
                                             CompanyName=t1.CompanyName,
                                             IsCutSheet = t2.IsCutSheet,
                                         }).ToList();
+
+                    FileLogger.Log($"This is Material List {MaterialList}");
                     filter.SearchValue = filter.SearchValue?.Trim().ToLower();
                     var FilterRecords = MaterialList
                                     .Where(x =>
@@ -334,6 +338,7 @@ namespace ShutterManagement.Business.Services
                         StockQuantity = x.StockQuantity,
                         ReorderLevel = x.ReorderLevel
                     }).ToList();
+                    FileLogger.Log($"This is Material List  ResponseVm data {responseVm.Data}");
                     responseVm.TotalRecords = FilterRecords.Count;
                     responseVm.Data = TakenRecords;
                     responseVm.IsSuccess = true;
@@ -347,6 +352,7 @@ namespace ShutterManagement.Business.Services
             catch (Exception ex)
             {
                 responseVm.Message = AppConstant.ExceptionError + ex.Message;
+                FileLogger.Log($"Error Material fetch: {AppConstant.ExceptionError + ex.Message}");
             }
 
             return responseVm;
