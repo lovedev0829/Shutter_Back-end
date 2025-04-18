@@ -301,7 +301,7 @@ namespace ShutterManagement.Business.Services
                                     responseVm.Message = AppConstant.InsertSuccessMsg + ghlResponse.Message;
                                 }
                             }
-                            else
+                            if (!Checkghlresponse.IsSuccess)
                             {
                                 responseVm.IsSuccess = true;
                                 responseVm.Message = AppConstant.InsertSuccessMsg;

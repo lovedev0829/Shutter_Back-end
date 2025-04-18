@@ -876,6 +876,7 @@ namespace ShutterManagement.Business.Services
                     if (responseVm.IsSuccess)
                     {
                         var EstimateName = GetAllQuerable().Where(x => x.EstimateId == EstimationId && x.IsDelete == false).Select(x => x.EstimateName).FirstOrDefault();
+                        var JobId = GetAllQuerable().Where(x => x.EstimateId == EstimationId && x.IsDelete == false).Select(x => x.JobId).FirstOrDefault();
 
                         // update job status and stage 
 

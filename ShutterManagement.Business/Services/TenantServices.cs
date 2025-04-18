@@ -244,6 +244,7 @@ namespace ShutterManagement.Business.Services
                     new SqlParameter("@PhoneNumber", SqlDbType.NVarChar) { SqlValue = model.PhoneNumber },
                     new SqlParameter("@Logo", SqlDbType.NVarChar) { SqlValue = model.Logo },
                     new SqlParameter("@CompanyName", SqlDbType.NVarChar) { SqlValue = model.CompanyName.Trim() },
+                     new SqlParameter("@InvoicePrefix", SqlDbType.NVarChar) { SqlValue = model.InvoicePrefix },
                     new SqlParameter("@PrimaryColor", SqlDbType.NVarChar) { SqlValue = model.PrimaryColor },
                     new SqlParameter("@SecondaryColor", SqlDbType.NVarChar) { SqlValue = model.SecondaryColor },
                     new SqlParameter("@StreetAddress", SqlDbType.NVarChar) { SqlValue = model.StreetAddress },

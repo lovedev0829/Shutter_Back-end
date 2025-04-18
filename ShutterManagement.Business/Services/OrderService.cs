@@ -3,10 +3,14 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Azure;
+using DinkToPdf;
+using DinkToPdf.Contracts;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core;
 using ShutterManagement.Core.Common;
@@ -44,6 +48,9 @@ namespace ShutterManagement.Business.Services
         private readonly IEstimateWindowProductService estimateWindowProduct;
         private readonly ITaxRate taxRate;
         private readonly IRegion region;
+        private readonly ITenantBrandingService tenantBrandingService;
+        private readonly IConverter converter;
+        public Pagination filter = new Pagination();
         private string Message = "";
         public OrderService(ITenantService tenantService, IWindowProductService windowProductService,
              IWindowService windowService, IComponentMaterial componentMaterialService,
@@ -55,7 +62,7 @@ namespace ShutterManagement.Business.Services
              IEstimateService estimateService, ShutterDBContext context,
              IWindowOptionService windowOptionService, IOptionsTypeService optionsTypeService, IMstProductType productType,
              IJobService jobService, IContactService contactService, IEstimateWindowProductService estimateWindowProduct, ITaxRate taxRate,
-            IRegion region)
+            IRegion region,ITenantBrandingService tenantBrandingService,IConverter converter)
         {
             this.tenantService = tenantService;
             this.windowProductService = windowProductService;
@@ -79,6 +86,8 @@ namespace ShutterManagement.Business.Services
             this.estimateWindowProduct = estimateWindowProduct;
             this.taxRate = taxRate;
             this.region = region;
+            this.tenantBrandingService = tenantBrandingService;
+            this.converter = converter;
         }
 
 
@@ -146,7 +155,7 @@ namespace ShutterManagement.Business.Services
                     decimal grandtotal = 0m;
                     Guid? taxRateId = null;
                     Guid? discountId = null;
-                    var windowproductdetails = await estimateService.BuildEstimate(updateOrder.WindowProductId, false,updateOrder.EstimateId.ToString(),true);
+                    var windowproductdetails = await estimateService.BuildEstimate(updateOrder.WindowProductId, false, updateOrder.EstimateId.ToString(), true);
                     if (windowproductdetails.Data != null && windowproductdetails.Data.Any())
                     {
                         additionalCost = (decimal)windowproductdetails.Data.ToList().DistinctBy(x => x.AdditionalCost).FirstOrDefault().AdditionalCost;
@@ -217,7 +226,7 @@ namespace ShutterManagement.Business.Services
                     newOrder.TaxId = estimate.TaxId;
                     newOrder.TaxAmount = estimate.TaxAmount;
                     newOrder.TotalPrice = estimate.TotalPrice;
-                    newOrder.AdditionalCost= estimate.AdditionalCost;
+                    newOrder.AdditionalCost = estimate.AdditionalCost;
                     newOrder.TermsCondition = estimate.TermsCondition;
                     newOrder.Status = status1;
                     newOrder.CreatedAt = DateTime.Now;
@@ -321,7 +330,7 @@ namespace ShutterManagement.Business.Services
 
                 // Group orders by EstimateId and get the latest version for each group
                 var latestVersionOrders = orders
-                    .GroupBy(o => o.EstimateId) 
+                    .GroupBy(o => o.EstimateId)
                     .Select(g => g.OrderByDescending(o => o.Version)  // Order by Version to get the latest
                                 .FirstOrDefault())  // Get the latest order in each group
                     .ToList();
@@ -389,11 +398,11 @@ namespace ShutterManagement.Business.Services
                             decimal grandtotal = 0.0M;
                             Guid? taxRateId = null;
                             Guid? discountId = null;
-                            var windowproductdetails = await estimateService.BuildEstimate(model.WindowProductId, false,model.EstimateId.ToString(),true);
+                            var windowproductdetails = await estimateService.BuildEstimate(model.WindowProductId, false, model.EstimateId.ToString(), true);
                             if (windowproductdetails.Data != null && windowproductdetails.Data.Any())
                             {
                                 additionalCost = (decimal)windowproductdetails.Data.ToList().DistinctBy(x => x.AdditionalCost).FirstOrDefault().AdditionalCost;
-                                subtotal = (decimal)windowproductdetails.Data.Sum(x=>x.Price);
+                                subtotal = (decimal)windowproductdetails.Data.Sum(x => x.Price);
                                 SumofSubtotalandAdditionalCost = subtotal + additionalCost;
                             }
                             if (string.IsNullOrEmpty((model.taxRateId).ToString()) && string.IsNullOrEmpty(model.DiscountCoupon))
@@ -834,9 +843,9 @@ namespace ShutterManagement.Business.Services
                 var jobDetails = jobService.GetAllQuerable().Where(x => x.JobId == order.JobId).Select(x => x.ContactId).FirstOrDefault();
 
                 var contactDetails = contactService.GetAllQuerable().Where(x => x.ContactId == jobDetails).FirstOrDefault();
-                e.FirstContactName = (contactDetails?.FirstName ??"");
-                e.LastContactName = (contactDetails?.LastName ??"");
-                e.Suffix = (contactDetails?.Suffix??"");
+                e.FirstContactName = (contactDetails?.FirstName ?? "");
+                e.LastContactName = (contactDetails?.LastName ?? "");
+                e.Suffix = (contactDetails?.Suffix ?? "");
                 e.ContactId = (contactDetails?.ContactId);
 
                 var userdetails = dbContext.TblUsers
@@ -891,9 +900,9 @@ namespace ShutterManagement.Business.Services
                     (string.IsNullOrWhiteSpace(filter.SearchValue) ||
                      ((x.Notes ?? "").Contains(filter.SearchValue)
                       || (x.JobId.ToString() ?? "").Contains(filter.SearchValue)
-                      || (x.FirstContactName?.ToLower() ?? "").Contains(filter.SearchValue.Trim().ToLower()) 
-                      || ((x.FirstContactName?.ToLower() ?? "") + " " + (x.LastContactName?.ToLower() ?? "")).Contains(filter.SearchValue.Trim().ToLower()) 
-                      || (x.LastContactName?.ToLower() ?? "").Contains(filter.SearchValue.Trim().ToLower()) 
+                      || (x.FirstContactName?.ToLower() ?? "").Contains(filter.SearchValue.Trim().ToLower())
+                      || ((x.FirstContactName?.ToLower() ?? "") + " " + (x.LastContactName?.ToLower() ?? "")).Contains(filter.SearchValue.Trim().ToLower())
+                      || (x.LastContactName?.ToLower() ?? "").Contains(filter.SearchValue.Trim().ToLower())
                       || (x.OrderNumber ?? "").Contains(filter.SearchValue)
                       || (x.OrderId.ToString() ?? "").Contains(filter.SearchValue)
                       || (x.Status ?? "").Contains(filter.SearchValue)
@@ -917,7 +926,7 @@ namespace ShutterManagement.Business.Services
                                join j4 in dbContext.MstJobTypes on j1.JobType equals j4.Id
                                join j5 in dbContext.TblUsers on j1.AssignedPersonnel equals j5.Id
                                join c in dbContext.TblContacts on j1.ContactId equals c.ContactId
-                               join j6 in dbContext.MstJobStatuses on j1.JobStatus equals j6.JobStatusId 
+                               join j6 in dbContext.MstJobStatuses on j1.JobStatus equals j6.JobStatusId
                                where j1.IsDelete == false && c.IsDelete == false && j1.TenantId == AppConstant.LoggedInTenantId && j1.IsDelete == false && j1.JobId == e.JobId
                                select new JobDetail
                                {
@@ -979,10 +988,10 @@ namespace ShutterManagement.Business.Services
                 var WindowQty_Label = windowService.GetAllQuerable()
                        .Where(w => w.WindowId == p.WindowId && w.IsDelete == false)
                        .FirstOrDefault();
-               
-                   
-                    EstimateProductLists estimateProduct = new EstimateProductLists
-                    {
+
+
+                EstimateProductLists estimateProduct = new EstimateProductLists
+                {
                     EstimateWindowProductId = p.OrderWindowProductId,
                     Label = WindowQty_Label.Label,
                     WindowQty = WindowQty_Label.Quantity,
@@ -1072,7 +1081,7 @@ namespace ShutterManagement.Business.Services
         {
             FileLogger.Log($"Adding product data for product {windowProductData.ProductId} to order...");
             var productData = (await productService.GetAll()).Where(x => x.ProductId == windowProductData.ProductId && x.IsDelete == false).FirstOrDefault();
-            var estimatePrice = estimateWindowProduct.GetAllQuerable().Where(x => x.EstimateId.ToString() == estimateId.ToString() && x.WindowId.ToString() == windowProductData.WindowId.ToString() &&  x.ProductId.ToString() == windowProductData.ProductId.ToString() && x.IsDelete == false).Select(x => x.Price).FirstOrDefault();
+            var estimatePrice = estimateWindowProduct.GetAllQuerable().Where(x => x.EstimateId.ToString() == estimateId.ToString() && x.WindowId.ToString() == windowProductData.WindowId.ToString() && x.ProductId.ToString() == windowProductData.ProductId.ToString() && x.IsDelete == false).Select(x => x.Price).FirstOrDefault();
             if (productData == null)
             {
                 Message = "Product " + AppConstant.NoDataFound;
@@ -1234,6 +1243,160 @@ namespace ShutterManagement.Business.Services
 
         #endregion
 
+
+
+
+        public async Task<IResponseVm<string>> GenerateOrderSheet(Guid? orderId)
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+
+            try
+            {
+
+                 var template = dbContext.TblTemplates
+                    .FirstOrDefault(c => c.TemplateName == EnumValue.GetEnumValue(EstimateDocumentType.OrderSheet) && c.IsDelete==false);
+
+                if (template == null)
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = "Order Sheet Template " + AppConstant.NoDataFound;
+                    return responseVm;
+                }
+
+
+                var orderDetails = dbContext.TblOrders
+                    .FirstOrDefault(o => o.OrderId == orderId && o.TenantId == AppConstant.LoggedInTenantId && o.IsDelete==false);
+
+                if (orderDetails == null)
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = "Order Details " + AppConstant.NoDataFound;
+                    return responseVm;
+                }
+
+
+                var jobDetails = dbContext.TblJobs.FirstOrDefault(j => j.JobId == orderDetails.JobId && j.IsDelete == false);
+                var customerDetails = dbContext.TblContacts
+                    .FirstOrDefault(x => x.ContactId == jobDetails.ContactId && x.IsActive==true && x.IsDelete ==false);
+
+
+                var tenantDetails = tenantService.GetAllQuerable()
+                    .FirstOrDefault(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive==true && x.IsDelete == false);
+
+                if (tenantDetails == null)
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = "Tenant " + AppConstant.NoDataFound;
+                    return responseVm;
+                }
+
+                var brandingInfo = tenantBrandingService.GetAllQuerable()
+                    .FirstOrDefault(x => x.Id == tenantDetails.BrandingInfo && x.IsActive == true && x.IsDelete == false);
+
+                var newestimate = estimateService.GetAll_Estimate(filter);
+                var EstimateRes = newestimate?.Result?.Data?.FirstOrDefault(x => x.EstimateId == orderDetails.EstimateId);
+
+                if (newestimate?.Result?.Data == null)
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = "Estimate " + AppConstant.NoDataFound;
+                    return responseVm;
+                }
+
+                var firstProduct = EstimateRes?.EstimateProductList?.FirstOrDefault();
+                var optionName = firstProduct?.Options?.FirstOrDefault() ?? "";
+
+                var model = new OrderSheetModel
+                {
+                    CustomerName = $"{customerDetails?.FirstName} {customerDetails?.LastName}",
+                    JobName = orderDetails?.OrderName,
+                    Notes = EstimateRes?.Notes ?? "",
+                    CurrentDate = DateTime.Now.ToString("MM/dd/yyyy"),
+                    CompanyName = brandingInfo?.CompanyName ?? "",
+                    PhoneNo = brandingInfo?.PhoneNumber ?? "",
+                    Position = tenantDetails?.Suffix ?? "",
+                    CompanyLogo = brandingInfo?.Logo ?? "",
+                    OptionName = optionName??"NA",
+                };
+
+
+                var finalHtml = ReplaceOrderSheetPlaceholders(template?.TemplateValue, model);
+
+  
+
+                var pdfBytes = GenerateInvoicePdf(finalHtml);
+
+                var rootPath = Path.Combine(AppConstant.FileUploadPath, orderDetails.OrderName);
+                FileLogger.Log($"Order Sheet File Path For Generation : {rootPath}");
+                if (!Directory.Exists(rootPath))
+                {
+                    Directory.CreateDirectory(rootPath);
+                }
+                var savePath = Path.Combine(rootPath, orderDetails.OrderName);
+
+                await using (var stream = new FileStream(savePath, FileMode.Create))
+                {
+                    await stream.WriteAsync(pdfBytes, 0, pdfBytes.Length);
+                }
+                var pdfBase64 = Convert.ToBase64String(pdfBytes);
+
+                responseVm.IsSuccess = true;
+                responseVm.Data = pdfBase64;
+                responseVm.Message = "Order sheet generated successfully.";
+                File.Delete(savePath);
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Log($"Error occurred while generating order sheet: {ex.Message}");
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+            }
+
+            return responseVm;
+        }
+
+        public string ReplaceOrderSheetPlaceholders(string template, OrderSheetModel model)
+        {
+            if (string.IsNullOrWhiteSpace(template)) return string.Empty;
+
+            return template
+                .Replace("{{CustomerName}}", model.CustomerName ?? "")
+                .Replace("{{JobName}}", model.JobName ?? "")
+                .Replace("{{Notes}}", model.Notes ?? "")
+                .Replace("{{CurrentDate}}", model.CurrentDate ?? "")
+                .Replace("{{CompanyName}}", model.CompanyName ?? "")
+                .Replace("{{PhoneNo}}", model.PhoneNo ?? "")
+                .Replace("{{Position}}", model.Position ?? "")
+                .Replace("{{logo}}", model.CompanyLogo ?? "")
+                .Replace("{{OptionName}}", model.OptionName ?? "");
+        }
+
+        public byte[] GenerateInvoicePdf(string htmlContent)
+        {
+            var pdfDocument = new HtmlToPdfDocument
+            {
+                GlobalSettings = new GlobalSettings
+                {
+                    ColorMode = ColorMode.Color,
+                    Orientation = Orientation.Landscape,
+                    PaperSize = PaperKind.A4,
+                    Margins = new MarginSettings { Top = 10, Bottom = 10 } 
+                },
+                Objects = {
+            new ObjectSettings
+            {
+                HtmlContent = htmlContent,
+                WebSettings = { DefaultEncoding = "utf-8", LoadImages = true }
+            }
+        }
+            };
+
+            return converter.Convert(pdfDocument);
+        }
+
+
+
+
     }
 }
+
 

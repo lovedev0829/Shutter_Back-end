@@ -669,8 +669,7 @@ namespace ShutterManagement.Business.Services
                     IsEstimateExists.ModifiedBy = AppConstant.LoggedInUserID;
                     await estimateService.Update(IsEstimateExists);
 
-                    if(AppConstant.GHL_AccessToken !=null && AppConstant.GHL_RefreshToken !=null)
-                    {
+                    
                         var jobStatusName = EnumValue.GetEnumValue(JobStatus.Quote_Sent);
                         var updateResponse = await statusAndStageMapping.UpdateOpportunityAndJobStatus(IsEstimateExists?.JobId ?? Guid.Empty, jobStatusName);
 
@@ -680,7 +679,7 @@ namespace ShutterManagement.Business.Services
                             responseVm.Message = updateResponse.Message;
                             return responseVm;
                         }
-                    }
+                    
                         
                     
 

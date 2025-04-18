@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using ShutterManagement.Business.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Azure;
+using ShutterManagement.Core.Common;
 
 namespace ShutterManagement.Business.Services
 {
@@ -219,11 +220,6 @@ namespace ShutterManagement.Business.Services
 
             try
             {
-                var opportunityResponse = await GetGHLOpportunityIdByJobId(jobId);
-                if (!opportunityResponse.IsSuccess || string.IsNullOrEmpty(opportunityResponse.Data))
-                    return new ResponseVm<string> { IsSuccess = false, Message = "Opportunity ID not found for this Job." };
-
-                string opportunityId = opportunityResponse.Data;
 
                 var statusResponse = await GetJobStatusByName(jobStatusName);
                 if (!statusResponse.IsSuccess)
@@ -232,32 +228,35 @@ namespace ShutterManagement.Business.Services
                 var jobStatus = statusResponse.Data;
 
                 var stageResponse = await GetGHLStagesMappingsById(jobStatus.JobStatusId);
-                if (!stageResponse.IsSuccess)
-                    return new ResponseVm<string> { IsSuccess = false, Message = "Stage mapping not found for the provided status." };
-
                 var stageMapping = stageResponse?.Data;
-                if (stageMapping?.StageId != null && stageMapping?.StageId != Guid.Empty)
+                Guid? stageId = stageMapping?.StageId;
+
+                var opportunityResponse = await GetGHLOpportunityIdByJobId(jobId);
+                bool isOpportunityAvailable = opportunityResponse.IsSuccess && !string.IsNullOrEmpty(opportunityResponse.Data);
+                string opportunityId = opportunityResponse.Data;
+
+                if (isOpportunityAvailable && stageId != null && stageId != Guid.Empty)
                 {
-                    var updateGhlResponse = await UpdateOpportunityStage(opportunityId, stageMapping?.StageId);
+                    var updateGhlResponse = await UpdateOpportunityStage(opportunityId, stageId);
                     if (!updateGhlResponse.IsSuccess)
-                        return new ResponseVm<string> { IsSuccess = false, Message = updateGhlResponse.Message };
+                    {
+
+                        FileLogger.Log($"GHL Update Failed: {updateGhlResponse.Message}");
+                    }
                 }
-                
-                var updateJobResponse = await UpdateJobStatus(jobId, jobStatus.JobStatusId, stageMapping?.StageId);
+
+                var updateJobResponse = await UpdateJobStatus(jobId, jobStatus.JobStatusId, stageId);
                 if (!updateJobResponse.IsSuccess)
                     return new ResponseVm<string> { IsSuccess = false, Message = updateJobResponse.Message };
 
-                var job = dBContext.TblJobs.Where(x => x.JobId == jobId && x.IsActive == true).FirstOrDefault();
+                var job = dBContext.TblJobs.FirstOrDefault(x => x.JobId == jobId && x.IsActive == true);
                 if (job != null)
                 {
-                
-                        var res = await automAtionHistory.SaveHistory(job);
-                    
-                  
+                    var res = await automAtionHistory.SaveHistory(job);
                 }
 
                 responseVm.IsSuccess = true;
-                responseVm.Message = "Opportunity and Job status updated successfully.";
+                responseVm.Message = "Job status updated successfully.";
             }
             catch (Exception ex)
             {
@@ -267,6 +266,7 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
+
         #endregion Update Opportunity Status
     }
 }

@@ -104,5 +104,13 @@ namespace ShutterManagement.Controllers
             return Ok(res);
 
         }
+
+        [HttpPost]
+        [Route("GenerateOrderSheet")]
+        public async Task<IActionResult> GenerateOrderSheet(Guid? Orderid)
+        {
+            var result = await orderService.GenerateOrderSheet(Orderid);
+            return Ok(result);
+        }
     }
 }

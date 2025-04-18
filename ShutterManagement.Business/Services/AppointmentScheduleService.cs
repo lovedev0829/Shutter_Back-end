@@ -74,11 +74,17 @@ namespace ShutterManagement.Business.Services
                             string formattedSchedule = FormatDateTimeWithOffset(model?.ScheduleDateTime);
                             var appointment = new GHLAppointmentAdd
                             {
+                                assignedUserId= IsExist.GhlUserId ?? "",
                                 startTime = formattedSchedule ?? "",
                                 locationId = AppConstant.GHL_Locationd ?? "",
                                 ignoreDateRange = true,
                             };
                             var ghlResponse = await gHLService_V2.UpdateAppointmentAsync(IsExist?.GhlEventId, appointment);
+                        }
+                        else
+                        {
+                            var jobStatusName = EnumValue.GetEnumValue(JobStatus.Appointment_Scheduled);
+                            var updateResponse = await statusAndStageMapping.UpdateOpportunityAndJobStatus(IsExist?.JobId ?? Guid.Empty, jobStatusName);
                         }
                     }
                 }
@@ -94,6 +100,7 @@ namespace ShutterManagement.Business.Services
                         Title = model?.Title?.Trim() ?? "",
                         Description = model?.Description?.Trim() ?? "",
                         GhlUserId = ghlUserIdAdd ?? "",
+                        UserId=model?.UserId?? null,
                         CreatedAt = DateTime.Now,
                         TenantId = AppConstant.LoggedInTenantId,
                         CreatedBy = AppConstant.LoggedInUserID,
@@ -136,6 +143,11 @@ namespace ShutterManagement.Business.Services
                                 return responseVm;
                             }
                        }
+                        else
+                        {
+                            var jobStatusName = EnumValue.GetEnumValue(JobStatus.Appointment_Scheduled);
+                            var updateResponse = await statusAndStageMapping.UpdateOpportunityAndJobStatus(tblAppointmentSchedule?.JobId ?? Guid.Empty, jobStatusName);
+                        }
                     }
                 }
             }

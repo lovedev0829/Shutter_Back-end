@@ -145,6 +145,8 @@ namespace ShutterManagement.Business.Services
                         {
                             MaterialName = model.MaterialName.Trim(),
                             UnitCost = model.UnitCost,
+                            Length=model.Lenght?? null,
+                            Width=model.Width?? null,
                             NonRatedUnitCost = model.NonRatedUnitCost,
                             UnitOfMeasurement = model.UnitOfMeasurement,
                             StockQuantity = model.StockQuantity,
@@ -275,6 +277,8 @@ namespace ShutterManagement.Business.Services
                                             Notes = t2.Notes,
                                             ReorderLevel = t2.ReorderLevel,
                                             SKU = t2.Sku,
+                                            Lenght=t2.Length,
+                                            Width=t2.Width,
                                             StockQuantity = t2.StockQuantity,
                                             UnitCost = t2.UnitCost,
                                             NonRatedUnitCost = t2.NonRatedUnitCost,
@@ -321,6 +325,8 @@ namespace ShutterManagement.Business.Services
                         VendorId = x.VendorId,
                         TenantId=x.TenantId,
                         ProductType = x.ProductType,
+                        Lenght=x.Lenght,
+                        Width=x.Width,
                         Notes = x.Notes,
                         UnitCost= x.UnitCost,
                         NonRatedUnitCost = x.NonRatedUnitCost,
@@ -364,16 +370,42 @@ namespace ShutterManagement.Business.Services
                 {
                     if (IsVendorExist != null)
                     {
+                        
                         var IsMaterialExists = GetAllQuerable()
                                  .Where(c => c.RawMaterialId == Guid.Parse(model.MaterialId)
                                                && c.TenantId == AppConstant.LoggedInTenantId
                                                && c.IsDelete == false)
                                    .FirstOrDefault();
+                        decimal? length = null;
+                        decimal? width = null;
+
+                        switch (model.UnitOfMeasurement)
+                        {
+                            case "Each (Ea)":
+                                length = null;
+                                width = null;
+                                break;
+
+                            case "Sq Feet":
+                            case "Sq Inches":
+                                length = model.Lenght;
+                                width = model.Width;
+                                break;
+
+                            case "Linear Inches":
+                            case "Linear Feet":
+                                length = model.Lenght;
+                                width = null;
+                                break;
+                        }
+
                         if (IsMaterialExists != null)
                         {
                             IsMaterialExists.IsCutSheet = model.IsCutSheet;
                             IsMaterialExists.MaterialName = model.MaterialName;
                             IsMaterialExists.UnitCost = model.UnitCost;
+                            IsMaterialExists.Length = length;
+                            IsMaterialExists.Width = width;
                             IsMaterialExists.NonRatedUnitCost = model.NonRatedUnitCost;
                             IsMaterialExists.Sku = model.SKU;
                             IsMaterialExists.ProductType = Guid.Parse(model.ProductType);
@@ -384,6 +416,7 @@ namespace ShutterManagement.Business.Services
                             IsMaterialExists.Notes = model.Notes;
                             IsMaterialExists.ModifiedBy = AppConstant.LoggedInUserID;
                             IsMaterialExists.UpdatedAt = DateTime.Now;
+
                             var res = Update(IsMaterialExists);
                             responseVm.IsSuccess = true;
                             responseVm.Message = $"{AppConstant.UpdateSuccessMsg}";
@@ -392,6 +425,7 @@ namespace ShutterManagement.Business.Services
                         {
                             responseVm.Message = AppConstant.NoUserFound;
                         }
+
 
                     }
                     else
