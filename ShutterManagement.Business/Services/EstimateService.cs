@@ -1076,7 +1076,8 @@ namespace ShutterManagement.Business.Services
                                    Address = j3.StreetAddress + " " + j3.City + " " + j3.State + " " + j3.ZipCode,
                                    AddressLabel = j3.Label,
                                    ScheduleTime = j1.ScheduledDate,
-                                   ContactId = j6.ContactId
+                                   ContactId = j6.ContactId,
+                                   JobIsActive = j1.IsActive
                                }).FirstOrDefault();
 
             e.jobDetails = jobdetails1;

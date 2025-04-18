@@ -358,7 +358,7 @@ namespace ShutterManagement.Business.Services
                                      join c in dbContext.TblContacts on j.ContactId equals c.ContactId
                                      join d in dbContext.TblEstimates on i.EstimateId equals d.EstimateId
                                      let hasActiveOrder = dbContext.TblOrders.Any(o => o.EstimateId == i.EstimateId && o.IsActive == true)
-                                     where i.IsDelete == false && hasActiveOrder
+                                     where i.IsDelete == false && hasActiveOrder && j.IsActive == true
                                      orderby i.CreatedAt descending
                                      select new InvoiceVM
                                      {

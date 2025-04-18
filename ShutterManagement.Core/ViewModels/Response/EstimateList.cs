@@ -61,6 +61,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public DateTime? UpdatedAt { get; set; }
 
         public Guid? ContactId { get; set; }
+        public bool? JobIsActive { get; set; }
 
     }
 

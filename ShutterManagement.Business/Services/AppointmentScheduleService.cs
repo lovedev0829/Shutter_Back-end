@@ -38,12 +38,10 @@ namespace ShutterManagement.Business.Services
         public async Task<IResponseVm<string>> CreateAppointmentSchedule(CreateAppointment model)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
-
             try
             {
                 var isTenantValid = await tenantService.AnyAsync(x =>
                     x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
-
                 if (!isTenantValid)
                 {
                     responseVm.IsSuccess = false;
@@ -51,7 +49,6 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
                 var ghlUserId = dbContext.TblUsers.Where(x => x.Id == model.UserId).Select(x => x.GhlUserId).FirstOrDefault();
-
                 var IsExist = GetAllQuerable().Where(x => x.JobId == model.JobId && x.IsActive == true && x.IsDelete == false).FirstOrDefault();
                 if (IsExist != null)
                 {
@@ -84,7 +81,6 @@ namespace ShutterManagement.Business.Services
                             var ghlResponse = await gHLService_V2.UpdateAppointmentAsync(IsExist?.GhlEventId, appointment);
                         }
                     }
-
                 }
                 else
                 {

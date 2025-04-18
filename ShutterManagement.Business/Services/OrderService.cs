@@ -795,7 +795,7 @@ namespace ShutterManagement.Business.Services
                 FileLogger.Log($"Tenant with ID {filter.TenantId} is not related or not found.");
                 return null; // Return null to indicate tenant validation failure
             }
-
+            
             // Fetch estimates for the provided tenant
             FileLogger.Log($"Tenant with ID {filter.TenantId} validated successfully.");
             return (await GetAll()).Where(x => x.IsDelete == false && x.TenantId.ToString() == filter.TenantId)
@@ -934,7 +934,8 @@ namespace ShutterManagement.Business.Services
                                    ContactFirstName = c.FirstName,
                                    ContactLastName = c.LastName,
                                    CreatedAt = j1.CreatedAt,
-                                   UpdatedAt = j1.UpdatedAt
+                                   UpdatedAt = j1.UpdatedAt,
+                                   JobIsActive = j1.IsActive
                                }).FirstOrDefault();
 
             e.jobDetails = jobdetails1;

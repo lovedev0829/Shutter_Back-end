@@ -590,6 +590,7 @@ namespace ShutterManagement.Business.Services
                         }
                         else
                          {
+                            responseVm.IsSuccess = true;
                             FileLogger.Log(Checkghlresponse.Message);
                           //  responseVm.Message = Checkghlresponse.Message;
                          }
