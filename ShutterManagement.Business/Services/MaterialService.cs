@@ -320,14 +320,14 @@ namespace ShutterManagement.Business.Services
 
                     responseVm.Data = TakenRecords.Select(x => new GetAllMaterialVm
                     {
-                        MaterialName = x.MaterialName,
+                        MaterialName = x.MaterialName??"",
                         IsActive = x.IsActive,
                         VendorId = x.VendorId,
                         TenantId=x.TenantId,
                         ProductType = x.ProductType,
                         Lenght=x.Lenght??null,
                         Width=x.Width??null,
-                        Notes = x.Notes,
+                        Notes = x.Notes ?? "",
                         UnitCost= x.UnitCost,
                         NonRatedUnitCost = x.NonRatedUnitCost,
                         UnitOfMeasurement = x.UnitOfMeasurement,
