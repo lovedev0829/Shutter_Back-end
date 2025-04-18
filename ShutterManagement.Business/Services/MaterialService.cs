@@ -376,32 +376,36 @@ namespace ShutterManagement.Business.Services
                                                && c.TenantId == AppConstant.LoggedInTenantId
                                                && c.IsDelete == false)
                                    .FirstOrDefault();
-                        decimal?  Lenght = null;
-                        decimal?  Width = null;
+                        decimal? length = null;
+                        decimal? width = null;
 
-                        if(model.UnitOfMeasurement== "Each (Ea)")
+                        switch (model.UnitOfMeasurement)
                         {
-                            Lenght= null;
-                            Width= null;
-                        }if(model.UnitOfMeasurement == "Sq Feet" && model.UnitOfMeasurement== "Sq Inches")
-                        {
-                            Lenght = model.Lenght;
-                            Width = model.Lenght;
+                            case "Each (Ea)":
+                                length = null;
+                                width = null;
+                                break;
+
+                            case "Sq Feet":
+                            case "Sq Inches":
+                                length = model.Lenght;
+                                width = model.Width;
+                                break;
+
+                            case "Linear Inches":
+                            case "Linear Feet":
+                                length = model.Lenght;
+                                width = null;
+                                break;
                         }
-                        if(model.UnitOfMeasurement == "Linear Inches" && model.UnitOfMeasurement== "Linear Feet")
-                        {
-                            Lenght = model.Lenght;
-                            Width = null;
-                        }
-                       
 
                         if (IsMaterialExists != null)
                         {
                             IsMaterialExists.IsCutSheet = model.IsCutSheet;
                             IsMaterialExists.MaterialName = model.MaterialName;
                             IsMaterialExists.UnitCost = model.UnitCost;
-                            IsMaterialExists.Length = Lenght ?? null;
-                            IsMaterialExists.Width = Width ?? null;
+                            IsMaterialExists.Length = length;
+                            IsMaterialExists.Width = width;
                             IsMaterialExists.NonRatedUnitCost = model.NonRatedUnitCost;
                             IsMaterialExists.Sku = model.SKU;
                             IsMaterialExists.ProductType = Guid.Parse(model.ProductType);
@@ -412,6 +416,7 @@ namespace ShutterManagement.Business.Services
                             IsMaterialExists.Notes = model.Notes;
                             IsMaterialExists.ModifiedBy = AppConstant.LoggedInUserID;
                             IsMaterialExists.UpdatedAt = DateTime.Now;
+
                             var res = Update(IsMaterialExists);
                             responseVm.IsSuccess = true;
                             responseVm.Message = $"{AppConstant.UpdateSuccessMsg}";
@@ -420,6 +425,7 @@ namespace ShutterManagement.Business.Services
                         {
                             responseVm.Message = AppConstant.NoUserFound;
                         }
+
 
                     }
                     else
