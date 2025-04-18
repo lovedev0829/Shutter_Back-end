@@ -893,16 +893,7 @@ namespace ShutterManagement.Controllers
             }
             return BadRequest(Checkghlresponse);
         }
-
-        //[HttpPost]
-        //[Route("VerifyGoHighLevel")]
-        //public async Task<IActionResult> GetAuthorizationUrl(string refreshtoken)
-        //{
-        //    var accessToken = await ghlService.GetAccessToken(refreshtoken);
-        //    Console.WriteLine("Access Token: " + accessToken);
-        //    return Ok(accessToken);
-
-        //}
+ 
 
         [HttpPost]
         [Route("GHLAppointment")]

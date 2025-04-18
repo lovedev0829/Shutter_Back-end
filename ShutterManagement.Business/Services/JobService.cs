@@ -386,9 +386,7 @@ namespace ShutterManagement.Business.Services
                     FileLogger.Log($"Starting SyncOpportunitiesFromGhl process.");
                     using var client = new HttpClient();
                     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
-
                     var pipelineResponse = await gHLService_V2.GetAllPipelinesWithStagesAsync();
-
                     if (pipelineResponse?.Pipelines == null || !pipelineResponse.Pipelines.Any())
                     {
                         FileLogger.Log("No pipelines found in GHL.");
@@ -396,13 +394,9 @@ namespace ShutterManagement.Business.Services
                         responseVm.Message = "No pipelines found.";
                         return responseVm;
                     }
-
                     string userProvidedPipelineNameOrId = AppConstant.GHL_PipelineId;
-
                     var targetPipeline = pipelineResponse.Pipelines
                         .FirstOrDefault(p => p.Id.Contains(userProvidedPipelineNameOrId) || p.Name.Contains(userProvidedPipelineNameOrId));
-
-
                     if (targetPipeline == null)
                     {
                         FileLogger.Log($"Target pipeline '{userProvidedPipelineNameOrId}' not found.");
@@ -410,7 +404,6 @@ namespace ShutterManagement.Business.Services
                         responseVm.Message = "Target pipeline not found.";
                         return responseVm;
                     }
-
                     FileLogger.Log($"Fetching opportunities from pipeline ID: {targetPipeline.Id}");
 
                     //var url = $"{AppConstant.GHL_BaseAddress}/pipelines/{targetPipeline.Id}/opportunities/";
@@ -434,25 +427,20 @@ namespace ShutterManagement.Business.Services
                         FileLogger.Log($"Processing opportunity ID: {opportunity.OpportunityId}, Name: {opportunity.Name}");
                         var existingJob = GetAllQuerable()
                             .Where(x => x.GhlOpportunityId == opportunity.OpportunityId).FirstOrDefault();
-
                         // Fetch job status dynamically from DB based on GHL stage
                         var res = await GetGHLStages();
                         var stage = res?.Data.Where(x => x.GhlStageId == opportunity.PipelineStageId).FirstOrDefault();
-
-
-
                         var contacts = await gHLService_V2.GetContactsAsync();
-                        var contact = contacts.FirstOrDefault(c => c.id == opportunity.Contact?.Id);
-                        var dbcontact = _context.TblContacts.Where(x => x.GhlcontactId == contact.id).FirstOrDefault();
+                       // var contact = contacts.FirstOrDefault(c => c.id == opportunity.Contact?.Id);
+                        var dbcontact = _context.TblContacts.Where(x => x.GhlcontactId == opportunity.Contact.Id).FirstOrDefault();
                         var jobstatusId = _context.MstJobStatuses.Where(x => x.JobStatusName == opportunity.Status).Select(x => x.JobStatusId).FirstOrDefault();
                         if (dbcontact == null)
                         {
-                            FileLogger.Log($"Contact not found for GHL Contact ID: {contact?.id}");
+                            FileLogger.Log($"Contact not found for GHL Contact ID: {opportunity.Contact.Id}");
                             responseVm.IsSuccess = false;
                             responseVm.Message = "Contact Not Found related GHl Contact id";
                             return responseVm;
                         }
-
                         if (existingJob != null)
                         {
                             FileLogger.Log($"Updating existing job: {existingJob.JobId} for opportunity ID: {opportunity.OpportunityId}");
@@ -460,7 +448,7 @@ namespace ShutterManagement.Business.Services
                             // Update existing job
                             existingJob.JobName = opportunity.Name;
                             existingJob.JobStatus = jobstatusId;
-                            existingJob.GhlContactId = contact?.id;
+                            existingJob.GhlContactId = opportunity.Contact?.Id;
                             existingJob.ContactId = dbcontact.ContactId;
                             existingJob.GhlStageName = stage?.GhlStageName;
                             existingJob.GhlStageId = Guid.Parse(opportunity.PipelineStageId);

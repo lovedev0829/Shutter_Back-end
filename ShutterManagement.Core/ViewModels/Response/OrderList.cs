@@ -65,6 +65,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public DateTime? ScheduleTime { get; set; }
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
+        public bool? JobIsActive { get; set; }
 
     }
 

@@ -48,7 +48,7 @@ namespace ShutterManagement.Business.Services
                 }
 
                 var filteredOrders = orders.Data
-                    .Where(o => o.Status == EnumValue.GetEnumValue(Estimation.Approved))
+                    .Where(o => o.Status == EnumValue.GetEnumValue(Estimation.Approved) && o.jobDetails.JobIsActive == true)
                     .GroupBy(x => x.EstimateId)
                     .Select(group => group
                     .OrderByDescending(o => o.CreatedDate)
