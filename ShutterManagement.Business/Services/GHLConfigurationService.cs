@@ -233,13 +233,13 @@ namespace ShutterManagement.Business.Services
                             //    response.Message = "AccessToken and RefreshToken is valid.";
                             //}
 
-                            var res1 = goHighLevelOAuthService.GetAccessToken(isExist.RefreshToken);
+                            var res1 = await goHighLevelOAuthService.GetAccessToken(isExist.RefreshToken);
                             if (res1 != null)
                             {
                                 isExist.AccessExpirationtime = DateTime.Now.AddDays(1);
                                 isExist.RefreshExpirationtime = DateTime.Now.AddDays(365);
-                                isExist.RefreshToken = res1?.Result?.Data?.RefreshToken??"";
-                                isExist.AccessToken = res1?.Result?.Data?.AccessToken ?? "";
+                                isExist.RefreshToken = res1?.Data?.RefreshToken??"";
+                                isExist.AccessToken = res1?.Data.AccessToken ?? "";
                                 isExist.LastSync= DateTime.Now;
                                 await Update(isExist);
                             }

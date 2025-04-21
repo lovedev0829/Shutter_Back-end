@@ -937,7 +937,7 @@ namespace ShutterManagement.Controllers
         [Route("GetAccessToken")]
         public async Task<IActionResult> GetAccessToken(string? code)
         {
-            var res =  gHLConfiguration.GetGHLConfigurations(code);
+            var res = await gHLConfiguration.GetGHLConfigurations(code);
             return Ok(res);
         }
 

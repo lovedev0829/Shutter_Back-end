@@ -260,7 +260,7 @@ namespace ShutterManagement.Business.Services
                                 TenantId = TenantId,
                                 CreatedBy = AppConstant.LoggedInUserID
                             };
-                            dbContext.TblAddresses.Add(address);
+                            await dbContext.TblAddresses.AddAsync(address);
                             await dbContext.SaveChangesAsync();
                             res.PrimaryAddress = address.AddressId;
                             await Update(res);
@@ -416,10 +416,10 @@ namespace ShutterManagement.Business.Services
                     }
                     else
                     {
-                        var contact1 = (await GetAll()).Where
+                        var contact1 = GetAllQuerable().Where
                             (c => c.ContactId == model.ContactId && c.TenantId == TenantId && c.IsDelete == false).FirstOrDefault();
 
-                        var IsContactExists1 = GetAllQuerable()
+                        var IsContactExists1 = (await GetAll())
                             .Where(c => (c.Email == model.Email || c.PhoneNumber == model.PhoneNumber)
                                         && c.TenantId == TenantId && c.IsDelete == false && c.ContactId != model.ContactId)
                             .ToList();
@@ -490,7 +490,7 @@ namespace ShutterManagement.Business.Services
                                     contactBillingAddress.UpdatedAt = DateTime.Now;
 
                                     dbContext.TblAddresses.Update(contactBillingAddress);
-                                    dbContext.SaveChanges();
+                                    await dbContext.SaveChangesAsync();
                                 }
                                 else
                                 {
@@ -527,7 +527,7 @@ namespace ShutterManagement.Business.Services
                                     };
 
                                     dbContext.TblAddresses.Add(CreateContactBillingAddress);
-                                    dbContext.SaveChanges();
+                                    await dbContext.SaveChangesAsync();
 
                                     contact1.PrimaryAddress = CreateContactBillingAddress.AddressId;
                                     await Update(contact1);
@@ -628,15 +628,15 @@ namespace ShutterManagement.Business.Services
                 contact.ModifiedBy = AppConstant.LoggedInUserID;
                 await Update(contact);
 
-                var billingaddress = dbContext.TblAddresses
-                   .Where(c => c.ContactId == ContactId && contact.PrimaryAddress == c.AddressId && c.IsDelete == false).FirstOrDefault();
+                var billingaddress =  await dbContext.TblAddresses
+                   .Where(c => c.ContactId == ContactId && contact.PrimaryAddress == c.AddressId && c.IsDelete == false).FirstOrDefaultAsync();
 
                 if (billingaddress != null)
                 {
                     billingaddress.IsActive = !billingaddress.IsActive;
                     billingaddress.UpdatedAt = DateTime.Now;
                     dbContext.TblAddresses.Update(billingaddress);
-                    dbContext.SaveChanges();
+                    await dbContext.SaveChangesAsync();
                 }
                 var taxExemption = (await taxExemptionService.GetAll())
                     .Where(c => c.ContactId == ContactId && c.IsDelete == false)
@@ -677,8 +677,8 @@ namespace ShutterManagement.Business.Services
                 contact.ModifiedBy = AppConstant.LoggedInUserID;
                 await Update(contact);
 
-                var billingaddress = dbContext.TblAddresses
-                   .Where(c => c.ContactId == ContactId && c.AddressId == contact.PrimaryAddress && c.IsDelete == false).FirstOrDefault();
+                var billingaddress = await dbContext.TblAddresses
+                   .Where(c => c.ContactId == ContactId && c.AddressId == contact.PrimaryAddress && c.IsDelete == false).FirstOrDefaultAsync();
 
                 if (billingaddress != null)
                 {
@@ -686,7 +686,7 @@ namespace ShutterManagement.Business.Services
                     billingaddress.IsDelete = true;
                     billingaddress.UpdatedAt = DateTime.Now;
                     dbContext.TblAddresses.Update(billingaddress);
-                    dbContext.SaveChanges();
+                    await dbContext.SaveChangesAsync();
                 }
                 var taxExemption = (await taxExemptionService.GetAll())
                     .Where(c => c.ContactId == ContactId && c.IsDelete == false)
@@ -712,7 +712,7 @@ namespace ShutterManagement.Business.Services
                         item.UpdatedAt = DateTime.Now;
                         item.ModifiedBy = AppConstant.LoggedInUserID;
                         dbContext.TblJobs.Update(item);
-                        dbContext.SaveChanges();
+                        await dbContext.SaveChangesAsync();
                     }
                 }
             }
