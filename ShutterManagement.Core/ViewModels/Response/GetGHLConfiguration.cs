@@ -19,6 +19,8 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? ClientId { get; set; }
         public string? ClientSecret { get; set; }
         public string? RedirectURI { get; set; }
+        public string? Refresh_Token { get; set; }
+        public string? Access_Token { get; set; }
     
     }
 }

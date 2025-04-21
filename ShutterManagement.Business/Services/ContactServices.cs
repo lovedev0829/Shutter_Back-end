@@ -1238,11 +1238,11 @@ namespace ShutterManagement.Business.Services
                                 }
                             }
                             else
-                            {
-                                FileLogger.Log("Contact is Deleting from the application(Application ContactId), as not present in GHL.", appContact.ContactId);
-                                var res = await DeleteContact(appContact.ContactId);
-                                if (!res.IsSuccess)
-                                { FileLogger.Log("Exception occurred while Deleting Contact in application.", res.Message); }
+                            { 
+                                FileLogger.Log("this contact deleted on GHL but in shutter ", appContact.ContactId);
+                               // var res = await DeleteContact(appContact.ContactId);
+                                //if (!res.IsSuccess)
+                                //{ FileLogger.Log("Exception occurred while Deleting Contact in application.", res.Message); }
                             }
                         }
                     }
