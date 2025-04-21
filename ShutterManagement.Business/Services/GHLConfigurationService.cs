@@ -38,7 +38,7 @@ namespace ShutterManagement.Business.Services
             FileLogger.Log("details GHl ID: ", Id);
             var Checkghlresponse = await CheckGHLConfiguration();
             var details = GetAllQuerable()
-                   .Where(x => x.LocationId == Id || x.TenantId.ToString().ToLower() == Id.ToLower())
+                   .Where(x => x.LocationId == Id || x.TenantId.ToString().ToLower() == Id.ToLower() && x.IsDelete == false)
                    .FirstOrDefault();
             FileLogger.Log("details GHl: ", details);
             if (details != null)

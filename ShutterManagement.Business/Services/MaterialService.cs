@@ -1,6 +1,8 @@
 ﻿using Azure;
+using Microsoft.Extensions.Configuration;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core;
+using ShutterManagement.Core.Common;
 using ShutterManagement.Core.ViewModels;
 using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.Core.ViewModels.Response;
@@ -277,8 +279,8 @@ namespace ShutterManagement.Business.Services
                                             Notes = t2.Notes,
                                             ReorderLevel = t2.ReorderLevel,
                                             SKU = t2.Sku,
-                                            Lenght=t2.Length,
-                                            Width=t2.Width,
+                                            Lenght=t2.Length??null,
+                                            Width=t2.Width ?? null,
                                             StockQuantity = t2.StockQuantity,
                                             UnitCost = t2.UnitCost,
                                             NonRatedUnitCost = t2.NonRatedUnitCost,
@@ -290,6 +292,8 @@ namespace ShutterManagement.Business.Services
                                             CompanyName=t1.CompanyName,
                                             IsCutSheet = t2.IsCutSheet,
                                         }).ToList();
+
+                    FileLogger.Log($"This is Material List {MaterialList}");
                     filter.SearchValue = filter.SearchValue?.Trim().ToLower();
                     var FilterRecords = MaterialList
                                     .Where(x =>
@@ -320,20 +324,21 @@ namespace ShutterManagement.Business.Services
 
                     responseVm.Data = TakenRecords.Select(x => new GetAllMaterialVm
                     {
-                        MaterialName = x.MaterialName,
+                        MaterialName = x.MaterialName??"",
                         IsActive = x.IsActive,
                         VendorId = x.VendorId,
                         TenantId=x.TenantId,
                         ProductType = x.ProductType,
-                        Lenght=x.Lenght,
-                        Width=x.Width,
-                        Notes = x.Notes,
+                        Lenght=x.Lenght??null,
+                        Width=x.Width??null,
+                        Notes = x.Notes ?? "",
                         UnitCost= x.UnitCost,
                         NonRatedUnitCost = x.NonRatedUnitCost,
                         UnitOfMeasurement = x.UnitOfMeasurement,
                         StockQuantity = x.StockQuantity,
                         ReorderLevel = x.ReorderLevel
                     }).ToList();
+                    FileLogger.Log($"This is Material List  ResponseVm data {responseVm.Data}");
                     responseVm.TotalRecords = FilterRecords.Count;
                     responseVm.Data = TakenRecords;
                     responseVm.IsSuccess = true;
@@ -347,6 +352,7 @@ namespace ShutterManagement.Business.Services
             catch (Exception ex)
             {
                 responseVm.Message = AppConstant.ExceptionError + ex.Message;
+                FileLogger.Log($"Error Material fetch: {AppConstant.ExceptionError + ex.Message}");
             }
 
             return responseVm;
@@ -370,18 +376,42 @@ namespace ShutterManagement.Business.Services
                 {
                     if (IsVendorExist != null)
                     {
+                        
                         var IsMaterialExists = GetAllQuerable()
                                  .Where(c => c.RawMaterialId == Guid.Parse(model.MaterialId)
                                                && c.TenantId == AppConstant.LoggedInTenantId
                                                && c.IsDelete == false)
                                    .FirstOrDefault();
+                        decimal? length = null;
+                        decimal? width = null;
+
+                        switch (model.UnitOfMeasurement)
+                        {
+                            case "Each (Ea)":
+                                length = null;
+                                width = null;
+                                break;
+
+                            case "Sq Feet":
+                            case "Sq Inches":
+                                length = model.Lenght;
+                                width = model.Width;
+                                break;
+
+                            case "Linear Inches":
+                            case "Linear Feet":
+                                length = model.Lenght;
+                                width = null;
+                                break;
+                        }
+
                         if (IsMaterialExists != null)
                         {
                             IsMaterialExists.IsCutSheet = model.IsCutSheet;
                             IsMaterialExists.MaterialName = model.MaterialName;
                             IsMaterialExists.UnitCost = model.UnitCost;
-                            IsMaterialExists.Length = model.Lenght?? null;
-                            IsMaterialExists.Width = model.Width?? null;
+                            IsMaterialExists.Length = length;
+                            IsMaterialExists.Width = width;
                             IsMaterialExists.NonRatedUnitCost = model.NonRatedUnitCost;
                             IsMaterialExists.Sku = model.SKU;
                             IsMaterialExists.ProductType = Guid.Parse(model.ProductType);
@@ -392,6 +422,7 @@ namespace ShutterManagement.Business.Services
                             IsMaterialExists.Notes = model.Notes;
                             IsMaterialExists.ModifiedBy = AppConstant.LoggedInUserID;
                             IsMaterialExists.UpdatedAt = DateTime.Now;
+
                             var res = Update(IsMaterialExists);
                             responseVm.IsSuccess = true;
                             responseVm.Message = $"{AppConstant.UpdateSuccessMsg}";
@@ -400,6 +431,7 @@ namespace ShutterManagement.Business.Services
                         {
                             responseVm.Message = AppConstant.NoUserFound;
                         }
+
 
                     }
                     else

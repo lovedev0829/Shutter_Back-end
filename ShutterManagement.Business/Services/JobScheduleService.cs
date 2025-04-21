@@ -465,6 +465,12 @@ namespace ShutterManagement.Business.Services
                                 FileLogger.Log("Error while creating Appointment.");
                                 }
                           }
+                            else
+                            {
+                                responseVm.IsSuccess = true;
+                                responseVm.Message = "Appointment Already  Synced";
+                                return responseVm;
+                            }
                         }
                         else
                         {

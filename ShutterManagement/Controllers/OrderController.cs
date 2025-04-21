@@ -35,6 +35,7 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> GetAllOrders(Pagination filter)
         {
             var res = await orderService.GetLatestVersionOrders(filter);
+            res.Data = res.Data.Where(x => x.jobDetails.JobIsActive == true).ToList();
             return Ok(res);
 
         }

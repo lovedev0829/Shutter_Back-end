@@ -16,6 +16,8 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? CompanyName { get; set; }
         public string? PhoneNo { get; set; }
         public string? Position { get; set; }
+        public string? OptionName { get; set; }
+        public string? OptionType { get; set; }
     }
 
 }
