@@ -144,13 +144,13 @@ namespace ShutterManagement.Business.Services
                             gHLConfiguration.LastSync = DateTime.Now;
 
                             // Save the updated configuration
-                            await Update(gHLConfiguration);
-                            FileLogger.Log($"Configuration Updated Successfully  in link to ghl");
+                            var resUpdate = await Update(gHLConfiguration);
+                            FileLogger.Log($"Configuration Updated Successfully  in link to ghl {resUpdate}");
                         }
                         else
                         {
                             responseVm.Message = "Failed to retrieve refresh token.";
-                            FileLogger.Log($"Failed to retrieve refresh token in link to ghl{responseVm}");
+                            FileLogger.Log($"Failed to retrieve refresh token in link to ghl {responseVm}");
                             return responseVm;
                         }
                     }
@@ -174,6 +174,8 @@ namespace ShutterManagement.Business.Services
                     ClientId = gHLConfiguration?.ClientId ?? "",
                     ClientSecret = gHLConfiguration?.ClientSecret ?? "",
                     RedirectURI = gHLConfiguration?.RedirectUri ?? "",
+                    Refresh_Token = gHLConfiguration?.RefreshToken ?? "",
+                    Access_Token = gHLConfiguration?.AccessToken ?? "",
                 };
                 FileLogger.Log($"Failed to retrieve refresh token in link to ghl{responseVm?.Data}");
 
@@ -217,7 +219,6 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> response = new ResponseVm<string>();
             try
             {
-                bool res = false;
                 var isExist = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete==false).FirstOrDefault();
                 if (isExist != null)
                 {

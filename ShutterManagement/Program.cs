@@ -31,7 +31,7 @@ builder.Configuration.AddConstants();
 
 builder.Services.AddDbContext<ShutterDBContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
-    sqlOptions => sqlOptions.CommandTimeout(60)));
+    sqlOptions => sqlOptions.CommandTimeout(180)));
 
 builder.Services.AddCors(options =>
 {

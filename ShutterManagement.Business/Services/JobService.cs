@@ -349,12 +349,12 @@ namespace ShutterManagement.Business.Services
                             }
                             else
                             {
-                                FileLogger.Log($"Opportunity {opportunity.GhlOpportunityId} not found in GHL.Start deletion from App.");
-                                var res = await DeleteJob(opportunity.JobId.ToString());
-                                if (!res.IsSuccess)
-                                {
-                                    FileLogger.Log($"Opportunity {opportunity.GhlOpportunityId} not found in GHL. But it's not deleted in App.");
-                                }
+                                FileLogger.Log($"TThis job Deleted on GHL but in The its Already have{existingGHLOpportunity}");
+                                //var res = await DeleteJob(opportunity.JobId.ToString());
+                                //if (!res.IsSuccess)
+                                //{
+                                //    FileLogger.Log($"Opportunity {opportunity.GhlOpportunityId} not found in GHL. But it's not deleted in App.");
+                                //}
                             }
                         }
                     }
