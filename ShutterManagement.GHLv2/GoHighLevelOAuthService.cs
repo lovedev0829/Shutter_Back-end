@@ -69,17 +69,25 @@ public class GoHighLevelOAuthService
             { "grant_type", "authorization_code" }
         });
 
+            FileLogger.Log($"Client id  of Marketplace : {AppConstant.GHL_Marketplace_ClientId}");
+            FileLogger.Log($"Client secret  of Marketplace: {AppConstant.GHL_Marketplace_ClientSecret}");
+            FileLogger.Log($"authorizationCode  of Marketplace: {authorizationCode}");
+            FileLogger.Log($"GHL_Marketplace_RedirectUri : {AppConstant.GHL_Marketplace_RedirectUri}");
+            FileLogger.Log($"GHL_Marketplace_TokenURL : {AppConstant.GHL_Marketplace_TokenURL}");
+
             var response = await _httpClient.PostAsync(AppConstant.GHL_Marketplace_TokenURL ?? "", tokenRequest);
+
 
             FileLogger.Log($"This is the Logs of Refresh token response: {response}");
 
             var responseContent = await response.Content.ReadAsStringAsync();
-            FileLogger.Log($"This is the Logs of Refresh token content: {responseContent}");
+            FileLogger.Log($"This is the Logs of Refresh token content post api : {responseContent}");
 
             if (response.IsSuccessStatusCode)
             {
                 try
                 {
+                    FileLogger.Log($"get Refresh Token APi Success : {response.IsSuccessStatusCode} response {response}");
                     var tokenData = JsonConvert.DeserializeObject<TokenResponse>(responseContent);
 
                     if (tokenData != null)
