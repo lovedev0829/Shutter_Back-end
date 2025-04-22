@@ -439,7 +439,7 @@ namespace ShutterManagement.Business.Services
                         var contacts = await gHLService_V2.GetContactsAsync();
                        // var contact = contacts.FirstOrDefault(c => c.id == opportunity.Contact?.Id);
                         var dbcontact = _context.TblContacts.Where(x => x.GhlcontactId == opportunity.Contact.Id).FirstOrDefault();
-                        var jobstatusId = _context.MstJobStatuses.Where(x => x.JobStatusName == opportunity.Status).Select(x => x.JobStatusId).FirstOrDefault();
+                        var jobstatusId = _context.MstJobStatuses.Where(x => x.JobStatusName == EnumValue.GetEnumValue(JobStatus.New)).Select(x => x.JobStatusId).FirstOrDefault();
                         if (dbcontact == null)
                         {
                             FileLogger.Log($"Contact not found for GHL Contact ID: {opportunity.Contact.Id}");
