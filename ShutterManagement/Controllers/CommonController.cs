@@ -891,7 +891,7 @@ namespace ShutterManagement.Controllers
                 users.Data = users.Data = null;
                 return Ok(users);
             }
-            return BadRequest(Checkghlresponse);
+            return Ok(Checkghlresponse);
         }
  
 
