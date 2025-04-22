@@ -40,7 +40,7 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> GetTaxReport(Pagination filter)
         {
             var result = await reportServices.GetTaxReport(filter);
-            result.Data = result?.Data.Where(x => x.jobDetails.JobIsActive == true).ToList();
+            result.Data = result?.Data?.Where(x => x.jobDetails?.JobIsActive == true).ToList();
             return Ok(result);
         }
 
