@@ -185,7 +185,7 @@ namespace ShutterManagement.Controllers
             if (Checkghlresponse.IsSuccess)
             {
                 var UserGHLs = await userService.GetAll(filter);
-                UserGHLs.Data = UserGHLs?.Data?.Where(x => x.IsActive == true && x.GhlUserId!=null).ToList();
+                UserGHLs.Data = UserGHLs?.Data?.Where(x => x.IsActive == true && !string.IsNullOrEmpty(x.GhlUserId)).ToList();
                 return Ok(UserGHLs);
             }
             else
@@ -891,7 +891,7 @@ namespace ShutterManagement.Controllers
                 users.Data = users.Data = null;
                 return Ok(users);
             }
-            return BadRequest(Checkghlresponse);
+            return Ok(Checkghlresponse);
         }
  
 
@@ -968,8 +968,17 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> GetAllGHL_Users()
         {
             await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
-            var result = await gHLService_V2.GetGHLUsersByCalendarId();
-            return Ok(result);
+            var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration();
+            if (Checkghlresponse.IsSuccess)
+            {
+                var result = await gHLService_V2.GetGHLUsersByCalendarId();
+                return Ok(result);
+            }
+            else
+            {
+                return Ok(Checkghlresponse);
+            }
+              
         }
 
 

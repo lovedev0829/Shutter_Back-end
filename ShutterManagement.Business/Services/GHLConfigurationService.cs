@@ -44,7 +44,6 @@ namespace ShutterManagement.Business.Services
             if (details != null)
             {
                 AppConstant.GHL_BaseAddress = configuration["GoHighLevelOAuthSettings:BaseUrl"] ?? "";
-                AppConstant.GHL_APIKey = details.Apikey??"";
                 AppConstant.GHL_PipelineId = details.PipelineId ?? "";
                 AppConstant.GHL_Locationd = details.LocationId??"";
                 AppConstant.LoggedInTenantId = details.TenantId;
@@ -52,9 +51,7 @@ namespace ShutterManagement.Business.Services
                 AppConstant.GHL_RefreshToken = details.RefreshToken ??"";
                 AppConstant.GHL_CalendarName = details.CalendarName ?? "";
                 // Fetch ClientId and ClientSecret from appsettings.json
-                AppConstant.GHL_ClientId = AppConstant.GHL_Marketplace_ClientId ?? "";
-                AppConstant.GHL_ClientSecret = AppConstant.GHL_Marketplace_ClientSecret ?? "";
-                AppConstant.GHL_RedirectUri = AppConstant.GHL_Marketplace_RedirectUri ?? "";
+               
             }
             
         }
@@ -67,16 +64,13 @@ namespace ShutterManagement.Business.Services
                 var IsGHLConfigurationTenantExist = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false).FirstOrDefault();
                 if (IsGHLConfigurationTenantExist != null)
                 {
-                    IsGHLConfigurationTenantExist.Apikey = gHLConfiguration.APIkey??"";
+                   // IsGHLConfigurationTenantExist.Apikey = gHLConfiguration.APIkey??"";
                     IsGHLConfigurationTenantExist.LocationId = gHLConfiguration.LocationId ?? "";
                     IsGHLConfigurationTenantExist.PipelineId = gHLConfiguration.PipelineId??"";
-                    IsGHLConfigurationTenantExist.BaseAddress = gHLConfiguration.BaseAddress ?? "";
+                    //IsGHLConfigurationTenantExist.BaseAddress = gHLConfiguration.BaseAddress ?? "";
                     IsGHLConfigurationTenantExist.GeneratedToken = gHLConfiguration.GeneratedToken??"";
                     IsGHLConfigurationTenantExist.CalendarName = gHLConfiguration.CalendarName ?? "";
                     IsGHLConfigurationTenantExist.TenantId = AppConstant.LoggedInTenantId;
-                    AppConstant.GHL_ClientId = AppConstant.GHL_Marketplace_ClientId ?? "";
-                    AppConstant.GHL_ClientSecret = AppConstant.GHL_Marketplace_ClientSecret ?? "";
-                    AppConstant.GHL_RedirectUri = AppConstant.GHL_Marketplace_RedirectUri ?? "";
 
                     var res = await Update(IsGHLConfigurationTenantExist);
                     responseVm.IsSuccess = true;
@@ -88,18 +82,15 @@ namespace ShutterManagement.Business.Services
                     {
                         Id=Guid.NewGuid(),
                         PipelineId = gHLConfiguration.PipelineId ?? "",
-                        BaseAddress = gHLConfiguration.BaseAddress??"",
+                       // BaseAddress = gHLConfiguration.BaseAddress??"",
                         LocationId = gHLConfiguration.LocationId ?? "",
-                        Apikey = gHLConfiguration.APIkey??"",
+                       // Apikey = gHLConfiguration.APIkey??"",
                         TenantId = AppConstant.LoggedInTenantId,
                         LastSync = DateTime.Now,
                         IsDelete = false,
                         IsActive = true,
                         GeneratedToken = gHLConfiguration.GeneratedToken ??"",
                         CalendarName = gHLConfiguration.CalendarName ?? "",
-                        ClientId = AppConstant.GHL_Marketplace_ClientId ?? "",
-                        ClientSecret = AppConstant.GHL_Marketplace_ClientSecret ?? "",
-                        RedirectUri = AppConstant.GHL_Marketplace_RedirectUri ?? "",
                     };
                     var res1 = await Add(tblGhlconfiguration);
                     responseVm.IsSuccess = true;
@@ -145,6 +136,7 @@ namespace ShutterManagement.Business.Services
 
                             // Save the updated configuration
                             var resUpdate = await Update(gHLConfiguration);
+                            responseVm.Message = "Ghl linked Successfully..";
                             FileLogger.Log($"Configuration Updated Successfully  in link to ghl {resUpdate}");
                         }
                         else
@@ -164,16 +156,11 @@ namespace ShutterManagement.Business.Services
                 responseVm.Data = new GetGHLConfiguration
                 {
                     Id= gHLConfiguration.Id,
-                    APIkey = gHLConfiguration?.Apikey ?? "",
-                    BaseAddress = gHLConfiguration?.BaseAddress ?? "",
                     LocationId = gHLConfiguration?.LocationId ?? "",
                     PipelineId = gHLConfiguration?.PipelineId ?? "",
                     LastSync = gHLConfiguration?.LastSync ?? null,
                     CalendarName = gHLConfiguration?.CalendarName ?? "",
                     GeneratedToken = gHLConfiguration?.GeneratedToken ?? "",
-                    ClientId = gHLConfiguration?.ClientId ?? "",
-                    ClientSecret = gHLConfiguration?.ClientSecret ?? "",
-                    RedirectURI = gHLConfiguration?.RedirectUri ?? "",
                     Refresh_Token = gHLConfiguration?.RefreshToken ?? "",
                     Access_Token = gHLConfiguration?.AccessToken ?? "",
                 };
@@ -222,26 +209,24 @@ namespace ShutterManagement.Business.Services
                 var isExist = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete==false).FirstOrDefault();
                 if (isExist != null)
                 {
-                    if (isExist.AccessExpirationtime > DateTime.Now && isExist.RefreshExpirationtime > DateTime.Now)
+                    if(isExist.AccessToken !=null && isExist.RefreshToken!=null)
                     {
-                        response.IsSuccess = true;
-                        response.Message = "AccessToken and RefreshToken is valid.";
-                    }
-                    else if(isExist.RefreshExpirationtime > DateTime.Now)
+                        if (isExist.AccessExpirationtime > DateTime.Now && isExist.RefreshExpirationtime > DateTime.Now)
                         {
-                            //if(isExist.AccessExpirationtime > DateTime.Now) {
-                            //    response.IsSuccess = true;
-                            //    response.Message = "AccessToken and RefreshToken is valid.";
-                            //}
+                            response.IsSuccess = true;
+                            response.Message = "AccessToken and RefreshToken is valid.";
+                        }
+                        else if (isExist.RefreshExpirationtime > DateTime.Now)
+                        {
 
                             var res1 = await goHighLevelOAuthService.GetAccessToken(isExist.RefreshToken);
                             if (res1 != null)
                             {
                                 isExist.AccessExpirationtime = DateTime.Now.AddDays(1);
                                 isExist.RefreshExpirationtime = DateTime.Now.AddDays(365);
-                                isExist.RefreshToken = res1?.Data?.RefreshToken??"";
+                                isExist.RefreshToken = res1?.Data?.RefreshToken ?? "";
                                 isExist.AccessToken = res1?.Data.AccessToken ?? "";
-                                isExist.LastSync= DateTime.Now;
+                                isExist.LastSync = DateTime.Now;
                                 await Update(isExist);
                             }
                             response.IsSuccess = true;
@@ -251,6 +236,12 @@ namespace ShutterManagement.Business.Services
                         {
                             response.Message = "User need to verify GoHighLevelConfiguration.";
                         }
+                    }
+                    else
+                    {
+                        response.Message = "User need to verify GoHighLevelConfiguration.";
+                    }
+                    
                 }
                 else
                 {
