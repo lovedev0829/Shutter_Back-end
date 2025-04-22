@@ -968,8 +968,17 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> GetAllGHL_Users()
         {
             await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
-            var result = await gHLService_V2.GetGHLUsersByCalendarId();
-            return Ok(result);
+            var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration();
+            if (Checkghlresponse.IsSuccess)
+            {
+                var result = await gHLService_V2.GetGHLUsersByCalendarId();
+                return Ok(result);
+            }
+            else
+            {
+                return Ok(Checkghlresponse);
+            }
+              
         }
 
 

@@ -1012,7 +1012,7 @@ namespace ShutterManagement.GHL.Services
             {
 
                 var users = await dBContext.TblGhlUsers
-                    .Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.GhlCalendarId == AppConstant.GHL_CalendarName ||  x.GhlCalendarName == AppConstant.GHL_CalendarName)
+                    .Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete==false && (x.GhlCalendarId == AppConstant.GHL_CalendarName ||  x.GhlCalendarName == AppConstant.GHL_CalendarName))
                     .ToListAsync();
 
                 if (users != null && users.Count > 0)
