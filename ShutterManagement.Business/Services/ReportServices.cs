@@ -72,9 +72,10 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var estimatelist = await estimateService.GetAll_Estimate(filter);
-                if(estimatelist == null)
+                if(estimatelist?.Data == null)
                 {
                     responseVm.Message = AppConstant.NoDataFound;
+                    return responseVm;
                 }
                 var filteredOrders = estimatelist?.Data
                        .Where(o => o.IsTaxApplied==true && o.Tax>0 && (o.Status == EnumValue.GetEnumValue(Estimation.Approved) || o.Status == EnumValue.GetEnumValue(Estimation.GenerateOrder)))
