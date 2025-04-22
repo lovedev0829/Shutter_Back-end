@@ -905,17 +905,35 @@ namespace ShutterManagement.GHL.Services
 
             try
             {
+                // 1. Get existing users for the tenant
+                var existingUsers = await dBContext.TblGhlUsers
+                    .Where(u => u.TenantId == AppConstant.LoggedInTenantId && u.IsActive==true && u.IsDelete==false)
+                    .ToListAsync();
+
+                var incomingEmails = users
+                    .Where(u => !string.IsNullOrEmpty(u.email))
+                    .Select(u => u.email.ToLower())
+                    .ToList();
+
+                // 2. Remove users not in the incoming list
+                var usersToRemove = existingUsers
+                    .Where(u => !incomingEmails.Contains(u.GhlEmail.ToLower()))
+                    .ToList();
+
+                if (usersToRemove.Any())
+                {
+                    dBContext.TblGhlUsers.RemoveRange(usersToRemove);
+                }
+
+                // 3. Add/update incoming users
                 foreach (var user in users)
                 {
-                    var existingUser = await dBContext.TblGhlUsers
-                        .FirstOrDefaultAsync(u =>
-                            u.GhlEmail == user.email &&
-                            u.TenantId == AppConstant.LoggedInTenantId &&
-                            u.IsActive == true &&
-                            u.IsDelete == false);
+                    var existingUser = existingUsers
+                        .FirstOrDefault(u => u.GhlEmail.Equals(user.email, StringComparison.OrdinalIgnoreCase));
 
                     if (existingUser != null)
                     {
+                        // Update user
                         existingUser.GhlUserName = user.name;
                         existingUser.GhlFirstName = user.firstName;
                         existingUser.GhlLastName = user.lastName;
@@ -928,6 +946,7 @@ namespace ShutterManagement.GHL.Services
                     }
                     else
                     {
+                        // Add new user
                         var newUser = new TblGhlUser
                         {
                             Id = Guid.NewGuid(),
@@ -950,14 +969,14 @@ namespace ShutterManagement.GHL.Services
                         await dBContext.TblGhlUsers.AddAsync(newUser);
                     }
 
+                    // 4. Update system user if exists
                     if (!string.IsNullOrEmpty(user.email))
                     {
                         var systemUser = await dBContext.TblUsers
                             .FirstOrDefaultAsync(u =>
                                 u.Email == user.email &&
                                 u.TenantId == AppConstant.LoggedInTenantId &&
-                                u.IsActive == true &&
-                                u.IsDelete == false);
+                                u.IsActive==true && u.IsDelete==false);
 
                         if (systemUser != null)
                         {
@@ -983,6 +1002,7 @@ namespace ShutterManagement.GHL.Services
 
             return responseVm;
         }
+
 
         public async Task<IResponseVm<List<TblGhlUser>>> GetGHLUsersByCalendarId()
         {

@@ -185,7 +185,7 @@ namespace ShutterManagement.Controllers
             if (Checkghlresponse.IsSuccess)
             {
                 var UserGHLs = await userService.GetAll(filter);
-                UserGHLs.Data = UserGHLs?.Data?.Where(x => x.IsActive == true && x.GhlUserId!=null).ToList();
+                UserGHLs.Data = UserGHLs?.Data?.Where(x => x.IsActive == true && !string.IsNullOrEmpty(x.GhlUserId)).ToList();
                 return Ok(UserGHLs);
             }
             else
