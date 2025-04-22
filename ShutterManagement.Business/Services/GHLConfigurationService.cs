@@ -136,6 +136,7 @@ namespace ShutterManagement.Business.Services
 
                             // Save the updated configuration
                             var resUpdate = await Update(gHLConfiguration);
+                            responseVm.Message = "Ghl linked Successfully..";
                             FileLogger.Log($"Configuration Updated Successfully  in link to ghl {resUpdate}");
                         }
                         else
