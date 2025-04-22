@@ -26,7 +26,7 @@ namespace ShutterManagement.Core.SPModel
 
 
         [DefaultValue("")]
-        [RegularExpression(@"^\+?1?\d{10}$", ErrorMessage = "Phone number must start with a '+' followed by 11 digits.")]
+        [RegularExpression(@"^\+?1?\d{11}$", ErrorMessage = "Phone number must start with 1 followed by 11 digits.")]
         public string? PhoneNumber { get; set; } = string.Empty ;
 
         [MaxLength(100)]
