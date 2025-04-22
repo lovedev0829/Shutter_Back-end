@@ -48,7 +48,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         public Guid? VendorId { get; set; }
 
         //[DefaultValue("")]
-        //[RegularExpression(@"^[A-Za-z0-9_-]+", ErrorMessage = AppConstant.SKUError)]
+        [RegularExpression(@"^[A-Za-z0-9_-]+", ErrorMessage = AppConstant.SKUError)]
         public string? SKU { get; set; }
 
         public bool IsCutSheet { get; set; } = false;
