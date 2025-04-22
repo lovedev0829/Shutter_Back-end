@@ -124,6 +124,7 @@ namespace ShutterManagement.Business.Services
                     IsTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
                     TenantId = (Guid)AppConstant.LoggedInTenantId;
                     FileLogger.Log($"Tenant Id id fetched {TenantId}");
+                    model.IsTaxExemption = true;
                 }
                 if(!model.IsTaxExemption)
                 {
@@ -458,7 +459,7 @@ namespace ShutterManagement.Business.Services
                             if (!model.IsBillingAddressSameAsAddress)
                             {
                                 var contactBillingAddress = dbContext.TblAddresses
-                                    .Where(x => x.ContactId == contact1.ContactId && x.AddressId == contact1.PrimaryAddress && x.IsDelete == false)
+                                    .Where(x => x.ContactId == contact1.ContactId && x.AddressId == contact1.PrimaryAddress && x.IsDelete == false && x.TenantId==AppConstant.LoggedInTenantId)
                                     .FirstOrDefault();
 
                                 if (contactBillingAddress != null)
@@ -537,7 +538,7 @@ namespace ShutterManagement.Business.Services
                             if (!model.IsTaxExemption)
                             {
                                 var contactTaxExemption = taxExemptionService.GetAllQuerable()
-                                    .Where(x => x.ContactId == contact1.ContactId && x.IsDelete == false).FirstOrDefault();
+                                    .Where(x => x.ContactId == contact1.ContactId && x.IsDelete == false ).FirstOrDefault();
 
                                 string arrayString = string.Join(", ", model.TaxExemptionVm?.ExemptionCertificate);
 
@@ -1162,7 +1163,7 @@ namespace ShutterManagement.Business.Services
                                 LastName = ghlcontact.lastName,
                                 Email = ghlcontact.email,
                                 PhoneNumber = ghlcontact.phone,
-                                locationId = ghlcontact.locationId,
+                                //locationId = ghlcontact.locationId,
                                 GHLContactId = ghlcontact.id,
                                 lastAsync = DateTime.Now,
                             };
@@ -1286,7 +1287,7 @@ namespace ShutterManagement.Business.Services
                                 var res = await gHLService_V2.CreateContactAsync(contact);
                                 if (res.IsSuccess)
                                 {
-                                    var contactExist = (await GetAll()).Where(x => x.Email == contact.Email).FirstOrDefault();
+                                    var contactExist = (await GetAll()).Where(x => x.Email == contact.Email && x.TenantId==AppConstant.LoggedInTenantId).FirstOrDefault();
                                     if (contactExist != null && res?.Data?.Contact?.id!=null)
                                     {
                                         contactExist.GhlcontactId = res?.Data?.Contact?.id??"";

@@ -222,12 +222,14 @@ namespace ShutterManagement.Business.Services
                 var isExist = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete==false).FirstOrDefault();
                 if (isExist != null)
                 {
-                    if (isExist.AccessExpirationtime > DateTime.Now && isExist.RefreshExpirationtime > DateTime.Now)
+                    if(isExist.AccessToken !=null && isExist.RefreshToken!=null)
                     {
-                        response.IsSuccess = true;
-                        response.Message = "AccessToken and RefreshToken is valid.";
-                    }
-                    else if(isExist.RefreshExpirationtime > DateTime.Now)
+                        if (isExist.AccessExpirationtime > DateTime.Now && isExist.RefreshExpirationtime > DateTime.Now)
+                        {
+                            response.IsSuccess = true;
+                            response.Message = "AccessToken and RefreshToken is valid.";
+                        }
+                        else if (isExist.RefreshExpirationtime > DateTime.Now)
                         {
                             //if(isExist.AccessExpirationtime > DateTime.Now) {
                             //    response.IsSuccess = true;
@@ -239,9 +241,9 @@ namespace ShutterManagement.Business.Services
                             {
                                 isExist.AccessExpirationtime = DateTime.Now.AddDays(1);
                                 isExist.RefreshExpirationtime = DateTime.Now.AddDays(365);
-                                isExist.RefreshToken = res1?.Data?.RefreshToken??"";
+                                isExist.RefreshToken = res1?.Data?.RefreshToken ?? "";
                                 isExist.AccessToken = res1?.Data.AccessToken ?? "";
-                                isExist.LastSync= DateTime.Now;
+                                isExist.LastSync = DateTime.Now;
                                 await Update(isExist);
                             }
                             response.IsSuccess = true;
@@ -251,6 +253,12 @@ namespace ShutterManagement.Business.Services
                         {
                             response.Message = "User need to verify GoHighLevelConfiguration.";
                         }
+                    }
+                    else
+                    {
+                        response.Message = "User need to verify GoHighLevelConfiguration.";
+                    }
+                    
                 }
                 else
                 {
