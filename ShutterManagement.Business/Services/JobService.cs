@@ -806,8 +806,6 @@ namespace ShutterManagement.Business.Services
                     {
                         jobStatus = JobStatusResponse.Data.JobStatusId;
                     }
-                    
-
                 }
                     if (!IsTenantValid)
                     {
