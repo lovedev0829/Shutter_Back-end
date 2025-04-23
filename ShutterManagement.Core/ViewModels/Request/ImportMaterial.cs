@@ -27,9 +27,10 @@ namespace ShutterManagement.Core.ViewModels.Request
 
         public decimal? NonRatedUnitCost { get; set; }
 
-        [DefaultValue("")]
-        [Required]
         public decimal? StockQuantity { get; set; }
+
+        public decimal? Lenght { get; set; }
+        public decimal? Width { get; set; }
 
         [DefaultValue("")]
         [Required]
@@ -39,7 +40,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         [DefaultValue("")]
         [Required]
 
-        public string? VendorCode { get; set; }
+        public string? Vendor { get; set; }
 
         public string SKU { get; set; }
 

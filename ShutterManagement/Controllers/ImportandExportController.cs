@@ -160,5 +160,26 @@ namespace ShutterManagement.Controllers
             return responseVm;
         }
 
+
+        [HttpGet("DownloadSample")]
+        [Authorize(Roles = "ContactView")]
+        public async Task<IActionResult> DownloadSample(string? downloadSample)
+        {
+            if (downloadSample == "material")
+            {
+                var Material = await importandExportCSV.DownloadCsvSampleMaterial();
+                return Ok(Material);
+            }
+            else if (downloadSample == "contact")
+            {
+                var contact = await importandExportCSV.DownloadCsvSampleContact();
+                return Ok(contact);
+            }
+            else
+            {
+                return BadRequest("Please input a valid type.");
+            }
+        }
+
     }
 }

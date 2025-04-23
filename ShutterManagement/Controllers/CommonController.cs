@@ -963,6 +963,8 @@ namespace ShutterManagement.Controllers
             return Ok(result);
         }
 
+       
+
         [HttpGet]
         [Route("GetAllGHL_Users")]
         public async Task<IActionResult> GetAllGHL_Users()

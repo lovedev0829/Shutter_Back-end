@@ -70,6 +70,97 @@ namespace ShutterManagement.Business.Services
 
         #region Start Export import Contact and material
 
+
+        public async Task<IResponseVm<string>> DownloadCsvSampleMaterial()
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+            try
+            {
+                var rootPath = Directory.GetCurrentDirectory();
+
+                var tenantId = AppConstant.LoggedInTenantId;
+                var relativePath = Path.Combine("Files", AppConstant.LoggedInTenantId.ToString(), "Samples");
+                var fullDirectoryPath = Path.Combine(rootPath, relativePath);
+
+                if (!Directory.Exists(fullDirectoryPath))
+                {
+                    Directory.CreateDirectory(fullDirectoryPath);
+                }
+
+                var fileName = "MaterialSample.csv";
+                var filePathWithName = Path.Combine(fullDirectoryPath, fileName);
+
+                if (!System.IO.File.Exists(filePathWithName))
+                {
+                    using (var writer = new StreamWriter(filePathWithName))
+                    {
+                        await writer.WriteLineAsync("MaterialName,UnitCost,NonRatedUnitCost,UnitOfMeasurement,Lenght,Width,StockQuantity,ReorderLevel,Vendor,Notes,ProductType,SKU,IsCutSheet");
+                    }
+                }
+
+                byte[] fileBytes = await File.ReadAllBytesAsync(filePathWithName);
+                string base64Data = Convert.ToBase64String(fileBytes);
+
+                responseVm.IsSuccess = true;
+                responseVm.Message = "Material Sample Downloaded successfully..";
+                responseVm.Data = base64Data;
+                File.Delete(filePathWithName);
+            }
+            catch (Exception ex)
+            {
+                responseVm.IsSuccess = false;
+                responseVm.Message = $"{AppConstant.ExceptionError} {ex.Message}";
+            }
+
+            return responseVm;
+        }
+        public async Task<IResponseVm<string>> DownloadCsvSampleContact()
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+            try
+            {
+                var rootPath = Directory.GetCurrentDirectory();
+
+                var tenantId = AppConstant.LoggedInTenantId;
+                var relativePath = Path.Combine("Files", AppConstant.LoggedInTenantId.ToString(), "Samples");
+                var fullDirectoryPath = Path.Combine(rootPath, relativePath);
+
+                if (!Directory.Exists(fullDirectoryPath))
+                {
+                    Directory.CreateDirectory(fullDirectoryPath);
+                }
+
+                var fileName = "MaterialSample.csv";
+                var filePathWithName = Path.Combine(fullDirectoryPath, fileName);
+
+                if (!System.IO.File.Exists(filePathWithName))
+                {
+                    using (var writer = new StreamWriter(filePathWithName))
+                    {
+                      
+                        await writer.WriteLineAsync("ContactType,FirstName,LastName,Suffix,PhoneNumber,Email,Website,Notes,Referral,BillingFirstName,BillingLastName,PhoneNumber,Email,City,State,ZipCode,StreetAddress,EffectiveDate,ExpiryDate");
+                    }
+                }
+
+                byte[] fileBytes = await File.ReadAllBytesAsync(filePathWithName);
+                string base64Data = Convert.ToBase64String(fileBytes);
+
+                responseVm.IsSuccess = true;
+                responseVm.Message = "Material Sample Downloaded successfully..";
+                responseVm.Data = base64Data;
+                File.Delete(filePathWithName);
+            }
+            catch (Exception ex)
+            {
+                responseVm.IsSuccess = false;
+                responseVm.Message = $"{AppConstant.ExceptionError} {ex.Message}";
+            }
+
+            return responseVm;
+        }
+
+
+
         public async Task<IResponseVm<List<string>>> ImportMaterialDatabase(Stream csvStream)
         {
             IResponseVm<List<string>> responseVm = new ResponseVm<List<string>>();
@@ -92,9 +183,9 @@ namespace ShutterManagement.Business.Services
                 {
                     //var records = csv.GetRecords<ImportMaterial>().ToList();
                     var expectedHeaders = new[]
-                   {
-                   "MaterialName", "UnitCost","NonRatedUnitCost", "UnitOfMeasurement", "StockQuantity", "ReorderLevel",
-                   "VendorCode", "Notes", "ProductType", "SKU", "IsCutSheet"
+                    {
+                   "MaterialName", "UnitCost","NonRatedUnitCost", "UnitOfMeasurement","Lenght","Width", "StockQuantity", "ReorderLevel",
+                   "Vendor", "Notes", "ProductType", "SKU", "IsCutSheet"
                     };
 
                     csv.Read();
@@ -120,7 +211,7 @@ namespace ShutterManagement.Business.Services
 
                     foreach (var record in records)
                     {
-                        if (string.IsNullOrEmpty(record.VendorCode))
+                        if (string.IsNullOrEmpty(record.Vendor))
                         {
                             validationErrors.Add($"Error in row {rowNumber}: VendorCode is required.");
                             hasValidationError = true;
@@ -128,7 +219,7 @@ namespace ShutterManagement.Business.Services
                         }
 
                         var vendor = vendorService.GetAllQuerable()
-                            .Where(v => v.VendorCode == record.VendorCode && v.IsDelete == false)
+                            .Where(v => (v.VendorCode == record.Vendor|| v.CompanyName==record.Vendor) && v.IsDelete == false && v.TenantId==AppConstant.LoggedInTenantId)
                             .FirstOrDefault();
 
                         if (vendor == null)
@@ -139,7 +230,7 @@ namespace ShutterManagement.Business.Services
                         }
 
                         var productType = dbContext.MstProductTypes
-                            .Where(p => p.ProductName == record.ProductType && p.IsDelete == false)
+                            .Where(p => p.ProductName == record.ProductType && p.IsDelete == false && p.TenantId==AppConstant.LoggedInTenantId)
                             .FirstOrDefault();
 
                         if (productType == null)
@@ -176,6 +267,8 @@ namespace ShutterManagement.Business.Services
                         {
                             SKU = record.SKU?.Trim(),
                             MaterialName = record.MaterialName?.Trim(),
+                            Lenght = record.Lenght??null,
+                            Width = record.Width??null,
                             UnitCost = record.UnitCost,
                             NonRatedUnitCost=record.NonRatedUnitCost,
                             UnitOfMeasurement = record.UnitOfMeasurement,
@@ -622,6 +715,7 @@ namespace ShutterManagement.Business.Services
                         contact.PhoneNumber,
                         contact.FirstName,
                         contact.LastName,
+                        contact.Suffix,
                         contact.Website,
                         contact.Notes,
                         contact.Referral,
@@ -644,7 +738,7 @@ namespace ShutterManagement.Business.Services
                             FirstName = x.FirstName,
                             LastName = x.LastName,
                             PhoneNumber = x.Phone,
-                            //State = x.State,
+                            StateName =  dbContext.MstStates.Where(s=>s.Id==x.State).Select(y=>y.StateName).FirstOrDefault(),
                             StreetAddress = x.StreetAddress,
                             ZipCode = x.ZipCode,
                         }).FirstOrDefault();
@@ -669,6 +763,7 @@ namespace ShutterManagement.Business.Services
                         FirstName = contact.FirstName,
                         LastName = contact.LastName,
                         Website = contact.Website,
+                        Suffix=contact.Suffix,
                         Notes = contact.Notes,
                         Referral = contact.Referral,
                         IsTaxExemption = contact.IsTaxExemption ?? false,
@@ -680,7 +775,7 @@ namespace ShutterManagement.Business.Services
                 }
 
                 var csvBuilder = new StringBuilder();
-                csvBuilder.AppendLine("ContactType,FirstName,LastName,PhoneNumber,Email,Website,Notes,Referral,BillingFirstName,BillingLastName,PhoneNumber,Email,City,State,ZipCode,StreetAddress,EffectiveDate,ExpiryDate");
+                csvBuilder.AppendLine("ContactType,FirstName,LastName,Suffix,PhoneNumber,Email,Website,Notes,Referral,BillingFirstName,BillingLastName,PhoneNumber,Email,City,State,ZipCode,StreetAddress,EffectiveDate,ExpiryDate");
 
                 foreach (var contact in detailedContactList)
                 {
@@ -689,7 +784,7 @@ namespace ShutterManagement.Business.Services
                         ? string.Join(";", contact.taxExemptionVm.ExemptionCertificate)
                         : "";
 
-                    var line = $"{contact.ContactType},{contact.FirstName},{contact.LastName},{contact.PhoneNumber},{contact.Email},{contact.Website},{contact.Notes},{contact.Referral}," +
+                    var line = $"{contact.ContactType},{contact.FirstName},{contact.LastName},{contact.Suffix},{contact.PhoneNumber},{contact.Email},{contact.Website},{contact.Notes},{contact.Referral}," +
                                $"{billingAddress.FirstName},{billingAddress.LastName},{billingAddress.PhoneNumber},{billingAddress.Email},{billingAddress.City},{billingAddress.StateName}," +
                                $"{billingAddress.ZipCode},{billingAddress.StreetAddress},{contact.taxExemptionVm?.EffectiveDate},{contact.taxExemptionVm?.ExpiryDate}";
 
@@ -777,6 +872,8 @@ namespace ShutterManagement.Business.Services
                                         Notes = t2.Notes,
                                         ReorderLevel = t2.ReorderLevel,
                                         SKU = t2.Sku,
+                                        Lenght=t2.Length??null,
+                                        Width=t2.Width??null,
                                         StockQuantity = t2.StockQuantity,
                                         UnitCost = t2.UnitCost,
                                         ProductTypeName = t3.ProductName,
@@ -790,11 +887,11 @@ namespace ShutterManagement.Business.Services
                                     }).ToList();
 
                 var csvBuilder = new StringBuilder();
-                csvBuilder.AppendLine("MaterialName,UnitCost,NonRatedUnitCost,UnitOfMeasurement,StockQuantity,ReorderLevel,VendorCode,Notes,ProductType,SKU,IsCutSheet");
+                csvBuilder.AppendLine("MaterialName,UnitCost,NonRatedUnitCost,UnitOfMeasurement,Lenght,Width,StockQuantity,ReorderLevel,VendorCode,Notes,ProductType,SKU,IsCutSheet");
 
                 foreach (var material in materialList)
                 {
-                    var line = $"{material.MaterialName},{material.UnitCost},{material.Non_Rated_UnitCost},{material.UnitOfMeasurement},{material.StockQuantity}," +
+                    var line = $"{material.MaterialName},{material.UnitCost},{material.Non_Rated_UnitCost},{material.UnitOfMeasurement},{material.Lenght},{material.Width},{material.StockQuantity}," +
                                $"{material.ReorderLevel},{material.VendorCode},{material.Notes},{material.ProductTypeName},{material.SKU},{material.IsCutSheet}";
 
                     csvBuilder.AppendLine(line);
