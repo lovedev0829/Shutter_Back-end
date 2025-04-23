@@ -50,6 +50,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         [DefaultValue("")]
         [MaxLength(1000)]
         public string? Notes { get; set; }
+        public string? Suffix { get; set; }
 
         [DefaultValue("")]
         public string? Referral { get; set; }

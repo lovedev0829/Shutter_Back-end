@@ -923,11 +923,15 @@ namespace ShutterManagement.Business.Services
             var jobdetails1 = (from j1 in dbContext.TblJobs
                                join j2 in dbContext.TblOrders on j1.JobId equals j2.JobId
                                join j3 in dbContext.TblAddresses on j1.AddressId equals j3.AddressId
-                               join j4 in dbContext.MstJobTypes on j1.JobType equals j4.Id
-                               join j5 in dbContext.TblUsers on j1.AssignedPersonnel equals j5.Id
+                               join j4 in dbContext.MstJobTypes on j1.JobType equals j4.Id into JobType
+                               from j4 in JobType.DefaultIfEmpty()
+                               join j5 in dbContext.TblUsers on j1.AssignedPersonnel equals j5.Id into Users
+                               from j5 in Users.DefaultIfEmpty()
                                join c in dbContext.TblContacts on j1.ContactId equals c.ContactId
-                               join j6 in dbContext.MstJobStatuses on j1.JobStatus equals j6.JobStatusId
-                               where j1.IsDelete == false && c.IsDelete == false && j1.TenantId == AppConstant.LoggedInTenantId && j1.IsDelete == false && j1.JobId == e.JobId
+                               join j6 in dbContext.MstJobStatuses on j1.JobStatus equals j6.JobStatusId into JobStatus
+                               from j6 in JobStatus.DefaultIfEmpty()
+                               where j1.IsDelete == false && c.IsDelete == false && j1.TenantId == AppConstant.LoggedInTenantId &&
+                               j1.JobId == e.JobId
                                select new JobDetail
                                {
                                    JobName = j1.JobName,
