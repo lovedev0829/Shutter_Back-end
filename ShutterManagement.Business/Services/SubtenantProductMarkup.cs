@@ -210,7 +210,7 @@ namespace ShutterManagement.Business.Services
                         .Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.Isdelete == false && x.IsActive == true)
                         .ToList(); 
 
-                    var products =  productService.GetAllQuerable().Where(x => x.IsActive == true && x.IsDelete == false)
+                    var products =  productService.GetAllQuerable().Where(x => x.IsActive == true && x.IsDelete == false && x.TenantId.ToString().ToLower()==AppConstant.LoggedInParentTenantId)
                         .ToList();
 
                     var markup = products
