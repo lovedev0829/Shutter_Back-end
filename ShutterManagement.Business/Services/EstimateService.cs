@@ -392,7 +392,6 @@ namespace ShutterManagement.Business.Services
             try
             {
                 string formula = model.Expression ?? "";
-
                 var validate = CalculateExpression(formula, model);
                 if (validate.HasErrors())
                 {
@@ -652,7 +651,7 @@ namespace ShutterManagement.Business.Services
                     }
                     //calculate Waste factor
                     // Set parameters
-                    formula = formula?.Replace(match.Value, Convert.ToDecimal(val).ToString());
+                    formula = formula?.Replace(match.Value, Convert.ToDecimal(val).ToString("N2"));
                     //expression.Parameters[match.Value] = Convert.ToDecimal(val);
                 }
             }
