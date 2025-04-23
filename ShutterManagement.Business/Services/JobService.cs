@@ -1331,7 +1331,9 @@ namespace ShutterManagement.Business.Services
                                   from p1 in createdUser.DefaultIfEmpty()
                                   join p2 in _context.TblTenants on t2.TenantId equals p2.TenantId into tenant
                                   from p2 in tenant.DefaultIfEmpty()
-                                  join t5 in _context.MstJobStatuses on t2.JobStatus equals t5.JobStatusId into jobStatus
+                                  join p3 in _context.TblTenantBrandingInfos on p2.BrandingInfo equals p3.Id into brandinginfo
+                                   from p3 in brandinginfo.DefaultIfEmpty()
+                                   join t5 in _context.MstJobStatuses on t2.JobStatus equals t5.JobStatusId into jobStatus
                                   from t5 in jobStatus.DefaultIfEmpty()
                                   join t6 in _context.TblContacts on t2.ContactId equals t6.ContactId into contact
                                   from t6 in contact.DefaultIfEmpty()
@@ -1368,6 +1370,7 @@ namespace ShutterManagement.Business.Services
                                              CreatedBy = t2.CreatedBy.ToString(),
                                              CreatedbyUsername = p1.FirstName + " " + p1.LastName,
                                              SubtenantName = p2.FirstName + " " + p2.LastName,
+                                             CompanyName = p3.CompanyName ?? "",
                                              TenantId = t2.TenantId,
                                              CreatedAt = t2.CreatedAt,
                                              UpdatedAt = t2.UpdatedAt,
@@ -1389,6 +1392,7 @@ namespace ShutterManagement.Business.Services
                                 (x.JobStatus.ToString() == filter.SearchValue) ||
                                 (x.AddressId.ToString() == filter.SearchValue)
                                 || (x.JobName ?? "").ToLower().Contains(filter.SearchValue)
+                                || (x.CompanyName ?? "").ToLower().Contains(filter.SearchValue)
                                 || (x.ContactFirstName ?? "").ToLower().Contains(filter.SearchValue)
                                 || (x.ContactLastName ?? "").ToLower().Contains(filter.SearchValue)
                                 || (x.ContactPhone ?? "").Contains(filter.SearchValue)
