@@ -26,6 +26,7 @@ namespace ShutterManagement.Controllers
         {
            
             this.importandExportCSV = importandExportCSV;
+
         }
 
         [Authorize]
@@ -158,6 +159,27 @@ namespace ShutterManagement.Controllers
                 return responseVm;
             }
             return responseVm;
+        }
+
+
+        [HttpGet("DownloadSample")]
+        [Authorize(Roles = "ContactAdd,MaterialAdd")]
+        public async Task<IActionResult> DownloadSample(string? downloadSample)
+        {
+            if (downloadSample == "material")
+            {
+                var Material = await importandExportCSV.DownloadCsvSampleMaterial();
+                return Ok(Material);
+            }
+            else if (downloadSample == "contact")
+            {
+                var contact = await importandExportCSV.DownloadCsvSampleContact();
+                return Ok(contact);
+            }
+            else
+            {
+                return BadRequest("Please input a valid type.");
+            }
         }
 
     }

@@ -19,6 +19,9 @@ namespace ShutterManagement.Core.ViewModels.Response
 
         public decimal? StockQuantity { get; set; }
 
+        public decimal? Lenght { get; set; }
+        public decimal? Width { get; set; }
+
         public decimal? ReorderLevel { get; set; }
 
         public Guid? VendorId { get; set; }

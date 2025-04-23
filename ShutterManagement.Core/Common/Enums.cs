@@ -183,6 +183,12 @@ namespace ShutterManagement.Core.Common
         GHL
     }
 
+    public enum DownloadSample
+    {
+        Material,
+        Contact,
+    }
+
     public static class EnumValue
     {
         public static string GetEnumValue<T>(T enumValue) where T : Enum
