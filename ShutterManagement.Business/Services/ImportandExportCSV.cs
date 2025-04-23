@@ -66,6 +66,16 @@ namespace ShutterManagement.Business.Services
             this.invoiceService = invoiceService;
             this.reportServices = reportServices;
             this.productType = productType;
+            filter.PageNo = 1;
+            filter.RecordPerPage = 1000;
+            filter.SearchValue = "";
+            filter.TenantId = "";
+            filter.Status = 1;
+            filter.Vendor = "";
+            filter.JobStatus = "";
+            filter.ProductType = "";
+            filter.Region = "";
+            filter.Address = "";
         }
 
         #region Start Export import Contact and material
@@ -366,7 +376,7 @@ namespace ShutterManagement.Business.Services
                 {
                     var expectedHeaders = new[]
                     {
-                "ContactType", "FirstName", "LastName", "PhoneNumber", "Email", "Website",
+                "ContactType", "FirstName", "LastName","Suffix", "PhoneNumber", "Email", "Website",
                 "Notes", "Referral", "BillingFirstName", "BillingLastName", "PhoneNumber",
                 "Email", "City", "State", "ZipCode", "StreetAddress", "EffectiveDate", "ExpiryDate"
             };
@@ -477,6 +487,7 @@ namespace ShutterManagement.Business.Services
                     ContactType=record.ContactType?.Trim(),
                     FirstName = record.FirstName?.Trim(),
                     LastName = record.LastName?.Trim(),
+                    Suffix = record.Suffix?.Trim(),
                     PhoneNumber = record.PhoneNumber?.Trim(),
                     Email = record.Email?.Trim(),
                     Website = record.Website?.Trim(),
@@ -507,6 +518,7 @@ namespace ShutterManagement.Business.Services
                 ContactType = record.ContactType?.Trim(),
                 FirstName = record.FirstName?.Trim(),
                 LastName = record.LastName?.Trim(),
+                Suffix=record.Suffix?.Trim(),
                 PhoneNumber = record.PhoneNumber?.Trim(),
                 Email = record.Email?.Trim(),
                 Website = record.Website?.Trim(),
@@ -540,7 +552,7 @@ namespace ShutterManagement.Business.Services
                 return null;
 
             var state = await dbContext.MstStates
-                .FirstOrDefaultAsync(s => s.StateCode.ToLower() == stateCode.Trim().ToLower());
+                .FirstOrDefaultAsync(s => s.StateCode.ToLower() == stateCode.Trim().ToLower() || s.StateName.ToLower() == stateCode.Trim().ToLower());
 
             return state?.Id;
         }

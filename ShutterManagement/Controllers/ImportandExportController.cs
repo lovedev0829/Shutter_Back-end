@@ -26,6 +26,7 @@ namespace ShutterManagement.Controllers
         {
            
             this.importandExportCSV = importandExportCSV;
+
         }
 
         [Authorize]
@@ -162,7 +163,7 @@ namespace ShutterManagement.Controllers
 
 
         [HttpGet("DownloadSample")]
-        [Authorize(Roles = "ContactView")]
+        [Authorize(Roles = "ContactAdd,MaterialAdd")]
         public async Task<IActionResult> DownloadSample(string? downloadSample)
         {
             if (downloadSample == "material")
