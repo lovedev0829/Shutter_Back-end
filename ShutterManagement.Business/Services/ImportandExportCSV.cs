@@ -148,7 +148,7 @@ namespace ShutterManagement.Business.Services
                     using (var writer = new StreamWriter(filePathWithName))
                     {
                       
-                        await writer.WriteLineAsync("ContactType,FirstName,LastName,Suffix,PhoneNumber,Email,Website,Notes,Referral,BillingFirstName,BillingLastName,PhoneNumber,Email,City,State,ZipCode,StreetAddress,EffectiveDate,ExpiryDate");
+                        await writer.WriteLineAsync("ContactType,FirstName,LastName,Suffix,PhoneNumber,Email,Website,Notes,Referral,BillingFirstName,BillingLastName,PhoneNumber,Email,City,StateName,ZipCode,StreetAddress,EffectiveDate,ExpiryDate");
                     }
                 }
 
@@ -189,7 +189,10 @@ namespace ShutterManagement.Business.Services
             try
             {
                 using (var reader = new StreamReader(csvStream))
-                using (var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture)))
+                using (var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture)
+                {
+                    MissingFieldFound = null 
+                }))
                 {
                     //var records = csv.GetRecords<ImportMaterial>().ToList();
                     var expectedHeaders = new[]
@@ -258,7 +261,7 @@ namespace ShutterManagement.Business.Services
 
                         foreach (var unitOfMeasurementExist in unitOfMeasurement)
                         {
-                            if (unitOfMeasurementExist.UnitofMeasurementName == record.UnitOfMeasurement?.Trim())
+                            if (unitOfMeasurementExist?.UnitofMeasurementName?.ToLower() == record?.UnitOfMeasurement?.ToLower()?.Trim())
                             {
                                 unitFound = true;
                                 break;
@@ -267,7 +270,7 @@ namespace ShutterManagement.Business.Services
 
                         if (!unitFound)
                         {
-                            validationErrors.Add($"Error in row {rowNumber}: UnitOfMeasurement '{record.UnitOfMeasurement}' is Not Valid.");
+                            validationErrors.Add($"Error in row {rowNumber}: UnitOfMeasurement '{record?.UnitOfMeasurement}' is Not Valid.");
                             hasValidationError = true;
                             continue;
 
@@ -372,13 +375,16 @@ namespace ShutterManagement.Business.Services
                 }
 
                 using (var reader = new StreamReader(csvStream))
-                using (var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture)))
+                using (var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture)
+                {
+                    MissingFieldFound = null
+                }))
                 {
                     var expectedHeaders = new[]
                     {
                 "ContactType", "FirstName", "LastName","Suffix", "PhoneNumber", "Email", "Website",
                 "Notes", "Referral", "BillingFirstName", "BillingLastName", "PhoneNumber",
-                "Email", "City", "State", "ZipCode", "StreetAddress", "EffectiveDate", "ExpiryDate"
+                "Email", "City", "StateName", "ZipCode", "StreetAddress", "EffectiveDate", "ExpiryDate"
             };
 
                     csv.Read();
@@ -478,7 +484,7 @@ namespace ShutterManagement.Business.Services
 
         private async Task<dynamic> MapToSpContact(ImportContact record, bool isUpdate, Guid? contactId)
         {
-            var stateId = await GetStateIdByCode(record.BillingAddressVm?.StateName);
+            var stateId =  GetStateIdByCode(record.BillingAddressVm?.StateName);
             if (isUpdate)
             {
                 return new UpdateContact
@@ -546,16 +552,19 @@ namespace ShutterManagement.Business.Services
         }
 
 
-        private async Task<Guid?> GetStateIdByCode(string stateCode)
+        private Guid GetStateIdByCode(string stateCode)
         {
             if (string.IsNullOrWhiteSpace(stateCode))
-                return null;
+                return Guid.Empty;
 
-            var state = await dbContext.MstStates
-                .FirstOrDefaultAsync(s => s.StateCode.ToLower() == stateCode.Trim().ToLower() || s.StateName.ToLower() == stateCode.Trim().ToLower());
+            var state = dbContext.MstStates
+                .FirstOrDefault(s =>
+                    s.StateCode.ToLower() == stateCode.Trim().ToLower() ||
+                    s.StateName.ToLower() == stateCode.Trim().ToLower());
 
-            return state?.Id;
+            return state?.Id ?? Guid.Empty;
         }
+
 
         //private async Task<int> SaveOrUpdateContacts(List<Sp_Contact> contacts, List<string> validationErrors)
         //{
@@ -787,7 +796,7 @@ namespace ShutterManagement.Business.Services
                 }
 
                 var csvBuilder = new StringBuilder();
-                csvBuilder.AppendLine("ContactType,FirstName,LastName,Suffix,PhoneNumber,Email,Website,Notes,Referral,BillingFirstName,BillingLastName,PhoneNumber,Email,City,State,ZipCode,StreetAddress,EffectiveDate,ExpiryDate");
+                csvBuilder.AppendLine("ContactType,FirstName,LastName,Suffix,PhoneNumber,Email,Website,Notes,Referral,BillingFirstName,BillingLastName,PhoneNumber,Email,City,StateName,ZipCode,StreetAddress,EffectiveDate,ExpiryDate");
 
                 foreach (var contact in detailedContactList)
                 {
