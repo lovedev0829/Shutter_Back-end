@@ -44,6 +44,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? CreatedBy { get; set; }
         public string? CreatedbyUsername { get; set; }
         public string? SubtenantName { get; set; }
+        public string? CompanyName { get; set; }
         public Guid? TenantId { get; set; }
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
