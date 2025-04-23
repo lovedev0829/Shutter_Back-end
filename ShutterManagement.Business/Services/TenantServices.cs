@@ -169,33 +169,48 @@ namespace ShutterManagement.Business.Services
                     }
                 }
 
-                var Templateid = Guid.Parse("1916A280-109F-4829-8A70-0AFA94146A5F").ToString().ToLower();
-
-                
-                WelcomeEmailModel welcomemodel = new WelcomeEmailModel
-                {
-                    Name = model.FirstName + " " + model.LastName ?? "",
-                    UserName = model.Email ?? "",
-                    Password = model.Password ?? "",
-                    CompanyName = model?.CompanyName ?? "",
-                    Logo = model?.Logo ?? "",
-                    loginUrl = $"{AppConstant.UIBaseURL}{model?.Code}",
-                    color=model?.PrimaryColor??""
-
-                };
-
-                var WelcomeTemplate = dbContext.TblTemplates.Where(x =>  x.IsDelete == false && x.TemplateId.ToString().ToLower() == Templateid).FirstOrDefault();
-                var emailContent = EmailHelper.ReplacePlaceholdersForlWelcomeEmail(WelcomeTemplate?.TemplateValue, welcomemodel);
-                EmailHelper.WelcomeEmail(model.Email, emailContent);
-
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.InsertSuccessMsg;
+                //  background email task
+                Task.Run(() => SendWelcomeEmailAsync(model));
             }
             catch (Exception ex)
             {
                 responseVm.Message = AppConstant.ExceptionError + ex.Message;
             }
             return responseVm;
+        }
+
+
+        public async Task SendWelcomeEmailAsync(CreateTenant model)
+        {
+            try
+            {
+                WelcomeEmailModel welcomemodel = new WelcomeEmailModel
+                {
+                    Name = $"{model.FirstName} {model.LastName}" ?? "",
+                    UserName = model.Email ?? "",
+                    Password = model.Password ?? "",
+                    CompanyName = model.CompanyName ?? "",
+                    Logo = model.Logo ?? "",
+                    loginUrl = $"{AppConstant.UIBaseURL}{model.Code}",
+                    color = model.PrimaryColor ?? ""
+                };
+
+                var WelcomeTemplate = dbContext.TblTemplates
+                    .FirstOrDefault(x => x.IsDelete==false &&
+                        x.TemplateName.ToLower() == EnumValue.GetEnumValue(EmailTemplateType.WelcomeEmail));
+
+                if (WelcomeTemplate != null)
+                {
+                    var emailContent = EmailHelper.ReplacePlaceholdersForlWelcomeEmail(WelcomeTemplate.TemplateValue, welcomemodel);
+                    EmailHelper.WelcomeEmail(model.Email, emailContent);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Welcome email failed: " + ex.Message);
+            }
         }
 
         public async Task<IResponseVm<string>> TenantUpdate(UpdateTenant model)

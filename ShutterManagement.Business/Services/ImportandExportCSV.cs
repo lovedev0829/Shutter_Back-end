@@ -87,9 +87,8 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var rootPath = Directory.GetCurrentDirectory();
-
                 var tenantId = AppConstant.LoggedInTenantId;
-                var relativePath = Path.Combine("Files", AppConstant.LoggedInTenantId.ToString(), "Samples");
+                var relativePath = Path.Combine("Files", tenantId.ToString(), "Samples");
                 var fullDirectoryPath = Path.Combine(rootPath, relativePath);
 
                 if (!Directory.Exists(fullDirectoryPath))
@@ -100,11 +99,12 @@ namespace ShutterManagement.Business.Services
                 var fileName = "MaterialSample.csv";
                 var filePathWithName = Path.Combine(fullDirectoryPath, fileName);
 
+                // CSV headers with * for required fields
                 if (!System.IO.File.Exists(filePathWithName))
                 {
                     using (var writer = new StreamWriter(filePathWithName))
                     {
-                        await writer.WriteLineAsync("MaterialName,UnitCost,NonRatedUnitCost,UnitOfMeasurement,Lenght,Width,StockQuantity,ReorderLevel,Vendor,Notes,ProductType,SKU,IsCutSheet");
+                        await writer.WriteLineAsync("MaterialName*,UnitCost*,NonRatedUnitCost*,UnitOfMeasurement*,Lenght,Width,StockQuantity,ReorderLevel,Vendor*,Notes,ProductType*,SKU,IsCutSheet*");
                     }
                 }
 
@@ -112,8 +112,10 @@ namespace ShutterManagement.Business.Services
                 string base64Data = Convert.ToBase64String(fileBytes);
 
                 responseVm.IsSuccess = true;
-                responseVm.Message = "Material Sample Downloaded successfully..";
+                responseVm.Message = "Material Sample Downloaded successfully.";
                 responseVm.Data = base64Data;
+
+                // Clean up temporary file
                 File.Delete(filePathWithName);
             }
             catch (Exception ex)
@@ -124,6 +126,7 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
+
         public async Task<IResponseVm<string>> DownloadCsvSampleContact()
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
@@ -148,7 +151,7 @@ namespace ShutterManagement.Business.Services
                     using (var writer = new StreamWriter(filePathWithName))
                     {
                       
-                        await writer.WriteLineAsync("ContactType,FirstName,LastName,Suffix,PhoneNumber,Email,Website,Notes,Referral,BillingFirstName,BillingLastName,PhoneNumber,Email,City,StateName,ZipCode,StreetAddress,EffectiveDate,ExpiryDate");
+                        await writer.WriteLineAsync("ContactType*,FirstName*,LastName*,Suffix*,PhoneNumber*,Email*,Website,Notes,Referral,BillingFirstNam*e,BillingLastName*,PhoneNumber*,Email*,City*,StateName*,ZipCode*,StreetAddress*,EffectiveDate,ExpiryDate");
                     }
                 }
 
@@ -201,13 +204,19 @@ namespace ShutterManagement.Business.Services
                    "Vendor", "Notes", "ProductType", "SKU", "IsCutSheet"
                     };
 
+                    
+
                     csv.Read();
                     csv.ReadHeader();
-                    var actualHeaders = csv.HeaderRecord;
+                    var actualHeaders = csv.HeaderRecord.Select(h => h.Trim().TrimStart('*').ToLower()) .ToArray();
 
-                    if (!expectedHeaders.SequenceEqual(actualHeaders, StringComparer.InvariantCultureIgnoreCase))
+                    var normalizedExpectedHeaders = expectedHeaders
+                        .Select(h => h.Trim().ToLower()) 
+                        .ToArray();
+
+                    if (!normalizedExpectedHeaders.SequenceEqual(actualHeaders))
                     {
-                        responseVm.Message = "The CSV file header format is  incorrect. Please export format";
+                        responseVm.Message = "The CSV file header format is incorrect. Please download the sample format.";
                         return responseVm;
                     }
                     var records = csv.GetRecords<ImportMaterial>().ToList();
@@ -389,11 +398,15 @@ namespace ShutterManagement.Business.Services
 
                     csv.Read();
                     csv.ReadHeader();
-                    var actualHeaders = csv.HeaderRecord;
+                    var actualHeaders = csv.HeaderRecord.Select(h => h.Trim().TrimStart('*').ToLower()).ToArray();
 
-                    if (!expectedHeaders.SequenceEqual(actualHeaders, StringComparer.InvariantCultureIgnoreCase))
+                    var normalizedExpectedHeaders = expectedHeaders
+                        .Select(h => h.Trim().ToLower())
+                        .ToArray();
+
+                    if (!normalizedExpectedHeaders.SequenceEqual(actualHeaders))
                     {
-                        responseVm.Message = "The CSV file header format is incorrect. Please export in the correct format.";
+                        responseVm.Message = "The CSV file header format is incorrect. Please download the sample format.";
                         return responseVm;
                     }
 
@@ -796,7 +809,7 @@ namespace ShutterManagement.Business.Services
                 }
 
                 var csvBuilder = new StringBuilder();
-                csvBuilder.AppendLine("ContactType,FirstName,LastName,Suffix,PhoneNumber,Email,Website,Notes,Referral,BillingFirstName,BillingLastName,PhoneNumber,Email,City,StateName,ZipCode,StreetAddress,EffectiveDate,ExpiryDate");
+                csvBuilder.AppendLine("ContactType*,FirstName*,LastName*,Suffix*,PhoneNumber*,Email*,Website,Notes,Referral,BillingFirstName*,BillingLastName*,PhoneNumber*,Email*,City*,StateName*,ZipCode*,StreetAddress*,EffectiveDate,ExpiryDate");
 
                 foreach (var contact in detailedContactList)
                 {
@@ -908,7 +921,7 @@ namespace ShutterManagement.Business.Services
                                     }).ToList();
 
                 var csvBuilder = new StringBuilder();
-                csvBuilder.AppendLine("MaterialName,UnitCost,NonRatedUnitCost,UnitOfMeasurement,Lenght,Width,StockQuantity,ReorderLevel,VendorCode,Notes,ProductType,SKU,IsCutSheet");
+                csvBuilder.AppendLine("MaterialName*,UnitCost*,NonRatedUnitCost*,UnitOfMeasurement*,Lenght,Width,StockQuantity,ReorderLevel,Vendor*,Notes,ProductType*,SKU,IsCutSheet*");
 
                 foreach (var material in materialList)
                 {
