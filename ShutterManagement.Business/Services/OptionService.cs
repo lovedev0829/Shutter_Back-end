@@ -122,7 +122,7 @@ namespace ShutterManagement.Business.Services
                                 else
                                 {
                                     alloptiontypeadded = false;
-                                    message += $"{item.OptionType} " + AppConstant.AlreadyExists;
+                                    message += $"{item.OptionType} OptionType " + AppConstant.AlreadyExists;
                                 }
                             }
                             if (!alloptiontypeadded)
