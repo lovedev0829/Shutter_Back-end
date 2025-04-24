@@ -124,7 +124,8 @@ namespace ShutterManagement.Services
                 claims.AddClaim(new Claim("Phone", UserDetails[0].Phone ?? ""));
                 claims.AddClaim(new Claim("TenantId", UserDetails[0].TenantId.ToString().ToUpper() ?? ""));
                 claims.AddClaim(new Claim("ParentTenantId", UserDetails[0].ParentTenantId.ToString().ToUpper() ?? ""));
-                claims.AddClaim(new Claim("CompanyCode", user.CompanyCode));
+               // claims.AddClaim(new Claim("CompanyCode", user.CompanyCode));
+                claims.AddClaim(new Claim("CompanyCode", UserDetails[0].Code));
                 claims.AddClaim(new Claim("CompanyName", UserDetails[0].CompanyName));
 
                 //// Store GHL Credentials in Claims

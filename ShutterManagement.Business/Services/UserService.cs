@@ -140,10 +140,7 @@ namespace ShutterManagement.Services
 
                         var Templateid = Guid.Parse("1916A280-109F-4829-8A70-0AFA94146A5F").ToString().ToLower();
                         var Tenantcode = dbContext.TblTenants.Where(x => x.IsDelete == false && x.TenantId==AppConstant.LoggedInTenantId).FirstOrDefault();
-                       
-                       
                         var tenantInfoDetails = tenantBrandingService.GetAllQuerable().Where(x => x.Id == Tenantcode.BrandingInfo && x.IsActive == true).FirstOrDefault();
-
 
                         WelcomeEmailModel welcomemodel = new WelcomeEmailModel
                         {
@@ -154,7 +151,6 @@ namespace ShutterManagement.Services
                             Logo = tenantInfoDetails?.Logo ?? "",
                             loginUrl = $"{AppConstant.UIBaseURL}{Tenantcode?.Code ?? ""}" ??"",
                             color = tenantInfoDetails?.PrimaryColor ?? ""
-
                         };
 
                         var WelcomeTemplate = dbContext.TblTemplates.Where(x => x.IsDelete == false && x.TemplateId.ToString().ToLower() == Templateid).FirstOrDefault();
