@@ -886,7 +886,7 @@ namespace ShutterManagement.Business.Services
                 }
                     ContactList.Add(contacts);
                 }
-                filter.SearchValue = filter?.SearchValue.Trim().ToLower();
+                filter.SearchValue = filter?.SearchValue?.Trim().ToLower();
                 var FilterRecords = ContactList
                                     .Where(x =>
                                     (filter?.Status == 0 ? x.IsActive == false : (filter?.Status == 1 ? x.IsActive == true : true)) &&
@@ -953,7 +953,7 @@ namespace ShutterManagement.Business.Services
 
                         if (contactExist != null && contactExist.IsDelete == false)
                         {
-                            contactExist.GhlcontactId = ghlResponse.Data.Contact.id;
+                            contactExist.GhlcontactId = ghlResponse?.Data?.Contact?.id;
                             contactExist.LastSync = DateTime.Now;
                         }
                         var res = await Update(contactExist);

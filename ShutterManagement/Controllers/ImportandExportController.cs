@@ -49,6 +49,17 @@ namespace ShutterManagement.Controllers
             }
             try
             {
+                var tenantId = AppConstant.LoggedInTenantId;
+                var importFolder = Path.Combine("Files", tenantId.ToString(), "Import");
+                if (!Directory.Exists(importFolder))
+                {
+                    Directory.CreateDirectory(importFolder);
+                }
+                var filePath = Path.Combine(importFolder, file.FileName);
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
                 using (var stream = file.OpenReadStream())
                 {
                   
