@@ -151,7 +151,7 @@ namespace ShutterManagement.Business.Services
                     using (var writer = new StreamWriter(filePathWithName))
                     {
                       
-                        await writer.WriteLineAsync("ContactType*,FirstName*,LastName*,Suffix*,PhoneNumber*,Email*,Website,Notes,Referral,BillingFirstNam*e,BillingLastName*,PhoneNumber*,Email*,City*,StateName*,ZipCode*,StreetAddress*,EffectiveDate,ExpiryDate");
+                        await writer.WriteLineAsync("ContactType*,FirstName*,LastName*,Suffix*,PhoneNumber*,Email*,Website,Notes,Referral,BillingFirstName*,BillingLastName*,PhoneNumber*,Email*,City*,StateName*,ZipCode*,StreetAddress*,EffectiveDate,ExpiryDate");
                     }
                 }
 
@@ -180,7 +180,7 @@ namespace ShutterManagement.Business.Services
             List<string> validationErrors = new List<string>();
             List<CreateMaterial> validMaterials = new List<CreateMaterial>();
             int successfulImports = 0;
-            int totalRecords = 0;
+            int totalRecords = 0; 
 
             var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
             if (!isTenantExists)
@@ -208,7 +208,7 @@ namespace ShutterManagement.Business.Services
 
                     csv.Read();
                     csv.ReadHeader();
-                    var actualHeaders = csv.HeaderRecord.Select(h => h.Trim().TrimStart('*').ToLower()) .ToArray();
+                    var actualHeaders = csv.HeaderRecord.Select(h => h.Trim().TrimEnd('*').ToLower()) .ToArray();
 
                     var normalizedExpectedHeaders = expectedHeaders
                         .Select(h => h.Trim().ToLower()) 
@@ -246,7 +246,7 @@ namespace ShutterManagement.Business.Services
 
                         if (vendor == null)
                         {
-                            validationErrors.Add($"Error in row {rowNumber}: Vendor  Code Required");
+                            validationErrors.Add($"Error in row {rowNumber}: Vendor  Required");
                             hasValidationError = true;
                             continue;
                         }
@@ -398,7 +398,7 @@ namespace ShutterManagement.Business.Services
 
                     csv.Read();
                     csv.ReadHeader();
-                    var actualHeaders = csv.HeaderRecord.Select(h => h.Trim().TrimStart('*').ToLower()).ToArray();
+                    var actualHeaders = csv.HeaderRecord.Select(h => h.Trim().TrimEnd('*').ToLower()).ToArray();
 
                     var normalizedExpectedHeaders = expectedHeaders
                         .Select(h => h.Trim().ToLower())
@@ -1432,6 +1432,28 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
         #endregion Start Export ExportTaxToCsv
+
+
+        //public class ImportContactMap : ClassMap<ImportContact>
+        //{
+        //    public ImportContactMap()
+        //    {
+        //        Map(m => m.ContactType).Name("ContactType", "ContactType*");
+        //        Map(m => m.FirstName).Name("FirstName", "firstname", "firstname*");
+        //        Map(m => m.LastName).Name("LastName", "lastname", "lastname*");
+        //        Map(m => m.Suffix).Name("Suffix", "Suffix", "Suffix*");
+        //        Map(m => m.PhoneNumber).Name("PhoneNumber", "PhoneNumber", "PhoneNumber*");
+        //        Map(m => m.Email).Name("Email", "email", "email*");
+        //        Map(m => m.PhoneNumber).Name("PhoneNumber", "phone", "phone*");
+        //        Map(m => m.BillingAddressVm.StreetAddress).Name("StreetAddress", "StreetAddress", "StreetAddress*");
+        //        Map(m => m.BillingAddressVm.City).Name("City", "city", "city*");
+        //        Map(m => m.BillingAddressVm.ZipCode).Name("ZipCode", "zipcode", "zipcode*");
+        //        Map(m => m.BillingAddressVm.StateName).Name("StateName", "StateName", "StateName*");
+        //        Map(m => m.BillingAddressVm.StateName).Name("StateName", "StateName", "StateName*");
+        //    }
+        //}
+
+
     }
 
 
