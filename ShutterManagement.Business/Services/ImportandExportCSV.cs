@@ -553,7 +553,8 @@ namespace ShutterManagement.Business.Services
                     StreetAddress = record.BillingAddressVm.StreetAddress?.Trim(),
                     ZipCode = record.BillingAddressVm.ZipCode?.Trim(),
                     City = record.BillingAddressVm.City?.Trim(),
-                    StateName = record.BillingAddressVm.StateName?.Trim()
+                    StateName = record.BillingAddressVm.StateName?.Trim(),
+                    StateId=stateId
                 } : null,
                 TaxExemptionVm = record.TaxExemptionVm != null ? new TaxExemption
                 {
@@ -572,8 +573,8 @@ namespace ShutterManagement.Business.Services
 
             var state = dbContext.MstStates
                 .FirstOrDefault(s =>
-                    s.StateCode.ToLower() == stateCode.Trim().ToLower() ||
-                    s.StateName.ToLower() == stateCode.Trim().ToLower());
+                    s.StateCode.Trim().ToLower() == stateCode.Trim().ToLower() ||
+                    s.StateName.Trim().ToLower() == stateCode.Trim().ToLower());
 
             return state?.Id ?? Guid.Empty;
         }
