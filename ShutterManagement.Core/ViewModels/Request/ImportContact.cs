@@ -7,6 +7,8 @@ using System.Text;
 using System.Threading.Tasks;
 using ShutterManagement.Core.SPModel;
 using ShutterManagement.Core.SPModel.SP_Responses;
+using Newtonsoft.Json;
+using CsvHelper.Configuration.Attributes;
 
 namespace ShutterManagement.Core.ViewModels.Request
 {
@@ -16,6 +18,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         [MaxLength(50)]
         [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabaticalError)]
         [DefaultValue("")]
+        [Name("ContactType*")]
         public string ContactType { get; set; } = string.Empty;
         //public Guid? ContactId { get; set; } = Guid.Empty;
 
@@ -23,18 +26,21 @@ namespace ShutterManagement.Core.ViewModels.Request
         [MaxLength(255)]
         [RegularExpression("^[\\p{L} .'-]+$", ErrorMessage = AppConstant.AlphabaticalError)]
         [DefaultValue("")]
+        [Name("FirstName*")]
         public string? FirstName { get; set; }
 
         [Required]
         [MaxLength(255)]
         [RegularExpression("^[\\p{L} .'-]+$", ErrorMessage = AppConstant.AlphabaticalError)]
         [DefaultValue("")]
+        [Name("LastName*")]
         public string? LastName { get; set; }
 
         [Required]
         [MaxLength(10)]
         [RegularExpression(@"^\d{10}$", ErrorMessage = "Phone number must be exactly 10 digits.")]
         [DefaultValue("")]
+        [Name("PhoneNumber*")]
         public string? PhoneNumber { get; set; }
 
 
@@ -42,6 +48,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         [RegularExpression(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", ErrorMessage = "Invalid email address.")]
         [EmailAddress]
         [DefaultValue("")]
+        [Name("Email*")]
         public string Email { get; set; }
 
         [DefaultValue("")]
@@ -50,6 +57,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         [DefaultValue("")]
         [MaxLength(1000)]
         public string? Notes { get; set; }
+        [Name("Suffix*")]
         public string? Suffix { get; set; }
 
         [DefaultValue("")]
