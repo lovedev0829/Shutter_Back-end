@@ -695,8 +695,9 @@ namespace ShutterManagement.Controllers
         {
             filter.Status = 1;
             filter.JobId=JobId?.ToLower();
-            filter.SearchValue = EnumValue.GetEnumValue(Estimation.GenerateOrder);
+           // filter.SearchValue = EnumValue.GetEnumValue(Estimation.GenerateOrder);
             var res = await estimateService.GetAll_Estimate(filter);
+            res.Data = res?.Data?.Where(x => x.Status == EnumValue.GetEnumValue(Estimation.GenerateOrder)).ToList();
             return Ok(res);
         }
 
