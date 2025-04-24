@@ -78,7 +78,7 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
                 var filteredOrders = estimatelist?.Data
-                       .Where(o => o.IsTaxApplied==true && o.Tax>0 && (o.Status == EnumValue.GetEnumValue(Estimation.Approved) || o.Status == EnumValue.GetEnumValue(Estimation.GenerateOrder)))
+                       .Where(o => o.IsTaxApplied==false && o.Tax >0 && (o.Status == EnumValue.GetEnumValue(Estimation.Approved) || o.Status == EnumValue.GetEnumValue(Estimation.GenerateOrder)))
                       .ToList();
 
                 responseVm.IsSuccess = true;
