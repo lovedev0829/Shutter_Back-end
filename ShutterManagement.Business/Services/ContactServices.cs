@@ -117,6 +117,7 @@ namespace ShutterManagement.Business.Services
                     {
                         IsTenantExists = true;
                         model.IsTaxExemption = true;
+                        model.IsBillingAddressSameAsAddress = true;
                     }
                 }
                 else
@@ -351,6 +352,7 @@ namespace ShutterManagement.Business.Services
                     {
                         IsTenantExists = true;
                         model.IsTaxExemption = true;
+                        model.IsBillingAddressSameAsAddress = true;
                     }
                 }
                 else
@@ -455,7 +457,10 @@ namespace ShutterManagement.Business.Services
                             contact1.UpdatedAt = DateTime.Now;
 
                             await Update(contact1);
-
+                            if(contact1.GhlcontactId !=null)
+                            {
+                                model.IsBillingAddressSameAsAddress = false;
+                            }
                             if (!model.IsBillingAddressSameAsAddress)
                             {
                                 var contactBillingAddress = dbContext.TblAddresses
@@ -1003,22 +1008,22 @@ namespace ShutterManagement.Business.Services
                         GHLContactId = contactData.contact_id,
                         lastAsync = DateTime.Now,
                     };
-                    if (contactData.location != null)
-                    {
-                        contact.BillingAddressVm = new BillingAddressVm
-                        {
-                            BillingFirstName = contactData.first_name,
-                            BillingLastName = contactData.last_name,
-                            FirstName = contactData.first_name,
-                            LastName = contactData.last_name,
-                            Email = contactData.email,
-                            PhoneNumber = contactData.phone,
-                            City = contactData.location.city,
-                            //State = contactData.location.state,
-                            ZipCode = contactData.location.postalCode,
-                            StreetAddress = contactData.location.address
-                        };
-                    }
+                    //if (contactData.location != null)
+                    //{
+                    //    contact.BillingAddressVm = new BillingAddressVm
+                    //    {
+                    //        BillingFirstName = contactData.first_name,
+                    //        BillingLastName = contactData.last_name,
+                    //        FirstName = contactData.first_name,
+                    //        LastName = contactData.last_name,
+                    //        Email = contactData.email,
+                    //        PhoneNumber = contactData.phone,
+                    //        City = contactData.location.city,
+                    //        //State = contactData.location.state,
+                    //        ZipCode = contactData.location.postalCode,
+                    //        StreetAddress = contactData.location.address
+                    //    };
+                    
                     await gHLConfigurationService.GetGHLConfiguration(contact.locationId);
                     var res = await Create_Contact(contact);
                     responseVm.IsSuccess = true;
@@ -1049,22 +1054,22 @@ namespace ShutterManagement.Business.Services
                         GHLContactId = contactData.contact_id,
                         lastAsync = DateTime.Now,
                     };
-                    if (contactData.location != null)
-                    {
-                        contact.BillingAddressVm = new BillingAddressVm
-                        {
-                            BillingFirstName = contactData.first_name,
-                            BillingLastName = contactData.last_name,
-                            FirstName = contactData.first_name,
-                            LastName = contactData.last_name,
-                            Email = contactData.email,
-                            PhoneNumber = contactData.phone,
-                            City = contactData.location.city,
-                            StateName = contactData.location.state,
-                            ZipCode = contactData.location.postalCode,
-                            StreetAddress = contactData.location.address
-                        };
-                    }
+                    //if (contactData.location != null)
+                    //{
+                    //    contact.BillingAddressVm = new BillingAddressVm
+                    //    {
+                    //        BillingFirstName = contactData.first_name,
+                    //        BillingLastName = contactData.last_name,
+                    //        FirstName = contactData.first_name,
+                    //        LastName = contactData.last_name,
+                    //        Email = contactData.email,
+                    //        PhoneNumber = contactData.phone,
+                    //        City = contactData.location.city,
+                    //        StateName = contactData.location.state,
+                    //        ZipCode = contactData.location.postalCode,
+                    //        StreetAddress = contactData.location.address
+                    //    };
+                    //}
                     await gHLConfigurationService.GetGHLConfiguration(contact.locationId);
                     var res = await Update_Contact(contact);
                     responseVm.IsSuccess = true;
