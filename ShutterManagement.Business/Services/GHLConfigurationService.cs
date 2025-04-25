@@ -220,7 +220,7 @@ namespace ShutterManagement.Business.Services
                         {
 
                             var res1 = await goHighLevelOAuthService.GetAccessToken(isExist.RefreshToken);
-                            if (res1 != null)
+                            if (res1 != null && res1?.Data?.AccessToken != null && res1?.Data?.RefreshToken != null)
                             {
                                 isExist.AccessExpirationtime = DateTime.Now.AddDays(1);
                                 isExist.RefreshExpirationtime = DateTime.Now.AddDays(365);

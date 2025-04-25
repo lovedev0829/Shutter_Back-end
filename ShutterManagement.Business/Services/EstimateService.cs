@@ -24,6 +24,7 @@ using NCalc;
 using Antlr.Runtime;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 using Stripe;
+using Microsoft.EntityFrameworkCore;
 
 namespace ShutterManagement.Business.Services
 {
@@ -1050,7 +1051,6 @@ namespace ShutterManagement.Business.Services
 
             return filteredRecords;
         }
-
         private void AddJobDetails(EstimateList e)
         {
 
@@ -1058,8 +1058,10 @@ namespace ShutterManagement.Business.Services
                                join j2 in dbContext.TblEstimates on j1.JobId equals j2.JobId
                                join con in dbContext.TblContacts on j1.ContactId equals con.ContactId
                                join j3 in dbContext.TblAddresses on j1.AddressId equals j3.AddressId
-                               join j4 in dbContext.MstJobTypes on j1.JobType equals j4.Id
-                               join j5 in dbContext.TblUsers on j1.AssignedPersonnel equals j5.Id
+                               join j4 in dbContext.MstJobTypes on j1.JobType equals j4.Id into JobType
+                               from j4 in JobType.DefaultIfEmpty()
+                               join j5 in dbContext.TblUsers on j1.AssignedPersonnel equals j5.Id into Users
+                               from j5 in Users.DefaultIfEmpty()
                                join j6 in dbContext.TblContacts on j1.ContactId equals j6.ContactId
                                where j1.TenantId == AppConstant.LoggedInTenantId && j1.IsDelete == false && j1.JobId == e.JobId
                                select new JobDetails

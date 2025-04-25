@@ -79,6 +79,8 @@ namespace ShutterManagement.Business.Services
                 var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null);
                 if (IsTenant)
                 {
+                    var message = "";
+                    bool alloptiontypeadded = true;
                     var IsOptionNameExists = await AnyAsync(x => x.OptionName == model.OptionName.Trim()
                     && x.IsActive == true && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId
                     && x.ProductTypeId == model.ProductTypeId);
@@ -107,7 +109,7 @@ namespace ShutterManagement.Business.Services
                                     TblOptionsType optionsType = new TblOptionsType
                                     {
                                         OptionId = options.OptionId,
-                                        OptionType = item.OptionType,
+                                        OptionType = item.OptionType.Trim(),
                                         AdditionalCost = item.AdditionalCost,
                                         IsDefault = item.IsDefault,
                                         CreatedAt = DateTime.Now,
@@ -117,9 +119,22 @@ namespace ShutterManagement.Business.Services
                                     };
                                     await optionsTypeService.Add(optionsType);
                                 }
+                                else
+                                {
+                                    alloptiontypeadded = false;
+                                    message += $"{item.OptionType} OptionType " + AppConstant.AlreadyExists;
+                                }
                             }
-                            responseVm.IsSuccess = true;
-                            responseVm.Message = AppConstant.InsertSuccessMsg;
+                            if (!alloptiontypeadded)
+                            {
+                                responseVm.IsSuccess = true;
+                                responseVm.Message = message;
+                            }
+                            else
+                            {
+                                responseVm.IsSuccess = true;
+                                responseVm.Message = AppConstant.InsertSuccessMsg;
+                            }
                         }
                         else
                         {
