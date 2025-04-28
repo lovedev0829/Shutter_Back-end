@@ -51,9 +51,7 @@ namespace ShutterManagement.Business.Services
                 AppConstant.GHL_RefreshToken = details.RefreshToken ??"";
                 AppConstant.GHL_CalendarName = details.CalendarName ?? "";
                 // Fetch ClientId and ClientSecret from appsettings.json
-               
             }
-            
         }
 
         public async Task<IResponseVm<string>> GHLConfiguration(GHLConfiguration gHLConfiguration)
@@ -176,7 +174,6 @@ namespace ShutterManagement.Business.Services
                 // logger.LogError(ex, "Error in GetGHLConfigurations API");
                 FileLogger.Log($"Failed to retrieve refresh token in link to ghl {ex.Message}");
             }
-
             return responseVm;
         }
 
@@ -241,13 +238,11 @@ namespace ShutterManagement.Business.Services
                     {
                         response.Message = "User need to verify GoHighLevelConfiguration.";
                     }
-                    
                 }
                 else
                 {
                     response.Message = "GoHighLevel Configuration. Not Found.";
                 }
-                
             }
             catch(Exception ex)
             {
@@ -296,7 +291,6 @@ namespace ShutterManagement.Business.Services
                 responseVm.IsSuccess = false;
                 responseVm.Message += ex.Message;
             }
-
             return responseVm;
         }
 

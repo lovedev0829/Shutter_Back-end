@@ -1309,7 +1309,6 @@ namespace ShutterManagement.Business.Services
                                 var res = await gHLService_V2.UpdateContactAsync(contact.GHLContactId, contact);
                                 if (!res.IsSuccess)
                                 { FileLogger.Log("Updating Contact in GHL.", contact.GHLContactId); }
-
                             }
                         }
                     }
