@@ -323,8 +323,34 @@ namespace ShutterManagement.GHL.Services
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    FileLogger.Log($"CreateContactAsync Error: {response.StatusCode} - {jsonResponse}");
-                    responseVm.Message =response.StatusCode.ToString();
+
+                    string errorMessage = $"Failed to get access token. StatusCode: {response.StatusCode}";
+
+                    try
+                    {
+                        var errorObj = JsonConvert.DeserializeObject<ErrorResponse>(jsonResponse);
+                        if (errorObj != null)
+                        {
+                            responseVm.Message = $", Error: {errorObj.Error} - {errorObj.ErrorDescription}";
+                            FileLogger.Log($", Error: {errorObj.Error} - {errorObj.ErrorDescription}");
+                            errorMessage += $", Error: {errorObj.Error} - {errorObj.ErrorDescription}";
+                        }
+                        else
+                        {
+                            errorMessage += $", Raw Response: {jsonResponse}";
+                        }
+                    }
+                    catch (Exception jsonEx)
+                    {
+                        errorMessage += $", Error parsing error response: {jsonEx.Message}";
+                        FileLogger.Log($"Error deserializing error response: {jsonEx.Message}");
+                    }
+
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = errorMessage;
+                    FileLogger.Log(errorMessage);
+                    return responseVm;
+
                 }
                 responseVm.IsSuccess = true;
                 responseVm.Data = JsonConvert.DeserializeObject<GhlContactSingleResponse>(jsonResponse);
@@ -471,13 +497,35 @@ namespace ShutterManagement.GHL.Services
 
                 if (!response.IsSuccessStatusCode)
                 {
+
+                    string errorMessage = $"Failed to get access token. StatusCode: {response.StatusCode}";
+
+                    try
+                    {
+                        var errorObj = JsonConvert.DeserializeObject<ErrorResponse>(jsonResponse);
+                        if (errorObj != null)
+                        {
+                            responseVm.Message = $", Error: {errorObj.Error} - {errorObj.ErrorDescription}";
+                            FileLogger.Log($", Error: {errorObj.Error} - {errorObj.ErrorDescription}");
+                            errorMessage += $", Error: {errorObj.Error} - {errorObj.ErrorDescription}";
+                        }
+                        else
+                        {
+                            errorMessage += $", Raw Response: {jsonResponse}";
+                        }
+                    }
+                    catch (Exception jsonEx)
+                    {
+                        errorMessage += $", Error parsing error response: {jsonEx.Message}";
+                        FileLogger.Log($"Error deserializing error response: {jsonEx.Message}");
+                    }
+
                     responseVm.IsSuccess = false;
-                    responseVm.Message = $"API request failed: {response.StatusCode} - {jsonResponse}";
-
-                    if (response.StatusCode == HttpStatusCode.NotFound)
-                        responseVm.Message = "404 Not Found: Verify API endpoint and resource availability.";
-
+                    responseVm.Message = errorMessage;
+                    FileLogger.Log(errorMessage);
                     return responseVm;
+                    
+
                 }
 
                 var result = JsonConvert.DeserializeObject<OpportunityResponsees>(jsonResponse);
@@ -488,11 +536,11 @@ namespace ShutterManagement.GHL.Services
                     return responseVm;
                 }
 
-                var existingJob =  dBContext.TblJobs.Where(j => j.JobId == job.JobId).FirstOrDefault();
+                var existingJob = await dBContext.TblJobs.Where(j => j.JobId == job.JobId).FirstOrDefaultAsync();
                 if (existingJob != null)
                 {
                     existingJob.GhlOpportunityId = result.Opportunity.OpportunityId;
-                    existingJob.GhlContactId = result.Opportunity.Contact?.ContactId; //
+                    existingJob.GhlContactId = result.Opportunity.Contact?.ContactId;
                     dBContext.TblJobs.Update(existingJob);
                     await dBContext.SaveChangesAsync();
                 }
@@ -620,16 +668,41 @@ namespace ShutterManagement.GHL.Services
                 requestMessage.Headers.Add("Version", AppConstant.GHL_Version);
 
                 var response = await httpClient.SendAsync(requestMessage);
-
+                var jsonResponse = await response.Content.ReadAsStringAsync();
                 if (!response.IsSuccessStatusCode)
                 {
-                    var errorResponse = await response.Content.ReadAsStringAsync();
-                    FileLogger.Log($"Error: {response.StatusCode} - {errorResponse}");
-                    responseVm.IsSuccess = true;
-                    responseVm.Message = errorResponse;
+
+                    string errorMessage = $"Failed to get access token. StatusCode: {response.StatusCode}";
+
+                    try
+                    {
+                        var errorObj = JsonConvert.DeserializeObject<ErrorResponse>(jsonResponse);
+                        if (errorObj != null)
+                        {
+                            responseVm.Message = $", Error: {errorObj.Error} - {errorObj.ErrorDescription}";
+                            FileLogger.Log($", Error: {errorObj.Error} - {errorObj.ErrorDescription}");
+                            errorMessage += $", Error: {errorObj.Error} - {errorObj.ErrorDescription}";
+                            return responseVm;
+                        }
+                        else
+                        {
+                            errorMessage += $", Raw Response: {jsonResponse}";
+                        }
+                    }
+                    catch (Exception jsonEx)
+                    {
+                        errorMessage += $", Error parsing error response: {jsonEx.Message}";
+                        FileLogger.Log($"Error deserializing error response: {jsonEx.Message}");
+                    }
+
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = errorMessage;
+                    FileLogger.Log(errorMessage);
+                    return responseVm;
+
                 }
 
-                var jsonResponse = await response.Content.ReadAsStringAsync();
+               
                 var appointmentResponse = JsonConvert.DeserializeObject<GHLAppointment>(jsonResponse);
                 responseVm.IsSuccess = true;
                 responseVm.Message = response.ToString();
