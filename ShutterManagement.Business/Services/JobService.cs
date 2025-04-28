@@ -825,7 +825,7 @@ namespace ShutterManagement.Business.Services
                         string arrayString = string.Join(", ", model.AttachmentsAny);
                     TblJob job = new TblJob
                     {
-                        AddressId = model.AddressId,
+                        AddressId = model.AddressId ?? null,
                         ContactId = model.ContactId,
                         JobName = model.JobName?.Trim(),
                         JobType = model.JobType,
