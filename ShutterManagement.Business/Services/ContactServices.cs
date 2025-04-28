@@ -164,7 +164,7 @@ namespace ShutterManagement.Business.Services
                                 GHLContactId = model.GHLContactId ?? string.Empty,
                                 locationId = model.locationId ?? string.Empty,
                             };
-                            var result = Update_Contact(ghlContactAdd);
+                            var result = await Update_Contact(ghlContactAdd);
                         }
                         else
                         {
@@ -1172,22 +1172,22 @@ namespace ShutterManagement.Business.Services
                                 lastAsync = DateTime.Now,
                             };
 
-                            if (brandingInfo != null)
-                            {
-                                newContact.BillingAddressVm = new BillingAddressVm
-                                {
-                                    BillingFirstName = newContact.FirstName,
-                                    BillingLastName = newContact.LastName,
-                                    FirstName = newContact.FirstName,
-                                    LastName = newContact.LastName,
-                                    Email = newContact.Email,
-                                    PhoneNumber = newContact.PhoneNumber,
-                                    City = brandingInfo.City,
-                                    //State = brandingInfo.StreetAddress,
-                                    ZipCode = brandingInfo.ZipCode,
-                                    StreetAddress = brandingInfo.StreetAddress
-                                };
-                            }
+                            //if (brandingInfo != null)
+                            //{
+                            //    newContact.BillingAddressVm = new BillingAddressVm
+                            //    {
+                            //        BillingFirstName = newContact.FirstName,
+                            //        BillingLastName = newContact.LastName,
+                            //        FirstName = newContact.FirstName,
+                            //        LastName = newContact.LastName,
+                            //        Email = newContact.Email,
+                            //        PhoneNumber = newContact.PhoneNumber,
+                            //        City = brandingInfo.City,
+                            //        //State = brandingInfo.StreetAddress,
+                            //        ZipCode = brandingInfo.ZipCode,
+                            //        StreetAddress = brandingInfo.StreetAddress
+                            //    };
+                            //}
                             contactsToInsert.Add(newContact);
                         }
                     }
