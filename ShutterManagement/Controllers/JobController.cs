@@ -118,7 +118,7 @@ namespace ShutterManagement.Controllers
                     FileLogger.Log($"Tenant ID {tenantId.Data} does not exist.");
                     return NotFound("Tenant does not exist.");
                 }
-
+                opportunityTrigger.WebhookTenantId = tenantId?.Data;
                 var res = await jobService.OpportunityFromGHL(opportunityTrigger);
                 if (res == null)
                 {
@@ -164,7 +164,7 @@ namespace ShutterManagement.Controllers
                     FileLogger.Log($"Tenant ID {tenantId.Data} does not exist.");
                     return NotFound("Tenant does not exist.");
                 }
-
+                opportunityData.WebhookTenantId = tenantId?.Data;
                 var res = await jobService.UpdateOpportunityFromGHL(opportunityData);
                 if (res == null)
                 {
