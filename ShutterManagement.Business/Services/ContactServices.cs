@@ -110,9 +110,9 @@ namespace ShutterManagement.Business.Services
                 FileLogger.Log($"Location id fetched {model.locationId}");
                 if (model.locationId != null)
                 {
-                    await gHLConfigurationService.GetGHLConfiguration(model.locationId);
+                   // await gHLConfigurationService.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
                     TenantId = (Guid)AppConstant.LoggedInTenantId;
-                    FileLogger.Log($"Location id fetched {model.locationId}");
+                    FileLogger.Log($"Tenant id fetched {TenantId}");
                     if (TenantId != null)
                     {
                         IsTenantExists = true;
@@ -345,7 +345,7 @@ namespace ShutterManagement.Business.Services
                 }
                 if (model.locationId != null)
                 {
-                    await gHLConfigurationService.GetGHLConfiguration(model.locationId);
+                   // await gHLConfigurationService.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
                     TenantId = (Guid)AppConstant.LoggedInTenantId;
 
                     if (TenantId != Guid.Empty)
@@ -1024,7 +1024,7 @@ namespace ShutterManagement.Business.Services
                     //        StreetAddress = contactData.location.address
                     //    };
                     
-                    await gHLConfigurationService.GetGHLConfiguration(contact.locationId);
+                    await gHLConfigurationService.GetGHLConfiguration(contactData.WebhookTenantId);
                     var res = await Create_Contact(contact);
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.InsertSuccessMsg;
@@ -1070,7 +1070,7 @@ namespace ShutterManagement.Business.Services
                     //        StreetAddress = contactData.location.address
                     //    };
                     //}
-                    await gHLConfigurationService.GetGHLConfiguration(contact.locationId);
+                    await gHLConfigurationService.GetGHLConfiguration(contactData.WebhookTenantId);
                     var res = await Update_Contact(contact);
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.InsertSuccessMsg;
@@ -1082,7 +1082,6 @@ namespace ShutterManagement.Business.Services
                 }
                 return responseVm;
             }
-
         }
 
         public async Task<IResponseVm<string>> ContactSync()

@@ -123,7 +123,6 @@ namespace ShutterManagement.Controllers
                     FileLogger.Log("Token not found in request headers.");
                     return Unauthorized("Token is missing.");
                 }
-
                 FileLogger.Log("Token: {0}", token);
                 var tenantId = authService.ReadTokenDetails(token);
 
@@ -137,15 +136,15 @@ namespace ShutterManagement.Controllers
                 if (!isTenantExist)
                 {
                     FileLogger.Log($"Tenant ID {tenantId.Data} does not exist.");
-                    return NotFound("Tenant does not exist.");
+                    AppConstant.LoggedInTenantId = Guid.Parse(tenantId.Data);
                 }
-
-                var res = await _contactService.ContactFromGHL(contactData);
-                if (res == null)
-                {
-                    return StatusCode(500, "Failed to process contact.");
-                }
-
+                    contactData.WebhookTenantId = tenantId.Data;
+                    var res = await _contactService.ContactFromGHL(contactData);
+                    if (res == null)
+                    {
+                        return StatusCode(500, "Failed to process contact.");
+                    }
+                
                 FileLogger.Log("Contact saved: {0}", res.Message);
                 return Ok(res);
             }
@@ -155,10 +154,7 @@ namespace ShutterManagement.Controllers
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
-
-
            
-
         [HttpPost("UpdateContactFromGHL")]
         public async Task<IActionResult> UpdateContactFromGHL(GHLContactTrigger contactData)
         {
@@ -166,7 +162,7 @@ namespace ShutterManagement.Controllers
             {
                 FileLogger.Log("Token print message....");
 
-                if (!Request.Headers.TryGetValue("token", out var token))
+                if (!Request.Headers.TryGetValue("Authentication", out var token))
                 {
                     FileLogger.Log("Token not found in request headers.");
                     return Unauthorized("Token is missing.");
@@ -187,7 +183,7 @@ namespace ShutterManagement.Controllers
                     FileLogger.Log($"Tenant ID {tenantId.Data} does not exist.");
                     return NotFound("Tenant does not exist.");
                 }
-
+                contactData.WebhookTenantId = tenantId.Data;
                 var res = await _contactService.UpdateContactFromGHL(contactData);
                 if (res == null)
                 {

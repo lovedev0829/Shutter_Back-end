@@ -772,7 +772,7 @@ namespace ShutterManagement.Business.Services
                 Guid? jobStatus = Guid.Empty;
                 if (model.locationId != null)
                 {
-                    await gHLConfiguration.GetGHLConfiguration(model.locationId);
+                    //await gHLConfiguration.GetGHLConfiguration(model.locationId);
                     TenantId = (Guid)AppConstant.LoggedInTenantId;
 
                     if (TenantId != null)
@@ -1144,7 +1144,7 @@ namespace ShutterManagement.Business.Services
                 var jobStatus = Guid.Empty;
                 if (model.locationId != null)
                 {
-                    await gHLConfiguration.GetGHLConfiguration(model.locationId);
+                    //await gHLConfiguration.GetGHLConfiguration(model.locationId);
                     TenantId = (Guid)AppConstant.LoggedInTenantId;
 
                     if (TenantId != null)
@@ -1523,6 +1523,7 @@ namespace ShutterManagement.Business.Services
                     lastasync = DateTime.Now,
                     GHL_jobstatus = jobstatus.ToString()
                 };
+                    await gHLConfiguration.GetGHLConfiguration(opportunitydata.WebhookTenantId);
                     var res = await Create(job);
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.InsertSuccessMsg;
@@ -1570,6 +1571,7 @@ namespace ShutterManagement.Business.Services
                         GHL_jobstatus = jobstatus.ToString()
 
                     };
+                    await gHLConfiguration.GetGHLConfiguration(opportunitydata.WebhookTenantId);
                     var res = await UpdateJob(job);
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.InsertSuccessMsg;
