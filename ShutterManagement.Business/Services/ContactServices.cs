@@ -1251,50 +1251,55 @@ namespace ShutterManagement.Business.Services
                             }
                         }
                     }
+                    var semaphore = new SemaphoreSlim(5); // Limit 5 concurrent tasks
+
+                    // Create Contacts in App
                     if (contactsToInsert.Any())
                     {
-                        foreach (var contact in contactsToInsert)
+                        var createTasks = contactsToInsert.Select(async contact =>
                         {
-                            //if (string.IsNullOrEmpty(contact.GHLContactId))
-                            //{
+                            await semaphore.WaitAsync();
+                            try
+                            {
                                 var res = await Create_Contact(contact);
-                                if (!res.IsSuccess) { FileLogger.Log("Exception occurred Creating Contact in application.", res.Message); }
-                            //}
-                            //else
-                            //{
-                            //    var ghlContactAdd = new UpdateContact
-                            //    {
-                            //        FirstName = contact.FirstName ?? string.Empty,
-                            //        LastName = contact.LastName ?? string.Empty,
-                            //        Email = contact.Email ?? string.Empty,
-                            //        PhoneNumber = contact.PhoneNumber ?? string.Empty,
-                            //        Notes = contact.Notes ?? string.Empty,
-                            //        ContactType = contact.ContactType ?? string.Empty,
-                            //        Website = contact.Website ?? string.Empty,
-                            //        Referral = contact.Referral ?? string.Empty,
-                            //        GHLContactId = contact.GHLContactId ?? string.Empty,
-                            //        locationId = contact.locationId ?? string.Empty,
-                            //    };
-                            //    var res = await Update_Contact(ghlContactAdd);
-                            //    if (!res.IsSuccess) { FileLogger.Log("Exception occurred Updating Contact in application.", res.Message); }
-                            //}
+                                if (!res.IsSuccess)
+                                {
+                                    FileLogger.Log("Exception occurred Creating Contact in application.", res.Message);
                         }
                     }
+                            finally
+                            {
+                                semaphore.Release();
+                            }
+                        }).ToList();
+
+                        await Task.WhenAll(createTasks);
+                    }
+
+                    // Create or Update Contacts in GHL
                     if (contactsToAddToGHL.Any())
                     {
-                        foreach (var contact in contactsToAddToGHL)
+                        var ghlTasks = contactsToAddToGHL.Select(async contact =>
                         {
+                            await semaphore.WaitAsync();
+                            try
+                            {
                             if (contact?.GHLContactId == null)
                             {
 
                                 FileLogger.Log("Creating bulk Contact in GHL(GhlContactId).", contact);
                                 var res = await gHLService_V2.CreateContactAsync(contact);
+
                                 if (res.IsSuccess)
                                 {
-                                    var contactExist = (await GetAll()).Where(x => x.Email == contact.Email && x.TenantId==AppConstant.LoggedInTenantId).FirstOrDefault();
-                                    if (contactExist != null && res?.Data?.Contact?.id!=null)
+                                        var allContacts = await GetAll(); // safer: fresh fetch inside thread
+                                        var contactExist = allContacts
+                                            .Where(x => x.Email == contact.Email && x.TenantId == AppConstant.LoggedInTenantId)
+                                            .FirstOrDefault();
+
+                                        if (contactExist != null && res?.Data?.Contact?.id != null)
                                     {
-                                        contactExist.GhlcontactId = res?.Data?.Contact?.id??"";
+                                            contactExist.GhlcontactId = res?.Data?.Contact?.id ?? "";
                                         contactExist.LastSync = DateTime.Now;
                                     }
                                     await Update(contactExist);
@@ -1305,14 +1310,28 @@ namespace ShutterManagement.Business.Services
                             }
                             else
                             {
+                                        FileLogger.Log("Exception occurred Creating bulk Contact in GHL.", res);
+                                    }
+                                }
+                                else
+                                {
                                 FileLogger.Log("Updating Contact in GHL.", contact.GHLContactId);
                                 var res = await gHLService_V2.UpdateContactAsync(contact.GHLContactId, contact);
                                 if (!res.IsSuccess)
-                                { FileLogger.Log("Updating Contact in GHL.", contact.GHLContactId); }
-
+                                    {
+                                        FileLogger.Log("Exception occurred Updating Contact in GHL.", contact.GHLContactId);
+                                    }
+                                }
                             }
+                            finally
+                            {
+                                semaphore.Release();
                         }
+                        }).ToList();
+
+                        await Task.WhenAll(ghlTasks);
                     }
+
                     var isUpdated = await gHLService_V2.UpdateLastSyncConfigurationAsync();
 
                     if (!isUpdated)
