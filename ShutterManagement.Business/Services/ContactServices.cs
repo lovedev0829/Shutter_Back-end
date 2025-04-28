@@ -163,7 +163,7 @@ namespace ShutterManagement.Business.Services
                                 GHLContactId = model.GHLContactId ?? string.Empty,
                                 locationId = model.locationId ?? string.Empty,
                             };
-                            var result = Update_Contact(ghlContactAdd);
+                            var result = await Update_Contact(ghlContactAdd);
                         }
                         else
                         {
@@ -261,7 +261,7 @@ namespace ShutterManagement.Business.Services
                                 TenantId = TenantId,
                                 CreatedBy = AppConstant.LoggedInUserID
                             };
-                            await dbContext.TblAddresses.AddAsync(address);
+                             dbContext.TblAddresses.Add(address);
                             await dbContext.SaveChangesAsync();
                             res.PrimaryAddress = address.AddressId;
                             await Update(res);
