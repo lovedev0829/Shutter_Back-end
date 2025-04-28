@@ -125,7 +125,7 @@ namespace ShutterManagement.Business.Services
                     IsTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
                     TenantId = (Guid)AppConstant.LoggedInTenantId;
                     FileLogger.Log($"Tenant Id id fetched {TenantId}");
-                    model.IsTaxExemption = true;
+                    //model.IsTaxExemption = true;
                 }
                 if(!model.IsTaxExemption)
                 {
@@ -1188,6 +1188,8 @@ namespace ShutterManagement.Business.Services
                             //        StreetAddress = brandingInfo.StreetAddress
                             //    };
                             //}
+                            newContact.IsBillingAddressSameAsAddress = true;
+                            newContact.IsTaxExemption = true;
                            var contactaddRespnse= await Create_Contact(newContact);
                             //contactsToInsert.Add(newContact);
                         }
