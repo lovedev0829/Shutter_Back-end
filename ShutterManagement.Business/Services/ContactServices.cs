@@ -371,14 +371,16 @@ namespace ShutterManagement.Business.Services
 
                         var IsContactExists = GetAllQuerable()
                             .Where(c => (c.Email == model.Email || c.PhoneNumber == model.PhoneNumber)
-                                        && c.TenantId == TenantId && c.IsDelete == false)
+                                        && c.TenantId == TenantId && c.IsDelete == false).OrderByDescending(x=>x.CreatedAt)
                             .ToList();
 
-                        //if (IsContactExists.Count > 0)
-                        //{
-                        //    responseVm.Message = "Email or Phone " + AppConstant.AlreadyExists;
-                        //    return responseVm;
-                        //}
+                        if (contact == null && IsContactExists.Count > 0)
+                        {
+                            contact = IsContactExists.FirstOrDefault();
+
+                            //responseVm.Message = "Email or Phone " + AppConstant.AlreadyExists;
+                            //return responseVm;
+                        }
 
                         if (contact != null)
                         {
@@ -1109,10 +1111,16 @@ namespace ShutterManagement.Business.Services
                     foreach (var ghlcontact in getGHLContacts)
                     {
                         var existingContact = getAppContacts.FirstOrDefault(x => x.GhlcontactId == ghlcontact.id);
+                        var IsContactExists = GetAllQuerable()
+                          .Where(c => (c.Email == ghlcontact.email || c.PhoneNumber == ghlcontact.phone)
+                                      && c.TenantId == AppConstant.LoggedInTenantId && c.IsDelete == false).OrderByDescending(x => x.CreatedAt)
+                          .FirstOrDefault();
+
+                        existingContact = IsContactExists != null ? IsContactExists : null;
 
                         if (existingContact != null)
                         {
-                            if (ghlcontact.dateUpdated > existingContact.UpdatedAt)
+                            if (ghlcontact.dateUpdated.ToLocalTime() > existingContact.UpdatedAt)
                             {
                                 existingContact.FirstName = ghlcontact.firstName;
                                 existingContact.Email = ghlcontact.email;
@@ -1121,6 +1129,7 @@ namespace ShutterManagement.Business.Services
                                 existingContact.ModifiedBy = AppConstant.LoggedInUserID;
                                 existingContact.LastSync = DateTime.Now;
                                 existingContact.ContactType = ghlcontact.type;
+                                existingContact.GhlcontactId = ghlcontact.id;
                                 FileLogger.Log("Updating Contact in application(Application ContactId).", existingContact.ContactId);
                                 FileLogger.Log("Updating Contact in application(GhlContactId).", existingContact.GhlcontactId);
                                 var res = await Update(existingContact);
@@ -1191,6 +1200,17 @@ namespace ShutterManagement.Business.Services
                             newContact.IsBillingAddressSameAsAddress = true;
                             newContact.IsTaxExemption = true;
                            var contactaddRespnse= await Create_Contact(newContact);
+                            if(contactaddRespnse.IsSuccess)
+                            {
+                                responseVm.IsSuccess = true;
+                                responseVm.Message = contactaddRespnse.Message;
+                            }
+                            else
+                            {
+                                responseVm.Message = contactaddRespnse.Message;
+
+                            }
+                           
                             //contactsToInsert.Add(newContact);
                         }
                     }
@@ -1214,7 +1234,7 @@ namespace ShutterManagement.Business.Services
                             var existingGHLContact = getGHLContacts.FirstOrDefault(x => x.id == appContact.GhlcontactId);
                             if (existingGHLContact != null)
                             {
-                                if (existingGHLContact.dateUpdated < appContact.UpdatedAt)
+                                if (existingGHLContact.dateUpdated.ToLocalTime() < appContact.UpdatedAt)
                                 {
                                     var newContactToAddToGHL = new GhlContactAdd
                                     {
