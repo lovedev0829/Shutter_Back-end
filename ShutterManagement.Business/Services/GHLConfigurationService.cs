@@ -388,9 +388,28 @@ namespace ShutterManagement.Business.Services
             return result;
         }
 
-
-
-
-
+        public Task<IResponseVm<string>> CheckStageMapping()
+        {
+           // get record check tblghlstagemapping not null
+           IResponseVm<string> response = new ResponseVm<string>();
+            try
+            {
+                var isExist = dbContext.TblGhlStagesmappings.Where(x => x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
+                if (isExist != null)
+                {
+                    response.IsSuccess = true;
+                    response.Message = "Stage Mapping Exist.";
+                }
+                else
+                {
+                    response.Message = "Stage Mapping Not Exist. Please Mapp Stages And Job Status";
+                }
+            }
+            catch (Exception ex)
+            {
+                response.Message = ex.Message;
+            }
+            return Task.FromResult(response);
+        }
     }
 }

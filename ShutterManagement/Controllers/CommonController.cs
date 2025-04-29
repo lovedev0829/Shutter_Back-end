@@ -820,6 +820,12 @@ namespace ShutterManagement.Controllers
             var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration();
             if (Checkghlresponse.IsSuccess)
             {
+                var CheckStageMapping = await gHLConfiguration.CheckStageMapping();
+                if(!CheckStageMapping.IsSuccess)
+                {
+                    return BadRequest(CheckStageMapping);
+                }
+
                 var pipelineResult = await gHLService_V2.GetAndSaveDefaultPipelineAndStage();
                 var contact = await contactService.ContactSync();
                 var opportunityResult = await jobService.SyncOpportunitiesFromGhl();
