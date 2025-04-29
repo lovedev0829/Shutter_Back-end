@@ -816,7 +816,7 @@ namespace ShutterManagement.Business.Services
                     var generateUnique = GenerateUniqueId.GenerateUniqueIds(ModuleName.Job, AppConstant.LoggedInCompanyCode, Version);
                     bool IsjobNameExists = await AnyAsync(x => x.JobName == model.JobName.Trim() && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId && x.ContactId == model.ContactId);
                     var StageResponse = await statusAndStageMapping.GetGHLStagesMappingsById(jobStatus);
-                    bool IsContactArchiveorInactive = await contact.AnyAsync(x => x.ContactId == model.ContactId && (x.IsActive == false || x.IsArchive == true));
+                    bool IsContactArchiveorInactive = await contact.AnyAsync(x => x.ContactId == model.ContactId && x.TenantId==AppConstant.LoggedInTenantId &&  (x.IsActive == false || x.IsArchive == true) );
                 if(IsContactArchiveorInactive)
                 {
                     responseVm.Message = "Contact is Archived or Inactive,You can not create Job.";
