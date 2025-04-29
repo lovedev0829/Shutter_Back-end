@@ -13,6 +13,7 @@ using ShutterManagement.Core.Common;
 using ShutterManagement.Core.ViewModels;
 using Azure;
 using static System.Net.WebRequestMethods;
+using ShutterManagement.Core.ViewModels.Response;
 
 
 public class GoHighLevelOAuthService
@@ -113,8 +114,31 @@ public class GoHighLevelOAuthService
             }
             else
             {
+                string errorMessage = $"Failed to get access token. StatusCode: {response.StatusCode}";
+
+                try
+                {
+                    var errorObj = JsonConvert.DeserializeObject<ErrorResponse>(responseContent);
+                    if (errorObj != null)
+                    {
+                        responseVm.Message = $", Error: {errorObj.Error} - {errorObj.ErrorDescription}";
+                        FileLogger.Log($", Error: {errorObj.Error} - {errorObj.ErrorDescription}");
+                        errorMessage += $", Error: {errorObj.Error} - {errorObj.ErrorDescription}";
+                    }
+                    else
+                    {
+                        errorMessage += $", Raw Response: {responseContent}";
+                    }
+                }
+                catch (JsonException jsonEx)
+                {
+                    errorMessage += $", Error parsing error response: {jsonEx.Message}";
+                    FileLogger.Log($"Error deserializing error response: {jsonEx.Message}");
+                }
+
                 responseVm.IsSuccess = false;
-                responseVm.Message = $"Failed to get token. StatusCode: {response.StatusCode}, Error: {responseContent}";
+                responseVm.Message = errorMessage;
+                FileLogger.Log(errorMessage);
             }
         }
         catch (HttpRequestException httpEx)
@@ -240,10 +264,33 @@ public class GoHighLevelOAuthService
             }
             else
             {
+                string errorMessage = $"Failed to get access token. StatusCode: {response.StatusCode}";
+
+                try
+                {
+                    var errorObj = JsonConvert.DeserializeObject<ErrorResponse>(responseContent);
+                    if (errorObj != null)
+                    {
+                        responseVm.Message = $", Error: {errorObj.Error} - {errorObj.ErrorDescription}";
+                        FileLogger.Log($", Error: {errorObj.Error} - {errorObj.ErrorDescription}");
+                        errorMessage += $", Error: {errorObj.Error} - {errorObj.ErrorDescription}";
+                    }
+                    else
+                    {
+                        errorMessage += $", Raw Response: {responseContent}";
+                    }
+                }
+                catch (JsonException jsonEx)
+                {
+                    errorMessage += $", Error parsing error response: {jsonEx.Message}";
+                    FileLogger.Log($"Error deserializing error response: {jsonEx.Message}");
+                }
+
                 responseVm.IsSuccess = false;
-                responseVm.Message = $"Failed to get access token. StatusCode: {response.StatusCode}, Error: {responseContent}";
-                FileLogger.Log($"Failed to get access token. StatusCode: {response.StatusCode}, Error: {responseContent}");
+                responseVm.Message = errorMessage;
+                FileLogger.Log(errorMessage);
             }
+        
         }
         catch (HttpRequestException httpEx)
         {

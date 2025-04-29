@@ -772,7 +772,7 @@ namespace ShutterManagement.Business.Services
                 Guid? jobStatus = Guid.Empty;
                 if (model.locationId != null)
                 {
-                    await gHLConfiguration.GetGHLConfiguration(model.locationId);
+                    //await gHLConfiguration.GetGHLConfiguration(model.locationId);
                     TenantId = (Guid)AppConstant.LoggedInTenantId;
 
                     if (TenantId != null)
@@ -781,15 +781,12 @@ namespace ShutterManagement.Business.Services
                         
                         stage.GhlStageName = model.GHL_StageName;
                         jobStatus = Guid.Parse(model.GHL_jobstatus);
-                        if (model.AddressId != null)
-                        {
-                            IsAddressExist = true;
-                        }
-                        else
-                        {
-                            responseVm.Message = "Contact is not synced in Application.";
-                            return responseVm;
-                        }
+                        IsAddressExist = true;
+                        //else
+                        //{
+                        //    responseVm.Message = "Contact is not synced in Application.";
+                        //    return responseVm;
+                        //}
                     }
                 }
                 else
@@ -818,6 +815,12 @@ namespace ShutterManagement.Business.Services
                     var generateUnique = GenerateUniqueId.GenerateUniqueIds(ModuleName.Job, AppConstant.LoggedInCompanyCode, Version);
                     bool IsjobNameExists = await AnyAsync(x => x.JobName == model.JobName.Trim() && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId && x.ContactId == model.ContactId);
                     var StageResponse = await statusAndStageMapping.GetGHLStagesMappingsById(jobStatus);
+                    bool IsContactArchiveorInactive = await contact.AnyAsync(x => x.ContactId == model.ContactId && (x.IsActive == false || x.IsArchive == true));
+                if(IsContactArchiveorInactive)
+                {
+                    responseVm.Message = "Contact is Archived or Inactive,You can not create Job.";
+                    return responseVm;
+                }
                 if (IsjobNameExists)
                     {
                         responseVm.Message = "JobName" + AppConstant.AlreadyExists;
@@ -828,7 +831,7 @@ namespace ShutterManagement.Business.Services
                         string arrayString = string.Join(", ", model.AttachmentsAny);
                     TblJob job = new TblJob
                     {
-                        AddressId = model.AddressId,
+                        AddressId = model.AddressId ?? null,
                         ContactId = model.ContactId,
                         JobName = model.JobName?.Trim(),
                         JobType = model.JobType,
@@ -1144,7 +1147,7 @@ namespace ShutterManagement.Business.Services
                 var jobStatus = Guid.Empty;
                 if (model.locationId != null)
                 {
-                    await gHLConfiguration.GetGHLConfiguration(model.locationId);
+                    //await gHLConfiguration.GetGHLConfiguration(model.locationId);
                     TenantId = (Guid)AppConstant.LoggedInTenantId;
 
                     if (TenantId != null)
@@ -1153,15 +1156,15 @@ namespace ShutterManagement.Business.Services
 
                         stage.GhlStageName = model.GHL_StageName;
                         jobStatus = Guid.Parse(model.GHL_jobstatus);
-                        if (model.AddressId != null)
-                        {
+                        //if (model.AddressId != null)
+                        //{
                             IsAddressExist = true;
-                        }
-                        else
-                        {
-                            responseVm.Message = "Contact is not synced in Application.";
-                            return responseVm;
-                        }
+                        //}
+                        //else
+                        //{
+                        //    responseVm.Message = "Contact is not synced in Application.";
+                        //    return responseVm;
+                        //}
                     }
                 }
                 else
@@ -1502,7 +1505,7 @@ namespace ShutterManagement.Business.Services
                 {
                     contact1 = contact.GetAllQuerable().Where(x => x.GhlcontactId == opportunitydata.contact_id && x.IsDelete == false)
                          .FirstOrDefault();
-                    addressId = (Guid)contact1.PrimaryAddress;
+                   //     addressId = (Guid)contact1.PrimaryAddress;
                 }
                 Guid jobtype = Guid.Parse("34623376-9CE3-4C9B-A538-2D3129B1A6B2");
                 var stageId = dbContext.TblGhlStages.Where(x => x.GhlStageName.ToLower() == opportunitydata.pipleline_stage.ToLower()).
@@ -1511,7 +1514,6 @@ namespace ShutterManagement.Business.Services
                 var job = new CreateJob
                 {
                     ContactId = contact1.ContactId,
-                    AddressId = addressId,
                     JobName = opportunitydata.opportunity_name,
                     JobType = jobtype,
                     AssignedPersonnel = Guid.Empty,
@@ -1523,6 +1525,7 @@ namespace ShutterManagement.Business.Services
                     lastasync = DateTime.Now,
                     GHL_jobstatus = jobstatus.ToString()
                 };
+                    await gHLConfiguration.GetGHLConfiguration(opportunitydata.WebhookTenantId);
                     var res = await Create(job);
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.InsertSuccessMsg;
@@ -1548,7 +1551,7 @@ namespace ShutterManagement.Business.Services
                     {
                         contact1 = contact.GetAllQuerable().Where(x => x.GhlcontactId == opportunitydata.contact_id && x.IsDelete == false).
                              FirstOrDefault();
-                        addressId = (Guid)contact1.PrimaryAddress;
+                        //addressId = (Guid)contact1.PrimaryAddress;
                     }
                     Guid jobtype = Guid.Parse("34623376-9CE3-4C9B-A538-2D3129B1A6B2");
                     var stageId = dbContext.TblGhlStages.Where(x => x.GhlStageName.ToLower() == opportunitydata.pipleline_stage.ToLower()).
@@ -1557,7 +1560,7 @@ namespace ShutterManagement.Business.Services
                     var job = new UpdateJob
                     {
                         ContactId = contact1.ContactId,
-                        AddressId = addressId,
+                        //AddressId = addressId,
                         JobName = opportunitydata.opportunity_name,
                         JobType = jobtype,
                         AssignedPersonnel = Guid.Empty,
@@ -1570,6 +1573,7 @@ namespace ShutterManagement.Business.Services
                         GHL_jobstatus = jobstatus.ToString()
 
                     };
+                    await gHLConfiguration.GetGHLConfiguration(opportunitydata.WebhookTenantId);
                     var res = await UpdateJob(job);
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.InsertSuccessMsg;

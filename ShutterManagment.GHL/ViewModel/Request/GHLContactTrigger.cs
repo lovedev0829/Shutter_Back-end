@@ -52,6 +52,7 @@ namespace ShutterManagment.GHL.ViewModel.Request
         public string? company_name { get; set; }
         public string? full_address { get; set; }
         public string contact_type { get; set; }
+        public string? WebhookTenantId { get; set; }
         public Location? location { get; set; }
         public Workflow? workflow { get; set; }
         public TriggerData? triggerData { get; set; }
