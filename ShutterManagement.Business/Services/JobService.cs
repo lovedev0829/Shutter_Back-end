@@ -823,6 +823,11 @@ namespace ShutterManagement.Business.Services
                         responseVm.Message = "JobName" + AppConstant.AlreadyExists;
                         return responseVm;
                     }
+
+                    if (model.GhlOpportunityId != null)
+                    {
+                        IsAddressExist = true;
+                    }
                     if (IsAddressExist)
                     {
                         string arrayString = string.Join(", ", model.AttachmentsAny);
@@ -1055,25 +1060,25 @@ namespace ShutterManagement.Business.Services
                                        JobId = t2.JobId,
                                        JobName = t2.JobName??"",
                                        ContactId = t2.ContactId,
-                                       ContactFirstName = t6.FirstName,
-                                       ContactLasttName = t6.LastName,
+                                       ContactFirstName = t6.FirstName??"",
+                                       ContactLasttName = t6.LastName??"",
                                        Suffix = t6.Suffix??"",
-                                       AddressId = t2.AddressId,
+                                       AddressId = t2.AddressId??null,
                                        JobType = t3.Id,
-                                       JobTypeName = t3.JobTypeName,
+                                       JobTypeName = t3.JobTypeName??"",
                                        AssignedPersonnel = t4.Id,
-                                       AssignedPersonnelName = t4.FirstName + " " + t4.LastName,
+                                       AssignedPersonnelName = t4.FirstName + " " + t4.LastName??"",
                                        ScheduledDate = t2.ScheduledDate,
                                        JobStatus = t5.JobStatusId,
-                                       JobStatusName = t5.JobStatusName,
-                                       Notes = t2.Notes,
+                                       JobStatusName = t5.JobStatusName??"",
+                                       Notes = t2.Notes??"",
                                        AttachmentsAny = t2.AttachmentAny.Split(",", StringSplitOptions.RemoveEmptyEntries).ToArray(),
-                                       Label = t1.Label,
-                                       StreetAddress = t1.StreetAddress,
-                                       City = t1.City,
+                                       Label = t1.Label??"",
+                                       StreetAddress = t1.StreetAddress??"",
+                                       City = t1.City??"",
                                        //State = dbContext.MstStates.Where(s => s.Id == t1.State).Select(y => y.StateName ?? "").FirstOrDefault(),
-                                       ZipCode = t1.ZipCode,
-                                       JobUniqueCode = t2.JobUniqueId,
+                                       ZipCode = t1.ZipCode??"",
+                                       JobUniqueCode = t2.JobUniqueId??"",
                                        GHL_StageId = t2.GhlStageId ?? Guid.Empty,
                                        GHL_StageName = t2.GhlStageName??"",
                                    }).ToList();
