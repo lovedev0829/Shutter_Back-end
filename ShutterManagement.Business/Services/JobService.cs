@@ -447,7 +447,8 @@ namespace ShutterManagement.Business.Services
                         FileLogger.Log($"Processing opportunity ID: {opportunity.OpportunityId}, Name: {opportunity.Name}");
 
                         var existingJob = GetAllQuerable()
-                            .FirstOrDefault(x => x.GhlOpportunityId == opportunity.OpportunityId);
+                            .FirstOrDefault(x => x.GhlOpportunityId == opportunity.OpportunityId && 
+                            x.TenantId==AppConstant.LoggedInTenantId && x.IsActive==true && x.IsDelete==false);
 
                         var stage = stages?.Data.FirstOrDefault(x => x.GhlStageId == opportunity.PipelineStageId);
                         var dbcontact = _context.TblContacts
@@ -856,7 +857,7 @@ namespace ShutterManagement.Business.Services
                         CreatedBy = AppConstant.LoggedInUserID ?? Guid.Empty 
                     };
 
-                    var res = await Add(job);
+                       var res = await Add(job);
                         responseVm.IsSuccess = true;
                         responseVm.Message = AppConstant.InsertSuccessMsg;
                         if (responseVm.IsSuccess)
