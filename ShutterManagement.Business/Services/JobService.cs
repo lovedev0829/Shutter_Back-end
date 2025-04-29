@@ -818,7 +818,7 @@ namespace ShutterManagement.Business.Services
                     bool IsContactArchiveorInactive = await contact.AnyAsync(x => x.ContactId == model.ContactId && (x.IsActive == false || x.IsArchive == true));
                 if(IsContactArchiveorInactive)
                 {
-                    responseVm.Message = "Contact is Archived or Inactive,You can create Job.";
+                    responseVm.Message = "Contact is Archived or Inactive,You can not create Job.";
                     return responseVm;
                 }
                 if (IsjobNameExists)
