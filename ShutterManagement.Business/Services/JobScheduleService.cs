@@ -15,6 +15,7 @@ using ShutterManagment.GHL.ViewModel.Request;
 using System.Globalization;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 using ShutterManagement.Core.Common;
+using System.Data.Entity;
 
 namespace ShutterManagement.Business.Services
 {
@@ -449,7 +450,7 @@ namespace ShutterManagement.Business.Services
                         {
                           if(item.UpdatedAt > item.LasSync)
                           {
-                          var contactId = dbContext.TblJobs.Where(x => x.JobId.ToString().ToLower() == item.JobId.ToString().ToLower() && x.IsDelete == false).Select(x => x.GhlContactId).FirstOrDefault();
+                          var contactId = await dbContext.TblJobs.Where(x => x.JobId.ToString().ToLower() == item.JobId.ToString().ToLower() && x.IsDelete == false).Select(x => x.GhlContactId).FirstOrDefaultAsync();
                           string formattedstartDate = FormatDateTimeWithOffset(item.StartDate, item.DayStartTime);
                           string formattedstartDateend = FormatDateTimeWithOffset(item.EndDate, item.DayEndDateTime);
                           var appointment = new GHLAppointmentAdd
