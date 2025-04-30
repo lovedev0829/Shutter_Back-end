@@ -13,7 +13,7 @@ namespace ShutterManagement.Core.ViewModels.Request
 
         //[Required]
         //public Guid? ContactId { get; set; }
-        [Required]
+        //[Required]
         public Guid? AddressId { get; set; }
         [Required]
         public string? Label { get; set; }
