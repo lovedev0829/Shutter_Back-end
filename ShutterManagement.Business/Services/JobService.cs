@@ -447,7 +447,8 @@ namespace ShutterManagement.Business.Services
                         FileLogger.Log($"Processing opportunity ID: {opportunity.OpportunityId}, Name: {opportunity.Name}");
 
                         var existingJob = GetAllQuerable()
-                            .FirstOrDefault(x => x.GhlOpportunityId == opportunity.OpportunityId);
+                            .FirstOrDefault(x => x.GhlOpportunityId == opportunity.OpportunityId && 
+                            x.TenantId==AppConstant.LoggedInTenantId && x.IsActive==true && x.IsDelete==false);
 
                         var stage = stages?.Data.FirstOrDefault(x => x.GhlStageId == opportunity.PipelineStageId);
                         var dbcontact = _context.TblContacts
@@ -772,7 +773,7 @@ namespace ShutterManagement.Business.Services
                 Guid? jobStatus = Guid.Empty;
                 if (model.locationId != null)
                 {
-                    await gHLConfiguration.GetGHLConfiguration(model.locationId);
+                    //await gHLConfiguration.GetGHLConfiguration(model.locationId);
                     TenantId = (Guid)AppConstant.LoggedInTenantId;
 
                     if (TenantId != null)
@@ -781,15 +782,12 @@ namespace ShutterManagement.Business.Services
                         
                         stage.GhlStageName = model.GHL_StageName;
                         jobStatus = Guid.Parse(model.GHL_jobstatus);
-                        if (model.AddressId != null)
-                        {
-                            IsAddressExist = true;
-                        }
-                        else
-                        {
-                            responseVm.Message = "Contact is not synced in Application.";
-                            return responseVm;
-                        }
+                        IsAddressExist = true;
+                        //else
+                        //{
+                        //    responseVm.Message = "Contact is not synced in Application.";
+                        //    return responseVm;
+                        //}
                     }
                 }
                 else
@@ -818,17 +816,28 @@ namespace ShutterManagement.Business.Services
                     var generateUnique = GenerateUniqueId.GenerateUniqueIds(ModuleName.Job, AppConstant.LoggedInCompanyCode, Version);
                     bool IsjobNameExists = await AnyAsync(x => x.JobName == model.JobName.Trim() && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId && x.ContactId == model.ContactId);
                     var StageResponse = await statusAndStageMapping.GetGHLStagesMappingsById(jobStatus);
+                    bool IsContactArchiveorInactive = await contact.AnyAsync(x => x.ContactId == model.ContactId && x.TenantId==AppConstant.LoggedInTenantId &&  (x.IsActive == false || x.IsArchive == true) );
+                if(IsContactArchiveorInactive)
+                {
+                    responseVm.Message = "Contact is Archived or Inactive,You can not create Job.";
+                    return responseVm;
+                }
                 if (IsjobNameExists)
                     {
                         responseVm.Message = "JobName" + AppConstant.AlreadyExists;
                         return responseVm;
+                    }
+
+                    if (model.GhlOpportunityId != null)
+                    {
+                        IsAddressExist = true;
                     }
                     if (IsAddressExist)
                     {
                         string arrayString = string.Join(", ", model.AttachmentsAny);
                     TblJob job = new TblJob
                     {
-                        AddressId = model.AddressId,
+                        AddressId = model.AddressId ?? null,
                         ContactId = model.ContactId,
                         JobName = model.JobName?.Trim(),
                         JobType = model.JobType,
@@ -848,7 +857,7 @@ namespace ShutterManagement.Business.Services
                         CreatedBy = AppConstant.LoggedInUserID ?? Guid.Empty 
                     };
 
-                    var res = await Add(job);
+                       var res = await Add(job);
                         responseVm.IsSuccess = true;
                         responseVm.Message = AppConstant.InsertSuccessMsg;
                         if (responseVm.IsSuccess)
@@ -1055,25 +1064,25 @@ namespace ShutterManagement.Business.Services
                                        JobId = t2.JobId,
                                        JobName = t2.JobName??"",
                                        ContactId = t2.ContactId,
-                                       ContactFirstName = t6.FirstName,
-                                       ContactLasttName = t6.LastName,
+                                       ContactFirstName = t6.FirstName??"",
+                                       ContactLasttName = t6.LastName??"",
                                        Suffix = t6.Suffix??"",
-                                       AddressId = t2.AddressId,
+                                       AddressId = t2.AddressId??null,
                                        JobType = t3.Id,
-                                       JobTypeName = t3.JobTypeName,
+                                       JobTypeName = t3.JobTypeName??"",
                                        AssignedPersonnel = t4.Id,
-                                       AssignedPersonnelName = t4.FirstName + " " + t4.LastName,
+                                       AssignedPersonnelName = t4.FirstName + " " + t4.LastName??"",
                                        ScheduledDate = t2.ScheduledDate,
                                        JobStatus = t5.JobStatusId,
-                                       JobStatusName = t5.JobStatusName,
-                                       Notes = t2.Notes,
+                                       JobStatusName = t5.JobStatusName??"",
+                                       Notes = t2.Notes??"",
                                        AttachmentsAny = t2.AttachmentAny.Split(",", StringSplitOptions.RemoveEmptyEntries).ToArray(),
-                                       Label = t1.Label,
-                                       StreetAddress = t1.StreetAddress,
-                                       City = t1.City,
+                                       Label = t1.Label??"",
+                                       StreetAddress = t1.StreetAddress??"",
+                                       City = t1.City??"",
                                        //State = dbContext.MstStates.Where(s => s.Id == t1.State).Select(y => y.StateName ?? "").FirstOrDefault(),
-                                       ZipCode = t1.ZipCode,
-                                       JobUniqueCode = t2.JobUniqueId,
+                                       ZipCode = t1.ZipCode??"",
+                                       JobUniqueCode = t2.JobUniqueId??"",
                                        GHL_StageId = t2.GhlStageId ?? Guid.Empty,
                                        GHL_StageName = t2.GhlStageName??"",
                                    }).ToList();
@@ -1144,7 +1153,7 @@ namespace ShutterManagement.Business.Services
                 var jobStatus = Guid.Empty;
                 if (model.locationId != null)
                 {
-                    await gHLConfiguration.GetGHLConfiguration(model.locationId);
+                    //await gHLConfiguration.GetGHLConfiguration(model.locationId);
                     TenantId = (Guid)AppConstant.LoggedInTenantId;
 
                     if (TenantId != null)
@@ -1153,15 +1162,15 @@ namespace ShutterManagement.Business.Services
 
                         stage.GhlStageName = model.GHL_StageName;
                         jobStatus = Guid.Parse(model.GHL_jobstatus);
-                        if (model.AddressId != null)
-                        {
+                        //if (model.AddressId != null)
+                        //{
                             IsAddressExist = true;
-                        }
-                        else
-                        {
-                            responseVm.Message = "Contact is not synced in Application.";
-                            return responseVm;
-                        }
+                        //}
+                        //else
+                        //{
+                        //    responseVm.Message = "Contact is not synced in Application.";
+                        //    return responseVm;
+                        //}
                     }
                 }
                 else
@@ -1180,7 +1189,7 @@ namespace ShutterManagement.Business.Services
                 }
                 if (model.GhlOpportunityId == null)
                 {
-                    var IsJobExist = (await GetAll()).Where(x => x.JobId == model.JobId && x.AddressId == model.AddressId &&
+                    var IsJobExist = (await GetAll()).Where(x => x.JobId == model.JobId &&
                     x.ContactId == model.ContactId && x.JobUniqueId == model.JobUniqueCode.Trim()
                     && x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false).FirstOrDefault();
                     bool IsjobNameExists = await AnyAsync(x => x.JobId != model.JobId && x.JobName.Trim() == model.JobName.Trim() &&
@@ -1502,7 +1511,7 @@ namespace ShutterManagement.Business.Services
                 {
                     contact1 = contact.GetAllQuerable().Where(x => x.GhlcontactId == opportunitydata.contact_id && x.IsDelete == false)
                          .FirstOrDefault();
-                    addressId = (Guid)contact1.PrimaryAddress;
+                   //     addressId = (Guid)contact1.PrimaryAddress;
                 }
                 Guid jobtype = Guid.Parse("34623376-9CE3-4C9B-A538-2D3129B1A6B2");
                 var stageId = dbContext.TblGhlStages.Where(x => x.GhlStageName.ToLower() == opportunitydata.pipleline_stage.ToLower()).
@@ -1511,7 +1520,6 @@ namespace ShutterManagement.Business.Services
                 var job = new CreateJob
                 {
                     ContactId = contact1.ContactId,
-                    AddressId = addressId,
                     JobName = opportunitydata.opportunity_name,
                     JobType = jobtype,
                     AssignedPersonnel = Guid.Empty,
@@ -1523,6 +1531,7 @@ namespace ShutterManagement.Business.Services
                     lastasync = DateTime.Now,
                     GHL_jobstatus = jobstatus.ToString()
                 };
+                    await gHLConfiguration.GetGHLConfiguration(opportunitydata.WebhookTenantId);
                     var res = await Create(job);
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.InsertSuccessMsg;
@@ -1548,7 +1557,7 @@ namespace ShutterManagement.Business.Services
                     {
                         contact1 = contact.GetAllQuerable().Where(x => x.GhlcontactId == opportunitydata.contact_id && x.IsDelete == false).
                              FirstOrDefault();
-                        addressId = (Guid)contact1.PrimaryAddress;
+                        //addressId = (Guid)contact1.PrimaryAddress;
                     }
                     Guid jobtype = Guid.Parse("34623376-9CE3-4C9B-A538-2D3129B1A6B2");
                     var stageId = dbContext.TblGhlStages.Where(x => x.GhlStageName.ToLower() == opportunitydata.pipleline_stage.ToLower()).
@@ -1557,7 +1566,7 @@ namespace ShutterManagement.Business.Services
                     var job = new UpdateJob
                     {
                         ContactId = contact1.ContactId,
-                        AddressId = addressId,
+                        //AddressId = addressId,
                         JobName = opportunitydata.opportunity_name,
                         JobType = jobtype,
                         AssignedPersonnel = Guid.Empty,
@@ -1570,6 +1579,7 @@ namespace ShutterManagement.Business.Services
                         GHL_jobstatus = jobstatus.ToString()
 
                     };
+                    await gHLConfiguration.GetGHLConfiguration(opportunitydata.WebhookTenantId);
                     var res = await UpdateJob(job);
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.InsertSuccessMsg;

@@ -110,13 +110,14 @@ namespace ShutterManagement.Business.Services
                 FileLogger.Log($"Location id fetched {model.locationId}");
                 if (model.locationId != null)
                 {
-                    await gHLConfigurationService.GetGHLConfiguration(model.locationId);
+                   // await gHLConfigurationService.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
                     TenantId = (Guid)AppConstant.LoggedInTenantId;
-                    FileLogger.Log($"Location id fetched {model.locationId}");
+                    FileLogger.Log($"Tenant id fetched {TenantId}");
                     if (TenantId != null)
                     {
                         IsTenantExists = true;
                         model.IsTaxExemption = true;
+                        model.IsBillingAddressSameAsAddress = true;
                     }
                 }
                 else
@@ -124,7 +125,7 @@ namespace ShutterManagement.Business.Services
                     IsTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
                     TenantId = (Guid)AppConstant.LoggedInTenantId;
                     FileLogger.Log($"Tenant Id id fetched {TenantId}");
-                    model.IsTaxExemption = true;
+                    //model.IsTaxExemption = true;
                 }
                 if(!model.IsTaxExemption)
                 {
@@ -344,13 +345,14 @@ namespace ShutterManagement.Business.Services
                 }
                 if (model.locationId != null)
                 {
-                    await gHLConfigurationService.GetGHLConfiguration(model.locationId);
+                   // await gHLConfigurationService.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
                     TenantId = (Guid)AppConstant.LoggedInTenantId;
 
                     if (TenantId != Guid.Empty)
                     {
                         IsTenantExists = true;
                         model.IsTaxExemption = true;
+                        model.IsBillingAddressSameAsAddress = true;
                     }
                 }
                 else
@@ -362,21 +364,23 @@ namespace ShutterManagement.Business.Services
                 if (IsTenantExists)
                 {
                     await gHLConfigurationService.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
-                    if (model.GHLContactId != null)
+                    if (!string.IsNullOrEmpty(model.GHLContactId))
                     {
                         var contact = (await GetAll()).Where
                             (c => c.GhlcontactId == model.GHLContactId && c.TenantId == TenantId && c.IsDelete == false).FirstOrDefault();
 
                         var IsContactExists = GetAllQuerable()
                             .Where(c => (c.Email == model.Email || c.PhoneNumber == model.PhoneNumber)
-                                        && c.TenantId == TenantId && c.IsDelete == false)
+                                        && c.TenantId == TenantId && c.IsDelete == false).OrderByDescending(x=>x.CreatedAt)
                             .ToList();
 
-                        //if (IsContactExists.Count > 0)
-                        //{
-                        //    responseVm.Message = "Email or Phone " + AppConstant.AlreadyExists;
-                        //    return responseVm;
-                        //}
+                        if (contact == null && IsContactExists.Count > 0)
+                        {
+                            contact = IsContactExists.FirstOrDefault();
+
+                            //responseVm.Message = "Email or Phone " + AppConstant.AlreadyExists;
+                            //return responseVm;
+                        }
 
                         if (contact != null)
                         {
@@ -455,7 +459,10 @@ namespace ShutterManagement.Business.Services
                             contact1.UpdatedAt = DateTime.Now;
 
                             await Update(contact1);
-
+                            if(contact1.GhlcontactId !=null)
+                            {
+                                model.IsBillingAddressSameAsAddress = false;
+                            }
                             if (!model.IsBillingAddressSameAsAddress)
                             {
                                 var contactBillingAddress = dbContext.TblAddresses
@@ -895,7 +902,9 @@ namespace ShutterManagement.Business.Services
                                     || (x.ContactId.ToString().ToLower()).Contains(filter?.SearchValue)
                                     || (x.Email.ToLower() ?? "").Contains(filter?.SearchValue)
                                     || (x.Website.ToLower() ?? "").Contains(filter?.SearchValue)
-                                    || (x.PhoneNumber ?? "").Contains(filter?.SearchValue)
+                                    || (x.PhoneNumber ?? "").ToLower().Contains(filter?.SearchValue)
+                                    || (x.ContactType ?? "").ToLower().Contains(filter?.SearchValue)
+                                    || (x.ContactUniqueId ?? "").ToLower().Contains(filter?.SearchValue)
                                     || ((x.FirstName.ToLower() + " " + x.LastName.ToLower()) ?? "").Contains(filter?.SearchValue)
                                     || (x.FirstName.ToLower() ?? "").Contains(filter?.SearchValue)
                                     || (x.LastName.ToLower() ?? "").Contains(filter?.SearchValue)
@@ -1003,23 +1012,23 @@ namespace ShutterManagement.Business.Services
                         GHLContactId = contactData.contact_id,
                         lastAsync = DateTime.Now,
                     };
-                    if (contactData.location != null)
-                    {
-                        contact.BillingAddressVm = new BillingAddressVm
-                        {
-                            BillingFirstName = contactData.first_name,
-                            BillingLastName = contactData.last_name,
-                            FirstName = contactData.first_name,
-                            LastName = contactData.last_name,
-                            Email = contactData.email,
-                            PhoneNumber = contactData.phone,
-                            City = contactData.location.city,
-                            //State = contactData.location.state,
-                            ZipCode = contactData.location.postalCode,
-                            StreetAddress = contactData.location.address
-                        };
-                    }
-                    await gHLConfigurationService.GetGHLConfiguration(contact.locationId);
+                    //if (contactData.location != null)
+                    //{
+                    //    contact.BillingAddressVm = new BillingAddressVm
+                    //    {
+                    //        BillingFirstName = contactData.first_name,
+                    //        BillingLastName = contactData.last_name,
+                    //        FirstName = contactData.first_name,
+                    //        LastName = contactData.last_name,
+                    //        Email = contactData.email,
+                    //        PhoneNumber = contactData.phone,
+                    //        City = contactData.location.city,
+                    //        //State = contactData.location.state,
+                    //        ZipCode = contactData.location.postalCode,
+                    //        StreetAddress = contactData.location.address
+                    //    };
+                    
+                    await gHLConfigurationService.GetGHLConfiguration(contactData.WebhookTenantId);
                     var res = await Create_Contact(contact);
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.InsertSuccessMsg;
@@ -1049,23 +1058,23 @@ namespace ShutterManagement.Business.Services
                         GHLContactId = contactData.contact_id,
                         lastAsync = DateTime.Now,
                     };
-                    if (contactData.location != null)
-                    {
-                        contact.BillingAddressVm = new BillingAddressVm
-                        {
-                            BillingFirstName = contactData.first_name,
-                            BillingLastName = contactData.last_name,
-                            FirstName = contactData.first_name,
-                            LastName = contactData.last_name,
-                            Email = contactData.email,
-                            PhoneNumber = contactData.phone,
-                            City = contactData.location.city,
-                            StateName = contactData.location.state,
-                            ZipCode = contactData.location.postalCode,
-                            StreetAddress = contactData.location.address
-                        };
-                    }
-                    await gHLConfigurationService.GetGHLConfiguration(contact.locationId);
+                    //if (contactData.location != null)
+                    //{
+                    //    contact.BillingAddressVm = new BillingAddressVm
+                    //    {
+                    //        BillingFirstName = contactData.first_name,
+                    //        BillingLastName = contactData.last_name,
+                    //        FirstName = contactData.first_name,
+                    //        LastName = contactData.last_name,
+                    //        Email = contactData.email,
+                    //        PhoneNumber = contactData.phone,
+                    //        City = contactData.location.city,
+                    //        StateName = contactData.location.state,
+                    //        ZipCode = contactData.location.postalCode,
+                    //        StreetAddress = contactData.location.address
+                    //    };
+                    //}
+                    await gHLConfigurationService.GetGHLConfiguration(contactData.WebhookTenantId);
                     var res = await Update_Contact(contact);
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.InsertSuccessMsg;
@@ -1077,7 +1086,6 @@ namespace ShutterManagement.Business.Services
                 }
                 return responseVm;
             }
-
         }
 
         public async Task<IResponseVm<string>> ContactSync()
@@ -1097,7 +1105,7 @@ namespace ShutterManagement.Business.Services
                     {
                         FileLogger.Log("Exception occurred GHLContact is null.");
                     }
-                    var getAppContacts = (await GetAll()).Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false).ToList();
+                    var getAppContacts = (await GetAll()).Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false && x.IsArchive ==false).ToList();
 
                     List<Sp_Contact> contactsToInsert = new List<Sp_Contact>();
                     List<GhlContactAdd> contactsToAddToGHL = new List<GhlContactAdd>();
@@ -1105,10 +1113,16 @@ namespace ShutterManagement.Business.Services
                     foreach (var ghlcontact in getGHLContacts)
                     {
                         var existingContact = getAppContacts.FirstOrDefault(x => x.GhlcontactId == ghlcontact.id);
+                        var IsContactExists = GetAllQuerable()
+                          .Where(c => (c.Email == ghlcontact.email || c.PhoneNumber == ghlcontact.phone)
+                                      && c.TenantId == AppConstant.LoggedInTenantId && c.IsDelete == false).OrderByDescending(x => x.CreatedAt)
+                          .FirstOrDefault();
+
+                        existingContact = IsContactExists != null ? IsContactExists : null;
 
                         if (existingContact != null)
                         {
-                            if (ghlcontact.dateUpdated > existingContact.UpdatedAt)
+                            if (ghlcontact.dateUpdated.ToLocalTime() > existingContact.UpdatedAt)
                             {
                                 existingContact.FirstName = ghlcontact.firstName;
                                 existingContact.Email = ghlcontact.email;
@@ -1117,6 +1131,7 @@ namespace ShutterManagement.Business.Services
                                 existingContact.ModifiedBy = AppConstant.LoggedInUserID;
                                 existingContact.LastSync = DateTime.Now;
                                 existingContact.ContactType = ghlcontact.type;
+                                existingContact.GhlcontactId = ghlcontact.id;
                                 FileLogger.Log("Updating Contact in application(Application ContactId).", existingContact.ContactId);
                                 FileLogger.Log("Updating Contact in application(GhlContactId).", existingContact.GhlcontactId);
                                 var res = await Update(existingContact);
@@ -1168,23 +1183,37 @@ namespace ShutterManagement.Business.Services
                                 lastAsync = DateTime.Now,
                             };
 
-                            if (brandingInfo != null)
+                            //if (brandingInfo != null)
+                            //{
+                            //    newContact.BillingAddressVm = new BillingAddressVm
+                            //    {
+                            //        BillingFirstName = newContact.FirstName,
+                            //        BillingLastName = newContact.LastName,
+                            //        FirstName = newContact.FirstName,
+                            //        LastName = newContact.LastName,
+                            //        Email = newContact.Email,
+                            //        PhoneNumber = newContact.PhoneNumber,
+                            //        City = brandingInfo.City,
+                            //        //State = brandingInfo.StreetAddress,
+                            //        ZipCode = brandingInfo.ZipCode,
+                            //        StreetAddress = brandingInfo.StreetAddress
+                            //    };
+                            //}
+                            newContact.IsBillingAddressSameAsAddress = true;
+                            newContact.IsTaxExemption = true;
+                           var contactaddRespnse= await Create_Contact(newContact);
+                            if(contactaddRespnse.IsSuccess)
                             {
-                                newContact.BillingAddressVm = new BillingAddressVm
-                                {
-                                    BillingFirstName = newContact.FirstName,
-                                    BillingLastName = newContact.LastName,
-                                    FirstName = newContact.FirstName,
-                                    LastName = newContact.LastName,
-                                    Email = newContact.Email,
-                                    PhoneNumber = newContact.PhoneNumber,
-                                    City = brandingInfo.City,
-                                    //State = brandingInfo.StreetAddress,
-                                    ZipCode = brandingInfo.ZipCode,
-                                    StreetAddress = brandingInfo.StreetAddress
-                                };
+                                responseVm.IsSuccess = true;
+                                responseVm.Message = contactaddRespnse.Message;
                             }
-                            contactsToInsert.Add(newContact);
+                            else
+                            {
+                                responseVm.Message = contactaddRespnse.Message;
+
+                            }
+                           
+                            //contactsToInsert.Add(newContact);
                         }
                     }
 
@@ -1207,7 +1236,7 @@ namespace ShutterManagement.Business.Services
                             var existingGHLContact = getGHLContacts.FirstOrDefault(x => x.id == appContact.GhlcontactId);
                             if (existingGHLContact != null)
                             {
-                                if (existingGHLContact.dateUpdated < appContact.UpdatedAt)
+                                if (existingGHLContact.dateUpdated.ToLocalTime() < appContact.UpdatedAt)
                                 {
                                     var newContactToAddToGHL = new GhlContactAdd
                                     {
@@ -1247,40 +1276,21 @@ namespace ShutterManagement.Business.Services
                             }
                         }
                     }
-                    if (contactsToInsert.Any())
-                    {
-                        foreach (var contact in contactsToInsert)
-                        {
-                            //if (string.IsNullOrEmpty(contact.GHLContactId))
-                            //{
-                                var res = await Create_Contact(contact);
-                                if (!res.IsSuccess) { FileLogger.Log("Exception occurred Creating Contact in application.", res.Message); }
-                            //}
-                            //else
-                            //{
-                            //    var ghlContactAdd = new UpdateContact
-                            //    {
-                            //        FirstName = contact.FirstName ?? string.Empty,
-                            //        LastName = contact.LastName ?? string.Empty,
-                            //        Email = contact.Email ?? string.Empty,
-                            //        PhoneNumber = contact.PhoneNumber ?? string.Empty,
-                            //        Notes = contact.Notes ?? string.Empty,
-                            //        ContactType = contact.ContactType ?? string.Empty,
-                            //        Website = contact.Website ?? string.Empty,
-                            //        Referral = contact.Referral ?? string.Empty,
-                            //        GHLContactId = contact.GHLContactId ?? string.Empty,
-                            //        locationId = contact.locationId ?? string.Empty,
-                            //    };
-                            //    var res = await Update_Contact(ghlContactAdd);
-                            //    if (!res.IsSuccess) { FileLogger.Log("Exception occurred Updating Contact in application.", res.Message); }
-                            //}
-                        }
-                    }
+                    //if (contactsToInsert.Any())
+                    //{
+                    //    foreach (var contact in contactsToInsert)
+                    //    {
+                            
+                    //            var res = await Create_Contact(contact);
+                    //            if (!res.IsSuccess) { FileLogger.Log("Exception occurred Creating Contact in application.", res.Message); }
+                           
+                    //    }
+                    //}
                     if (contactsToAddToGHL.Any())
                     {
                         foreach (var contact in contactsToAddToGHL)
                         {
-                            if (contact?.GHLContactId == null)
+                            if (string.IsNullOrEmpty(contact?.GHLContactId))
                             {
 
                                 FileLogger.Log("Creating bulk Contact in GHL(GhlContactId).", contact);

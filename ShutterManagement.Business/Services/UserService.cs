@@ -451,8 +451,11 @@ namespace ShutterManagement.Services
                                     || (x.Phone ?? "").ToLower().Contains(filter.SearchValue)
                                     || (x.FirstName ?? "").ToLower().Contains(filter.SearchValue)
                                     || (x.MiddleName ?? "").ToLower().Contains(filter.SearchValue)
+                                    || (x.RoleName ?? "").ToLower().Contains(filter.SearchValue)
+                                    || ((x.FirstName.ToLower() + " " + x.LastName.ToLower()) ?? "").Contains(filter.SearchValue)
                                     || (x.LastName ?? "").ToLower().Contains(filter.SearchValue)
                                     || (x.UserName ?? "").ToLower().Contains(filter.SearchValue)
+                                    || (x.GhlUserName ?? "").ToLower().Contains(filter.SearchValue)
                                     ) : true)).ToList();
                 var TakenRecords = FilterRecords
                                     .Skip((filter.PageNo - 1) * filter.RecordPerPage).Take(filter.RecordPerPage).ToList();
