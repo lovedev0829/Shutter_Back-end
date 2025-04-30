@@ -821,6 +821,13 @@ namespace ShutterManagement.Controllers
             if (Checkghlresponse.IsSuccess)
             {
                 var pipelineResult = await gHLService_V2.GetAndSaveDefaultPipelineAndStage();
+                var CheckStageMapping = await gHLConfiguration.CheckStageMapping();
+                if(!CheckStageMapping.IsSuccess)
+                {
+                    return BadRequest(CheckStageMapping);
+                }
+
+                
                 var contact = await contactService.ContactSync();
                 var opportunityResult = await jobService.SyncOpportunitiesFromGhl();
                 var appointment = await jobSchedule.AppointmentSync();
@@ -952,7 +959,9 @@ namespace ShutterManagement.Controllers
         [HttpGet("GetallStagesMapping")]
         public async Task<IActionResult> GetallStagesMapping()
         {
+            var pipelineResult = await gHLService_V2.GetAndSaveDefaultPipelineAndStage();
             var result = await gHLConfiguration.GetGHLStagesMappings();
+
             return Ok(result);
         }
 

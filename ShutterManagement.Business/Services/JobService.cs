@@ -447,7 +447,8 @@ namespace ShutterManagement.Business.Services
                         FileLogger.Log($"Processing opportunity ID: {opportunity.OpportunityId}, Name: {opportunity.Name}");
 
                         var existingJob = GetAllQuerable()
-                            .FirstOrDefault(x => x.GhlOpportunityId == opportunity.OpportunityId);
+                            .FirstOrDefault(x => x.GhlOpportunityId == opportunity.OpportunityId && 
+                            x.TenantId==AppConstant.LoggedInTenantId && x.IsActive==true && x.IsDelete==false);
 
                         var stage = stages?.Data.FirstOrDefault(x => x.GhlStageId == opportunity.PipelineStageId);
                         var dbcontact = _context.TblContacts
@@ -815,7 +816,7 @@ namespace ShutterManagement.Business.Services
                     var generateUnique = GenerateUniqueId.GenerateUniqueIds(ModuleName.Job, AppConstant.LoggedInCompanyCode, Version);
                     bool IsjobNameExists = await AnyAsync(x => x.JobName == model.JobName.Trim() && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId && x.ContactId == model.ContactId);
                     var StageResponse = await statusAndStageMapping.GetGHLStagesMappingsById(jobStatus);
-                    bool IsContactArchiveorInactive = await contact.AnyAsync(x => x.ContactId == model.ContactId && (x.IsActive == false || x.IsArchive == true));
+                    bool IsContactArchiveorInactive = await contact.AnyAsync(x => x.ContactId == model.ContactId && x.TenantId==AppConstant.LoggedInTenantId &&  (x.IsActive == false || x.IsArchive == true) );
                 if(IsContactArchiveorInactive)
                 {
                     responseVm.Message = "Contact is Archived or Inactive,You can not create Job.";
@@ -856,7 +857,7 @@ namespace ShutterManagement.Business.Services
                         CreatedBy = AppConstant.LoggedInUserID ?? Guid.Empty 
                     };
 
-                    var res = await Add(job);
+                       var res = await Add(job);
                         responseVm.IsSuccess = true;
                         responseVm.Message = AppConstant.InsertSuccessMsg;
                         if (responseVm.IsSuccess)
