@@ -1189,7 +1189,7 @@ namespace ShutterManagement.Business.Services
                 }
                 if (model.GhlOpportunityId == null)
                 {
-                    var IsJobExist = (await GetAll()).Where(x => x.JobId == model.JobId && x.AddressId == model.AddressId &&
+                    var IsJobExist = (await GetAll()).Where(x => x.JobId == model.JobId &&
                     x.ContactId == model.ContactId && x.JobUniqueId == model.JobUniqueCode.Trim()
                     && x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false).FirstOrDefault();
                     bool IsjobNameExists = await AnyAsync(x => x.JobId != model.JobId && x.JobName.Trim() == model.JobName.Trim() &&
