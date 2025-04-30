@@ -6,6 +6,8 @@ using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.Core.ViewModels.Response;
 using ShutterManagement.DAL.Context;
 using ShutterManagement.Services;
+using Stripe;
+using Stripe.Climate;
 using System;
 using System.Collections.Generic;
 using System.Data.Entity;
@@ -22,12 +24,18 @@ namespace ShutterManagement.Business.Services
         private readonly IExpressionService expressionService;
         private readonly IProductComponentService productComponentService;
         private readonly ClaimsProperty claimProperty;
+        private readonly IOption option;
+        private readonly IOptionsTypeService optionsType;
         private readonly IComponentService componentService;
-        public ProductService(ITenantService tenantService, IExpressionService expressionService, IProductComponentService productComponentService, ClaimsProperty claimsProperty,IComponentService componentService)
+        public ProductService(ITenantService tenantService, IExpressionService expressionService, 
+            IProductComponentService productComponentService, ClaimsProperty claimsProperty,IComponentService componentService,
+            IOption option,IOptionsTypeService optionsType )
         {
             this.tenantService = tenantService;
             this.expressionService = expressionService;
             this.claimProperty = claimsProperty;
+            this.option = option;
+            this.optionsType = optionsType;
             this.productComponentService = productComponentService;
         }
         public async Task<IResponseVm<string>> ActiveInActiveProduct(Guid ProductId)
@@ -88,7 +96,6 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
-
 
         public async Task<IResponseVm<string>> Create_Product(CreateProduct model)
         {
@@ -244,7 +251,6 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-
         public async Task<IResponseVm<List<ProductListVm>>> GetAll_Product(Pagination filter)
         {
             IResponseVm<List<ProductListVm>> responseVm = new ResponseVm<List<ProductListVm>>();
@@ -395,6 +401,102 @@ namespace ShutterManagement.Business.Services
             }
             return responseVm;
         }
+
+        public async Task<IResponseVm<List<ProductOptionsVm>>> GetAllProductOptions()
+        {
+            var responseVm = new ResponseVm<List<ProductOptionsVm>>();
+
+            try
+            {
+                bool isTenantValid = await tenantService.AnyAsync(x =>
+                    x.TenantId == AppConstant.LoggedInTenantId &&
+                    x.IsDelete == false &&
+                    x.IsActive == true);
+
+                if (!isTenantValid)
+                {
+                    responseVm.Message = AppConstant.AccessDenied;
+                    return responseVm;
+                }
+
+                var products = (from p1 in dbContext.TblProducts
+                                join p2 in dbContext.TblManagePartnersProducts on p1.ProductId equals p2.ProductId
+                                into ManageProducts from p2 in ManageProducts.DefaultIfEmpty()
+                                where p1.IsActive == true && p1.IsDelete == false && p1.TenantId == AppConstant.LoggedInTenantId
+                                select new ProductOptionsVm
+                                {
+                                   ProductId=  p1.ProductId,
+                                   ProductName= p1.ProductName,
+                                   WholeSalePrice= p2.WholeSalePrice ?? 0.0m,
+                                   MaxPartnerPrice= p2.MaxPartnerPrice ?? 0.0m,
+                                   IsAvailable = p2.IsAvailable ?? false,
+                                   ManageProductId= p2.ManageProductId.ToString() ?? null,
+                                }).ToList();
+
+                var productIds = products.Select(p => p.ProductId).ToList();
+
+                var allOptions = dbContext.TblOptions
+                    .Where(o => o.IsDelete == false && o.IsActive == true && productIds.Contains((Guid)o.ProductId))
+                    .Select(o => new ProductOptionsList
+                    {
+                        OptionId = o.OptionId,
+                        ProductId = o.ProductId,
+                        OptionName = o.OptionName
+                    }).ToList();
+
+                var optionIds = allOptions.Select(o => o.OptionId).ToList();
+
+                var allOptionTypes = (from o1 in dbContext.TblOptionsTypes
+                                      join o2 in dbContext.TblManagePartnersProductsOptions
+                                          on o1.OptionTypeId equals o2.OptionTypeId
+                                          into ManageProductsOptions
+                                      from o2 in ManageProductsOptions.DefaultIfEmpty()
+                                      where o1.IsDelete == false && o1.IsActive == true && optionIds.Contains(o1.OptionId)
+                                      select new ProductOptionTypeList
+                                      {
+                                          OptionTypeId = o1.OptionTypeId,
+                                          OptionTypeName = o1.OptionType,
+                                          OptionId = o1.OptionId,
+                                          WholeSalePrice = o2.WholeSalePrice ?? 0.0m,
+                                          MaxPrice = o2.MaxPrice ?? 0.0m,
+                                          IsEnable = o2.IsEnable ?? false
+                                      }).ToList();
+
+                var productList = products.Select(product => new ProductOptionsVm
+                {
+                    ProductId = product.ProductId,
+                    ProductName = product.ProductName,
+                    IsAvailable = product.IsAvailable,
+                    WholeSalePrice = product.WholeSalePrice,
+                    MaxPartnerPrice = product.MaxPartnerPrice,
+                    Options = allOptions
+                        .Where(opt => opt.ProductId == product.ProductId)
+                        .Select(opt => new ProductOptionsList
+                        {
+                            OptionId = opt.OptionId,
+                            OptionName = opt.OptionName,
+                            optionTypes = allOptionTypes
+                                .Where(ot => ot.OptionId == opt.OptionId)
+                                .ToList()
+                        }).ToList()
+                }).ToList();
+
+                responseVm.IsSuccess = true;
+                responseVm.Data = productList;
+                responseVm.Message = AppConstant.FetchSuccessMsg;
+                responseVm.TotalRecords = productList.Count();
+            }
+            catch (Exception ex)
+            {
+                responseVm.Message = $"Error: {ex.Message}";
+            }
+
+            return responseVm;
+        }
+
+
+
+
     }
 }
 

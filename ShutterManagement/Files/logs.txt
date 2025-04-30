@@ -1,7 +1,10 @@
-﻿2025-04-16 10:55:34 : details GHl: 
-Data: [
-  {
-    "Id": "7f0f8dae-01d5-4207-8a74-9d2c6135bbc1",
+﻿2025-04-30 18:05:42 : Base Address from Constr Base: 
+
+d successfully.
+
+rPage: 10
+
+c6135bbc1",
     "Apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2NhdGlvbl9pZCI6IlBUbklDTU4wbUtyMDNrekpRcVBRIiwidmVyc2lvbiI6MSwiaWF0IjoxNzI0MDcwNDM3MTYzLCJzdWIiOiJkOGhlWkl2dEliZDVPcGhGdXNmYiJ9.yRrmWRgUC5VtrhKMsE4JsLjpwROYvvQnwoYu5JbVQWU",
     "PipelineId": "TestPipeline",
     "BaseAddress": "",

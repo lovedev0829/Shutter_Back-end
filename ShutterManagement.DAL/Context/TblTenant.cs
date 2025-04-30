@@ -61,6 +61,8 @@ public partial class TblTenant
 
     public virtual ICollection<TblJob> TblJobs { get; set; } = new List<TblJob>();
 
+    public virtual ICollection<TblManagePartnersProduct> TblManagePartnersProducts { get; set; } = new List<TblManagePartnersProduct>();
+
     public virtual ICollection<TblOption> TblOptions { get; set; } = new List<TblOption>();
 
     public virtual ICollection<TblProductComponent> TblProductComponents { get; set; } = new List<TblProductComponent>();

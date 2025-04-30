@@ -561,10 +561,10 @@ namespace ShutterManagement.Controllers
         //}
         [HttpGet]
         [Route("GetAllOption")]
-        public async Task<IActionResult> GetAllOption(string ProductTypeId)
+        public async Task<IActionResult> GetAllOption(string ProductId)
         {
             var res = await option.GetAll_Option(filter);
-            res.Data = res.Data?.Where(x => x.IsActive == true && x.ProductTypeId == Guid.Parse(ProductTypeId)).ToList();
+            res.Data = res.Data?.Where(x => x.IsActive == true && x.ProductId == Guid.Parse(ProductId)).ToList();
             return Ok(res);
         }
 
@@ -984,7 +984,13 @@ namespace ShutterManagement.Controllers
               
         }
 
-
+        [HttpGet]
+        [Route("ProductOption")]
+        public async Task<IActionResult> ProductOption()
+        {
+            var result = await productService.GetAllProductOptions();
+            return Ok(result);
+        }
 
     }
 }

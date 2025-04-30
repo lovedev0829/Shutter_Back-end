@@ -11,7 +11,7 @@ namespace ShutterManagement.Core.ViewModels.Request
     public class CreateOption
     {
         [DefaultValue("")]
-        public Guid? ProductTypeId { get; set; }
+        public Guid? ProductId { get; set; }
         [DefaultValue("")]
         public string? OptionName { get; set; }
         public Options[]? Options { get; set; }
@@ -28,6 +28,10 @@ namespace ShutterManagement.Core.ViewModels.Request
         //[DefaultValue("")]
         //[Required]
         public decimal? AdditionalCost { get; set; }
+
+        [DefaultValue("")]
+        [Required]
+        public string? Unit { get; set; }
 
         public bool? IsDefault { get; set; }
     }
