@@ -29,6 +29,8 @@ public partial class MstProductType
 
     public virtual ICollection<TblExpression> TblExpressions { get; set; } = new List<TblExpression>();
 
+    public virtual ICollection<TblOption> TblOptions { get; set; } = new List<TblOption>();
+
     public virtual ICollection<TblRawMaterial> TblRawMaterials { get; set; } = new List<TblRawMaterial>();
 
     public virtual ICollection<TblWindowProduct> TblWindowProducts { get; set; } = new List<TblWindowProduct>();
