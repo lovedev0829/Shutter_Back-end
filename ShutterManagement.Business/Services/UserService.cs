@@ -422,6 +422,7 @@ namespace ShutterManagement.Services
                         UserName = user.Username,
                         Phone = user.Phone,
                         JobTitle = user.JobTitleId,
+                        TenantId = user.TenantId,
                         IsActive = user.IsActive
                     };
                     users.JobTitleName = dbContext.MstJobTitles
@@ -445,6 +446,8 @@ namespace ShutterManagement.Services
                 var FilterRecords = UsersList
                                     .Where(x =>
                                     (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
+                                    (string.IsNullOrEmpty(filter.SearchValue) ||
+                                    string.IsNullOrEmpty(filter.TenantId) || filter.TenantId == x.TenantId.ToString()) &&
                                     (filter.SearchValue != "" ?
                                     (x.UserId.ToString() == filter.SearchValue) ||
                                     ((x.Email ?? "").ToLower().Contains(filter.SearchValue)

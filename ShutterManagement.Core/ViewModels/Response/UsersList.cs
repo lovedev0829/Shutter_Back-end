@@ -24,6 +24,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? JobTitleName { get; set; }
         public Guid? UserId { get; set; }
         public string? UserName { get; set; }
+        public Guid? TenantId { get; set; }
         public bool? IsActive { get; set; }
     }
 }

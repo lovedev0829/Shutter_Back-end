@@ -60,7 +60,6 @@ namespace ShutterManagement.API.Controllers
         [Authorize(Roles = "UsersView")]
         public async Task<IActionResult> GetAll(Pagination filter)
         {
-            filter.TenantId = AppConstant.LoggedInTenantId.ToString();
             var res = await _userService.GetAll(filter);
             return Ok(res);
         }

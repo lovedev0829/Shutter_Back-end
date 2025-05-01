@@ -297,7 +297,7 @@ namespace ShutterManagement.Controllers
         [Route("GetAllJobs")]
         public async Task<IActionResult> GetAll(Pagination filter1)
         {
-            filter1.TenantId = AppConstant.LoggedInTenantId.ToString();
+            filter1.TenantId = AppConstant.LoggedInTenantId.ToString().ToLower();
             var result = await jobService.GetAllJobsTenant_SubTenant(filter1);
             return Ok(result);
         }
