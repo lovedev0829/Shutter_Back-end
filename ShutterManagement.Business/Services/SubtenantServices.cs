@@ -447,6 +447,8 @@ namespace ShutterManagement.Business.Services
                                     ((x.BrandingInfoNavigation?.Email ?? "").ToLower().Contains(filter.SearchValue)
                                     || (x.BrandingInfoNavigation?.PhoneNumber ?? "").ToLower().Contains(filter.SearchValue)
                                     || (x.FirstName ?? "").ToLower().Contains(filter.SearchValue)
+                                    || (x.BrandingInfoNavigation?.CompanyName ?? "").ToLower().Contains(filter.SearchValue)
+                                    || ((x.FirstName.ToLower() + " " + x.LastName.ToLower()) ?? "").Contains(filter?.SearchValue)
                                     || (x.LastName ?? "").ToLower().Contains(filter.SearchValue)
                                     || (x.MiddleName ?? "").ToLower().Contains(filter.SearchValue)
                                     || (x.Code ?? "").ToLower().Contains(filter.SearchValue)

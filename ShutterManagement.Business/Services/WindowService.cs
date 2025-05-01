@@ -138,6 +138,12 @@ namespace ShutterManagement.Business.Services
                     FileLogger.Log("Tenant validation failed in Create_Window.");
                     return responseVm;
                 }
+                if(model.AddressId == null || model.AddressId == Guid.Empty)
+                {
+                    responseVm.Message = "AddressId is required.Please update job detail with address";
+                    FileLogger.Log("AddressId is required in Create_Window.");
+                    return responseVm;
+                }
 
                 var IsLabelExists = await AnyAsync(x => x.Label == model.Label.Trim() && x.JobId == model.JobId  && !(bool)x.IsDelete  && x.TenantId == AppConstant.LoggedInTenantId);
 

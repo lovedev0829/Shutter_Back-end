@@ -15,7 +15,7 @@ namespace ShutterManagement.Core.ViewModels.Request
 
         [Required]
         [MaxLength(20)]
-        [RegularExpression("^[\\p{L} .'-]+$", ErrorMessage = AppConstant.AlphabaticalError)]
+        //[RegularExpression("^[\\p{L} .'-]+$", ErrorMessage = AppConstant.AlphabaticalError)]
         [DefaultValue("")]
        
         public string? Label { get; set; }
