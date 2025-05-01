@@ -14,6 +14,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public decimal? WholeSalePrice { get; set; }
         public decimal? MaxPartnerPrice { get; set; }
         public string? ManageProductId { get; set; }
+        public decimal? PartnerSellingPrice { get; set; }
 
         public List<ProductOptionsList> Options { get; set; }
     }
@@ -38,6 +39,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public decimal? WholeSalePrice { get; set; }
         public decimal? MaxPrice { get; set; }
         public bool? IsEnable { get; set; }
+        public decimal? PartnerSellingPrice { get; set; }
     }
 }
 

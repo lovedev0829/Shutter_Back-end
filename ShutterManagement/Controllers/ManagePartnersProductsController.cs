@@ -21,7 +21,17 @@ namespace ShutterManagement.Controllers
 
         public async Task<IActionResult> CreateManagePartnerProduct(CreateManagePartnerProduct createManagePartnerProduct)
         {
-            var res = managePartnersProducts.CreateManagePartnerProduct(createManagePartnerProduct);    
+            var res = await managePartnersProducts.CreateManagePartnerProduct(createManagePartnerProduct);    
+            return Ok(res);
+        }
+
+
+        [HttpGet]
+        [Route("GetAllManagePartnerProduct")]
+
+        public async Task<IActionResult> GetAllManagePartnerProduct(Pagination filter)
+        {
+            var res = await managePartnersProducts.GetAllProductOptions(filter);
             return Ok(res);
         }
     }

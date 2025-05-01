@@ -993,13 +993,6 @@ namespace ShutterManagement.Controllers
               
         }
 
-        [HttpGet]
-        [Route("ProductOption")]
-        public async Task<IActionResult> ProductOption()
-        {
-            var result = await productService.GetAllProductOptions();
-            return Ok(result);
-        }
 
     }
 }
