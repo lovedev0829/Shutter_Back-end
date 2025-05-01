@@ -172,7 +172,7 @@ namespace ShutterManagement.Business.Services
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.InsertSuccessMsg;
                 //  background email task
-                Task.Run(() => SendWelcomeEmailAsync(model));
+               await Task.Run(() => SendWelcomeEmailAsync(model));
             }
             catch (Exception ex)
             {

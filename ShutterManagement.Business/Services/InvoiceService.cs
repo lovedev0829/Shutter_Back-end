@@ -594,13 +594,25 @@ namespace ShutterManagement.Business.Services
                     .FirstOrDefault(x => x.IsActive == true)
                     ?.EstimateProductList ?? new List<EstimateProductList>();
 
+
+                var stateId = customerDetails?.billingAddressVm?.StateId;
+
+                string customerState = null;
+                if (stateId.HasValue)
+                {
+                    customerState = dbContext.MstStates
+                        .Where(x => x.Id == stateId.Value)
+                        .Select(y => y.StateName)
+                        .FirstOrDefault();
+                }
+
                 var invoiceData = new InvoiceDataModel
                 {
                     CustomerName = customerDetails?.FirstName ?? "" + customerDetails?.LastName ?? "",
                     PreparedBy = userDetails?.FirstName + " " + userDetails?.LastName,
                     CustomerId = customerDetails?.ContactUniqueId ?? "",
                     CustomerCity = customerDetails?.billingAddressVm?.City ?? "",
-                   // CustomerState = customerDetails?.billingAddressVm?.State ?? "",
+                    CustomerState = customerState,
                     CustomerZipCode = customerDetails?.billingAddressVm?.ZipCode ?? "",
                     HomePhone = customerDetails?.billingAddressVm?.PhoneNumber ?? "",
                     CompanyStreetAddress = tenantInfoDetails?.StreetAddress ?? "",
@@ -865,13 +877,15 @@ namespace ShutterManagement.Business.Services
                         return responseVm;
                     }
 
+
+
                     var invoiceDataModel = new InvoiceDataModel
                     {
                         CustomerName = customerDetails?.FirstName + " " + customerDetails?.LastName,
                         PreparedBy = userDetails?.FirstName + " " + userDetails?.LastName,
                         CustomerId = customerDetails?.ContactUniqueId ?? "",
                         CustomerCity = customerDetails?.billingAddressVm?.City ?? "",
-                       // CustomerState = customerDetails?.billingAddressVm?.State ?? "",
+                        CustomerState = customerState ?? "",
                         CustomerZipCode = customerDetails?.billingAddressVm?.ZipCode ?? "",
                         HomePhone = customerDetails?.billingAddressVm?.PhoneNumber ?? "",
                         CompanyStreetAddress = tenantInfoDetails?.StreetAddress ?? "",

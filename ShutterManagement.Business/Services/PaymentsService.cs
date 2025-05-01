@@ -119,7 +119,7 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
                 var invoice = invoiceService.GetAllQuerable()
-                    .FirstOrDefault(i => i.InvoiceId == model.InvoiceId && i.IsActive == true);
+                    .FirstOrDefault(i => i.InvoiceId == model.InvoiceId && i.IsActive == true && i.TenantId== AppConstant.LoggedInTenantId);
 
                 if (model.Amount > invoice.TotalAmount)
                 {
@@ -143,7 +143,7 @@ namespace ShutterManagement.Business.Services
                 }
 
                 // ✅ Check if Payment is Already Completed (Stripe Webhook Might Have Updated It)
-                var existingPayment =  GetAllQuerable().Where(x => x.TransactionId == model.TransactionId && x.IsActive == true).FirstOrDefault();
+                var existingPayment =  GetAllQuerable().Where(x => x.TransactionId == model.TransactionId && x.IsActive == true && x.TenantId==AppConstant.LoggedInTenantId).FirstOrDefault();
                 if (existingPayment != null && existingPayment.Status == "Paid")
                 {
                     responseVm.IsSuccess = true;
@@ -177,25 +177,28 @@ namespace ShutterManagement.Business.Services
                     await transaction.RollbackAsync();
                     return responseVm;
                 }
-                if (model.PaymentStatus == PaymentStatus.Unpaid)
+                bool isValidStripe = IsStripeApiKeyValid();
+                if (isValidStripe)
                 {
-                    var invoiceDetail = dbContext.TblInvoices.Where(x => x.InvoiceId == model.InvoiceId).FirstOrDefault();
-                    var job = dbContext.TblJobs.Where(x => x.JobId == invoiceDetail.JobId).FirstOrDefault();
-                    var contactDetails = dbContext.TblContacts.Where(x => x.ContactId == job.ContactId).FirstOrDefault();
-
-                    var paymentRequest = new PaymentRequest
+                    if (model.PaymentStatus == PaymentStatus.Unpaid)
                     {
-                        CustomerEmail = contactDetails?.Email??"",
-                        ProductName = $"Invoice Payment - {invoiceDetail?.InvoiceNumber}",
-                        Amount = (long)(model.Amount * 100), // Convert to cents for Stripe
-                        Quantity = 1,
-                        InvoiceId = invoiceDetail?.InvoiceId.ToString(),
-                        PaymentId = tblPayments?.PaymentId.ToString(),
-                    };
+                        var invoiceDetail = dbContext.TblInvoices.Where(x => x.InvoiceId == model.InvoiceId).FirstOrDefault();
+                        var job = dbContext.TblJobs.Where(x => x.JobId == invoiceDetail.JobId).FirstOrDefault();
+                        var contactDetails = dbContext.TblContacts.Where(x => x.ContactId == job.ContactId).FirstOrDefault();
 
-                    string paymentLink = stripeService.CreateCheckoutSession(paymentRequest);
+                        var paymentRequest = new PaymentRequest
+                        {
+                            CustomerEmail = contactDetails?.Email ?? "",
+                            ProductName = $"Invoice Payment - {invoiceDetail?.InvoiceNumber}",
+                            Amount = (long)(model.Amount * 100), // Convert to cents for Stripe
+                            Quantity = 1,
+                            InvoiceId = invoiceDetail?.InvoiceId.ToString(),
+                            PaymentId = tblPayments?.PaymentId.ToString(),
+                        };
 
-                    var emailBody = $@"
+                        string paymentLink = stripeService.CreateCheckoutSession(paymentRequest);
+
+                        var emailBody = $@"
 <div style='max-width: 600px; margin: auto; background: #fff; border-radius: 8px; 
             box-shadow: 0px 0px 10px rgba(0,0,0,0.1); padding: 20px; 
             font-family: Arial, sans-serif; color: #333;'>
@@ -230,17 +233,17 @@ namespace ShutterManagement.Business.Services
 </div>";
 
 
-                    // ✅ Send Payment Email
-                    EmailHelper.SendEmailWithAttachment(
-                        contactDetails?.Email,
-                        "Invoice Payment Reminder",
-                        emailBody
-                    );
+                        // ✅ Send Payment Email
+                        EmailHelper.SendEmailWithAttachment(
+                            contactDetails?.Email,
+                            "Invoice Payment Reminder",
+                            emailBody
+                        );
 
-                    responseVm.IsSuccess = true;
-                    responseVm.Message = "Payment link email sent successfully.";
+                        responseVm.IsSuccess = true;
+                        responseVm.Message = "Payment link email sent successfully.";
+                    }
                 }
-
                 if (model.PaymentStatus == PaymentStatus.Paid)
                 {
                     invoice.PaidAmount += model.Amount ?? 0;
@@ -805,6 +808,46 @@ namespace ShutterManagement.Business.Services
                 .Replace("{tenantInfoDetails?.Logo}", data.CompanyLogo ?? "");
         }
         #endregion ReplacePaymentConfirmationPlaceholders
+
+        #region Validate Stripe API Key 
+        public static bool IsStripeApiKeyValid()
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(AppConstant.Stripe_SecretKey))
+                {
+                    FileLogger.Log("Stripe API Key is missing.");
+                    return false;
+                }
+
+                StripeConfiguration.ApiKey = AppConstant.Stripe_SecretKey;
+
+                var service = new BalanceService();
+                var balance = service.Get();
+
+                FileLogger.Log("Stripe API Key validation successful.");
+                return true;
+            }
+            catch (StripeException stripeEx)
+            {
+                if (stripeEx.StripeError != null)
+                {
+                    FileLogger.Log($"Stripe API Key Validation Failed: {stripeEx.StripeError.Message} (Code: {stripeEx.StripeError.Code})");
+                }
+                else
+                {
+                    FileLogger.Log($"Stripe API Key Validation Failed: {stripeEx.Message}");
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Log($"Unexpected Error During Stripe API Key Validation: {ex.Message}");
+                return false;
+            }
+        }
+
+        #endregion Validate Stripe API Key 
 
     }
 
