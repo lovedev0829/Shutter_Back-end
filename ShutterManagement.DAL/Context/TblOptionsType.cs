@@ -27,7 +27,11 @@ public partial class TblOptionsType
 
     public bool? IsDefault { get; set; }
 
+    public string? Unit { get; set; }
+
     public virtual TblOption? Option { get; set; }
+
+    public virtual ICollection<TblManagePartnersProductsOption> TblManagePartnersProductsOptions { get; set; } = new List<TblManagePartnersProductsOption>();
 
     public virtual ICollection<WindowOption> WindowOptions { get; set; } = new List<WindowOption>();
 }

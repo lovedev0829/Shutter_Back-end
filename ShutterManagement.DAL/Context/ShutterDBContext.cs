@@ -95,6 +95,10 @@ public partial class ShutterDBContext : DbContext
 
     public virtual DbSet<TblLocation> TblLocations { get; set; }
 
+    public virtual DbSet<TblManagePartnersProduct> TblManagePartnersProducts { get; set; }
+
+    public virtual DbSet<TblManagePartnersProductsOption> TblManagePartnersProductsOptions { get; set; }
+
     public virtual DbSet<TblMeasurement> TblMeasurements { get; set; }
 
     public virtual DbSet<TblNotification> TblNotifications { get; set; }
@@ -1132,6 +1136,54 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
         });
 
+        modelBuilder.Entity<TblManagePartnersProduct>(entity =>
+        {
+            entity.HasKey(e => e.ManageProductId).HasName("PK__TblManag__E07C429B7F9C28E8");
+
+            entity.ToTable("TblManagePartnersProducts", "dbo");
+
+            entity.Property(e => e.ManageProductId).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.MaxPartnerPrice).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.PartnerSellingPrice).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+            entity.Property(e => e.WholeSalePrice).HasColumnType("decimal(10, 2)");
+
+            entity.HasOne(d => d.Product).WithMany(p => p.TblManagePartnersProducts)
+                .HasForeignKey(d => d.ProductId)
+                .HasConstraintName("FK_TblManagePartnersProducts_Product");
+
+            entity.HasOne(d => d.Tenant).WithMany(p => p.TblManagePartnersProducts)
+                .HasForeignKey(d => d.TenantId)
+                .HasConstraintName("FK_TblManagePartnersProducts_ManageProductTenant");
+        });
+
+        modelBuilder.Entity<TblManagePartnersProductsOption>(entity =>
+        {
+            entity.HasKey(e => e.ManageProductOptionId).HasName("PK__TblManag__5912BD4E4EAB5C00");
+
+            entity.ToTable("TblManagePartnersProductsOptions", "dbo");
+
+            entity.Property(e => e.ManageProductOptionId).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.MaxPrice).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.PartnerSellingPrice).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+            entity.Property(e => e.WholeSalePrice).HasColumnType("decimal(10, 2)");
+
+            entity.HasOne(d => d.ManageProduct).WithMany(p => p.TblManagePartnersProductsOptions)
+                .HasForeignKey(d => d.ManageProductId)
+                .HasConstraintName("FK_TblManagePartnersProducts_ManageProduct");
+
+            entity.HasOne(d => d.Option).WithMany(p => p.TblManagePartnersProductsOptions)
+                .HasForeignKey(d => d.OptionId)
+                .HasConstraintName("FK_TblOptions_ManagePartnerProductOptionId");
+
+            entity.HasOne(d => d.OptionType).WithMany(p => p.TblManagePartnersProductsOptions)
+                .HasForeignKey(d => d.OptionTypeId)
+                .HasConstraintName("FK_TBLOptionsType_ManagePartnerProductOptionTypeId");
+        });
+
         modelBuilder.Entity<TblMeasurement>(entity =>
         {
             entity.HasKey(e => e.MeasurementId).HasName("PK__TblMeasu__85599FB873C0E0A4");
@@ -1185,7 +1237,7 @@ public partial class ShutterDBContext : DbContext
 
             entity.HasOne(d => d.ProductType).WithMany(p => p.TblOptions)
                 .HasForeignKey(d => d.ProductTypeId)
-                .HasConstraintName("FK__TblOption__Produ__10E07F16");
+                .HasConstraintName("FK_TblOption_ProductType");
 
             entity.HasOne(d => d.Tenant).WithMany(p => p.TblOptions)
                 .HasForeignKey(d => d.TenantId)
@@ -1203,6 +1255,7 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
             entity.Property(e => e.ModifiedAt).HasColumnType("datetime");
             entity.Property(e => e.OptionType).HasMaxLength(200);
+            entity.Property(e => e.Unit).HasMaxLength(200);
 
             entity.HasOne(d => d.Option).WithMany(p => p.TblOptionsTypes)
                 .HasForeignKey(d => d.OptionId)

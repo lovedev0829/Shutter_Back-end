@@ -13,7 +13,9 @@ namespace ShutterManagement.Core.ViewModels.Response
     {
         public Guid? OptionId { get; set; }
         public string? OptionName { get; set; }
+        public Guid? ProductId { get; set; }
         public Guid? ProductTypeId { get; set; }
+        public string? ProductName { get; set; }
         public string? ProductTypeName { get; set; }
         public bool? IsActive { get; set; }
         public List<OptionsType>? Options { get; set; }
@@ -24,5 +26,6 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? OptionType { get; set; }
         public decimal? AdditionalCost { get; set; }
         public bool? IsDefault { get; set; }
+        public string? Unit { get; set; }
     }
 }

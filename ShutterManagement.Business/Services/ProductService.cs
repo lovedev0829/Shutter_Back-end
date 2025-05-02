@@ -6,6 +6,8 @@ using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.Core.ViewModels.Response;
 using ShutterManagement.DAL.Context;
 using ShutterManagement.Services;
+using Stripe;
+using Stripe.Climate;
 using System;
 using System.Collections.Generic;
 using System.Data.Entity;
@@ -22,12 +24,18 @@ namespace ShutterManagement.Business.Services
         private readonly IExpressionService expressionService;
         private readonly IProductComponentService productComponentService;
         private readonly ClaimsProperty claimProperty;
+        private readonly IOption option;
+        private readonly IOptionsTypeService optionsType;
         private readonly IComponentService componentService;
-        public ProductService(ITenantService tenantService, IExpressionService expressionService, IProductComponentService productComponentService, ClaimsProperty claimsProperty,IComponentService componentService)
+        public ProductService(ITenantService tenantService, IExpressionService expressionService, 
+            IProductComponentService productComponentService, ClaimsProperty claimsProperty,IComponentService componentService,
+            IOption option,IOptionsTypeService optionsType )
         {
             this.tenantService = tenantService;
             this.expressionService = expressionService;
             this.claimProperty = claimsProperty;
+            this.option = option;
+            this.optionsType = optionsType;
             this.productComponentService = productComponentService;
         }
         public async Task<IResponseVm<string>> ActiveInActiveProduct(Guid ProductId)
@@ -88,7 +96,6 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
-
 
         public async Task<IResponseVm<string>> Create_Product(CreateProduct model)
         {
@@ -244,7 +251,6 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-
         public async Task<IResponseVm<List<ProductListVm>>> GetAll_Product(Pagination filter)
         {
             IResponseVm<List<ProductListVm>> responseVm = new ResponseVm<List<ProductListVm>>();
@@ -395,6 +401,12 @@ namespace ShutterManagement.Business.Services
             }
             return responseVm;
         }
+
+       
+
+
+
+
     }
 }
 

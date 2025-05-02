@@ -83,7 +83,7 @@ namespace ShutterManagement.Business.Services
                     bool alloptiontypeadded = true;
                     var IsOptionNameExists = await AnyAsync(x => x.OptionName == model.OptionName.Trim()
                     && x.IsActive == true && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId
-                    && x.ProductTypeId == model.ProductTypeId);
+                    && x.ProductId == model.ProductId && x.ProductTypeId == model.ProductTypeId);
                     if (!IsOptionNameExists)
                     {
                         TblOption options = new TblOption
@@ -91,6 +91,7 @@ namespace ShutterManagement.Business.Services
                             OptionId = Guid.NewGuid(),
                             OptionName = model.OptionName.Trim(),
                             ProductTypeId = model.ProductTypeId,
+                            ProductId = model.ProductId,
                             CreatedAt = DateTime.Now,
                             CreatedBy = AppConstant.LoggedInUserID,
                             TenantId = AppConstant.LoggedInTenantId,
@@ -111,6 +112,7 @@ namespace ShutterManagement.Business.Services
                                         OptionId = options.OptionId,
                                         OptionType = item.OptionType.Trim(),
                                         AdditionalCost = item.AdditionalCost,
+                                        Unit = item.Unit.Trim(),
                                         IsDefault = item.IsDefault,
                                         CreatedAt = DateTime.Now,
                                         CreatedBy = AppConstant.LoggedInUserID,
@@ -213,6 +215,8 @@ namespace ShutterManagement.Business.Services
                             OptionId = x.OptionId,
                             IsActive = x.IsActive,
                             OptionName = x.OptionName,
+                            ProductId = x.ProductId,
+                            ProductName = dbContext.TblProducts.Where(y => y.ProductId == x.ProductId).Select(z => z.ProductName).FirstOrDefault(),
                             ProductTypeId = x.ProductTypeId,
                             ProductTypeName = dbContext.MstProductTypes.Where(y => y.ProductId == x.ProductTypeId).Select(z => z.ProductName).FirstOrDefault()
                         })
@@ -228,7 +232,8 @@ namespace ShutterManagement.Business.Services
                                 AdditionalCost = x.AdditionalCost,
                                 IsDefault = x.IsDefault,
                                 OptionType = x.OptionType,
-                                OptionTypeId = x.OptionTypeId
+                                OptionTypeId = x.OptionTypeId,
+                                Unit = x.Unit
                             })
                             .ToList();
                         item.Options = optionsType;
@@ -239,11 +244,12 @@ namespace ShutterManagement.Business.Services
                     var FilterRecords = IsOptionExists
                                     .Where(x =>
                                     (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
-                                     (string.IsNullOrEmpty(filter.ProductType) ? true : (filter.ProductType == x.ProductTypeId.ToString())) &&
+                                     (string.IsNullOrEmpty(filter.ProductType) ? true : (filter.ProductType == x.ProductId.ToString())) &&
                                     (string.IsNullOrEmpty(filter.SearchValue) ? true :
                                     (x.OptionId.ToString() == filter.SearchValue)
-                                    || (x.ProductTypeName ?? "").Contains(filter.SearchValue)
-                                    || (x.OptionName ?? "").Contains(filter.SearchValue)))
+                                    || (x.ProductName ?? "").Contains(filter.SearchValue)
+                                    || (x.OptionName ?? "").Contains(filter.SearchValue)
+                                    || (x.ProductTypeName ?? "").Contains(filter.SearchValue)))
                                     .ToList();
 
 
@@ -255,7 +261,7 @@ namespace ShutterManagement.Business.Services
                     responseVm.IsSuccess = true;
                     responseVm.Data = TakenRecords;
                     responseVm.Message = AppConstant.FetchSuccessMsg;
-                    responseVm.TotalRecords = FilterRecords.Count;
+                    responseVm.TotalRecords = FilterRecords.Count();
                 }
                 else
                 {
@@ -284,7 +290,7 @@ namespace ShutterManagement.Business.Services
                         .FirstOrDefault();
                     var IsOptionNameExists = await AnyAsync(x => x.OptionName == model.OptionName.Trim()
                   && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId
-                  && x.ProductTypeId == model.ProductTypeId && x.OptionId != model.OptionId);
+                  && x.ProductId == model.ProductId && x.ProductTypeId == model.ProductTypeId && x.OptionId != model.OptionId);
                     if (IsOptionExists == null)
                     {
                         responseVm.Message = AppConstant.NoDataFound;
@@ -299,6 +305,7 @@ namespace ShutterManagement.Business.Services
                     {
                         OptionId = Guid.NewGuid(),
                         OptionName = model.OptionName,
+                        ProductId = model.ProductId,
                         ProductTypeId = model.ProductTypeId,
                         CreatedAt = DateTime.Now,
                         CreatedBy = AppConstant.LoggedInUserID,
@@ -312,6 +319,7 @@ namespace ShutterManagement.Business.Services
                         IsOptionExists.OptionName = model.OptionName;
                         IsOptionExists.ModifiedBy = AppConstant.LoggedInUserID;
                         IsOptionExists.UpdatedAt = DateTime.Now;
+                        IsOptionExists.ProductId = model.ProductId;
                         IsOptionExists.ProductTypeId = model.ProductTypeId;
 
                         await Update(IsOptionExists);
@@ -322,12 +330,13 @@ namespace ShutterManagement.Business.Services
                             AdditionalCost = x.AdditionalCost,
                             IsDefault = x.IsDefault,
                             OptionType = x.OptionType,
-                            OptionTypeId = x.OptionTypeId
+                            OptionTypeId = x.OptionTypeId,
+                            Unit = x.Unit
                         }).ToArray();
 
 
-                        var InsertRecords = model.Options.Where(a1 => !OptionsTypes.Any(a2 => a1.OptionType == a2.OptionType && a1.AdditionalCost == a2.AdditionalCost && a1.IsDefault == a2.IsDefault)).ToList();
-                        var DeleteRecords = OptionsTypes.Where(a1 => !model.Options.Any(a2 => a1.OptionType == a2.OptionType && a1.AdditionalCost == a2.AdditionalCost && a1.IsDefault == a2.IsDefault)).ToList();
+                        var InsertRecords = model.Options.Where(a1 => !OptionsTypes.Any(a2 => a1.OptionType == a2.OptionType && a1.AdditionalCost == a2.AdditionalCost && a1.IsDefault == a2.IsDefault && a1.Unit == a2.Unit)).ToList();
+                        var DeleteRecords = OptionsTypes.Where(a1 => !model.Options.Any(a2 => a1.OptionType == a2.OptionType && a1.AdditionalCost == a2.AdditionalCost && a1.IsDefault == a2.IsDefault && a1.Unit == a2.Unit)).ToList();
 
                         foreach (var item in DeleteRecords)
                         {
@@ -349,6 +358,7 @@ namespace ShutterManagement.Business.Services
                                     OptionId = IsOptionExists.OptionId,
                                     OptionType = item.OptionType,
                                     AdditionalCost = item.AdditionalCost,
+                                    Unit = item.Unit,
                                     IsDefault = item.IsDefault,
                                     CreatedAt = DateTime.Now,
                                     CreatedBy = AppConstant.LoggedInUserID,
@@ -358,9 +368,6 @@ namespace ShutterManagement.Business.Services
                                 await optionsTypeService.Add(optionsType);
                             }
                         }
-
-
-
                         responseVm.IsSuccess = true;
                         responseVm.Message = AppConstant.UpdateSuccessMsg;
                     }

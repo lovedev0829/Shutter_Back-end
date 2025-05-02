@@ -15,6 +15,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Data;
+using System.Data.Entity.Core.Metadata.Edm;
 using System.Threading.Tasks;
 
 namespace ShutterManagement.Services
@@ -138,13 +139,12 @@ namespace ShutterManagement.Services
                         };
                         await userRoleService.Add(userRole);
 
-                        var Templateid = Guid.Parse("1916A280-109F-4829-8A70-0AFA94146A5F").ToString().ToLower();
                         var Tenantcode = dbContext.TblTenants.Where(x => x.IsDelete == false && x.TenantId==AppConstant.LoggedInTenantId).FirstOrDefault();
                         var tenantInfoDetails = tenantBrandingService.GetAllQuerable().Where(x => x.Id == Tenantcode.BrandingInfo && x.IsActive == true).FirstOrDefault();
 
                         WelcomeEmailModel welcomemodel = new WelcomeEmailModel
                         {
-                            Name = UserDetails.FirstName + " " + UserDetails.LastName ?? "",
+                            Name = UserDetails.FirstName + " " + UserDetails.LastName ?? "" + UserDetails.Suffix ?? "",
                             UserName = UserDetails.Email ?? "",
                             Password = UserDetails.Password ?? "",
                             CompanyName = tenantInfoDetails?.CompanyName ?? "",
@@ -153,7 +153,7 @@ namespace ShutterManagement.Services
                             color = tenantInfoDetails?.PrimaryColor ?? ""
                         };
 
-                        var WelcomeTemplate = dbContext.TblTemplates.Where(x => x.IsDelete == false && x.TemplateId.ToString().ToLower() == Templateid).FirstOrDefault();
+                        var WelcomeTemplate = dbContext.TblTemplates.Where(x => x.IsDelete == false && x.TemplateCategory.ToLower() == EnumValue.GetEnumValue(EmailTemplateType.WelcomeEmail)).FirstOrDefault();
                         var emailContent = EmailHelper.ReplacePlaceholdersForlWelcomeEmail(WelcomeTemplate?.TemplateValue, welcomemodel);
                         EmailHelper.WelcomeEmail(UserDetails.Email, emailContent);
 
@@ -422,6 +422,7 @@ namespace ShutterManagement.Services
                         UserName = user.Username,
                         Phone = user.Phone,
                         JobTitle = user.JobTitleId,
+                        TenantId = user.TenantId,
                         IsActive = user.IsActive
                     };
                     users.JobTitleName = dbContext.MstJobTitles
@@ -445,6 +446,8 @@ namespace ShutterManagement.Services
                 var FilterRecords = UsersList
                                     .Where(x =>
                                     (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
+                                    (string.IsNullOrEmpty(filter.SearchValue) ||
+                                    string.IsNullOrEmpty(filter.TenantId) || filter.TenantId == x.TenantId.ToString()) &&
                                     (filter.SearchValue != "" ?
                                     (x.UserId.ToString() == filter.SearchValue) ||
                                     ((x.Email ?? "").ToLower().Contains(filter.SearchValue)

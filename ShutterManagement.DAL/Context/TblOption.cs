@@ -25,11 +25,15 @@ public partial class TblOption
 
     public Guid? TenantId { get; set; }
 
-    public Guid? ProductTypeId { get; set; }
+    public Guid? ProductId { get; set; }
 
     public bool? IsDefault { get; set; }
 
+    public Guid? ProductTypeId { get; set; }
+
     public virtual MstProductType? ProductType { get; set; }
+
+    public virtual ICollection<TblManagePartnersProductsOption> TblManagePartnersProductsOptions { get; set; } = new List<TblManagePartnersProductsOption>();
 
     public virtual ICollection<TblOptionsType> TblOptionsTypes { get; set; } = new List<TblOptionsType>();
 

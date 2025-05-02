@@ -38,7 +38,7 @@ namespace ShutterManagement.Business.Services
         private readonly IContactService contact;
         private readonly GHLService_v2 gHLService_V2;
         private readonly JobStatusAndStageMapping statusAndStageMapping;
-        private  string BaseUrl = AppConstant.GHL_BaseAddress;
+        private string BaseUrl = AppConstant.GHL_BaseAddress;
 
         public JobService(ShutterDBContext context, ClaimsProperty claimsProperty, IAddress address,
             ITenantService tenantService,INotificationService notification, IGHLConfiguration gHLConfiguration,
