@@ -1081,7 +1081,11 @@ namespace ShutterManagement.Business.Services
                     return CreateErrorResponse(AppConstant.TenantNotFound);
                 }
 
-                Guid[] ids = string.IsNullOrEmpty(windowProductId) ? null : new Guid[] { Guid.Parse(windowProductId) };
+                Guid[] ids = windowProductId?.Split(',')
+                .Where(id => !string.IsNullOrWhiteSpace(id))
+                .Select(id => Guid.Parse(id))
+                 .ToArray();
+
                 var estimateResponse = !string.IsNullOrEmpty(estimationId)
                     ? await estimationBreakdownService.GetProductBreakdown(Guid.Parse(estimationId), null)
                     : await estimateService.BuildEstimate(ids, true);
