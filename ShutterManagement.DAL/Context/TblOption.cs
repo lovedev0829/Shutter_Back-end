@@ -25,11 +25,13 @@ public partial class TblOption
 
     public Guid? TenantId { get; set; }
 
-    public Guid? ProductId { get; set; }
-
     public bool? IsDefault { get; set; }
 
     public Guid? ProductTypeId { get; set; }
+
+    public Guid? ProductId { get; set; }
+
+    public virtual TblProduct? Product { get; set; }
 
     public virtual MstProductType? ProductType { get; set; }
 
