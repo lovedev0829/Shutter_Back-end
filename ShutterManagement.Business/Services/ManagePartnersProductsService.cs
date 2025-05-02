@@ -13,6 +13,7 @@ using Microsoft.Extensions.Options;
 using ShutterManagement.Core.ViewModels.Response;
 using ShutterManagement.Business.Services;
 using Org.BouncyCastle.Utilities;
+using ShutterManagement.Core.Common;
 
 namespace ShutterManagement.Business.Services
 {
@@ -222,8 +223,8 @@ namespace ShutterManagement.Business.Services
                                     into ManageProducts
                                     from p2 in ManageProducts.DefaultIfEmpty()
                                     where p1.IsActive == true && p1.IsDelete == false && p1.TenantId == AppConstant.LoggedInTenantId
-                                    && (string.IsNullOrEmpty(filter.TenantId) ? true : p2.TenantId.ToString() == filter.TenantId)
-                                    && (string.IsNullOrEmpty(filter.ProductType) ? true : p1.ProductType.ToString() == filter.ProductType)
+                                    //&& (string.IsNullOrEmpty(filter.TenantId) ? true : p2.TenantId.ToString() == filter.TenantId)
+                                    && p1.ProductType.ToString() == filter.ProductType
                                     select new ProductOptionsVm
                                     {
                                         ProductId = p1.ProductId,
@@ -232,6 +233,7 @@ namespace ShutterManagement.Business.Services
                                         MaxPartnerPrice = p2.MaxPartnerPrice ?? 0.0m,
                                         IsAvailable = p2.IsAvailable ?? false,
                                         ManageProductId = p2.ManageProductId.ToString() ?? null,
+                                        ManageProductTenantId = p1.TenantId.ToString() ?? null
                                     }).ToList();
 
                     var productIds = products.Select(p => p.ProductId).ToList();
@@ -258,6 +260,7 @@ namespace ShutterManagement.Business.Services
                                               OptionTypeId = o1.OptionTypeId,
                                               OptionTypeName = o1.OptionType,
                                               OptionId = o1.OptionId,
+                                              Price = o1.AdditionalCost ?? 0.0m,
                                               WholeSalePrice = o2.WholeSalePrice ?? 0.0m,
                                               MaxPrice = o2.MaxPrice ?? 0.0m,
                                               IsAvailable = o2.IsAvailable ?? false
@@ -281,9 +284,19 @@ namespace ShutterManagement.Business.Services
                                     .ToList()
                             }).ToList()
                     }).ToList();
+                    filter.SearchValue = filter.SearchValue?.Trim().ToLower();
+                    var FilterRecords = productList
+                              .Where(x =>
+                              (string.IsNullOrEmpty(filter.TenantId) ? true : (filter.TenantId == x.ManageProductTenantId?.ToString())) &&
+                              (string.IsNullOrEmpty(filter.SearchValue) ? true :
+                                 (x.ProductId.ToString() == filter.SearchValue) ||
+                                 (x.ProductName?.ToString() == filter.SearchValue))
+                             ).ToList();
+
+                    var TakenRecords = Paginate.Pagination(FilterRecords, filter);
 
                     responseVm.IsSuccess = true;
-                    responseVm.Data = productList;
+                    responseVm.Data = TakenRecords;
                     responseVm.Message = AppConstant.FetchSuccessMsg;
                     responseVm.TotalRecords = productList.Count();
                 }
@@ -291,13 +304,15 @@ namespace ShutterManagement.Business.Services
                 {
                     var products = (from p1 in dbContext.TblManagePartnersProducts
                                     join p2 in dbContext.TblProducts on p1.ProductId equals p2.ProductId
-                                    where p1.IsActive == true && p1.IsDelete == false && p1.TenantId == AppConstant.LoggedInTenantId && p1.IsAvailable == true
+                                    where p1.IsActive == true && p1.IsDelete == false && p1.TenantId == AppConstant.LoggedInTenantId && 
+                                    p1.IsAvailable == true && p2.ProductType == filter.ProductType
                                     select new ProductOptionsVm
                                     {
                                         ProductId = p1.ProductId,
                                         ProductName = p2.ProductName,
                                         PartnerSellingPrice = p1.PartnerSellingPrice ?? 0.0m,
                                         ManageProductId = p1.ManageProductId.ToString() ?? null,
+                                        WholeSalePrice = p1.WholeSalePrice ?? 0.0m
                                     }).ToList();
 
                     var productIds = products.Select(p => p.ProductId).ToList();
@@ -327,7 +342,9 @@ namespace ShutterManagement.Business.Services
                                               OptionTypeId = o1.OptionTypeId,
                                               OptionTypeName = o2.OptionType,
                                               OptionId = o1.OptionId,
+                                              Price = o2.AdditionalCost,
                                               PartnerSellingPrice = o1.PartnerSellingPrice ?? 0.0m,
+                                              WholeSalePrice = o1.WholeSalePrice ?? 0.0m
                                           }).ToList();
 
                     var productList = products.Select(product => new ProductOptionsVm
@@ -348,7 +365,16 @@ namespace ShutterManagement.Business.Services
                                     .ToList()
                             }).ToList()
                     }).ToList();
+                    //filter.SearchValue = filter.SearchValue?.Trim().ToLower();
+                    //var FilterRecords = productList
+                    //          .Where(x =>
+                    //          (string.IsNullOrEmpty(filter.TenantId) ? true : (filter.TenantId == x.ManageProductTenantId?.ToString())) &&
+                    //          (string.IsNullOrEmpty(filter.SearchValue) ? true :
+                    //             (x.ProductId.ToString() == filter.SearchValue) ||
+                    //             (x.ProductName?.ToString() == filter.SearchValue))
+                    //         ).ToList();
 
+                    //var TakenRecords = Paginate.Pagination(FilterRecords, filter);
 
                     responseVm.IsSuccess = true;
                     responseVm.Data = productList;
