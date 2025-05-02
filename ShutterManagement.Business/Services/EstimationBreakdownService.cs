@@ -11,6 +11,7 @@ using ShutterManagement.Core.SPModel;
 using ShutterManagement.Core;
 using static ShutterManagement.Business.Services.ReportServices;
 using System.ComponentModel;
+using Microsoft.IdentityModel.Tokens;
 
 namespace ShutterManagement.Business.Services
 {
@@ -182,13 +183,22 @@ namespace ShutterManagement.Business.Services
                     .ToArray();
 
                 var estimateResponse = await estimateService.BuildEstimate(windowProductIds, true, EstimationId.ToString(), true);
-
-                if (!string.IsNullOrEmpty(WindowProductId))
+                List<Guid> guidList = WindowProductId.Split(',')
+                           .Select(id => Guid.Parse(id.Trim()))
+                           .ToList();
+                if (guidList != null)
                 {
-                    estimateResponse.Data = estimateResponse.Data.Where(item => item.WindowProdcutId.ToString() == WindowProductId).ToList();
-                }
+                    foreach (var item in guidList)
+                    {
+                        var estimatebreakdown = estimateResponse.Data.Where(item => item.WindowProdcutId.ToString() == item.WindowProdcutId.ToString());
+                        //    .Select new WindowProdcutDetailsForEstimate
+                        //    {
 
-                responseVm.IsSuccess = true;
+                        //}.FirstOrDefault();
+                    }
+                    }
+
+                    responseVm.IsSuccess = true;
                 responseVm.Data = estimateResponse.Data;
                 responseVm.Message = AppConstant.FetchSuccessMsg;
                 responseVm.TotalRecords = estimateResponse.TotalRecords;

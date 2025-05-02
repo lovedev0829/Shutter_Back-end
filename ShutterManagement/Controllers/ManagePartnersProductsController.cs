@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core.ViewModels.Request;
@@ -18,7 +19,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("Create")]
-
+        [Authorize(Roles = "ManagePartnerProductEdit")]
         public async Task<IActionResult> CreateManagePartnerProduct(CreateManagePartnerProduct createManagePartnerProduct)
         {
             var res = await managePartnersProducts.CreateManagePartnerProduct(createManagePartnerProduct);    
@@ -26,9 +27,9 @@ namespace ShutterManagement.Controllers
         }
 
 
-        [HttpGet]
+        [HttpPost]
         [Route("GetAllManagePartnerProduct")]
-
+        [Authorize(Roles = "ManagePartnerProductView")]
         public async Task<IActionResult> GetAllManagePartnerProduct(Pagination filter)
         {
             var res = await managePartnersProducts.GetAllProductOptions(filter);
