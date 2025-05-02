@@ -197,9 +197,9 @@ namespace ShutterManagement.Business.Services
                     color = model.PrimaryColor ?? ""
                 };
 
-                var WelcomeTemplate = dbContext.TblTemplates
+                var WelcomeTemplate =  dbContext.TblTemplates
                     .FirstOrDefault(x => x.IsDelete==false &&
-                        x.TemplateName.ToLower() == EnumValue.GetEnumValue(EmailTemplateType.WelcomeEmail));
+                        x.TemplateName.ToLower() == EnumValue.GetEnumValue(EmailTemplateType.WelcomeEmail).ToLower());
 
                 if (WelcomeTemplate != null)
                 {
