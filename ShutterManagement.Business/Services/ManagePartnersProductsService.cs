@@ -43,21 +43,19 @@ namespace ShutterManagement.Business.Services
 
                 if (!IsSubtenant)
                 {
-                    foreach (var items in model.managerPartnerProducts)
+                    var IsProductExist = await productService.AnyAsync(x => x.ProductId == model.ProductId && x.IsActive == true
+                       && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
+                    if (IsProductExist)
                     {
-                        var IsProductExist = await productService.AnyAsync(x => x.ProductId == items.ProductId && x.IsActive == true
-                           && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
-                        if (IsProductExist)
-                        {
-                            await UpdateManagePartnerProduct(items);
-                        }
-                        else
-                        {
-                            IsSuccess = true;
-                            message += $" Some Products does not exist in the Tenant. ";
-                        }
+                        await UpdateManagePartnerProduct(model);
                     }
-                    if(IsSuccess)
+                    else
+                    {
+                        IsSuccess = true;
+                        message += $" Some Products does not exist in the Tenant. ";
+                    }
+
+                    if (IsSuccess)
                     {
                         responseVm.Message = message;
                         return responseVm;
@@ -65,49 +63,49 @@ namespace ShutterManagement.Business.Services
                     responseVm.IsSuccess = true;
                     responseVm.Message = "Manage Product for Partner successfully.";
                 }
+
                 else
                 {
-                    foreach (var items in model.managerPartnerProducts)
+                    bool IsProductExist = await productService.AnyAsync(x => x.ProductId == model.ProductId && x.IsActive == true
+                        && x.IsDelete == false && x.TenantId.ToString() == AppConstant.LoggedInParentTenantId);
+                    if (IsProductExist)
                     {
-                        bool IsProductExist = await productService.AnyAsync(x => x.ProductId == items.ProductId && x.IsActive == true
-                            && x.IsDelete == false && x.TenantId.ToString() == AppConstant.LoggedInParentTenantId);
-                        if (IsProductExist)
+                        var IsManagePartnerProductExist = GetAllQuerable().Where(x => x.ProductId == model.ProductId &&
+                        x.IsActive == true && x.IsDelete == false && x.IsAvailable == true).FirstOrDefault();
+                        if (IsManagePartnerProductExist != null)
                         {
-                            var IsManagePartnerProductExist = GetAllQuerable().Where(x => x.ProductId == items.ProductId &&
-                            x.IsActive == true && x.IsDelete == false && x.IsAvailable == true).FirstOrDefault();
-                            if (IsManagePartnerProductExist != null)
+                            IsManagePartnerProductExist.PartnerSellingPrice = model.PartnerSellingPrice;
+                            await Update(IsManagePartnerProductExist);
+                            foreach (var item in model.ManagePartnerProductOptions)
                             {
-                                IsManagePartnerProductExist.PartnerSellingPrice = items.PartnerSellingPrice;
-                                await Update(IsManagePartnerProductExist);
-                                foreach (var item in items.ManagePartnerProductOptions)
+                                var IsManagepartneroptiontype = managePartnersProductsOptions.GetAllQuerable().
+                                    Where(x => x.OptionId == item.OptionId && x.OptionTypeId == item.OptionTypeId && x.ManageProductId.ToString().ToLower()
+                                    == IsManagePartnerProductExist.ManageProductId.ToString().ToLower() &&
+                                    x.IsActive == true && x.IsDelete == false && x.IsAvailable == true).FirstOrDefault();
+                                if (IsManagepartneroptiontype != null)
                                 {
-                                    var IsManagepartneroptiontype = managePartnersProductsOptions.GetAllQuerable().
-                                        Where(x => x.OptionId == item.OptionId && x.OptionTypeId == item.OptionTypeId && x.ManageProductId.ToString().ToLower()
-                                        == IsManagePartnerProductExist.ManageProductId.ToString().ToLower() &&
-                                        x.IsActive == true && x.IsDelete == false && x.IsAvailable == true).FirstOrDefault();
-                                    if (IsManagepartneroptiontype != null)
-                                    {
-                                        IsManagepartneroptiontype.PartnerSellingPrice = item.PartnerSellingPrice;
-                                        await managePartnersProductsOptions.Update(IsManagepartneroptiontype);
-                                    }
+                                    IsManagepartneroptiontype.PartnerSellingPrice = item.PartnerSellingPrice;
+                                    await managePartnersProductsOptions.Update(IsManagepartneroptiontype);
                                 }
                             }
                         }
-                        else
-                        {
-                            IsSuccess = true;
-                            message = message += $"Some Products does not exist in the Parent Tenant.";
-                        }
-                        if(IsSuccess)
-                        {
-                            responseVm.Message = message;
-                            return responseVm;
-                        }
-                        responseVm.IsSuccess = true;
-                        responseVm.Message = "Manage Product successfully."; ;
                     }
+                    else
+                    {
+                        IsSuccess = true;
+                        message = message += $"Some Products does not exist in the Parent Tenant.";
+                    }
+                    if (IsSuccess)
+                    {
+                        responseVm.Message = message;
+                        return responseVm;
+                    }
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = "Manage Product successfully."; ;
+
                 }
             }
+
             catch (Exception ex)
             {
                 responseVm.Message = AppConstant.ExceptionError + ex.Message;
@@ -115,7 +113,7 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        private async Task UpdateManagePartnerProduct(ManagerPartnerProducts items)
+        private async Task UpdateManagePartnerProduct(CreateManagePartnerProduct items)
         {
             var IsManagePartnerProductExist = GetAllQuerable().Where(x => x.ProductId == items.ProductId &&
                 x.IsActive == true && x.IsDelete == false).FirstOrDefault();
@@ -159,11 +157,11 @@ namespace ShutterManagement.Business.Services
             }
             else
             {
-                await CreateNewManagePartnerProductOption(item,manageProductId);
+                await CreateNewManagePartnerProductOption(item, manageProductId);
             }
         }
 
-        private async Task CreateNewManagePartnerProduct(ManagerPartnerProducts model)
+        private async Task CreateNewManagePartnerProduct(CreateManagePartnerProduct model)
         {
             TblManagePartnersProduct managePartnersProduct = new TblManagePartnersProduct
             {
@@ -225,6 +223,7 @@ namespace ShutterManagement.Business.Services
                                     from p2 in ManageProducts.DefaultIfEmpty()
                                     where p1.IsActive == true && p1.IsDelete == false && p1.TenantId == AppConstant.LoggedInTenantId
                                     && (string.IsNullOrEmpty(filter.TenantId) ? true : p2.TenantId.ToString() == filter.TenantId)
+                                    && (string.IsNullOrEmpty(filter.ProductType) ? true : p1.ProductType.ToString() == filter.ProductType)
                                     select new ProductOptionsVm
                                     {
                                         ProductId = p1.ProductId,
