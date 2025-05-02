@@ -1235,6 +1235,10 @@ public partial class ShutterDBContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
 
+            entity.HasOne(d => d.Product).WithMany(p => p.TblOptions)
+                .HasForeignKey(d => d.ProductId)
+                .HasConstraintName("FK_TblOption_Product");
+
             entity.HasOne(d => d.ProductType).WithMany(p => p.TblOptions)
                 .HasForeignKey(d => d.ProductTypeId)
                 .HasConstraintName("FK_TblOption_ProductType");

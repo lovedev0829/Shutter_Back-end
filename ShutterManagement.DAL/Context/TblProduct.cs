@@ -47,6 +47,8 @@ public partial class TblProduct
 
     public virtual ICollection<TblManagePartnersProduct> TblManagePartnersProducts { get; set; } = new List<TblManagePartnersProduct>();
 
+    public virtual ICollection<TblOption> TblOptions { get; set; } = new List<TblOption>();
+
     public virtual ICollection<TblProductComponent> TblProductComponents { get; set; } = new List<TblProductComponent>();
 
     public virtual ICollection<TblWindowProduct> TblWindowProducts { get; set; } = new List<TblWindowProduct>();
