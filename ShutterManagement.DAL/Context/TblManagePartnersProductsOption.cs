@@ -13,7 +13,7 @@ public partial class TblManagePartnersProductsOption
 
     public Guid? OptionTypeId { get; set; }
 
-    public bool? IsEnable { get; set; }
+    public bool? IsAvailable { get; set; }
 
     public decimal? WholeSalePrice { get; set; }
 

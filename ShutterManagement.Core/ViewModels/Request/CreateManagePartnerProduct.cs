@@ -26,7 +26,7 @@ namespace ShutterManagement.Core.ViewModels.Request
     {
         public Guid? OptionId { get; set; }
         public Guid? OptionTypeId { get; set; }
-        public bool? IsEnable { get; set; }
+        public bool? IsAvailable { get; set; }
         public decimal? WholeSalePrice { get; set; }
         public decimal? MaxPrice { get; set; }
         public decimal? PartnerSellingPrice { get; set; }

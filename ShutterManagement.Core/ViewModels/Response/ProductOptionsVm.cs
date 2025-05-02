@@ -38,7 +38,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public decimal? Price { get; set; }
         public decimal? WholeSalePrice { get; set; }
         public decimal? MaxPrice { get; set; }
-        public bool? IsEnable { get; set; }
+        public bool? IsAvailable { get; set; }
         public decimal? PartnerSellingPrice { get; set; }
     }
 }

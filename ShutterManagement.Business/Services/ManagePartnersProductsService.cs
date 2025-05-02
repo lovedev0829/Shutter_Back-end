@@ -84,7 +84,7 @@ namespace ShutterManagement.Business.Services
                                     var IsManagepartneroptiontype = managePartnersProductsOptions.GetAllQuerable().
                                         Where(x => x.OptionId == item.OptionId && x.OptionTypeId == item.OptionTypeId && x.ManageProductId.ToString().ToLower()
                                         == IsManagePartnerProductExist.ManageProductId.ToString().ToLower() &&
-                                        x.IsActive == true && x.IsDelete == false && x.IsEnable == true).FirstOrDefault();
+                                        x.IsActive == true && x.IsDelete == false && x.IsAvailable == true).FirstOrDefault();
                                     if (IsManagepartneroptiontype != null)
                                     {
                                         IsManagepartneroptiontype.PartnerSellingPrice = item.PartnerSellingPrice;
@@ -150,7 +150,7 @@ namespace ShutterManagement.Business.Services
 
             if (IsManagepartneroptiontype != null)
             {
-                IsManagepartneroptiontype.IsEnable = item.IsEnable;
+                IsManagepartneroptiontype.IsAvailable = item.IsAvailable;
                 IsManagepartneroptiontype.WholeSalePrice = item.WholeSalePrice;
                 IsManagepartneroptiontype.MaxPrice = item.MaxPrice;
                 IsManagepartneroptiontype.ModifiedBy = AppConstant.LoggedInUserID;
@@ -195,7 +195,7 @@ namespace ShutterManagement.Business.Services
                 ManageProductId = manageProductId,
                 OptionId = model.OptionId,
                 OptionTypeId = model.OptionTypeId,
-                IsEnable = model.IsEnable,
+                IsAvailable = model.IsAvailable,
                 WholeSalePrice = model.WholeSalePrice,
                 MaxPrice = model.MaxPrice,
                 CreatedAt = DateTime.Now,
@@ -261,7 +261,7 @@ namespace ShutterManagement.Business.Services
                                               OptionId = o1.OptionId,
                                               WholeSalePrice = o2.WholeSalePrice ?? 0.0m,
                                               MaxPrice = o2.MaxPrice ?? 0.0m,
-                                              IsEnable = o2.IsEnable ?? false
+                                              IsAvailable = o2.IsAvailable ?? false
                                           }).ToList();
 
                     var productList = products.Select(product => new ProductOptionsVm
