@@ -355,8 +355,8 @@ namespace ShutterManagement.Business.Services
                             where p1.IsActive == true &&
                                   p1.IsDelete == false &&
                                   p1.TenantId == AppConstant.LoggedInTenantId &&
-                                  p1.ProductType.ToString() == filter.ProductType
-                                 &&  p2.TenantId.ToString() == filter.TenantId ? true : false
+                                  p1.ProductType.ToString() == filter.ProductType &&
+                                 (string.IsNullOrEmpty(filter.TenantId) || (p2 != null && p2.TenantId.ToString() == filter.TenantId))
                             select new ProductOptionsVm
                             {
                                 ProductId = p1.ProductId,
