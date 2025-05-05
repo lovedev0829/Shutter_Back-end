@@ -223,7 +223,6 @@ namespace ShutterManagement.Business.Services
                                     into ManageProducts
                                     from p2 in ManageProducts.DefaultIfEmpty()
                                     where p1.IsActive == true && p1.IsDelete == false && p1.TenantId == AppConstant.LoggedInTenantId
-                                    //&& (string.IsNullOrEmpty(filter.TenantId) ? true : p2.TenantId.ToString() == filter.TenantId)
                                     && p1.ProductType.ToString() == filter.ProductType
                                     select new ProductOptionsVm
                                     {
