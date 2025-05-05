@@ -44,31 +44,23 @@ namespace ShutterManagement.Business.Services
 
                 if (!IsSubtenant)
                 {
+                    if (string.IsNullOrEmpty(model.TenantId))
+                    {
+                        responseVm.Message = $"First Select Partner. ";
+                        return responseVm;
+                    }
                     var IsProductExist = await productService.AnyAsync(x => x.ProductId == model.ProductId && x.IsActive == true
                        && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
                     if (IsProductExist)
                     {
-                        if (string.IsNullOrEmpty(model.TenantId))
-                        {
-                            IsSuccess = false;
-                            message = $"First Select Partner. ";
-                        }
-                        else
-                        {
-                            await UpdateManagePartnerProduct(model);
-                        }
+                       await UpdateManagePartnerProduct(model);
                     }
                     else
                     {
-                        IsSuccess = true;
-                        message += $" Some Products does not exist in the Tenant. ";
-                    }
-
-                    if (IsSuccess)
-                    {
-                        responseVm.Message = message;
+                        responseVm.Message += $" Some Products does not exist in the Tenant. ";
                         return responseVm;
                     }
+                   
                     responseVm.IsSuccess = true;
                     responseVm.Message = "Manage Product for Partner successfully.";
                 }
@@ -240,6 +232,7 @@ namespace ShutterManagement.Business.Services
                                 ? GetManagePartnerProductData(filter)
                                 : GetDefaultProductData(filter);
 
+                        productlist.DistinctBy(x => x.ProductName);
                         responseVm.IsSuccess = true;
                         responseVm.Data = productlist;
                         responseVm.Message = AppConstant.FetchSuccessMsg;
@@ -348,9 +341,8 @@ namespace ShutterManagement.Business.Services
             }
 
             var products = (from p1 in dbContext.TblProducts
-                            join p2 in dbContext.TblManagePartnersProducts
-                                on p1.ProductId equals p2.ProductId into joined
-                            from p2 in joined.DefaultIfEmpty()
+                            join p2 in dbContext.TblManagePartnersProducts on p1.ProductId  equals p2.ProductId into joined
+                            from p2 in joined.Where(x => string.IsNullOrEmpty(filter.TenantId) || x.TenantId.ToString() == filter.TenantId).DefaultIfEmpty()
                             where p1.IsActive == true &&
                                   p1.IsDelete == false &&
                                   p1.TenantId == AppConstant.LoggedInTenantId &&
@@ -384,7 +376,6 @@ namespace ShutterManagement.Business.Services
             var optionTypes = (from o1 in dbContext.TblOptionsTypes
                                join o2 in dbContext.TblManagePartnersProductsOptions on o1.OptionTypeId equals o2.OptionTypeId into joined
                                from o2 in joined.DefaultIfEmpty()
-                               join o3 in dbContext.TblManagePartnersProducts on o2.ManageProductId equals o3.ManageProductId 
                                where o1.IsActive == true && o1.IsDelete == false && optionIds.Contains(o1.OptionId)
                                select new ProductOptionTypeList
                                {
