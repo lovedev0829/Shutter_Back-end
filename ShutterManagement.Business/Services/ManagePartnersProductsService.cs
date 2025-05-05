@@ -233,7 +233,7 @@ namespace ShutterManagement.Business.Services
                                         MaxPartnerPrice = p2.MaxPartnerPrice ?? 0.0m,
                                         IsAvailable = p2.IsAvailable ?? false,
                                         ManageProductId = p2.ManageProductId.ToString() ?? null,
-                                        ManageProductTenantId = p1.TenantId.ToString() ?? null
+                                        ManageProductTenantId = p2.TenantId.ToString() ?? null
                                     }).ToList();
 
                     var productIds = products.Select(p => p.ProductId).ToList();
@@ -273,6 +273,7 @@ namespace ShutterManagement.Business.Services
                         IsAvailable = product.IsAvailable,
                         WholeSalePrice = product.WholeSalePrice,
                         MaxPartnerPrice = product.MaxPartnerPrice,
+                        ManageProductTenantId = product.ManageProductTenantId,
                         Options = allOptions
                             .Where(opt => opt.ProductId == product.ProductId)
                             .Select(opt => new ProductOptionsList
@@ -287,7 +288,7 @@ namespace ShutterManagement.Business.Services
                     filter.SearchValue = filter.SearchValue?.Trim().ToLower();
                     var FilterRecords = productList
                               .Where(x =>
-                              (string.IsNullOrEmpty(filter.TenantId) ? true : (filter.TenantId == x.ManageProductTenantId?.ToString())) &&
+                              (string.IsNullOrEmpty(filter.TenantId) ? true : (filter.TenantId.ToLower() == x.ManageProductTenantId?.ToLower())) &&
                               (string.IsNullOrEmpty(filter.SearchValue) ? true :
                                  (x.ProductId.ToString() == filter.SearchValue) ||
                                  (x.ProductName?.ToString() == filter.SearchValue))
@@ -354,6 +355,7 @@ namespace ShutterManagement.Business.Services
                         IsAvailable = product.IsAvailable,
                         WholeSalePrice = product.WholeSalePrice,
                         MaxPartnerPrice = product.MaxPartnerPrice,
+                        PartnerSellingPrice = product.PartnerSellingPrice,
                         Options = allOptions
                             .Where(opt => opt.ProductId == product.ProductId)
                             .Select(opt => new ProductOptionsList
