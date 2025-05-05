@@ -48,7 +48,15 @@ namespace ShutterManagement.Business.Services
                        && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
                     if (IsProductExist)
                     {
-                        await UpdateManagePartnerProduct(model);
+                        if (string.IsNullOrEmpty(model.TenantId))
+                        {
+                            IsSuccess = false;
+                            message = $"First Select Partner. ";
+                        }
+                        else
+                        {
+                            await UpdateManagePartnerProduct(model);
+                        }
                     }
                     else
                     {
@@ -72,7 +80,7 @@ namespace ShutterManagement.Business.Services
                     if (IsProductExist)
                     {
                         var IsManagePartnerProductExist = GetAllQuerable().Where(x => x.ProductId == model.ProductId &&
-                        x.IsActive == true && x.IsDelete == false && x.IsAvailable == true).FirstOrDefault();
+                        x.IsActive == true && x.IsDelete == false && x.IsAvailable == true && x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
                         if (IsManagePartnerProductExist != null)
                         {
                             IsManagePartnerProductExist.PartnerSellingPrice = model.PartnerSellingPrice;
@@ -117,7 +125,7 @@ namespace ShutterManagement.Business.Services
         private async Task UpdateManagePartnerProduct(CreateManagePartnerProduct items)
         {
             var IsManagePartnerProductExist = GetAllQuerable().Where(x => x.ProductId == items.ProductId &&
-                x.IsActive == true && x.IsDelete == false).FirstOrDefault();
+                x.IsActive == true && x.IsDelete == false && x.TenantId.ToString().ToLower() == items.TenantId.ToLower()).FirstOrDefault();
 
             if (IsManagePartnerProductExist != null)
             {
@@ -211,6 +219,7 @@ namespace ShutterManagement.Business.Services
 
             try
             {
+                List<ProductOptionsVm> productlist = new List<ProductOptionsVm>();
                 bool IsTenantorSubtenant = await tenantService.AnyAsync(x =>
                     x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId != null &&
                     x.IsDelete == false &&
@@ -218,93 +227,41 @@ namespace ShutterManagement.Business.Services
 
                 if (!IsTenantorSubtenant)
                 {
-                    var products = (from p1 in dbContext.TblProducts
-                                    join p2 in dbContext.TblManagePartnersProducts on p1.ProductId equals p2.ProductId
-                                    into ManageProducts
-                                    from p2 in ManageProducts.DefaultIfEmpty()
-                                    where p1.IsActive == true && p1.IsDelete == false && p1.TenantId == AppConstant.LoggedInTenantId
-                                    && p1.ProductType.ToString() == filter.ProductType
-                                    select new ProductOptionsVm
-                                    {
-                                        ProductId = p1.ProductId,
-                                        ProductName = p1.ProductName,
-                                        WholeSalePrice = p2.WholeSalePrice ?? 0.0m,
-                                        MaxPartnerPrice = p2.MaxPartnerPrice ?? 0.0m,
-                                        IsAvailable = p2.IsAvailable ?? false,
-                                        ManageProductId = p2.ManageProductId.ToString() ?? null,
-                                        ManageProductTenantId = p2.TenantId.ToString() ?? null
-                                    }).ToList();
-
-                    var productIds = products.Select(p => p.ProductId).ToList();
-
-                    var allOptions = dbContext.TblOptions
-                        .Where(o => o.IsDelete == false && o.IsActive == true && productIds.Contains((Guid)o.ProductId))
-                        .Select(o => new ProductOptionsList
-                        {
-                            OptionId = o.OptionId,
-                            ProductId = o.ProductId,
-                            OptionName = o.OptionName
-                        }).ToList();
-
-                    var optionIds = allOptions.Select(o => o.OptionId).ToList();
-
-                    var allOptionTypes = (from o1 in dbContext.TblOptionsTypes
-                                          join o2 in dbContext.TblManagePartnersProductsOptions
-                                              on o1.OptionTypeId equals o2.OptionTypeId
-                                              into ManageProductsOptions
-                                          from o2 in ManageProductsOptions.DefaultIfEmpty()
-                                          where o1.IsDelete == false && o1.IsActive == true && optionIds.Contains(o1.OptionId)
-                                          select new ProductOptionTypeList
-                                          {
-                                              OptionTypeId = o1.OptionTypeId,
-                                              OptionTypeName = o1.OptionType,
-                                              OptionId = o1.OptionId,
-                                              Price = o1.AdditionalCost ?? 0.0m,
-                                              WholeSalePrice = o2.WholeSalePrice ?? 0.0m,
-                                              MaxPrice = o2.MaxPrice ?? 0.0m,
-                                              IsAvailable = o2.IsAvailable ?? false
-                                          }).ToList();
-
-                    var productList = products.Select(product => new ProductOptionsVm
+                    // Check if partner data exists for TenantId
+                    bool hasPartnerData = false;
+                    if (!string.IsNullOrEmpty(filter.TenantId))
                     {
-                        ProductId = product.ProductId,
-                        ProductName = product.ProductName,
-                        IsAvailable = product.IsAvailable,
-                        WholeSalePrice = product.WholeSalePrice,
-                        MaxPartnerPrice = product.MaxPartnerPrice,
-                        ManageProductTenantId = product.ManageProductTenantId,
-                        Options = allOptions
-                            .Where(opt => opt.ProductId == product.ProductId)
-                            .Select(opt => new ProductOptionsList
-                            {
-                                OptionId = opt.OptionId,
-                                OptionName = opt.OptionName,
-                                optionTypes = allOptionTypes
-                                    .Where(ot => ot.OptionId == opt.OptionId)
-                                    .ToList()
-                            }).ToList()
-                    }).ToList();
-                    filter.SearchValue = filter.SearchValue?.Trim().ToLower();
-                    var FilterRecords = productList
-                              .Where(x =>
-                              (string.IsNullOrEmpty(filter.TenantId) ? true : (filter.TenantId.ToLower() == x.ManageProductTenantId?.ToLower())) &&
-                              (string.IsNullOrEmpty(filter.SearchValue) ? true :
-                                 (x.ProductId.ToString() == filter.SearchValue) ||
-                                 (x.ProductName?.ToString() == filter.SearchValue))
-                             ).ToList();
+                        hasPartnerData = GetAllQuerable()
+                            .Any(x => x.TenantId.ToString() == filter.TenantId && x.IsDelete == false && x.IsActive == true);
+                    }
+                    if (!string.IsNullOrEmpty(filter.TenantId))
+                    {
+                        productlist = (hasPartnerData)
+                                ? GetManagePartnerProductData(filter)
+                                : GetDefaultProductData(filter);
 
-                    var TakenRecords = Paginate.Pagination(FilterRecords, filter);
+                        responseVm.IsSuccess = true;
+                        responseVm.Data = productlist;
+                        responseVm.Message = AppConstant.FetchSuccessMsg;
+                        responseVm.TotalRecords = productlist.Count();
 
-                    responseVm.IsSuccess = true;
-                    responseVm.Data = TakenRecords;
-                    responseVm.Message = AppConstant.FetchSuccessMsg;
-                    responseVm.TotalRecords = productList.Count();
+                    }
+
+                    else
+                    {
+                        productlist = GetDefaultProductData(filter);
+                        responseVm.IsSuccess = true;
+                        responseVm.Data = productlist;
+                        responseVm.Message = AppConstant.FetchSuccessMsg;
+                        responseVm.TotalRecords = productlist.Count();
+                    }
                 }
+            
                 else
                 {
                     var products = (from p1 in dbContext.TblManagePartnersProducts
                                     join p2 in dbContext.TblProducts on p1.ProductId equals p2.ProductId
-                                    where p1.IsActive == true && p1.IsDelete == false && p1.TenantId == AppConstant.LoggedInTenantId && 
+                                    where p1.IsActive == true && p1.IsDelete == false && p1.TenantId == AppConstant.LoggedInTenantId &&
                                     p1.IsAvailable == true && p2.ProductType == filter.ProductType
                                     select new ProductOptionsVm
                                     {
@@ -366,16 +323,6 @@ namespace ShutterManagement.Business.Services
                                     .ToList()
                             }).ToList()
                     }).ToList();
-                    //filter.SearchValue = filter.SearchValue?.Trim().ToLower();
-                    //var FilterRecords = productList
-                    //          .Where(x =>
-                    //          (string.IsNullOrEmpty(filter.TenantId) ? true : (filter.TenantId == x.ManageProductTenantId?.ToString())) &&
-                    //          (string.IsNullOrEmpty(filter.SearchValue) ? true :
-                    //             (x.ProductId.ToString() == filter.SearchValue) ||
-                    //             (x.ProductName?.ToString() == filter.SearchValue))
-                    //         ).ToList();
-
-                    //var TakenRecords = Paginate.Pagination(FilterRecords, filter);
 
                     responseVm.IsSuccess = true;
                     responseVm.Data = productList;
@@ -390,6 +337,120 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
+
+        private List<ProductOptionsVm> GetManagePartnerProductData(Pagination filter)
+        {
+            var products = (from p1 in dbContext.TblProducts
+                            join p2 in dbContext.TblManagePartnersProducts on p1.ProductId equals p2.ProductId into joined
+                            from p2 in joined.DefaultIfEmpty()
+                            where p1.IsActive == true && p1.IsDelete == false && p1.TenantId == AppConstant.LoggedInTenantId &&
+                                  p1.ProductType.ToString() == filter.ProductType
+                            select new ProductOptionsVm
+                            {
+                                ProductId = p1.ProductId,
+                                ProductName = p1.ProductName,
+                                WholeSalePrice = p2.WholeSalePrice ?? 0.0m,
+                                MaxPartnerPrice = p2.MaxPartnerPrice ?? 0.0m,
+                                IsAvailable = p2.IsAvailable ?? false,
+                                ManageProductId = p2.ManageProductId.ToString(),
+                                TenantId = p1.TenantId.ToString()
+                            }).ToList();
+
+            var productIds = products.Select(p => p.ProductId).ToList();
+
+            var options = dbContext.TblOptions
+                .Where(o => o.IsActive == true && o.IsDelete == false && productIds.Contains((Guid)o.ProductId))
+                .Select(o => new ProductOptionsList
+                {
+                    OptionId = o.OptionId,
+                    ProductId = o.ProductId,
+                    OptionName = o.OptionName
+                }).ToList();
+
+            var optionIds = options.Select(o => o.OptionId).ToList();
+
+            var optionTypes = (from o1 in dbContext.TblOptionsTypes
+                               join o2 in dbContext.TblManagePartnersProductsOptions on o1.OptionTypeId equals o2.OptionTypeId into joined
+                               from o2 in joined.DefaultIfEmpty()
+                               where o1.IsActive == true && o1.IsDelete == false && optionIds.Contains(o1.OptionId)
+                               select new ProductOptionTypeList
+                               {
+                                   OptionTypeId = o1.OptionTypeId,
+                                   OptionTypeName = o1.OptionType,
+                                   OptionId = o1.OptionId,
+                                   Price = o1.AdditionalCost ?? 0.0m,
+                                   WholeSalePrice = o2.WholeSalePrice ?? 0.0m,
+                                   MaxPrice = o2.MaxPrice ?? 0.0m,
+                                   IsAvailable = o2.IsAvailable ?? false
+                               }).ToList();
+
+            foreach (var product in products)
+            {
+                product.Options = options
+                    .Where(opt => opt.ProductId == product.ProductId)
+                    .Select(opt => new ProductOptionsList
+                    {
+                        OptionId = opt.OptionId,
+                        OptionName = opt.OptionName,
+                        optionTypes = optionTypes.Where(ot => ot.OptionId == opt.OptionId).ToList()
+                    }).ToList();
+            }
+
+            return products;
+        }
+
+        private List<ProductOptionsVm> GetDefaultProductData(Pagination filter)
+        {
+            var products = dbContext.TblProducts
+                .Where(p => p.IsActive == true && p.IsDelete == false && p.TenantId == AppConstant.LoggedInTenantId &&
+                            p.ProductType.ToString() == filter.ProductType)
+                .Select(p => new ProductOptionsVm
+                {
+                    ProductId = p.ProductId,
+                    ProductName = p.ProductName,
+                    MaxPartnerPrice = 0.0m,
+                    WholeSalePrice = 0.0m,
+                    IsAvailable = false,
+                    TenantId = ""
+                }).ToList();
+
+            var productIds = products.Select(p => p.ProductId).ToList();
+
+            var options = dbContext.TblOptions
+                .Where(o => o.IsActive == true && o.IsDelete == false && productIds.Contains((Guid)o.ProductId))
+                .Select(o => new ProductOptionsList
+                {
+                    OptionId = o.OptionId,
+                    ProductId = o.ProductId,
+                    OptionName = o.OptionName
+                }).ToList();
+
+            var optionIds = options.Select(o => o.OptionId).ToList();
+
+            var optionTypes = dbContext.TblOptionsTypes
+                .Where(ot => ot.IsActive == true && ot.IsDelete == false && optionIds.Contains(ot.OptionId))
+                .Select(ot => new ProductOptionTypeList
+                {
+                    OptionTypeId = ot.OptionTypeId,
+                    OptionTypeName = ot.OptionType,
+                    OptionId = ot.OptionId,
+                    Price = ot.AdditionalCost ?? 0.0m
+                }).ToList();
+
+            foreach (var product in products)
+            {
+                product.Options = options
+                    .Where(opt => opt.ProductId == product.ProductId)
+                    .Select(opt => new ProductOptionsList
+                    {
+                        OptionId = opt.OptionId,
+                        OptionName = opt.OptionName,
+                        optionTypes = optionTypes.Where(ot => ot.OptionId == opt.OptionId).ToList()
+                    }).ToList();
+            }
+            return products;
+        }
+
     }
 }
 

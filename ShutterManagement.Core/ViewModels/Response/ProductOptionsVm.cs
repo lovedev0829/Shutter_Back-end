@@ -15,7 +15,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public decimal? MaxPartnerPrice { get; set; }
         public string? ManageProductId { get; set; }
         public decimal? PartnerSellingPrice { get; set; }
-        public string? ManageProductTenantId { get; set; }
+        public string? TenantId { get; set; }
 
         public List<ProductOptionsList> Options { get; set; }
     }
