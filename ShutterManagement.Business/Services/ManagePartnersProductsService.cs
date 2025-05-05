@@ -350,7 +350,7 @@ namespace ShutterManagement.Business.Services
             var products = (from p1 in dbContext.TblProducts
                             join p2 in dbContext.TblManagePartnersProducts
                                 on p1.ProductId equals p2.ProductId into joined
-                            from p2 in joined.Where(x => string.IsNullOrEmpty(filter.TenantId) || x.TenantId.ToString() == filter.TenantId).DefaultIfEmpty()
+                            from p2 in joined.DefaultIfEmpty()
                             where p1.IsActive == true &&
                                   p1.IsDelete == false &&
                                   p1.TenantId == AppConstant.LoggedInTenantId &&
@@ -384,6 +384,7 @@ namespace ShutterManagement.Business.Services
             var optionTypes = (from o1 in dbContext.TblOptionsTypes
                                join o2 in dbContext.TblManagePartnersProductsOptions on o1.OptionTypeId equals o2.OptionTypeId into joined
                                from o2 in joined.DefaultIfEmpty()
+                               join o3 in dbContext.TblManagePartnersProducts on o2.ManageProductId equals o3.ManageProductId 
                                where o1.IsActive == true && o1.IsDelete == false && optionIds.Contains(o1.OptionId)
                                select new ProductOptionTypeList
                                {
