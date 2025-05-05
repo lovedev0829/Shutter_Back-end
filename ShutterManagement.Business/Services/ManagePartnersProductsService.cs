@@ -342,7 +342,6 @@ namespace ShutterManagement.Business.Services
         {
             Guid? filterTenantId = null;
 
-            // Try parsing the filter's TenantId if it's not null or empty
             if (!string.IsNullOrEmpty(filter.TenantId))
             {
                 filterTenantId = Guid.Parse(filter.TenantId);
@@ -351,22 +350,22 @@ namespace ShutterManagement.Business.Services
             var products = (from p1 in dbContext.TblProducts
                             join p2 in dbContext.TblManagePartnersProducts
                                 on p1.ProductId equals p2.ProductId into joined
-                            from p2 in joined.DefaultIfEmpty()
+                            from p2 in joined.Where(x => string.IsNullOrEmpty(filter.TenantId) || x.TenantId.ToString() == filter.TenantId).DefaultIfEmpty()
                             where p1.IsActive == true &&
                                   p1.IsDelete == false &&
                                   p1.TenantId == AppConstant.LoggedInTenantId &&
-                                  p1.ProductType.ToString() == filter.ProductType &&
-                                 (string.IsNullOrEmpty(filter.TenantId) || (p2 != null && p2.TenantId.ToString() == filter.TenantId))
+                                  p1.ProductType.ToString() == filter.ProductType
                             select new ProductOptionsVm
                             {
                                 ProductId = p1.ProductId,
                                 ProductName = p1.ProductName,
-                                WholeSalePrice = p2 != null ? p2.WholeSalePrice ?? 0.0m : 0.0m,
-                                MaxPartnerPrice = p2 != null ? p2.MaxPartnerPrice ?? 0.0m : 0.0m,
-                                IsAvailable = p2 != null ? p2.IsAvailable ?? false : false,
-                                ManageProductId = p2 != null ? p2.ManageProductId.ToString() : null,
-                                TenantId = p1.TenantId.ToString(),
+                                WholeSalePrice = (p2 != null && p2.TenantId.ToString() == filter.TenantId) ? p2.WholeSalePrice ?? 0.0m : 0.0m,
+                                MaxPartnerPrice = (p2 != null && p2.TenantId.ToString() == filter.TenantId) ? p2.MaxPartnerPrice ?? 0.0m : 0.0m,
+                                IsAvailable = (p2 != null && p2.TenantId.ToString() == filter.TenantId) ? p2.IsAvailable ?? false : false,
+                                ManageProductId = (p2 != null && p2.TenantId.ToString() == filter.TenantId) ? p2.ManageProductId.ToString() : null,
+                                TenantId = (p2 != null && p2.TenantId.ToString() == filter.TenantId) ? p2.TenantId.ToString() : p1.TenantId.ToString()
                             }).ToList();
+
 
 
             var productIds = products.Select(p => p.ProductId).ToList();
