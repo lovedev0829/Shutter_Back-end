@@ -452,6 +452,7 @@ namespace ShutterManagement.Services
                                     (x.UserId.ToString() == filter.SearchValue) ||
                                     ((x.Email ?? "").ToLower().Contains(filter.SearchValue)
                                     || (x.Phone ?? "").ToLower().Contains(filter.SearchValue)
+                                    || (x.TenantId.ToString() ?? "").ToLower().Contains(filter.SearchValue)
                                     || (x.FirstName ?? "").ToLower().Contains(filter.SearchValue)
                                     || (x.MiddleName ?? "").ToLower().Contains(filter.SearchValue)
                                     || (x.RoleName ?? "").ToLower().Contains(filter.SearchValue)
