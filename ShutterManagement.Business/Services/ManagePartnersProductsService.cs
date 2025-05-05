@@ -240,14 +240,14 @@ namespace ShutterManagement.Business.Services
 
                     }
 
-                    else
-                    {
-                        productlist = GetDefaultProductData(filter);
-                        responseVm.IsSuccess = true;
-                        responseVm.Data = productlist;
-                        responseVm.Message = AppConstant.FetchSuccessMsg;
-                        responseVm.TotalRecords = productlist.Count();
-                    }
+                    //else
+                    //{
+                    //    productlist = GetDefaultProductData(filter);
+                    //    responseVm.IsSuccess = true;
+                    //    responseVm.Data = productlist;
+                    //    responseVm.Message = AppConstant.FetchSuccessMsg;
+                    //    responseVm.TotalRecords = productlist.Count();
+                    //}
                 }
             
                 else
@@ -355,7 +355,7 @@ namespace ShutterManagement.Business.Services
                                 MaxPartnerPrice = (p2 != null && p2.TenantId.ToString() == filter.TenantId) ? p2.MaxPartnerPrice ?? 0.0m : 0.0m,
                                 IsAvailable = (p2 != null && p2.TenantId.ToString() == filter.TenantId) ? p2.IsAvailable ?? false : false,
                                 ManageProductId = (p2 != null && p2.TenantId.ToString() == filter.TenantId) ? p2.ManageProductId.ToString() : null,
-                                TenantId = (p2 != null && p2.TenantId.ToString() == filter.TenantId) ? p2.TenantId.ToString() : p1.TenantId.ToString()
+                                TenantId = ((p2 != null && p2.TenantId.ToString() == filter.TenantId) ? p2.TenantId.ToString() : null) ?? ""
                             }).ToList();
 
 
@@ -375,7 +375,10 @@ namespace ShutterManagement.Business.Services
 
             var optionTypes = (from o1 in dbContext.TblOptionsTypes
                                join o2 in dbContext.TblManagePartnersProductsOptions on o1.OptionTypeId equals o2.OptionTypeId into joined
-                               from o2 in joined.DefaultIfEmpty()
+                               from o2 in joined.DefaultIfEmpty() 
+                               join o3 in dbContext.TblManagePartnersProducts on o2.ManageProductId equals o3.ManageProductId 
+                               into manageproductId
+                               from o3 in manageproductId.DefaultIfEmpty()
                                where o1.IsActive == true && o1.IsDelete == false && optionIds.Contains(o1.OptionId)
                                select new ProductOptionTypeList
                                {
@@ -386,7 +389,7 @@ namespace ShutterManagement.Business.Services
                                    WholeSalePrice = o2.WholeSalePrice ?? 0.0m,
                                    MaxPrice = o2.MaxPrice ?? 0.0m,
                                    IsAvailable = o2.IsAvailable ?? false
-                               }).ToList();
+                               }).Distinct().ToList();
 
             foreach (var product in products)
             {
