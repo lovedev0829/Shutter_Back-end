@@ -76,6 +76,8 @@ namespace ShutterManagement.Business.Services
                         if (IsManagePartnerProductExist != null)
                         {
                             IsManagePartnerProductExist.PartnerSellingPrice = model.PartnerSellingPrice;
+                            IsManagePartnerProductExist.MarkupType = model.MarkupType;
+                            IsManagePartnerProductExist.MarkupPer = model.MarkupPer;
                             await Update(IsManagePartnerProductExist);
                             foreach (var item in model.ManagePartnerProductOptions)
                             {
@@ -117,7 +119,7 @@ namespace ShutterManagement.Business.Services
         private async Task UpdateManagePartnerProduct(CreateManagePartnerProduct items)
         {
             var IsManagePartnerProductExist = GetAllQuerable().Where(x => x.ProductId == items.ProductId &&
-                x.IsActive == true && x.IsDelete == false && x.TenantId.ToString().ToLower() == items.TenantId.ToLower()).FirstOrDefault();
+                x.IsActive == true && x.IsDelete == false && x.TenantId.ToString().ToLower() == items.TenantId.ToLower() && x.IsAvailable == true).FirstOrDefault();
 
             if (IsManagePartnerProductExist != null)
             {
@@ -176,14 +178,17 @@ namespace ShutterManagement.Business.Services
                 CreatedBy = AppConstant.LoggedInUserID,
                 TenantId = Guid.Parse(model.TenantId),
                 IsActive = true,
-                IsDelete = false
+                IsDelete = false,
             };
 
             await Add(managePartnersProduct);
 
             foreach (var item in model.ManagePartnerProductOptions)
             {
-                await CreateNewManagePartnerProductOption(item, managePartnersProduct.ManageProductId);
+                if (item.IsAvailable != null && (bool)item.IsAvailable)
+                {
+                    await CreateNewManagePartnerProductOption(item, managePartnersProduct.ManageProductId);
+                }
             }
         }
 
@@ -200,7 +205,8 @@ namespace ShutterManagement.Business.Services
                 CreatedAt = DateTime.Now,
                 CreatedBy = AppConstant.LoggedInUserID,
                 IsActive = true,
-                IsDelete = false
+                IsDelete = false,
+                TenantId = Guid.Parse(model.TenantId)
             };
             await managePartnersProductsOptions.Add(optionsType);
         }
@@ -219,7 +225,6 @@ namespace ShutterManagement.Business.Services
 
                 if (!IsTenantorSubtenant)
                 {
-                    // Check if partner data exists for TenantId
                     bool hasPartnerData = false;
                     if (!string.IsNullOrEmpty(filter.TenantId))
                     {
@@ -237,7 +242,6 @@ namespace ShutterManagement.Business.Services
                         responseVm.Data = productlist;
                         responseVm.Message = AppConstant.FetchSuccessMsg;
                         responseVm.TotalRecords = productlist.Count();
-
                     }
 
                     //else
@@ -262,7 +266,9 @@ namespace ShutterManagement.Business.Services
                                         ProductName = p2.ProductName,
                                         PartnerSellingPrice = p1.PartnerSellingPrice ?? 0.0m,
                                         ManageProductId = p1.ManageProductId.ToString() ?? null,
-                                        WholeSalePrice = p1.WholeSalePrice ?? 0.0m
+                                        WholeSalePrice = p1.WholeSalePrice ?? 0.0m,
+                                        MarkupPer = p1.MarkupPer ?? 0.0m,
+                                        MarkupType = p1.MarkupType ?? "",
                                     }).ToList();
 
                     var productIds = products.Select(p => p.ProductId).ToList();
@@ -273,6 +279,7 @@ namespace ShutterManagement.Business.Services
                                       join
                                       o3 in dbContext.TblManagePartnersProducts on o1.ManageProductId equals o3.ManageProductId
                                       where o1.IsDelete == false && o1.IsActive == true && productIds.Contains((Guid)o2.ProductId)
+                                      && o1.TenantId == AppConstant.LoggedInTenantId
                                       select new ProductOptionsList
                                       {
                                           OptionId = o1.OptionId,
@@ -287,6 +294,7 @@ namespace ShutterManagement.Business.Services
                                               on o1.OptionTypeId equals o2.OptionTypeId
                                           join o3 in dbContext.TblManagePartnersProducts on o1.ManageProductId equals o3.ManageProductId
                                           where o1.IsDelete == false && o1.IsActive == true && optionIds.Contains(o1.OptionId)
+                                          && o1.TenantId == AppConstant.LoggedInTenantId
                                           select new ProductOptionTypeList
                                           {
                                               OptionTypeId = o1.OptionTypeId,
@@ -305,6 +313,8 @@ namespace ShutterManagement.Business.Services
                         WholeSalePrice = product.WholeSalePrice,
                         MaxPartnerPrice = product.MaxPartnerPrice,
                         PartnerSellingPrice = product.PartnerSellingPrice,
+                        MarkupPer = product.MarkupPer,
+                        MarkupType = product.MarkupType,
                         Options = allOptions
                             .Where(opt => opt.ProductId == product.ProductId)
                             .Select(opt => new ProductOptionsList
@@ -375,7 +385,9 @@ namespace ShutterManagement.Business.Services
 
             var optionTypes = (from o1 in dbContext.TblOptionsTypes
                                join o2 in dbContext.TblManagePartnersProductsOptions on o1.OptionTypeId equals o2.OptionTypeId into joined
-                               from o2 in joined.DefaultIfEmpty() 
+                               from o2 in joined.Where(x => string.IsNullOrEmpty(filter.TenantId) || 
+                               x.TenantId.ToString() == filter.TenantId).DefaultIfEmpty()
+                               //from o2 in joined.DefaultIfEmpty() 
                                join o3 in dbContext.TblManagePartnersProducts on o2.ManageProductId equals o3.ManageProductId 
                                into manageproductId
                                from o3 in manageproductId.DefaultIfEmpty()
@@ -386,9 +398,9 @@ namespace ShutterManagement.Business.Services
                                    OptionTypeName = o1.OptionType,
                                    OptionId = o1.OptionId,
                                    Price = o1.AdditionalCost ?? 0.0m,
-                                   WholeSalePrice = o2.WholeSalePrice ?? 0.0m,
-                                   MaxPrice = o2.MaxPrice ?? 0.0m,
-                                   IsAvailable = o2.IsAvailable ?? false
+                                   WholeSalePrice = (o2 != null && o2.TenantId.ToString() == filter.TenantId) ? o2.WholeSalePrice ?? 0.0m : 0.0m,
+                                   MaxPrice = (o2 != null && o2.TenantId.ToString() == filter.TenantId) ? o2.MaxPrice ?? 0.0m : 0.0m,
+                                   IsAvailable = (o2 != null && o2.TenantId.ToString() == filter.TenantId) ? o2.IsAvailable : false,
                                }).Distinct().ToList();
 
             foreach (var product in products)
@@ -402,8 +414,6 @@ namespace ShutterManagement.Business.Services
                         optionTypes = optionTypes.Where(ot => ot.OptionId == opt.OptionId).ToList()
                     }).ToList();
             }
-            
-
             return products;
         }
 

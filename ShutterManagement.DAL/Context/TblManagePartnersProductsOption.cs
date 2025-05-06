@@ -33,6 +33,8 @@ public partial class TblManagePartnersProductsOption
 
     public decimal? PartnerSellingPrice { get; set; }
 
+    public Guid? TenantId { get; set; }
+
     public virtual TblManagePartnersProduct? ManageProduct { get; set; }
 
     public virtual TblOption? Option { get; set; }
