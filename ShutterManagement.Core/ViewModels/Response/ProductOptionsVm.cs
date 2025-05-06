@@ -16,6 +16,8 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? ManageProductId { get; set; }
         public decimal? PartnerSellingPrice { get; set; }
         public string? TenantId { get; set; }
+        public decimal? MarkupPer { get; set; }
+        public string? MarkupType { get; set; }
 
         public List<ProductOptionsList> Options { get; set; }
     }

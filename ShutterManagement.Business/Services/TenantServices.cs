@@ -67,7 +67,7 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = "CompanyName " + AppConstant.AlreadyExists;
                     return responseVm;
                 }
-                bool IsUserEmailExists = await userService.AnyAsync(x => x.Email == model.UserEmail && x.IsDelete == false);
+                bool IsUserEmailExists = await userService.AnyAsync(x => x.Email == model.UserEmail && x.IsDelete == false && x.IsTenantAdmin == true);
                 if (IsUserEmailExists)
                 {
                     responseVm.Message = "User Email " + AppConstant.AlreadyExists;
@@ -181,7 +181,6 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-
         public async Task SendWelcomeEmailAsync(CreateTenant model)
         {
             try
@@ -230,6 +229,12 @@ namespace ShutterManagement.Business.Services
                 if (IsTenantEmailExists)
                 {
                     responseVm.Message = "Email " + AppConstant.AlreadyExists;
+                    return responseVm;
+                }
+                bool IsUserEmailExists = await userService.AnyAsync(x => x.Email == model.UserEmail && x.TenantId.ToString() == model.TenantId && x.IsDelete == false && x.IsTenantAdmin == false);
+                if (IsUserEmailExists)
+                {
+                    responseVm.Message = "User Email " + AppConstant.AlreadyExists;
                     return responseVm;
                 }
                 bool IsTenantCompanynameExists = await tenantBrandingService.AnyAsync(x => x.CompanyName == model.CompanyName.Trim() && x.IsDelete == false &&
