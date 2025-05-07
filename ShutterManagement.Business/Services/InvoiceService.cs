@@ -1070,7 +1070,10 @@ namespace ShutterManagement.Business.Services
             int i = 0;
             foreach (var product in productList)
             {
-                decimal? unitprice = product.TotalPrice / product.WindowQty;
+                //decimal? unitprice = product.TotalPrice / product.WindowQty;
+
+                decimal? effectiveTotalPrice = product.TotalPrice > 0 ? product.TotalPrice.Value : product.ProductPrice;
+                decimal? unitprice = effectiveTotalPrice / product.WindowQty;
                 productListHtml.Append($@"
     <tr style='background-color: #efefef;'>
         <td style='text-align: center; padding: 5px 5px;'>{++i}</td>
@@ -1080,8 +1083,8 @@ namespace ShutterManagement.Business.Services
         <td style='text-align: center; padding: 5px 5px;'>{product.WindowQty}</td>
         <td style='text-align: center; padding: 5px 5px;'>{product.Width}</td>
         <td style='text-align: center; padding: 5px 5px;'>{product.Height}</td>
-        <td style='text-align: center; padding: 5px 5px;'>{unitprice}</td>
-        <td style='text-align: center; padding: 5px 5px;'>{product.TotalPrice}</td>
+        <td style='text-align: center; padding: 5px 5px;'>{unitprice:F2}</td>
+        <td style='text-align: center; padding: 5px 5px;'>{effectiveTotalPrice:F2}</td>
     </tr>");
             }
 
