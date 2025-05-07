@@ -54,20 +54,20 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-                var TenantDetails = (await GetAll()).Where(x => x.IsDelete == false).Select(x => x.BrandingInfo).ToList();
-                bool IsTenantEmailExists = await tenantBrandingService.AnyAsync(x => x.Email == model.Email && x.IsDelete == false && TenantDetails.Contains(x.Id));
-                if (IsTenantEmailExists)
-                {
-                    responseVm.Message = "Email " + AppConstant.AlreadyExists;
-                    return responseVm;
-                }
+                //var TenantDetails = (await GetAll()).Where(x => x.IsDelete == false).Select(x => x.BrandingInfo).ToList();
+                //bool IsTenantEmailExists = await tenantBrandingService.AnyAsync(x => x.Email == model.Email && x.IsDelete == false && TenantDetails.Contains(x.Id));
+                //if (IsTenantEmailExists)
+                //{
+                //    responseVm.Message = "Email " + AppConstant.AlreadyExists;
+                //    return responseVm;
+                //}
                 bool IsTenantCompanynameExists = await tenantBrandingService.AnyAsync(x => x.CompanyName == model.CompanyName.Trim() && x.IsDelete == false);
                 if (IsTenantCompanynameExists)
                 {
                     responseVm.Message = "CompanyName " + AppConstant.AlreadyExists;
                     return responseVm;
                 }
-                bool IsUserEmailExists = await userService.AnyAsync(x => x.Email == model.UserEmail && x.IsDelete == false && x.IsTenantAdmin == true);
+                bool IsUserEmailExists = await userService.AnyAsync(x => x.Email == model.UserEmail && x.IsDelete == false && x.IsTenantAdmin == true );
                 if (IsUserEmailExists)
                 {
                     responseVm.Message = "User Email " + AppConstant.AlreadyExists;

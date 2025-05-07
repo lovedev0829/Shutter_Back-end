@@ -469,6 +469,39 @@ namespace ShutterManagement.Business.Services
             return products;
         }
 
+        // calculate MSRP
+        public async Task<IResponseVm<string>> CalculateMSRP(string productId)
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+            try
+            {
+                var product =  GetAllQuerable().Where(x => x.ProductId.ToString() == productId && x.IsActive == true && x.IsDelete == false).FirstOrDefault();
+                if (product != null)
+                {
+                    var options =  managePartnersProductsOptions.GetAllQuerable().Where(x => x.ManageProductId.ToString() == product.ManageProductId.ToString() && x.IsActive == true && x.IsDelete == false).ToList();
+                    decimal totalMSRP = 0;
+                    foreach (var item in options)
+                    {
+                        totalMSRP += item.PartnerSellingPrice ?? 0.0m;
+                    }
+                    responseVm.Data = totalMSRP.ToString();
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = "MSRP calculated successfully.";
+                }
+                else
+                {
+                    responseVm.Message = "Product not found.";
+                }
+            }
+            catch (Exception ex)
+            {
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+            }
+            return responseVm;
+        }
+
+        
+
     }
 }
 
