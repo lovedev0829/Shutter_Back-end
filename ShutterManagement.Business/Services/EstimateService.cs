@@ -536,7 +536,8 @@ namespace ShutterManagement.Business.Services
                                 Markup = item.Markup,
                                 ProductTypeName = item.ProductName,
                                 TotalPrice = item.TotalPrice,
-                                IsTaxApplied = isTaxApplied
+                                IsTaxApplied = isTaxApplied,
+                                IsComponentAvailable = item.IsComponentAvailable,
                             });
                         }
 
@@ -739,13 +740,22 @@ namespace ShutterManagement.Business.Services
                 decimal grandtotal = 0.0M;
                 Guid? taxRateId = null;
                 Guid? discountId = null;
-                var windowproductdetails = await BuildEstimate(model.ProductsList.Select(x=> x.WindowProductId).ToArray(), true);
+                var PricedProductsList = model.ProductsList.Where(x => x.ProductPrice != null && x.ProductPrice > 0).ToList();
+                var windowproductdetails = await BuildEstimate(model.ProductsList.Select(x => x.WindowProductId).ToArray(), false);
                 if (windowproductdetails.Data != null && windowproductdetails.Data.Any())
                 {
-                    additionalCost = (decimal)windowproductdetails.Data.Sum(x => x.AdditionalCost);
-                    subtotal = (decimal)windowproductdetails.Data.Sum(x => x.TotalPrice);
-                    SumofSubtotalandAdditionalCost = subtotal + additionalCost;
+                    if (windowproductdetails.Data.Any(x => x.TotalPrice == null))
+                    {
+                        var Ids = windowproductdetails.Data.Select(x => x.WindowProdcutId).ToList();
+                        subtotal = PricedProductsList
+                            .Where(p => Ids.Contains(p.WindowProductId))
+                            .Select(x => x.ProductPrice).FirstOrDefault();
+                    }
+                    subtotal += (decimal)windowproductdetails.Data.DistinctBy(x => x.WindowProdcutId).Sum(x => x.TotalPrice);
+                    additionalCost += (decimal)windowproductdetails.Data.DistinctBy(x => x.WindowProdcutId).Sum(x => x.AdditionalCost);
+
                 }
+                SumofSubtotalandAdditionalCost = subtotal + additionalCost;
                 if (string.IsNullOrEmpty((model.taxRateId).ToString()) && string.IsNullOrEmpty(model.DiscountCoupon))
                 {
                     grandtotal = SumofSubtotalandAdditionalCost;
@@ -922,7 +932,6 @@ namespace ShutterManagement.Business.Services
                                     //return responseVm;
                                 }
                             }
-                            
                         }
 
                         CreateNotification notification1 = new CreateNotification()

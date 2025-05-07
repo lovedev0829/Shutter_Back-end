@@ -242,12 +242,18 @@ namespace ShutterManagement.Business.Services
                 await Add(newOrder);
                 var windowProductIds = dbContext.TblEstimateWindowProducts
                 .Where(e => e.EstimateId == EstimateId)
-                .Select(e => e.WindowProductId)
+                .Select(x => new ProductListing
+                {
+                    WindowProductId = (Guid)x.WindowProductId,
+                    ProductPrice =(decimal)x.ProductPrice
+                })
                 .ToList();
 
-                var windowProductIdsNonNullable = windowProductIds.Where(x => x.HasValue).Select(x => x.Value).ToList();
 
-                await ProcessWindowProducts(windowProductIdsNonNullable, estimate.EstimateId, newOrder.OrderId, newOrder.Version);
+
+               // var windowProductIdsNonNullable = windowProductIds.Where(x => x.HasValue).Select(x => x.Value).ToList();
+
+                await ProcessWindowProducts(windowProductIds, estimate.EstimateId, newOrder.OrderId, newOrder.Version);
 
                 if (!string.IsNullOrEmpty(Message))
                 {
@@ -972,6 +978,7 @@ namespace ShutterManagement.Business.Services
                     x.WindowProductId,
                     x.Price,
                     x.ProductTypeName,
+                    x.ProductPrice,
                 }).ToList();
 
             e.WindowProductId = productList.Select(p => (Guid)p.WindowProductId).ToArray();
@@ -1007,6 +1014,7 @@ namespace ShutterManagement.Business.Services
                     ProductName = p.ProductName,
                     WindowProductId = p.WindowProductId,
                     Price = p.Price,
+                    ProductPrice = p.ProductPrice,
                     Options = Options.Select(x => x.OptionName).ToArray(),
                     EstimateWindowDetails = WindowDetails.Where(x => x.WindowId == p.WindowId).Select(x => new EstimateWindowLists
                     {
@@ -1021,12 +1029,12 @@ namespace ShutterManagement.Business.Services
             AddJobDetails(e);
             e.IsTaxApplied = await estimateService.IsTaxApplied((Guid)e.JobId);
         }
-        private async Task ProcessWindowProducts(List<Guid> windowProductIds, Guid estimateId, Guid OrderId, string Version)
+        private async Task ProcessWindowProducts(List<ProductListing> windowProductIds, Guid estimateId, Guid OrderId, string Version)
         {
             FileLogger.Log("Processing window products...");
             foreach (var product in windowProductIds)
             {
-                var windowProductData = (await windowProductService.GetAll()).Where(x => x.WindowProductId == product && x.IsDelete == false).FirstOrDefault();
+                var windowProductData = (await windowProductService.GetAll()).Where(x => x.WindowProductId == product.WindowProductId && x.IsDelete == false).FirstOrDefault();
                 if (windowProductData == null)
                 {
                     Message = "Window Product " + AppConstant.NoDataFound;
@@ -1046,7 +1054,10 @@ namespace ShutterManagement.Business.Services
                 {
                     return;
                 }
-                await AddComponentsToOrder((Guid)windowProductData.ProductId, estimateId, OrderId, Version);
+                if (product.ProductPrice == null)
+                {
+                    await AddComponentsToOrder((Guid)windowProductData.ProductId, estimateId, OrderId, Version);
+                }
                 if (!string.IsNullOrEmpty(Message))
                 {
                     return;
@@ -1246,8 +1257,6 @@ namespace ShutterManagement.Business.Services
 
 
         #endregion
-
-
 
 
         public async Task<IResponseVm<string>> GenerateOrderSheet(Guid? orderId)

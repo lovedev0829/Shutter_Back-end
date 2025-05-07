@@ -29,6 +29,8 @@ namespace ShutterManagement.Core.ViewModels.Response
 
         // Product Properties
         public string? ProductName { get; set; }
+
+        public bool? IsComponentAvailable { get; set; }
         public decimal? ProductWidth { get; set; }
         public decimal? ProductHeight { get; set; }
         public decimal? ProductArchHeight { get; set; }

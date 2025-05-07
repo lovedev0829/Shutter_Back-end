@@ -260,6 +260,7 @@ namespace ShutterManagement.Business.Services
                       Length = product.Length,
                       AdditionalWidth = product.AdditionalWidth,
                       Markup = product.Markup,
+                      IsComponentAvailable = product.IsComponentAvailable,
 
                       // ProductType Properties
                       ProductTypeName = productType.ProductName,
