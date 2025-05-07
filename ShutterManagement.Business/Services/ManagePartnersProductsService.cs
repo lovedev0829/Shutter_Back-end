@@ -22,12 +22,23 @@ namespace ShutterManagement.Business.Services
         private readonly ITenantService tenantService;
         private readonly IProductService productService;
         private readonly IManagePartnersProductsOptions managePartnersProductsOptions;
+        private readonly IEstimateService estimateService;
+        private readonly ISubtenantProductMarkup subtenantProductMarkup;
+        private readonly ITenantBrandingService tenantBrandingService;
 
-        public ManagePartnersProductsService(ITenantService tenantService, IProductService productService, IManagePartnersProductsOptions managePartnersProductsOptions)
+        public ManagePartnersProductsService(ITenantService tenantService,
+            IProductService productService, IManagePartnersProductsOptions 
+            managePartnersProductsOptions,IEstimateService estimateService,
+            ISubtenantProductMarkup subtenantProductMarkup,
+            ITenantBrandingService tenantBrandingService
+            )
         {
             this.tenantService = tenantService;
             this.productService = productService;
             this.managePartnersProductsOptions = managePartnersProductsOptions;
+            this.estimateService = estimateService;
+            this.subtenantProductMarkup = subtenantProductMarkup;
+            this.tenantBrandingService = tenantBrandingService;
         }
 
         public async Task<IResponseVm<string>> CreateManagePartnerProduct(CreateManagePartnerProduct model)
@@ -475,23 +486,13 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var product =  GetAllQuerable().Where(x => x.ProductId.ToString() == productId && x.IsActive == true && x.IsDelete == false).FirstOrDefault();
-                if (product != null)
+                decimal? MSRPValue = await CalculateMSRPData(Guid.Parse(productId));
+                if (MSRPValue != null)
                 {
-                    var options =  managePartnersProductsOptions.GetAllQuerable().Where(x => x.ManageProductId.ToString() == product.ManageProductId.ToString() && x.IsActive == true && x.IsDelete == false).ToList();
-                    decimal totalMSRP = 0;
-                    foreach (var item in options)
-                    {
-                        totalMSRP += item.PartnerSellingPrice ?? 0.0m;
-                    }
-                    responseVm.Data = totalMSRP.ToString();
-                    responseVm.IsSuccess = true;
-                    responseVm.Message = "MSRP calculated successfully.";
+                    responseVm.Data = MSRPValue.Value.ToString();
                 }
-                else
-                {
-                    responseVm.Message = "Product not found.";
-                }
+                responseVm.IsSuccess = true;
+                responseVm.Message = "MSRP calculated successfully.";
             }
             catch (Exception ex)
             {
@@ -500,7 +501,119 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        
+        public async Task<decimal> CalculateMSRPData(Guid productId)
+        {
+            decimal? totalMSRP = 0.00M;
+
+            // Fetch the data for the given ProductId (window table removed)
+            var data = (
+                from product in dbContext.TblProducts
+                join productType in dbContext.MstProductTypes on product.ProductType equals productType.ProductId.ToString()
+                join productComponent in dbContext.TblProductComponents on product.ProductId equals productComponent.ProductId
+                join expression in dbContext.TblExpressions on productComponent.PricingExpression equals expression.Id.ToString()
+                join component in dbContext.TblComponents on productComponent.ComponentId equals component.ComponentId
+                join componentMaterial in dbContext.TblComponentMaterials on component.ComponentId equals componentMaterial.ComponentId
+                join material in dbContext.TblRawMaterials on componentMaterial.RawMaterialId equals material.RawMaterialId
+                where product.ProductId == productId
+                      && product.IsActive==true && product.IsDelete==false
+                      && productType.IsActive==true && productType.IsDelete==false
+                      && productComponent.IsActive==true && productComponent.IsDelete==false
+                      && component.IsActive == true && component.IsDelete == false
+                      && expression.IsActive == true && expression.IsDelete == false
+                      && componentMaterial.IsActive == true && componentMaterial.IsDelete == false
+                      && material.IsActive == true && material.IsDelete == false
+                select new WindowProdcutDetailsForEstimate
+                {
+                    ProductId = product.ProductId,
+                    ProductName = product.ProductName,
+                    ProductWidth = product.Width,
+                    ProductHeight = product.Height,
+                    ProductArchHeight = product.ArchHeight,
+                    Area = product.Area,
+                    Length = product.Length,
+                    Quantity = 1,
+                    BuildWidth = 1,
+                    BuildHeight = 1,
+                    AdditionalWidth = product.AdditionalWidth,
+                    Markup = product.Markup,
+
+                    ProductTypeName = productType.ProductName,
+
+                    ComponentId = productComponent.ComponentId,
+                    ComponentQuantity = productComponent.Quantity,
+
+                    ComponentName = component.ComponentName,
+                    MarkupPercentage = component.MarkupPercentage,
+                    PricingExpression = productComponent.PricingExpression,
+                    Price = component.Price,
+
+                    ExpressionFormulae = expression.ExpressionFormulae,
+
+                    RawMaterialId = componentMaterial.RawMaterialId,
+                    MaterialQuantity = componentMaterial.Quantity,
+                    WasteFactor = componentMaterial.WasteFactor,
+
+                    MaterialName = material.MaterialName,
+                    UnitCost = material.UnitCost,
+                    Non_Rated_UnitCost = material.NonRatedUnitCost,
+                    UnitOfMeasurement = material.UnitOfMeasurement,
+                    StockQuantity = material.StockQuantity,
+                    ReorderLevel = material.ReorderLevel,
+                    IsCutSheet = material.IsCutSheet,
+
+                    IsRated = true 
+                }).ToList();
+
+            if (data != null && data.Count > 0)
+            {
+                foreach (var item in data)
+                {
+                    var formula = item.ExpressionFormulae ?? "";
+                    var expression = estimateService.CalculateExpression(formula, item);
+                    var res = expression.Evaluate();
+                    var componentPrice = Convert.ToDecimal(res);
+
+                    item.AdditionalCost = Convert.ToDecimal(item.OptionsPrice.Sum());
+                    var componentPriceWithoutMarkup = componentPrice;
+                    var componentPriceWithMarkup = (componentPriceWithoutMarkup * (100 + item.MarkupPercentage)) / 100;
+                    var componentPriceWithProductMarkup = (componentPriceWithMarkup * (100 + item.Markup)) / 100;
+
+                    var isSubtenant = (await tenantService.GetAll())
+                        .FirstOrDefault(t => t.TenantId == AppConstant.LoggedInTenantId && t.ParentTenantId != null && t.IsActive==true && t.IsDelete==false);
+
+                    if (isSubtenant != null)
+                    {
+                        var subtenantMarkup = subtenantProductMarkup.GetAllQuerable()
+                            .Where(x => x.ProductId == item.ProductId)
+                            .Select(x => x.Markup)
+                            .FirstOrDefault();
+
+                        if (subtenantMarkup != null && subtenantMarkup > 0)
+                        {
+                            componentPriceWithProductMarkup = componentPriceWithProductMarkup * (100 + subtenantMarkup) / 100;
+                        }
+                        else
+                        {
+                            var globalMarkup = tenantBrandingService.GetAllQuerable()
+                                .Where(x => x.Id == isSubtenant.BrandingInfo)
+                                .Select(x => x.Markup)
+                                .FirstOrDefault();
+
+                            componentPriceWithProductMarkup = componentPriceWithProductMarkup * (100 + (globalMarkup ?? 0.00m)) / 100;
+                        }
+                    }
+                    item.Price = Convert.ToDecimal(componentPriceWithProductMarkup.Value.ToString("0.00"));
+                    totalMSRP += item.Price;
+                    
+                }
+            }
+
+            return totalMSRP?? 0.00M;
+        }
+
+
+
+
 
     }
 }
