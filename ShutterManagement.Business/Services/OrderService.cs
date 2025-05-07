@@ -1119,7 +1119,7 @@ namespace ShutterManagement.Business.Services
                 ProductId = productData.ProductId,
                 Price = estimatePrice,
                 WindowProductId = windowProductData.WindowProductId,
-                ProductTypeName = productTypeName
+                ProductTypeName = productTypeName,
             };
 
             await orderWindowProductService.Add(tblOrderWindowProduct);

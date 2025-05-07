@@ -227,10 +227,10 @@ namespace ShutterManagement.Business.Services
                   && product.IsActive == true && product.IsDelete == false
                   && productType.IsActive == true && productType.IsDelete == false
                   //&& productComponent.IsActive == true && productComponent.IsDelete == false
-                  && component.IsActive == true && component.IsDelete == false
-                  && expression.IsActive == true && expression.IsDelete == false
-                  && componentMaterial.IsActive == true && componentMaterial.IsDelete == false
-                  && material.IsActive == true && material.IsDelete == false
+                  //&& component.IsActive == true && component.IsDelete == false
+                  //&& expression.IsActive == true && expression.IsDelete == false
+                  //&& componentMaterial.IsActive == true && componentMaterial.IsDelete == false
+                  //&& material.IsActive == true && material.IsDelete == false
                   select new WindowProdcutDetailsForEstimate
                   {
                       // Window Properties

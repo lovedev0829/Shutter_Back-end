@@ -1331,6 +1331,7 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.OrderId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.Price).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.ProductName).HasMaxLength(255);
+            entity.Property(e => e.ProductPrice).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.ProductType)
                 .HasMaxLength(50)
                 .IsUnicode(false);

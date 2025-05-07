@@ -13,5 +13,6 @@ namespace ShutterManagement.Core.ViewModels.Request
         public string? ProductType { get; set; }
         public string? Notes { get; set; }
         public decimal? Markup { get; set; }
+        public bool? IsComponentAvailable { get; set; }
     }
 }

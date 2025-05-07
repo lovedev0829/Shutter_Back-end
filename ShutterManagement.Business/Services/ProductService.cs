@@ -132,7 +132,8 @@ namespace ShutterManagement.Business.Services
                         CreatedBy = AppConstant.LoggedInUserID,
                         IsActive = true,
                         IsDelete = false,
-                        TenantId = AppConstant.LoggedInTenantId
+                        TenantId = AppConstant.LoggedInTenantId,
+                        IsComponentAvailable = model.IsComponentAvailable
                     };
 
                     await Add(product);
@@ -381,6 +382,7 @@ namespace ShutterManagement.Business.Services
                         IsProductExists.Markup = model.Markup;
                         IsProductExists.UpdatedAt = DateTime.Now;
                         IsProductExists.ModifiedBy = AppConstant.LoggedInUserID;
+                        IsProductExists.IsComponentAvailable = model.IsComponentAvailable;
                         await Update(IsProductExists);
                         responseVm.IsSuccess = true;
                         responseVm.Message = AppConstant.UpdateSuccessMsg;
