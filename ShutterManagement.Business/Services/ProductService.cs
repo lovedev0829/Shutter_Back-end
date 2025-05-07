@@ -111,7 +111,6 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-
                 var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
                 if (IsTenant)
                 {
@@ -137,31 +136,32 @@ namespace ShutterManagement.Business.Services
                     };
 
                     await Add(product);
-
-                    foreach (var item in model.ProductComponents)
+                    if (model.IsComponentAvailable != null && (bool)model.IsComponentAvailable)
                     {
-
-                        var isComponentExists = await productComponentService.AnyAsync(x => x.ComponentId == item.ComponentId && x.ProductId == product.ProductId
-                        && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
-                        var isPricingExpression = await expressionService.AnyAsync(x => x.Id.ToString() == item.PricingExpression && x.IsActive == true && x.IsDelete == false
-                         && x.TenantId == AppConstant.LoggedInTenantId);
-                        if (!isComponentExists && isPricingExpression)
+                        foreach (var item in model.ProductComponents)
                         {
-                            TblProductComponent productcomponent = new TblProductComponent
+                            var isComponentExists = await productComponentService.AnyAsync(x => x.ComponentId == item.ComponentId && x.ProductId == product.ProductId
+                            && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
+                            var isPricingExpression = await expressionService.AnyAsync(x => x.Id.ToString() == item.PricingExpression && x.IsActive == true && x.IsDelete == false
+                             && x.TenantId == AppConstant.LoggedInTenantId);
+                            if (!isComponentExists && isPricingExpression)
                             {
-                                ProductComponentId = Guid.NewGuid(),
-                                ProductId = product.ProductId,
-                                ComponentId = item.ComponentId,
-                                PricingExpression = item.PricingExpression,
-                                Quantity = item.Quantity,
-                                CreatedAt = DateTime.Now,
-                                CreatedBy = AppConstant.LoggedInUserID,
-                                IsActive = true,
-                                IsDelete = false,
-                                TenantId = AppConstant.LoggedInTenantId
-                            };
+                                TblProductComponent productcomponent = new TblProductComponent
+                                {
+                                    ProductComponentId = Guid.NewGuid(),
+                                    ProductId = product.ProductId,
+                                    ComponentId = item.ComponentId,
+                                    PricingExpression = item.PricingExpression,
+                                    Quantity = item.Quantity,
+                                    CreatedAt = DateTime.Now,
+                                    CreatedBy = AppConstant.LoggedInUserID,
+                                    IsActive = true,
+                                    IsDelete = false,
+                                    TenantId = AppConstant.LoggedInTenantId
+                                };
 
-                            await productComponentService.Add(productcomponent);
+                                await productComponentService.Add(productcomponent);
+                            }
                         }
                     }
                     responseVm.IsSuccess = true;
@@ -278,6 +278,7 @@ namespace ShutterManagement.Business.Services
                                            ProductTypeName = pt.ProductName,
                                            TenantId = p.TenantId,
                                            IsActive = p.IsActive,
+                                           IsComponentAvailable = p.IsComponentAvailable,
                                        }).ToList();
                     foreach (var item in productList)
                     {

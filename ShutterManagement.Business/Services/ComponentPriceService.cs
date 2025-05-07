@@ -211,17 +211,22 @@ namespace ShutterManagement.Business.Services
                   join windowProduct in dbContext.TblWindowProducts on window.WindowId equals windowProduct.WindowId
                   join product in dbContext.TblProducts on windowProduct.ProductId equals product.ProductId
                   join productType in dbContext.MstProductTypes on product.ProductType equals productType.ProductId.ToString()
-                  join productComponent in dbContext.TblProductComponents on product.ProductId equals productComponent.ProductId
-                  join expression in dbContext.TblExpressions on productComponent.PricingExpression equals expression.Id.ToString()
-                  join component in dbContext.TblComponents on productComponent.ComponentId equals component.ComponentId
-                  join componentMaterial in dbContext.TblComponentMaterials on component.ComponentId equals componentMaterial.ComponentId
-                  join material in dbContext.TblRawMaterials on componentMaterial.RawMaterialId equals material.RawMaterialId
+                  join productComponent in dbContext.TblProductComponents on product.ProductId equals productComponent.ProductId into productcomponents
+                  from productComponent in productcomponents.DefaultIfEmpty()
+                  join expression in dbContext.TblExpressions on productComponent.PricingExpression equals expression.Id.ToString() into PExpressions
+                  from expression in PExpressions.DefaultIfEmpty()
+                  join component in dbContext.TblComponents on productComponent.ComponentId equals component.ComponentId into components
+                  from component in components.DefaultIfEmpty()
+                  join componentMaterial in dbContext.TblComponentMaterials on component.ComponentId equals componentMaterial.ComponentId into MComponent
+                  from componentMaterial in MComponent.DefaultIfEmpty()
+                  join material in dbContext.TblRawMaterials on componentMaterial.RawMaterialId equals material.RawMaterialId into materials
+                  from material in materials.DefaultIfEmpty()
                   where windowProduct.WindowProductId == WindowProductId
                   && window.IsActive == true && window.IsDelete == false
                   && windowProduct.IsActive == true && windowProduct.IsDelete == false
                   && product.IsActive == true && product.IsDelete == false
                   && productType.IsActive == true && productType.IsDelete == false
-                  && productComponent.IsActive == true && productComponent.IsDelete == false
+                  //&& productComponent.IsActive == true && productComponent.IsDelete == false
                   && component.IsActive == true && component.IsDelete == false
                   && expression.IsActive == true && expression.IsDelete == false
                   && componentMaterial.IsActive == true && componentMaterial.IsDelete == false
