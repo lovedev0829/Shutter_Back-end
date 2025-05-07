@@ -19,7 +19,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("Create")]
-        [Authorize(Roles = "ManagePartnerProductEdit")]
+        [Authorize(Roles = "ManageProductEdit")]
         public async Task<IActionResult> CreateManagePartnerProduct(CreateManagePartnerProduct createManagePartnerProduct)
         {
             var res = await managePartnersProducts.CreateManagePartnerProduct(createManagePartnerProduct);    
@@ -29,11 +29,23 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("GetAllManagePartnerProduct")]
-        [Authorize(Roles = "ManagePartnerProductView")]
+        [Authorize(Roles = "ManageProductView")]
         public async Task<IActionResult> GetAllManagePartnerProduct(Pagination filter)
         {
             var res = await managePartnersProducts.GetAllProductOptions(filter);
             return Ok(res);
         }
+
+        [HttpGet]
+        [Route("GetMSRP")]
+        [Authorize(Roles = "ManageProductView")]
+        public async Task<IActionResult> GetMSRP(string? ProductId)
+        {
+            var res = await managePartnersProducts.CalculateMSRP(ProductId);
+            return Ok(res);
+        }
+
+
+
     }
 }
