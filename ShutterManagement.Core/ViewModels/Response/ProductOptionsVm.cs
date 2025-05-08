@@ -16,8 +16,13 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? ManageProductId { get; set; }
         public decimal? PartnerSellingPrice { get; set; }
         public string? TenantId { get; set; }
-        public decimal? MarkupPer { get; set; }
         public string? MarkupType { get; set; }
+        public string? PriceType { get; set; }
+
+
+        public decimal? MaxSellingPrice { get; set; }
+    
+        public decimal? MinSellingPrice { get; set; }
 
         public List<ProductOptionsList> Options { get; set; }
     }
@@ -44,6 +49,9 @@ namespace ShutterManagement.Core.ViewModels.Response
         public decimal? MaxPrice { get; set; }
         public bool? IsAvailable { get; set; }
         public decimal? PartnerSellingPrice { get; set; }
+        public string? PriceType { get; set; }
+        public decimal? MaxSellingPrice { get; set; }
+        public decimal? MinSellingPrice { get; set; }
     }
 }
 

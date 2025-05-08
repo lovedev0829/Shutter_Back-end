@@ -15,13 +15,16 @@ namespace ShutterManagement.Core.ViewModels.Request
         public Guid? ProductId { get; set; }
         public bool? IsAvailable { get; set; } = false;
         [DefaultValue("")]
-        public decimal? WholeSalePrice { get; set; }
+        public decimal? WholeSalePrice { get; set; }       
+        [DefaultValue("")]
+        public string? PriceType { get; set; }
         [DefaultValue("")]
         public decimal? MaxPartnerPrice { get; set; }
         [DefaultValue("")]
         public decimal? PartnerSellingPrice { get; set; }
-        [DefaultValue("")]
-        public decimal? MarkupPer { get; set; }
+
+        //[DefaultValue("")]
+        //public decimal? MarkupPer { get; set; }
         [DefaultValue("")]
         public string? MarkupType { get; set; }
         [DefaultValue("")]
@@ -56,6 +59,8 @@ namespace ShutterManagement.Core.ViewModels.Request
         public decimal? WholeSalePrice { get; set; }
         [DefaultValue("")]
         public decimal? MaxPrice { get; set; }
+        [DefaultValue("")]
+        public string? PriceType { get; set; }
         [DefaultValue("")]
         public decimal? PartnerSellingPrice { get; set; }
         public string? TenantId { get; set; }

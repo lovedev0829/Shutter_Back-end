@@ -35,6 +35,8 @@ public partial class TblManagePartnersProduct
 
     public string? MarkupType { get; set; }
 
+    public string? PriceType { get; set; }
+
     public virtual TblProduct? Product { get; set; }
 
     public virtual ICollection<TblManagePartnersProductsOption> TblManagePartnersProductsOptions { get; set; } = new List<TblManagePartnersProductsOption>();
