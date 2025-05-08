@@ -534,9 +534,10 @@ namespace ShutterManagement.Business.Services
                                 AdditionalCost = item.AdditionalCost,
                                 AdditionalWidth = item.AdditionalWidth,
                                 Markup = item.Markup,
-                                ProductTypeName = item.ProductName,
+                                ProductTypeName = item.ProductTypeName,
                                 TotalPrice = item.TotalPrice,
                                 IsTaxApplied = isTaxApplied,
+                                Price = item.Price,
                                 IsComponentAvailable = item.IsComponentAvailable,
                             });
                         }
@@ -1279,7 +1280,7 @@ namespace ShutterManagement.Business.Services
             Guid? taxRateId = null;
             Guid? discountId = null;
             var PricedProductsList = model.ProductsList.Where(x => x.ProductPrice != null && x.ProductPrice > 0).ToList();
-            var windowproductdetails = await BuildEstimate(model.ProductsList.Select(x => x.WindowProductId).ToArray(), false);
+            var windowproductdetails = await BuildEstimate(model.ProductsList.Select(x => x.WindowProductId).ToArray(), true);
             //if (PricedProductsList.Count > 0)
             //{
             //    //var windowproductdetail = await BuildEstimate(PricedProductsList.Select(m => m.WindowProductId).ToArray(), false);
@@ -1449,12 +1450,13 @@ namespace ShutterManagement.Business.Services
                 }
 
                 await AddWindowToEstimate(windowData, windowProductData, estimateId);
-                await AddProductToEstimate(windowProductData, estimateId,product.ProductPrice);
+                await AddProductToEstimate(windowProductData, estimateId, product.ProductPrice);
                 if (!string.IsNullOrEmpty(Message))
                 {
                     return;
                 }
-                if (product.ProductPrice == null)
+                bool isComponentAvailable = (bool)windowProdcutDetailsForEstimates.Where(x => x.WindowProdcutId == product.WindowProductId).Select(y => y.IsComponentAvailable).FirstOrDefault();
+                if (isComponentAvailable)
                 {
                     await AddComponentsToEstimate((Guid)windowProductData.ProductId, (Guid)windowProductData.WindowId, estimateId,
                         windowProdcutDetailsForEstimates.Where(x => x.WindowProdcutId == product.WindowProductId).ToList());
@@ -1540,10 +1542,11 @@ namespace ShutterManagement.Business.Services
         private async Task AddComponentsToEstimate(Guid productId,Guid WindowId, Guid estimateId, List<WindowProdcutDetailsForEstimate> windowProdcutDetailsForEstimates)
         {
             FileLogger.Log($"Adding components for product {productId} to estimate...");
+            
             var productComponentData = (await productComponentService.GetAll()).Where(x => x.ProductId == productId && x.IsDelete == false).ToList();
             if (productComponentData == null || productComponentData.Count == 0)
             {
-                Message = "No Components " + AppConstant.NoDataFound;
+                //Message = "No Components " + AppConstant.NoDataFound;
                 return; // Return early if no components found
             }
             foreach (var component in productComponentData)
