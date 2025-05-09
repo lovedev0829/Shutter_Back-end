@@ -96,16 +96,21 @@ namespace ShutterManagement.Business.Services
                   where estimatewindow.EstimateId.ToString() == EstimateID
                   join estwindowProduct in dbContext.TblEstimateWindowProducts on estimatewindow.WindowId equals estwindowProduct.WindowId
                   where estwindowProduct.EstimateId.ToString() == EstimateID
-                  join estwinprocomp in dbContext.TblEstimateWindowProductComponents on estwindowProduct.ProductId equals estwinprocomp.ProductId
-                  where estwinprocomp.EstimateId.ToString() == EstimateID  && estwindowProduct.WindowId == estwinprocomp.WindowId
-                  join productComponentmat in dbContext.TblEstimateWindowProductComponentMaterials on estwinprocomp.ComponentId equals productComponentmat.ComponentId
-                  where productComponentmat.EstimateId.ToString() == EstimateID && estwinprocomp.WindowId == productComponentmat.WindowId
+                  join estwinprocomp in dbContext.TblEstimateWindowProductComponents on estwindowProduct.ProductId equals estwinprocomp.ProductId into estwinprocomps
+                  from estwinprocomp in estwinprocomps.DefaultIfEmpty()
+                  where (string.IsNullOrEmpty(estwinprocomp.EstimateId.ToString()) || estwinprocomp.EstimateId.ToString() == EstimateID) &&
+                  (string.IsNullOrEmpty(estwinprocomp.WindowId.ToString()) || estwindowProduct.WindowId == estwinprocomp.WindowId)
+                  join productComponentmat in dbContext.TblEstimateWindowProductComponentMaterials on estwinprocomp.ComponentId equals
+                  productComponentmat.ComponentId 
+                  into productComponentmats from productComponentmat in productComponentmats.DefaultIfEmpty()
+                  where (string.IsNullOrEmpty(productComponentmat.EstimateId.ToString()) || productComponentmat.EstimateId.ToString() == EstimateID ) &&
+                  (string.IsNullOrEmpty(productComponentmat.WindowId.ToString()) || estwindowProduct.WindowId == productComponentmat.WindowId)
                   where estwindowProduct.WindowProductId == WindowProductId
                   && estimate.IsActive == true && estimate.IsDelete == false
                   && estimatewindow.IsActive == true && estimatewindow.IsDelete == false
                   && estwindowProduct.IsActive == true && estwindowProduct.IsDelete == false
-                  && estwinprocomp.IsActive == true && estwinprocomp.IsDelete == false
-                  && productComponentmat.IsActive == true && productComponentmat.IsDelete == false
+                  //&& estwinprocomp.IsActive == true && estwinprocomp.IsDelete == false
+                  //&& productComponentmat.IsActive == true && productComponentmat.IsDelete == false
                   select new WindowProdcutDetailsForEstimate
                   {
                       WindowId = (Guid)estimatewindow.WindowId,
@@ -135,7 +140,7 @@ namespace ShutterManagement.Business.Services
                       Markup = estwindowProduct.Markup,
 
                       // ProductType Properties
-                      ProductTypeName = estwinprocomp.ProductTypeName,
+                      ProductTypeName = estwindowProduct.ProductTypeName,
 
                       // ProductComponent Properties
                       ComponentId = estwinprocomp.ComponentId,

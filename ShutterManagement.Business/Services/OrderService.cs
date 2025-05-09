@@ -1049,7 +1049,7 @@ namespace ShutterManagement.Business.Services
                 }
 
                 await AddWindowToOrder(windowData, windowProductData, OrderId, estimateId, Version);
-                await AddProductToOrder(windowProductData, estimateId, OrderId, Version);
+                await AddProductToOrder(windowProductData, estimateId, OrderId, Version,product.ProductPrice);
                 if (!string.IsNullOrEmpty(Message))
                 {
                     return;
@@ -1092,7 +1092,7 @@ namespace ShutterManagement.Business.Services
             await orderWindowService.Add(tblOrderWindow);
         }
 
-        private async Task AddProductToOrder(TblWindowProduct windowProductData, Guid estimateId, Guid OrderId, string Version)
+        private async Task AddProductToOrder(TblWindowProduct windowProductData, Guid estimateId, Guid OrderId, string Version,decimal? ProductPrice)
         {
             FileLogger.Log($"Adding product data for product {windowProductData.ProductId} to order...");
             var productData = (await productService.GetAll()).Where(x => x.ProductId == windowProductData.ProductId && x.IsDelete == false).FirstOrDefault();
@@ -1131,6 +1131,7 @@ namespace ShutterManagement.Business.Services
                 Price = estimatePrice,
                 WindowProductId = windowProductData.WindowProductId,
                 ProductTypeName = productTypeName,
+                ProductPrice = ProductPrice,
             };
 
             await orderWindowProductService.Add(tblOrderWindowProduct);
