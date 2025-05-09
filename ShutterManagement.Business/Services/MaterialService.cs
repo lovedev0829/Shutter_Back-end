@@ -210,7 +210,7 @@ namespace ShutterManagement.Business.Services
                     var IsMaterialExists =  GetAllQuerable()
                           .Where(c => c.RawMaterialId == Id
                                       && c.TenantId == AppConstant.LoggedInTenantId
-                                      && c.IsDelete == false && c.IsActive==true
+                                      && c.IsDelete == false 
                                       )
                           .FirstOrDefault();
 

@@ -1234,9 +1234,12 @@ namespace ShutterManagement.Business.Services
                         (!string.IsNullOrEmpty(invoice.Status) && invoice.Status.ToLower().Contains(searchTerm)) ||
                         (!string.IsNullOrEmpty(invoice.ContactFirstName) && invoice.ContactFirstName.ToLower().Contains(searchTerm)) ||
                         (!string.IsNullOrEmpty(invoice.ContactLastName) && invoice.ContactLastName.ToLower().Contains(searchTerm)) ||
-                        (!string.IsNullOrEmpty(invoice.EstimateName) && invoice.EstimateName.ToLower().Contains(searchTerm))
+                        (!string.IsNullOrEmpty(invoice.EstimateName) && invoice.EstimateName.ToLower().Contains(searchTerm)) ||
+                        ((!string.IsNullOrEmpty(invoice.ContactFirstName) || !string.IsNullOrEmpty(invoice.ContactLastName)) &&
+                         ($"{invoice.ContactFirstName} {invoice.ContactLastName}".Trim().ToLower().Contains(searchTerm)))
                     ).ToList();
                 }
+
 
 
 
