@@ -50,6 +50,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public bool? IsAvailable { get; set; }
         public decimal? PartnerSellingPrice { get; set; }
         public string? PriceType { get; set; }
+        public string? MarkupOptionType { get; set; }
         public decimal? MaxSellingPrice { get; set; }
         public decimal? MinSellingPrice { get; set; }
     }

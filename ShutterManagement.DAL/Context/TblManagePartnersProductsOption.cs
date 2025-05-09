@@ -37,6 +37,8 @@ public partial class TblManagePartnersProductsOption
 
     public string? PriceType { get; set; }
 
+    public string? MarkupOptionType { get; set; }
+
     public virtual TblManagePartnersProduct? ManageProduct { get; set; }
 
     public virtual TblOption? Option { get; set; }

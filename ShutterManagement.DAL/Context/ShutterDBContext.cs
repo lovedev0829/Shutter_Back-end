@@ -1169,6 +1169,7 @@ public partial class ShutterDBContext : DbContext
 
             entity.Property(e => e.ManageProductOptionId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.MarkupOptionType).HasMaxLength(20);
             entity.Property(e => e.MaxPrice).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.PartnerSellingPrice).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.PriceType).HasMaxLength(20);
