@@ -14,6 +14,7 @@ using ShutterManagement.Core.ViewModels.Response;
 using ShutterManagement.Business.Services;
 using Org.BouncyCastle.Utilities;
 using ShutterManagement.Core.Common;
+using Stripe;
 
 namespace ShutterManagement.Business.Services
 {
@@ -371,14 +372,15 @@ namespace ShutterManagement.Business.Services
                                               WholeSalePrice = o1.WholeSalePrice ?? 0.0m,
                                               MarkupOptionType =  EnumValue.GetEnumValue(PriceType.Percentage)
                                           }).ToList();
+                    //decimal wholesale1 = Price * (1 + (wholeSalePrice / 100));
 
                     var productTasks = products.Select(async product =>
                     {
                         decimal baseCost = await CalculateBaseCost((Guid)product.ProductId);
                         var msrp = await CalculateMSRPData((Guid)product.ProductId);
 
-                       var (maxSellingPrice, minSellingPrice, wholesale) =
-                       CalculateSellingPrices(baseCost, msrp, (decimal)product.WholeSalePrice, (decimal)product.MaxPartnerPrice,product.PriceType);
+                        var (maxSellingPrice, minSellingPrice, wholesale) =
+                            CalculateSellingPrices(baseCost, msrp, (decimal)product.WholeSalePrice, (decimal)product.MaxPartnerPrice, product.PriceType);
 
                         return new ProductOptionsVm
                         {
@@ -399,7 +401,29 @@ namespace ShutterManagement.Business.Services
                                     OptionName = opt.OptionName,
                                     optionTypes = allOptionTypes
                                         .Where(ot => ot.OptionId == opt.OptionId)
-                                        .ToList()
+                                        .Select(optt =>
+                                        {
+                                            decimal optionWholesale;
+                                            if (optt.MarkupOptionType == EnumValue.GetEnumValue(PriceType.Percentage))
+                                            {
+                                                optionWholesale = (decimal)(optt.Price * (1 + (optt.WholeSalePrice / 100)));
+                                            }
+                                            else
+                                            {
+                                                optionWholesale = (decimal)(optt.Price + optt.WholeSalePrice);
+                                            }
+
+                                            return new ProductOptionTypeList
+                                            {
+                                                OptionTypeId = optt.OptionTypeId,
+                                                OptionTypeName = optt.OptionTypeName,
+                                                OptionId = optt.OptionId,
+                                                Price = optt.Price,
+                                                PartnerSellingPrice = optt.PartnerSellingPrice,
+                                                WholeSalePrice = Math.Round(optionWholesale, 2),
+                                                MarkupOptionType = optt.MarkupOptionType
+                                            };
+                                        }).ToList()
                                 }).ToList()
                         };
                     });
