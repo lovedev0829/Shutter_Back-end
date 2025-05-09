@@ -13,6 +13,8 @@ namespace ShutterManagement.Core.ViewModels.Request
         [DefaultValue("")]
         [Required]
         [MinLength(8), MaxLength(12)]
+        [RegularExpression(@"^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,12}$",
+        ErrorMessage = "Password must be 8-12 chars with letter, number & special char.")]
         public string? Password { get; set; }
     }
 }

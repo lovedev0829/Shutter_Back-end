@@ -1225,6 +1225,21 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = "No invoices match the specified filter criteria.";
                     return responseVm;
                 }
+
+                if (!string.IsNullOrWhiteSpace(filter.SearchValue))
+                {
+                    string searchTerm = filter.SearchValue.Trim().ToLower();
+                    filteredInvoices = filteredInvoices.Where(invoice =>
+                        (!string.IsNullOrEmpty(invoice.InvoiceNumber) && invoice.InvoiceNumber.ToLower().Contains(searchTerm)) ||
+                        (!string.IsNullOrEmpty(invoice.Status) && invoice.Status.ToLower().Contains(searchTerm)) ||
+                        (!string.IsNullOrEmpty(invoice.ContactFirstName) && invoice.ContactFirstName.ToLower().Contains(searchTerm)) ||
+                        (!string.IsNullOrEmpty(invoice.ContactLastName) && invoice.ContactLastName.ToLower().Contains(searchTerm)) ||
+                        (!string.IsNullOrEmpty(invoice.EstimateName) && invoice.EstimateName.ToLower().Contains(searchTerm))
+                    ).ToList();
+                }
+
+
+
                 var paginatedInvoices = filteredInvoices
                     .Skip((filter.PageNo - 1) * filter.RecordPerPage)
                     .Take(filter.RecordPerPage)

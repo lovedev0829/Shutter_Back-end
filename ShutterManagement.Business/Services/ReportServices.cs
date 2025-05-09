@@ -55,6 +55,24 @@ namespace ShutterManagement.Business.Services
                     .FirstOrDefault())
                    .ToList();
 
+
+                // Apply search
+                if (!string.IsNullOrWhiteSpace(filter.SearchValue))
+                {
+                    var SearchValue = filter.SearchValue.Trim().ToLower();
+                    filteredOrders = filteredOrders
+                        .Where(o =>
+                            (!string.IsNullOrEmpty(o.OrderNumber) && o.OrderNumber.ToLower().Contains(SearchValue)) ||
+                            (o.EstimateId != Guid.Empty && o.EstimateId.ToString().ToLower().Contains(SearchValue)) ||
+                            (!string.IsNullOrEmpty(o.jobDetails.ContactFirstName) || !string.IsNullOrEmpty(o.jobDetails.ContactLastName)) &&
+                            ($"{o.jobDetails.ContactFirstName} {o.jobDetails.ContactLastName}".ToLower().Contains(SearchValue)) ||
+                            (o.CreatedDate.HasValue && o.CreatedDate.Value.ToString("yyyy-MM-dd").Contains(SearchValue)) ||
+                            (o.CreatedDate.HasValue && o.CreatedDate.Value.ToString("yyyy-MM-dd").Contains(SearchValue)) ||
+                            (o.GrandTotal.HasValue && o.GrandTotal.Value.ToString().Contains(SearchValue))
+                        )
+                        .ToList();
+                }
+
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.FetchSuccessMsg;
                 responseVm.Data = filteredOrders;
@@ -80,6 +98,24 @@ namespace ShutterManagement.Business.Services
                 var filteredOrders = estimatelist?.Data
                        .Where(o => o.IsTaxApplied==false && o.Tax >0 && (o.Status == EnumValue.GetEnumValue(Estimation.Approved) || o.Status == EnumValue.GetEnumValue(Estimation.GenerateOrder)))
                       .ToList();
+
+                if (!string.IsNullOrWhiteSpace(filter.SearchValue))
+                {
+                    var searchTerm = filter.SearchValue.Trim().ToLower();
+                    filteredOrders = filteredOrders
+                        .Where(o =>
+                            (!string.IsNullOrEmpty(o.EstimateCode) &&
+                                o.EstimateCode.ToLower().Contains(searchTerm)) ||
+                            (!string.IsNullOrEmpty(o.jobDetails.JobUniqueId) &&
+                                o.jobDetails.JobUniqueId.ToLower().Contains(searchTerm)) ||
+                            (
+                                (!string.IsNullOrEmpty(o.jobDetails.FirstName) || !string.IsNullOrEmpty(o.jobDetails.LastName)) &&
+                                $"{o.jobDetails.FirstName} {o.jobDetails.LastName}".ToLower().Contains(searchTerm)
+                            ) ||
+                            (o.Tax.HasValue && o.Tax.Value.ToString().ToLower().Contains(searchTerm))
+                        )
+                        .ToList();
+                }
 
                 responseVm.IsSuccess = true;
                 responseVm.Data = filteredOrders;
