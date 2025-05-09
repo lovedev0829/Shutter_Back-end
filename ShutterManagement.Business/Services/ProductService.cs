@@ -258,17 +258,27 @@ namespace ShutterManagement.Business.Services
 
             try
             {
-                var isTenantValid = await tenantService.AnyAsync(x =>
-                    x.TenantId == AppConstant.LoggedInTenantId &&
-                  //  x.ParentTenantId == null &&
-                    x.IsDelete == false &&
-                    x.IsActive == true);
+                var tenant = await tenantService.FirstOrDefaultAsync(x =>
+                        x.TenantId == AppConstant.LoggedInTenantId &&
+                        x.IsDelete == false &&
+                        x.IsActive == true);
 
-                if (isTenantValid)
+                if (tenant != null)
                 {
-                    var productList = (from p in dbContext.TblProducts.OrderByDescending(x => x.CreatedAt)
+                    bool isSubTenant = tenant.ParentTenantId != null;
+
+                    List<ProductListVm> productList;
+
+                    if (isSubTenant)
+                    {
+                        // Sub-tenant: Fetch from ManageProducts (shared from parent)
+                        productList = (from mp in dbContext.TblManagePartnersProducts.OrderByDescending(x => x.CreatedAt)
+                                       join p in dbContext.TblProducts on mp.ProductId equals p.ProductId
                                        join pt in dbContext.MstProductTypes on p.ProductType equals pt.ProductId.ToString()
-                                       where p.IsDelete == false && (p.TenantId == AppConstant.LoggedInTenantId || p.TenantId.ToString() == AppConstant.LoggedInParentTenantId) 
+                                       where mp.TenantId == AppConstant.LoggedInTenantId
+                                             && mp.IsDelete == false
+                                             && mp.IsAvailable == true
+                                             && p.IsDelete == false
                                        select new ProductListVm
                                        {
                                            ProductId = p.ProductId,
@@ -281,6 +291,28 @@ namespace ShutterManagement.Business.Services
                                            IsActive = p.IsActive,
                                            IsComponentAvailable = p.IsComponentAvailable,
                                        }).ToList();
+                    }
+                    else
+                    {
+                        // Parent or regular tenant: Fetch directly from TblProducts
+                        productList = (from p in dbContext.TblProducts.OrderByDescending(x => x.CreatedAt)
+                                       join pt in dbContext.MstProductTypes on p.ProductType equals pt.ProductId.ToString()
+                                       where p.IsDelete == false &&
+                                             (p.TenantId == AppConstant.LoggedInTenantId || p.TenantId.ToString() == AppConstant.LoggedInParentTenantId)
+                                       select new ProductListVm
+                                       {
+                                           ProductId = p.ProductId,
+                                           ProductName = p.ProductName,
+                                           Markup = p.Markup,
+                                           Notes = p.Notes,
+                                           ProductType = pt.ProductId.ToString().ToLower(),
+                                           ProductTypeName = pt.ProductName,
+                                           TenantId = p.TenantId,
+                                           IsActive = p.IsActive,
+                                           IsComponentAvailable = p.IsComponentAvailable,
+                                       }).ToList();
+                    }
+
                     foreach (var item in productList)
                     {
                         var productComponent = (from pm in dbContext.TblProductComponents.OrderByDescending(x => x.CreatedAt)
@@ -300,6 +332,7 @@ namespace ShutterManagement.Business.Services
 
                         item.ProductComponents = productComponent;
                     }
+
 
                     filter.SearchValue = filter.SearchValue?.Trim().ToLower();
                     var FilterRecords = productList
