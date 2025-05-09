@@ -15,6 +15,7 @@ using ShutterManagement.Business.Services;
 using Org.BouncyCastle.Utilities;
 using ShutterManagement.Core.Common;
 using Stripe;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace ShutterManagement.Business.Services
 {
@@ -102,10 +103,9 @@ namespace ShutterManagement.Business.Services
                                 PartnerSellingPricewithPer = (decimal)msrp * (1 + (model.PartnerSellingPrice / 100)) ?? 0.0m;
                             }
 
-                            if (model.PartnerSellingPrice > minSellingPrice && model.PartnerSellingPrice < maxSellingPrice ||
-                                (PartnerSellingPricewithPer > minSellingPrice && PartnerSellingPricewithPer < maxSellingPrice))
+                            if ((model.PartnerSellingPrice >= minSellingPrice && model.PartnerSellingPrice <= maxSellingPrice) ||
+                            (PartnerSellingPricewithPer >= minSellingPrice && PartnerSellingPricewithPer <= maxSellingPrice))
                             {
-
                                 IsManagePartnerProductExist.PartnerSellingPrice = model.PartnerSellingPrice;
                                 IsManagePartnerProductExist.MarkupType = model.MarkupType;
                                 await Update(IsManagePartnerProductExist);
@@ -121,13 +121,13 @@ namespace ShutterManagement.Business.Services
                                         && x.IsActive == true && x.IsDelete == false).Select(x => x.AdditionalCost).FirstOrDefault();
                                         var (maxSellingPrice1, minSellingPrice1, wholesale1) =
                                          CalculateSellingPrices((decimal)optionprice, (decimal)optionprice, (decimal)IsManagepartneroptiontype.WholeSalePrice, (decimal)IsManagepartneroptiontype.MaxPrice,
-                                      item.PriceType);
+                                      item.MarkupOptionType);
                                         if (item.MarkupOptionType == EnumValue.GetEnumValue(PriceType.Percentage))
                                         {
                                             PartnerSellingPricewithPer = (decimal)optionprice * (1 + (item.PartnerSellingPrice / 100)) ?? 0.0m;
                                         }
-                                        if((maxSellingPrice1 > item.PartnerSellingPrice && minSellingPrice1 < item.PartnerSellingPrice) ||
-                                            (PartnerSellingPricewithPer > minSellingPrice && PartnerSellingPricewithPer < maxSellingPrice))
+                                        if((maxSellingPrice1 >= item.PartnerSellingPrice && minSellingPrice1 <= item.PartnerSellingPrice) ||
+                                            (PartnerSellingPricewithPer >= minSellingPrice && PartnerSellingPricewithPer <= maxSellingPrice))
                                         {
                                             IsManagepartneroptiontype.MarkupOptionType = item.MarkupOptionType;
                                             IsManagepartneroptiontype.PartnerSellingPrice = item.PartnerSellingPrice;
@@ -174,8 +174,7 @@ namespace ShutterManagement.Business.Services
         private async Task UpdateManagePartnerProduct(CreateManagePartnerProduct items)
         {
             var IsManagePartnerProductExist = GetAllQuerable().Where(x => x.ProductId == items.ProductId &&
-                x.IsActive == true && x.IsDelete == false && x.TenantId.ToString().ToLower() == items.TenantId.ToLower() && x.IsAvailable == true).FirstOrDefault();
-
+                x.IsActive == true && x.IsDelete == false && x.TenantId.ToString().ToLower() == items.TenantId.ToLower()).FirstOrDefault();
             if (IsManagePartnerProductExist != null)
             {
                 IsManagePartnerProductExist.PriceType = items.PriceType;
@@ -186,10 +185,18 @@ namespace ShutterManagement.Business.Services
                 IsManagePartnerProductExist.ModifiedBy = AppConstant.LoggedInUserID;
                 IsManagePartnerProductExist.UpdatedAt = DateTime.Now;
                 await Update(IsManagePartnerProductExist);
-
+              
                 foreach (var item in items.ManagePartnerProductOptions)
                 {
-                    await UpdatePartnerProductOptions(item, IsManagePartnerProductExist.ManageProductId);
+                    if (!items.IsAvailable == false)
+                    {
+                        await UpdatePartnerProductOptions(item, IsManagePartnerProductExist.ManageProductId);
+                    }
+                    else
+                    {
+                        await DeleteOptions(IsManagePartnerProductExist.ManageProductId);
+                    }
+                  // await UpdatePartnerProductOptions(item, IsManagePartnerProductExist.ManageProductId);
                 }
             }
             else
@@ -359,7 +366,7 @@ namespace ShutterManagement.Business.Services
                     var allOptionTypes = (from o1 in dbContext.TblManagePartnersProductsOptions
                                           join o2 in dbContext.TblOptionsTypes on o1.OptionTypeId equals o2.OptionTypeId
                                           join o3 in dbContext.TblManagePartnersProducts on o1.ManageProductId equals o3.ManageProductId
-                                          where o1.IsDelete == false && o1.IsActive == true &&
+                                          where o1.IsDelete == false && o1.IsActive == true && o1.IsAvailable == true &&
                                                 optionIds.Contains(o1.OptionId) &&
                                                 o1.TenantId == AppConstant.LoggedInTenantId
                                           select new ProductOptionTypeList
@@ -370,7 +377,7 @@ namespace ShutterManagement.Business.Services
                                               Price = o2.AdditionalCost,
                                               PartnerSellingPrice = o1.PartnerSellingPrice ?? 0.0m,
                                               WholeSalePrice = o1.WholeSalePrice ?? 0.0m,
-                                              MarkupOptionType =  EnumValue.GetEnumValue(PriceType.Percentage)
+                                              MarkupOptionType = o1.MarkupOptionType ?? EnumValue.GetEnumValue(PriceType.Fixed)
                                           }).ToList();
                     //decimal wholesale1 = Price * (1 + (wholeSalePrice / 100));
 
@@ -789,6 +796,21 @@ namespace ShutterManagement.Business.Services
   );
         }
 
+        private async Task DeleteOptions(Guid manageproductId)
+        {
+            var IsManagePartnerProductOptionExist = managePartnersProductsOptions.GetAllQuerable().Where(x => x.ManageProductId == manageproductId &&
+               x.IsActive == true && x.IsDelete == false).FirstOrDefault();
+            if(IsManagePartnerProductOptionExist != null)
+            {
+                IsManagePartnerProductOptionExist.IsActive = false;
+                IsManagePartnerProductOptionExist.IsDelete = true;
+                IsManagePartnerProductOptionExist.IsAvailable = false;
+                IsManagePartnerProductOptionExist.UpdatedAt = DateTime.Now;
+                IsManagePartnerProductOptionExist.ModifiedBy = AppConstant.LoggedInUserID;
+                await managePartnersProductsOptions.Update(IsManagePartnerProductOptionExist);
+            }
+        }
+        
 
     }
 }
