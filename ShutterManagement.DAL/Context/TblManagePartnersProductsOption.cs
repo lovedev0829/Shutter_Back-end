@@ -35,6 +35,8 @@ public partial class TblManagePartnersProductsOption
 
     public Guid? TenantId { get; set; }
 
+    public string? PriceType { get; set; }
+
     public virtual TblManagePartnersProduct? ManageProduct { get; set; }
 
     public virtual TblOption? Option { get; set; }

@@ -31,7 +31,7 @@ public partial class TblManagePartnersProduct
 
     public Guid? TenantId { get; set; }
 
-    public decimal? MarkupPer { get; set; }
+    public string? PriceType { get; set; }
 
     public string? MarkupType { get; set; }
 
