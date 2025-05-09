@@ -47,6 +47,15 @@ namespace ShutterManagement.Core.Common
         
     }
 
+    public enum PriceType
+    {
+        [EnumMember(Value = "Percentage")]
+        Percentage,
+        [EnumMember(Value = "Fixed")]
+        Fixed
+
+    }
+
     public enum DiscountType
     {
         [EnumMember(Value = "Percentage")]

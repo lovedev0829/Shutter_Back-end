@@ -26,12 +26,13 @@ namespace ShutterManagement.Business.Services
         private readonly IEstimateService estimateService;
         private readonly ISubtenantProductMarkup subtenantProductMarkup;
         private readonly ITenantBrandingService tenantBrandingService;
+        private readonly IOptionsTypeService optionsTypeService;
 
         public ManagePartnersProductsService(ShutterDBContext dBContext, ITenantService tenantService,
             IProductService productService, IManagePartnersProductsOptions 
             managePartnersProductsOptions,IEstimateService estimateService,
             ISubtenantProductMarkup subtenantProductMarkup,
-            ITenantBrandingService tenantBrandingService
+            ITenantBrandingService tenantBrandingService,IOptionsTypeService optionsTypeService
             )
         {
             this.dBContext = dBContext;
@@ -41,6 +42,7 @@ namespace ShutterManagement.Business.Services
             this.estimateService = estimateService;
             this.subtenantProductMarkup = subtenantProductMarkup;
             this.tenantBrandingService = tenantBrandingService;
+            this.optionsTypeService = optionsTypeService;
         }
 
         public async Task<IResponseVm<string>> CreateManagePartnerProduct(CreateManagePartnerProduct model)
@@ -88,13 +90,19 @@ namespace ShutterManagement.Business.Services
                         x.IsActive == true && x.IsDelete == false && x.IsAvailable == true && x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
                         if (IsManagePartnerProductExist != null)
                         {
+                            decimal PartnerSellingPricewithPer = 0.0m;
                             decimal baseCost = await CalculateBaseCost((Guid)IsManagePartnerProductExist.ProductId);
                             var msrp = await CalculateMSRPData((Guid)IsManagePartnerProductExist.ProductId);
                             var (maxSellingPrice, minSellingPrice, wholesale) =
                              CalculateSellingPrices(baseCost, msrp, (decimal)IsManagePartnerProductExist.WholeSalePrice,(decimal)IsManagePartnerProductExist.MaxPartnerPrice, 
                              IsManagePartnerProductExist.PriceType);
+                            if(model.MarkupType == EnumValue.GetEnumValue(PriceType.Percentage))
+                            {
+                                PartnerSellingPricewithPer = (decimal)msrp * (1 + (model.PartnerSellingPrice / 100)) ?? 0.0m;
+                            }
 
-                            if (model.PartnerSellingPrice > minSellingPrice && model.PartnerSellingPrice < maxSellingPrice)
+                            if (model.PartnerSellingPrice > minSellingPrice && model.PartnerSellingPrice < maxSellingPrice ||
+                                (PartnerSellingPricewithPer > minSellingPrice && PartnerSellingPricewithPer < maxSellingPrice))
                             {
 
                                 IsManagePartnerProductExist.PartnerSellingPrice = model.PartnerSellingPrice;
@@ -108,15 +116,32 @@ namespace ShutterManagement.Business.Services
                                         x.IsActive == true && x.IsDelete == false && x.IsAvailable == true).FirstOrDefault();
                                     if (IsManagepartneroptiontype != null)
                                     {
-                                        IsManagepartneroptiontype.PartnerSellingPrice = item.PartnerSellingPrice;
-                                        await managePartnersProductsOptions.Update(IsManagepartneroptiontype);
+                                        var optionprice = optionsTypeService.GetAllQuerable().Where(x => x.OptionTypeId == IsManagepartneroptiontype.OptionTypeId
+                                        && x.IsActive == true && x.IsDelete == false).Select(x => x.AdditionalCost).FirstOrDefault();
+                                        var (maxSellingPrice1, minSellingPrice1, wholesale1) =
+                                         CalculateSellingPrices((decimal)optionprice, (decimal)optionprice, (decimal)item.WholeSalePrice, (decimal)item.MaxPrice,
+                                      item.PriceType);
+                                        if (model.MarkupType == EnumValue.GetEnumValue(PriceType.Percentage))
+                                        {
+                                            PartnerSellingPricewithPer = (decimal)optionprice * (1 + (item.PartnerSellingPrice / 100)) ?? 0.0m;
+                                        }
+                                        if((maxSellingPrice1 > item.PartnerSellingPrice && minSellingPrice1 < item.PartnerSellingPrice) ||
+                                            (PartnerSellingPricewithPer > minSellingPrice && PartnerSellingPricewithPer < maxSellingPrice))
+                                        {
+                                            IsManagepartneroptiontype.PartnerSellingPrice = item.PartnerSellingPrice;
+                                            await managePartnersProductsOptions.Update(IsManagepartneroptiontype);
+                                        }
+                                        else
+                                        {
+                                            message = $"Also,Option Selling Price must be {minSellingPrice1} and {maxSellingPrice1} in this limit.";
+                                        }
                                     }
                                 }
                             }
                             else
                             {
                                 IsSuccess = true;
-                                message = $"SellingPrice must be {maxSellingPrice} and {minSellingPrice} in this limit.";
+                                message = $"SellingPrice must be {minSellingPrice} and {maxSellingPrice} in this limit." + message;
                             }
                         }
                     }
@@ -712,7 +737,7 @@ namespace ShutterManagement.Business.Services
         {
             decimal maxSellingPrice, minSellingPrice, wholesale;
 
-            if (priceType == "Percentage")
+            if (priceType == EnumValue.GetEnumValue(PriceType.Percentage))
             {
                 wholesale = baseCost * (1 + (wholeSalePrice / 100));
                 maxSellingPrice = msrp * (1 + (maxPartnerPrice / 100));
