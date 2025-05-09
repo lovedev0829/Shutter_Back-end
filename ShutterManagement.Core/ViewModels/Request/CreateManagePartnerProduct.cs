@@ -62,6 +62,8 @@ namespace ShutterManagement.Core.ViewModels.Request
         [DefaultValue("")]
         public string? PriceType { get; set; }
         [DefaultValue("")]
+        public string? MarkupOptionType { get; set; }
+        [DefaultValue("")]
         public decimal? PartnerSellingPrice { get; set; }
         public string? TenantId { get; set; }
     }
