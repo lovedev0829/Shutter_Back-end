@@ -86,30 +86,37 @@ namespace ShutterManagement.Business.Services
                     {
                         var IsManagePartnerProductExist = GetAllQuerable().Where(x => x.ProductId == model.ProductId &&
                         x.IsActive == true && x.IsDelete == false && x.IsAvailable == true && x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
-                        if (IsManagePartnerProductExist.PriceType == "Percentage")
-                        {
-
-                        }
-                        else
-                        {
-
-                        }
                         if (IsManagePartnerProductExist != null)
                         {
-                            IsManagePartnerProductExist.PartnerSellingPrice = model.PartnerSellingPrice;
-                            IsManagePartnerProductExist.MarkupType = model.MarkupType;
-                            await Update(IsManagePartnerProductExist);
-                            foreach (var item in model.ManagePartnerProductOptions)
+                            decimal baseCost = await CalculateBaseCost((Guid)IsManagePartnerProductExist.ProductId);
+                            var msrp = await CalculateMSRPData((Guid)IsManagePartnerProductExist.ProductId);
+                            var (maxSellingPrice, minSellingPrice, wholesale) =
+                             CalculateSellingPrices(baseCost, msrp, (decimal)IsManagePartnerProductExist.WholeSalePrice,(decimal)IsManagePartnerProductExist.MaxPartnerPrice, 
+                             IsManagePartnerProductExist.PriceType);
+
+                            if (model.PartnerSellingPrice > minSellingPrice && model.PartnerSellingPrice < maxSellingPrice)
                             {
-                                var IsManagepartneroptiontype = managePartnersProductsOptions.GetAllQuerable().
-                                    Where(x => x.OptionId == item.OptionId && x.OptionTypeId == item.OptionTypeId && x.ManageProductId.ToString().ToLower()
-                                    == IsManagePartnerProductExist.ManageProductId.ToString().ToLower() &&
-                                    x.IsActive == true && x.IsDelete == false && x.IsAvailable == true).FirstOrDefault();
-                                if (IsManagepartneroptiontype != null)
+
+                                IsManagePartnerProductExist.PartnerSellingPrice = model.PartnerSellingPrice;
+                                IsManagePartnerProductExist.MarkupType = model.MarkupType;
+                                await Update(IsManagePartnerProductExist);
+                                foreach (var item in model.ManagePartnerProductOptions)
                                 {
-                                    IsManagepartneroptiontype.PartnerSellingPrice = item.PartnerSellingPrice;
-                                    await managePartnersProductsOptions.Update(IsManagepartneroptiontype);
+                                    var IsManagepartneroptiontype = managePartnersProductsOptions.GetAllQuerable().
+                                        Where(x => x.OptionId == item.OptionId && x.OptionTypeId == item.OptionTypeId && x.ManageProductId.ToString().ToLower()
+                                        == IsManagePartnerProductExist.ManageProductId.ToString().ToLower() &&
+                                        x.IsActive == true && x.IsDelete == false && x.IsAvailable == true).FirstOrDefault();
+                                    if (IsManagepartneroptiontype != null)
+                                    {
+                                        IsManagepartneroptiontype.PartnerSellingPrice = item.PartnerSellingPrice;
+                                        await managePartnersProductsOptions.Update(IsManagepartneroptiontype);
+                                    }
                                 }
+                            }
+                            else
+                            {
+                                IsSuccess = true;
+                                message = $"SellingPrice must be {maxSellingPrice} and {minSellingPrice} in this limit.";
                             }
                         }
                     }
@@ -338,20 +345,11 @@ namespace ShutterManagement.Business.Services
                     var productTasks = products.Select(async product =>
                     {
                         decimal baseCost = await CalculateBaseCost((Guid)product.ProductId);
-                        decimal wholesale;
                         var msrp = await CalculateMSRPData((Guid)product.ProductId);
-                        if (product.PriceType == "Percentage")
-                        {
-                            wholesale = (decimal)(baseCost * (1+ product.WholeSalePrice / 100));
-                            maxsellingPrice = (decimal)(msrp * ((1 + product.MaxPartnerPrice) / 100));
-                            minsellingPrice = (decimal)(msrp * ((1 - product.MaxPartnerPrice) / 100));
-                        }
-                        else
-                        {
-                            maxsellingPrice = (decimal)(msrp + product.MaxPartnerPrice);
-                            minsellingPrice = (decimal)(msrp - product.MaxPartnerPrice);
-                            wholesale = (decimal)(baseCost + product.WholeSalePrice);
-                        }
+
+                       var (maxSellingPrice, minSellingPrice, wholesale) =
+                       CalculateSellingPrices(baseCost, msrp, (decimal)product.WholeSalePrice, (decimal)product.MaxPartnerPrice,product.PriceType);
+
                         return new ProductOptionsVm
                         {
                             ProductId = product.ProductId,
@@ -359,8 +357,8 @@ namespace ShutterManagement.Business.Services
                             IsAvailable = product.IsAvailable,
                             WholeSalePrice = wholesale,
                             MaxPartnerPrice = product.MaxPartnerPrice,
-                            MaxSellingPrice = maxsellingPrice,
-                            MinSellingPrice = minsellingPrice,
+                            MaxSellingPrice = maxSellingPrice,
+                            MinSellingPrice = minSellingPrice,
                             PartnerSellingPrice = product.PartnerSellingPrice,
                             MarkupType = product.MarkupType,
                             Options = allOptions
@@ -707,6 +705,28 @@ namespace ShutterManagement.Business.Services
 
                 return data;
             }
+
+
+        private (decimal MaxSellingPrice, decimal MinSellingPrice, decimal WholeSalePrice)
+          CalculateSellingPrices(decimal baseCost, decimal msrp, decimal wholeSalePrice, decimal maxPartnerPrice, string priceType)
+        {
+            decimal maxSellingPrice, minSellingPrice, wholesale;
+
+            if (priceType == "Percentage")
+            {
+                wholesale = baseCost * (1 + (wholeSalePrice / 100));
+                maxSellingPrice = msrp * (1 + (maxPartnerPrice / 100));
+                minSellingPrice = msrp * (1 - (maxPartnerPrice / 100));
+            }
+            else
+            {
+                wholesale = baseCost + wholeSalePrice;
+                maxSellingPrice = msrp + maxPartnerPrice;
+                minSellingPrice = msrp - maxPartnerPrice;
+            }
+
+            return (maxSellingPrice, minSellingPrice, wholesale);
+        }
 
 
     }
