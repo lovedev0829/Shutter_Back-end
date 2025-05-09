@@ -272,9 +272,9 @@ namespace ShutterManagement.Business.Services
                                      (string.IsNullOrEmpty(filter.ProductType) ? true : (filter.ProductType == x.ProductId.ToString())) &&
                                     (string.IsNullOrEmpty(filter.SearchValue) ? true :
                                     (x.OptionId.ToString() == filter.SearchValue)
-                                    || (x.ProductName ?? "").Contains(filter.SearchValue)
-                                    || (x.OptionName ?? "").Contains(filter.SearchValue)
-                                    || (x.ProductTypeName ?? "").Contains(filter.SearchValue)))
+                                    || (x.ProductName?.ToLower() ?? "").Contains(filter?.SearchValue)
+                                    || (x.OptionName?.ToLower() ?? "").Contains(filter?.SearchValue)
+                                    || (x.ProductTypeName?.ToLower() ?? "").Contains(filter?.SearchValue)))
                                     .ToList();
 
 
