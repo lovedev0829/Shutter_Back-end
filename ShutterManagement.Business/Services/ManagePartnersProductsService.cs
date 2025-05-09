@@ -565,27 +565,27 @@ namespace ShutterManagement.Business.Services
                     var isSubtenant = (await tenantService.GetAll())
                         .FirstOrDefault(t => t.TenantId == AppConstant.LoggedInTenantId && t.ParentTenantId != null && t.IsActive==true && t.IsDelete==false);
 
-                    if (isSubtenant != null)
-                    {
-                        var subtenantMarkup = subtenantProductMarkup.GetAllQuerable()
-                            .Where(x => x.ProductId == item.ProductId)
-                            .Select(x => x.Markup)
-                            .FirstOrDefault();
+                    //if (isSubtenant != null)
+                    //{
+                    //    var subtenantMarkup = subtenantProductMarkup.GetAllQuerable()
+                    //        .Where(x => x.ProductId == item.ProductId)
+                    //        .Select(x => x.Markup)
+                    //        .FirstOrDefault();
 
-                        if (subtenantMarkup != null && subtenantMarkup > 0)
-                        {
-                            componentPriceWithProductMarkup = componentPriceWithProductMarkup * (100 + subtenantMarkup) / 100;
-                        }
-                        else
-                        {
-                            var globalMarkup = tenantBrandingService.GetAllQuerable()
-                                .Where(x => x.Id == isSubtenant.BrandingInfo)
-                                .Select(x => x.Markup)
-                                .FirstOrDefault();
+                    //    if (subtenantMarkup != null && subtenantMarkup > 0)
+                    //    {
+                    //        componentPriceWithProductMarkup = componentPriceWithProductMarkup * (100 + subtenantMarkup) / 100;
+                    //    }
+                    //    else
+                    //    {
+                    //        var globalMarkup = tenantBrandingService.GetAllQuerable()
+                    //            .Where(x => x.Id == isSubtenant.BrandingInfo)
+                    //            .Select(x => x.Markup)
+                    //            .FirstOrDefault();
 
-                            componentPriceWithProductMarkup = componentPriceWithProductMarkup * (100 + (globalMarkup ?? 0.00m)) / 100;
-                        }
-                    }
+                    //        componentPriceWithProductMarkup = componentPriceWithProductMarkup * (100 + (globalMarkup ?? 0.00m)) / 100;
+                    //    }
+                    //}
                     item.Price = Convert.ToDecimal(componentPriceWithProductMarkup.Value.ToString("0.00"));
                     totalMSRP += item.Price;
                     
