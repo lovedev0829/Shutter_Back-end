@@ -205,11 +205,36 @@ namespace ShutterManagement.Business.Services
             IResponseVm<List<OptionsList>> responseVm = new ResponseVm<List<OptionsList>>();
             try
             {
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
-                if (IsTenant)
+                var tenant = await tenantService.FirstOrDefaultAsync(x =>
+                    x.TenantId == AppConstant.LoggedInTenantId &&
+                    x.IsActive == true &&
+                    x.IsDelete == false);
+
+                if (tenant != null)
                 {
-                    var IsOptionExists = (await GetAll())
-                        .Where(x => x.IsDelete == false && (x.TenantId == AppConstant.LoggedInTenantId || x.TenantId.ToString().ToLower() == AppConstant.LoggedInParentTenantId.ToLower())).OrderByDescending(x => x.CreatedAt)
+                    bool isSubTenant = tenant.ParentTenantId != null;
+
+                    var allOptions = (await GetAll())
+                        .Where(x => x.IsDelete == false && x.IsActive == true &&
+                                    (x.TenantId == AppConstant.LoggedInTenantId ||
+                                     x.TenantId.ToString().ToLower() == AppConstant.LoggedInParentTenantId.ToLower()))
+                        .OrderByDescending(x => x.CreatedAt)
+                        .ToList();
+
+                    
+                    if (isSubTenant)
+                    {
+                        var assignedOptionIds = dbContext.TblManagePartnersProductsOptions
+                            .Where(m => m.TenantId == AppConstant.LoggedInTenantId && m.IsAvailable == true && m.IsDelete==false && m.IsActive==true)
+                            .Select(m => m.OptionId)
+                            .ToList();
+
+                        allOptions = allOptions
+                            .Where(x => assignedOptionIds.Contains(x.OptionId))
+                            .ToList();
+                    }
+
+                    var IsOptionExists = allOptions
                         .Select(x => new OptionsList
                         {
                             OptionId = x.OptionId,
@@ -247,9 +272,9 @@ namespace ShutterManagement.Business.Services
                                      (string.IsNullOrEmpty(filter.ProductType) ? true : (filter.ProductType == x.ProductId.ToString())) &&
                                     (string.IsNullOrEmpty(filter.SearchValue) ? true :
                                     (x.OptionId.ToString() == filter.SearchValue)
-                                    || (x.ProductName ?? "").Contains(filter.SearchValue)
-                                    || (x.OptionName ?? "").Contains(filter.SearchValue)
-                                    || (x.ProductTypeName ?? "").Contains(filter.SearchValue)))
+                                    || (x.ProductName?.ToLower() ?? "").Contains(filter?.SearchValue)
+                                    || (x.OptionName?.ToLower() ?? "").Contains(filter?.SearchValue)
+                                    || (x.ProductTypeName?.ToLower() ?? "").Contains(filter?.SearchValue)))
                                     .ToList();
 
 

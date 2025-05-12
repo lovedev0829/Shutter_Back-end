@@ -73,7 +73,7 @@ namespace ShutterManagement.Services
 
                 bool IsEmailExists = await AnyAsync(x => x.IsDelete == false && 
                   (x.Email == UserDetails.Email)
-                  //&& AllTenantSubTenants.Contains(x.TenantId.ToString())
+                  && x.TenantId == AppConstant.LoggedInTenantId
                   );
                 if (IsEmailExists)
                 {
@@ -218,7 +218,7 @@ namespace ShutterManagement.Services
 
                     bool IsEmailExists = await AnyAsync(x => x.IsDelete == false &&
                       (x.Email == UserDetails.Email) && x.Id != Guid.Parse(UserDetails.UserId)
-                      //&& AllTenantSubTenants.Contains(x.TenantId.ToString())
+                      && x.TenantId == AppConstant.LoggedInTenantId
                       );
                     if (IsEmailExists)
                     {
@@ -452,6 +452,7 @@ namespace ShutterManagement.Services
                                     (x.UserId.ToString() == filter.SearchValue) ||
                                     ((x.Email ?? "").ToLower().Contains(filter.SearchValue)
                                     || (x.Phone ?? "").ToLower().Contains(filter.SearchValue)
+                                    || (x.TenantId.ToString() ?? "").ToLower().Contains(filter.SearchValue)
                                     || (x.FirstName ?? "").ToLower().Contains(filter.SearchValue)
                                     || (x.MiddleName ?? "").ToLower().Contains(filter.SearchValue)
                                     || (x.RoleName ?? "").ToLower().Contains(filter.SearchValue)

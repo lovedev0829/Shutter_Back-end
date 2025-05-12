@@ -189,7 +189,7 @@ namespace ShutterManagement.Services
             }
 
             var TenantHomePageData = tenantService.GetAllQuerable().Where(x => x.Code == CompanyCode
-            && x.IsDelete == false && x.IsActive == true && x.ParentTenantId == null).FirstOrDefault();
+            && x.IsDelete == false && x.IsActive == true).FirstOrDefault();
             if (TenantHomePageData != null)
             {
                 var brandInfo = tenantBrandingService.GetAllQuerable().Where(x => x.Id == TenantHomePageData.BrandingInfo).FirstOrDefault();
@@ -521,8 +521,6 @@ namespace ShutterManagement.Services
             return result;
         }
 
-
-
         public async Task<IResponseVm<string>> GenerateToken()
         {
             IResponseVm<string> result = new ResponseVm<string>();
@@ -578,7 +576,6 @@ namespace ShutterManagement.Services
             result.Data = tenantId;
             return result;
         }
-
 
         public async Task<IResponseVm<Dictionary<string, string>>> GenerateLetterOnlyUniqueCodeAsync(string inputName)
         {

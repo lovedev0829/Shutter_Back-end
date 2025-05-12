@@ -19,15 +19,15 @@ namespace ShutterManagement.Core.ViewModels.Request
         //public Guid? ConctactId { get; set; }
 
         [Default("")]
-    
+
         public Guid? taxRateId { get; set; }
-      
+
         [Default("")]
         [Required]
         public string? EstimateName { get; set; }
         [Default("")]
         [Required]
-        public Guid[]? WindowProductId { get; set; } = new Guid[] {};
+        public List<ProductListing> ProductsList { get; set; } = new List<ProductListing> { };
         [Default("")]
         public string? TermsCondition { get; set; }
         [Default("")]
@@ -47,5 +47,12 @@ namespace ShutterManagement.Core.ViewModels.Request
         [Default(0.00)]
         [Required]
         public decimal? GrandTotal { get; set; }
+    }
+
+    public class ProductListing
+    {
+        public Guid WindowProductId { get; set; }
+
+        public decimal ProductPrice { get; set; }
     }
 }

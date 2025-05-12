@@ -60,4 +60,6 @@ public partial class TblOrderWindowProduct
     public string? Options { get; set; }
 
     public string? ProductTypeName { get; set; }
+
+    public decimal? ProductPrice { get; set; }
 }

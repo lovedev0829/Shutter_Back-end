@@ -1070,7 +1070,10 @@ namespace ShutterManagement.Business.Services
             int i = 0;
             foreach (var product in productList)
             {
-                decimal? unitprice = product.TotalPrice / product.WindowQty;
+                //decimal? unitprice = product.TotalPrice / product.WindowQty;
+
+                decimal? effectiveTotalPrice = product.TotalPrice > 0 ? product.TotalPrice.Value : product.ProductPrice;
+                decimal? unitprice = effectiveTotalPrice / product.WindowQty;
                 productListHtml.Append($@"
     <tr style='background-color: #efefef;'>
         <td style='text-align: center; padding: 5px 5px;'>{++i}</td>
@@ -1080,8 +1083,8 @@ namespace ShutterManagement.Business.Services
         <td style='text-align: center; padding: 5px 5px;'>{product.WindowQty}</td>
         <td style='text-align: center; padding: 5px 5px;'>{product.Width}</td>
         <td style='text-align: center; padding: 5px 5px;'>{product.Height}</td>
-        <td style='text-align: center; padding: 5px 5px;'>{unitprice}</td>
-        <td style='text-align: center; padding: 5px 5px;'>{product.TotalPrice}</td>
+        <td style='text-align: center; padding: 5px 5px;'>{unitprice:F2}</td>
+        <td style='text-align: center; padding: 5px 5px;'>{effectiveTotalPrice:F2}</td>
     </tr>");
             }
 
@@ -1222,6 +1225,24 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = "No invoices match the specified filter criteria.";
                     return responseVm;
                 }
+
+                if (!string.IsNullOrWhiteSpace(filter.SearchValue))
+                {
+                    string searchTerm = filter.SearchValue.Trim().ToLower();
+                    filteredInvoices = filteredInvoices.Where(invoice =>
+                        (!string.IsNullOrEmpty(invoice.InvoiceNumber) && invoice.InvoiceNumber.ToLower().Contains(searchTerm)) ||
+                        (!string.IsNullOrEmpty(invoice.Status) && invoice.Status.ToLower().Contains(searchTerm)) ||
+                        (!string.IsNullOrEmpty(invoice.ContactFirstName) && invoice.ContactFirstName.ToLower().Contains(searchTerm)) ||
+                        (!string.IsNullOrEmpty(invoice.ContactLastName) && invoice.ContactLastName.ToLower().Contains(searchTerm)) ||
+                        (!string.IsNullOrEmpty(invoice.EstimateName) && invoice.EstimateName.ToLower().Contains(searchTerm)) ||
+                        ((!string.IsNullOrEmpty(invoice.ContactFirstName) || !string.IsNullOrEmpty(invoice.ContactLastName)) &&
+                         ($"{invoice.ContactFirstName} {invoice.ContactLastName}".Trim().ToLower().Contains(searchTerm)))
+                    ).ToList();
+                }
+
+
+
+
                 var paginatedInvoices = filteredInvoices
                     .Skip((filter.PageNo - 1) * filter.RecordPerPage)
                     .Take(filter.RecordPerPage)

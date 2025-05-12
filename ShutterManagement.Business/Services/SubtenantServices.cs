@@ -18,6 +18,7 @@ using ShutterManagement.Core.Common;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using ShutterManagement.Core.ViewModels.Response;
 using System.Data.Entity.Core.Metadata.Edm;
+using Microsoft.Extensions.Logging;
 
 namespace ShutterManagement.Business.Services
 {
@@ -45,8 +46,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsCodeExists = await AnyAsync(x => x.IsActive == true
-                    && x.IsDelete == false && x.Code == model.Code);
+                var IsCodeExists = await AnyAsync(x => x.IsActive == true && x.IsDelete == false && x.Code == model.Code);
                 //var IsCodeExists = await AnyAsync(x => x.IsActive == true
                 //   && x.IsDelete == false && x.Code == model.Code);
                 if (IsCodeExists)
@@ -63,20 +63,20 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-                var TenantDetails = (await GetAll()).Where(x => x.IsDelete == false).Select(x => x.BrandingInfo).ToList();
-                bool IsTenantEmailExists = await tenantBrandingService.AnyAsync(x => x.Email == model.Email && x.IsDelete == false && TenantDetails.Contains(x.Id));
-                if (IsTenantEmailExists)
-                {
-                    responseVm.Message = "Email " + AppConstant.AlreadyExists;
-                    return responseVm;
-                }
+                //var TenantDetails = (await GetAll()).Where(x => x.IsDelete == false).Select(x => x.BrandingInfo).ToList();
+                //bool IsTenantEmailExists = await tenantBrandingService.AnyAsync(x => x.Email == model.Email && x.IsDelete == false && TenantDetails.Contains(x.Id));
+                //if (IsTenantEmailExists)
+                //{
+                //    responseVm.Message = "Email " + AppConstant.AlreadyExists;
+                //    return responseVm;
+                //}
                 bool IsTenantCompanynameExists = await tenantBrandingService.AnyAsync(x => x.CompanyName == model.CompanyName.Trim() && x.IsDelete == false);
                 if (IsTenantCompanynameExists)
                 {
                     responseVm.Message = "CompanyName " + AppConstant.AlreadyExists;
                     return responseVm;
                 }
-                bool IsUserEmailExists = await userService.AnyAsync(x => x.Email == model.UserEmail && x.IsDelete == false);
+                bool IsUserEmailExists = await userService.AnyAsync(x => x.Email == model.UserEmail && x.IsDelete == false && x.IsTenantAdmin == true && x.TenantId==AppConstant.LoggedInTenantId);
                 if (IsUserEmailExists)
                 {
                     responseVm.Message = "User Email " + AppConstant.AlreadyExists;
@@ -195,29 +195,12 @@ namespace ShutterManagement.Business.Services
                     }
                 }
 
-               // var Templateid = Guid.Parse("1916A280-109F-4829-8A70-0AFA94146A5F").ToString().ToLower();
-                var Tenantcode =  dbContext.TblTenants.Where(x => x.IsDelete == false && x.TenantId==AppConstant.LoggedInTenantId).FirstOrDefault();
-                var tenantInfoDetails = tenantBrandingService.GetAllQuerable().Where(x => x.Id == Tenantcode.BrandingInfo && x.IsActive == true).FirstOrDefault();
-
-                WelcomeEmailModel welcomemodel = new WelcomeEmailModel
-                {
-                    Name = model.FirstName + " " + model.LastName ?? "" + model.Suffix??"",
-                    UserName = model.Email ?? "",
-                    Password = model.Password ?? "",
-                    CompanyName = tenantInfoDetails?.CompanyName ?? "",
-                    Logo = tenantInfoDetails?.Logo ?? "",
-                    loginUrl = $"{AppConstant.UIBaseURL}{Tenantcode?.Code}"??"",
-                    color = tenantInfoDetails?.PrimaryColor ?? ""
-
-                };
-
-                var WelcomeTemplate = dbContext.TblTemplates.Where(x => x.IsDelete == false && x.TemplateCategory == EnumValue.GetEnumValue(EmailTemplateType.WelcomeEmail)).FirstOrDefault();
-                var emailContent = EmailHelper.ReplacePlaceholdersForlWelcomeEmail(WelcomeTemplate?.TemplateValue, welcomemodel);
-                EmailHelper.WelcomeEmail(model.Email, emailContent);
+                
 
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.InsertSuccessMsg;
 
+                await Task.Run(() => SendWelcomeEmailAsync(model));
             }
             catch (Exception ex)
             {
@@ -225,6 +208,41 @@ namespace ShutterManagement.Business.Services
             }
             return responseVm;
         }
+
+
+        public async Task SendWelcomeEmailAsync(CreateTenant model)
+        {
+            try
+            {
+                var tenant =  dbContext.TblTenants
+                    .FirstOrDefault(x => x.IsDelete==false && x.TenantId == AppConstant.LoggedInTenantId);
+
+                var tenantInfo = tenantBrandingService.GetAllQuerable()
+                    .FirstOrDefault(x => x.Id == tenant.BrandingInfo && x.IsActive==true);
+
+                var welcomeModel = new WelcomeEmailModel
+                {
+                    Name = $"{model.FirstName} {model.LastName ?? ""}{model.Suffix ?? ""}".Trim(),
+                    UserName = model.Email ?? "",
+                    Password = model.Password ?? "",
+                    CompanyName = model?.CompanyName ?? "",
+                    Logo = model?.Logo ?? "",
+                    loginUrl = $"{AppConstant.UIBaseURL}{model?.Code}" ?? "",
+                    color = model?.PrimaryColor ?? ""
+                };
+
+                var template =  dbContext.TblTemplates
+                    .FirstOrDefault(x => x.IsDelete==false && x.TemplateCategory == EnumValue.GetEnumValue(EmailTemplateType.WelcomeEmail));
+
+                var emailContent = EmailHelper.ReplacePlaceholdersForlWelcomeEmail(template?.TemplateValue, welcomeModel);
+                EmailHelper.WelcomeEmail(model.Email, emailContent);
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Log($"Error sending welcome email.{ex}");
+            }
+        }
+
 
         public async Task<IResponseVm<string>> SubTenantUpdate(UpdateSubTenant model)
         {
@@ -254,6 +272,13 @@ namespace ShutterManagement.Business.Services
                     //    responseVm.Message = AppConstant.TenantNotFound;
                     //    return responseVm;
                     //}
+
+                    bool IsUserEmailExists = await userService.AnyAsync(x => x.Email == model.UserEmail && x.TenantId.ToString() == model.TenantId && x.IsDelete == false && x.IsTenantAdmin == false);
+                    if (IsUserEmailExists)
+                    {
+                        responseVm.Message = "User Email " + AppConstant.AlreadyExists;
+                        return responseVm;
+                    }
                     var TenantDetails = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId.ToString() != model.TenantId).Select(x => x.BrandingInfo).ToList();
                     bool IsTenantEmailExists = await tenantBrandingService.AnyAsync(x => x.Email == model.Email && x.IsDelete == false && TenantDetails.Contains(x.Id));
                     if (IsTenantEmailExists)

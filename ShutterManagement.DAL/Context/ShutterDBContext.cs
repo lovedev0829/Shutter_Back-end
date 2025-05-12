@@ -697,6 +697,7 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.Markup).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.Price).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.ProductName).HasMaxLength(255);
+            entity.Property(e => e.ProductPrice).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.ProductType)
                 .HasMaxLength(50)
                 .IsUnicode(false);
@@ -1144,8 +1145,10 @@ public partial class ShutterDBContext : DbContext
 
             entity.Property(e => e.ManageProductId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.MarkupType).HasMaxLength(20);
             entity.Property(e => e.MaxPartnerPrice).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.PartnerSellingPrice).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.PriceType).HasMaxLength(20);
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
             entity.Property(e => e.WholeSalePrice).HasColumnType("decimal(10, 2)");
 
@@ -1166,8 +1169,10 @@ public partial class ShutterDBContext : DbContext
 
             entity.Property(e => e.ManageProductOptionId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.MarkupOptionType).HasMaxLength(20);
             entity.Property(e => e.MaxPrice).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.PartnerSellingPrice).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.PriceType).HasMaxLength(20);
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
             entity.Property(e => e.WholeSalePrice).HasColumnType("decimal(10, 2)");
 
@@ -1328,6 +1333,7 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.OrderId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.Price).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.ProductName).HasMaxLength(255);
+            entity.Property(e => e.ProductPrice).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.ProductType)
                 .HasMaxLength(50)
                 .IsUnicode(false);

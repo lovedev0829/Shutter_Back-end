@@ -87,6 +87,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public Guid? WindowProductId { get; set; }
 
         public decimal? TotalPrice { get; set; }
+        public decimal? ProductPrice { get; set; }
         public EstimateWindowList EstimateWindowDetails { get; set; } = new EstimateWindowList();
 
         public string[]? Options { get; set; } = [];

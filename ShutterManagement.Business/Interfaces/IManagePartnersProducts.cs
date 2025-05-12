@@ -15,5 +15,7 @@ namespace ShutterManagement.Business.Interfaces
     {
         Task<IResponseVm<string>> CreateManagePartnerProduct(CreateManagePartnerProduct model);
         Task<IResponseVm<List<ProductOptionsVm>>> GetAllProductOptions(Pagination filter);
+
+        Task<IResponseVm<string>> CalculateMSRP(string productId);
     }
 }

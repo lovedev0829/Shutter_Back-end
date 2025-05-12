@@ -31,6 +31,10 @@ public partial class TblManagePartnersProduct
 
     public Guid? TenantId { get; set; }
 
+    public string? PriceType { get; set; }
+
+    public string? MarkupType { get; set; }
+
     public virtual TblProduct? Product { get; set; }
 
     public virtual ICollection<TblManagePartnersProductsOption> TblManagePartnersProductsOptions { get; set; } = new List<TblManagePartnersProductsOption>();

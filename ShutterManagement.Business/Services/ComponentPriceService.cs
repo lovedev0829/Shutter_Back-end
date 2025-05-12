@@ -96,16 +96,21 @@ namespace ShutterManagement.Business.Services
                   where estimatewindow.EstimateId.ToString() == EstimateID
                   join estwindowProduct in dbContext.TblEstimateWindowProducts on estimatewindow.WindowId equals estwindowProduct.WindowId
                   where estwindowProduct.EstimateId.ToString() == EstimateID
-                  join estwinprocomp in dbContext.TblEstimateWindowProductComponents on estwindowProduct.ProductId equals estwinprocomp.ProductId
-                  where estwinprocomp.EstimateId.ToString() == EstimateID  && estwindowProduct.WindowId == estwinprocomp.WindowId
-                  join productComponentmat in dbContext.TblEstimateWindowProductComponentMaterials on estwinprocomp.ComponentId equals productComponentmat.ComponentId
-                  where productComponentmat.EstimateId.ToString() == EstimateID && estwinprocomp.WindowId == productComponentmat.WindowId
+                  join estwinprocomp in dbContext.TblEstimateWindowProductComponents on estwindowProduct.ProductId equals estwinprocomp.ProductId into estwinprocomps
+                  from estwinprocomp in estwinprocomps.DefaultIfEmpty()
+                  where (string.IsNullOrEmpty(estwinprocomp.EstimateId.ToString()) || estwinprocomp.EstimateId.ToString() == EstimateID) &&
+                  (string.IsNullOrEmpty(estwinprocomp.WindowId.ToString()) || estwindowProduct.WindowId == estwinprocomp.WindowId)
+                  join productComponentmat in dbContext.TblEstimateWindowProductComponentMaterials on estwinprocomp.ComponentId equals
+                  productComponentmat.ComponentId 
+                  into productComponentmats from productComponentmat in productComponentmats.DefaultIfEmpty()
+                  where (string.IsNullOrEmpty(productComponentmat.EstimateId.ToString()) || productComponentmat.EstimateId.ToString() == EstimateID ) &&
+                  (string.IsNullOrEmpty(productComponentmat.WindowId.ToString()) || estwindowProduct.WindowId == productComponentmat.WindowId)
                   where estwindowProduct.WindowProductId == WindowProductId
                   && estimate.IsActive == true && estimate.IsDelete == false
                   && estimatewindow.IsActive == true && estimatewindow.IsDelete == false
                   && estwindowProduct.IsActive == true && estwindowProduct.IsDelete == false
-                  && estwinprocomp.IsActive == true && estwinprocomp.IsDelete == false
-                  && productComponentmat.IsActive == true && productComponentmat.IsDelete == false
+                  //&& estwinprocomp.IsActive == true && estwinprocomp.IsDelete == false
+                  //&& productComponentmat.IsActive == true && productComponentmat.IsDelete == false
                   select new WindowProdcutDetailsForEstimate
                   {
                       WindowId = (Guid)estimatewindow.WindowId,
@@ -135,7 +140,7 @@ namespace ShutterManagement.Business.Services
                       Markup = estwindowProduct.Markup,
 
                       // ProductType Properties
-                      ProductTypeName = estwinprocomp.ProductTypeName,
+                      ProductTypeName = estwindowProduct.ProductTypeName,
 
                       // ProductComponent Properties
                       ComponentId = estwinprocomp.ComponentId,
@@ -211,21 +216,26 @@ namespace ShutterManagement.Business.Services
                   join windowProduct in dbContext.TblWindowProducts on window.WindowId equals windowProduct.WindowId
                   join product in dbContext.TblProducts on windowProduct.ProductId equals product.ProductId
                   join productType in dbContext.MstProductTypes on product.ProductType equals productType.ProductId.ToString()
-                  join productComponent in dbContext.TblProductComponents on product.ProductId equals productComponent.ProductId
-                  join expression in dbContext.TblExpressions on productComponent.PricingExpression equals expression.Id.ToString()
-                  join component in dbContext.TblComponents on productComponent.ComponentId equals component.ComponentId
-                  join componentMaterial in dbContext.TblComponentMaterials on component.ComponentId equals componentMaterial.ComponentId
-                  join material in dbContext.TblRawMaterials on componentMaterial.RawMaterialId equals material.RawMaterialId
+                  join productComponent in dbContext.TblProductComponents on product.ProductId equals productComponent.ProductId into productcomponents
+                  from productComponent in productcomponents.DefaultIfEmpty()
+                  join expression in dbContext.TblExpressions on productComponent.PricingExpression equals expression.Id.ToString() into PExpressions
+                  from expression in PExpressions.DefaultIfEmpty()
+                  join component in dbContext.TblComponents on productComponent.ComponentId equals component.ComponentId into components
+                  from component in components.DefaultIfEmpty()
+                  join componentMaterial in dbContext.TblComponentMaterials on component.ComponentId equals componentMaterial.ComponentId into MComponent
+                  from componentMaterial in MComponent.DefaultIfEmpty()
+                  join material in dbContext.TblRawMaterials on componentMaterial.RawMaterialId equals material.RawMaterialId into materials
+                  from material in materials.DefaultIfEmpty()
                   where windowProduct.WindowProductId == WindowProductId
                   && window.IsActive == true && window.IsDelete == false
                   && windowProduct.IsActive == true && windowProduct.IsDelete == false
                   && product.IsActive == true && product.IsDelete == false
                   && productType.IsActive == true && productType.IsDelete == false
-                  && productComponent.IsActive == true && productComponent.IsDelete == false
-                  && component.IsActive == true && component.IsDelete == false
-                  && expression.IsActive == true && expression.IsDelete == false
-                  && componentMaterial.IsActive == true && componentMaterial.IsDelete == false
-                  && material.IsActive == true && material.IsDelete == false
+                  //&& productComponent.IsActive == true && productComponent.IsDelete == false
+                  //&& component.IsActive == true && component.IsDelete == false
+                  //&& expression.IsActive == true && expression.IsDelete == false
+                  //&& componentMaterial.IsActive == true && componentMaterial.IsDelete == false
+                  //&& material.IsActive == true && material.IsDelete == false
                   select new WindowProdcutDetailsForEstimate
                   {
                       // Window Properties
@@ -255,6 +265,7 @@ namespace ShutterManagement.Business.Services
                       Length = product.Length,
                       AdditionalWidth = product.AdditionalWidth,
                       Markup = product.Markup,
+                      IsComponentAvailable = product.IsComponentAvailable,
 
                       // ProductType Properties
                       ProductTypeName = productType.ProductName,
@@ -300,6 +311,7 @@ namespace ShutterManagement.Business.Services
                                            OptionTypeName = Convert.ToString(options.OptionName + " - " + optionType.OptionType),
                                            OptionPrice = optionType.AdditionalCost ?? 0m
                                        }).ToList();
+                        item.OptionsId = Options.Select(x => x.OptionTypeId.ToString()).ToArray();
                         item.Options = Options.Select(x => x.OptionTypeName).ToArray();
                         item.OptionsPrice = Options.Select(x => x.OptionPrice).ToArray();
                     }
