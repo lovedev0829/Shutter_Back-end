@@ -100,11 +100,18 @@ namespace ShutterManagement.Business.Services
                              IsManagePartnerProductExist.PriceType);
                             if(model.MarkupType == EnumValue.GetEnumValue(PriceType.Percentage))
                             {
-                                PartnerSellingPricewithPer = (decimal)msrp * (1 + (model.PartnerSellingPrice / 100)) ?? 0.0m;
+                                minSellingPrice =(-1)*(decimal)IsManagePartnerProductExist.MaxPartnerPrice;
+                                maxSellingPrice =(decimal)IsManagePartnerProductExist.MaxPartnerPrice;
+                               // PartnerSellingPricewithPer = (decimal)msrp * (1 + (model.PartnerSellingPrice / 100)) ?? 0.0m;
                             }
-
-                            if ((model.PartnerSellingPrice >= (msrp + IsManagePartnerProductExist.MaxPartnerPrice) && model.PartnerSellingPrice <= (msrp + IsManagePartnerProductExist.MaxPartnerPrice)) ||
-                            (PartnerSellingPricewithPer >= minSellingPrice && PartnerSellingPricewithPer <= maxSellingPrice))
+                            if (model.MarkupType == EnumValue.GetEnumValue(PriceType.Fixed))
+                            {
+                                minSellingPrice = (-1) * (decimal)IsManagePartnerProductExist.MaxPartnerPrice;
+                                maxSellingPrice = (decimal)IsManagePartnerProductExist.MaxPartnerPrice;
+                                // PartnerSellingPricewithPer = (decimal)msrp * (1 + (model.PartnerSellingPrice / 100)) ?? 0.0m;
+                            }
+                          
+                            if (model.PartnerSellingPrice >= minSellingPrice && model.PartnerSellingPrice <= maxSellingPrice)
                             {
                                 IsManagePartnerProductExist.PartnerSellingPrice = model.PartnerSellingPrice;
                                 IsManagePartnerProductExist.MarkupType = model.MarkupType;
@@ -124,19 +131,24 @@ namespace ShutterManagement.Business.Services
                                       item.MarkupOptionType);
                                         if (item.MarkupOptionType == EnumValue.GetEnumValue(PriceType.Percentage))
                                         {
-                                            PartnerSellingPricewithPer = (decimal)optionprice * (1 + (item.PartnerSellingPrice / 100)) ?? 0.0m;
+                                            minSellingPrice1 = (decimal)((-1)*IsManagepartneroptiontype.MaxPrice);
+                                            maxSellingPrice1 = (decimal)IsManagepartneroptiontype.MaxPrice;
                                         }
-                                        if((maxSellingPrice1 >= item.PartnerSellingPrice && minSellingPrice1 <= item.PartnerSellingPrice) ||
-                                            (PartnerSellingPricewithPer >= minSellingPrice && PartnerSellingPricewithPer <= maxSellingPrice))
+                                        if (item.MarkupOptionType == EnumValue.GetEnumValue(PriceType.Fixed))
                                         {
-                                            IsManagepartneroptiontype.MarkupOptionType = item.MarkupOptionType;
+                                            minSellingPrice1 = (decimal)((-1) * IsManagepartneroptiontype.MaxPrice);
+                                            maxSellingPrice1 = (decimal)IsManagepartneroptiontype.MaxPrice;
+                                        }
+                                        if (item.PartnerSellingPrice >= minSellingPrice1 && item.PartnerSellingPrice <= maxSellingPrice1)
+                                        {
+                                            IsManagepartneroptiontype.MarkupOptionType = item.PriceType;
                                             IsManagepartneroptiontype.PartnerSellingPrice = item.PartnerSellingPrice;
                                             await managePartnersProductsOptions.Update(IsManagepartneroptiontype);
                                         }
                                         else
                                         {
                                             IsSuccess = true; 
-                                            message = $"Also,Option Selling Price must be {minSellingPrice1} and {maxSellingPrice1} in this limit.";
+                                            message = $"Also,Option Selling Price Markup must be between {minSellingPrice1} and {maxSellingPrice1}.";
                                         }
                                     }
                                 }
@@ -144,7 +156,7 @@ namespace ShutterManagement.Business.Services
                             else
                             {
                                 IsSuccess = true;
-                                message = $"SellingPrice must be {minSellingPrice} and {maxSellingPrice} in this limit." + message;
+                                message = $"SellingPrice Markup must be between {minSellingPrice} and {maxSellingPrice}" + message;
                             }
                         }
                     }
@@ -181,6 +193,7 @@ namespace ShutterManagement.Business.Services
                 IsManagePartnerProductExist.IsAvailable = items.IsAvailable;
                 IsManagePartnerProductExist.WholeSalePrice = items.WholeSalePrice;
                 IsManagePartnerProductExist.MaxPartnerPrice = items.MaxPartnerPrice;
+                IsManagePartnerProductExist.MarkupType = items.PriceType;
                 IsManagePartnerProductExist.TenantId = Guid.Parse(items.TenantId);
                 IsManagePartnerProductExist.ModifiedBy = AppConstant.LoggedInUserID;
                 IsManagePartnerProductExist.UpdatedAt = DateTime.Now;
@@ -261,6 +274,7 @@ namespace ShutterManagement.Business.Services
                 ProductId = model.ProductId,
                 IsAvailable = model.IsAvailable,
                 WholeSalePrice = model.WholeSalePrice,
+                MarkupType = model.PriceType,
                 MaxPartnerPrice = model.MaxPartnerPrice,
                 PartnerSellingPrice = model.PartnerSellingPrice,
                 CreatedAt = DateTime.Now,
@@ -368,7 +382,7 @@ namespace ShutterManagement.Business.Services
                                         MarkupType = p1.MarkupType ?? EnumValue.GetEnumValue(PriceType.Fixed),
                                         MaxPartnerPrice = p1.MaxPartnerPrice ?? 0.0m,
                                         IsAvailable = p1.IsAvailable,
-                                        PriceType = p1.PriceType ?? ""
+                                        PriceType = p1.PriceType ?? EnumValue.GetEnumValue(PriceType.Fixed)
                                     }).ToList();
 
                     var productIds = products.Select(p => p.ProductId).ToList();
@@ -400,6 +414,7 @@ namespace ShutterManagement.Business.Services
                                               OptionTypeName = o2.OptionType,
                                               OptionId = o1.OptionId,
                                               Price = o2.AdditionalCost,
+                                              PriceType = o1.PriceType ?? EnumValue.GetEnumValue(PriceType.Fixed),
                                               PartnerSellingPrice = o1.PartnerSellingPrice ?? 0.0m,
                                               WholeSalePrice = o1.WholeSalePrice ?? 0.0m,
                                               MarkupOptionType = o1.MarkupOptionType ?? EnumValue.GetEnumValue(PriceType.Fixed)

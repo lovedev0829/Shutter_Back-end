@@ -1352,11 +1352,11 @@ namespace ShutterManagement.Business.Services
                     {
                         if (item.PriceType == "Percentage")
                         {
-                            additionalCost = (decimal)(additionalCost * (1 + (item.PartnerSellingPrice) / 100));
+                            additionalCost = (decimal)(additionalCost * (1 + (item.PartnerSellingPrice ?? 0.0m) / 100));
                         }
                         else if (item.PriceType == "Fixed")
                         {
-                            additionalCost = (decimal)(additionalCost + (item.PartnerSellingPrice));
+                            additionalCost = (decimal)(additionalCost + (item.PartnerSellingPrice?? 0.0m));
                         }
                     }
                 }
