@@ -148,7 +148,7 @@ namespace ShutterManagement.Business.Services
                                         else
                                         {
                                             IsSuccess = true; 
-                                            message = $"Also,Option Selling Price must be {minSellingPrice1} and {maxSellingPrice1} in this limit.";
+                                            message = $"Also,Option Selling Price Markup must be between {minSellingPrice1} and {maxSellingPrice1}.";
                                         }
                                     }
                                 }
@@ -156,7 +156,7 @@ namespace ShutterManagement.Business.Services
                             else
                             {
                                 IsSuccess = true;
-                                message = $"SellingPrice must be {minSellingPrice} and {maxSellingPrice} in this limit." + message;
+                                message = $"SellingPrice Markup must be between {minSellingPrice} and {maxSellingPrice}" + message.;
                             }
                         }
                     }
