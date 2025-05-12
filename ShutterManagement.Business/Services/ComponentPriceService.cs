@@ -311,6 +311,7 @@ namespace ShutterManagement.Business.Services
                                            OptionTypeName = Convert.ToString(options.OptionName + " - " + optionType.OptionType),
                                            OptionPrice = optionType.AdditionalCost ?? 0m
                                        }).ToList();
+                        item.OptionsId = Options.Select(x => x.OptionTypeId.ToString()).ToArray();
                         item.Options = Options.Select(x => x.OptionTypeName).ToArray();
                         item.OptionsPrice = Options.Select(x => x.OptionPrice).ToArray();
                     }

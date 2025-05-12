@@ -103,7 +103,7 @@ namespace ShutterManagement.Business.Services
                                 PartnerSellingPricewithPer = (decimal)msrp * (1 + (model.PartnerSellingPrice / 100)) ?? 0.0m;
                             }
 
-                            if ((model.PartnerSellingPrice >= minSellingPrice && model.PartnerSellingPrice <= maxSellingPrice) ||
+                            if ((model.PartnerSellingPrice >= (msrp + IsManagePartnerProductExist.MaxPartnerPrice) && model.PartnerSellingPrice <= (msrp + IsManagePartnerProductExist.MaxPartnerPrice)) ||
                             (PartnerSellingPricewithPer >= minSellingPrice && PartnerSellingPricewithPer <= maxSellingPrice))
                             {
                                 IsManagePartnerProductExist.PartnerSellingPrice = model.PartnerSellingPrice;
@@ -185,22 +185,44 @@ namespace ShutterManagement.Business.Services
                 IsManagePartnerProductExist.ModifiedBy = AppConstant.LoggedInUserID;
                 IsManagePartnerProductExist.UpdatedAt = DateTime.Now;
                 await Update(IsManagePartnerProductExist);
-              
-                foreach (var item in items.ManagePartnerProductOptions)
+                if (IsManagePartnerProductExist.IsAvailable == true)
                 {
-                    //await DeleteOptions(IsManagePartnerProductExist.ManageProductId);
-                    //await CreateNewManagePartnerProductOption(item, IsManagePartnerProductExist.ManageProductId);
-                    if (!items.IsAvailable == false)
+                    if (IsManagePartnerProductExist != null)
                     {
-                        await DeleteOptions(IsManagePartnerProductExist.ManageProductId);
-                        await CreateNewManagePartnerProductOption(item, IsManagePartnerProductExist.ManageProductId);
+                        foreach (var option in items.ManagePartnerProductOptions)
+                        {
+                            await DeleteOptions(IsManagePartnerProductExist.ManageProductId);
+                        }
                     }
-                    else
+
+                    foreach (var option in items.ManagePartnerProductOptions)
                     {
-                        await DeleteOptions(IsManagePartnerProductExist.ManageProductId);
+                        await CreateNewManagePartnerProductOption(option, IsManagePartnerProductExist.ManageProductId);
                     }
-                  // await UpdatePartnerProductOptions(item, IsManagePartnerProductExist.ManageProductId);
                 }
+                else
+                {
+                    foreach (var option in items.ManagePartnerProductOptions)
+                    {
+                        await DeleteOptions(IsManagePartnerProductExist.ManageProductId);
+                    }
+                }
+            
+                //foreach (var item in items.ManagePartnerProductOptions)
+                //{
+                //    //await DeleteOptions(IsManagePartnerProductExist.ManageProductId);
+                //    //await CreateNewManagePartnerProductOption(item, IsManagePartnerProductExist.ManageProductId);
+                //    if (!items.IsAvailable == false)
+                //    {
+                //        await DeleteOptions(IsManagePartnerProductExist.ManageProductId);
+                //        await CreateNewManagePartnerProductOption(item, IsManagePartnerProductExist.ManageProductId);
+                //    }
+                //    else
+                //    {
+                //        await DeleteOptions(IsManagePartnerProductExist.ManageProductId);
+                //    }
+                //  // await UpdatePartnerProductOptions(item, IsManagePartnerProductExist.ManageProductId);
+                //}
             }
             else
             {
