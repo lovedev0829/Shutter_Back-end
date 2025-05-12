@@ -156,7 +156,7 @@ namespace ShutterManagement.Business.Services
                             else
                             {
                                 IsSuccess = true;
-                                message = $"SellingPrice Markup must be between {minSellingPrice} and {maxSellingPrice}" + message.;
+                                message = $"SellingPrice Markup must be between {minSellingPrice} and {maxSellingPrice}" + message;
                             }
                         }
                     }
