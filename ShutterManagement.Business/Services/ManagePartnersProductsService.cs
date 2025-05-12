@@ -327,7 +327,7 @@ namespace ShutterManagement.Business.Services
             
                 else
                 {
-                    var products = (from p1 in dbContext.TblManagePartnersProducts
+                    var products = (from p1 in dbContext.TblManagePartnersProducts.OrderByDescending(x=> x.CreatedAt)
                                     join p2 in dbContext.TblProducts on p1.ProductId equals p2.ProductId
                                     where p1.IsActive == true && p1.IsDelete == false &&
                                           p1.TenantId == AppConstant.LoggedInTenantId &&
@@ -348,7 +348,7 @@ namespace ShutterManagement.Business.Services
 
                     var productIds = products.Select(p => p.ProductId).ToList();
 
-                    var allOptions = (from o1 in dbContext.TblManagePartnersProductsOptions
+                    var allOptions = (from o1 in dbContext.TblManagePartnersProductsOptions.OrderByDescending(x=> x.CreatedAt)
                                       join o2 in dbContext.TblOptions on o1.OptionId equals o2.OptionId
                                       join o3 in dbContext.TblManagePartnersProducts on o1.ManageProductId equals o3.ManageProductId
                                       where o1.IsDelete == false && o1.IsActive == true &&
@@ -363,7 +363,7 @@ namespace ShutterManagement.Business.Services
 
                     var optionIds = allOptions.Select(o => o.OptionId).ToList();
 
-                    var allOptionTypes = (from o1 in dbContext.TblManagePartnersProductsOptions
+                    var allOptionTypes = (from o1 in dbContext.TblManagePartnersProductsOptions.OrderByDescending(o => o.CreatedAt)    
                                           join o2 in dbContext.TblOptionsTypes on o1.OptionTypeId equals o2.OptionTypeId
                                           join o3 in dbContext.TblManagePartnersProducts on o1.ManageProductId equals o3.ManageProductId
                                           where o1.IsDelete == false && o1.IsActive == true && o1.IsAvailable == true &&
@@ -461,7 +461,7 @@ namespace ShutterManagement.Business.Services
             }
 
             var products = (from p1 in dbContext.TblProducts
-                            join p2 in dbContext.TblManagePartnersProducts on p1.ProductId equals p2.ProductId into joined
+                            join p2 in dbContext.TblManagePartnersProducts.OrderByDescending(x=> x.CreatedAt) on p1.ProductId equals p2.ProductId into joined
                             from p2 in joined.Where(x => string.IsNullOrEmpty(filter.TenantId) || x.TenantId.ToString() == filter.TenantId).DefaultIfEmpty()
                             where p1.IsActive == true &&
                                   p1.IsDelete == false &&
@@ -494,7 +494,7 @@ namespace ShutterManagement.Business.Services
             var optionIds = options.Select(o => o.OptionId).ToList();
 
             var optionTypes = (from o1 in dbContext.TblOptionsTypes
-                               join o2 in dbContext.TblManagePartnersProductsOptions on o1.OptionTypeId equals o2.OptionTypeId into joined
+                               join o2 in dbContext.TblManagePartnersProductsOptions.OrderByDescending(x => x.CreatedAt) on o1.OptionTypeId equals o2.OptionTypeId into joined
                                from o2 in joined.Where(x => string.IsNullOrEmpty(filter.TenantId) || 
                                x.TenantId.ToString() == filter.TenantId).DefaultIfEmpty()
                                //from o2 in joined.DefaultIfEmpty() 
@@ -502,6 +502,7 @@ namespace ShutterManagement.Business.Services
                                into manageproductId
                                from o3 in manageproductId.DefaultIfEmpty()
                                where o1.IsActive == true && o1.IsDelete == false && optionIds.Contains(o1.OptionId)
+                               && o2.IsDelete == false && o2.IsActive == true
                                select new ProductOptionTypeList
                                {
                                    OptionTypeId = o1.OptionTypeId,
