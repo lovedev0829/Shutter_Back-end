@@ -188,9 +188,12 @@ namespace ShutterManagement.Business.Services
               
                 foreach (var item in items.ManagePartnerProductOptions)
                 {
+                    //await DeleteOptions(IsManagePartnerProductExist.ManageProductId);
+                    //await CreateNewManagePartnerProductOption(item, IsManagePartnerProductExist.ManageProductId);
                     if (!items.IsAvailable == false)
                     {
-                        await UpdatePartnerProductOptions(item, IsManagePartnerProductExist.ManageProductId);
+                        await DeleteOptions(IsManagePartnerProductExist.ManageProductId);
+                        await CreateNewManagePartnerProductOption(item, IsManagePartnerProductExist.ManageProductId);
                     }
                     else
                     {
@@ -496,13 +499,13 @@ namespace ShutterManagement.Business.Services
             var optionTypes = (from o1 in dbContext.TblOptionsTypes
                                join o2 in dbContext.TblManagePartnersProductsOptions.OrderByDescending(x => x.CreatedAt) on o1.OptionTypeId equals o2.OptionTypeId into joined
                                from o2 in joined.Where(x => string.IsNullOrEmpty(filter.TenantId) || 
-                               x.TenantId.ToString() == filter.TenantId).DefaultIfEmpty()
+                               (x.TenantId.ToString() == filter.TenantId && x.IsDelete == false && x.IsActive == true)).DefaultIfEmpty()
                                //from o2 in joined.DefaultIfEmpty() 
                                join o3 in dbContext.TblManagePartnersProducts on o2.ManageProductId equals o3.ManageProductId 
                                into manageproductId
                                from o3 in manageproductId.DefaultIfEmpty()
                                where o1.IsActive == true && o1.IsDelete == false && optionIds.Contains(o1.OptionId)
-                               && o2.IsDelete == false && o2.IsActive == true
+                               // && o2.IsDelete == false && o2.IsActive == true
                                select new ProductOptionTypeList
                                {
                                    OptionTypeId = o1.OptionTypeId,
