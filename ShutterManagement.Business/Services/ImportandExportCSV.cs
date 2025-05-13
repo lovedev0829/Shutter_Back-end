@@ -926,7 +926,7 @@ namespace ShutterManagement.Business.Services
 
                 foreach (var material in materialList)
                 {
-                    var line = $"{material.MaterialName},{material.UnitCost},{material.Non_Rated_UnitCost},{material.UnitOfMeasurement},{material.Lenght},{material.Width},{material.StockQuantity}," +
+                    var line = $"{material.MaterialName},{material.UnitCost},{material.UnitOfMeasurement},{material.Lenght},{material.Width},{material.StockQuantity}," +
                                $"{material.ReorderLevel},{material.VendorCode},{material.Notes},{material.ProductTypeName},{material.SKU},{material.IsCutSheet}";
 
                     csvBuilder.AppendLine(line);
