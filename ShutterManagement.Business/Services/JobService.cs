@@ -1354,6 +1354,7 @@ namespace ShutterManagement.Business.Services
                                              IsActive = t2.IsActive,
                                              JobId = t2.JobId,
                                              JobName = t2.JobName,
+                                             JobCode = t2.JobUniqueId,
                                              ContactId = t2.ContactId,
                                              ContactFirstName = t6.FirstName,
                                              ContactLastName = t6.LastName,
