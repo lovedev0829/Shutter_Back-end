@@ -16,6 +16,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? ContactEmail { get; set; }
         public string? Suffix { get; set; }
         public Guid? AddressId { get; set; }
+        public string? JobCode { get; set; }
 
         public string? JobName { get; set; }
         public Guid? JobType { get; set; }
