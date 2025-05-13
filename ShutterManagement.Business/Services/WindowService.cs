@@ -170,7 +170,7 @@ namespace ShutterManagement.Business.Services
                     IsActive = true,
                     IsDelete = false,
                     JobId = model.JobId,
-                    IsRated = model.IsRated,
+                    IsRated = true,
                     TenantId = AppConstant.LoggedInTenantId
                 };
 
@@ -572,7 +572,7 @@ namespace ShutterManagement.Business.Services
             existingWindow.ArchHeight = model.ArchHeight;
             existingWindow.JobId = model.JobId;
             existingWindow.UpdatedAt = DateTime.Now;
-            existingWindow.IsRated = model.IsRated;
+            existingWindow.IsRated = true;
             existingWindow.ModifiedBy = AppConstant.LoggedInUserID;
         }
 
