@@ -104,7 +104,7 @@ namespace ShutterManagement.Business.Services
                 {
                     using (var writer = new StreamWriter(filePathWithName))
                     {
-                        await writer.WriteLineAsync("MaterialName*,UnitCost*,NonRatedUnitCost*,UnitOfMeasurement*,Lenght,Width,StockQuantity,ReorderLevel,Vendor*,Notes,ProductType*,SKU,IsCutSheet*");
+                        await writer.WriteLineAsync("MaterialName*,UnitCost*,UnitOfMeasurement*,Lenght,Width,StockQuantity,ReorderLevel,Vendor*,Notes,ProductType*,SKU,IsCutSheet*");
                     }
                 }
 
@@ -200,7 +200,7 @@ namespace ShutterManagement.Business.Services
                     //var records = csv.GetRecords<ImportMaterial>().ToList();
                     var expectedHeaders = new[]
                     {
-                   "MaterialName", "UnitCost","NonRatedUnitCost", "UnitOfMeasurement","Lenght","Width", "StockQuantity", "ReorderLevel",
+                   "MaterialName", "UnitCost", "UnitOfMeasurement","Lenght","Width", "StockQuantity", "ReorderLevel",
                    "Vendor", "Notes", "ProductType", "SKU", "IsCutSheet"
                     };
 
@@ -292,7 +292,7 @@ namespace ShutterManagement.Business.Services
                             Lenght = record.Lenght??null,
                             Width = record.Width??null,
                             UnitCost = record.UnitCost,
-                            NonRatedUnitCost=record.NonRatedUnitCost,
+                            //NonRatedUnitCost=record.NonRatedUnitCost,
                             UnitOfMeasurement = record.UnitOfMeasurement,
                             StockQuantity = record.StockQuantity,
                             ReorderLevel = record.ReorderLevel,
@@ -913,7 +913,7 @@ namespace ShutterManagement.Business.Services
                                         UnitCost = t2.UnitCost,
                                         ProductTypeName = t3.ProductName,
                                         UnitOfMeasurement = t2.UnitOfMeasurement,
-                                        Non_Rated_UnitCost = t2.NonRatedUnitCost,
+                                       // Non_Rated_UnitCost = t2.NonRatedUnitCost,
                                         VendorId = t2.VendorId,
                                         FirstName = t1.FirstName,
                                         LastName = t1.LastName,
@@ -922,7 +922,7 @@ namespace ShutterManagement.Business.Services
                                     }).ToList();
 
                 var csvBuilder = new StringBuilder();
-                csvBuilder.AppendLine("MaterialName*,UnitCost*,NonRatedUnitCost*,UnitOfMeasurement*,Lenght,Width,StockQuantity,ReorderLevel,Vendor*,Notes,ProductType*,SKU,IsCutSheet*");
+                csvBuilder.AppendLine("MaterialName*,UnitCost*,UnitOfMeasurement*,Lenght,Width,StockQuantity,ReorderLevel,Vendor*,Notes,ProductType*,SKU,IsCutSheet*");
 
                 foreach (var material in materialList)
                 {
