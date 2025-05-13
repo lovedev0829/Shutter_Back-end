@@ -114,7 +114,6 @@ namespace ShutterManagement.Business.Services
                             if (model.PartnerSellingPrice >= minSellingPrice && model.PartnerSellingPrice <= maxSellingPrice)
                             {
                                 IsManagePartnerProductExist.PartnerSellingPrice = model.PartnerSellingPrice;
-                                IsManagePartnerProductExist.MarkupType = model.MarkupType;
                                 await Update(IsManagePartnerProductExist);
                                 foreach (var item in model.ManagePartnerProductOptions)
                                 {
@@ -141,7 +140,6 @@ namespace ShutterManagement.Business.Services
                                         }
                                         if (item.PartnerSellingPrice >= minSellingPrice1 && item.PartnerSellingPrice <= maxSellingPrice1)
                                         {
-                                            IsManagepartneroptiontype.MarkupOptionType = item.MarkupOptionType;
                                             IsManagepartneroptiontype.PartnerSellingPrice = item.PartnerSellingPrice;
                                             await managePartnersProductsOptions.Update(IsManagepartneroptiontype);
                                         }
@@ -312,6 +310,7 @@ namespace ShutterManagement.Business.Services
                 IsDelete = false,
                 TenantId = Guid.Parse(model.TenantId),
                 PriceType = model.PriceType,
+                MarkupOptionType = model.PriceType,
             };
             await managePartnersProductsOptions.Add(optionsType);
         }
@@ -417,7 +416,7 @@ namespace ShutterManagement.Business.Services
                                               PriceType = o1.PriceType ?? EnumValue.GetEnumValue(PriceType.Fixed),
                                               PartnerSellingPrice = o1.PartnerSellingPrice ?? 0.0m,
                                               WholeSalePrice = o1.WholeSalePrice ?? 0.0m,
-                                              MarkupOptionType = o1.PriceType ?? EnumValue.GetEnumValue(PriceType.Fixed)
+                                              MarkupOptionType = o1.MarkupOptionType ?? EnumValue.GetEnumValue(PriceType.Fixed)
                                           }).ToList();
                     //decimal wholesale1 = Price * (1 + (wholeSalePrice / 100));
 

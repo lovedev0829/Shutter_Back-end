@@ -292,7 +292,7 @@ namespace ShutterManagement.Business.Services
                             Lenght = record.Lenght??null,
                             Width = record.Width??null,
                             UnitCost = record.UnitCost,
-                            NonRatedUnitCost=record.NonRatedUnitCost,
+                           // NonRatedUnitCost=record.UnitCost,
                             UnitOfMeasurement = record.UnitOfMeasurement,
                             StockQuantity = record.StockQuantity,
                             ReorderLevel = record.ReorderLevel,
