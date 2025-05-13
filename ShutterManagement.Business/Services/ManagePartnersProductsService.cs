@@ -362,7 +362,6 @@ namespace ShutterManagement.Business.Services
                     //    responseVm.TotalRecords = productlist.Count();
                     //}
                 }
-
                 else
                 {
                     var products = (from p1 in dbContext.TblManagePartnersProducts.OrderByDescending(x => x.CreatedAt)

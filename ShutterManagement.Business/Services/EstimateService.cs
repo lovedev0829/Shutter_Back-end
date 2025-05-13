@@ -607,7 +607,7 @@ namespace ShutterManagement.Business.Services
                 var expression = CalculateExpression(formula, item);
                 var res = expression.Evaluate();
                 var ComponentPrice = Convert.ToDecimal(res);
-                item.AdditionalCost = Convert.ToDecimal(item.OptionsPrice.Sum());
+                //item.AdditionalCost = Convert.ToDecimal(item.OptionsPrice.Sum());
                 //finalSubTotal = (decimal)item.AdditionalCost + finalSubTotal;
                 var ComponentPriceWithoutMarkup = ComponentPrice;
                 var ComponentPriceWithMarkup = (ComponentPriceWithoutMarkup * (100 + item.MarkupPercentage)) / 100;
@@ -618,6 +618,26 @@ namespace ShutterManagement.Business.Services
                  .FirstOrDefault();
                 if (IsSubtenants != null)
                 {
+                    var optionpricewithsellingmarkup = 0.0m;
+                    foreach(var items in item.OptionsId)
+                    {
+                        var optionprice = optionsTypeService.GetAllQuerable().Where(x=> x.OptionTypeId.ToString() == items && x.IsDelete == false).FirstOrDefault();
+                        var optionmarkup = dbContext.TblManagePartnersProductsOptions.Where(x => x.OptionTypeId == optionprice.OptionTypeId && x.TenantId == AppConstant.LoggedInTenantId
+                        && x.IsDelete == false && x.IsActive == true && x.IsAvailable == true).FirstOrDefault();
+                        if (optionmarkup != null)
+                        {
+                            if(optionmarkup.MarkupOptionType == EnumValue.GetEnumValue(PriceType.Percentage))
+                            {
+                                optionpricewithsellingmarkup += (decimal)(optionprice.AdditionalCost * (1 + (optionmarkup.PartnerSellingPrice ?? 0.0m) / 100));
+                            }
+                            else if (optionmarkup.MarkupOptionType == EnumValue.GetEnumValue(PriceType.Fixed))
+                            {
+                                optionpricewithsellingmarkup += (decimal)(optionprice.AdditionalCost + (optionmarkup.PartnerSellingPrice ?? 0.0m));
+                            }
+                        }
+                        //item.OptionsPrice
+                    }
+                    item.AdditionalCost = optionpricewithsellingmarkup;
                     var productMarkup = dbContext.TblManagePartnersProducts.Where(x => x.ProductId == item.ProductId && x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
                     if(productMarkup.MarkupType == "Percentage")
                     {
@@ -1336,30 +1356,30 @@ namespace ShutterManagement.Business.Services
             }
                subtotal += (decimal)windowproductdetails.Data.DistinctBy(x => x.WindowProdcutId).Sum(x => x.TotalPrice);
                additionalCost += (decimal)windowproductdetails.Data.DistinctBy(x => x.WindowProdcutId).Sum(x => x.AdditionalCost);
-                var IsSubtenants = (await tenantService.GetAll()).Where
-                    (t => t.TenantId == AppConstant.LoggedInTenantId && (t.ParentTenantId != null || !string.IsNullOrEmpty(t.ParentTenantId.ToString()))
-                    && t.IsActive == true && t.IsDelete == false)
-                    .FirstOrDefault();
+                //var IsSubtenants = (await tenantService.GetAll()).Where
+                //    (t => t.TenantId == AppConstant.LoggedInTenantId && (t.ParentTenantId != null || !string.IsNullOrEmpty(t.ParentTenantId.ToString()))
+                //    && t.IsActive == true && t.IsDelete == false)
+                //    .FirstOrDefault();
                // additionalCost += (decimal)windowproductdetails.Data.DistinctBy(x => x.WindowProdcutId).Sum(x => x.AdditionalCost);
-                if (IsSubtenants != null)
-                {
-                    var optionIds = windowproductdetails.Data.Select(x => x.OptionsId).ToList();
-                    var flatOptionIds = optionIds.SelectMany(x => x).Distinct().ToList();
-                    var optionPrices = dbContext.TblManagePartnersProductsOptions
-                        .Where(x => flatOptionIds.Contains(x.OptionTypeId.ToString()))
-                        .ToList();
-                    foreach (var item in optionPrices)
-                    {
-                        if (item.PriceType == "Percentage")
-                        {
-                            additionalCost = (decimal)(additionalCost * (1 + (item.PartnerSellingPrice ?? 0.0m) / 100));
-                        }
-                        else if (item.PriceType == "Fixed")
-                        {
-                            additionalCost = (decimal)(additionalCost + (item.PartnerSellingPrice?? 0.0m));
-                        }
-                    }
-                }
+                //if (IsSubtenants != null)
+                //{
+                //    var optionIds = windowproductdetails.Data.Select(x => x.OptionsId).ToList();
+                //    var flatOptionIds = optionIds.SelectMany(x => x).Distinct().ToList();
+                //    var optionPrices = dbContext.TblManagePartnersProductsOptions
+                //        .Where(x => flatOptionIds.Contains(x.OptionTypeId.ToString()))
+                //        .ToList();
+                //    foreach (var item in optionPrices)
+                //    {
+                //        if (item.PriceType == "Percentage")
+                //        {
+                //            additionalCost = (decimal)(additionalCost * (1 + (item.PartnerSellingPrice ?? 0.0m) / 100));
+                //        }
+                //        else if (item.PriceType == "Fixed")
+                //        {
+                //            additionalCost = (decimal)(additionalCost + (item.PartnerSellingPrice?? 0.0m));
+                //        }
+                //    }
+                //}
              
             SumofSubtotalandAdditionalCost = subtotal + additionalCost;
             if (string.IsNullOrEmpty((model.taxRateId).ToString()) && string.IsNullOrEmpty(model.DiscountCoupon))
