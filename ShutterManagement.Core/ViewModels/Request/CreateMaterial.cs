@@ -21,10 +21,10 @@ namespace ShutterManagement.Core.ViewModels.Request
         [Required]
         //[OnError(AppConstant.NumericError)]
         public decimal? UnitCost { get; set; }
-        [DefaultValue("")]
-        [Required]
-        //[OnError(AppConstant.NumericError)]
-        public decimal? NonRatedUnitCost { get; set; }
+        //[DefaultValue("")]
+        //[Required]
+        ////[OnError(AppConstant.NumericError)]
+        //public decimal? NonRatedUnitCost { get; set; }
 
         [DefaultValue("")]
         [Required]

@@ -152,7 +152,7 @@ namespace ShutterManagement.Business.Services
                             UnitCost = model.UnitCost,
                             Length=model.Lenght?? null,
                             Width=model.Width?? null,
-                            NonRatedUnitCost = model.NonRatedUnitCost,
+                            NonRatedUnitCost = model.UnitCost,
                             UnitOfMeasurement = model.UnitOfMeasurement,
                             StockQuantity = model.StockQuantity,
                             ReorderLevel = model.ReorderLevel,
@@ -286,7 +286,7 @@ namespace ShutterManagement.Business.Services
                                             Width=t2.Width ?? null,
                                             StockQuantity = t2.StockQuantity,
                                             UnitCost = t2.UnitCost,
-                                            NonRatedUnitCost = t2.NonRatedUnitCost,
+                                            //NonRatedUnitCost = t2.NonRatedUnitCost,
                                             ProductType = t2.ProductType,
                                             UnitOfMeasurement = t2.UnitOfMeasurement,
                                             VendorId = t2.VendorId,
@@ -308,7 +308,7 @@ namespace ShutterManagement.Business.Services
                                         || (x.ProductType.ToString() == filter.SearchValue)
                                         || (x.MaterialName ?? "").ToLower().Contains(filter.SearchValue)
                                         || (x.UnitCost.ToString() ?? "").ToLower().Contains(filter.SearchValue)
-                                        || (x.NonRatedUnitCost.ToString() ?? "").ToLower().Contains(filter.SearchValue)
+                                        //|| (x.NonRatedUnitCost.ToString() ?? "").ToLower().Contains(filter.SearchValue)
                                         || (x.ReorderLevel.ToString() ?? "").ToLower().Contains(filter.SearchValue)
                                         || (x.StockQuantity.ToString() ?? "").ToLower().Contains(filter.SearchValue)
                                         || (x.Notes.ToString() ?? "").ToLower().Contains(filter.SearchValue)
@@ -400,6 +400,10 @@ namespace ShutterManagement.Business.Services
                                 length = null;
                                 width = null;
                                 break;
+                            case "Lbs":
+                                length = null;
+                                width = null;
+                                break;
 
                             case "Sq Feet":
                             case "Sq Inches":
@@ -421,7 +425,7 @@ namespace ShutterManagement.Business.Services
                             IsMaterialExists.UnitCost = model.UnitCost;
                             IsMaterialExists.Length = length;
                             IsMaterialExists.Width = width;
-                            IsMaterialExists.NonRatedUnitCost = model.NonRatedUnitCost;
+                           // IsMaterialExists.NonRatedUnitCost = model.NonRatedUnitCost;
                             IsMaterialExists.Sku = model.SKU;
                             IsMaterialExists.ProductType = Guid.Parse(model.ProductType);
                             IsMaterialExists.UnitOfMeasurement = model.UnitOfMeasurement;
