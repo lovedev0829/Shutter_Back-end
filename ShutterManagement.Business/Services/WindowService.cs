@@ -23,14 +23,17 @@ namespace ShutterManagement.Business.Services
         private readonly IWindowProductService windowProductService;
         private readonly IWindowOptionService windowOptionService;
         private readonly IEstimateWindowService estimateWindowService;
+  
 
         public WindowService(ITenantService tenantService, 
-            IWindowProductService windowProductService, IWindowOptionService windowOptionService,IEstimateWindowService estimateWindowService)
+            IWindowProductService windowProductService, IWindowOptionService windowOptionService,
+            IEstimateWindowService estimateWindowService)
         {
             this.tenantService = tenantService;
             this.windowProductService = windowProductService;
             this.windowOptionService = windowOptionService;
             this.estimateWindowService = estimateWindowService;
+        
         }
 
         public async Task<IResponseVm<string>> ActiveInActiveWindow(Guid WindowId)
@@ -303,8 +306,10 @@ namespace ShutterManagement.Business.Services
                 FileLogger.Log($"Delete window process started for WindowId: {WindowId}.");
 
                 var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false && (bool)x.IsActive == true);
-                bool WindowUsedInEstimation = await estimateWindowService.AnyAsync(x => x.WindowId == WindowId && x.IsDelete == false);
-                if(WindowUsedInEstimation)
+                var WindowUsedInEstimation =estimateWindowService.GetAllQuerable().Where(x => x.WindowId == WindowId && x.IsDelete == false).FirstOrDefault();
+                var Estimatestatus = dbContext.TblEstimates.Where(x => x.EstimateId == WindowUsedInEstimation.EstimateId && x.IsDelete == false)
+                  .FirstOrDefault();
+                if (WindowUsedInEstimation != null && Estimatestatus.Status == EnumValue.GetEnumValue(Estimation.GenerateOrder))
                 {
                     responseVm.Message = "Window used in Estimation.It's not alllowed to delete.";
                     return responseVm;
@@ -362,7 +367,17 @@ namespace ShutterManagement.Business.Services
                                 await windowProductService.Update(product);
                             }
                         }
-
+                        var Estimation = estimateWindowService.GetAllQuerable().Where(x => x.WindowId == WindowId &&
+                        x.IsActive == true && x.IsDelete == false).ToList();
+                        foreach(var item in Estimation)
+                        {
+                            Estimatestatus.IsActive = false;
+                            Estimatestatus.IsDelete = true;
+                            Estimatestatus.UpdatedAt = DateTime.Now;
+                            Estimatestatus.ModifiedBy = AppConstant.LoggedInUserID;
+                            dbContext.Update(Estimatestatus);
+                            await dbContext.SaveChangesAsync();
+                        }
                         // Window status change
                         IsWindowExists.IsActive = false;
                         IsWindowExists.IsDelete = true;
