@@ -25,6 +25,7 @@ namespace ShutterManagement.Core.SPModel.SP_Responses
         public string? CompanyName { get; set; }
         public Guid? TenantId { get; set; }
         public string? ParentTenantId { get; set; }
+        public bool? IsTenant { get; set; }
 
     }
 }

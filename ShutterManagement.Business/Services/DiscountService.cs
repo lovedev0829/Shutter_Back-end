@@ -13,6 +13,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
+using System.Linq.Dynamic.Core;
+
 
 namespace ShutterManagement.Business.Services
 {
@@ -216,6 +218,15 @@ namespace ShutterManagement.Business.Services
                         (x.StartDate.ToString() ?? "").Contains(filter.SearchValue.Trim()))
                 );
 
+                if (!string.IsNullOrEmpty(filter.SortColumn))
+                {
+                    var sortDirection = string.IsNullOrEmpty(filter.SortDirection) || filter.SortDirection.ToLower() == "asc" ? "asc" : "desc";
+                    var sortExpression = $"{filter.SortColumn} {sortDirection}";
+                    filteredRecords = filteredRecords.AsQueryable().OrderBy(sortExpression);
+                }
+
+
+                
                 var pagination = Paginate.Pagination(filteredRecords, filter);
 
 

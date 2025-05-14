@@ -54,5 +54,11 @@ namespace ShutterManagement.Core.ViewModels.Response
         public decimal? MaxSellingPrice { get; set; }
         public decimal? MinSellingPrice { get; set; }
     }
+
+    public class MSRPVm
+    {
+        public decimal? msrp { get; set; }
+        public decimal? basecost { get; set; }
+    }
 }
 

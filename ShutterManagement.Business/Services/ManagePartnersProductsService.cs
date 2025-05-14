@@ -31,10 +31,10 @@ namespace ShutterManagement.Business.Services
         private readonly IOptionsTypeService optionsTypeService;
 
         public ManagePartnersProductsService(ShutterDBContext dBContext, ITenantService tenantService,
-            IProductService productService, IManagePartnersProductsOptions 
-            managePartnersProductsOptions,IEstimateService estimateService,
+            IProductService productService, IManagePartnersProductsOptions
+            managePartnersProductsOptions, IEstimateService estimateService,
             ISubtenantProductMarkup subtenantProductMarkup,
-            ITenantBrandingService tenantBrandingService,IOptionsTypeService optionsTypeService
+            ITenantBrandingService tenantBrandingService, IOptionsTypeService optionsTypeService
             )
         {
             this.dBContext = dBContext;
@@ -70,14 +70,14 @@ namespace ShutterManagement.Business.Services
                        && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
                     if (IsProductExist)
                     {
-                       await UpdateManagePartnerProduct(model);
+                        await UpdateManagePartnerProduct(model);
                     }
                     else
                     {
                         responseVm.Message += $" Some Products does not exist in the Tenant. ";
                         return responseVm;
                     }
-                   
+
                     responseVm.IsSuccess = true;
                     responseVm.Message = "Manage Product for Partner successfully.";
                 }
@@ -93,16 +93,18 @@ namespace ShutterManagement.Business.Services
                         if (IsManagePartnerProductExist != null)
                         {
                             decimal PartnerSellingPricewithPer = 0.0m;
-                            decimal baseCost = await CalculateBaseCost((Guid)IsManagePartnerProductExist.ProductId);
-                            var msrp = await CalculateMSRPData((Guid)IsManagePartnerProductExist.ProductId);
-                            var (maxSellingPrice, minSellingPrice, wholesale) =
-                             CalculateSellingPrices(baseCost, msrp, (decimal)IsManagePartnerProductExist.WholeSalePrice,(decimal)IsManagePartnerProductExist.MaxPartnerPrice, 
-                             IsManagePartnerProductExist.PriceType);
-                            if(model.MarkupType == EnumValue.GetEnumValue(PriceType.Percentage))
+                            //decimal baseCost = await CalculateBaseCost((Guid)IsManagePartnerProductExist.ProductId);
+                            //var msrp = await CalculateMSRPData((Guid)IsManagePartnerProductExist.ProductId);
+                            //var (maxSellingPrice, minSellingPrice, wholesale) =
+                            // CalculateSellingPrices(baseCost, msrp, (decimal)IsManagePartnerProductExist.WholeSalePrice, (decimal)IsManagePartnerProductExist.MaxPartnerPrice,
+                            // IsManagePartnerProductExist.PriceType);
+                            decimal? minSellingPrice = 0.0m;
+                            decimal? maxSellingPrice = 0.0m;
+                            if (model.MarkupType == EnumValue.GetEnumValue(PriceType.Percentage))
                             {
-                                minSellingPrice =(-1)*(decimal)IsManagePartnerProductExist.MaxPartnerPrice;
-                                maxSellingPrice =(decimal)IsManagePartnerProductExist.MaxPartnerPrice;
-                               // PartnerSellingPricewithPer = (decimal)msrp * (1 + (model.PartnerSellingPrice / 100)) ?? 0.0m;
+                                minSellingPrice = (-1) * (decimal)IsManagePartnerProductExist.MaxPartnerPrice;
+                                maxSellingPrice = (decimal)IsManagePartnerProductExist.MaxPartnerPrice;
+                                // PartnerSellingPricewithPer = (decimal)msrp * (1 + (model.PartnerSellingPrice / 100)) ?? 0.0m;
                             }
                             if (model.MarkupType == EnumValue.GetEnumValue(PriceType.Fixed))
                             {
@@ -110,11 +112,10 @@ namespace ShutterManagement.Business.Services
                                 maxSellingPrice = (decimal)IsManagePartnerProductExist.MaxPartnerPrice;
                                 // PartnerSellingPricewithPer = (decimal)msrp * (1 + (model.PartnerSellingPrice / 100)) ?? 0.0m;
                             }
-                          
+
                             if (model.PartnerSellingPrice >= minSellingPrice && model.PartnerSellingPrice <= maxSellingPrice)
                             {
                                 IsManagePartnerProductExist.PartnerSellingPrice = model.PartnerSellingPrice;
-                                IsManagePartnerProductExist.MarkupType = model.MarkupType;
                                 await Update(IsManagePartnerProductExist);
                                 foreach (var item in model.ManagePartnerProductOptions)
                                 {
@@ -131,7 +132,7 @@ namespace ShutterManagement.Business.Services
                                       item.MarkupOptionType);
                                         if (item.MarkupOptionType == EnumValue.GetEnumValue(PriceType.Percentage))
                                         {
-                                            minSellingPrice1 = (decimal)((-1)*IsManagepartneroptiontype.MaxPrice);
+                                            minSellingPrice1 = (decimal)((-1) * IsManagepartneroptiontype.MaxPrice);
                                             maxSellingPrice1 = (decimal)IsManagepartneroptiontype.MaxPrice;
                                         }
                                         if (item.MarkupOptionType == EnumValue.GetEnumValue(PriceType.Fixed))
@@ -141,13 +142,12 @@ namespace ShutterManagement.Business.Services
                                         }
                                         if (item.PartnerSellingPrice >= minSellingPrice1 && item.PartnerSellingPrice <= maxSellingPrice1)
                                         {
-                                            IsManagepartneroptiontype.MarkupOptionType = item.PriceType;
                                             IsManagepartneroptiontype.PartnerSellingPrice = item.PartnerSellingPrice;
                                             await managePartnersProductsOptions.Update(IsManagepartneroptiontype);
                                         }
                                         else
                                         {
-                                            IsSuccess = true; 
+                                            IsSuccess = true;
                                             message = $"Also,Option Selling Price Markup must be between {minSellingPrice1} and {maxSellingPrice1}.";
                                         }
                                     }
@@ -220,7 +220,7 @@ namespace ShutterManagement.Business.Services
                         await DeleteOptions(IsManagePartnerProductExist.ManageProductId);
                     }
                 }
-            
+
                 //foreach (var item in items.ManagePartnerProductOptions)
                 //{
                 //    //await DeleteOptions(IsManagePartnerProductExist.ManageProductId);
@@ -312,6 +312,7 @@ namespace ShutterManagement.Business.Services
                 IsDelete = false,
                 TenantId = Guid.Parse(model.TenantId),
                 PriceType = model.PriceType,
+                MarkupOptionType = model.PriceType,
             };
             await managePartnersProductsOptions.Add(optionsType);
         }
@@ -363,10 +364,9 @@ namespace ShutterManagement.Business.Services
                     //    responseVm.TotalRecords = productlist.Count();
                     //}
                 }
-            
                 else
                 {
-                    var products = (from p1 in dbContext.TblManagePartnersProducts.OrderByDescending(x=> x.CreatedAt)
+                    var products = (from p1 in dbContext.TblManagePartnersProducts.OrderByDescending(x => x.CreatedAt)
                                     join p2 in dbContext.TblProducts on p1.ProductId equals p2.ProductId
                                     where p1.IsActive == true && p1.IsDelete == false &&
                                           p1.TenantId == AppConstant.LoggedInTenantId &&
@@ -387,7 +387,7 @@ namespace ShutterManagement.Business.Services
 
                     var productIds = products.Select(p => p.ProductId).ToList();
 
-                    var allOptions = (from o1 in dbContext.TblManagePartnersProductsOptions.OrderByDescending(x=> x.CreatedAt)
+                    var allOptions = (from o1 in dbContext.TblManagePartnersProductsOptions.OrderByDescending(x => x.CreatedAt)
                                       join o2 in dbContext.TblOptions on o1.OptionId equals o2.OptionId
                                       join o3 in dbContext.TblManagePartnersProducts on o1.ManageProductId equals o3.ManageProductId
                                       where o1.IsDelete == false && o1.IsActive == true &&
@@ -402,7 +402,7 @@ namespace ShutterManagement.Business.Services
 
                     var optionIds = allOptions.Select(o => o.OptionId).ToList();
 
-                    var allOptionTypes = (from o1 in dbContext.TblManagePartnersProductsOptions.OrderByDescending(o => o.CreatedAt)    
+                    var allOptionTypes = (from o1 in dbContext.TblManagePartnersProductsOptions.OrderByDescending(o => o.CreatedAt)
                                           join o2 in dbContext.TblOptionsTypes on o1.OptionTypeId equals o2.OptionTypeId
                                           join o3 in dbContext.TblManagePartnersProducts on o1.ManageProductId equals o3.ManageProductId
                                           where o1.IsDelete == false && o1.IsActive == true && o1.IsAvailable == true &&
@@ -427,7 +427,7 @@ namespace ShutterManagement.Business.Services
                         var msrp = await CalculateMSRPData((Guid)product.ProductId);
 
                         var (maxSellingPrice, minSellingPrice, wholesale) =
-                            CalculateSellingPrices(baseCost, msrp, (decimal)product.WholeSalePrice, (decimal)product.MaxPartnerPrice, product.PriceType);
+                            CalculateSellingPrices(baseCost, (decimal)msrp.Data.msrp, (decimal)product.WholeSalePrice, (decimal)product.MaxPartnerPrice, product.PriceType);
 
                         return new ProductOptionsVm
                         {
@@ -501,7 +501,7 @@ namespace ShutterManagement.Business.Services
             }
 
             var products = (from p1 in dbContext.TblProducts
-                            join p2 in dbContext.TblManagePartnersProducts.OrderByDescending(x=> x.CreatedAt) on p1.ProductId equals p2.ProductId into joined
+                            join p2 in dbContext.TblManagePartnersProducts.OrderByDescending(x => x.CreatedAt) on p1.ProductId equals p2.ProductId into joined
                             from p2 in joined.Where(x => string.IsNullOrEmpty(filter.TenantId) || x.TenantId.ToString() == filter.TenantId).DefaultIfEmpty()
                             where p1.IsActive == true &&
                                   p1.IsDelete == false &&
@@ -535,10 +535,10 @@ namespace ShutterManagement.Business.Services
 
             var optionTypes = (from o1 in dbContext.TblOptionsTypes
                                join o2 in dbContext.TblManagePartnersProductsOptions.OrderByDescending(x => x.CreatedAt) on o1.OptionTypeId equals o2.OptionTypeId into joined
-                               from o2 in joined.Where(x => string.IsNullOrEmpty(filter.TenantId) || 
+                               from o2 in joined.Where(x => string.IsNullOrEmpty(filter.TenantId) ||
                                (x.TenantId.ToString() == filter.TenantId && x.IsDelete == false && x.IsActive == true)).DefaultIfEmpty()
-                               //from o2 in joined.DefaultIfEmpty() 
-                               join o3 in dbContext.TblManagePartnersProducts on o2.ManageProductId equals o3.ManageProductId 
+                                   //from o2 in joined.DefaultIfEmpty() 
+                               join o3 in dbContext.TblManagePartnersProducts on o2.ManageProductId equals o3.ManageProductId
                                into manageproductId
                                from o3 in manageproductId.DefaultIfEmpty()
                                where o1.IsActive == true && o1.IsDelete == false && optionIds.Contains(o1.OptionId)
@@ -624,18 +624,36 @@ namespace ShutterManagement.Business.Services
         }
 
         // calculate MSRP
-        public async Task<IResponseVm<string>> CalculateMSRP(string productId)
+        public async Task<IResponseVm<MSRPVm>> CalculateMSRP(string productId)
         {
-            IResponseVm<string> responseVm = new ResponseVm<string>();
+            IResponseVm<MSRPVm> responseVm = new ResponseVm<MSRPVm>();
             try
             {
-                decimal? MSRPValue = await CalculateMSRPData(Guid.Parse(productId));
-                if (MSRPValue != null)
+                var pricecalculation = await CalculateMSRPData(Guid.Parse(productId));
+                //decimal? MSRPValue = response.Data.msrp;
+                //if (MSRPValue != null)
+                //{
+                //    responseVm.Data = MSRPValue.Value.ToString();
+                //}
+                if (pricecalculation.Data != null)
                 {
-                    responseVm.Data = MSRPValue.Value.ToString();
+                    responseVm.IsSuccess = true;
+                    responseVm.Data = new MSRPVm
+                    {
+                        basecost = pricecalculation.Data.basecost ?? 0.0m,
+                        msrp = pricecalculation.Data.msrp ?? 0.0m,
+                    };
+                    responseVm.Message = "MSRP calculated successfully.";
                 }
-                responseVm.IsSuccess = true;
-                responseVm.Message = "MSRP calculated successfully.";
+                else
+                {
+                    responseVm.IsSuccess = true;
+                    responseVm.Data = new MSRPVm
+                    {
+                        basecost = 0.0m,
+                        msrp = 0.0m,
+                    };
+                }
             }
             catch (Exception ex)
             {
@@ -644,58 +662,74 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        public async Task<decimal> CalculateMSRPData(Guid productId)
+        public async Task<IResponseVm<MSRPVm>> CalculateMSRPData(Guid productId)
         {
-            decimal? totalMSRP = 0.00M;
-            List< WindowProdcutDetailsForEstimate> data = new List<WindowProdcutDetailsForEstimate>();
-            // Fetch the data for the given ProductId (window table removed)
-            data = await GetProductDetailsforCalculation(productId);
-
-            if (data != null && data.Count > 0)
+            IResponseVm<MSRPVm> responseVm = new ResponseVm<MSRPVm>();
+            try
             {
-                foreach (var item in data)
+                decimal? totalMSRP = 0.00M;
+                List<WindowProdcutDetailsForEstimate> data = new List<WindowProdcutDetailsForEstimate>();
+                // Fetch the data for the given ProductId (window table removed)
+                data = await GetProductDetailsforCalculation(productId);
+
+                if (data != null && data.Count > 0)
                 {
-                    var formula = item.ExpressionFormulae ?? "";
-                    var expression = estimateService.CalculateExpression(formula, item);
-                    var res = expression.Evaluate();
-                    var componentPrice = Convert.ToDecimal(res);
+                    foreach (var item in data)
+                    {
+                        var formula = item.ExpressionFormulae ?? "";
+                        var expression = estimateService.CalculateExpression(formula, item);
+                        var res = expression.Evaluate();
+                        var componentPrice = Convert.ToDecimal(res);
 
-                    item.AdditionalCost = Convert.ToDecimal(item.OptionsPrice.Sum());
-                    var componentPriceWithoutMarkup = componentPrice;
-                    var componentPriceWithMarkup = (componentPriceWithoutMarkup * (100 + item.MarkupPercentage)) / 100;
-                    var componentPriceWithProductMarkup = (componentPriceWithMarkup * (100 + item.Markup)) / 100;
+                        item.AdditionalCost = Convert.ToDecimal(item.OptionsPrice.Sum());
+                        var componentPriceWithoutMarkup = componentPrice;
+                        var componentPriceWithMarkup = (componentPriceWithoutMarkup * (100 + item.MarkupPercentage)) / 100;
+                        var componentPriceWithProductMarkup = (componentPriceWithMarkup * (100 + item.Markup)) / 100;
 
-                    var isSubtenant = (await tenantService.GetAll())
-                        .FirstOrDefault(t => t.TenantId == AppConstant.LoggedInTenantId && t.ParentTenantId != null && t.IsActive==true && t.IsDelete==false);
+                        var isSubtenant = (await tenantService.GetAll())
+                            .FirstOrDefault(t => t.TenantId == AppConstant.LoggedInTenantId && t.ParentTenantId != null && t.IsActive == true && t.IsDelete == false);
 
-                    //if (isSubtenant != null)
-                    //{
-                    //    var subtenantMarkup = subtenantProductMarkup.GetAllQuerable()
-                    //        .Where(x => x.ProductId == item.ProductId)
-                    //        .Select(x => x.Markup)
-                    //        .FirstOrDefault();
+                        //if (isSubtenant != null)
+                        //{
+                        //    var subtenantMarkup = subtenantProductMarkup.GetAllQuerable()
+                        //        .Where(x => x.ProductId == item.ProductId)
+                        //        .Select(x => x.Markup)
+                        //        .FirstOrDefault();
 
-                    //    if (subtenantMarkup != null && subtenantMarkup > 0)
-                    //    {
-                    //        componentPriceWithProductMarkup = componentPriceWithProductMarkup * (100 + subtenantMarkup) / 100;
-                    //    }
-                    //    else
-                    //    {
-                    //        var globalMarkup = tenantBrandingService.GetAllQuerable()
-                    //            .Where(x => x.Id == isSubtenant.BrandingInfo)
-                    //            .Select(x => x.Markup)
-                    //            .FirstOrDefault();
+                        //    if (subtenantMarkup != null && subtenantMarkup > 0)
+                        //    {
+                        //        componentPriceWithProductMarkup = componentPriceWithProductMarkup * (100 + subtenantMarkup) / 100;
+                        //    }
+                        //    else
+                        //    {
+                        //        var globalMarkup = tenantBrandingService.GetAllQuerable()
+                        //            .Where(x => x.Id == isSubtenant.BrandingInfo)
+                        //            .Select(x => x.Markup)
+                        //            .FirstOrDefault();
 
-                    //        componentPriceWithProductMarkup = componentPriceWithProductMarkup * (100 + (globalMarkup ?? 0.00m)) / 100;
-                    //    }
-                    //}
-                    item.Price = Convert.ToDecimal(componentPriceWithProductMarkup.Value.ToString("0.00"));
-                    totalMSRP += item.Price;
-                    
+                        //        componentPriceWithProductMarkup = componentPriceWithProductMarkup * (100 + (globalMarkup ?? 0.00m)) / 100;
+                        //    }
+                        //}
+                        item.Price = Convert.ToDecimal(componentPriceWithProductMarkup.Value.ToString("0.00"));
+                        totalMSRP += item.Price;
+
+                        decimal? basecost = await CalculateBaseCost(productId);
+
+                        responseVm.IsSuccess = true;    
+                        responseVm.Data = new MSRPVm
+                        {
+                            msrp = totalMSRP ?? 0.0m,
+                            basecost = basecost ?? 0.0m,
+                        };
+                    }
                 }
             }
+            catch(Exception ex)
+            {
+                responseVm.Message = ex.Message;
+            }
 
-            return totalMSRP?? 0.00M;
+            return responseVm;
         }
 
         public async Task<decimal> CalculateBaseCost(Guid productId)
@@ -744,7 +778,7 @@ namespace ShutterManagement.Business.Services
                     item.Price = Convert.ToDecimal(componentPriceWithoutMarkup.ToString("0.00"));
                     BaseCost = item.Price;
                 }
-                }
+            }
             return BaseCost ?? 0.0m;
         }
 
@@ -808,8 +842,8 @@ namespace ShutterManagement.Business.Services
                         IsRated = true
                     }).ToList();
 
-                return data;
-            }
+            return data;
+        }
 
 
         private (decimal MaxSellingPrice, decimal MinSellingPrice, decimal WholeSalePrice)
@@ -831,17 +865,17 @@ namespace ShutterManagement.Business.Services
             }
 
             return (
-      Math.Round(maxSellingPrice, 2),
-      Math.Round(minSellingPrice, 2),
-      Math.Round(wholesale, 2)
-  );
+              Math.Round(maxSellingPrice, 2),
+              Math.Round(minSellingPrice, 2),
+              Math.Round(wholesale, 2)
+              );
         }
 
         private async Task DeleteOptions(Guid manageproductId)
         {
             var IsManagePartnerProductOptionExist = managePartnersProductsOptions.GetAllQuerable().Where(x => x.ManageProductId == manageproductId &&
                x.IsActive == true && x.IsDelete == false).FirstOrDefault();
-            if(IsManagePartnerProductOptionExist != null)
+            if (IsManagePartnerProductOptionExist != null)
             {
                 IsManagePartnerProductOptionExist.IsActive = false;
                 IsManagePartnerProductOptionExist.IsDelete = true;
@@ -851,7 +885,7 @@ namespace ShutterManagement.Business.Services
                 await managePartnersProductsOptions.Update(IsManagePartnerProductOptionExist);
             }
         }
-        
+
 
     }
 }
