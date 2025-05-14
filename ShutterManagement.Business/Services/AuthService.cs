@@ -96,8 +96,6 @@ namespace ShutterManagement.Services
 
             if (UserDetails.Count > 0)
             {
-                
-
                 var UserRole = await dataServices.CallSPtoRead<UserRoles>("Sp_GetLoggedinUserRoles", reader =>
                 {
                     return new UserRoles
@@ -116,7 +114,7 @@ namespace ShutterManagement.Services
                 {
                     claims.AddClaim(new Claim(ClaimTypes.Role, item.PermissionName));
                 }
-
+                bool IsTenant = string.IsNullOrEmpty(UserDetails[0].ParentTenantId) ? true : false;
                 claims.AddClaim(new Claim("UserId", UserDetails[0].UserId.ToString().ToUpper()));
                 claims.AddClaim(new Claim("Username", UserDetails[0].Username ?? ""));
                 claims.AddClaim(new Claim(ClaimTypes.Name, UserDetails[0].FirstName + " " + UserDetails[0].MiddleName + " " + UserDetails[0].LastName));
@@ -127,16 +125,15 @@ namespace ShutterManagement.Services
                // claims.AddClaim(new Claim("CompanyCode", user.CompanyCode));
                 claims.AddClaim(new Claim("CompanyCode", UserDetails[0].Code));
                 claims.AddClaim(new Claim("CompanyName", UserDetails[0].CompanyName));
-
+                claims.AddClaim(new Claim("IsTenant", IsTenant.ToString()));
+              //  AppConstant.IsTenant = IsTenant;
                 //// Store GHL Credentials in Claims
                 //claims.AddClaim(new Claim("GHL_APIKey", GHLres.APIkey ?? ""));
                 //claims.AddClaim(new Claim("GHL_BaseAddress", GHLres.BaseAddress ?? ""));
                 //claims.AddClaim(new Claim("GHL_PipelineId", GHLres.PipelineId ?? ""));
                 //claims.AddClaim(new Claim("GHL_Locationd", GHLres.StageId ?? ""));
                 // Fetch GHL Configuration (Ensure to await the method)
-                
                
-
                 var tokenHandler = new JwtSecurityTokenHandler();
                 var key = Encoding.UTF8.GetBytes(AppConstant.JWTSecretKey);
                 var tokenDescriptor = new SecurityTokenDescriptor
@@ -165,6 +162,7 @@ namespace ShutterManagement.Services
                     })
                     .DistinctBy(x=>x.RoleName).ToArray();
                 responseVm.Data.Token = TokenValue;
+                responseVm.Data.IsTenant = IsTenant;
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.LoginSuccessMessgae;
                 responseVm.TotalRecords = 1;

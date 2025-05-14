@@ -25,6 +25,7 @@ namespace ShutterManagement.Business
                 AppConstant.LoggedInEmail = httpContext.HttpContext.User.Claims.First(c => c.Type == ClaimTypes.Email).Value;
                 AppConstant.LoggedInParentTenantId = httpContext.HttpContext.User.Claims.First(c => c.Type == "ParentTenantId").Value;
                 AppConstant.IsAdminRolesShow = Convert.ToBoolean(configuration["IsAdminRolesShow"] ?? "false");
+                AppConstant.IsTenant = Convert.ToBoolean(configuration["IsTenant"] ?? "false");
             }
             
         }
@@ -79,5 +80,17 @@ namespace ShutterManagement.Business
             AppConstant.LoggedInCompanyCode = value;
             return value;
         }
+
+        //public bool IsTenant()
+        //{
+        //    var claim = httpContext.HttpContext.User.Claims.FirstOrDefault(c => c.Type == "IsTenant");
+
+        //    if (claim != null && bool.TryParse(claim.Value, out bool claimValue))
+        //    {
+        //        AppConstant.IsTenant = claimValue;
+        //    }
+        //    return AppConstant.IsTenant;
+        //}
+
     }
 }
