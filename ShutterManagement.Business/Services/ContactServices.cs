@@ -18,6 +18,7 @@ using ShutterManagement.GHL.Services;
 using ShutterManagement.Services;
 using ShutterManagment.GHL.ViewModel.Request;
 using ShutterManagment.GHL.ViewModel.Response;
+using System.Linq.Dynamic.Core;
 
 namespace ShutterManagement.Business.Services
 {
@@ -909,6 +910,16 @@ namespace ShutterManagement.Business.Services
                                     || (x.FirstName.ToLower() ?? "").Contains(filter?.SearchValue)
                                     || (x.LastName.ToLower() ?? "").Contains(filter?.SearchValue)
                                     ) : true)).ToList();
+
+
+                if (!string.IsNullOrEmpty(filter.SortColumn))
+                {
+                    var sortDirection = string.IsNullOrEmpty(filter.SortDirection) || filter.SortDirection.ToLower() == "asc" ? "asc" : "desc";
+                    var sortExpression = $"{filter.SortColumn} {sortDirection}";
+                    FilterRecords = FilterRecords.AsQueryable().OrderBy(sortExpression).ToList();
+                }
+
+
 
                 var TakenRecords = Paginate.Pagination(FilterRecords, filter);
                 responseVm.IsSuccess = true;
