@@ -478,8 +478,15 @@ namespace ShutterManagement.Business.Services
                                     || (x.MiddleName ?? "").ToLower().Contains(filter.SearchValue)
                                     || (x.Code ?? "").ToLower().Contains(filter.SearchValue)
                                     ) : true)).ToList();
-                var TakenRecords = FilterRecords
-                                    .Skip((filter.PageNo - 1) * filter.RecordPerPage).Take(filter.RecordPerPage).ToList();
+
+
+                var queryable = FilterRecords.AsQueryable();
+
+                queryable = Paginate.ApplyColumnFilters(queryable, filter.ColumnFilters);
+                queryable = Paginate.ApplySorting(queryable, filter.SortColumn, filter.SortDirection);
+
+                var TakenRecords = Paginate.Pagination(queryable.ToList(), filter);
+
                 if (TakenRecords != null && TakenRecords.Count > 0)
                 {
                     var data = TakenRecords.Select(x => new GetAllTenant
