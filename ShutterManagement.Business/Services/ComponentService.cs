@@ -319,7 +319,6 @@ namespace ShutterManagement.Business.Services
 
                 var pagedRecords = Paginate(filteredRecords, filter);
 
-
                 responseVm.IsSuccess = true;
                 if (pagedRecords.Any())
                 {

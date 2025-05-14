@@ -336,7 +336,8 @@ namespace ShutterManagement.Business.Services
                         NonRatedUnitCost = x.NonRatedUnitCost,
                         UnitOfMeasurement = x.UnitOfMeasurement,
                         StockQuantity = x.StockQuantity,
-                        ReorderLevel = x.ReorderLevel
+                        ReorderLevel = x.ReorderLevel,
+                        SKU=x.SKU?? "", 
                     }).ToList();
 
                     var queryable = FilterRecords.AsQueryable();
