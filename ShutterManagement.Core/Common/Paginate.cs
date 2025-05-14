@@ -32,36 +32,65 @@ namespace ShutterManagement.Core.Common
                     continue;
 
                 var entityType = typeof(T);
-                var property = entityType.GetProperties()
-                    .FirstOrDefault(p => string.Equals(p.Name, col.Field, StringComparison.OrdinalIgnoreCase));
-                if (property == null) continue;
-
                 var val = col.Value.ToLower().Trim();
                 var parameter = Expression.Parameter(typeof(T), "r");
-                var propertyExpression = Expression.Property(parameter, property.Name);
-                var propertyType = property.PropertyType;
 
                 Expression predicateBody = null;
 
-                if (propertyType == typeof(string))
+                // Special case for "FirstName" to combine FirstName + LastName
+                if (col.Field.Equals("FirstName", StringComparison.OrdinalIgnoreCase))
                 {
-                    var toLower = Expression.Call(propertyExpression, "ToLower", null);
-                    predicateBody = Expression.Equal(toLower, Expression.Constant(val));
+                    var firstNameProp = entityType.GetProperty("FirstName");
+                    var lastNameProp = entityType.GetProperty("LastName");
+
+                    if (firstNameProp != null && lastNameProp != null)
+                    {
+                        var firstNameExpr = Expression.Property(parameter, firstNameProp);
+                        var lastNameExpr = Expression.Property(parameter, lastNameProp);
+
+                        var concatExpr = Expression.Call(
+                            typeof(string).GetMethod("Concat", new[] { typeof(string), typeof(string), typeof(string) }),
+                            firstNameExpr,
+                            Expression.Constant(" "),
+                            lastNameExpr
+                        );
+
+                        var toLower = Expression.Call(concatExpr, "ToLower", null);
+                        var containsMethod = typeof(string).GetMethod("Contains", new[] { typeof(string) });
+                        predicateBody = Expression.Call(toLower, containsMethod, Expression.Constant(val));
+                    }
                 }
-                else if (propertyType == typeof(Guid))
+                else
                 {
-                    if (Guid.TryParse(val, out var guidValue))
-                        predicateBody = Expression.Equal(propertyExpression, Expression.Constant(guidValue));
-                }
-                else if (propertyType == typeof(DateTime))
-                {
-                    if (DateTime.TryParse(val, out var dateTimeValue))
-                        predicateBody = Expression.Equal(propertyExpression, Expression.Constant(dateTimeValue));
-                }
-                else if (propertyType == typeof(bool))
-                {
-                    if (bool.TryParse(val, out var boolValue))
-                        predicateBody = Expression.Equal(propertyExpression, Expression.Constant(boolValue));
+                    var property = entityType.GetProperties()
+                        .FirstOrDefault(p => string.Equals(p.Name, col.Field, StringComparison.OrdinalIgnoreCase));
+                    if (property == null) continue;
+
+                    var propertyExpression = Expression.Property(parameter, property.Name);
+                    var propertyType = property.PropertyType;
+
+                    if (propertyType == typeof(string))
+                    {
+                        var toLower = Expression.Call(propertyExpression, "ToLower", null);
+                        predicateBody = Expression.Call(toLower,
+                            typeof(string).GetMethod("Contains", new[] { typeof(string) }),
+                            Expression.Constant(val));
+                    }
+                    else if (propertyType == typeof(Guid))
+                    {
+                        if (Guid.TryParse(val, out var guidValue))
+                            predicateBody = Expression.Equal(propertyExpression, Expression.Constant(guidValue));
+                    }
+                    else if (propertyType == typeof(DateTime))
+                    {
+                        if (DateTime.TryParse(val, out var dateTimeValue))
+                            predicateBody = Expression.Equal(propertyExpression, Expression.Constant(dateTimeValue));
+                    }
+                    else if (propertyType == typeof(bool))
+                    {
+                        if (bool.TryParse(val, out var boolValue))
+                            predicateBody = Expression.Equal(propertyExpression, Expression.Constant(boolValue));
+                    }
                 }
 
                 if (predicateBody != null)
@@ -73,6 +102,7 @@ namespace ShutterManagement.Core.Common
 
             return source;
         }
+
 
         // Apply dynamic sorting
         public static IQueryable<T> ApplySorting<T>(IQueryable<T> source, string sortColumn, string sortDirection)
