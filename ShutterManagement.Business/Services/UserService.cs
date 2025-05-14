@@ -461,8 +461,15 @@ namespace ShutterManagement.Services
                                     || (x.UserName ?? "").ToLower().Contains(filter.SearchValue)
                                     || (x.GhlUserName ?? "").ToLower().Contains(filter.SearchValue)
                                     ) : true)).ToList();
-                var TakenRecords = FilterRecords
-                                    .Skip((filter.PageNo - 1) * filter.RecordPerPage).Take(filter.RecordPerPage).ToList();
+
+
+                var queryable = FilterRecords.AsQueryable();
+
+                queryable = Paginate.ApplyColumnFilters(queryable, filter.ColumnFilters);
+                queryable = Paginate.ApplySorting(queryable, filter.SortColumn, filter.SortDirection);
+
+                var TakenRecords = Paginate.Pagination(queryable.ToList(), filter);
+
                 if (TakenRecords != null && TakenRecords.Count > 0)
                 {
                     responseVm.Data = TakenRecords;
