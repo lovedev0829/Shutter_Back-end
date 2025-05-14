@@ -421,11 +421,8 @@ namespace ShutterManagement.Business.Services
                                     || (x.MiddleName ?? "").ToLower().Contains(filter.SearchValue)
                                     || (x.Code ?? "").ToLower().Contains(filter.SearchValue)
                                     ) : true)).ToList();
-                var TakenRecords = FilterRecords
-                                    .Skip((filter.PageNo - 1) * filter.RecordPerPage).Take(filter.RecordPerPage).ToList();
-                if (TakenRecords != null && TakenRecords.Count > 0)
-                {
-                    var data = TakenRecords.Select(x => new GetAllTenant
+                
+                    var data = FilterRecords.Select(x => new GetAllTenant
                     {
                         TenantId = x.TenantId,
                         FirstName = x.FirstName,
@@ -460,15 +457,19 @@ namespace ShutterManagement.Business.Services
                             data[i].UserEmail = UserDetails.Email;
                         }
                     }
-                    responseVm.Data = data;
+
+                var queryable = data.AsQueryable();
+
+                queryable = Paginate.ApplyColumnFilters(queryable, filter.ColumnFilters);
+                queryable = Paginate.ApplySorting(queryable, filter.SortColumn, filter.SortDirection);
+
+                var TakenRecords = Paginate.Pagination(queryable.ToList(), filter);
+
+                responseVm.Data = data;
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.UpdateSuccessMsg;
                     responseVm.TotalRecords = FilterRecords.Count;
-                }
-                else
-                {
-                    responseVm.Message = AppConstant.NoDataFound;
-                }
+                
 
 
             }
