@@ -221,7 +221,12 @@ namespace ShutterManagement.Business.Services
                             (x.ExpressionName ?? "").ToLower().Contains(filter.SearchValue)
                             : true)).ToList();
 
-                var TakenRecords = Paginate.Pagination(FilterRecords, filter);
+                var queryable = FilterRecords.AsQueryable();
+
+                queryable = Paginate.ApplyColumnFilters(queryable, filter.ColumnFilters);
+                queryable = Paginate.ApplySorting(queryable, filter.SortColumn, filter.SortDirection);
+
+                var TakenRecords = Paginate.Pagination(queryable.ToList(), filter);
 
                 responseVm.Data = TakenRecords;
                 responseVm.IsSuccess = true;

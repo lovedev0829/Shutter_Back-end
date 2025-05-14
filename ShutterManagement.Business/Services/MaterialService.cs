@@ -320,12 +320,9 @@ namespace ShutterManagement.Business.Services
                                         || (x.UnitOfMeasurement ?? "").ToLower().Contains(filter.SearchValue)))
                                     .ToList();
 
-                    var TakenRecords = FilterRecords
-                        .Skip((filter.PageNo - 1) * filter.RecordPerPage)
-                        .Take(filter.RecordPerPage)
-                        .ToList();
+                    
 
-                    responseVm.Data = TakenRecords.Select(x => new GetAllMaterialVm
+                    responseVm.Data = FilterRecords.Select(x => new GetAllMaterialVm
                     {
                         MaterialName = x.MaterialName??"",
                         IsActive = x.IsActive,
@@ -341,6 +338,14 @@ namespace ShutterManagement.Business.Services
                         StockQuantity = x.StockQuantity,
                         ReorderLevel = x.ReorderLevel
                     }).ToList();
+
+                    var queryable = FilterRecords.AsQueryable();
+
+                    queryable = Paginate.ApplyColumnFilters(queryable, filter.ColumnFilters);
+                    queryable = Paginate.ApplySorting(queryable, filter.SortColumn, filter.SortDirection);
+
+                    var TakenRecords = Paginate.Pagination(queryable.ToList(), filter);
+
                     FileLogger.Log($"This is Material List  ResponseVm data {responseVm.Data}");
                     responseVm.TotalRecords = FilterRecords.Count;
                     responseVm.Data = TakenRecords;

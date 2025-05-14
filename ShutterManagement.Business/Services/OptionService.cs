@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Options;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core;
+using ShutterManagement.Core.Common;
 using ShutterManagement.Core.ViewModels;
 using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.Core.ViewModels.Response;
@@ -278,10 +279,12 @@ namespace ShutterManagement.Business.Services
                                     .ToList();
 
 
-                    var TakenRecords = FilterRecords
-                        .Skip((filter.PageNo - 1) * filter.RecordPerPage)
-                        .Take(filter.RecordPerPage)
-                        .ToList();
+                    var queryable = FilterRecords.AsQueryable();
+
+                    queryable = Paginate.ApplyColumnFilters(queryable, filter.ColumnFilters);
+                    queryable = Paginate.ApplySorting(queryable, filter.SortColumn, filter.SortDirection);
+
+                    var TakenRecords = Paginate.Pagination(queryable.ToList(), filter);
 
                     responseVm.IsSuccess = true;
                     responseVm.Data = TakenRecords;

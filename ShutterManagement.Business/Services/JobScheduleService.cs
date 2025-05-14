@@ -290,13 +290,15 @@ namespace ShutterManagement.Business.Services
                     ).ToList();
 
 
-                var paginatedInvoices = filteredJobSchedul
-                    .Skip((filter.PageNo - 1) * filter.RecordPerPage)
-                    .Take(filter.RecordPerPage)
-                    .ToList();
+                var queryable = filteredJobSchedul.AsQueryable();
+
+                queryable = Paginate.ApplyColumnFilters(queryable, filter.ColumnFilters);
+                queryable = Paginate.ApplySorting(queryable, filter.SortColumn, filter.SortDirection);
+
+                var TakenRecords = Paginate.Pagination(queryable.ToList(), filter);
 
                 responseVm.IsSuccess = true;
-                responseVm.Data = paginatedInvoices;
+                responseVm.Data = TakenRecords;
                 responseVm.TotalRecords = filteredJobSchedul.Count;
                 responseVm.Message = AppConstant.FetchSuccessMsg;
             }

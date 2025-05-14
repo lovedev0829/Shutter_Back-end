@@ -14,6 +14,7 @@ using System.Text;
 using System.Threading.Tasks;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 using System.Linq.Dynamic.Core;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 
 namespace ShutterManagement.Business.Services
@@ -218,20 +219,16 @@ namespace ShutterManagement.Business.Services
                         (x.StartDate.ToString() ?? "").Contains(filter.SearchValue.Trim()))
                 );
 
-                if (!string.IsNullOrEmpty(filter.SortColumn))
-                {
-                    var sortDirection = string.IsNullOrEmpty(filter.SortDirection) || filter.SortDirection.ToLower() == "asc" ? "asc" : "desc";
-                    var sortExpression = $"{filter.SortColumn} {sortDirection}";
-                    filteredRecords = filteredRecords.AsQueryable().OrderBy(sortExpression);
-                }
+                var queryable = filteredRecords.AsQueryable();
 
+                queryable = Paginate.ApplyColumnFilters(queryable, filter.ColumnFilters);
+                queryable = Paginate.ApplySorting(queryable, filter.SortColumn, filter.SortDirection);
 
-                
-                var pagination = Paginate.Pagination(filteredRecords, filter);
+                var TakenRecords = Paginate.Pagination(queryable.ToList(), filter);
 
 
                 responseVm.IsSuccess = true;
-                responseVm.Data = pagination;
+                responseVm.Data = TakenRecords;
                 responseVm.TotalRecords = DiscountList.Count;
                 responseVm.Message = AppConstant.FetchSuccessMsg;
 
