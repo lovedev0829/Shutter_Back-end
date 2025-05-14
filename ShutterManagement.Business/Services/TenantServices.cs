@@ -465,7 +465,7 @@ namespace ShutterManagement.Business.Services
 
                 var TakenRecords = Paginate.Pagination(queryable.ToList(), filter);
 
-                responseVm.Data = data;
+                responseVm.Data = TakenRecords;
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.UpdateSuccessMsg;
                     responseVm.TotalRecords = FilterRecords.Count;
