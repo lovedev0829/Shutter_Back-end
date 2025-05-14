@@ -323,6 +323,7 @@ namespace ShutterManagement.Business.Services
                                                 {
                                                     ComponentId = pm.ComponentId,
                                                     PricingExpression = pm.PricingExpression,
+                                                    PricingExpressionName = pe.ExpressionName,
                                                     PricingExpressionFormula = !string.IsNullOrEmpty(pe.DisplayArray) ? pe.DisplayArray.Split(new[] { ", " }, StringSplitOptions.TrimEntries) : new string[0],
                                                     ComponentName = c.ComponentName,
                                                     Quantity = pm.Quantity,
@@ -345,6 +346,7 @@ namespace ShutterManagement.Business.Services
                                  (x.ProductName ?? "").ToLower().Contains(filter.SearchValue) ||
                                  (x.Notes ?? "").ToLower().Contains(filter.SearchValue) ||
                                  (x.Markup.ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
+                                 (x.ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
                                  (x.ProductTypeName ?? "").ToLower().Contains(filter.SearchValue))
                              ).ToList();
 

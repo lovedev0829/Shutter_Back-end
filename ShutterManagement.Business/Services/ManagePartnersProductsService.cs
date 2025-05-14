@@ -93,11 +93,13 @@ namespace ShutterManagement.Business.Services
                         if (IsManagePartnerProductExist != null)
                         {
                             decimal PartnerSellingPricewithPer = 0.0m;
-                            decimal baseCost = await CalculateBaseCost((Guid)IsManagePartnerProductExist.ProductId);
-                            var msrp = await CalculateMSRPData((Guid)IsManagePartnerProductExist.ProductId);
-                            var (maxSellingPrice, minSellingPrice, wholesale) =
-                             CalculateSellingPrices(baseCost, msrp, (decimal)IsManagePartnerProductExist.WholeSalePrice, (decimal)IsManagePartnerProductExist.MaxPartnerPrice,
-                             IsManagePartnerProductExist.PriceType);
+                            //decimal baseCost = await CalculateBaseCost((Guid)IsManagePartnerProductExist.ProductId);
+                            //var msrp = await CalculateMSRPData((Guid)IsManagePartnerProductExist.ProductId);
+                            //var (maxSellingPrice, minSellingPrice, wholesale) =
+                            // CalculateSellingPrices(baseCost, msrp, (decimal)IsManagePartnerProductExist.WholeSalePrice, (decimal)IsManagePartnerProductExist.MaxPartnerPrice,
+                            // IsManagePartnerProductExist.PriceType);
+                            decimal? minSellingPrice = 0.0m;
+                            decimal? maxSellingPrice = 0.0m;
                             if (model.MarkupType == EnumValue.GetEnumValue(PriceType.Percentage))
                             {
                                 minSellingPrice = (-1) * (decimal)IsManagePartnerProductExist.MaxPartnerPrice;
@@ -425,7 +427,7 @@ namespace ShutterManagement.Business.Services
                         var msrp = await CalculateMSRPData((Guid)product.ProductId);
 
                         var (maxSellingPrice, minSellingPrice, wholesale) =
-                            CalculateSellingPrices(baseCost, msrp, (decimal)product.WholeSalePrice, (decimal)product.MaxPartnerPrice, product.PriceType);
+                            CalculateSellingPrices(baseCost, (decimal)msrp.Data.msrp, (decimal)product.WholeSalePrice, (decimal)product.MaxPartnerPrice, product.PriceType);
 
                         return new ProductOptionsVm
                         {
@@ -622,18 +624,36 @@ namespace ShutterManagement.Business.Services
         }
 
         // calculate MSRP
-        public async Task<IResponseVm<string>> CalculateMSRP(string productId)
+        public async Task<IResponseVm<MSRPVm>> CalculateMSRP(string productId)
         {
-            IResponseVm<string> responseVm = new ResponseVm<string>();
+            IResponseVm<MSRPVm> responseVm = new ResponseVm<MSRPVm>();
             try
             {
-                decimal? MSRPValue = await CalculateMSRPData(Guid.Parse(productId));
-                if (MSRPValue != null)
+                var pricecalculation = await CalculateMSRPData(Guid.Parse(productId));
+                //decimal? MSRPValue = response.Data.msrp;
+                //if (MSRPValue != null)
+                //{
+                //    responseVm.Data = MSRPValue.Value.ToString();
+                //}
+                if (pricecalculation.Data != null)
                 {
-                    responseVm.Data = MSRPValue.Value.ToString();
+                    responseVm.IsSuccess = true;
+                    responseVm.Data = new MSRPVm
+                    {
+                        basecost = pricecalculation.Data.basecost ?? 0.0m,
+                        msrp = pricecalculation.Data.msrp ?? 0.0m,
+                    };
+                    responseVm.Message = "MSRP calculated successfully.";
                 }
-                responseVm.IsSuccess = true;
-                responseVm.Message = "MSRP calculated successfully.";
+                else
+                {
+                    responseVm.IsSuccess = true;
+                    responseVm.Data = new MSRPVm
+                    {
+                        basecost = 0.0m,
+                        msrp = 0.0m,
+                    };
+                }
             }
             catch (Exception ex)
             {
@@ -642,58 +662,74 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        public async Task<decimal> CalculateMSRPData(Guid productId)
+        public async Task<IResponseVm<MSRPVm>> CalculateMSRPData(Guid productId)
         {
-            decimal? totalMSRP = 0.00M;
-            List<WindowProdcutDetailsForEstimate> data = new List<WindowProdcutDetailsForEstimate>();
-            // Fetch the data for the given ProductId (window table removed)
-            data = await GetProductDetailsforCalculation(productId);
-
-            if (data != null && data.Count > 0)
+            IResponseVm<MSRPVm> responseVm = new ResponseVm<MSRPVm>();
+            try
             {
-                foreach (var item in data)
+                decimal? totalMSRP = 0.00M;
+                List<WindowProdcutDetailsForEstimate> data = new List<WindowProdcutDetailsForEstimate>();
+                // Fetch the data for the given ProductId (window table removed)
+                data = await GetProductDetailsforCalculation(productId);
+
+                if (data != null && data.Count > 0)
                 {
-                    var formula = item.ExpressionFormulae ?? "";
-                    var expression = estimateService.CalculateExpression(formula, item);
-                    var res = expression.Evaluate();
-                    var componentPrice = Convert.ToDecimal(res);
+                    foreach (var item in data)
+                    {
+                        var formula = item.ExpressionFormulae ?? "";
+                        var expression = estimateService.CalculateExpression(formula, item);
+                        var res = expression.Evaluate();
+                        var componentPrice = Convert.ToDecimal(res);
 
-                    item.AdditionalCost = Convert.ToDecimal(item.OptionsPrice.Sum());
-                    var componentPriceWithoutMarkup = componentPrice;
-                    var componentPriceWithMarkup = (componentPriceWithoutMarkup * (100 + item.MarkupPercentage)) / 100;
-                    var componentPriceWithProductMarkup = (componentPriceWithMarkup * (100 + item.Markup)) / 100;
+                        item.AdditionalCost = Convert.ToDecimal(item.OptionsPrice.Sum());
+                        var componentPriceWithoutMarkup = componentPrice;
+                        var componentPriceWithMarkup = (componentPriceWithoutMarkup * (100 + item.MarkupPercentage)) / 100;
+                        var componentPriceWithProductMarkup = (componentPriceWithMarkup * (100 + item.Markup)) / 100;
 
-                    var isSubtenant = (await tenantService.GetAll())
-                        .FirstOrDefault(t => t.TenantId == AppConstant.LoggedInTenantId && t.ParentTenantId != null && t.IsActive == true && t.IsDelete == false);
+                        var isSubtenant = (await tenantService.GetAll())
+                            .FirstOrDefault(t => t.TenantId == AppConstant.LoggedInTenantId && t.ParentTenantId != null && t.IsActive == true && t.IsDelete == false);
 
-                    //if (isSubtenant != null)
-                    //{
-                    //    var subtenantMarkup = subtenantProductMarkup.GetAllQuerable()
-                    //        .Where(x => x.ProductId == item.ProductId)
-                    //        .Select(x => x.Markup)
-                    //        .FirstOrDefault();
+                        //if (isSubtenant != null)
+                        //{
+                        //    var subtenantMarkup = subtenantProductMarkup.GetAllQuerable()
+                        //        .Where(x => x.ProductId == item.ProductId)
+                        //        .Select(x => x.Markup)
+                        //        .FirstOrDefault();
 
-                    //    if (subtenantMarkup != null && subtenantMarkup > 0)
-                    //    {
-                    //        componentPriceWithProductMarkup = componentPriceWithProductMarkup * (100 + subtenantMarkup) / 100;
-                    //    }
-                    //    else
-                    //    {
-                    //        var globalMarkup = tenantBrandingService.GetAllQuerable()
-                    //            .Where(x => x.Id == isSubtenant.BrandingInfo)
-                    //            .Select(x => x.Markup)
-                    //            .FirstOrDefault();
+                        //    if (subtenantMarkup != null && subtenantMarkup > 0)
+                        //    {
+                        //        componentPriceWithProductMarkup = componentPriceWithProductMarkup * (100 + subtenantMarkup) / 100;
+                        //    }
+                        //    else
+                        //    {
+                        //        var globalMarkup = tenantBrandingService.GetAllQuerable()
+                        //            .Where(x => x.Id == isSubtenant.BrandingInfo)
+                        //            .Select(x => x.Markup)
+                        //            .FirstOrDefault();
 
-                    //        componentPriceWithProductMarkup = componentPriceWithProductMarkup * (100 + (globalMarkup ?? 0.00m)) / 100;
-                    //    }
-                    //}
-                    item.Price = Convert.ToDecimal(componentPriceWithProductMarkup.Value.ToString("0.00"));
-                    totalMSRP += item.Price;
+                        //        componentPriceWithProductMarkup = componentPriceWithProductMarkup * (100 + (globalMarkup ?? 0.00m)) / 100;
+                        //    }
+                        //}
+                        item.Price = Convert.ToDecimal(componentPriceWithProductMarkup.Value.ToString("0.00"));
+                        totalMSRP += item.Price;
 
+                        decimal? basecost = await CalculateBaseCost(productId);
+
+                        responseVm.IsSuccess = true;    
+                        responseVm.Data = new MSRPVm
+                        {
+                            msrp = totalMSRP ?? 0.0m,
+                            basecost = basecost ?? 0.0m,
+                        };
+                    }
                 }
             }
+            catch(Exception ex)
+            {
+                responseVm.Message = ex.Message;
+            }
 
-            return totalMSRP ?? 0.00M;
+            return responseVm;
         }
 
         public async Task<decimal> CalculateBaseCost(Guid productId)

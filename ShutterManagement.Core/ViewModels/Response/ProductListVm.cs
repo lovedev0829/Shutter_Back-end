@@ -25,6 +25,7 @@ namespace ShutterManagement.Core.ViewModels.Response
       //  public Guid? ProductId { get; set; }
         public Guid ProductComponentId { get; set; }
         public string? PricingExpression { get; set; }
+        public string? PricingExpressionName { get; set; }
         public string[]? PricingExpressionFormula { get; set; }
         public decimal? Quantity { get; set; }
         public Guid? ComponentId { get; set; }

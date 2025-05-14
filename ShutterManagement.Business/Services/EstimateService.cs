@@ -536,13 +536,13 @@ namespace ShutterManagement.Business.Services
                                 ProductArchHeight = item.ArchHeight,
                                 Area = item.Area,
                                 Length = item.Length,
-                                AdditionalCost = item.AdditionalCost,
+                                AdditionalCost = item.AdditionalCost ?? 0.0m,
                                 AdditionalWidth = item.AdditionalWidth,
                                 Markup = item.Markup,
                                 ProductTypeName = item.ProductTypeName,
-                                TotalPrice = item.TotalPrice,
+                                TotalPrice = item.TotalPrice ?? 0.0m,
                                 IsTaxApplied = isTaxApplied,
-                                Price = item.Price,
+                                Price = item.Price ?? 0.0m,
                                 IsComponentAvailable = item.IsComponentAvailable,
                             });
                         }
