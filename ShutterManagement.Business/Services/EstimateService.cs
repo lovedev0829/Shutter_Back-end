@@ -536,7 +536,7 @@ namespace ShutterManagement.Business.Services
                                 ProductArchHeight = item.ArchHeight,
                                 Area = item.Area,
                                 Length = item.Length,
-                                AdditionalCost = item.AdditionalCost ?? 0.0m,
+                                AdditionalCost = (decimal)item.OptionsPrice.Sum(),
                                 AdditionalWidth = item.AdditionalWidth,
                                 Markup = item.Markup,
                                 ProductTypeName = item.ProductTypeName,
@@ -555,6 +555,7 @@ namespace ShutterManagement.Business.Services
                     {
                         foreach (var item in WindowProductData)
                         {
+                            item.AdditionalCost = item.OptionsPrice.Sum();
                             item.IsTaxApplied = await IsTaxApplied((Guid)item.JobId);
                         }
                         responseVm.Data = WindowProductData;
