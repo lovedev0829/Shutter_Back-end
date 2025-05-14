@@ -7,6 +7,16 @@ using System.Threading.Tasks;
 
 namespace ShutterManagement.Core.ViewModels.Request
 {
+
+    public class ColumnFilter
+    {
+        [DefaultValue("")]
+        public string? Field { get; set; } = "";
+        [DefaultValue("")]// e.g. "FirstName"
+        //public string? Operator { get; set; } = "";
+        //[DefaultValue("")]// e.g. "startsWith", "contains", "equals"
+        public string? Value { get; set; } = "";        // e.g. "Ram"
+    }
     public class Pagination
     {
         [DefaultValue("")]
@@ -58,5 +68,7 @@ namespace ShutterManagement.Core.ViewModels.Request
 
         [DefaultValue("asc")]
         public string? SortDirection { get; set; } = "asc";  // "asc" or "desc"
+
+        public List<ColumnFilter>? ColumnFilters { get; set; } = new(); // 🔍 Individual column filters
     }
 }
