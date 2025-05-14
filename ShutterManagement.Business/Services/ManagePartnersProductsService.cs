@@ -16,6 +16,7 @@ using Org.BouncyCastle.Utilities;
 using ShutterManagement.Core.Common;
 using Stripe;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using System.Data.Entity;
 
 namespace ShutterManagement.Business.Services
 {
@@ -377,11 +378,11 @@ namespace ShutterManagement.Business.Services
                                         ProductId = p1.ProductId,
                                         ProductName = p2.ProductName,
                                         PartnerSellingPrice = p1.PartnerSellingPrice ?? 0.0m,
-                                        ManageProductId = p1.ManageProductId.ToString(),
+                                        ManageProductId = p1.ManageProductId.ToString() ?? "",
                                         WholeSalePrice = p1.WholeSalePrice ?? 0.0m,
                                         MarkupType = p1.MarkupType ?? EnumValue.GetEnumValue(PriceType.Fixed),
                                         MaxPartnerPrice = p1.MaxPartnerPrice ?? 0.0m,
-                                        IsAvailable = p1.IsAvailable,
+                                        IsAvailable = p1.IsAvailable ?? false,
                                         PriceType = p1.PriceType ?? EnumValue.GetEnumValue(PriceType.Fixed)
                                     }).ToList();
 
@@ -413,7 +414,7 @@ namespace ShutterManagement.Business.Services
                                               OptionTypeId = o1.OptionTypeId,
                                               OptionTypeName = o2.OptionType,
                                               OptionId = o1.OptionId,
-                                              Price = o2.AdditionalCost,
+                                              Price = o2.AdditionalCost ?? 0.0m,
                                               PriceType = o1.PriceType ?? EnumValue.GetEnumValue(PriceType.Fixed),
                                               PartnerSellingPrice = o1.PartnerSellingPrice ?? 0.0m,
                                               WholeSalePrice = o1.WholeSalePrice ?? 0.0m,
