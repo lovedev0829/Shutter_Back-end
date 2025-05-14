@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ShutterManagement.Core.ViewModels.Response;
 
 namespace ShutterManagement.Business.Interfaces
 {
@@ -17,6 +18,6 @@ namespace ShutterManagement.Business.Interfaces
         Task<IResponseVm<string>> SubTenantUpdate(UpdateSubTenant model);
         Task<IResponseVm<string>> SubTenantDelete(string TenantId);
         Task<IResponseVm<string>> SubTenantActiveInactive(string TenantId);
-        Task<IResponseVm<dynamic>> SubTenantGetAll(Pagination filter);
+        Task<IResponseVm<List<GetAllTenant>>> SubTenantGetAll(Pagination filter);
     }
 }
