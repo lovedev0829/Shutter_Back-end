@@ -479,17 +479,7 @@ namespace ShutterManagement.Business.Services
                                     || (x.Code ?? "").ToLower().Contains(filter.SearchValue)
                                     ) : true)).ToList();
 
-
-                var queryable = FilterRecords.AsQueryable();
-
-                queryable = Paginate.ApplyColumnFilters(queryable, filter.ColumnFilters);
-                queryable = Paginate.ApplySorting(queryable, filter.SortColumn, filter.SortDirection);
-
-                var TakenRecords = Paginate.Pagination(queryable.ToList(), filter);
-
-                if (TakenRecords != null && TakenRecords.Count > 0)
-                {
-                    var data = TakenRecords.Select(x => new GetAllTenant
+                    var data = FilterRecords.Select(x => new GetAllTenant
                     {
                         TenantId = x.TenantId,
                         FirstName = x.FirstName,
@@ -527,17 +517,19 @@ namespace ShutterManagement.Business.Services
                             data[i].UserEmail = UserDetails.Email;
                         }
                     }
-                    responseVm.Data = data;
-                    responseVm.IsSuccess = true;
-                    responseVm.Message = AppConstant.UpdateSuccessMsg;
-                    responseVm.TotalRecords = FilterRecords.Count;
-                }
-                else
-                {
-                    responseVm.Message = AppConstant.NoDataFound;
-                }
 
 
+                var queryable = data.AsQueryable();
+
+                queryable = Paginate.ApplyColumnFilters(queryable, filter.ColumnFilters);
+                queryable = Paginate.ApplySorting(queryable, filter.SortColumn, filter.SortDirection);
+
+                var TakenRecords = Paginate.Pagination(queryable.ToList(), filter);
+
+                responseVm.Data = data;
+                responseVm.IsSuccess = true;
+                responseVm.Message = AppConstant.UpdateSuccessMsg;
+                responseVm.TotalRecords = FilterRecords.Count();
             }
             catch (Exception ex)
             {
