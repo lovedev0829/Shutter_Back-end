@@ -200,7 +200,7 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = "Estimate " + AppConstant.NoDataFound;
                     return responseVm;
                 }
-
+             
                 // Mark the estimate as deleted
                 estimate.IsActive = false;
                 estimate.IsDelete = true;
