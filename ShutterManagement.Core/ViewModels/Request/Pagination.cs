@@ -52,5 +52,11 @@ namespace ShutterManagement.Core.ViewModels.Request
 
         [DefaultValue("")]
         public string? Region { get; set; } = "";
+
+        [DefaultValue("")]
+        public string? SortColumn { get; set; } = "";  // E.g. "FirstName", "LastName"
+
+        [DefaultValue("asc")]
+        public string? SortDirection { get; set; } = "asc";  // "asc" or "desc"
     }
 }
