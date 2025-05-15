@@ -201,10 +201,12 @@ namespace ShutterManagement.Business.Services
                                     (x.ZipCode ?? "").Contains(filter.SearchValue.Trim())
                                     ))
                         .ToList();
-                    var TakenRecords = FilterRecords
-                        .Skip((filter.PageNo - 1) * filter.RecordPerPage)
-                        .Take(filter.RecordPerPage)
-                        .ToList();
+                    var queryable = FilterRecords.AsQueryable();
+
+                    queryable = Paginate.ApplyColumnFilters(queryable, filter.ColumnFilters);
+                    queryable = Paginate.ApplySorting(queryable, filter.SortColumn, filter.SortDirection);
+
+                    var TakenRecords = Paginate.Pagination(queryable.ToList(), filter);
 
                     responseVm.IsSuccess = true;
                     responseVm.Data = TakenRecords.Select(x => new VendorListVm

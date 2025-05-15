@@ -19,6 +19,8 @@ using ShutterManagement.Services;
 using ShutterManagment.GHL.ViewModel.Request;
 using ShutterManagment.GHL.ViewModel.Response;
 using System.Linq.Dynamic.Core;
+using System.Reflection;
+using System.Linq.Expressions;
 
 namespace ShutterManagement.Business.Services
 {
@@ -895,7 +897,7 @@ namespace ShutterManagement.Business.Services
                     ContactList.Add(contacts);
                 }
                 filter.SearchValue = filter?.SearchValue?.Trim().ToLower();
-                var FilterRecords = ContactList
+                var filteredRecords = ContactList
                                     .Where(x =>
                                     (filter?.Status == 0 ? x.IsActive == false : (filter?.Status == 1 ? x.IsActive == true : true)) &&
                                     (filter?.SearchValue != "" ?
@@ -909,26 +911,23 @@ namespace ShutterManagement.Business.Services
                                     || ((x.FirstName.ToLower() + " " + x.LastName.ToLower()) ?? "").Contains(filter?.SearchValue)
                                     || (x.FirstName.ToLower() ?? "").Contains(filter?.SearchValue)
                                     || (x.LastName.ToLower() ?? "").Contains(filter?.SearchValue)
-                                    ) : true)).ToList();
-
-
-                if (!string.IsNullOrEmpty(filter.SortColumn))
-                {
-                    var sortDirection = string.IsNullOrEmpty(filter.SortDirection) || filter.SortDirection.ToLower() == "asc" ? "asc" : "desc";
-                    var sortExpression = $"{filter.SortColumn} {sortDirection}";
-                    FilterRecords = FilterRecords.AsQueryable().OrderBy(sortExpression).ToList();
-                }
+                                    ) : true)).AsQueryable();
 
 
 
-                var TakenRecords = Paginate.Pagination(FilterRecords, filter);
+
+
+                filteredRecords = Paginate.ApplyColumnFilters(filteredRecords, filter.ColumnFilters);
+                filteredRecords = Paginate.ApplySorting(filteredRecords, filter.SortColumn, filter.SortDirection);
+
+                var TakenRecords = Paginate.Pagination(filteredRecords, filter);
                 responseVm.IsSuccess = true;
 
                 if (TakenRecords != null && TakenRecords.Count > 0)
                 {
                     responseVm.Data = TakenRecords.ToList();
                     responseVm.Message = AppConstant.FetchSuccessMsg;
-                    responseVm.TotalRecords = FilterRecords.Count;
+                    responseVm.TotalRecords = filteredRecords.Count();
                 }
                 else
                 {

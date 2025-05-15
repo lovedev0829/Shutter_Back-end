@@ -1,5 +1,6 @@
 ﻿using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core;
+using ShutterManagement.Core.Common;
 using ShutterManagement.Core.ViewModels;
 using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.Core.ViewModels.Response;
@@ -239,8 +240,16 @@ namespace ShutterManagement.Business.Services
                                     (x.RoleId.ToString() == filter.SearchValue) ||
                                     ((x.RoleName ?? "").ToLower().Contains(filter.SearchValue.Trim())
                                     ) : true)).ToList();
-                var TakenRecords = FilterRecords
-                                    .Skip((filter.PageNo - 1) * filter.RecordPerPage).Take(filter.RecordPerPage).ToList(); 
+
+
+                var queryable = FilterRecords.AsQueryable();
+
+                queryable = Paginate.ApplyColumnFilters(queryable, filter.ColumnFilters);
+                queryable = Paginate.ApplySorting(queryable, filter.SortColumn, filter.SortDirection);
+
+                var TakenRecords = Paginate.Pagination(queryable.ToList(), filter);
+
+
                 if (TakenRecords != null && TakenRecords.Count > 0)
                 {
                     responseVm.Data = TakenRecords;

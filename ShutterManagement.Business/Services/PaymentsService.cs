@@ -384,15 +384,16 @@ namespace ShutterManagement.Business.Services
                             (x.PaymentId.ToString() == filter.SearchValue.Trim()) ||
                             (x.InvoiceId.ToString() == filter.SearchValue.Trim()))).ToList();
 
-                
 
-                var paginatedInvoices = filteredPayments
-                    .Skip((filter.PageNo - 1) * filter.RecordPerPage)
-                    .Take(filter.RecordPerPage)
-                    .ToList();
 
+                var queryable = filteredPayments.AsQueryable();
+
+                queryable = Paginate.ApplyColumnFilters(queryable, filter.ColumnFilters);
+                queryable = Paginate.ApplySorting(queryable, filter.SortColumn, filter.SortDirection);
+
+                var TakenRecords = Paginate.Pagination(queryable.ToList(), filter);
                 responseVm.IsSuccess = true;
-                responseVm.Data = paginatedInvoices;
+                responseVm.Data = TakenRecords;
                 responseVm.TotalRecords = filteredPayments.Count;
                 responseVm.Message = AppConstant.FetchSuccessMsg;
             }

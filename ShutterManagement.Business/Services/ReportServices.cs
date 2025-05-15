@@ -117,8 +117,15 @@ namespace ShutterManagement.Business.Services
                         .ToList();
                 }
 
+                var queryable = filteredOrders.AsQueryable();
+
+                queryable = Paginate.ApplyColumnFilters(queryable, filter.ColumnFilters);
+                queryable = Paginate.ApplySorting(queryable, filter.SortColumn, filter.SortDirection);
+
+                var TakenRecords = Paginate.Pagination(queryable.ToList(), filter);
+
                 responseVm.IsSuccess = true;
-                responseVm.Data = filteredOrders;
+                responseVm.Data = TakenRecords;
                 responseVm.TotalRecords = filteredOrders.Count;
             }
             catch(Exception ex)
