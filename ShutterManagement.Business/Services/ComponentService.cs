@@ -317,12 +317,20 @@ namespace ShutterManagement.Business.Services
 
                 var filteredRecords = ApplyFilters(componentList, filter);
 
-                var pagedRecords = Paginate(filteredRecords, filter);
+               // var pagedRecords = Paginate(filteredRecords, filter);
+
+
+                var queryable = filteredRecords.AsQueryable();
+
+                queryable = ShutterManagement.Core.Common.Paginate.ApplyColumnFilters(queryable, filter.ColumnFilters);
+                queryable = ShutterManagement.Core.Common.Paginate.ApplySorting(queryable, filter.SortColumn, filter.SortDirection);
+
+                var TakenRecords = ShutterManagement.Core.Common.Paginate.Pagination(queryable.ToList(), filter);
 
                 responseVm.IsSuccess = true;
-                if (pagedRecords.Any())
+                if (TakenRecords.Any())
                 {
-                    responseVm.Data = pagedRecords;
+                    responseVm.Data = TakenRecords;
                     responseVm.Message = AppConstant.FetchSuccessMsg;
                     responseVm.TotalRecords = filteredRecords.Count();
                 }

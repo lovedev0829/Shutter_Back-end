@@ -352,7 +352,13 @@ namespace ShutterManagement.Business.Services
 
 
 
-                    var TakenRecords = Paginate.Pagination(FilterRecords, filter);
+                    var queryable = FilterRecords.AsQueryable();
+
+                    queryable = Paginate.ApplyColumnFilters(queryable, filter.ColumnFilters);
+                    queryable = Paginate.ApplySorting(queryable, filter.SortColumn, filter.SortDirection);
+
+                    var TakenRecords = Paginate.Pagination(queryable.ToList(), filter);
+
                     responseVm.IsSuccess = true;
 
                     if (TakenRecords != null && TakenRecords.Count > 0)
