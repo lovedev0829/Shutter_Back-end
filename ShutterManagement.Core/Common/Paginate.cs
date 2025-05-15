@@ -71,11 +71,15 @@ namespace ShutterManagement.Core.Common
 
                     if (propertyType == typeof(string))
                     {
+                        var notNull = Expression.NotEqual(propertyExpression, Expression.Constant(null, typeof(string)));
                         var toLower = Expression.Call(propertyExpression, "ToLower", null);
-                        predicateBody = Expression.Call(toLower,
+                        var contains = Expression.Call(toLower,
                             typeof(string).GetMethod("Contains", new[] { typeof(string) }),
                             Expression.Constant(val));
+
+                        predicateBody = Expression.AndAlso(notNull, contains);
                     }
+
                     else if (propertyType == typeof(Guid))
                     {
                         if (Guid.TryParse(val, out var guidValue))
@@ -93,7 +97,7 @@ namespace ShutterManagement.Core.Common
                     }
                 }
 
-                if (predicateBody != null)
+                if (predicateBody != null && parameter != null && source != null)
                 {
                     var lambda = Expression.Lambda<Func<T, bool>>(predicateBody, parameter);
                     source = source.Where(lambda);
