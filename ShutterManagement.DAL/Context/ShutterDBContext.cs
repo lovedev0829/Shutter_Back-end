@@ -1235,6 +1235,7 @@ public partial class ShutterDBContext : DbContext
                 .HasColumnType("datetime");
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
+            entity.Property(e => e.Markup).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.OptionName).HasMaxLength(255);
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(getdate())")
@@ -1440,6 +1441,10 @@ public partial class ShutterDBContext : DbContext
                 .HasColumnType("datetime");
             entity.Property(e => e.Width).HasColumnType("decimal(10, 2)");
 
+            entity.HasOne(d => d.Tax).WithMany(p => p.TblProducts)
+                .HasForeignKey(d => d.TaxId)
+                .HasConstraintName("FK__TblProduc__TaxId__7172C0B5");
+
             entity.HasOne(d => d.Tenant).WithMany(p => p.TblProducts)
                 .HasForeignKey(d => d.TenantId)
                 .HasConstraintName("FK__TblProduc__Tenan__5D2BD0E6");
@@ -1632,6 +1637,7 @@ public partial class ShutterDBContext : DbContext
             entity.ToTable("TblTaxRate", "dbo");
 
             entity.Property(e => e.TaxRateId).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.City).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
@@ -1639,7 +1645,10 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.ExpiryDate).HasColumnType("datetime");
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
+            entity.Property(e => e.Municipality).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.Rate).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.State).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.TaxName).HasMaxLength(200);
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");

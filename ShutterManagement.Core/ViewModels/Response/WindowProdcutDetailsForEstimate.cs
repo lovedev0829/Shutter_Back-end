@@ -77,7 +77,6 @@ namespace ShutterManagement.Core.ViewModels.Response
         public decimal? TotalPrice { get; set; }
 
         //Tax Excemption
-
         public bool? IsTaxApplied { get; set; } = false;
 
     }

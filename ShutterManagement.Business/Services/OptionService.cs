@@ -93,6 +93,8 @@ namespace ShutterManagement.Business.Services
                             OptionName = model.OptionName.Trim(),
                             ProductTypeId = model.ProductTypeId,
                             ProductId = model.ProductId,
+                            Markup = model.Markup,
+                            OptionExpression = model.OptionExpression,
                             CreatedAt = DateTime.Now,
                             CreatedBy = AppConstant.LoggedInUserID,
                             TenantId = AppConstant.LoggedInTenantId,
@@ -329,18 +331,18 @@ namespace ShutterManagement.Business.Services
                         responseVm.Message = "Option Name " + AppConstant.AlreadyExists;
                         return responseVm;
                     }
-                    TblOption options = new TblOption
-                    {
-                        OptionId = Guid.NewGuid(),
-                        OptionName = model.OptionName,
-                        ProductId = model.ProductId,
-                        ProductTypeId = model.ProductTypeId,
-                        CreatedAt = DateTime.Now,
-                        CreatedBy = AppConstant.LoggedInUserID,
-                        TenantId = AppConstant.LoggedInTenantId,
-                        IsActive = true,
-                        IsDelete = false
-                    };
+                    //TblOption options = new TblOption
+                    //{
+                    //    OptionId = Guid.NewGuid(),
+                    //    OptionName = model.OptionName,
+                    //    ProductId = model.ProductId,
+                    //    ProductTypeId = model.ProductTypeId,
+                    //    CreatedAt = DateTime.Now,
+                    //    CreatedBy = AppConstant.LoggedInUserID,
+                    //    TenantId = AppConstant.LoggedInTenantId,
+                    //    IsActive = true,
+                    //    IsDelete = false
+                    //};
 
                     if (IsOptionExists != null)
                     {
@@ -348,7 +350,10 @@ namespace ShutterManagement.Business.Services
                         IsOptionExists.ModifiedBy = AppConstant.LoggedInUserID;
                         IsOptionExists.UpdatedAt = DateTime.Now;
                         IsOptionExists.ProductId = model.ProductId;
+                        IsOptionExists.Markup = model.Markup;
                         IsOptionExists.ProductTypeId = model.ProductTypeId;
+                        IsOptionExists.OptionExpression = model.OptionExpression;
+
 
                         await Update(IsOptionExists);
 

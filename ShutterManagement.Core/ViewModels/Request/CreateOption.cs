@@ -19,6 +19,8 @@ namespace ShutterManagement.Core.ViewModels.Request
         [DefaultValue("")]
         [Required]
         public string? OptionName { get; set; }
+        public decimal? Markup { get; set; }
+        public Guid? OptionExpression { get; set; }
         public Options[]? Options { get; set; }
     }
 

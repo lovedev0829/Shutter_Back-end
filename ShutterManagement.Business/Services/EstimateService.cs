@@ -682,6 +682,10 @@ namespace ShutterManagement.Business.Services
                                         val = (val * (100 + values.WasteFactor ?? 0) / 100);
                                     }
                                 }
+                                if (info[0] == "Option")
+                                {
+                                    //val = optionsTypeService.GetAllQuerable().Where(x => x.OptionTypeId.ToString() == info[1] && x.OptionType == info[2] && x.IsActive == true && (x.TenantId == AppConstant.LoggedInTenantId || x.TenantId.ToString() == AppConstant.LoggedInParentTenantId)).Select(x => x.UnitCost).FirstOrDefault();
+                                }
                                 else
                                 {
                                     val = 0;
@@ -1762,11 +1766,14 @@ namespace ShutterManagement.Business.Services
                     .FirstOrDefault(x => x.OptionTypeId.ToString() == optionTypeId &&
                                          x.IsDelete == false &&
                                          x.IsActive == true);
+                var optionexp = optionService.GetAllQuerable().Where(x => x.OptionId == option.OptionId && x.IsActive == true &&
+                x.IsDelete == false).FirstOrDefault();
+
 
                 if (option == null)
                     continue;
-
                 decimal baseCost = 0.0m;
+                
                 if (option.Unit == EnumValue.GetEnumValue(OptionUnit.PerUnit))
                 {
                     baseCost = (decimal)(option.AdditionalCost * quantity);
@@ -1775,7 +1782,6 @@ namespace ShutterManagement.Business.Services
                 {
                     baseCost = (decimal)option.AdditionalCost;
                 }
-
                 if (IsSubtenants != null )
                 {
                     baseCost = ApplySubtenantMarkup(option.OptionTypeId, baseCost);
