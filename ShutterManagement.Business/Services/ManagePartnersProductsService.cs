@@ -15,8 +15,8 @@ using ShutterManagement.Business.Services;
 using Org.BouncyCastle.Utilities;
 using ShutterManagement.Core.Common;
 using Stripe;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using System.Data.Entity;
 
 namespace ShutterManagement.Business.Services
 {
@@ -422,10 +422,10 @@ namespace ShutterManagement.Business.Services
                                           }).ToList();
                     //decimal wholesale1 = Price * (1 + (wholeSalePrice / 100));
 
-                    var productTasks = products.Select(async product =>
+                    var productTasks = products.Select(product =>
                     {
-                        decimal baseCost = await CalculateBaseCost((Guid)product.ProductId);
-                        var msrp = await CalculateMSRPData((Guid)product.ProductId);
+                        decimal baseCost = CalculateBaseCost((Guid)product.ProductId).Result;
+                        var msrp = CalculateMSRPData((Guid)product.ProductId).Result;
 
                         var (maxSellingPrice, minSellingPrice, wholesale) =
                             CalculateSellingPrices(baseCost, (decimal)msrp.Data.msrp, (decimal)product.WholeSalePrice, (decimal)product.MaxPartnerPrice, product.PriceType);
@@ -476,12 +476,12 @@ namespace ShutterManagement.Business.Services
                         };
                     });
 
-                    var productList = await Task.WhenAll(productTasks);
+                    //var productList = await Task.WhenAll(productTasks);
 
                     responseVm.IsSuccess = true;
-                    responseVm.Data = productList.ToList();
+                    responseVm.Data = productTasks.ToList();
                     responseVm.Message = AppConstant.FetchSuccessMsg;
-                    responseVm.TotalRecords = productList.Count();
+                    responseVm.TotalRecords = productTasks.Count();
                 }
             }
             catch (Exception ex)
@@ -671,7 +671,7 @@ namespace ShutterManagement.Business.Services
                 decimal? totalMSRP = 0.00M;
                 List<WindowProdcutDetailsForEstimate> data = new List<WindowProdcutDetailsForEstimate>();
                 // Fetch the data for the given ProductId (window table removed)
-                data = await GetProductDetailsforCalculation(productId);
+                data = await GetProductDetailsForCalculation(productId);
 
                 if (data != null && data.Count > 0)
                 {
@@ -737,7 +737,7 @@ namespace ShutterManagement.Business.Services
         {
             List<WindowProdcutDetailsForEstimate> data = new List<WindowProdcutDetailsForEstimate>();
             decimal? BaseCost = 0.00M;
-            data = await GetProductDetailsforCalculation(productId);
+            data = await GetProductDetailsForCalculation(productId);
             if (data != null && data.Count > 0)
             {
                 foreach (var item in data)
@@ -783,68 +783,76 @@ namespace ShutterManagement.Business.Services
             return BaseCost ?? 0.0m;
         }
 
-        public async Task<List<WindowProdcutDetailsForEstimate>> GetProductDetailsforCalculation(Guid productId)
+        public async Task<List<WindowProdcutDetailsForEstimate>> GetProductDetailsForCalculation(Guid productId)
         {
-            var data = (
-                    from product in dbContext.TblProducts
-                    join productType in dbContext.MstProductTypes on product.ProductType equals productType.ProductId.ToString()
-                    join productComponent in dbContext.TblProductComponents on product.ProductId equals productComponent.ProductId
-                    join expression in dbContext.TblExpressions on productComponent.PricingExpression equals expression.Id.ToString()
-                    join component in dbContext.TblComponents on productComponent.ComponentId equals component.ComponentId
-                    join componentMaterial in dbContext.TblComponentMaterials on component.ComponentId equals componentMaterial.ComponentId
-                    join material in dbContext.TblRawMaterials on componentMaterial.RawMaterialId equals material.RawMaterialId
-                    where product.ProductId == productId
-                          && product.IsActive == true && product.IsDelete == false
-                          && productType.IsActive == true && productType.IsDelete == false
-                          && productComponent.IsActive == true && productComponent.IsDelete == false
-                          && component.IsActive == true && component.IsDelete == false
-                          && expression.IsActive == true && expression.IsDelete == false
-                          && componentMaterial.IsActive == true && componentMaterial.IsDelete == false
-                          && material.IsActive == true && material.IsDelete == false
-                    select new WindowProdcutDetailsForEstimate
-                    {
-                        ProductId = product.ProductId,
-                        ProductName = product.ProductName,
-                        ProductWidth = product.Width,
-                        ProductHeight = product.Height,
-                        ProductArchHeight = product.ArchHeight,
-                        Area = product.Area,
-                        Length = product.Length,
-                        Quantity = 1,
-                        BuildWidth = 1,
-                        BuildHeight = 1,
-                        AdditionalWidth = product.AdditionalWidth,
-                        Markup = product.Markup,
+            var data =
+                (from product in dbContext.TblProducts
+                join productType in dbContext.MstProductTypes
+                    on product.ProductType equals productType.ProductId.ToString()
+                join productComponent in dbContext.TblProductComponents
+                    on product.ProductId equals productComponent.ProductId
+                join expression in dbContext.TblExpressions
+                    on productComponent.PricingExpression equals expression.Id.ToString() into exprJoin
+                from expression in exprJoin.DefaultIfEmpty()
+                join component in dbContext.TblComponents
+                    on productComponent.ComponentId equals component.ComponentId
+                join componentMaterial in dbContext.TblComponentMaterials
+                    on component.ComponentId equals componentMaterial.ComponentId
+                join material in dbContext.TblRawMaterials
+                    on componentMaterial.RawMaterialId equals material.RawMaterialId into matJoin
+                from material in matJoin.DefaultIfEmpty()
+                where product.ProductId == productId
+                      && product.IsActive == true && product.IsDelete == false
+                      && productType.IsActive == true && productType.IsDelete == false
+                      && productComponent.IsActive == true && productComponent.IsDelete == false
+                      && component.IsActive == true && component.IsDelete == false
+                      && (expression == null || (expression.IsActive == true && expression.IsDelete == false))
+                      && (material == null || (material.IsActive == true && material.IsDelete == false))
+                select new WindowProdcutDetailsForEstimate
+                {
+                    ProductId = product.ProductId,
+                    ProductName = product.ProductName,
+                    ProductWidth = product.Width,
+                    ProductHeight = product.Height,
+                    ProductArchHeight = product.ArchHeight,
+                    Area = product.Area,
+                    Length = product.Length,
+                    Quantity = 1,
+                    BuildWidth = 1,
+                    BuildHeight = 1,
+                    AdditionalWidth = product.AdditionalWidth,
+                    Markup = product.Markup,
 
-                        ProductTypeName = productType.ProductName,
+                    ProductTypeName = productType.ProductName,
 
-                        ComponentId = productComponent.ComponentId,
-                        ComponentQuantity = productComponent.Quantity,
+                    ComponentId = productComponent.ComponentId,
+                    ComponentQuantity = productComponent.Quantity,
 
-                        ComponentName = component.ComponentName,
-                        MarkupPercentage = component.MarkupPercentage,
-                        PricingExpression = productComponent.PricingExpression,
-                        Price = component.Price,
+                    ComponentName = component.ComponentName,
+                    MarkupPercentage = component.MarkupPercentage,
+                    PricingExpression = productComponent.PricingExpression,
+                    Price = component.Price,
 
-                        ExpressionFormulae = expression.ExpressionFormulae,
+                    ExpressionFormulae = expression.ExpressionFormulae ?? string.Empty,
 
-                        RawMaterialId = componentMaterial.RawMaterialId,
-                        MaterialQuantity = componentMaterial.Quantity,
-                        WasteFactor = componentMaterial.WasteFactor,
+                    RawMaterialId = componentMaterial.RawMaterialId,
+                    MaterialQuantity = componentMaterial.Quantity,
+                    WasteFactor = componentMaterial.WasteFactor,
 
-                        MaterialName = material.MaterialName,
-                        UnitCost = material.UnitCost,
-                        Non_Rated_UnitCost = material.NonRatedUnitCost,
-                        UnitOfMeasurement = material.UnitOfMeasurement,
-                        StockQuantity = material.StockQuantity,
-                        ReorderLevel = material.ReorderLevel,
-                        IsCutSheet = material.IsCutSheet,
+                    MaterialName = material.MaterialName ?? string.Empty,
+                    UnitCost = material.UnitCost ?? 0,
+                    Non_Rated_UnitCost = material.NonRatedUnitCost ?? 0,
+                    UnitOfMeasurement = material.UnitOfMeasurement ?? string.Empty,
+                    StockQuantity = material.StockQuantity ?? 0,
+                    ReorderLevel = material.ReorderLevel ?? 0,
+                    IsCutSheet = material.IsCutSheet ?? false,
 
-                        IsRated = true
-                    }).ToList();
+                    IsRated = true
+                }).ToList();
 
             return data;
         }
+
 
 
         private (decimal MaxSellingPrice, decimal MinSellingPrice, decimal WholeSalePrice)
