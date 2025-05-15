@@ -190,6 +190,13 @@ namespace ShutterManagement.Core.Common
         Stripe,
         [EnumMember(Value = "GHL")]
         GHL
+    } 
+    public enum OptionUnit
+    {
+        [EnumMember(Value = "Per Unit")]
+        PerUnit,
+        [EnumMember(Value = "Each Job")]
+        EachJob
     }
 
     public enum DownloadSample
