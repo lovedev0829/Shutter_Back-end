@@ -427,8 +427,8 @@ namespace ShutterManagement.Business.Services
                         decimal baseCost = CalculateBaseCost((Guid)product.ProductId).Result;
                         var msrp = CalculateMSRPData((Guid)product.ProductId).Result;
 
-                        var (maxSellingPrice, minSellingPrice, wholesale) =
-                            CalculateSellingPrices(baseCost, (decimal)msrp.Data.msrp, (decimal)product.WholeSalePrice, (decimal)product.MaxPartnerPrice, product.PriceType);
+                        var (maxSellingPrice, minSellingPrice, wholesale) = (msrp.Data != null ?
+                           CalculateSellingPrices(baseCost, (decimal)msrp.Data.msrp, (decimal)product.WholeSalePrice, (decimal)product.MaxPartnerPrice, product.PriceType) : (0.0m, 0.0m, 0.0m));
 
                         return new ProductOptionsVm
                         {
