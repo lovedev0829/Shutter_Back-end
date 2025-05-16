@@ -851,7 +851,7 @@ namespace ShutterManagement.Business.Services
 
                 if (estimate == null)
                 {
-                    responseVm.Message = "Estimate not Found.";
+                    responseVm.Message = "These is an issue.Please contact administration.";
                     return responseVm;
                 }
 
@@ -1429,7 +1429,6 @@ namespace ShutterManagement.Business.Services
             decimal taxApplied = (decimal)((subtotal - discount) * taxRate1) / 100;
             return taxApplied;
         }
-
 
         private async Task ProcessWindowProducts(List<ProductListing> windowProductIds, List<WindowProdcutDetailsForEstimate> windowProdcutDetailsForEstimates, Guid estimateId)
         {

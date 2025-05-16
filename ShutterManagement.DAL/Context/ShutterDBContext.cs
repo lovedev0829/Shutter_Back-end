@@ -1235,7 +1235,6 @@ public partial class ShutterDBContext : DbContext
                 .HasColumnType("datetime");
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
-            entity.Property(e => e.Markup).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.OptionName).HasMaxLength(255);
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(getdate())")

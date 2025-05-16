@@ -31,10 +31,6 @@ public partial class TblOption
 
     public Guid? ProductId { get; set; }
 
-    public decimal? Markup { get; set; }
-
-    public Guid? OptionExpression { get; set; }
-
     public virtual TblProduct? Product { get; set; }
 
     public virtual MstProductType? ProductType { get; set; }
