@@ -45,11 +45,11 @@ public partial class TblProduct
 
     public bool? IsComponentAvailable { get; set; }
 
-    public bool? IsTaxApplied { get; set; }
+    //public bool? IsTaxApplied { get; set; }
 
-    public Guid? TaxId { get; set; }
+    //public Guid? TaxId { get; set; }
 
-    public virtual TblTaxRate? Tax { get; set; }
+    //public virtual TblTaxRate? Tax { get; set; }
 
     public virtual ICollection<TblJobComponent> TblJobComponents { get; set; } = new List<TblJobComponent>();
 
