@@ -41,7 +41,7 @@ namespace ShutterManagement.Controllers
         [Authorize(Roles = "ManageProductView")]
         public async Task<IActionResult> GetMSRP(string? ProductId)
         {
-            var res = await managePartnersProducts.CalculateMSRP(ProductId);
+            var res = await managePartnersProducts.CalculateMSRPData(Guid.Parse(ProductId));
             return Ok(res);
         }
 

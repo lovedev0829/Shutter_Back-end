@@ -63,6 +63,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         public decimal? BuildWidth { get; set; }
         public decimal? Optionprice { get; set; }
         public bool? IsView { get; set; }
+        public string? Unit { get; set; }
     }
 
     public class OptionPriceResult

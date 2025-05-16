@@ -218,7 +218,7 @@ namespace ShutterManagement.Business.Services
                     bool isSubTenant = tenant.ParentTenantId != null;
 
                     var allOptions = (await GetAll())
-                        .Where(x => x.IsDelete == false && x.IsActive == true &&
+                        .Where(x => x.IsDelete == false &&
                                     (x.TenantId == AppConstant.LoggedInTenantId ||
                                      x.TenantId.ToString().ToLower() == AppConstant.LoggedInParentTenantId.ToLower()))
                         .OrderByDescending(x => x.CreatedAt)

@@ -1801,7 +1801,8 @@ namespace ShutterManagement.Business.Services
                     BuildWidth = width,
                     Quantity = quantity,
                     IsView = false,
-                    Optionprice = option.AdditionalCost
+                    Optionprice = option.AdditionalCost,
+                    Unit = option.Unit
                 };
 
                 var pricingExpression = expressionService.GetAllQuerable()
@@ -1816,30 +1817,30 @@ namespace ShutterManagement.Business.Services
                     baseCost = Convert.ToDecimal(res);
                 }
 
-                decimal priceBeforeMarkup = Math.Round(baseCost, 2);
-                decimal priceAfterMarkup = priceBeforeMarkup;
+                decimal OptionWholesale = Math.Round(baseCost, 2);
+                decimal OptionMSRP = OptionWholesale;
 
                 // Apply markup
                 if (optionexp.Markup > 0)
                 {
-                    priceAfterMarkup = Math.Round((decimal)(priceBeforeMarkup * (1 + optionexp.Markup / 100)), 2);
+                    OptionMSRP = Math.Round((decimal)(OptionWholesale * (1 + optionexp.Markup / 100)), 2);
                 }
 
                 // Manage product - return detailed list
                 if (IsManageProduct == true)
                 {
-                    result.OptionWholesale.Add(priceBeforeMarkup);
-                    result.OptionMSRP.Add(priceAfterMarkup);
+                    result.OptionWholesale.Add(OptionWholesale);
+                    result.OptionMSRP.Add(OptionMSRP);
                     continue; 
                 }
 
                 // Apply tenant-specific logic
                 if (!isTenant)
                 {
-                    priceAfterMarkup = ApplySubtenantMarkup(option.OptionTypeId, priceAfterMarkup);
+                    OptionMSRP = ApplySubtenantMarkup(option.OptionTypeId, OptionMSRP);
                 }
 
-                result.TotalCost += priceAfterMarkup;
+                result.TotalCost += OptionMSRP;
             }
 
             return result;
