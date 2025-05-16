@@ -777,7 +777,7 @@ namespace ShutterManagement.Business.Services
                     //    }
                     //}
                     item.Price = Convert.ToDecimal(componentPriceWithoutMarkup.ToString("0.00"));
-                    BaseCost = item.Price;
+                    BaseCost += item.Price;
                 }
             }
             return BaseCost ?? 0.0m;
