@@ -27,13 +27,15 @@ public partial class TblExpression
 
     public Guid? ProductType { get; set; }
 
-    public Guid? ProductId { get; set; }
-
     public string? FormulaeArray { get; set; }
+
+    public string? DisplayArray { get; set; }
+
+    public Guid? ProductId { get; set; }
 
     public Guid? OptionId { get; set; }
 
-    public string? DisplayArray { get; set; }
+    public bool? IsOptionExpression { get; set; }
 
     public virtual MstProductType? ProductTypeNavigation { get; set; }
 }

@@ -14,5 +14,8 @@ namespace ShutterManagement.Core.ViewModels.Request
         public string? Notes { get; set; }
         public decimal? Markup { get; set; }
         public bool? IsComponentAvailable { get; set; }
+
+        public bool? IsTaxAvailable { get; set; } = true;
+        public Guid? TaxId { get; set; }
     }
 }

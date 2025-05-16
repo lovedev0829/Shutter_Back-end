@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -79,6 +80,22 @@ namespace ShutterManagement.Core.ViewModels.Response
         //Tax Excemption
 
         public bool? IsTaxApplied { get; set; } = false;
+
+
+        // Tax Details 
+
+        public bool? IsTaxAvailable { get; set; } = false;
+
+        public Guid? TaxRateId { get; set; }
+        public string? TaxName { get; set; }
+        public decimal? Municipality { get; set; }
+
+        public decimal? StateTax { get; set; }
+
+        public decimal? CityTax { get; set; }
+
+        public decimal? TotalTaxAmount  { get; set; }
+
 
     }
 }

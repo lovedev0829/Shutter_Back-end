@@ -511,6 +511,14 @@ namespace ShutterManagement.Business.Services
 
                         foreach (var item in WindowProductData)
                         {
+                            decimal? taxAmount = 0.0m;
+
+                            if (item.IsTaxAvailable == true)
+                            {
+                                var taxRate = (item.CityTax ?? 0) + (item.StateTax ?? 0) + (item.Municipality ?? 0);
+                                taxAmount = ((item.TotalPrice ?? 0) * taxRate) / 100;
+                            }
+
                             var isTaxApplied = await IsTaxApplied((Guid)item.JobId);
                             forProduct.Add(new WindowProdcutDetailsForEstimate
                             {
@@ -544,6 +552,12 @@ namespace ShutterManagement.Business.Services
                                 IsTaxApplied = isTaxApplied,
                                 Price = item.Price ?? 0.0m,
                                 IsComponentAvailable = item.IsComponentAvailable,
+                                // Tax Related Field
+                                IsTaxAvailable = item.IsTaxAvailable,
+                                TotalTaxAmount = taxAmount??0.0m,
+                                Municipality= ((item.TotalPrice ?? 0) * item.Municipality) / 100,
+                                CityTax=((item.TotalPrice ?? 0) * item.CityTax ?? 0) / 100,
+                                StateTax= ((item.TotalPrice ?? 0) * item.CityTax ?? 0) / 100,
                             });
                         }
 
@@ -557,6 +571,9 @@ namespace ShutterManagement.Business.Services
                         {
                             item.AdditionalCost = await CalculateOptionPrice(item.OptionsId, (decimal)item.Quantity);
                             item.IsTaxApplied = await IsTaxApplied((Guid)item.JobId);
+                            item.TotalTaxAmount = item.IsTaxAvailable == true
+                            ? CalculateTotalTaxAmount(item.TotalPrice, item.Municipality, item.CityTax, item.StateTax)
+                            : 0.0m;
                         }
                         responseVm.Data = WindowProductData;
                         responseVm.TotalRecords = WindowProductData.Count;
@@ -572,6 +589,15 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
+
+        private decimal CalculateTotalTaxAmount(decimal? totalPrice, decimal? municipality, decimal? city, decimal? state)
+        {
+            decimal basePrice = totalPrice ?? 0.0m;
+            decimal totalTaxRate = (municipality ?? 0) + (city ?? 0) + (state ?? 0);
+            return (basePrice * totalTaxRate) / 100;
+        }
+
+
 
         public async Task<bool> IsTaxApplied(Guid JobId)
         {
@@ -634,6 +660,14 @@ namespace ShutterManagement.Business.Services
                     //    ComponentPriceWithProductMarkup = (decimal)(ComponentPriceWithProductMarkup * (100 + (globalmarkup ?? 0.00m))) / 100;
                     //}
                 }
+                
+                if (item.IsTaxAvailable == true)
+                {
+                    var taxRate = (item.CityTax ?? 0) + (item.StateTax ?? 0) + (item.Municipality ?? 0);
+                    var taxAmount = (ComponentPriceWithProductMarkup * taxRate) / 100;
+                    
+                }
+
                 item.Price = Convert.ToDecimal(Convert.ToDecimal(ComponentPriceWithProductMarkup).ToString("0.0000"));
                 ComponentSubTotal += Convert.ToDecimal(Convert.ToDecimal(ComponentPriceWithProductMarkup).ToString("0.0000"));
             }
@@ -804,6 +838,7 @@ namespace ShutterManagement.Business.Services
                 estimate.AdditionalCost = additionalCost;
                 estimate.TermsCondition = model.TermsCondition;
                 estimate.ModifiedBy = AppConstant.LoggedInUserID;
+                estimate.IsTaxApplied = model.IsTaxApplicable;
                 estimate.UpdatedAt = DateTime.Now;
 
                 await Update(estimate);
@@ -1032,6 +1067,7 @@ namespace ShutterManagement.Business.Services
                     Notes = estimate.Notes,
                     Tax = estimate.TaxAmount,
                     TermsCondition = estimate.TermsCondition,
+                    IsTaxApplicable = estimate.IsTaxApplied,
                 };
                 var Userdetails = dbContext.TblUsers
                   .Where(x => x.Id == estimate.CreatedBy && x.IsDelete == false)
@@ -1286,6 +1322,7 @@ namespace ShutterManagement.Business.Services
             decimal SumofSubtotalandAdditionalCost = 0.0M;
             decimal grandtotal = 0m;
             decimal additionalCost = 0m;
+            decimal totalTaxAmount = 0m;
             Guid? taxRateId = null;
             Guid? discountId = null;
             var PricedProductsList = model.ProductsList.Where(x => x.ProductPrice != null && x.ProductPrice > 0).ToList();
@@ -1302,13 +1339,9 @@ namespace ShutterManagement.Business.Services
             }
                subtotal += (decimal)windowproductdetails.Data.DistinctBy(x => x.WindowProdcutId).Sum(x => x.TotalPrice);
                additionalCost += (decimal)windowproductdetails.Data.DistinctBy(x => x.WindowProdcutId).Sum(x => x.AdditionalCost);
+            totalTaxAmount += (decimal)windowproductdetails.Data.DistinctBy(x => x.WindowProdcutId).Sum(x => x.TotalTaxAmount);
             SumofSubtotalandAdditionalCost = subtotal + additionalCost;
-            if (string.IsNullOrEmpty((model.taxRateId).ToString()) && string.IsNullOrEmpty(model.DiscountCoupon))
-            {
-                grandtotal = SumofSubtotalandAdditionalCost;
-            }
-            else
-            {
+            
                 if (string.IsNullOrEmpty((model.taxRateId).ToString()))
                 {
                     taxRateId = Guid.Empty;
@@ -1317,7 +1350,7 @@ namespace ShutterManagement.Business.Services
                 {
                     taxRateId = model.taxRateId;
                 }
-                if (string.IsNullOrEmpty(model.DiscountId.ToString()))
+                if (string.IsNullOrEmpty(model.DiscountId.ToString()) && string.IsNullOrEmpty(model.DiscountCoupon))
                 {
                     discountId = Guid.Empty;
                 }
@@ -1326,8 +1359,10 @@ namespace ShutterManagement.Business.Services
                     discountId = model.DiscountId;
                 }
                 grandtotal = await CalculateGrandTotal(discountId, SumofSubtotalandAdditionalCost, taxRateId) ?? 0m;
-            }
-
+                if(model.IsTaxApplicable==true)
+                {
+                    grandtotal = grandtotal + totalTaxAmount;
+                }
 
             string EstimationCode = EstimationUniqueName().Result.Data;
             TblEstimate createEstimate = new TblEstimate
@@ -1350,6 +1385,7 @@ namespace ShutterManagement.Business.Services
                 IsDelete = false,
                 TotalPrice = subtotal,
                 AdditionalCost = additionalCost,
+                IsTaxApplied= model.IsTaxApplicable,
                 Status = EnumValue.GetEnumValue(Estimation.New),
             };
             var res = await Add(createEstimate);
@@ -1509,6 +1545,19 @@ namespace ShutterManagement.Business.Services
             var ProductTypeName = mstProductType.GetAllQuerable().Where(x => x.ProductId.ToString() == productData.ProductType).Select(x => x.ProductName).FirstOrDefault();
             Guid[] arr = { windowProductData.WindowProductId };
             var buildEstimate = await BuildEstimate(arr, false);
+
+            var MunicipalityTax = (buildEstimate.Data.FirstOrDefault() != null ? buildEstimate.Data.FirstOrDefault().Municipality : 0.00M);
+            var CityTax = (buildEstimate.Data.FirstOrDefault() != null ? buildEstimate.Data.FirstOrDefault().CityTax : 0.00M);
+            var Statetax = (buildEstimate.Data.FirstOrDefault() != null ? buildEstimate.Data.FirstOrDefault().StateTax : 0.00M);
+
+            TblTaxRate taxDetailsInProductId= null;
+            bool isTaxExemptionInContact = GetIsTaxExemptByWindowId(windowProductData.WindowId);
+            if(isTaxExemptionInContact)
+            {
+                 taxDetailsInProductId = GetTaxDetailsByProductId(productData.ProductId);
+            }
+            
+
             TblEstimateWindowProduct tblEstimateWindowProduct = new TblEstimateWindowProduct
             {
                 WindowId = (Guid)windowProductData.WindowId,
@@ -1534,11 +1583,61 @@ namespace ShutterManagement.Business.Services
                 EstimateWindowProductId = Guid.NewGuid(),
                 WindowProductId = windowProductData.WindowProductId,
                 ProductTypeName = ProductTypeName,
-                ProductPrice = ProductPrice
+                ProductPrice = ProductPrice,
+                TaxId = productData.TaxId,
+                TaxName= (buildEstimate.Data.FirstOrDefault() != null ? buildEstimate.Data.FirstOrDefault().TaxName : "")??"",
+                Municipality= MunicipalityTax,
+                City= CityTax,
+                State= Statetax,
             };
 
             await estimateWindowProductService.Add(tblEstimateWindowProduct);
         }
+
+        private bool GetIsTaxExemptByWindowId(Guid? windowId)
+        {
+            var isTaxExempt = (from w in dbContext.TblWindows
+                               join j in dbContext.TblJobs on w.JobId equals j.JobId
+                               join c in dbContext.TblContacts on j.ContactId equals c.ContactId
+                               where w.WindowId == windowId
+                                     && w.IsDelete == false
+                                     && j.IsDelete == false
+                                     && c.IsDelete == false
+                               select c.IsTaxExemption).FirstOrDefault();
+
+            return isTaxExempt?? false;
+        }
+
+
+        private TblTaxRate GetTaxDetailsByProductId(Guid productId)
+        {
+            var productData = dbContext.TblProducts
+                .Where(p => p.ProductId == productId && p.IsDelete == false && p.IsActive == true)
+                .Select(p => new { p.TaxId, p.IsTaxApplied })
+                .FirstOrDefault();
+
+            if (productData == null || !productData.IsTaxApplied==false)
+                return null;
+
+            var taxDetails = dbContext.TblTaxRates
+                .Where(t => t.TaxRateId == productData.TaxId && t.IsDelete == false && t.IsActive == true)
+                .Select(t => new TblTaxRate
+                {
+                    TaxRateId = t.TaxRateId,
+                    TaxName = t.TaxName,
+                    Rate = t.Rate,
+                    Municipality = t.Municipality,
+                    City = t.City,
+                    State = t.State,
+                })
+                .FirstOrDefault();
+
+            return taxDetails;
+        }
+
+
+
+
 
         private async Task AddComponentsToEstimate(Guid productId,Guid WindowId, Guid estimateId, List<WindowProdcutDetailsForEstimate> windowProdcutDetailsForEstimates)
         {

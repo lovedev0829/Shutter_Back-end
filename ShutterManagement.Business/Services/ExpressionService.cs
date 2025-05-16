@@ -130,7 +130,7 @@ namespace ShutterManagement.Business.Services
                     IsExpressionExist.ProductType = model.ProductTypeId;
                     //IsExpressionExist.ProductId = model.ProductId;
                     IsExpressionExist.UpdateAt = DateTime.Now;
-                    IsExpressionExist.OptionId = string.IsNullOrEmpty(model.OptionId) ? null : Guid.Parse(model.OptionId);
+                  //  IsExpressionExist.OptionId = string.IsNullOrEmpty(model.OptionId) ? null : Guid.Parse(model.OptionId);
                     IsExpressionExist.ModifiedBy = AppConstant.LoggedInUserID;
                     IsExpressionExist.FormulaeArray = string.Join(", ", model.FormulaeArray);
                     IsExpressionExist.DisplayArray = string.Join(", ", model.displayArray);

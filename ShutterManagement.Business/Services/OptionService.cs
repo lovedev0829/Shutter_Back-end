@@ -96,6 +96,8 @@ namespace ShutterManagement.Business.Services
                             CreatedAt = DateTime.Now,
                             CreatedBy = AppConstant.LoggedInUserID,
                             TenantId = AppConstant.LoggedInTenantId,
+                            IsTaxApplied = model.IsTaxAvailable,
+                            TaxId = model.TaxId,
                             IsActive = true,
                             IsDelete = false
                         };
@@ -146,7 +148,7 @@ namespace ShutterManagement.Business.Services
                     }
                     else
                     {
-                        responseVm.Message = AppConstant.AlreadyExists;
+                        responseVm.Message = "Option Name"+" "+AppConstant.AlreadyExists;
                     }
                 }
                 else
@@ -241,10 +243,14 @@ namespace ShutterManagement.Business.Services
                             OptionId = x.OptionId,
                             IsActive = x.IsActive,
                             OptionName = x.OptionName,
+                            TaxId = x.TaxId ?? null,
+                            TaxName = dbContext.TblTaxRates.Where(y => y.TaxRateId == x.TaxId).Select(z => z.TaxName).FirstOrDefault() ?? "",
                             ProductId = x.ProductId,
                             ProductName = dbContext.TblProducts.Where(y => y.ProductId == x.ProductId).Select(z => z.ProductName).FirstOrDefault(),
                             ProductTypeId = x.ProductTypeId,
-                            ProductTypeName = dbContext.MstProductTypes.Where(y => y.ProductId == x.ProductTypeId).Select(z => z.ProductName).FirstOrDefault()
+                            ProductTypeName = dbContext.MstProductTypes.Where(y => y.ProductId == x.ProductTypeId).Select(z => z.ProductName).FirstOrDefault(),
+                            IsTaxAvailable = x.IsTaxApplied,
+                            
                         })
                         .ToList();
 
@@ -275,6 +281,7 @@ namespace ShutterManagement.Business.Services
                                     (x.OptionId.ToString() == filter.SearchValue)
                                     || (x.ProductName?.ToLower() ?? "").Contains(filter?.SearchValue)
                                     || (x.OptionName?.ToLower() ?? "").Contains(filter?.SearchValue)
+                                    || (x.TaxName?.ToLower() ?? "").Contains(filter?.SearchValue)
                                     || (x.ProductTypeName?.ToLower() ?? "").Contains(filter?.SearchValue)))
                                     .ToList();
 
@@ -338,6 +345,8 @@ namespace ShutterManagement.Business.Services
                         CreatedAt = DateTime.Now,
                         CreatedBy = AppConstant.LoggedInUserID,
                         TenantId = AppConstant.LoggedInTenantId,
+                        IsTaxApplied = model.IsTaxAvailable,
+                        TaxId = model.TaxId,
                         IsActive = true,
                         IsDelete = false
                     };

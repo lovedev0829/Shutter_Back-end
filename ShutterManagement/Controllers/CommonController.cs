@@ -688,7 +688,7 @@ namespace ShutterManagement.Controllers
             var res = await taxService.GetAll_Tax(filter);
             DateTime current = Convert.ToDateTime(DateTime.Now.ToShortDateString());
             var d = res.Data
-        .Where(x => x.IsActive == true && x.EffectiveDate <= current && x.ExpiryDate >= current)
+        .Where(x => x.IsActive == true/* && x.EffectiveDate <= current && x.ExpiryDate >= current*/)
         .ToList();
             res.Data = d;
             return Ok(res);

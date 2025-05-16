@@ -29,5 +29,19 @@ public partial class TblTaxRate
 
     public Guid? TenantId { get; set; }
 
+    public string? TaxName { get; set; }
+
+    public decimal? Municipality { get; set; }
+
+    public decimal? State { get; set; }
+
+    public decimal? City { get; set; }
+
+    public virtual ICollection<TblEstimateWindowProduct> TblEstimateWindowProducts { get; set; } = new List<TblEstimateWindowProduct>();
+
+    public virtual ICollection<TblOption> TblOptions { get; set; } = new List<TblOption>();
+
+    public virtual ICollection<TblProduct> TblProducts { get; set; } = new List<TblProduct>();
+
     public virtual TblTenant? Tenant { get; set; }
 }

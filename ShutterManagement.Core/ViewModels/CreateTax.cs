@@ -12,19 +12,24 @@ namespace ShutterManagement.Core.ViewModels
     {
         [DefaultValue("")]
         [Required]
-        public Guid? Region { get; set; }
+        public string? TaxName { get; set; }
 
         [DefaultValue("")]
-        [Required]
-        public decimal? Rate { get; set; }
+        public decimal? Municipality { get; set; }
 
         [DefaultValue("")]
-        [Required]
-        public DateTime? EffectiveDate { get; set; }
+        public decimal? State { get; set; }
 
         [DefaultValue("")]
-        [Required]
-        public DateTime? ExpiryDate { get; set; }
+        public decimal? City { get; set; }
+
+        //[DefaultValue("")]
+        //[Required]
+        //public DateTime? EffectiveDate { get; set; }
+
+        //[DefaultValue("")]
+        //[Required]
+        //public DateTime? ExpiryDate { get; set; }
 
     }
 }

@@ -33,6 +33,8 @@ namespace ShutterManagement.Core.ViewModels.Request
         [Default("")]
         public string? Notes { get; set; }
 
+        public bool? IsTaxApplicable { get; set; } =false;
+
         [Default("")]
         public Guid? DiscountId { get; set; }
         [Default("")]
@@ -47,6 +49,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         [Default(0.00)]
         [Required]
         public decimal? GrandTotal { get; set; }
+
     }
 
     public class ProductListing

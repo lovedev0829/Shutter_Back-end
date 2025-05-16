@@ -215,6 +215,8 @@ namespace ShutterManagement.Business.Services
                  (from window in dbContext.TblWindows
                   join windowProduct in dbContext.TblWindowProducts on window.WindowId equals windowProduct.WindowId
                   join product in dbContext.TblProducts on windowProduct.ProductId equals product.ProductId
+                  join tax in dbContext.TblTaxRates on product.TaxId equals tax.TaxRateId into PTax
+                  from taxdata in PTax.DefaultIfEmpty()
                   join productType in dbContext.MstProductTypes on product.ProductType equals productType.ProductId.ToString()
                   join productComponent in dbContext.TblProductComponents on product.ProductId equals productComponent.ProductId into productcomponents
                   from productComponent in productcomponents.DefaultIfEmpty()
@@ -295,12 +297,23 @@ namespace ShutterManagement.Business.Services
                       UnitOfMeasurement = material.UnitOfMeasurement,
                       StockQuantity = material.StockQuantity,
                       ReorderLevel = material.ReorderLevel,
-                      IsCutSheet = material.IsCutSheet
+                      IsCutSheet = material.IsCutSheet,
+
+                      // Tax Details 
+                      TaxRateId = taxdata.TaxRateId,
+                      TaxName = taxdata.TaxName,
+                      Municipality= taxdata.Municipality,
+                      StateTax= taxdata.State,
+                      CityTax = taxdata.City,
+                      IsTaxAvailable = product.IsTaxApplied,
+
+
+
                   }).ToList();
                 if (query != null && query.Count > 0)
                 {
                     foreach (var item in query.DistinctBy(x => x.ProductId))
-                    {
+                    { 
                         var Options = (from windowOption in dbContext.WindowOptions
                                        join optionType in dbContext.TblOptionsTypes on windowOption.OptionTypeId equals optionType.OptionTypeId
                                        join options in dbContext.TblOptions on optionType.OptionId equals options.OptionId

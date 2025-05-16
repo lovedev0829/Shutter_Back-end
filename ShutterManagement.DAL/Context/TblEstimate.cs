@@ -47,6 +47,8 @@ public partial class TblEstimate
 
     public decimal? AdditionalCost { get; set; }
 
+    public bool? IsTaxApplied { get; set; }
+
     public virtual TblJob? Job { get; set; }
 
     public virtual ICollection<TblEstimateWindowProductComponentMaterial> TblEstimateWindowProductComponentMaterials { get; set; } = new List<TblEstimateWindowProductComponentMaterial>();
