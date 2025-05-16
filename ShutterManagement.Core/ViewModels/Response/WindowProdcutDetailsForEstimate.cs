@@ -45,6 +45,7 @@ namespace ShutterManagement.Core.ViewModels.Response
 
         // ProductType Properties
         public string? ProductTypeName { get; set; }
+        public string? ProductTypeId { get; set; }
 
         // ProductComponent Properties
         public Guid? ComponentId { get; set; }

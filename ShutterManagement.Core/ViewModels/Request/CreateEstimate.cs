@@ -59,8 +59,18 @@ namespace ShutterManagement.Core.ViewModels.Request
     public class DimensionModel
     {
         public decimal? Quantity { get; set; }
-        public decimal? Height { get; set; }
-        public decimal? Width { get; set; }
+        public decimal? BuildHeight { get; set; }
+        public decimal? BuildWidth { get; set; }
+        public decimal? Optionprice { get; set; }
+        public bool? IsView { get; set; }
     }
+
+    public class OptionPriceResult
+    {
+        public List<decimal> OptionWholesale { get; set; } = new List<decimal>();
+        public List<decimal> OptionMSRP { get; set; } = new List<decimal>();
+        public decimal TotalCost { get; set; } = 0.0m; 
+    }
+
 
 }

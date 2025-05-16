@@ -536,7 +536,11 @@ namespace ShutterManagement.Business.Services
                                 ProductArchHeight = item.ArchHeight,
                                 Area = item.Area,
                                 Length = item.Length,
-                                AdditionalCost = await CalculateOptionPrice(item.OptionsId , (decimal)item.Quantity, (decimal)item.Height, (decimal)item.Width),
+                                AdditionalCost = (decimal)(await CalculateOptionPrice(item.OptionsId,
+                                    (decimal)item.Quantity,
+                                    (decimal)item.Height,
+                                    (decimal)item.Width,
+                                     false)).TotalCost,
                                 AdditionalWidth = item.AdditionalWidth,
                                 Markup = item.Markup,
                                 ProductTypeName = item.ProductTypeName,
@@ -555,7 +559,11 @@ namespace ShutterManagement.Business.Services
                     {
                         foreach (var item in WindowProductData)
                         {
-                            item.AdditionalCost = await CalculateOptionPrice(item.OptionsId, (decimal)item.Quantity, (decimal)item.Height, (decimal)item.Width);
+                            item.AdditionalCost = (decimal)(await CalculateOptionPrice(item.OptionsId,
+                                          (decimal)item.Quantity,
+                                          (decimal)item.Height,
+                                          (decimal)item.Width,
+                                           false)).TotalCost;
                             item.IsTaxApplied = await IsTaxApplied((Guid)item.JobId);
                         }
                         responseVm.Data = WindowProductData;
@@ -684,11 +692,7 @@ namespace ShutterManagement.Business.Services
                                 }
                                 if (info[0] == "Option")
                                 {
-                                    val = optionsTypeService.GetAllQuerable().Where(x => x.OptionTypeId.ToString() == info[1] && x.OptionType == info[2] && x.IsActive == true).Select(x => x.AdditionalCost).FirstOrDefault();
-                                }
-                                else
-                                {
-                                    val = 0;
+                                    val = values.Optionprice;
                                 }
                             }
                         }
@@ -1753,26 +1757,35 @@ namespace ShutterManagement.Business.Services
             return res;
         }
 
-        public async Task<decimal> CalculateOptionPrice(string[] optionTypeIds, decimal? quantity,decimal? height,decimal? width)
+        public async Task<OptionPriceResult> CalculateOptionPrice(
+                 string[] optionTypeIds,
+                 decimal? quantity,
+                 decimal? height,
+                 decimal? width,
+                 bool? IsManageProduct)
         {
-            decimal totalCost = 0.0m;
-            var IsSubtenants = (await tenantService.GetAll()).Where
-                   (t => t.TenantId == AppConstant.LoggedInTenantId && (t.ParentTenantId != null || !string.IsNullOrEmpty(t.ParentTenantId.ToString()))
-                   && t.IsActive == true && t.IsDelete == false);
-      
+            var result = new OptionPriceResult();
+
+            bool isTenant = await tenantService.AnyAsync(t =>
+                t.TenantId == AppConstant.LoggedInTenantId &&
+                (t.ParentTenantId == null || string.IsNullOrEmpty(t.ParentTenantId.ToString())) &&
+                t.IsActive == true && t.IsDelete == false);
+
             foreach (var optionTypeId in optionTypeIds)
             {
                 var option = optionsTypeService.GetAllQuerable()
-                    .FirstOrDefault(x => x.OptionTypeId.ToString() == optionTypeId &&
-                                         x.IsDelete == false &&
-                                         x.IsActive == true);
-                var optionexp = optionService.GetAllQuerable().Where(x => x.OptionId == option.OptionId && x.IsActive == true &&
-                x.IsDelete == false).FirstOrDefault();
+                    .FirstOrDefault(x => x.OptionTypeId.ToString() == optionTypeId && x.IsDelete == false && x.IsActive == true);
 
-                if (option == null)
-                    continue;
+                if (option == null) continue;
+
+                var optionexp = optionService.GetAllQuerable()
+                    .FirstOrDefault(x => x.OptionId == option.OptionId && x.IsActive == true && x.IsDelete == false);
+
+                if (optionexp == null) continue;
+
                 decimal baseCost = 0.0m;
-                
+
+                // Direct cost calculation if no expression exists
                 if (option.Unit == EnumValue.GetEnumValue(OptionUnit.PerUnit))
                 {
                     baseCost = (decimal)(option.AdditionalCost * quantity);
@@ -1781,29 +1794,58 @@ namespace ShutterManagement.Business.Services
                 {
                     baseCost = (decimal)option.AdditionalCost;
                 }
-                if (option != null)
+
+                var model = new DimensionModel
                 {
-                    var model = new DimensionModel
-                    {
-                        Height = height,
-                        Width = width,
-                        Quantity = quantity
-                    };
-                    
-                    var pricingexpression = expressionService.GetAllQuerable().
-                        Where(x => x.Id == optionexp.OptionExpression && x.IsActive == true && x.IsDelete == false).Select(x=> x.ExpressionFormulae).FirstOrDefault();
-                    baseCost = Convert.ToDecimal(CalculateExpression(pricingexpression, model));
-                }
-                if (IsSubtenants != null )
+                    BuildHeight = height,
+                    BuildWidth = width,
+                    Quantity = quantity,
+                    IsView = false,
+                    Optionprice = option.AdditionalCost
+                };
+
+                var pricingExpression = expressionService.GetAllQuerable()
+                    .Where(x => x.Id == optionexp.OptionExpression && x.IsActive == true && x.IsDelete == false)
+                    .Select(x => x.ExpressionFormulae)
+                    .FirstOrDefault();
+
+                if (!string.IsNullOrEmpty(pricingExpression))
                 {
-                    baseCost = ApplySubtenantMarkup(option.OptionTypeId, baseCost);
+                    var expression = CalculateExpression(pricingExpression, model);
+                    var res = expression.Evaluate();
+                    baseCost = Convert.ToDecimal(res);
                 }
-               
-                totalCost += baseCost;
+
+                decimal priceBeforeMarkup = Math.Round(baseCost, 2);
+                decimal priceAfterMarkup = priceBeforeMarkup;
+
+                // Apply markup
+                if (optionexp.Markup > 0)
+                {
+                    priceAfterMarkup = Math.Round((decimal)(priceBeforeMarkup * (1 + optionexp.Markup / 100)), 2);
+                }
+
+                // Manage product - return detailed list
+                if (IsManageProduct == true)
+                {
+                    result.OptionWholesale.Add(priceBeforeMarkup);
+                    result.OptionMSRP.Add(priceAfterMarkup);
+                    continue; 
+                }
+
+                // Apply tenant-specific logic
+                if (!isTenant)
+                {
+                    priceAfterMarkup = ApplySubtenantMarkup(option.OptionTypeId, priceAfterMarkup);
+                }
+
+                result.TotalCost += priceAfterMarkup;
             }
 
-            return totalCost;
+            return result;
         }
+
+
 
         private decimal ApplySubtenantMarkup(Guid optionTypeId, decimal baseCost)
         {

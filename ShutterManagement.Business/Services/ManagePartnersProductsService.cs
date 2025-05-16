@@ -17,6 +17,8 @@ using ShutterManagement.Core.Common;
 using Stripe;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Azure;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace ShutterManagement.Business.Services
 {
@@ -643,6 +645,8 @@ namespace ShutterManagement.Business.Services
                     {
                         basecost = pricecalculation.Data.basecost ?? 0.0m,
                         msrp = pricecalculation.Data.msrp ?? 0.0m,
+                        OptionWholesale = pricecalculation.Data.OptionWholesale ?? null,
+                        OptionMSRP = pricecalculation.Data.OptionMSRP ?? null,
                     };
                     responseVm.Message = "MSRP calculated successfully.";
                 }
@@ -669,7 +673,11 @@ namespace ShutterManagement.Business.Services
             try
             {
                 decimal? totalMSRP = 0.00M;
+                decimal? baseCost = 0.0M;
                 List<WindowProdcutDetailsForEstimate> data = new List<WindowProdcutDetailsForEstimate>();
+                List<decimal> OptionWholesale = new List<decimal>();
+                List<decimal> OptionMSRP = new List<decimal>();
+                var optionPrices = new OptionPriceResult();
                 // Fetch the data for the given ProductId (window table removed)
                 data = await GetProductDetailsForCalculation(productId);
 
@@ -681,49 +689,40 @@ namespace ShutterManagement.Business.Services
                         var expression = estimateService.CalculateExpression(formula, item);
                         var res = expression.Evaluate();
                         var componentPrice = Convert.ToDecimal(res);
-
-                        item.AdditionalCost = Convert.ToDecimal(item.OptionsPrice.Sum());
                         var componentPriceWithoutMarkup = componentPrice;
                         var componentPriceWithMarkup = (componentPriceWithoutMarkup * (100 + item.MarkupPercentage)) / 100;
                         var componentPriceWithProductMarkup = (componentPriceWithMarkup * (100 + item.Markup)) / 100;
-
-                        var isSubtenant = (await tenantService.GetAll())
-                            .FirstOrDefault(t => t.TenantId == AppConstant.LoggedInTenantId && t.ParentTenantId != null && t.IsActive == true && t.IsDelete == false);
-
-                        //if (isSubtenant != null)
-                        //{
-                        //    var subtenantMarkup = subtenantProductMarkup.GetAllQuerable()
-                        //        .Where(x => x.ProductId == item.ProductId)
-                        //        .Select(x => x.Markup)
-                        //        .FirstOrDefault();
-
-                        //    if (subtenantMarkup != null && subtenantMarkup > 0)
-                        //    {
-                        //        componentPriceWithProductMarkup = componentPriceWithProductMarkup * (100 + subtenantMarkup) / 100;
-                        //    }
-                        //    else
-                        //    {
-                        //        var globalMarkup = tenantBrandingService.GetAllQuerable()
-                        //            .Where(x => x.Id == isSubtenant.BrandingInfo)
-                        //            .Select(x => x.Markup)
-                        //            .FirstOrDefault();
-
-                        //        componentPriceWithProductMarkup = componentPriceWithProductMarkup * (100 + (globalMarkup ?? 0.00m)) / 100;
-                        //    }
-                        //}
                         item.Price = Convert.ToDecimal(componentPriceWithProductMarkup.Value.ToString("0.00"));
                         totalMSRP += item.Price;
+                        if (item.OptionsId != null && item.OptionsId.Length > 0)
+                        {
+                                optionPrices = await estimateService.CalculateOptionPrice(
+                                item.OptionsId,
+                                item.Quantity,
+                                item.BuildHeight,
+                                item.BuildWidth,
+                                true
+                            );
+                            if (optionPrices != null)
+                            {
+                                OptionWholesale.AddRange(optionPrices.OptionWholesale);
+                                OptionMSRP.AddRange(optionPrices.OptionMSRP);
+                            }
 
-                        decimal? basecost = await CalculateBaseCost(productId);
+                        }
 
-                        responseVm.IsSuccess = true;    
+                    }
+                }
+                   baseCost = await CalculateBaseCost(productId);
+                    
+                    responseVm.IsSuccess = true;    
                         responseVm.Data = new MSRPVm
                         {
                             msrp = totalMSRP ?? 0.0m,
-                            basecost = basecost ?? 0.0m,
+                            basecost = baseCost ?? 0.0m,
+                            OptionWholesale = OptionWholesale,
+                            OptionMSRP = OptionMSRP
                         };
-                    }
-                }
             }
             catch(Exception ex)
             {
@@ -778,6 +777,7 @@ namespace ShutterManagement.Business.Services
                     //}
                     item.Price = Convert.ToDecimal(componentPriceWithoutMarkup.ToString("0.00"));
                     BaseCost = item.Price;
+
                 }
             }
             return BaseCost ?? 0.0m;
@@ -824,6 +824,7 @@ namespace ShutterManagement.Business.Services
                     Markup = product.Markup,
 
                     ProductTypeName = productType.ProductName,
+                    ProductTypeId = productType.ProductId.ToString(),
 
                     ComponentId = productComponent.ComponentId,
                     ComponentQuantity = productComponent.Quantity,
@@ -849,8 +850,39 @@ namespace ShutterManagement.Business.Services
 
                     IsRated = true
                 }).ToList();
+            if (data?.Count > 0)
+            {
+                var distinctProductTypeIds = data
+                    .Select(x => x.ProductId)
+                    .Distinct()
+                    .ToList();
 
+                var optionsData = (
+                    from option in dbContext.TblOptions
+                    join optionType in dbContext.TblOptionsTypes on option.OptionId equals optionType.OptionId
+                    where distinctProductTypeIds.Contains(option.ProductId)
+                    select new
+                    {
+                        option.ProductId,
+                        OptionTypeId = optionType.OptionTypeId,
+                        OptionTypeName = option.OptionName + " - " + optionType.OptionType,
+                        OptionPrice = optionType.AdditionalCost ?? 0m,
+                        OptionExpression = option.OptionExpression
+                    }).ToList();
+
+                foreach (var item in data)
+                {
+                    var matchedOptions = optionsData
+                        .Where(o => o.ProductId == item.ProductId)
+                        .ToList();
+
+                    item.OptionsId = matchedOptions.Select(o => o.OptionTypeId.ToString()).ToArray();
+                    item.Options = matchedOptions.Select(o => o.OptionTypeName).ToArray();
+                    item.OptionsPrice = matchedOptions.Select(o => o.OptionPrice).ToArray();
+                }
+            }
             return data;
+            
         }
 
 
