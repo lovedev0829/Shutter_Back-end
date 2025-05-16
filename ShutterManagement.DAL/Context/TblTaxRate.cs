@@ -29,15 +29,5 @@ public partial class TblTaxRate
 
     public Guid? TenantId { get; set; }
 
-    //public string? TaxName { get; set; }
-
-    //public decimal? Municipality { get; set; }
-
-    //public decimal? State { get; set; }
-
-    //public decimal? City { get; set; }
-
-    public virtual ICollection<TblProduct> TblProducts { get; set; } = new List<TblProduct>();
-
     public virtual TblTenant? Tenant { get; set; }
 }
