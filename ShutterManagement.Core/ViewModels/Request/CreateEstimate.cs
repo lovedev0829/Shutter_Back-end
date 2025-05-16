@@ -55,4 +55,12 @@ namespace ShutterManagement.Core.ViewModels.Request
 
         public decimal ProductPrice { get; set; }
     }
+
+    public class DimensionModel
+    {
+        public decimal? Quantity { get; set; }
+        public decimal? Height { get; set; }
+        public decimal? Width { get; set; }
+    }
+
 }

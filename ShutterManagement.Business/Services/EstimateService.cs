@@ -536,7 +536,7 @@ namespace ShutterManagement.Business.Services
                                 ProductArchHeight = item.ArchHeight,
                                 Area = item.Area,
                                 Length = item.Length,
-                                AdditionalCost = await CalculateOptionPrice(item.OptionsId , (decimal)item.Quantity),
+                                AdditionalCost = await CalculateOptionPrice(item.OptionsId , (decimal)item.Quantity, (decimal)item.Height, (decimal)item.Width),
                                 AdditionalWidth = item.AdditionalWidth,
                                 Markup = item.Markup,
                                 ProductTypeName = item.ProductTypeName,
@@ -555,7 +555,7 @@ namespace ShutterManagement.Business.Services
                     {
                         foreach (var item in WindowProductData)
                         {
-                            item.AdditionalCost = await CalculateOptionPrice(item.OptionsId, (decimal)item.Quantity);
+                            item.AdditionalCost = await CalculateOptionPrice(item.OptionsId, (decimal)item.Quantity, (decimal)item.Height, (decimal)item.Width);
                             item.IsTaxApplied = await IsTaxApplied((Guid)item.JobId);
                         }
                         responseVm.Data = WindowProductData;
@@ -684,7 +684,7 @@ namespace ShutterManagement.Business.Services
                                 }
                                 if (info[0] == "Option")
                                 {
-                                    //val = optionsTypeService.GetAllQuerable().Where(x => x.OptionTypeId.ToString() == info[1] && x.OptionType == info[2] && x.IsActive == true && (x.TenantId == AppConstant.LoggedInTenantId || x.TenantId.ToString() == AppConstant.LoggedInParentTenantId)).Select(x => x.UnitCost).FirstOrDefault();
+                                    val = optionsTypeService.GetAllQuerable().Where(x => x.OptionTypeId.ToString() == info[1] && x.OptionType == info[2] && x.IsActive == true).Select(x => x.AdditionalCost).FirstOrDefault();
                                 }
                                 else
                                 {
@@ -1753,7 +1753,7 @@ namespace ShutterManagement.Business.Services
             return res;
         }
 
-        public async Task<decimal> CalculateOptionPrice(string[] optionTypeIds, decimal quantity)
+        public async Task<decimal> CalculateOptionPrice(string[] optionTypeIds, decimal? quantity,decimal? height,decimal? width)
         {
             decimal totalCost = 0.0m;
             var IsSubtenants = (await tenantService.GetAll()).Where
@@ -1769,7 +1769,6 @@ namespace ShutterManagement.Business.Services
                 var optionexp = optionService.GetAllQuerable().Where(x => x.OptionId == option.OptionId && x.IsActive == true &&
                 x.IsDelete == false).FirstOrDefault();
 
-
                 if (option == null)
                     continue;
                 decimal baseCost = 0.0m;
@@ -1782,11 +1781,24 @@ namespace ShutterManagement.Business.Services
                 {
                     baseCost = (decimal)option.AdditionalCost;
                 }
+                if (option != null)
+                {
+                    var model = new DimensionModel
+                    {
+                        Height = height,
+                        Width = width,
+                        Quantity = quantity
+                    };
+                    
+                    var pricingexpression = expressionService.GetAllQuerable().
+                        Where(x => x.Id == optionexp.OptionExpression && x.IsActive == true && x.IsDelete == false).Select(x=> x.ExpressionFormulae).FirstOrDefault();
+                    baseCost = Convert.ToDecimal(CalculateExpression(pricingexpression, model));
+                }
                 if (IsSubtenants != null )
                 {
                     baseCost = ApplySubtenantMarkup(option.OptionTypeId, baseCost);
                 }
-
+               
                 totalCost += baseCost;
             }
 
