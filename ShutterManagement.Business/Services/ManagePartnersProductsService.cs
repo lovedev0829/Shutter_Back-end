@@ -372,7 +372,8 @@ namespace ShutterManagement.Business.Services
                                     where p1.IsActive == true && p1.IsDelete == false &&
                                           p1.TenantId == AppConstant.LoggedInTenantId &&
                                           p1.IsAvailable == true &&
-                                          p2.ProductType == filter.ProductType
+                                          p2.ProductType == filter.ProductType &&
+                                          p2.IsDelete == false && p2.IsActive == true 
                                     select new ProductOptionsVm
                                     {
                                         ProductId = p1.ProductId,
@@ -508,11 +509,11 @@ namespace ShutterManagement.Business.Services
                                   p1.IsDelete == false &&
                                   p1.TenantId == AppConstant.LoggedInTenantId &&
                                   p1.ProductType.ToString() == filter.ProductType
-                                  && p1.IsComponentAvailable == true
                             select new ProductOptionsVm
                             {
                                 ProductId = p1.ProductId,
                                 ProductName = p1.ProductName,
+                                IsComponentAvailable = p1.IsComponentAvailable ?? false,
                                 PriceType = (p2 != null && p2.TenantId.ToString() == filter.TenantId) ? p2.PriceType.ToString() : EnumValue.GetEnumValue(PriceType.Percentage),
                                 WholeSalePrice = (p2 != null && p2.TenantId.ToString() == filter.TenantId) ? p2.WholeSalePrice ?? 0.0m : 0.0m,
                                 MaxPartnerPrice = (p2 != null && p2.TenantId.ToString() == filter.TenantId) ? p2.MaxPartnerPrice ?? 0.0m : 0.0m,
