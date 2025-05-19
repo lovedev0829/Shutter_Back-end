@@ -58,8 +58,9 @@ namespace ShutterManagement.Core.ViewModels.Response
     public class MSRPVm
     {
         public decimal? msrp { get; set; }
-        public List<decimal> OptionMSRP { get; set; } = new List<decimal>();
-        public List<decimal> OptionWholesale { get; set; } = new List<decimal>();
+     
+            public Dictionary<string, decimal> OptionWholesale { get; set; } = new Dictionary<string, decimal>();
+            public Dictionary<string, decimal> OptionMSRP { get; set; } = new Dictionary<string, decimal>();
         public decimal? basecost { get; set; }
     }
 }

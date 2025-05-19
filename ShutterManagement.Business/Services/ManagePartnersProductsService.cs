@@ -453,16 +453,18 @@ namespace ShutterManagement.Business.Services
                                     optionTypes = allOptionTypes
                                         .Where(ot => ot.OptionId == opt.OptionId)
                                         .Select(optt =>
-                                        {
-                                            decimal optionWholesale;
-                                            if (optt.MarkupOptionType == EnumValue.GetEnumValue(PriceType.Percentage))
-                                            {
-                                                optionWholesale = (decimal)(optt.Price * (1 + (optt.WholeSalePrice / 100)));
-                                            }
-                                            else
-                                            {
-                                                optionWholesale = (decimal)(optt.Price + optt.WholeSalePrice);
-                                            }
+                                        {  // Fetch Wholesale and MSRP from the dictionaries
+                                            calculateprice.Data.OptionWholesale.TryGetValue(optt.OptionTypeId.ToString(), out decimal dictWholesale);
+                                            calculateprice.Data.OptionMSRP.TryGetValue(optt.OptionTypeId.ToString(), out decimal dictMSRP);
+
+                                            // Calculate selling prices
+                                            var (maxSellingPrice, minSellingPrice, calculatedWholesale) = CalculateSellingPrices(
+                                                dictWholesale,
+                                                dictMSRP,
+                                                (decimal)optt.WholeSalePrice,
+                                                (decimal)optt.MaxPrice,
+                                                optt.MarkupOptionType
+                                            );
 
                                             return new ProductOptionTypeList
                                             {
@@ -471,7 +473,7 @@ namespace ShutterManagement.Business.Services
                                                 OptionId = optt.OptionId,
                                                 Price = optt.Price,
                                                 PartnerSellingPrice = optt.PartnerSellingPrice,
-                                                WholeSalePrice = Math.Round(optionWholesale, 2),
+                                                WholeSalePrice = Math.Round(calculatedWholesale, 2),
                                                 MarkupOptionType = optt.MarkupOptionType
                                             };
                                         }).ToList()
@@ -670,8 +672,9 @@ namespace ShutterManagement.Business.Services
             {
                 var totalMSRP = 0.00M;
                 var baseCost = 0.00M;
-                var optionWholesale = new List<decimal>();
-                var optionMSRP = new List<decimal>();
+
+                var optionWholesale = new Dictionary<string, decimal>();
+                var optionMSRP = new Dictionary<string, decimal>();
 
                 var productDetails = await GetProductDetailsForCalculation(productId);
 
@@ -679,7 +682,7 @@ namespace ShutterManagement.Business.Services
                 {
                     foreach (var item in productDetails)
                     {
-                        // ----- Base Cost Calculation (No Markup) -----
+                        // Base Cost Calculation (No Markup)
                         var expression = estimateService.CalculateExpression(item.ExpressionFormulae ?? "", item);
                         var result = expression.Evaluate();
                         var baseComponentPrice = Math.Round(Convert.ToDecimal(result), 2);
@@ -687,13 +690,13 @@ namespace ShutterManagement.Business.Services
 
                         baseCost += baseComponentPrice;
 
-                        // ----- MSRP Calculation (With Markup) -----
+                        // MSRP Calculation (With Markup)
                         var withMarkup = baseComponentPrice * (1 + item.MarkupPercentage / 100);
                         var withProductMarkup = withMarkup * (1 + item.Markup / 100);
                         var finalMSRP = Math.Round((decimal)withProductMarkup, 2);
                         totalMSRP += finalMSRP;
 
-                        // ----- Option Pricing -----
+                        // Option Pricing
                         if (item.OptionsId?.Length > 0)
                         {
                             var optionPrices = await estimateService.CalculateOptionPrice(
@@ -706,8 +709,16 @@ namespace ShutterManagement.Business.Services
 
                             if (optionPrices != null)
                             {
-                                optionWholesale.AddRange(optionPrices.OptionWholesale);
-                                optionMSRP.AddRange(optionPrices.OptionMSRP);
+                                // Merge dictionaries
+                                foreach (var kvp in optionPrices.OptionWholesale)
+                                {
+                                    optionWholesale[kvp.Key] = kvp.Value;
+                                }
+
+                                foreach (var kvp in optionPrices.OptionMSRP)
+                                {
+                                    optionMSRP[kvp.Key] = kvp.Value;
+                                }
                             }
                         }
                     }
@@ -729,6 +740,7 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
+
 
 
         //public async Task<IResponseVm<MSRPVm>> CalculateMSRPData(Guid productId)

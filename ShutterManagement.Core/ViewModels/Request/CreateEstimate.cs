@@ -66,12 +66,21 @@ namespace ShutterManagement.Core.ViewModels.Request
         public string? Unit { get; set; }
     }
 
+    //public class OptionPriceResult
+    //{
+    //    public List<decimal> OptionWholesale { get; set; } = new List<decimal>();
+    //    public List<decimal> OptionMSRP { get; set; } = new List<decimal>();
+    //    public decimal TotalCost { get; set; } = 0.0m; 
+    //}
+
     public class OptionPriceResult
     {
-        public List<decimal> OptionWholesale { get; set; } = new List<decimal>();
-        public List<decimal> OptionMSRP { get; set; } = new List<decimal>();
-        public decimal TotalCost { get; set; } = 0.0m; 
+        public decimal TotalCost { get; set; } = 0;
+
+        public Dictionary<string, decimal> OptionWholesale { get; set; } = new Dictionary<string, decimal>();
+        public Dictionary<string, decimal> OptionMSRP { get; set; } = new Dictionary<string, decimal>();
     }
+
 
 
 }

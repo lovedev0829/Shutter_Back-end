@@ -1827,12 +1827,20 @@ namespace ShutterManagement.Business.Services
                 }
 
                 // Manage product - return detailed list
+                //if (IsManageProduct == true)
+                //{
+                //    result.OptionWholesale.Add(OptionWholesale);
+                //    result.OptionMSRP.Add(OptionMSRP);
+                //    continue; 
+                //}
+
                 if (IsManageProduct == true)
                 {
-                    result.OptionWholesale.Add(OptionWholesale);
-                    result.OptionMSRP.Add(OptionMSRP);
-                    continue; 
+                    result.OptionWholesale[optionTypeId] = OptionWholesale;
+                    result.OptionMSRP[optionTypeId] = OptionMSRP;
+                    continue;
                 }
+
 
                 // Apply tenant-specific logic
                 if (!isTenant)
