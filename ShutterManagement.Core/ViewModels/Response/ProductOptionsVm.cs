@@ -18,6 +18,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? TenantId { get; set; }
         public string? MarkupType { get; set; }
         public string? PriceType { get; set; }
+        public bool? IsComponentAvailable { get; set; }
 
 
         public decimal? MaxSellingPrice { get; set; }

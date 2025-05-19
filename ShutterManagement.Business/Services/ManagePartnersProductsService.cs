@@ -339,7 +339,7 @@ namespace ShutterManagement.Business.Services
                     if (!string.IsNullOrEmpty(filter.TenantId))
                     {
                         hasPartnerData = GetAllQuerable()
-                            .Any(x => x.TenantId.ToString() == filter.TenantId && x.IsDelete == false && x.IsActive == true);
+                            .Any(x => x.TenantId.ToString().ToLower() == filter.TenantId.ToLower() && x.IsDelete == false && x.IsActive == true);
                     }
                     if (!string.IsNullOrEmpty(filter.TenantId))
                     {
@@ -372,11 +372,13 @@ namespace ShutterManagement.Business.Services
                                     where p1.IsActive == true && p1.IsDelete == false &&
                                           p1.TenantId == AppConstant.LoggedInTenantId &&
                                           p1.IsAvailable == true &&
-                                          p2.ProductType == filter.ProductType
+                                          p2.ProductType == filter.ProductType &&
+                                          p2.IsDelete == false && p2.IsActive == true 
                                     select new ProductOptionsVm
                                     {
                                         ProductId = p1.ProductId,
                                         ProductName = p2.ProductName,
+                                        IsComponentAvailable = p2.IsComponentAvailable ?? false,
                                         PartnerSellingPrice = p1.PartnerSellingPrice ?? 0.0m,
                                         ManageProductId = p1.ManageProductId.ToString() ?? "",
                                         WholeSalePrice = p1.WholeSalePrice ?? 0.0m,
@@ -441,6 +443,7 @@ namespace ShutterManagement.Business.Services
                             MinSellingPrice = minSellingPrice,
                             PartnerSellingPrice = product.PartnerSellingPrice,
                             MarkupType = product.MarkupType,
+                            IsComponentAvailable = product.IsComponentAvailable,
                             Options = allOptions
                                 .Where(opt => opt.ProductId == product.ProductId)
                                 .Select(opt => new ProductOptionsList
@@ -501,18 +504,18 @@ namespace ShutterManagement.Business.Services
                 filterTenantId = Guid.Parse(filter.TenantId);
             }
 
-            var products = (from p1 in dbContext.TblProducts
-                            join p2 in dbContext.TblManagePartnersProducts.OrderByDescending(x => x.CreatedAt) on p1.ProductId equals p2.ProductId into joined
+            var products = (from p1 in dbContext.TblProducts.OrderByDescending(x => x.CreatedAt)
+                            join p2 in dbContext.TblManagePartnersProducts on p1.ProductId equals p2.ProductId into joined
                             from p2 in joined.Where(x => string.IsNullOrEmpty(filter.TenantId) || x.TenantId.ToString() == filter.TenantId).DefaultIfEmpty()
                             where p1.IsActive == true &&
                                   p1.IsDelete == false &&
                                   p1.TenantId == AppConstant.LoggedInTenantId &&
                                   p1.ProductType.ToString() == filter.ProductType
-                                  && p1.IsComponentAvailable == true
                             select new ProductOptionsVm
                             {
                                 ProductId = p1.ProductId,
                                 ProductName = p1.ProductName,
+                                IsComponentAvailable = p1.IsComponentAvailable ?? false,
                                 PriceType = (p2 != null && p2.TenantId.ToString() == filter.TenantId) ? p2.PriceType.ToString() : EnumValue.GetEnumValue(PriceType.Percentage),
                                 WholeSalePrice = (p2 != null && p2.TenantId.ToString() == filter.TenantId) ? p2.WholeSalePrice ?? 0.0m : 0.0m,
                                 MaxPartnerPrice = (p2 != null && p2.TenantId.ToString() == filter.TenantId) ? p2.MaxPartnerPrice ?? 0.0m : 0.0m,
@@ -535,7 +538,7 @@ namespace ShutterManagement.Business.Services
             var optionIds = options.Select(o => o.OptionId).ToList();
 
             var optionTypes = (from o1 in dbContext.TblOptionsTypes
-                               join o2 in dbContext.TblManagePartnersProductsOptions.OrderByDescending(x => x.CreatedAt) on o1.OptionTypeId equals o2.OptionTypeId into joined
+                               join o2 in dbContext.TblManagePartnersProductsOptions on o1.OptionTypeId equals o2.OptionTypeId into joined
                                from o2 in joined.Where(x => string.IsNullOrEmpty(filter.TenantId) ||
                                (x.TenantId.ToString() == filter.TenantId && x.IsDelete == false && x.IsActive == true)).DefaultIfEmpty()
                                    //from o2 in joined.DefaultIfEmpty() 
@@ -583,7 +586,8 @@ namespace ShutterManagement.Business.Services
                     WholeSalePrice = 0.0m,
                     IsAvailable = false,
                     TenantId = "",
-                    PriceType = EnumValue.GetEnumValue(PriceType.Fixed)
+                    PriceType = EnumValue.GetEnumValue(PriceType.Fixed),
+                    IsComponentAvailable = p.IsComponentAvailable 
                 }).ToList();
 
             var productIds = products.Select(p => p.ProductId).ToList();
