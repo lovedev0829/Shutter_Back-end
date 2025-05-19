@@ -339,7 +339,7 @@ namespace ShutterManagement.Business.Services
                     if (!string.IsNullOrEmpty(filter.TenantId))
                     {
                         hasPartnerData = GetAllQuerable()
-                            .Any(x => x.TenantId.ToString() == filter.TenantId && x.IsDelete == false && x.IsActive == true);
+                            .Any(x => x.TenantId.ToString().ToLower() == filter.TenantId.ToLower() && x.IsDelete == false && x.IsActive == true);
                     }
                     if (!string.IsNullOrEmpty(filter.TenantId))
                     {
@@ -378,6 +378,7 @@ namespace ShutterManagement.Business.Services
                                     {
                                         ProductId = p1.ProductId,
                                         ProductName = p2.ProductName,
+                                        IsComponentAvailable = p2.IsComponentAvailable ?? false,
                                         PartnerSellingPrice = p1.PartnerSellingPrice ?? 0.0m,
                                         ManageProductId = p1.ManageProductId.ToString() ?? "",
                                         WholeSalePrice = p1.WholeSalePrice ?? 0.0m,
@@ -442,6 +443,7 @@ namespace ShutterManagement.Business.Services
                             MinSellingPrice = minSellingPrice,
                             PartnerSellingPrice = product.PartnerSellingPrice,
                             MarkupType = product.MarkupType,
+                            IsComponentAvailable = product.IsComponentAvailable,
                             Options = allOptions
                                 .Where(opt => opt.ProductId == product.ProductId)
                                 .Select(opt => new ProductOptionsList
@@ -584,7 +586,8 @@ namespace ShutterManagement.Business.Services
                     WholeSalePrice = 0.0m,
                     IsAvailable = false,
                     TenantId = "",
-                    PriceType = EnumValue.GetEnumValue(PriceType.Fixed)
+                    PriceType = EnumValue.GetEnumValue(PriceType.Fixed),
+                    IsComponentAvailable = p.IsComponentAvailable 
                 }).ToList();
 
             var productIds = products.Select(p => p.ProductId).ToList();
