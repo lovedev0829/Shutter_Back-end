@@ -502,8 +502,8 @@ namespace ShutterManagement.Business.Services
                 filterTenantId = Guid.Parse(filter.TenantId);
             }
 
-            var products = (from p1 in dbContext.TblProducts
-                            join p2 in dbContext.TblManagePartnersProducts.OrderByDescending(x => x.CreatedAt) on p1.ProductId equals p2.ProductId into joined
+            var products = (from p1 in dbContext.TblProducts.OrderByDescending(x => x.CreatedAt)
+                            join p2 in dbContext.TblManagePartnersProducts on p1.ProductId equals p2.ProductId into joined
                             from p2 in joined.Where(x => string.IsNullOrEmpty(filter.TenantId) || x.TenantId.ToString() == filter.TenantId).DefaultIfEmpty()
                             where p1.IsActive == true &&
                                   p1.IsDelete == false &&
@@ -536,7 +536,7 @@ namespace ShutterManagement.Business.Services
             var optionIds = options.Select(o => o.OptionId).ToList();
 
             var optionTypes = (from o1 in dbContext.TblOptionsTypes
-                               join o2 in dbContext.TblManagePartnersProductsOptions.OrderByDescending(x => x.CreatedAt) on o1.OptionTypeId equals o2.OptionTypeId into joined
+                               join o2 in dbContext.TblManagePartnersProductsOptions on o1.OptionTypeId equals o2.OptionTypeId into joined
                                from o2 in joined.Where(x => string.IsNullOrEmpty(filter.TenantId) ||
                                (x.TenantId.ToString() == filter.TenantId && x.IsDelete == false && x.IsActive == true)).DefaultIfEmpty()
                                    //from o2 in joined.DefaultIfEmpty() 
