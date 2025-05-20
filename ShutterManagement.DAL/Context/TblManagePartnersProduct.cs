@@ -35,7 +35,11 @@ public partial class TblManagePartnersProduct
 
     public string? MarkupType { get; set; }
 
+    public Guid? TaxId { get; set; }
+
     public virtual TblProduct? Product { get; set; }
+
+    public virtual TblTaxRate? Tax { get; set; }
 
     public virtual ICollection<TblManagePartnersProductsOption> TblManagePartnersProductsOptions { get; set; } = new List<TblManagePartnersProductsOption>();
 

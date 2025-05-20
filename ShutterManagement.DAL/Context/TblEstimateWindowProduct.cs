@@ -59,7 +59,21 @@ public partial class TblEstimateWindowProduct
 
     public decimal? ProductPrice { get; set; }
 
+    public string? TaxName { get; set; }
+
+    public decimal? Municipality { get; set; }
+
+    public decimal? State { get; set; }
+
+    public decimal? City { get; set; }
+
+    public Guid? TaxId { get; set; }
+
     public virtual TblEstimate Estimate { get; set; } = null!;
+
+    public virtual TblTaxRate? Tax { get; set; }
+
+    public virtual ICollection<TblEstimateWindowProductOption> TblEstimateWindowProductOptions { get; set; } = new List<TblEstimateWindowProductOption>();
 
     public virtual TblTenant? Tenant { get; set; }
 

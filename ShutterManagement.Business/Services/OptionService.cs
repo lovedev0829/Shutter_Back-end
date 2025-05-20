@@ -95,6 +95,7 @@ namespace ShutterManagement.Business.Services
                             ProductId = model.ProductId,
                             Markup = model.Markup,
                             OptionExpression = model.OptionExpression,
+                            Unit = model.Unit.Trim(),
                             CreatedAt = DateTime.Now,
                             CreatedBy = AppConstant.LoggedInUserID,
                             TenantId = AppConstant.LoggedInTenantId,
@@ -115,7 +116,7 @@ namespace ShutterManagement.Business.Services
                                         OptionId = options.OptionId,
                                         OptionType = item.OptionType.Trim(),
                                         AdditionalCost = item.AdditionalCost,
-                                        Unit = item.Unit.Trim(),
+                                       // Unit = item.Unit.Trim(),
                                         IsDefault = item.IsDefault,
                                         CreatedAt = DateTime.Now,
                                         CreatedBy = AppConstant.LoggedInUserID,
@@ -244,6 +245,7 @@ namespace ShutterManagement.Business.Services
                             IsActive = x.IsActive,
                             OptionName = x.OptionName,
                             ProductId = x.ProductId,
+                            Unit = x.Unit,
                             ProductName = dbContext.TblProducts.Where(y => y.ProductId == x.ProductId).Select(z => z.ProductName).FirstOrDefault(),
                             ProductTypeId = x.ProductTypeId,
                             ProductTypeName = dbContext.MstProductTypes.Where(y => y.ProductId == x.ProductTypeId).Select(z => z.ProductName).FirstOrDefault()
@@ -261,7 +263,7 @@ namespace ShutterManagement.Business.Services
                                 IsDefault = x.IsDefault,
                                 OptionType = x.OptionType,
                                 OptionTypeId = x.OptionTypeId,
-                                Unit = x.Unit
+                               // Unit = x.Unit
                             })
                             .ToList();
                         item.Options = optionsType;
@@ -352,6 +354,7 @@ namespace ShutterManagement.Business.Services
                         IsOptionExists.ProductId = model.ProductId;
                         IsOptionExists.Markup = model.Markup;
                         IsOptionExists.ProductTypeId = model.ProductTypeId;
+                        IsOptionExists.Unit = model.Unit.Trim();
                         IsOptionExists.OptionExpression = model.OptionExpression;
 
 
@@ -364,12 +367,12 @@ namespace ShutterManagement.Business.Services
                             IsDefault = x.IsDefault,
                             OptionType = x.OptionType,
                             OptionTypeId = x.OptionTypeId,
-                            Unit = x.Unit
+                           // Unit = x.Unit
                         }).ToArray();
 
 
-                        var InsertRecords = model.Options.Where(a1 => !OptionsTypes.Any(a2 => a1.OptionType == a2.OptionType && a1.AdditionalCost == a2.AdditionalCost && a1.IsDefault == a2.IsDefault && a1.Unit == a2.Unit)).ToList();
-                        var DeleteRecords = OptionsTypes.Where(a1 => !model.Options.Any(a2 => a1.OptionType == a2.OptionType && a1.AdditionalCost == a2.AdditionalCost && a1.IsDefault == a2.IsDefault && a1.Unit == a2.Unit)).ToList();
+                        var InsertRecords = model.Options.Where(a1 => !OptionsTypes.Any(a2 => a1.OptionType == a2.OptionType && a1.AdditionalCost == a2.AdditionalCost && a1.IsDefault == a2.IsDefault)).ToList();
+                        var DeleteRecords = OptionsTypes.Where(a1 => !model.Options.Any(a2 => a1.OptionType == a2.OptionType && a1.AdditionalCost == a2.AdditionalCost && a1.IsDefault == a2.IsDefault)).ToList();
 
                         foreach (var item in DeleteRecords)
                         {
@@ -391,7 +394,7 @@ namespace ShutterManagement.Business.Services
                                     OptionId = IsOptionExists.OptionId,
                                     OptionType = item.OptionType,
                                     AdditionalCost = item.AdditionalCost,
-                                    Unit = item.Unit,
+                                    //Unit = item.Unit,
                                     IsDefault = item.IsDefault,
                                     CreatedAt = DateTime.Now,
                                     CreatedBy = AppConstant.LoggedInUserID,

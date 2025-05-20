@@ -67,6 +67,8 @@ public partial class ShutterDBContext : DbContext
 
     public virtual DbSet<TblEstimateWindowProductComponentMaterial> TblEstimateWindowProductComponentMaterials { get; set; }
 
+    public virtual DbSet<TblEstimateWindowProductOption> TblEstimateWindowProductOptions { get; set; }
+
     public virtual DbSet<TblExpression> TblExpressions { get; set; }
 
     public virtual DbSet<TblGhlStage> TblGhlStages { get; set; }
@@ -686,6 +688,7 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.AdditionalWidth).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.ArchHeight).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.Area).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.City).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.Color).HasMaxLength(100);
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
@@ -695,6 +698,7 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
             entity.Property(e => e.Length).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.Markup).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.Municipality).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.Price).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.ProductName).HasMaxLength(255);
             entity.Property(e => e.ProductPrice).HasColumnType("decimal(10, 2)");
@@ -702,6 +706,8 @@ public partial class ShutterDBContext : DbContext
                 .HasMaxLength(50)
                 .IsUnicode(false);
             entity.Property(e => e.ProductTypeName).HasMaxLength(50);
+            entity.Property(e => e.State).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.TaxName).HasMaxLength(200);
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
@@ -711,6 +717,10 @@ public partial class ShutterDBContext : DbContext
                 .HasForeignKey(d => d.EstimateId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__TblEstima__Estim__0F4D3C5F");
+
+            entity.HasOne(d => d.Tax).WithMany(p => p.TblEstimateWindowProducts)
+                .HasForeignKey(d => d.TaxId)
+                .HasConstraintName("FK__TblEstima__TaxId__04859529");
 
             entity.HasOne(d => d.Tenant).WithMany(p => p.TblEstimateWindowProducts)
                 .HasForeignKey(d => d.TenantId)
@@ -793,6 +803,38 @@ public partial class ShutterDBContext : DbContext
             entity.HasOne(d => d.Tenant).WithMany(p => p.TblEstimateWindowProductComponentMaterials)
                 .HasForeignKey(d => d.TenantId)
                 .HasConstraintName("FK__EstimateW__Tenan__1ABEEF0B");
+        });
+
+        modelBuilder.Entity<TblEstimateWindowProductOption>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__TblEstim__3213E83F9C96ED79");
+
+            entity.ToTable("TblEstimateWindowProductOption", "dbo");
+
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("(newid())")
+                .HasColumnName("id");
+            entity.Property(e => e.CityTax).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.MunicipilityTax).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.StateTax).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+
+            entity.HasOne(d => d.EstimateWindowProduct).WithMany(p => p.TblEstimateWindowProductOptions)
+                .HasForeignKey(d => d.EstimateWindowProductId)
+                .HasConstraintName("FK__TblEstima__Estim__25E688F4");
+
+            entity.HasOne(d => d.Tax).WithMany(p => p.TblEstimateWindowProductOptions)
+                .HasForeignKey(d => d.TaxId)
+                .HasConstraintName("FK__TblEstima__TaxId__26DAAD2D");
+
+            entity.HasOne(d => d.WindowOption).WithMany(p => p.TblEstimateWindowProductOptions)
+                .HasForeignKey(d => d.WindowOptionId)
+                .HasConstraintName("FK__TblEstima__Windo__24F264BB");
+
+            entity.HasOne(d => d.WindowProduct).WithMany(p => p.TblEstimateWindowProductOptions)
+                .HasForeignKey(d => d.WindowProductId)
+                .HasConstraintName("FK__TblEstima__Windo__23FE4082");
         });
 
         modelBuilder.Entity<TblExpression>(entity =>
@@ -1156,6 +1198,10 @@ public partial class ShutterDBContext : DbContext
                 .HasForeignKey(d => d.ProductId)
                 .HasConstraintName("FK_TblManagePartnersProducts_Product");
 
+            entity.HasOne(d => d.Tax).WithMany(p => p.TblManagePartnersProducts)
+                .HasForeignKey(d => d.TaxId)
+                .HasConstraintName("FK__TblManage__TaxId__2B9F624A");
+
             entity.HasOne(d => d.Tenant).WithMany(p => p.TblManagePartnersProducts)
                 .HasForeignKey(d => d.TenantId)
                 .HasConstraintName("FK_TblManagePartnersProducts_ManageProductTenant");
@@ -1187,6 +1233,10 @@ public partial class ShutterDBContext : DbContext
             entity.HasOne(d => d.OptionType).WithMany(p => p.TblManagePartnersProductsOptions)
                 .HasForeignKey(d => d.OptionTypeId)
                 .HasConstraintName("FK_TBLOptionsType_ManagePartnerProductOptionTypeId");
+
+            entity.HasOne(d => d.Tax).WithMany(p => p.TblManagePartnersProductsOptions)
+                .HasForeignKey(d => d.TaxId)
+                .HasConstraintName("FK__TblManage__TaxId__2AAB3E11");
         });
 
         modelBuilder.Entity<TblMeasurement>(entity =>
@@ -1237,6 +1287,7 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
             entity.Property(e => e.Markup).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.OptionName).HasMaxLength(255);
+            entity.Property(e => e.Unit).HasMaxLength(20);
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
@@ -1248,6 +1299,10 @@ public partial class ShutterDBContext : DbContext
             entity.HasOne(d => d.ProductType).WithMany(p => p.TblOptions)
                 .HasForeignKey(d => d.ProductTypeId)
                 .HasConstraintName("FK_TblOption_ProductType");
+
+            entity.HasOne(d => d.Tax).WithMany(p => p.TblOptions)
+                .HasForeignKey(d => d.TaxId)
+                .HasConstraintName("FK__TblOption__TaxId__0579B962");
 
             entity.HasOne(d => d.Tenant).WithMany(p => p.TblOptions)
                 .HasForeignKey(d => d.TenantId)
@@ -1265,7 +1320,6 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
             entity.Property(e => e.ModifiedAt).HasColumnType("datetime");
             entity.Property(e => e.OptionType).HasMaxLength(200);
-            entity.Property(e => e.Unit).HasMaxLength(200);
 
             entity.HasOne(d => d.Option).WithMany(p => p.TblOptionsTypes)
                 .HasForeignKey(d => d.OptionId)

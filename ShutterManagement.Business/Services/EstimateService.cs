@@ -697,14 +697,35 @@ namespace ShutterManagement.Business.Services
                             }
                         }
                     }
-                    //calculate Waste factor
-                    // Set parameters
-                    formula = formula?.Replace(match.Value, Convert.ToDecimal(val).ToString("N2"));
+                    if (property == "Unit")
+                    {
+                        formula = formula?.Replace(match.Value, $"'{val}'");  // Wrap it in quotes as it's a string
+                    }
+                    else
+                    {
+                        // For numeric placeholders, convert to decimal and format
+                        formula = formula?.Replace(match.Value, Convert.ToDecimal(val).ToString("N2"));
+                    }
+                
+                // Set parameters
+                //formula = formula?.Replace(match.Value, Convert.ToDecimal(val).ToString("N2"));
                     //expression.Parameters[match.Value] = Convert.ToDecimal(val);
                 }
             }
 
             var expression = new NCalc.Expression(formula);
+            //// Add Unit dynamically if needed, compare with any string value
+            //if (formula.Contains("{{Unit}}"))
+            //{
+            //    string unitValue = values.Unit ?? "DefaultUnit";  // Default fallback if Unit is null
+            //    expression.Parameters["Unit"] = unitValue;  // Add the Unit value as a parameter to NCalc
+            //}
+
+            //// Always add other parameters like BuildWidth, BuildHeight, and Quantity.
+            //expression.Parameters["BuildWidth"] = values.BuildWidth;
+            //expression.Parameters["BuildHeight"] = values.BuildHeight;
+            //expression.Parameters["Quantity"] = values.Quantity;
+
             return expression;
         }
 
@@ -859,7 +880,7 @@ namespace ShutterManagement.Business.Services
 
                 if (estimate == null)
                 {
-                    responseVm.Message = "Estimate not Found.";
+                    responseVm.Message = "These is an issue.Please contact administration.";
                     return responseVm;
                 }
 
@@ -1438,7 +1459,6 @@ namespace ShutterManagement.Business.Services
             return taxApplied;
         }
 
-
         private async Task ProcessWindowProducts(List<ProductListing> windowProductIds, List<WindowProdcutDetailsForEstimate> windowProdcutDetailsForEstimates, Guid estimateId)
         {
             FileLogger.Log("Processing window products...");
@@ -1786,14 +1806,14 @@ namespace ShutterManagement.Business.Services
                 decimal baseCost = 0.0m;
 
                 // Direct cost calculation if no expression exists
-                if (option.Unit == EnumValue.GetEnumValue(OptionUnit.PerUnit))
-                {
-                    baseCost = (decimal)(option.AdditionalCost * quantity);
-                }
-                else if (option.Unit == EnumValue.GetEnumValue(OptionUnit.EachJob))
-                {
-                    baseCost = (decimal)option.AdditionalCost;
-                }
+                //if (option.Unit == EnumValue.GetEnumValue(OptionUnit.PerUnit))
+                //{
+                //    baseCost = (decimal)(option.AdditionalCost * quantity);
+                //}
+                //else if (option.Unit == EnumValue.GetEnumValue(OptionUnit.EachJob))
+                //{
+                //    baseCost = (decimal)option.AdditionalCost;
+                //}
 
                 var model = new DimensionModel
                 {
@@ -1802,7 +1822,7 @@ namespace ShutterManagement.Business.Services
                     Quantity = quantity,
                     IsView = false,
                     Optionprice = option.AdditionalCost,
-                    Unit = option.Unit
+                    Unit = optionexp.Unit
                 };
 
                 var pricingExpression = expressionService.GetAllQuerable()
@@ -1825,14 +1845,6 @@ namespace ShutterManagement.Business.Services
                 {
                     OptionMSRP = Math.Round((decimal)(OptionWholesale * (1 + optionexp.Markup / 100)), 2);
                 }
-
-                // Manage product - return detailed list
-                //if (IsManageProduct == true)
-                //{
-                //    result.OptionWholesale.Add(OptionWholesale);
-                //    result.OptionMSRP.Add(OptionMSRP);
-                //    continue; 
-                //}
 
                 if (IsManageProduct == true)
                 {

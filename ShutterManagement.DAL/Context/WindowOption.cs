@@ -31,6 +31,8 @@ public partial class WindowOption
 
     public virtual TblOptionsType? OptionType { get; set; }
 
+    public virtual ICollection<TblEstimateWindowProductOption> TblEstimateWindowProductOptions { get; set; } = new List<TblEstimateWindowProductOption>();
+
     public virtual TblTenant? Tenant { get; set; }
 
     public virtual TblWindow? Window { get; set; }

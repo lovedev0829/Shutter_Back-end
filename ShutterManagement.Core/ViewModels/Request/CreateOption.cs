@@ -21,6 +21,10 @@ namespace ShutterManagement.Core.ViewModels.Request
         public string? OptionName { get; set; }
         public decimal? Markup { get; set; }
         public Guid? OptionExpression { get; set; }
+
+        [DefaultValue("")]
+        [Required]
+        public string? Unit { get; set; }
         public Options[]? Options { get; set; }
     }
 
@@ -35,10 +39,6 @@ namespace ShutterManagement.Core.ViewModels.Request
         //[DefaultValue("")]
         //[Required]
         public decimal? AdditionalCost { get; set; }
-
-        [DefaultValue("")]
-        [Required]
-        public string? Unit { get; set; }
 
         public bool? IsDefault { get; set; }
     }
