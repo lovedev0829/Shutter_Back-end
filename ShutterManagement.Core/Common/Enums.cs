@@ -196,7 +196,13 @@ namespace ShutterManagement.Core.Common
         [EnumMember(Value = "Per Unit")]
         PerUnit,
         [EnumMember(Value = "Each Job")]
-        EachJob
+        EachJob,
+        [EnumMember(Value = "Inch")]
+        Inch,
+        [EnumMember(Value = "CM")]
+        CM,
+        [EnumMember(Value = "Sqft")]
+        Sqft
     }
 
     public enum DownloadSample

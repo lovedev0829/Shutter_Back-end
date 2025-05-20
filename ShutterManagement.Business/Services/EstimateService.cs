@@ -690,16 +690,18 @@ namespace ShutterManagement.Business.Services
                                         val = (val * (100 + values.WasteFactor ?? 0) / 100);
                                     }
                                 }
-                                if (info[0] == "Option")
-                                {
-                                    val = values.Optionprice;
-                                }
                             }
                         }
                     }
+             //       var ProductUnit = dbContext.MstUnitofMeasurements.Where(x => x.UnitofMeasurementId =)
                     if (property == "Unit")
                     {
                         formula = formula?.Replace(match.Value, $"'{val}'");
+                    }
+                    else if(property == "OptionPrice")
+                    {
+                        val = values.Optionprice;
+                        formula = formula?.Replace(match.Value, Convert.ToDecimal(val).ToString("N2"));
                     }
                     else
                     {

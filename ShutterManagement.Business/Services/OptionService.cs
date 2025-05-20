@@ -246,8 +246,8 @@ namespace ShutterManagement.Business.Services
                             OptionName = x.OptionName,
                             ProductId = x.ProductId,
                             Unit = x.Unit,
-                            Markup = x.Markup,
-                            OptionExpression = x.OptionExpression.ToString(),
+                            Markup = x.Markup ?? 0.0m,
+                            OptionExpression = x.OptionExpression.ToString() ?? "",
                             ProductName = dbContext.TblProducts.Where(y => y.ProductId == x.ProductId).Select(z => z.ProductName).FirstOrDefault(),
                             ProductTypeId = x.ProductTypeId,
                             ProductTypeName = dbContext.MstProductTypes.Where(y => y.ProductId == x.ProductTypeId).Select(z => z.ProductName).FirstOrDefault()
