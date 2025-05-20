@@ -600,16 +600,22 @@ namespace ShutterManagement.Controllers
             return Ok(res);
         }
 
-        [HttpGet]
+        [HttpPost]
         [Route("GetAllExpression")]
-        public async Task<IActionResult> GetAllExpression(Guid ProductId)
+        public async Task<IActionResult> GetAllExpression(Pagination filter)
         {
-
-            filter.SearchValue = ProductId.ToString();
             var res = await expression.Get_AllExpression(filter);
             res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
+            if(filter.IsOptionExpression !=null)
+            {
+                res.Data = res.Data?.Where(x => x.IsOptionExpression == true).ToList();
+                res.TotalRecords = res.Data.Count();
+            }
             return Ok(res);
         }
+
+
+      
 
         [HttpPost]
         [Route("SettingById")]

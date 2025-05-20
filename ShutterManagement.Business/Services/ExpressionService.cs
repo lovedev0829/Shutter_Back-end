@@ -209,6 +209,7 @@ namespace ShutterManagement.Business.Services
                     .Where(x =>
                         (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
                         (string.IsNullOrEmpty(filter.TenantId) ? true : (filter.TenantId == x.TenantId.ToString())) &&
+                        (string.IsNullOrEmpty(filter.ProductType) ? true : (filter.ProductType == x.ProductTypeId.ToString())) &&
                         (filter.SearchValue != "" ?
                             (x.ExpressionId.ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
                             (x.ProductId.ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
