@@ -16,6 +16,8 @@ namespace ShutterManagement.Core.ViewModels.Response
         public Guid? ProductId { get; set; }
         public Guid? ProductTypeId { get; set; }
         public string? ProductName { get; set; }
+        public decimal? Markup { get; set; }
+        public string? OptionExpression { get; set; }
         public string? ProductTypeName { get; set; }
         public bool? IsActive { get; set; }
         public string? Unit { get; set; }

@@ -246,6 +246,8 @@ namespace ShutterManagement.Business.Services
                             OptionName = x.OptionName,
                             ProductId = x.ProductId,
                             Unit = x.Unit,
+                            Markup = x.Markup,
+                            OptionExpression = x.OptionExpression.ToString(),
                             ProductName = dbContext.TblProducts.Where(y => y.ProductId == x.ProductId).Select(z => z.ProductName).FirstOrDefault(),
                             ProductTypeId = x.ProductTypeId,
                             ProductTypeName = dbContext.MstProductTypes.Where(y => y.ProductId == x.ProductTypeId).Select(z => z.ProductName).FirstOrDefault()
@@ -279,6 +281,8 @@ namespace ShutterManagement.Business.Services
                                     (x.OptionId.ToString() == filter.SearchValue)
                                     || (x.ProductName?.ToLower() ?? "").Contains(filter?.SearchValue)
                                     || (x.OptionName?.ToLower() ?? "").Contains(filter?.SearchValue)
+                                    || (x.Markup?.ToString().ToLower() ?? "").Contains(filter?.SearchValue)
+                                    || (x.OptionExpression?.ToString().ToLower() ?? "").Contains(filter?.SearchValue)
                                     || (x.ProductTypeName?.ToLower() ?? "").Contains(filter?.SearchValue)))
                                     .ToList();
 
