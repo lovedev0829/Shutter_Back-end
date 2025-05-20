@@ -699,11 +699,10 @@ namespace ShutterManagement.Business.Services
                     }
                     if (property == "Unit")
                     {
-                        formula = formula?.Replace(match.Value, $"'{val}'");  // Wrap it in quotes as it's a string
+                        formula = formula?.Replace(match.Value, $"'{val}'");
                     }
                     else
                     {
-                        // For numeric placeholders, convert to decimal and format
                         formula = formula?.Replace(match.Value, Convert.ToDecimal(val).ToString("N2"));
                     }
                 
