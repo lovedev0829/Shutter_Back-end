@@ -117,6 +117,7 @@ namespace ShutterManagement.Business.Services
                             if (model.PartnerSellingPrice >= minSellingPrice && model.PartnerSellingPrice <= maxSellingPrice)
                             {
                                 IsManagePartnerProductExist.PartnerSellingPrice = model.PartnerSellingPrice;
+                                IsManagePartnerProductExist.TaxId = model.TaxRateId;
                                 await Update(IsManagePartnerProductExist);
                                 foreach (var item in model.ManagePartnerProductOptions)
                                 {
@@ -144,6 +145,7 @@ namespace ShutterManagement.Business.Services
                                         if (item.PartnerSellingPrice >= minSellingPrice1 && item.PartnerSellingPrice <= maxSellingPrice1)
                                         {
                                             IsManagepartneroptiontype.PartnerSellingPrice = item.PartnerSellingPrice;
+                                            IsManagepartneroptiontype.TaxId = item.TaxRateId;
                                             await managePartnersProductsOptions.Update(IsManagepartneroptiontype);
                                         }
                                         else
@@ -383,7 +385,9 @@ namespace ShutterManagement.Business.Services
                                         MarkupType = p1.MarkupType ?? EnumValue.GetEnumValue(PriceType.Fixed),
                                         MaxPartnerPrice = p1.MaxPartnerPrice ?? 0.0m,
                                         IsAvailable = p1.IsAvailable ?? false,
-                                        PriceType = p1.PriceType ?? EnumValue.GetEnumValue(PriceType.Fixed)
+                                        PriceType = p1.PriceType ?? EnumValue.GetEnumValue(PriceType.Fixed),
+                                        TaxId = (p1 != null ? p1.TaxId : Guid.Empty) ?? Guid.Empty,
+
                                     }).ToList();
 
                     var productIds = products.Select(p => p.ProductId).ToList();
@@ -418,7 +422,9 @@ namespace ShutterManagement.Business.Services
                                               PriceType = o1.PriceType ?? EnumValue.GetEnumValue(PriceType.Fixed),
                                               PartnerSellingPrice = o1.PartnerSellingPrice ?? 0.0m,
                                               WholeSalePrice = o1.WholeSalePrice ?? 0.0m,
-                                              MarkupOptionType = o1.MarkupOptionType ?? EnumValue.GetEnumValue(PriceType.Fixed)
+                                              MarkupOptionType = o1.MarkupOptionType ?? EnumValue.GetEnumValue(PriceType.Fixed),
+                                              TaxId = (o1 != null ? o1.TaxId : Guid.Empty) ?? Guid.Empty,
+
                                           }).ToList();
                     //decimal wholesale1 = Price * (1 + (wholeSalePrice / 100));
 
@@ -427,8 +433,8 @@ namespace ShutterManagement.Business.Services
                         decimal baseCost = CalculateBaseCost((Guid)product.ProductId).Result;
                         var msrp = CalculateMSRPData((Guid)product.ProductId).Result;
 
-                        var (maxSellingPrice, minSellingPrice, wholesale) =
-                            CalculateSellingPrices(baseCost, (decimal)msrp.Data.msrp, (decimal)product.WholeSalePrice, (decimal)product.MaxPartnerPrice, product.PriceType);
+                        var (maxSellingPrice, minSellingPrice, wholesale) = (msrp.Data != null ?
+                            CalculateSellingPrices(baseCost, (decimal)msrp.Data.msrp, (decimal)product.WholeSalePrice, (decimal)product.MaxPartnerPrice, product.PriceType) : (0.0m, 0.0m, 0.0m));
 
                         return new ProductOptionsVm
                         {
@@ -441,6 +447,7 @@ namespace ShutterManagement.Business.Services
                             MinSellingPrice = minSellingPrice,
                             PartnerSellingPrice = product.PartnerSellingPrice,
                             MarkupType = product.MarkupType,
+                            TaxId = product.TaxId,
                             Options = allOptions
                                 .Where(opt => opt.ProductId == product.ProductId)
                                 .Select(opt => new ProductOptionsList
@@ -467,6 +474,7 @@ namespace ShutterManagement.Business.Services
                                                 OptionTypeName = optt.OptionTypeName,
                                                 OptionId = optt.OptionId,
                                                 Price = optt.Price,
+                                                TaxId = optt.TaxId,
                                                 PartnerSellingPrice = optt.PartnerSellingPrice,
                                                 WholeSalePrice = Math.Round(optionWholesale, 2),
                                                 MarkupOptionType = optt.MarkupOptionType
@@ -518,7 +526,8 @@ namespace ShutterManagement.Business.Services
                                 MaxPartnerPrice = (p2 != null && p2.TenantId.ToString() == filter.TenantId) ? p2.MaxPartnerPrice ?? 0.0m : 0.0m,
                                 IsAvailable = (p2 != null && p2.TenantId.ToString() == filter.TenantId) ? p2.IsAvailable ?? false : false,
                                 ManageProductId = (p2 != null && p2.TenantId.ToString() == filter.TenantId) ? p2.ManageProductId.ToString() : null,
-                                TenantId = ((p2 != null && p2.TenantId.ToString() == filter.TenantId) ? p2.TenantId.ToString() : null) ?? ""
+                                TenantId = ((p2 != null && p2.TenantId.ToString() == filter.TenantId) ? p2.TenantId.ToString() : null) ?? "",
+                                TaxId = (p2 != null  ? p2.TaxId : Guid.Empty) ??Guid.Empty,
                             }).ToList();
 
             var productIds = products.Select(p => p.ProductId).ToList();
@@ -554,6 +563,7 @@ namespace ShutterManagement.Business.Services
                                    WholeSalePrice = (o2 != null && o2.TenantId.ToString() == filter.TenantId) ? o2.WholeSalePrice ?? 0.0m : 0.0m,
                                    MaxPrice = (o2 != null && o2.TenantId.ToString() == filter.TenantId) ? o2.MaxPrice ?? 0.0m : 0.0m,
                                    IsAvailable = (o2 != null && o2.TenantId.ToString() == filter.TenantId) ? o2.IsAvailable : false,
+                                   TaxId = (o2 != null ? o2.TaxId : Guid.Empty) ?? Guid.Empty,
                                }).Distinct().ToList();
 
             foreach (var product in products)

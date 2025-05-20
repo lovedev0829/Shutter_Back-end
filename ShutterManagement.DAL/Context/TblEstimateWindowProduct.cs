@@ -73,6 +73,8 @@ public partial class TblEstimateWindowProduct
 
     public virtual TblTaxRate? Tax { get; set; }
 
+    public virtual ICollection<TblEstimateWindowProductOption> TblEstimateWindowProductOptions { get; set; } = new List<TblEstimateWindowProductOption>();
+
     public virtual TblTenant? Tenant { get; set; }
 
     public virtual TblWindowProduct? WindowProduct { get; set; }

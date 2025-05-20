@@ -115,7 +115,7 @@ namespace ShutterManagement.Business.Services
                                         OptionId = options.OptionId,
                                         OptionType = item.OptionType.Trim(),
                                         AdditionalCost = item.AdditionalCost,
-                                        Unit = item.Unit.Trim(),
+                                        //Unit = item.Unit.Trim(),
                                         IsDefault = item.IsDefault,
                                         CreatedAt = DateTime.Now,
                                         CreatedBy = AppConstant.LoggedInUserID,
@@ -265,7 +265,7 @@ namespace ShutterManagement.Business.Services
                                 IsDefault = x.IsDefault,
                                 OptionType = x.OptionType,
                                 OptionTypeId = x.OptionTypeId,
-                                Unit = x.Unit
+                                //Unit = x.Unit
                             })
                             .ToList();
                         item.Options = optionsType;
@@ -368,7 +368,7 @@ namespace ShutterManagement.Business.Services
                             IsDefault = x.IsDefault,
                             OptionType = x.OptionType,
                             OptionTypeId = x.OptionTypeId,
-                            Unit = x.Unit
+                           // Unit = x.Unit
                         }).ToArray();
 
 
@@ -395,7 +395,7 @@ namespace ShutterManagement.Business.Services
                                     OptionId = IsOptionExists.OptionId,
                                     OptionType = item.OptionType,
                                     AdditionalCost = item.AdditionalCost,
-                                    Unit = item.Unit,
+                                    //Unit = item.Unit,
                                     IsDefault = item.IsDefault,
                                     CreatedAt = DateTime.Now,
                                     CreatedBy = AppConstant.LoggedInUserID,

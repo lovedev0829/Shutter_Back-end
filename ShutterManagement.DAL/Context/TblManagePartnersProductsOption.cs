@@ -39,9 +39,13 @@ public partial class TblManagePartnersProductsOption
 
     public string? MarkupOptionType { get; set; }
 
+    public Guid? TaxId { get; set; }
+
     public virtual TblManagePartnersProduct? ManageProduct { get; set; }
 
     public virtual TblOption? Option { get; set; }
 
     public virtual TblOptionsType? OptionType { get; set; }
+
+    public virtual TblTaxRate? Tax { get; set; }
 }

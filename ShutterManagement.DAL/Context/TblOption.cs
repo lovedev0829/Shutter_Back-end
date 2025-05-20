@@ -39,6 +39,8 @@ public partial class TblOption
 
     public Guid? OptionExpression { get; set; }
 
+    public string? Unit { get; set; }
+
     public virtual TblProduct? Product { get; set; }
 
     public virtual MstProductType? ProductType { get; set; }
