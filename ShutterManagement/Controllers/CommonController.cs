@@ -608,14 +608,12 @@ namespace ShutterManagement.Controllers
             res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
             if(filter.IsOptionExpression !=null)
             {
-                res.Data = res.Data?.Where(x => x.IsOptionExpression == true).ToList();
+                res.Data = res.Data?.Where(x => x.IsOptionExpression == filter.IsOptionExpression).ToList();
                 res.TotalRecords = res.Data.Count();
             }
             return Ok(res);
         }
 
-
-      
 
         [HttpPost]
         [Route("SettingById")]
