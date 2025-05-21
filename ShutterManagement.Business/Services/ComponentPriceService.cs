@@ -378,7 +378,7 @@ namespace ShutterManagement.Business.Services
                                                              OptionId = options.OptionId.ToString(),
                                                              OptionTypeId = optionValues.OptionTypeId.ToString(),
                                                              OptionName = options.OptionName ?? "",
-                                                             OptionTypeName = Convert.ToString(options.OptionName + " - " + optionValues.OptionType),
+                                                             OptionTypeName =  optionValues.OptionType ?? "",
                                                              WindowOptionId = windowOptions.WindowoptionId,
                                                              //IsTaxAvailable = opt.IsTaxApplied ?? false
                                                          };
@@ -412,7 +412,7 @@ namespace ShutterManagement.Business.Services
                                                          OptionId = options.OptionId.ToString(),
                                                          OptionTypeId = optionValues.OptionTypeId.ToString(),
                                                          OptionName = options.OptionName ?? "",
-                                                         OptionTypeName = Convert.ToString(options.OptionName + " - " + optionValues.OptionType),
+                                                         OptionTypeName =  optionValues.OptionType ?? "",
                                                          WindowOptionId = windowOptions.WindowoptionId,
                                                         // IsTaxAvailable = options.IsTaxApplied ?? false
                                                      };
@@ -421,7 +421,7 @@ namespace ShutterManagement.Business.Services
                         }
                         item.OptionsTypeIds = item.OptionTaxDetails.Select(x => x.OptionTypeId.ToString()).ToArray();
                         item.OptionIds = item.OptionTaxDetails.Select(x => x.OptionId.ToString()).ToArray();
-                        item.Options = item.OptionTaxDetails.Select(x => x.OptionTypeName).ToArray();
+                        item.Options = item.OptionTaxDetails.Select(x => x.OptionName + " - " + x.OptionTypeName).ToArray();
                     }
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.FetchSuccessMsg;
