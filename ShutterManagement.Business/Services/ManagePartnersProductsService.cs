@@ -138,9 +138,11 @@ namespace ShutterManagement.Business.Services
                                     {
                                         var optionprice = optionsTypeService.GetAllQuerable().Where(x => x.OptionTypeId == IsManagepartneroptiontype.OptionTypeId
                                         && x.IsActive == true && x.IsDelete == false).Select(x => x.AdditionalCost).FirstOrDefault();
-                                        var (maxSellingPrice1, minSellingPrice1, wholesale1) =
-                                         CalculateSellingPrices((decimal)optionprice, (decimal)optionprice, (decimal)IsManagepartneroptiontype.WholeSalePrice, (decimal)IsManagepartneroptiontype.MaxPrice,
-                                      item.MarkupOptionType);
+                                        decimal minSellingPrice1 = 0.0m;
+                                        decimal maxSellingPrice1 = 0.0m;
+                                        //  var (maxSellingPrice1, minSellingPrice1, wholesale1) =
+                                        //   CalculateSellingPrices((decimal)optionprice, (decimal)optionprice, (decimal)IsManagepartneroptiontype.WholeSalePrice, (decimal)IsManagepartneroptiontype.MaxPrice,
+                                        //item.MarkupOptionType);
                                         if (item.MarkupOptionType == EnumValue.GetEnumValue(PriceType.Percentage))
                                         {
                                             minSellingPrice1 = (decimal)((-1) * IsManagepartneroptiontype.MaxPrice);
@@ -422,7 +424,7 @@ namespace ShutterManagement.Business.Services
                                           join o2 in dbContext.TblOptionsTypes on o1.OptionTypeId equals o2.OptionTypeId
                                           join o3 in dbContext.TblManagePartnersProducts on o1.ManageProductId equals o3.ManageProductId
                                           where o1.IsDelete == false && o1.IsActive == true && o1.IsAvailable == true &&
-                                                optionIds.Contains(o1.OptionId) &&
+                                                optionIds.Contains(o1.OptionId) && o2.IsActive == true && o2.IsDelete == false &&
                                                 o1.TenantId == AppConstant.LoggedInTenantId
                                           select new ProductOptionTypeList
                                           {
