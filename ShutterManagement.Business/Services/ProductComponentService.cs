@@ -123,6 +123,7 @@ namespace ShutterManagement.Business.Services
 
                         await Update(productcomponent);
 
+                        //var getallcomponents = GetAllQuerable().(x => x.P)
                         responseVm.IsSuccess = true;
                         responseVm.Message = AppConstant.DeleteSuccessMsg;
                     }
