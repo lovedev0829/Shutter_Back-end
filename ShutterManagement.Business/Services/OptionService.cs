@@ -245,7 +245,7 @@ namespace ShutterManagement.Business.Services
                         {
                             OptionId = x.OptionId,
                             IsActive = x.IsActive,
-                            OptionName = x.OptionName,
+                            OptionName = x.OptionName??"",
                             TaxId = x.TaxId ?? null,
                             TaxName = dbContext.TblTaxRates.Where(y => y.TaxRateId == x.TaxId).Select(z => z.TaxName).FirstOrDefault() ?? "",
                             ProductId = x.ProductId,
