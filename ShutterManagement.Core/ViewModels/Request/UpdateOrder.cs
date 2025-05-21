@@ -13,5 +13,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         [DefaultValue("")]
         [Required]
         public Guid OrderId { get; set; }
+
+        
     }
 }

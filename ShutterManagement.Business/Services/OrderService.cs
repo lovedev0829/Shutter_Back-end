@@ -238,6 +238,7 @@ namespace ShutterManagement.Business.Services
                     newOrder.OrderName = OrderNumber;
                     newOrder.IsActive = true;
                     newOrder.IsDelete = false;
+                    newOrder.IsTaxApplied = updateOrder.IsTaxApplicable;
                     newOrder.CreatedBy = AppConstant.LoggedInUserID;
                     newOrder.ModifiedBy = AppConstant.LoggedInUserID;
                 }
@@ -265,6 +266,7 @@ namespace ShutterManagement.Business.Services
                     newOrder.OrderName = OrderNumber;
                     newOrder.IsActive = true;
                     newOrder.IsDelete = false;
+                    newOrder.IsTaxApplied = estimate.IsTaxApplied;
                     newOrder.CreatedBy = AppConstant.LoggedInUserID;
                     newOrder.ModifiedBy = AppConstant.LoggedInUserID;
                 };
