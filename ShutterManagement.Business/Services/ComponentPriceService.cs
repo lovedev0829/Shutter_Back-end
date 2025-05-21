@@ -409,7 +409,7 @@ namespace ShutterManagement.Business.Services
                                                          OptionId = options.OptionId.ToString(),
                                                          OptionTypeId = optionValues.OptionTypeId.ToString(),
                                                          OptionName = options.OptionName ?? "",
-                                                         OptionTypeName = optionValues.OptionType ?? "",
+                                                         OptionTypeName = Convert.ToString(options.OptionName + " - " + optionValues.OptionType),
                                                          WindowOptionId = windowOptions.WindowoptionId,
                                                         // IsTaxAvailable = options.IsTaxApplied ?? false
                                                      };
