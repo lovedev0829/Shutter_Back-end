@@ -62,4 +62,18 @@ public partial class TblOrderWindowProduct
     public string? ProductTypeName { get; set; }
 
     public decimal? ProductPrice { get; set; }
+
+    public string? TaxName { get; set; }
+
+    public decimal? Municipality { get; set; }
+
+    public decimal? State { get; set; }
+
+    public decimal? City { get; set; }
+
+    public Guid? TaxId { get; set; }
+
+    public virtual TblTaxRate? Tax { get; set; }
+
+    public virtual ICollection<TblOrderWindowProductOption> TblOrderWindowProductOptions { get; set; } = new List<TblOrderWindowProductOption>();
 }

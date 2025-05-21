@@ -47,6 +47,10 @@ public partial class TblTaxRate
 
     public virtual ICollection<TblOption> TblOptions { get; set; } = new List<TblOption>();
 
+    public virtual ICollection<TblOrderWindowProductOption> TblOrderWindowProductOptions { get; set; } = new List<TblOrderWindowProductOption>();
+
+    public virtual ICollection<TblOrderWindowProduct> TblOrderWindowProducts { get; set; } = new List<TblOrderWindowProduct>();
+
     public virtual ICollection<TblProduct> TblProducts { get; set; } = new List<TblProduct>();
 
     public virtual TblTenant? Tenant { get; set; }
