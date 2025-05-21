@@ -137,19 +137,21 @@ namespace ShutterManagement.Business.Services
                                     if (IsManagepartneroptiontype != null)
                                     {
                                         var optionprice = optionsTypeService.GetAllQuerable().Where(x => x.OptionTypeId == IsManagepartneroptiontype.OptionTypeId
-                                        && x.IsActive == true && x.IsDelete == false).Select(x => x.AdditionalCost).FirstOrDefault();
-                                        var (maxSellingPrice1, minSellingPrice1, wholesale1) =
-                                         CalculateSellingPrices((decimal)optionprice, (decimal)optionprice, (decimal)IsManagepartneroptiontype.WholeSalePrice, (decimal)IsManagepartneroptiontype.MaxPrice,
-                                      item.MarkupOptionType);
+                                        && x.IsActive == true && x.IsDelete == false).Select(x => x.AdditionalCost).FirstOrDefault() ?? 0.0m;
+                                        //  var (maxSellingPrice1, minSellingPrice1, wholesale1) =
+                                        //   CalculateSellingPrices((decimal)optionprice != null ? (decimal)optionprice : 0.0m, (decimal)optionprice !=null?(decimal)optionprice:0.0m , (decimal)IsManagepartneroptiontype.WholeSalePrice, (decimal)IsManagepartneroptiontype.MaxPrice,
+                                        //item.MarkupOptionType);
+                                        var minSellingPrice1=0.0m;
+                                            var maxSellingPrice1=0.0m;
                                         if (item.MarkupOptionType == EnumValue.GetEnumValue(PriceType.Percentage))
                                         {
                                             minSellingPrice1 = (decimal)((-1) * IsManagepartneroptiontype.MaxPrice);
-                                            maxSellingPrice1 = (decimal)IsManagepartneroptiontype.MaxPrice;
+                                             maxSellingPrice1 = (decimal)IsManagepartneroptiontype.MaxPrice;
                                         }
                                         if (item.MarkupOptionType == EnumValue.GetEnumValue(PriceType.Fixed))
                                         {
-                                            minSellingPrice1 = (decimal)((-1) * IsManagepartneroptiontype.MaxPrice);
-                                            maxSellingPrice1 = (decimal)IsManagepartneroptiontype.MaxPrice;
+                                             minSellingPrice1 = (decimal)((-1) * IsManagepartneroptiontype.MaxPrice);
+                                             maxSellingPrice1 = (decimal)IsManagepartneroptiontype.MaxPrice;
                                         }
                                         if (item.PartnerSellingPrice >= minSellingPrice1 && item.PartnerSellingPrice <= maxSellingPrice1)
                                         {

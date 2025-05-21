@@ -874,7 +874,7 @@ namespace ShutterManagement.Business.Services
                 decimal SumofSubtotalandAdditionalCost = 0.0M;
                 decimal subtotal = 0.0M;
                 decimal grandtotal = 0.0M;
-                decimal totalTaxAmount = 0m;
+                decimal totalTaxAmount = 0.0m;
                 Guid? taxRateId = null;
                 Guid? discountId = null;
                 var PricedProductsList = model.ProductsList.Where(x => x.ProductPrice != null && x.ProductPrice > 0).ToList();
@@ -1441,7 +1441,7 @@ namespace ShutterManagement.Business.Services
             decimal SumofSubtotalandAdditionalCost = 0.0M;
             decimal grandtotal = 0m;
             decimal additionalCost = 0m;
-            decimal totalTaxAmount = 0m;
+            decimal totalTaxAmount = 0.0m;
             Guid? taxRateId = null;
             Guid? discountId = null;
             var PricedProductsList = model.ProductsList.Where(x => x.ProductPrice != null && x.ProductPrice > 0).ToList();

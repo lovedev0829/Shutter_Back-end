@@ -402,11 +402,13 @@ namespace ShutterManagement.Business.Services
                                                          OptionId = options.OptionId.ToString(),
                                                          WindowOptionId = windowOptions.WindowoptionId,
                                                          //IsTaxAvailable = opt.IsTaxApplied ?? false
+                                                         
                                                      };
 
                             item.OptionTaxDetails = TaxOprionByPartner.ToList();
 
-
+                            //item.OptionsTypeIds = optionValues.Select(x => x.OptionTypeId.ToString()).ToArray();
+                            //item.OptionIds = Options.Select(x => x.Optionid.ToString()).ToArray();
                             //item.OptionTaxDetails = new List<OptionTaxVM>();
 
                             //foreach (var option in optionData)
