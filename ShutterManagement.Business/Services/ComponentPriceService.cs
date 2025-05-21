@@ -376,6 +376,9 @@ namespace ShutterManagement.Business.Services
                                                              CityTax = (tax.TaxRateId != Guid.Empty ? tax.City : item.CityTax) ?? item.CityTax ?? 0.0m,
                                                              OptionPrice = optionValues.AdditionalCost,
                                                              OptionId = options.OptionId.ToString(),
+                                                             OptionTypeId = optionValues.OptionTypeId.ToString(),
+                                                             OptionName = options.OptionName ?? "",
+                                                             OptionTypeName = Convert.ToString(options.OptionName + " - " + optionValues.OptionType),
                                                              WindowOptionId = windowOptions.WindowoptionId,
                                                              //IsTaxAvailable = opt.IsTaxApplied ?? false
                                                          };
