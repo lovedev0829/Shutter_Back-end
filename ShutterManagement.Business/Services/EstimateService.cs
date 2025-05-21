@@ -950,6 +950,7 @@ namespace ShutterManagement.Business.Services
                 estimate.TermsCondition = model.TermsCondition;
                 estimate.ModifiedBy = AppConstant.LoggedInUserID;
                 estimate.IsTaxApplied = model.IsTaxApplicable;
+                estimate.TotaltaxAmount = totalTaxAmount;
                 estimate.UpdatedAt = DateTime.Now;
 
                 await Update(estimate);
@@ -1508,6 +1509,7 @@ namespace ShutterManagement.Business.Services
                 TotalPrice = subtotal,
                 AdditionalCost = additionalCost,
                 IsTaxApplied= model.IsTaxApplicable,
+                TotaltaxAmount= totalTaxAmount,
                 Status = EnumValue.GetEnumValue(Estimation.New),
             };
             var res = await Add(createEstimate);

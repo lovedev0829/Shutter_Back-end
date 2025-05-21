@@ -44,6 +44,10 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? TenantId { get; set; }
         public Guid? ContactId { get; set; }
         public bool? IsTaxApplied { get; set; } = false;
+
+        public decimal? TotaltaxAmount { get; set; }
+
+        public bool? IsTaxApplicable { get; set; } = false;
         public JobDetail jobDetails { get; set; } = new JobDetail();
         public List<EstimateProductLists> EstimateProductList { get; set; } = new List<EstimateProductLists>();
     }

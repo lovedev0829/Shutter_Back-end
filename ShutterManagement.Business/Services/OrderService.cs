@@ -239,6 +239,7 @@ namespace ShutterManagement.Business.Services
                     newOrder.IsActive = true;
                     newOrder.IsDelete = false;
                     newOrder.IsTaxApplied = updateOrder.IsTaxApplicable;
+                    newOrder.TotaltaxAmount = totalTaxAmount;
                     newOrder.CreatedBy = AppConstant.LoggedInUserID;
                     newOrder.ModifiedBy = AppConstant.LoggedInUserID;
                 }
@@ -267,6 +268,7 @@ namespace ShutterManagement.Business.Services
                     newOrder.IsActive = true;
                     newOrder.IsDelete = false;
                     newOrder.IsTaxApplied = estimate.IsTaxApplied;
+                    newOrder.TotaltaxAmount = estimate.TotaltaxAmount;
                     newOrder.CreatedBy = AppConstant.LoggedInUserID;
                     newOrder.ModifiedBy = AppConstant.LoggedInUserID;
                 };
@@ -513,6 +515,8 @@ namespace ShutterManagement.Business.Services
                             orderExist.AdditionalCost = additionalCost;
                             orderExist.TermsCondition = model.TermsCondition;
                             orderExist.ModifiedBy = AppConstant.LoggedInUserID;
+                            orderExist.IsTaxApplied = model.IsTaxApplicable;
+                            orderExist.TotaltaxAmount = totalTaxAmount;
                             orderExist.UpdatedAt = DateTime.Now;
                             await Update(orderExist);
                             responseVm.Message = AppConstant.UpdateSuccessMsg;
@@ -924,6 +928,8 @@ namespace ShutterManagement.Business.Services
                     GrandTotal = order.GrandTotal,
                     Notes = order.Notes,
                     Tax = order.TaxAmount,
+                    TotaltaxAmount = order.TotaltaxAmount,
+                    IsTaxApplicable = order.IsTaxApplied,
                     TermsCondition = order.TermsCondition,
                 };
                 var jobDetails = jobService.GetAllQuerable().Where(x => x.JobId == order.JobId).Select(x => x.ContactId).FirstOrDefault();
