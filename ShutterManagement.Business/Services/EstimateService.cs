@@ -615,10 +615,15 @@ namespace ShutterManagement.Business.Services
                                 (decimal)item.Width,
                                   false
                                    );
+                            item.OptionTaxDetails.ForEach(x =>
+                            {
+                                x.OptionPrice = optionMSRPDict.OptionMSRP.Where(y => y.Key == x.OptionTypeId.ToString()).FirstOrDefault().Value;
+
+                            });
                             var optionMSRPArray = optionMSRPDict.OptionMSRP.Values.ToArray();
-                            item.OptionsPrice = optionMSRPArray;
+                            //item.OptionsPrice = optionMSRPArray;
                             item.AdditionalCost = optionMSRPArray.Sum();
-                            item.IsTaxApplied = await IsTaxApplied((Guid)item.JobId);
+                            //item.IsTaxApplied = await IsTaxApplied((Guid)item.JobId);
                             //item.TotalTaxAmount = item.IsTaxAvailable == true
                             //? CalculateTotalTaxAmount(item.TotalPrice, item.MunicipalityTax, item.CityTax, item.StateTax)
                             //: 0.0m;
