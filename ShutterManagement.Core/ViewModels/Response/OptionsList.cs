@@ -22,6 +22,11 @@ namespace ShutterManagement.Core.ViewModels.Response
         public bool? IsActive { get; set; }
         public string? Unit { get; set; }
         public List<OptionsType>? Options { get; set; }
+
+        public bool? IsTaxAvailable { get; set; } = true;
+        public Guid? TaxId { get; set; }
+
+        public string? TaxName { get; set; }
     }
     public class OptionsType
     {

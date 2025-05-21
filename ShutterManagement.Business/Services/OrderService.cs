@@ -155,11 +155,13 @@ namespace ShutterManagement.Business.Services
                     decimal grandtotal = 0m;
                     Guid? taxRateId = null;
                     Guid? discountId = null;
+                    decimal totalTaxAmount = 0m;
                     var windowproductdetails = await estimateService.BuildEstimate(updateOrder.WindowProductId, false, updateOrder.EstimateId.ToString(), true);
                     if (windowproductdetails.Data != null && windowproductdetails.Data.Any())
                     {
                         additionalCost = (decimal)windowproductdetails.Data.ToList().DistinctBy(x => x.AdditionalCost).FirstOrDefault().AdditionalCost;
                         subtotal = (decimal)windowproductdetails.Data.Sum(x => x.Price);
+                        totalTaxAmount += (decimal)windowproductdetails.Data.DistinctBy(x => x.WindowProdcutId).Sum(x => x.TotalTaxAmount);
                         SumofSubtotalandAdditionalCost = subtotal + additionalCost;
                     }
                     if (string.IsNullOrEmpty((updateOrder.taxRateId).ToString()) && string.IsNullOrEmpty(updateOrder.DiscountCoupon))
@@ -411,36 +413,63 @@ namespace ShutterManagement.Business.Services
                             decimal grandtotal = 0.0M;
                             Guid? taxRateId = null;
                             Guid? discountId = null;
+                            decimal totalTaxAmount = 0m;
                             var windowproductdetails = await estimateService.BuildEstimate(model.WindowProductId, false, model.EstimateId.ToString(), true);
                             if (windowproductdetails.Data != null && windowproductdetails.Data.Any())
                             {
                                 additionalCost = (decimal)windowproductdetails.Data.ToList().DistinctBy(x => x.AdditionalCost).FirstOrDefault().AdditionalCost;
                                 subtotal = (decimal)windowproductdetails.Data.Sum(x => x.Price);
                                 SumofSubtotalandAdditionalCost = subtotal + additionalCost;
+                                totalTaxAmount += (decimal)windowproductdetails.Data.DistinctBy(x => x.WindowProdcutId).Sum(x => x.TotalTaxAmount);
                             }
-                            if (string.IsNullOrEmpty((model.taxRateId).ToString()) && string.IsNullOrEmpty(model.DiscountCoupon))
+                            //if (string.IsNullOrEmpty((model.taxRateId).ToString()) && string.IsNullOrEmpty(model.DiscountCoupon))
+                            //{
+                            //    grandtotal = SumofSubtotalandAdditionalCost;
+                            //}
+                            //else
+                            //{
+                            //    if (string.IsNullOrEmpty((model.taxRateId).ToString()))
+                            //    {
+                            //        taxRateId = Guid.Empty;
+                            //    }
+                            //    else
+                            //    {
+                            //        taxRateId = model.taxRateId;
+                            //    }
+                            //    if (string.IsNullOrEmpty(model.DiscountId.ToString()))
+                            //    {
+                            //        discountId = Guid.Empty;
+                            //    }
+                            //    else
+                            //    {
+                            //        discountId = model.DiscountId;
+                            //    }
+                            //    grandtotal = await estimateService.CalculateGrandTotal(discountId, SumofSubtotalandAdditionalCost, taxRateId) ?? 0m;
+                            //}
+                            if (string.IsNullOrEmpty((model.taxRateId).ToString()))
                             {
-                                grandtotal = SumofSubtotalandAdditionalCost;
+                                taxRateId = Guid.Empty;
                             }
                             else
                             {
-                                if (string.IsNullOrEmpty((model.taxRateId).ToString()))
-                                {
-                                    taxRateId = Guid.Empty;
-                                }
-                                else
-                                {
-                                    taxRateId = model.taxRateId;
-                                }
-                                if (string.IsNullOrEmpty(model.DiscountId.ToString()))
-                                {
-                                    discountId = Guid.Empty;
-                                }
-                                else
-                                {
-                                    discountId = model.DiscountId;
-                                }
-                                grandtotal = await estimateService.CalculateGrandTotal(discountId, SumofSubtotalandAdditionalCost, taxRateId) ?? 0m;
+                                taxRateId = model.taxRateId;
+                            }
+                            if (string.IsNullOrEmpty(model.DiscountId.ToString()) && string.IsNullOrEmpty(model.DiscountCoupon))
+                            {
+                                discountId = Guid.Empty;
+                            }
+                            else
+                            {
+                                discountId = model.DiscountId;
+                            }
+                            grandtotal = await estimateService.CalculateGrandTotal(discountId, SumofSubtotalandAdditionalCost, taxRateId) ?? 0m;
+
+                            bool isTaxExemptionInContact = GetIsTaxExemptByWindowId(windowproductdetails.Data.Select(s => s.WindowId).FirstOrDefault());
+                            if (model.IsTaxApplicable == true && isTaxExemptionInContact)
+                            {
+                                grandtotal = grandtotal + totalTaxAmount;
+
+                                grandtotal = grandtotal + windowproductdetails.Data.SelectMany(x => x.OptionTaxDetails).Sum(x => (decimal)x.TotalTaxAmount);
                             }
 
                             orderExist.Notes = model.Notes;
@@ -483,6 +512,20 @@ namespace ShutterManagement.Business.Services
             }
 
             return responseVm;
+        }
+
+        private bool GetIsTaxExemptByWindowId(Guid? windowId)
+        {
+            var isTaxExempt = (from w in dbContext.TblWindows
+                               join j in dbContext.TblJobs on w.JobId equals j.JobId
+                               join c in dbContext.TblContacts on j.ContactId equals c.ContactId
+                               where w.WindowId == windowId
+                                     && w.IsDelete == false
+                                     && j.IsDelete == false
+                                     && c.IsDelete == false
+                               select c.IsTaxExemption).FirstOrDefault();
+
+            return isTaxExempt ?? false;
         }
 
         public async Task<IResponseVm<string>> ChangeStatus(Guid OrderId, Estimation NewOrderStatus)

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -39,7 +40,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public decimal? AdditionalWidth { get; set; }
         public decimal? Markup { get; set; }
         public string[]? Options { get; set; } = [];
-        public string[]? OptionsId { get; set; } = [];
+        public string[]? OptionsTypeIds { get; set; } = [];
         public decimal[]? OptionsPrice { get; set; } = [];
         public decimal? AdditionalCost { get; set; } = 0.0m;
 
@@ -80,5 +81,67 @@ namespace ShutterManagement.Core.ViewModels.Response
         //Tax Excemption
         public bool? IsTaxApplied { get; set; } = false;
 
+
+        // Tax Details 
+
+        public bool? IsTaxAvailable { get; set; } = false;
+
+        public Guid? TaxRateId { get; set; }
+        public string? TaxName { get; set; }
+        public decimal? MunicipalityTax { get; set; }
+
+        public decimal? StateTax { get; set; }
+
+        public decimal? CityTax { get; set; }
+        public decimal? CityTaxAmount { get; set; }
+        public decimal? StateTaxAmount { get; set; }
+        public decimal? MunicipalityTaxAmount { get; set; }
+        public decimal? TotalTaxAmount  { get; set; }
+
+        // Option tax Details 
+
+        public string[]? OptionIds { get; set; } = [];
+        public Guid[]? OptionTaxRateIds { get; set; }
+        public Guid[]? WindowOptionId { get; set; }
+        public string[]? OptionTaxNames { get; set; }
+        public decimal[]? OptionMunicipalities { get; set; }
+        public decimal[]? OptionStateTaxes { get; set; }
+        public decimal[]? OptionCityTaxes { get; set; }
+        public bool?[]? OptionIsTaxAvailable { get; set; }
+
+
+        // option tax details
+        public string? OptionTaxName { get; set; }
+        public decimal? OptionMunicipalityTax { get; set; }
+        public decimal? OptionStateTax { get; set; }
+        public decimal? OptionCityTaxe { get; set; }
+
+        public List<OptionTaxVM> OptionTaxDetails { get; set; } = new();
+
+
+
+
+
     }
+
+
+    public class OptionTaxVM
+    {
+        public string OptionId { get; set; } = string.Empty;
+        public Guid WindowOptionId { get; set; }
+        public string TaxName { get; set; } = string.Empty;
+        public Guid? TaxId { get; set; }
+        public decimal? OptionPrice { get; set; }
+        public string? OptionTaxName { get; set; }
+        public decimal? MunicipalityTax { get; set; }
+        public decimal? StateTax { get; set; }
+        public decimal?CityTax { get; set; }
+        public bool? IsTaxAvailable { get; set; } = false;
+        public decimal? CityTaxAmount { get; set; }
+        public decimal? StateTaxAmount { get; set; }
+        public decimal? MunicipalityTaxAmount { get; set; }
+
+        public decimal? TotalTaxAmount { get; set; }
+    }
+
 }

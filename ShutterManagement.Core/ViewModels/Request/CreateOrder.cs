@@ -58,5 +58,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         [Default("")]
         [Required]
         public string? Status { get; set; }
+
+        public bool? IsTaxApplicable { get; set; } = false;
     }
 }

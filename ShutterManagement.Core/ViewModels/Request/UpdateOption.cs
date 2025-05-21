@@ -29,6 +29,10 @@ namespace ShutterManagement.Core.ViewModels.Request
         public Guid? OptionExpression { get; set; }
         public OptionsType[]? Options { get; set; }
 
+        public bool? IsTaxAvailable { get; set; }
+        public Guid? TaxId { get; set; }
+
+
     }
    
 }

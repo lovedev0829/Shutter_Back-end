@@ -99,6 +99,8 @@ namespace ShutterManagement.Business.Services
                             CreatedAt = DateTime.Now,
                             CreatedBy = AppConstant.LoggedInUserID,
                             TenantId = AppConstant.LoggedInTenantId,
+                            IsTaxApplied = model.IsTaxAvailable,
+                            TaxId = model.TaxId,
                             IsActive = true,
                             IsDelete = false
                         };
@@ -149,7 +151,7 @@ namespace ShutterManagement.Business.Services
                     }
                     else
                     {
-                        responseVm.Message = AppConstant.AlreadyExists;
+                        responseVm.Message = "Option Name"+" "+AppConstant.AlreadyExists;
                     }
                 }
                 else
@@ -244,13 +246,17 @@ namespace ShutterManagement.Business.Services
                             OptionId = x.OptionId,
                             IsActive = x.IsActive,
                             OptionName = x.OptionName,
+                            TaxId = x.TaxId ?? null,
+                            TaxName = dbContext.TblTaxRates.Where(y => y.TaxRateId == x.TaxId).Select(z => z.TaxName).FirstOrDefault() ?? "",
                             ProductId = x.ProductId,
                             Unit = x.Unit,
                             Markup = x.Markup ?? 0.0m,
                             OptionExpression = x.OptionExpression.ToString() ?? "",
                             ProductName = dbContext.TblProducts.Where(y => y.ProductId == x.ProductId).Select(z => z.ProductName).FirstOrDefault(),
                             ProductTypeId = x.ProductTypeId,
-                            ProductTypeName = dbContext.MstProductTypes.Where(y => y.ProductId == x.ProductTypeId).Select(z => z.ProductName).FirstOrDefault()
+                            ProductTypeName = dbContext.MstProductTypes.Where(y => y.ProductId == x.ProductTypeId).Select(z => z.ProductName).FirstOrDefault(),
+                            IsTaxAvailable = x.IsTaxApplied,
+                            
                         })
                         .ToList();
 
@@ -265,7 +271,7 @@ namespace ShutterManagement.Business.Services
                                 IsDefault = x.IsDefault,
                                 OptionType = x.OptionType,
                                 OptionTypeId = x.OptionTypeId,
-                               // Unit = x.Unit
+                                //Unit = x.Unit
                             })
                             .ToList();
                         item.Options = optionsType;
@@ -283,6 +289,7 @@ namespace ShutterManagement.Business.Services
                                     || (x.OptionName?.ToLower() ?? "").Contains(filter?.SearchValue)
                                     || (x.Markup?.ToString().ToLower() ?? "").Contains(filter?.SearchValue)
                                     || (x.OptionExpression?.ToString().ToLower() ?? "").Contains(filter?.SearchValue)
+                                    || (x.TaxName?.ToLower() ?? "").Contains(filter?.SearchValue)
                                     || (x.ProductTypeName?.ToLower() ?? "").Contains(filter?.SearchValue)))
                                     .ToList();
 
@@ -337,18 +344,20 @@ namespace ShutterManagement.Business.Services
                         responseVm.Message = "Option Name " + AppConstant.AlreadyExists;
                         return responseVm;
                     }
-                    //TblOption options = new TblOption
-                    //{
-                    //    OptionId = Guid.NewGuid(),
-                    //    OptionName = model.OptionName,
-                    //    ProductId = model.ProductId,
-                    //    ProductTypeId = model.ProductTypeId,
-                    //    CreatedAt = DateTime.Now,
-                    //    CreatedBy = AppConstant.LoggedInUserID,
-                    //    TenantId = AppConstant.LoggedInTenantId,
-                    //    IsActive = true,
-                    //    IsDelete = false
-                    //};
+                    TblOption options = new TblOption
+                    {
+                        OptionId = Guid.NewGuid(),
+                        OptionName = model.OptionName,
+                        ProductId = model.ProductId,
+                        ProductTypeId = model.ProductTypeId,
+                        CreatedAt = DateTime.Now,
+                        CreatedBy = AppConstant.LoggedInUserID,
+                        TenantId = AppConstant.LoggedInTenantId,
+                        IsTaxApplied = model.IsTaxAvailable,
+                        TaxId = model.TaxId,
+                        IsActive = true,
+                        IsDelete = false
+                    };
 
                     if (IsOptionExists != null)
                     {
