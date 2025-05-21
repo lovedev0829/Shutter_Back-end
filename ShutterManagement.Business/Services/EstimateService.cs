@@ -745,55 +745,59 @@ namespace ShutterManagement.Business.Services
 
         public NCalc.Expression CalculateExpression(string formula, dynamic values)
         {
-            // check placeholders
-            string pattern = @"{{.*?}}";
+            // Find all placeholders in the formula
+            const string pattern = @"{{.*?}}";
             var matches = Regex.Matches(formula ?? "", pattern);
-            if (matches != null && matches.Count() > 0)
+            if (matches.Count > 0)
             {
                 foreach (Match match in matches)
                 {
                     var property = match.Value.Replace("{{", "").Replace("}}", "");
-                    var val = GetProperty.GetColumnValue(values, property);
+                    object val = GetProperty.GetColumnValue(values, property);
+
+                    // Handle null values and special property cases
                     if (val == null)
                     {
                         if (values.IsView)
                         {
                             val = values.UnitCost;
-                            if (GetProperty.GetColumnValue(values, "WasteFactor") != null)
-                            {
-                                val = (val * (100 + values.WasteFactor ?? 0) / 100);
-                            }
+                            var wasteFactor = GetProperty.GetColumnValue(values, "WasteFactor");
+                            if (wasteFactor != null)
+                                val = (val * (100 + (values.WasteFactor ?? 0)) / 100);
                         }
                         else
                         {
-
-                            string[] info = property.Split("__");
-                            if (info != null && info.Length > 0 && info.Length == 3)
+                            var info = property.Split("__");
+                            if (info.Length == 3 && info[0] == "Material")
                             {
-                                if (info[0] == "Material")
-                                {
-                                    if (values.IsRated)
-                                    {
-                                        val = materialService.GetAllQuerable().Where(x => x.ProductType.ToString() == info[1] && x.MaterialName == info[2] && x.IsActive == true && (x.TenantId == AppConstant.LoggedInTenantId || x.TenantId.ToString() == AppConstant.LoggedInParentTenantId)).Select(x => x.UnitCost).FirstOrDefault();
-                                    }
-                                    else
-                                    {
-                                        val = materialService.GetAllQuerable().Where(x => x.ProductType.ToString() == info[1] && x.MaterialName == info[2] && x.IsActive == true && (x.TenantId == AppConstant.LoggedInTenantId || x.TenantId.ToString() == AppConstant.LoggedInParentTenantId)).Select(x => x.NonRatedUnitCost).FirstOrDefault();
-                                    }
-                                    if (GetProperty.GetColumnValue(values, "WasteFactor") != null)
-                                    {
-                                        val = (val * (100 + values.WasteFactor ?? 0) / 100);
-                                    }
-                                }
+                                var query = materialService.GetAllQuerable()
+                                    .Where(x => x.ProductType.ToString() == info[1] && x.MaterialName == info[2] && x.IsActive == true &&
+                                                (x.TenantId == AppConstant.LoggedInTenantId || x.TenantId.ToString() == AppConstant.LoggedInParentTenantId));
+                                val = values.IsRated
+                                    ? query.Select(x => x.UnitCost).FirstOrDefault()
+                                    : query.Select(x => x.NonRatedUnitCost).FirstOrDefault();
+                                var wasteFactor = GetProperty.GetColumnValue(values, "WasteFactor");
+                                if (wasteFactor != null)
+                                    val = (val * (100 + (values.WasteFactor ?? 0)) / 100);
+                            }
+                            else if (info.Length == 4 && info[0] == "Material" && info[3] == "Unit")
+                            {
+                                var materialUnit = materialService.GetAllQuerable()
+                                    .Where(x => x.ProductType.ToString() == info[1] && x.MaterialName == info[2] && x.IsActive == true &&
+                                                (x.TenantId == AppConstant.LoggedInTenantId || x.TenantId.ToString() == AppConstant.LoggedInParentTenantId))
+                                    .Select(x => x.UnitOfMeasurement).FirstOrDefault();
+                                formula = formula?.Replace(match.Value, $"'{materialUnit}'");
+                                continue;
                             }
                         }
                     }
-             //       var ProductUnit = dbContext.MstUnitofMeasurements.Where(x => x.UnitofMeasurementId =)
+
+                    // Replace the placeholder in the formula with the value
                     if (property == "Unit")
                     {
                         formula = formula?.Replace(match.Value, $"'{val}'");
                     }
-                    else if(property == "OptionPrice")
+                    else if (property == "OptionPrice")
                     {
                         val = values.Optionprice;
                         formula = formula?.Replace(match.Value, Convert.ToDecimal(val).ToString("N2"));
@@ -802,27 +806,10 @@ namespace ShutterManagement.Business.Services
                     {
                         formula = formula?.Replace(match.Value, Convert.ToDecimal(val).ToString("N2"));
                     }
-                
-                // Set parameters
-                //formula = formula?.Replace(match.Value, Convert.ToDecimal(val).ToString("N2"));
-                    //expression.Parameters[match.Value] = Convert.ToDecimal(val);
                 }
             }
 
-            var expression = new NCalc.Expression(formula);
-            //// Add Unit dynamically if needed, compare with any string value
-            //if (formula.Contains("{{Unit}}"))
-            //{
-            //    string unitValue = values.Unit ?? "DefaultUnit";  // Default fallback if Unit is null
-            //    expression.Parameters["Unit"] = unitValue;  // Add the Unit value as a parameter to NCalc
-            //}
-
-            //// Always add other parameters like BuildWidth, BuildHeight, and Quantity.
-            //expression.Parameters["BuildWidth"] = values.BuildWidth;
-            //expression.Parameters["BuildHeight"] = values.BuildHeight;
-            //expression.Parameters["Quantity"] = values.Quantity;
-
-            return expression;
+            return new NCalc.Expression(formula);
         }
 
         public async Task<IResponseVm<string>> Update_Estimate(UpdatetEstimate model)

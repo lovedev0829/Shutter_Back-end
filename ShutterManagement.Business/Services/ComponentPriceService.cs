@@ -54,6 +54,14 @@ namespace ShutterManagement.Business.Services
                         Name = "Material__" + x.ProductType + "__" + x.MaterialName
                     });
                     ChipData.AddRange(MaterialData);
+
+                    var MaterialDataUnit = Materials.Data.Select(x => new ComponentPrice
+                    {
+                        Type = "Materials",
+                        ComponentName = x.MaterialName,
+                        Name = "Material__" + x.ProductType + "__" + x.MaterialName + "__Unit"
+                    });
+                    ChipData.AddRange(MaterialDataUnit);
                 }
                 if (!string.IsNullOrEmpty(Option))
                 {
@@ -76,7 +84,7 @@ namespace ShutterManagement.Business.Services
                 {
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.FetchSuccessMsg;
-                    responseVm.Data = ChipData;
+                    responseVm.Data = ChipData.OrderBy(x => x.ComponentName);
                 }
             }
             catch (Exception ex)
@@ -85,7 +93,6 @@ namespace ShutterManagement.Business.Services
             }
             return responseVm;
         }
-
         public async Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> GetProductDataForView(Guid WindowProductId, string EstimateID)
         {
             IResponseVm<List<WindowProdcutDetailsForEstimate>> responseVm = new ResponseVm<List<WindowProdcutDetailsForEstimate>>();
