@@ -753,7 +753,6 @@ namespace ShutterManagement.Business.Services
 
                             if (optionPrices != null)
                             {
-                                // Merge dictionaries
                                 foreach (var kvp in optionPrices.OptionWholesale)
                                 {
                                     optionWholesale[kvp.Key] = kvp.Value;
@@ -773,8 +772,8 @@ namespace ShutterManagement.Business.Services
                 {
                     msrp = totalMSRP,
                     basecost = baseCost,
-                    OptionWholesale = optionWholesale,
-                    OptionMSRP = optionMSRP
+                    OptionWholesale = optionWholesale ?? new Dictionary<string, decimal>(),
+                    OptionMSRP = optionMSRP ?? new Dictionary<string, decimal>(),
                 };
             }
             catch (Exception ex)
@@ -917,7 +916,8 @@ namespace ShutterManagement.Business.Services
                 join productComponent in dbContext.TblProductComponents 
                     on product.ProductId equals productComponent.ProductId 
                     into prodcomp from productComponent in prodcomp.DefaultIfEmpty()
-                join expression in dbContext.TblExpressions
+                .Where(x => x.IsActive == true)
+                 join expression in dbContext.TblExpressions
                     on productComponent.PricingExpression equals expression.Id.ToString() into exprJoin
                 from expression in exprJoin.DefaultIfEmpty()
                 join component in dbContext.TblComponents
