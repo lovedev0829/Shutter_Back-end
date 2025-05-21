@@ -146,12 +146,12 @@ namespace ShutterManagement.Business.Services
                                         if (item.MarkupOptionType == EnumValue.GetEnumValue(PriceType.Percentage))
                                         {
                                             minSellingPrice1 = (decimal)((-1) * IsManagepartneroptiontype.MaxPrice);
-                                            maxSellingPrice1 = (decimal)IsManagepartneroptiontype.MaxPrice;
+                                             maxSellingPrice1 = (decimal)IsManagepartneroptiontype.MaxPrice;
                                         }
                                         if (item.MarkupOptionType == EnumValue.GetEnumValue(PriceType.Fixed))
                                         {
-                                            minSellingPrice1 = (decimal)((-1) * IsManagepartneroptiontype.MaxPrice);
-                                            maxSellingPrice1 = (decimal)IsManagepartneroptiontype.MaxPrice;
+                                             minSellingPrice1 = (decimal)((-1) * IsManagepartneroptiontype.MaxPrice);
+                                             maxSellingPrice1 = (decimal)IsManagepartneroptiontype.MaxPrice;
                                         }
                                         if (item.PartnerSellingPrice >= minSellingPrice1 && item.PartnerSellingPrice <= maxSellingPrice1)
                                         {
