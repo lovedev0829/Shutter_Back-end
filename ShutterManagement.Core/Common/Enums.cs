@@ -202,7 +202,9 @@ namespace ShutterManagement.Core.Common
         [EnumMember(Value = "CM")]
         CM,
         [EnumMember(Value = "Sqft")]
-        Sqft
+        Sqft,
+        [EnumMember(Value = "lbs")]
+        lbs
     }
 
     public enum DownloadSample
