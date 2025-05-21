@@ -39,7 +39,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsActive == true && x.IsDelete == false);
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId  && x.IsActive == true && x.IsDelete == false);
                 if (IsTenant)
                 {
                     var IsOptionExists = GetAllQuerable()
@@ -78,7 +78,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null);
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId );
                 if (IsTenant)
                 {
                     var message = "";
@@ -172,7 +172,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsActive == true && x.IsDelete == false);
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId  && x.IsActive == true && x.IsDelete == false);
                 if (IsTenant)
                 {
                     var IsOptionExists = GetAllQuerable()
@@ -223,23 +223,23 @@ namespace ShutterManagement.Business.Services
 
                     var allOptions = (await GetAll())
                         .Where(x => x.IsDelete == false &&
-                                    (x.TenantId == AppConstant.LoggedInTenantId ||
-                                     x.TenantId.ToString().ToLower() == AppConstant.LoggedInParentTenantId.ToLower()))
+                                    (x.TenantId == AppConstant.LoggedInTenantId ))//||
+                                    // x.TenantId.ToString().ToLower() == AppConstant.LoggedInParentTenantId.ToLower()))
                         .OrderByDescending(x => x.CreatedAt)
                         .ToList();
 
                     
-                    if (isSubTenant)
-                    {
-                        var assignedOptionIds = dbContext.TblManagePartnersProductsOptions
-                            .Where(m => m.TenantId == AppConstant.LoggedInTenantId && m.IsAvailable == true && m.IsDelete==false && m.IsActive==true)
-                            .Select(m => m.OptionId)
-                            .ToList();
+                    //if (isSubTenant)
+                    //{
+                    //    var assignedOptionIds = dbContext.TblManagePartnersProductsOptions
+                    //        .Where(m => m.TenantId == AppConstant.LoggedInTenantId && m.IsAvailable == true && m.IsDelete==false && m.IsActive==true)
+                    //        .Select(m => m.OptionId)
+                    //        .ToList();
 
-                        allOptions = allOptions
-                            .Where(x => assignedOptionIds.Contains(x.OptionId))
-                            .ToList();
-                    }
+                    //    allOptions = allOptions
+                    //        .Where(x => assignedOptionIds.Contains(x.OptionId))
+                    //        .ToList();
+                    //}
 
                     var IsOptionExists = allOptions
                         .Select(x => new OptionsList
@@ -283,7 +283,7 @@ namespace ShutterManagement.Business.Services
                     var FilterRecords = IsOptionExists
                                     .Where(x =>
                                     (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
-                                     (string.IsNullOrEmpty(filter.ProductType) ? true : (filter.ProductType == x.ProductId.ToString())) &&
+                                     (string.IsNullOrEmpty(filter.ProductType) ? true : (filter.ProductType == x.ProductTypeId.ToString())) &&
                                     (string.IsNullOrEmpty(filter.SearchValue) ? true :
                                     (x.OptionId.ToString() == filter.SearchValue)
                                     || (x.ProductName?.ToLower() ?? "").Contains(filter?.SearchValue)
@@ -324,7 +324,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsActive == true && x.IsDelete == false);
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId  && x.IsActive == true && x.IsDelete == false);
                 if (IsTenant)
                 {
                     var IsOptionExists = GetAllQuerable()
