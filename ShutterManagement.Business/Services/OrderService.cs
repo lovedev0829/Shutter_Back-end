@@ -1067,7 +1067,10 @@ namespace ShutterManagement.Business.Services
                     x.ProductPrice,
                 }).ToList();
 
-            e.WindowProductId = productList.Select(p => (Guid)p.WindowProductId).Distinct().ToArray();
+        
+
+
+            e.WindowProductId = productList.DistinctBy(x=>x.ProductId).Select(p => (Guid)p.WindowProductId).ToArray();
             foreach (var p in productList)
             {
                 var Options = (from windowOption in dbContext.WindowOptions
