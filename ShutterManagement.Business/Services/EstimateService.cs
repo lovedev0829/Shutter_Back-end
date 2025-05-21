@@ -608,7 +608,7 @@ namespace ShutterManagement.Business.Services
                     {
                         foreach (var item in WindowProductData)
                         {
-                            item.AdditionalCost = (decimal)(await CalculateOptionPrice(item.OptionsId,
+                            item.AdditionalCost = (decimal)(await CalculateOptionPrice(item.OptionsTypeIds,
                                           (decimal)item.Quantity,
                                           (decimal)item.Height,
                                           (decimal)item.Width,

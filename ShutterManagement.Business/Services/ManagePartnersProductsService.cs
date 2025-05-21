@@ -739,10 +739,10 @@ namespace ShutterManagement.Business.Services
                             totalMSRP += finalMSRP;
                         }
                         // Option Pricing
-                        if (item.OptionsId?.Length > 0)
+                        if (item.OptionsTypeIds?.Length > 0)
                         {
                             var optionPrices = await estimateService.CalculateOptionPrice(
-                                item.OptionsId,
+                                item.OptionsTypeIds,
                                 item.Quantity,
                                 item.BuildHeight,
                                 item.BuildWidth,
@@ -1003,7 +1003,7 @@ namespace ShutterManagement.Business.Services
                         .Where(o => o.ProductId == item.ProductId)
                         .ToList();
 
-                    item.OptionsId = matchedOptions.Select(o => o.OptionTypeId.ToString()).ToArray();
+                    item.OptionsTypeIds = matchedOptions.Select(o => o.OptionTypeId.ToString()).ToArray();
                     item.Options = matchedOptions.Select(o => o.OptionTypeName).ToArray();
                     item.OptionsPrice = matchedOptions.Select(o => o.OptionPrice).ToArray();
                 }
