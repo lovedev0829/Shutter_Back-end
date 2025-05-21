@@ -58,7 +58,7 @@ namespace ShutterManagement.Business.Services
                     var MaterialDataUnit = Materials.Data.Select(x => new ComponentPrice
                     {
                         Type = "Materials",
-                        ComponentName = x.MaterialName,
+                        ComponentName = x.MaterialName + " - Unit",
                         Name = "Material__" + x.ProductType + "__" + x.MaterialName + "__Unit"
                     });
                     ChipData.AddRange(MaterialDataUnit);
