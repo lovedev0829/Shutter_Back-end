@@ -608,11 +608,16 @@ namespace ShutterManagement.Business.Services
                     {
                         foreach (var item in WindowProductData)
                         {
-                            item.AdditionalCost = (decimal)(await CalculateOptionPrice(item.OptionsTypeIds,
-                                          (decimal)item.Quantity,
-                                          (decimal)item.Height,
-                                          (decimal)item.Width,
-                                           false)).TotalCost;
+                            var optionMSRPDict = await CalculateOptionPrice(
+                                item.OptionsTypeIds,
+                                (decimal)item.Quantity,
+                                (decimal)item.Height,
+                                (decimal)item.Width,
+                                  false
+                                   );
+                            var optionMSRPArray = optionMSRPDict.OptionMSRP.Values.ToArray();
+                            item.OptionsPrice = optionMSRPArray;
+                            item.AdditionalCost = optionMSRPArray.Sum();
                             item.IsTaxApplied = await IsTaxApplied((Guid)item.JobId);
                             //item.TotalTaxAmount = item.IsTaxAvailable == true
                             //? CalculateTotalTaxAmount(item.TotalPrice, item.MunicipalityTax, item.CityTax, item.StateTax)
@@ -778,7 +783,7 @@ namespace ShutterManagement.Business.Services
                                     : query.Select(x => x.NonRatedUnitCost).FirstOrDefault();
                                 var wasteFactor = GetProperty.GetColumnValue(values, "WasteFactor");
                                 if (wasteFactor != null)
-                                    val = (val * (100 + (values.WasteFactor ?? 0)) / 100);
+                                    val = (Convert.ToDecimal(val) * (100 + (values.WasteFactor ?? 0)) / 100);
                             }
                             else if (info.Length == 4 && info[0] == "Material" && info[3] == "Unit")
                             {
@@ -2083,16 +2088,16 @@ namespace ShutterManagement.Business.Services
                     OptionMSRP = Math.Round((decimal)(OptionWholesale * (1 + optionexp.Markup / 100)), 2);
                 }
 
-                if (IsManageProduct == true)
-                {
+                //if (IsManageProduct == true)
+                //{
                     result.OptionWholesale[optionTypeId] = OptionWholesale;
                     result.OptionMSRP[optionTypeId] = OptionMSRP;
                     continue;
-                }
+            //}
 
 
-                // Apply tenant-specific logic
-                if (!isTenant)
+            // Apply tenant-specific logic
+            if (!isTenant)
                 {
                     OptionMSRP = ApplySubtenantMarkup(option.OptionTypeId, OptionMSRP);
                 }

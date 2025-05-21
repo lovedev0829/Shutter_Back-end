@@ -128,6 +128,9 @@ namespace ShutterManagement.Core.ViewModels.Response
     public class OptionTaxVM
     {
         public string OptionId { get; set; } = string.Empty;
+        public string OptionTypeId { get; set; } = string.Empty;
+        public string OptionName { get; set; } = string.Empty;
+        public string OptionTypeName { get; set; } = string.Empty;
         public Guid WindowOptionId { get; set; }
         public string TaxName { get; set; } = string.Empty;
         public Guid? TaxId { get; set; }

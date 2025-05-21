@@ -770,7 +770,7 @@ namespace ShutterManagement.Business.Services
                 {
                     msrp = totalMSRP,
                     basecost = baseCost,
-                    OptionWholesale = optionWholesale ?? new Dictionary<"", 0.0m>(),
+                    OptionWholesale = optionWholesale ?? new Dictionary<string, decimal>(),
                     OptionMSRP = optionMSRP ?? new Dictionary<string, decimal>(),
                 };
             }

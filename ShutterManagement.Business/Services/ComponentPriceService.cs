@@ -388,7 +388,7 @@ namespace ShutterManagement.Business.Services
 
                         else
                         {
-                            var TaxOprionByPartner = from windowOptions in dbContext.WindowOptions
+                            var TaxOptionForTenant = from windowOptions in dbContext.WindowOptions
                                                      join optionValues in dbContext.TblOptionsTypes on windowOptions.OptionTypeId equals optionValues.OptionTypeId
                                                      join options in dbContext.TblOptions on optionValues.OptionId equals options.OptionId
                                                     join taxDetails in dbContext.TblTaxRates on options.TaxId equals taxDetails.TaxRateId into PTax
@@ -407,33 +407,18 @@ namespace ShutterManagement.Business.Services
                                                          CityTax = (tax.TaxRateId != Guid.Empty ? tax.City : item.CityTax) ?? 0.0m,
                                                          OptionPrice = optionValues.AdditionalCost,
                                                          OptionId = options.OptionId.ToString(),
+                                                         OptionTypeId = optionValues.OptionTypeId.ToString(),
+                                                         OptionName = options.OptionName ?? "",
+                                                         OptionTypeName = optionValues.OptionType ?? "",
                                                          WindowOptionId = windowOptions.WindowoptionId,
-                                                         //IsTaxAvailable = opt.IsTaxApplied ?? false
+                                                        // IsTaxAvailable = options.IsTaxApplied ?? false
                                                      };
-
-                            item.OptionTaxDetails = TaxOprionByPartner.ToList();
-
-
-                            //item.OptionTaxDetails = new List<OptionTaxVM>();
-
-                            //foreach (var option in optionData)
-                            //{
-                            //   
-                            //}
-
-                            //item.OptionTaxDetails = TaxOprionByPartner.ToList();
+                            item.OptionTaxDetails = TaxOptionForTenant.ToList();
+                          
                         }
-
-                        //var taxDetail = CalculateOptionTax(option, item);
-                        //    item.OptionTaxDetails.Add(taxDetail);
-
-                        //item.OptionsTypeIds = Options.Select(x => x.OptionTypeId.ToString()).ToArray();
-                        //item.OptionIds = Options.Select(x => x.Optionid.ToString()).ToArray();
-                        //item.Options = Options.Select(x => x.OptionTypeName).ToArray();
-                        //item.OptionsPrice = Options.Select(x => x.OptionPrice).ToArray();
-
-
-
+                        item.OptionsTypeIds = item.OptionTaxDetails.Select(x => x.OptionTypeId.ToString()).ToArray();
+                        item.OptionIds = item.OptionTaxDetails.Select(x => x.OptionId.ToString()).ToArray();
+                        item.Options = item.OptionTaxDetails.Select(x => x.OptionTypeName).ToArray();
                     }
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.FetchSuccessMsg;
