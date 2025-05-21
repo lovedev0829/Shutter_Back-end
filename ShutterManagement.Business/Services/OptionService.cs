@@ -237,7 +237,7 @@ namespace ShutterManagement.Business.Services
                             .ToList();
 
                         allOptions = allOptions
-                            .Where(x => assignedOptionIds.Contains(x.OptionId))
+                            .Where(x => assignedOptionIds.Contains(x.OptionId) || x.TenantId == AppConstant.LoggedInTenantId)
                             .ToList();
                     }
 
