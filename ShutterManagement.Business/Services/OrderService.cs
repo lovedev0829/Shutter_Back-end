@@ -1185,7 +1185,56 @@ namespace ShutterManagement.Business.Services
             };
 
             await orderWindowProductService.Add(tblOrderWindowProduct);
+
+            //// Save OptionTaxDetails 
+            //var optionTaxDetails = buildEstimate.Data.FirstOrDefault()?.OptionTaxDetails;
+            //if (optionTaxDetails != null && optionTaxDetails.Any())
+            //{
+            //    await SaveOptionTaxDetailsToOrder(
+            //        tblEstimateWindowProduct.EstimateWindowProductId,
+            //        windowProductData.WindowProductId,
+            //        optionTaxDetails
+            //    );
+            //}
+
         }
+
+
+        private async Task SaveOptionTaxDetailsToOrder(Guid OrderWindowProductId, Guid windowProductId, List<OptionTaxVM> optionTaxDetails)
+        {
+            if (optionTaxDetails == null || !optionTaxDetails.Any())
+                return;
+
+            List<TblOrderWindowProductOption> estimateWindowOptions = new List<TblOrderWindowProductOption>();
+
+            foreach (var option in optionTaxDetails)
+            {
+                var optionEntity = new TblOrderWindowProductOption
+                {
+                    Id = Guid.NewGuid(),
+                    WindowProductId = windowProductId,
+                    WindowOptionId = option.WindowOptionId,
+                    OrderWindowProductId = OrderWindowProductId,
+                    TaxId = option.TaxId,
+                    CityTax = option.CityTaxAmount,
+                    StateTax = option.StateTaxAmount,
+                    MunicipilityTax = option.MunicipalityTaxAmount,
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now,
+                    TenantId = AppConstant.LoggedInTenantId,
+                    CreatedBy = AppConstant.LoggedInUserID,
+                    ModifiedBy = AppConstant.LoggedInUserID,
+                    IsActive = true,
+                    IsDelete = false
+                };
+
+                estimateWindowOptions.Add(optionEntity);
+            }
+
+           // await dbContext.TblEstimateWindowProductOptions.AddRangeAsync(estimateWindowOptions);
+            await dbContext.SaveChangesAsync();
+        }
+
 
         private async Task AddComponentsToOrder(Guid productId, Guid estimateId, Guid OrderId, string Version)
         {

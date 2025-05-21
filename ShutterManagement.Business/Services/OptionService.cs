@@ -7,6 +7,7 @@ using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.Core.ViewModels.Response;
 using ShutterManagement.DAL.Context;
 using ShutterManagement.Services;
+using Stripe;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -245,7 +246,7 @@ namespace ShutterManagement.Business.Services
                         {
                             OptionId = x.OptionId,
                             IsActive = x.IsActive,
-                            OptionName = x.OptionName,
+                            OptionName = x.OptionName??"",
                             TaxId = x.TaxId ?? null,
                             TaxName = dbContext.TblTaxRates.Where(y => y.TaxRateId == x.TaxId).Select(z => z.TaxName).FirstOrDefault() ?? "",
                             ProductId = x.ProductId,
@@ -344,20 +345,22 @@ namespace ShutterManagement.Business.Services
                         responseVm.Message = "Option Name " + AppConstant.AlreadyExists;
                         return responseVm;
                     }
-                    TblOption options = new TblOption
-                    {
-                        OptionId = Guid.NewGuid(),
-                        OptionName = model.OptionName,
-                        ProductId = model.ProductId,
-                        ProductTypeId = model.ProductTypeId,
-                        CreatedAt = DateTime.Now,
-                        CreatedBy = AppConstant.LoggedInUserID,
-                        TenantId = AppConstant.LoggedInTenantId,
-                        IsTaxApplied = model.IsTaxAvailable,
-                        TaxId = model.TaxId,
-                        IsActive = true,
-                        IsDelete = false
-                    };
+
+
+                    //TblOption options = new TblOption
+                    //{
+                    //    OptionId = Guid.NewGuid(),
+                    //    OptionName = model.OptionName,
+                    //    ProductId = model.ProductId,
+                    //    ProductTypeId = model.ProductTypeId,
+                    //    CreatedAt = DateTime.Now,
+                    //    CreatedBy = AppConstant.LoggedInUserID,
+                    //    TenantId = AppConstant.LoggedInTenantId,
+                    //    IsTaxApplied = model.IsTaxAvailable,
+                    //    TaxId = model.TaxId,
+                    //    IsActive = true,
+                    //    IsDelete = false
+                    //};
 
                     if (IsOptionExists != null)
                     {
@@ -369,6 +372,8 @@ namespace ShutterManagement.Business.Services
                         IsOptionExists.ProductTypeId = model.ProductTypeId;
                         IsOptionExists.Unit = model.Unit.Trim();
                         IsOptionExists.OptionExpression = model.OptionExpression;
+                        IsOptionExists.IsTaxApplied = model.IsTaxAvailable;
+                        IsOptionExists.TaxId = model.TaxId;
 
 
                         await Update(IsOptionExists);

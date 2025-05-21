@@ -119,6 +119,8 @@ public partial class ShutterDBContext : DbContext
 
     public virtual DbSet<TblOrderWindowProductComponentMaterial> TblOrderWindowProductComponentMaterials { get; set; }
 
+    public virtual DbSet<TblOrderWindowProductOption> TblOrderWindowProductOptions { get; set; }
+
     public virtual DbSet<TblPayment> TblPayments { get; set; }
 
     public virtual DbSet<TblProduct> TblProducts { get; set; }
@@ -1380,11 +1382,13 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.AdditionalWidth).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.ArchHeight).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.Area).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.City).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.Color).HasMaxLength(100);
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
             entity.Property(e => e.Height).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.Length).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.Markup).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.Municipality).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.OrderId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.Price).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.ProductName).HasMaxLength(255);
@@ -1393,9 +1397,15 @@ public partial class ShutterDBContext : DbContext
                 .HasMaxLength(50)
                 .IsUnicode(false);
             entity.Property(e => e.ProductTypeName).HasMaxLength(50);
+            entity.Property(e => e.State).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.TaxName).HasMaxLength(200);
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
             entity.Property(e => e.Version).HasMaxLength(3);
             entity.Property(e => e.Width).HasColumnType("decimal(10, 2)");
+
+            entity.HasOne(d => d.Tax).WithMany(p => p.TblOrderWindowProducts)
+                .HasForeignKey(d => d.TaxId)
+                .HasConstraintName("FK__TblOrderW__TaxId__3DBE1285");
         });
 
         modelBuilder.Entity<TblOrderWindowProductComponent>(entity =>
@@ -1437,6 +1447,38 @@ public partial class ShutterDBContext : DbContext
                 .IsUnicode(false);
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
             entity.Property(e => e.Version).HasMaxLength(3);
+        });
+
+        modelBuilder.Entity<TblOrderWindowProductOption>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__TblOrder__3213E83F716A4742");
+
+            entity.ToTable("TblOrderWindowProductOption", "dbo");
+
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("(newid())")
+                .HasColumnName("id");
+            entity.Property(e => e.CityTax).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.MunicipilityTax).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.StateTax).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+
+            entity.HasOne(d => d.OrderWindowProduct).WithMany(p => p.TblOrderWindowProductOptions)
+                .HasForeignKey(d => d.OrderWindowProductId)
+                .HasConstraintName("FK__TblOrderW__Order__4376EBDB");
+
+            entity.HasOne(d => d.Tax).WithMany(p => p.TblOrderWindowProductOptions)
+                .HasForeignKey(d => d.TaxId)
+                .HasConstraintName("FK__TblOrderW__TaxId__446B1014");
+
+            entity.HasOne(d => d.WindowOption).WithMany(p => p.TblOrderWindowProductOptions)
+                .HasForeignKey(d => d.WindowOptionId)
+                .HasConstraintName("FK__TblOrderW__Windo__4282C7A2");
+
+            entity.HasOne(d => d.WindowProduct).WithMany(p => p.TblOrderWindowProductOptions)
+                .HasForeignKey(d => d.WindowProductId)
+                .HasConstraintName("FK__TblOrderW__Windo__418EA369");
         });
 
         modelBuilder.Entity<TblPayment>(entity =>

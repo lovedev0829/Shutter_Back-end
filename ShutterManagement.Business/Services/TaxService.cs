@@ -10,6 +10,7 @@ using ShutterManagement.Core.ViewModels;
 using ShutterManagement.DAL.Context;
 using ShutterManagement.Services;
 using ShutterManagement.Core;
+using ShutterManagement.Core.Common;
 
 namespace ShutterManagement.Business.Services
 {
@@ -156,6 +157,7 @@ namespace ShutterManagement.Business.Services
                                   State = t2.State ?? null,
                                   City = t2.City ?? null,
                                   TenantId = t2.TenantId.ToString(),
+                                  IsActive = t2.IsActive,
 
                               }).ToList();
                 
@@ -163,7 +165,6 @@ namespace ShutterManagement.Business.Services
                 var FilterRecords = taxlist
                                     .Where(x =>
                                     (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
-                                    (string.IsNullOrEmpty(filter.Region) ? true : (filter.Region == x.TaxName.ToString())) &&
                                     (string.IsNullOrEmpty(filter.TenantId) ? true : (filter.TenantId == x.TenantId.ToString())) &&
                                     (filter.SearchValue != "" ?
                                     (x.TaxRateId.ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
@@ -175,8 +176,7 @@ namespace ShutterManagement.Business.Services
 
 
 
-                var TakenRecords = FilterRecords
-                                    .Skip((filter.PageNo - 1) * filter.RecordPerPage).Take(filter.RecordPerPage).ToList();
+                var TakenRecords =Paginate.Pagination(FilterRecords,filter);
 
 
 

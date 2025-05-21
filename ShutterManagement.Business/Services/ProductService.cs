@@ -310,7 +310,8 @@ namespace ShutterManagement.Business.Services
                         // Parent or regular tenant: Fetch directly from TblProducts
                         productList = (from p in dbContext.TblProducts.OrderByDescending(x => x.CreatedAt)
                                        join pt in dbContext.MstProductTypes on p.ProductType equals pt.ProductId.ToString()
-                                       join tax in dbContext.TblTaxRates on p.TaxId equals tax.TaxRateId
+                                       join tax in dbContext.TblTaxRates on p.TaxId equals tax.TaxRateId into PTax
+                                       from taxdata in PTax.DefaultIfEmpty()
                                        where p.IsDelete == false &&
                                              (p.TenantId == AppConstant.LoggedInTenantId || p.TenantId.ToString() == AppConstant.LoggedInParentTenantId)
                                        select new ProductListVm
@@ -322,7 +323,7 @@ namespace ShutterManagement.Business.Services
                                            ProductType = pt.ProductId.ToString().ToLower(),
                                            ProductTypeName = pt.ProductName,
                                            TaxId = p.TaxId,
-                                           TaxName = tax.TaxName ?? "",
+                                           TaxName = taxdata.TaxName ?? "",
                                            IsTaxAvailable = p.IsTaxApplied,
                                            TenantId = p.TenantId,
                                            IsActive = p.IsActive,
