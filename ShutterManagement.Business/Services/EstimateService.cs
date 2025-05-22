@@ -627,8 +627,8 @@ namespace ShutterManagement.Business.Services
                     else
                     {
                         
-                        responseVm.Data = WindowProductData;
-                        responseVm.TotalRecords = WindowProductData.Count;
+                        responseVm.Data = WindowProductData.DistinctBy(x => x.ComponentId).ToList();
+                        responseVm.TotalRecords = WindowProductData.DistinctBy(x => x.ComponentId).Count();
                     }
                 }
             }
