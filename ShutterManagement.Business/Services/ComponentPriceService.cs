@@ -360,7 +360,7 @@ namespace ShutterManagement.Business.Services
                                                          join partnerOptions in dbContext.TblManagePartnersProductsOptions on windowOptions.OptionTypeId equals partnerOptions.OptionTypeId
                                                          join optionValues in dbContext.TblOptionsTypes on partnerOptions.OptionTypeId equals optionValues.OptionTypeId
                                                          join options in dbContext.TblOptions on optionValues.OptionId equals options.OptionId
-                                                         join taxDetails in dbContext.TblTaxRates on partnerOptions.TaxId equals taxDetails.TaxRateId into PTax
+                                                         join taxDetails in dbContext.TblTaxRates.Where(x => x.TenantId == AppConstant.LoggedInTenantId) on partnerOptions.TaxId equals taxDetails.TaxRateId into PTax
                                                          from tax in PTax.DefaultIfEmpty()
                                                          where partnerOptions.IsActive == true
                                                          && partnerOptions.TenantId == AppConstant.LoggedInTenantId &&
@@ -394,20 +394,20 @@ namespace ShutterManagement.Business.Services
                             var TaxOptionForTenant = from windowOptions in dbContext.WindowOptions
                                                      join optionValues in dbContext.TblOptionsTypes on windowOptions.OptionTypeId equals optionValues.OptionTypeId
                                                      join options in dbContext.TblOptions on optionValues.OptionId equals options.OptionId
-                                                    join taxDetails in dbContext.TblTaxRates on options.TaxId equals taxDetails.TaxRateId into PTax
-                                                         from tax in PTax.DefaultIfEmpty()
-                                                     where tax.TenantId == AppConstant.LoggedInTenantId && options.IsActive == true
+                                                    join taxDetails in dbContext.TblTaxRates.Where(x=>x.TenantId == AppConstant.LoggedInTenantId) on options.TaxId equals taxDetails.TaxRateId into PTax
+                                                         from tax in PTax.DefaultIfEmpty() 
+                                                     where options.IsActive == true
                                                      && windowOptions.TenantId == AppConstant.LoggedInTenantId &&
                                                       windowOptions.WindowId == item.WindowId &&
                                                      options.ProductId == item.ProductId &&
                                                      windowOptions.IsActive == true
                                                      select new OptionTaxVM
                                                      {
-                                                         TaxId = (tax.TaxRateId != Guid.Empty ? tax.TaxRateId : item.TaxRateId) ?? Guid.Empty,
-                                                         TaxName = (tax.TaxRateId != Guid.Empty ? tax.TaxName : item.TaxName) ?? "",
-                                                         MunicipalityTax = (tax.TaxRateId != Guid.Empty ? tax.Municipality : item.MunicipalityTax) ?? 0.0m,
-                                                         StateTax = (tax.TaxRateId != Guid.Empty ? tax.State : item.StateTax) ?? 0.0m,
-                                                         CityTax = (tax.TaxRateId != Guid.Empty ? tax.City : item.CityTax) ?? 0.0m,
+                                                         TaxId = (tax != null && tax.TaxRateId != Guid.Empty ? tax.TaxRateId : item.TaxRateId) ?? item.TaxRateId ?? Guid.Empty,
+                                                         TaxName = (tax.TaxRateId != Guid.Empty ? tax.TaxName : item.TaxName) ?? item.TaxName ?? "",
+                                                         MunicipalityTax = (tax.TaxRateId != Guid.Empty ? tax.Municipality : item.MunicipalityTax) ?? item.MunicipalityTax ?? 0.0m,
+                                                         StateTax = (tax.TaxRateId != Guid.Empty ? tax.State : item.StateTax) ?? item.StateTax ?? 0.0m,
+                                                         CityTax = (tax.TaxRateId != Guid.Empty ? tax.City : item.CityTax) ?? item.CityTax ?? 0.0m,
                                                          OptionPrice = optionValues.AdditionalCost,
                                                          OptionId = options.OptionId.ToString(),
                                                          OptionTypeId = optionValues.OptionTypeId.ToString(),
