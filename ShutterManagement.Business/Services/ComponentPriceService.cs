@@ -184,17 +184,24 @@ namespace ShutterManagement.Business.Services
                     foreach (var item in query.DistinctBy(x => x.ProductId))
                     {
                         var Options = (from windowOption in dbContext.WindowOptions
-                                       join optionType in dbContext.TblOptionsTypes on windowOption.OptionTypeId equals optionType.OptionTypeId
-                                       join options in dbContext.TblOptions on optionType.OptionId equals options.OptionId
+                                       join estimateOption in dbContext.TblEstimateWindowProductOptions on windowOption.OptionTypeId equals estimateOption.WindowOptionId
+                                       join optionType in dbContext.TblOptionsTypes on estimateOption.WindowOptionId equals optionType.OptionTypeId
+                                       join option in dbContext.TblOptions on optionType.OptionId equals option.OptionId
                                        where windowOption.WindowProductId == item.WindowProdcutId
-                                       select new
+                                       select new OptionTaxVM
                                        {
-                                           OptionTypeId = optionType.OptionTypeId,
-                                           OptionTypeName = Convert.ToString(options.OptionName + " - " + optionType.OptionType),
-                                           OptionPrice = optionType.AdditionalCost ?? 0m
-                                       }).ToList();
-                        item.Options = Options.Select(x => x.OptionTypeName).ToArray();
-                        item.OptionsPrice = Options.Select(x => x.OptionPrice).ToArray();
+                                           TaxId = estimateOption.TaxId,
+                                           TaxName = estimateOption.TaxName ?? "",
+                                           MunicipalityTax = estimateOption.MunicipilityTax,
+                                           StateTax = estimateOption.StateTax,
+                                           CityTax = estimateOption.CityTax,
+                                           OptionPrice = estimateOption.OptionPrice,
+                                           OptionName = estimateOption.OptionName ?? "",
+                                           OptionId = estimateOption.Optionid.ToString(),
+                                           OptionTypeId = estimateOption.OptionTypeid.ToString(),
+                                           OptionTypeName = Convert.ToString(estimateOption.OptionName + " - " + estimateOption.OptionTypeName),
+                                       }).ToList(); item.Options = Options.Select(x => x.OptionTypeName).ToArray();
+                        //item.OptionsPrice = Options.Select(x => x.OptionPrice).ToArray();
                     }
                 }
                 responseVm.IsSuccess = true;
