@@ -820,7 +820,17 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.CityTax).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
             entity.Property(e => e.MunicipilityTax).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.OptionName)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.OptionPrice).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.OptionTypeName)
+                .HasMaxLength(100)
+                .IsUnicode(false);
             entity.Property(e => e.StateTax).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.TaxName)
+                .HasMaxLength(100)
+                .IsUnicode(false);
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
 
             entity.HasOne(d => d.EstimateWindowProduct).WithMany(p => p.TblEstimateWindowProductOptions)

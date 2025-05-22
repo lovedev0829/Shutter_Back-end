@@ -35,6 +35,18 @@ public partial class TblEstimateWindowProductOption
 
     public bool? IsDelete { get; set; }
 
+    public string? OptionName { get; set; }
+
+    public string? TaxName { get; set; }
+
+    public string? OptionTypeName { get; set; }
+
+    public decimal? OptionPrice { get; set; }
+
+    public Guid? OptionTypeid { get; set; }
+
+    public Guid? Optionid { get; set; }
+
     public virtual TblEstimateWindowProduct? EstimateWindowProduct { get; set; }
 
     public virtual TblTaxRate? Tax { get; set; }
