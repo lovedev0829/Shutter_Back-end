@@ -262,7 +262,7 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        public async Task<IResponseVm<List<OptionsList>>> GetAll_Option(Pagination filter)
+        public async Task<IResponseVm<List<OptionsList>>> GetAll_Option(Pagination filter,bool? IsManageProductOption)
         {
             IResponseVm<List<OptionsList>> responseVm = new ResponseVm<List<OptionsList>>();
             try
@@ -283,68 +283,67 @@ namespace ShutterManagement.Business.Services
                         // x.TenantId.ToString().ToLower() == AppConstant.LoggedInParentTenantId.ToLower())
                         .OrderByDescending(x => x.CreatedAt)
                         .ToList();
-                    //if (isSubTenant)
+                    //if (issubtenant)
                     //{
-                    //    IsOptionExists = (
-                    //            from op in dbContext.TblOptions
-                    //            join p in dbContext.TblManagePartnersProducts
-                    //              on op.ProductId equals p.ProductId
-                    //            //join opp in dbContext.TblManagePartnersProductsOptions
-                    //            //on p.ManageProductId equals opp.ManageProductId
+                    //    isoptionexists = (
+                    //            from op in dbcontext.tbloptions
+                    //            join p in dbcontext.tblmanagepartnersproducts
+                    //              on op.productid equals p.productid
+                    //            //join opp in dbcontext.tblmanagepartnersproductsoptions
+                    //            //on p.manageproductid equals opp.manageproductid
                     //            //into optiontype from
-                    //            //opp in optiontype.DefaultIfEmpty()
+                    //            //opp in optiontype.defaultifempty()
 
-                    //            join tax in dbContext.TblTaxRates
-                    //             on op.TaxId equals tax.TaxRateId into taxGroup
-                    //            from tax in taxGroup.DefaultIfEmpty()
+                    //            join tax in dbcontext.tbltaxrates
+                    //             on op.taxid equals tax.taxrateid into taxgroup
+                    //            from tax in taxgroup.defaultifempty()
 
-                    //            join prod in dbContext.TblProducts
-                    //            on op.ProductId equals prod.ProductId into productGroup
-                    //            from product in productGroup.DefaultIfEmpty()
+                    //            join prod in dbcontext.tblproducts
+                    //            on op.productid equals prod.productid into productgroup
+                    //            from product in productgroup.defaultifempty()
 
-                    //            join pt in dbContext.MstProductTypes
-                    //             on op.ProductTypeId equals pt.ProductId into ptGroup
-                    //            from productType in ptGroup.DefaultIfEmpty()
+                    //            join pt in dbcontext.mstproducttypes
+                    //             on op.producttypeid equals pt.productid into ptgroup
+                    //            from producttype in ptgroup.defaultifempty()
 
-                    //            where op.IsDelete == false
-                    //       && op.TenantId == AppConstant.LoggedInTenantId
-                    //       && p.TenantId == op.TenantId
-                    //      // && (opp == null || (opp.IsDelete == false && opp.IsAvailable == true))
-                    //      && p.IsAvailable == true
-                    //      orderby op.CreatedAt descending
+                    //            where op.isdelete == false
+                    //       && op.tenantid == appconstant.loggedintenantid
+                    //       && p.tenantid == op.tenantid
+                    //      // && (opp == null || (opp.isdelete == false && opp.isavailable == true))
+                    //      && p.isavailable == true
+                    //      orderby op.createdat descending
 
-                    //    select new OptionsList
+                    //    select new optionslist
                     //    {
-                    //    OptionId = op.OptionId,
-                    //    IsActive = op.IsActive,
-                    //    OptionName = op.OptionName ?? "",
-                    //    TaxId = op.TaxId,
-                    //    TaxName = tax != null ? tax.TaxName : "",
-                    //   ProductId = op.ProductId,
-                    //    Unit = op.Unit,
-                    //   Markup = op.Markup ?? 0.0m,
-                    //   OptionExpression = op.OptionExpression != null ? op.OptionExpression.ToString() : "",
-                    //   ProductName = product != null ? product.ProductName : "",
-                    //   ProductTypeId = op.ProductTypeId,
-                    //   ProductTypeName = productType != null ? productType.ProductName : "",
-                    //   IsTaxAvailable = op.IsTaxApplied,
-                       
-                    //   }).ToList();
+                    //    optionid = op.optionid,
+                    //    isactive = op.isactive,
+                    //    optionname = op.optionname ?? "",
+                    //    taxid = op.taxid,
+                    //    taxname = tax != null ? tax.taxname : "",
+                    //   productid = op.productid,
+                    //    unit = op.unit,
+                    //   markup = op.markup ?? 0.0m,
+                    //   optionexpression = op.optionexpression != null ? op.optionexpression.tostring() : "",
+                    //   productname = product != null ? product.productname : "",
+                    //   producttypeid = op.producttypeid,
+                    //   producttypename = producttype != null ? producttype.productname : "",
+                    //   istaxavailable = op.istaxapplied,
+
+                    //   }).tolist();
                     //}
 
-                    //    if (isSubTenant)
-                    //    {
-                    //        var assignedOptionIds = dbContext.TblManagePartnersProductsOptions
-                    //            .Where(m => m.TenantId == AppConstant.LoggedInTenantId && m.IsAvailable == true && m.IsDelete == false && m.IsActive == true)
-                    //            .Select(m => m.OptionId)
-                    //            .ToList();
+                    if ((bool)IsManageProductOption)
+                    {
+                        var assignedOptionIds = dbContext.TblManagePartnersProductsOptions
+                            .Where(m => m.TenantId == AppConstant.LoggedInTenantId && m.IsAvailable == true && m.IsDelete == false && m.IsActive == true)
+                            .Select(m => m.OptionId)
+                            .ToList();
 
-                    //        allOptions = allOptions
-                    //        .Where(x => assignedOptionIds.Contains(x.OptionId) || x.TenantId == AppConstant.LoggedInTenantId)
-                    //        .ToList();
-                    //}
-                    //else
-                    //{
+                        allOptions = allOptions
+                        .Where(x => assignedOptionIds.Contains(x.OptionId) || x.TenantId == AppConstant.LoggedInTenantId)
+                        .ToList();
+                    }
+                    
                         IsOptionExists = allOptions
                            .Select(x => new OptionsList
                            {
@@ -361,12 +360,12 @@ namespace ShutterManagement.Business.Services
                                ProductTypeId = x.ProductTypeId,
                                ProductTypeName = dbContext.MstProductTypes.Where(y => y.ProductId == x.ProductTypeId).Select(z => z.ProductName).FirstOrDefault(),
                                IsTaxAvailable = x.IsTaxApplied,
-                               
+
 
                            })
                            .ToList();
-
-                    //}
+                   
+                    
                     foreach (var item in IsOptionExists)
                     {
 

@@ -56,9 +56,9 @@ namespace ShutterManagement.Controllers
         [HttpPost]
         [Route("GetAll")]
         [Authorize(Roles = "OptionsView")]
-        public async Task<IActionResult> GetAll(Pagination filter)
+        public async Task<IActionResult> GetAll(Pagination filter, bool? IsManageProductOption)
         {
-            var result = await _option.GetAll_Option(filter);
+            var result = await _option.GetAll_Option(filter, IsManageProductOption);
             return Ok(result);
         }
 

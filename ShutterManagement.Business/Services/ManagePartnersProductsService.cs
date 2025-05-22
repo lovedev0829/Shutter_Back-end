@@ -424,7 +424,8 @@ namespace ShutterManagement.Business.Services
                                       {
                                           OptionId = o1.OptionId,
                                           ProductId = o2.ProductId,
-                                          OptionName = o2.OptionName
+                                          OptionName = o2.OptionName,
+                                        //  TaxRateId = (o1 != null ? o1.TaxId : Guid.Empty) ?? Guid.Empty,
                                       }).Distinct().ToList();
 
                     var optionIds = allOptions.Select(o => o.OptionId).ToList();

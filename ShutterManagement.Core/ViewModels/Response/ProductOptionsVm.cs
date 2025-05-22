@@ -35,7 +35,8 @@ namespace ShutterManagement.Core.ViewModels.Response
         public Guid? ProductId { get; set; }
 
         public string? OptionName { get; set; }
-       
+       // public Guid? TaxRateId { get; set; }
+
 
 
         public List<ProductOptionTypeList> optionTypes { get; set; }
