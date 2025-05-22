@@ -241,7 +241,7 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.TenantNotFound;
                     return responseVm;
                 }
-
+               
                 // Log the number of estimates fetched
                 FileLogger.Log($"Fetched {estimates.Count} estimates.");
 
@@ -1135,7 +1135,7 @@ namespace ShutterManagement.Business.Services
             {
                 // Log and fetch estimates for the logged-in tenant
                 FileLogger.Log("No TenantId provided, fetching for the logged-in tenant.");
-                return (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId)
+                return (await GetAll()).Where(x => x.IsDelete == false && (!string.IsNullOrEmpty(filter.EstimationId) ? x.EstimateId.ToString() == filter.EstimationId : true) && x.TenantId == AppConstant.LoggedInTenantId)
                                        .OrderByDescending(x => x.CreatedAt)
                                        .ToList();
             }
@@ -1153,7 +1153,7 @@ namespace ShutterManagement.Business.Services
 
             // Fetch estimates for the provided tenant
             FileLogger.Log($"Tenant with ID {filter.TenantId} validated successfully.");
-            return (await GetAll()).Where(x => x.IsDelete == false && x.TenantId.ToString() == filter.TenantId)
+            return (await GetAll()).Where(x => x.IsDelete == false && (!string.IsNullOrEmpty(filter.EstimationId) ? x.EstimateId.ToString() == filter.EstimationId : true) && x.TenantId.ToString() == filter.TenantId)
                                    .OrderByDescending(x => x.CreatedAt)
                                    .ToList();
         }
@@ -1322,7 +1322,7 @@ namespace ShutterManagement.Business.Services
                         x.ProductPrice,
                     }).ToList();
 
-                e.WindowProductId = productList.Select(p => (Guid)p.WindowProductId).ToArray();
+                e.WindowProductId = productList.Select(p => (Guid)p.WindowProductId).Distinct().ToArray();
                 foreach (var p in productList)
                 {
                     var Options = (from windowOption in dbContext.WindowOptions
@@ -1367,7 +1367,7 @@ namespace ShutterManagement.Business.Services
                         TotalPrice = p.Price,
                         additionalCost = Options.Select(x=>x.OptionPrice).Sum(),
                         ProductPrice = p.ProductPrice,
-                        Options = Options.Select(x => x.OptionName).ToArray(),
+                        Options = Options.Select(x => x.OptionTypeName).ToArray(),
                         IsComponentAvailable = IsComponenetAvailable,
                         EstimateWindowDetails = WindowDetails.Where(x => x.WindowId == p.WindowId).Select(x => new EstimateWindowList
                         {
@@ -1787,7 +1787,13 @@ namespace ShutterManagement.Business.Services
                     CreatedBy = AppConstant.LoggedInUserID,
                     ModifiedBy = AppConstant.LoggedInUserID,
                     IsActive = true,
-                    IsDelete = false
+                    IsDelete = false,
+                    OptionName = option.OptionName,
+                    TaxName = option.TaxName,
+                     OptionTypeid = Guid.Parse(option.OptionTypeId),
+                     OptionTypeName = option.OptionTypeName,
+                     Optionid = Guid.Parse(option.OptionId),
+                     OptionPrice = option.OptionPrice,
                 };
 
                 estimateWindowOptions.Add(optionEntity);
