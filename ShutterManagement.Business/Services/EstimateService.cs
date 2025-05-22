@@ -627,8 +627,8 @@ namespace ShutterManagement.Business.Services
                     else
                     {
                         
-                        responseVm.Data = WindowProductData;
-                        responseVm.TotalRecords = WindowProductData.Count;
+                        responseVm.Data = WindowProductData.DistinctBy(x => x.ComponentId).ToList();
+                        responseVm.TotalRecords = WindowProductData.DistinctBy(x => x.ComponentId).Count();
                     }
                 }
             }
@@ -1305,7 +1305,7 @@ namespace ShutterManagement.Business.Services
                         x.WindowProductId,
                         x.Price,
                         x.ProductTypeName,
-                        x.ProductPrice
+                        x.ProductPrice,
                     }).ToList();
 
                 e.WindowProductId = productList.Select(p => (Guid)p.WindowProductId).ToArray();
@@ -1326,6 +1326,8 @@ namespace ShutterManagement.Business.Services
                     var WindowQty_Label = windowService.GetAllQuerable()
                             .Where(w => w.WindowId == p.WindowId && w.IsDelete == false)
                             .FirstOrDefault();
+                    var IsComponenetAvailable = await estimateWindowProductComponentService.AnyAsync(
+                        x => x.EstimateId == estimate.EstimateId && x.WindowId == p.WindowId && x.ProductId == p.ProductId && x.IsDelete == false);
                     EstimateProductList estimateProduct = new EstimateProductList
                     {
                         EstimateWindowProductId = p.EstimateWindowProductId,
@@ -1341,6 +1343,7 @@ namespace ShutterManagement.Business.Services
                         TotalPrice = p.Price,
                         ProductPrice = p.ProductPrice,
                         Options = Options.Select(x => x.OptionName).ToArray(),
+                        IsComponentAvailable = IsComponenetAvailable,
                         EstimateWindowDetails = WindowDetails.Where(x => x.WindowId == p.WindowId).Select(x => new EstimateWindowList
                         {
                             ArchHeight = x.ArchHeight,

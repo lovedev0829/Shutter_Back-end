@@ -41,6 +41,8 @@ namespace ShutterManagement.Core.ViewModels.Request
         [Required(ErrorMessage = "Product height is required")]
         public decimal? BuildHeight { get; set; }
         public decimal? AdditionalCost { get; set; }
+
+        public int? SortOrder { get; set; }
     }
 }
 

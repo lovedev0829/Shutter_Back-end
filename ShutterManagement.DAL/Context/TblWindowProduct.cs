@@ -31,6 +31,8 @@ public partial class TblWindowProduct
 
     public decimal? BuildHeight { get; set; }
 
+    public int? SortOrder { get; set; }
+
     public virtual TblProduct? Product { get; set; }
 
     public virtual MstProductType? ProductType { get; set; }
