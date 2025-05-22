@@ -1177,7 +1177,7 @@ namespace ShutterManagement.Business.Services
                     EstimateName = estimate.EstimateName,
                     EstimateCode = estimate.EstimateCode,
                     SubTotal = estimate.TotalPrice,
-                    additionalCost = estimate.AdditionalCost,
+                    //additionalCost = estimate.AdditionalCost,
                     GrandTotal = estimate.GrandTotal,
                     Notes = estimate.Notes,
                     Tax = estimate.TaxAmount,
@@ -1325,15 +1325,25 @@ namespace ShutterManagement.Business.Services
                 e.WindowProductId = productList.Select(p => (Guid)p.WindowProductId).ToArray();
                 foreach (var p in productList)
                 {
-
                     var Options = (from windowOption in dbContext.WindowOptions
-                                   join optionType in dbContext.TblOptionsTypes on windowOption.OptionTypeId equals optionType.OptionTypeId
-                                   join options in dbContext.TblOptions on optionType.OptionId equals options.OptionId
+                                   join estimateOption in dbContext.TblEstimateWindowProductOptions on windowOption.OptionTypeId equals estimateOption.WindowOptionId
+                                   join optionType in dbContext.TblOptionsTypes on estimateOption.WindowOptionId equals optionType.OptionTypeId
+                                   join option in dbContext.TblOptions on optionType.OptionId equals option.OptionId
                                    where windowOption.WindowProductId == p.WindowProductId
-                                   select new
+                                   select new OptionTaxVM
                                    {
-                                       OptionName = Convert.ToString(options.OptionName + " - " + optionType.OptionType)
-                                   }).ToList();
+                                       TaxId = estimateOption.TaxId,
+                                       TaxName = estimateOption.TaxName ?? "",
+                                       MunicipalityTax = estimateOption.MunicipilityTax,
+                                       StateTax = estimateOption.StateTax,
+                                       CityTax = estimateOption.CityTax,
+                                       OptionPrice = estimateOption.OptionPrice,
+                                       OptionName = estimateOption.OptionName ?? "",
+                                       OptionId = estimateOption.Optionid.ToString(),
+                                       OptionTypeId = estimateOption.OptionTypeid.ToString(),
+                                       OptionTypeName = Convert.ToString(estimateOption.OptionName + " - " + estimateOption.OptionTypeName),
+                                   }).ToList(); 
+                    
                     var WindowDetails = estimateWindowService.GetAllQuerable()
                         .Where(x => x.EstimateId == estimate.EstimateId && x.IsDelete == false)
                         .ToList();
@@ -1355,6 +1365,7 @@ namespace ShutterManagement.Business.Services
                         ProductTypeName = p.ProductTypeName,
                         WindowProductId = p.WindowProductId,
                         TotalPrice = p.Price,
+                        additionalCost = Options.Select(x=>x.OptionPrice).Sum(),
                         ProductPrice = p.ProductPrice,
                         Options = Options.Select(x => x.OptionName).ToArray(),
                         IsComponentAvailable = IsComponenetAvailable,
