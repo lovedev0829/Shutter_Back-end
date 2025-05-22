@@ -24,16 +24,18 @@ namespace ShutterManagement.Business.Services
         private readonly IOptionsTypeService optionsTypeService;
         private readonly ClaimsProperty claimsProperty;
         private readonly ITenantService tenantService;
+        private readonly IManagePartnersProductsOptions managePartnersProductsOptions;
 
         public OptionService(ShutterDBContext context, IOptionsTypeService optionsTypeService,
-            ClaimsProperty claimsProperty, ITenantService tenantService
+            ClaimsProperty claimsProperty, ITenantService tenantService,
+            IManagePartnersProductsOptions managePartnersProductsOptions
             )
         {
             _context = context;
             this.optionsTypeService = optionsTypeService;
             this.claimsProperty = claimsProperty;
             this.tenantService = tenantService;
-          
+            this.managePartnersProductsOptions = managePartnersProductsOptions;
         }
 
         public async Task<IResponseVm<string>> ActiveInActive(Guid Id)
@@ -161,8 +163,9 @@ namespace ShutterManagement.Business.Services
                                             CreatedAt = DateTime.Now,
                                             CreatedBy = AppConstant.LoggedInUserID,
                                         };
-                                        dbContext.Add(managePartnerProductOption);
-                                        await dbContext.SaveChangesAsync();
+                                        await managePartnersProductsOptions.Add(managePartnerProductOption);
+                                        //dbContext.Add(managePartnerProductOption);
+                                        //await dbContext.SaveChangesAsync();
                                     }
                                 }
                                 else
@@ -518,7 +521,7 @@ namespace ShutterManagement.Business.Services
                         //}
                         foreach (var item in DeleteRecords)
                         {
-                            var Ismanageproductexist = await dbContext.TblManagePartnersProductsOptions.Where
+                            var Ismanageproductexist = await managePartnersProductsOptions.GetAllQuerable().Where
                             (x => x.TenantId == AppConstant.LoggedInTenantId
                              && x.IsActive == true && x.IsAvailable == true && x.IsDelete == false && x.OptionTypeId == item.OptionTypeId).FirstOrDefaultAsync();
                             if (Ismanageproductexist != null)
@@ -526,8 +529,9 @@ namespace ShutterManagement.Business.Services
                                 Ismanageproductexist.IsActive = false;
                                 Ismanageproductexist.IsDelete = true;
                                 Ismanageproductexist.IsAvailable = false;
-                                dbContext.TblManagePartnersProductsOptions.Update(Ismanageproductexist);
-                                await dbContext.SaveChangesAsync();
+                                await managePartnersProductsOptions.Update(Ismanageproductexist);
+                                //dbContext.TblManagePartnersProductsOptions.Update(Ismanageproductexist);
+                                //await dbContext.SaveChangesAsync();
                             }
                             var data = optionsTypeService.GetAllQuerable().Where(x => x.OptionTypeId == item.OptionTypeId
                              && x.IsDelete == false).FirstOrDefault();
@@ -560,6 +564,7 @@ namespace ShutterManagement.Business.Services
 
                                 if (!AppConstant.IsTenant)
                                 {
+                                    
                                     TblManagePartnersProductsOption managePartnerProductOption = new TblManagePartnersProductsOption
                                     {
                                         ManageProductId = IsOptionExists.OptionId,
@@ -573,8 +578,9 @@ namespace ShutterManagement.Business.Services
                                         CreatedAt = DateTime.Now,
                                         CreatedBy = AppConstant.LoggedInUserID,
                                     };
-                                    dbContext.TblManagePartnersProductsOptions.Add(managePartnerProductOption);
-                                    await dbContext.SaveChangesAsync();
+                                    await managePartnersProductsOptions.Add(managePartnerProductOption);
+                                    //dbContext.TblManagePartnersProductsOptions.Add(managePartnerProductOption);
+                                    //await dbContext.SaveChangesAsync();
                                 }
                             }
                         }
