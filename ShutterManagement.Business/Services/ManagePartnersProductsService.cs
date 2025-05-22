@@ -103,24 +103,17 @@ namespace ShutterManagement.Business.Services
                         if (IsManagePartnerProductExist != null)
                         {
                             decimal PartnerSellingPricewithPer = 0.0m;
-                            //decimal baseCost = await CalculateBaseCost((Guid)IsManagePartnerProductExist.ProductId);
-                            //var msrp = await CalculateMSRPData((Guid)IsManagePartnerProductExist.ProductId);
-                            //var (maxSellingPrice, minSellingPrice, wholesale) =
-                            // CalculateSellingPrices(baseCost, msrp, (decimal)IsManagePartnerProductExist.WholeSalePrice, (decimal)IsManagePartnerProductExist.MaxPartnerPrice,
-                            // IsManagePartnerProductExist.PriceType);
                             decimal? minSellingPrice = 0.0m;
                             decimal? maxSellingPrice = 0.0m;
                             if (model.MarkupType == EnumValue.GetEnumValue(PriceType.Percentage))
                             {
                                 minSellingPrice = (-1) * (decimal)IsManagePartnerProductExist.MaxPartnerPrice;
                                 maxSellingPrice = (decimal)IsManagePartnerProductExist.MaxPartnerPrice;
-                                // PartnerSellingPricewithPer = (decimal)msrp * (1 + (model.PartnerSellingPrice / 100)) ?? 0.0m;
                             }
                             if (model.MarkupType == EnumValue.GetEnumValue(PriceType.Fixed))
                             {
                                 minSellingPrice = (-1) * (decimal)IsManagePartnerProductExist.MaxPartnerPrice;
                                 maxSellingPrice = (decimal)IsManagePartnerProductExist.MaxPartnerPrice;
-                                // PartnerSellingPricewithPer = (decimal)msrp * (1 + (model.PartnerSellingPrice / 100)) ?? 0.0m;
                             }
 
                             if (model.PartnerSellingPrice >= minSellingPrice && model.PartnerSellingPrice <= maxSellingPrice)
@@ -140,9 +133,6 @@ namespace ShutterManagement.Business.Services
                                         && x.IsActive == true && x.IsDelete == false).Select(x => x.AdditionalCost).FirstOrDefault();
                                         decimal minSellingPrice1 = 0.0m;
                                         decimal maxSellingPrice1 = 0.0m;
-                                        //  var (maxSellingPrice1, minSellingPrice1, wholesale1) =
-                                        //   CalculateSellingPrices((decimal)optionprice, (decimal)optionprice, (decimal)IsManagepartneroptiontype.WholeSalePrice, (decimal)IsManagepartneroptiontype.MaxPrice,
-                                        //item.MarkupOptionType);
                                         if (item.MarkupOptionType == EnumValue.GetEnumValue(PriceType.Percentage))
                                         {
                                             minSellingPrice1 = (decimal)((-1) * IsManagepartneroptiontype.MaxPrice);
@@ -158,6 +148,19 @@ namespace ShutterManagement.Business.Services
                                             IsManagepartneroptiontype.PartnerSellingPrice = item.PartnerSellingPrice;
                                             IsManagepartneroptiontype.TaxId = item.TaxRateId;
                                             await managePartnersProductsOptions.Update(IsManagepartneroptiontype);
+                                            if (!AppConstant.IsTenant)
+                                            {
+                                                var IsOptionvalueExist = await dbContext.TblOptions.Where(x => x.OptionId
+                                                == IsManagepartneroptiontype.OptionId && x.IsActive == true && x.IsDelete == false
+                                                && x.TenantId == AppConstant.LoggedInTenantId).
+                                                FirstOrDefaultAsync();
+                                                if (IsOptionvalueExist != null)
+                                                {
+                                                    IsOptionvalueExist.TaxId = item.TaxRateId;
+                                                    dbContext.TblOptions.Update(IsOptionvalueExist);
+                                                    dbContext.SaveChangesAsync();
+                                                }
+                                            }
                                         }
                                         else
                                         {
