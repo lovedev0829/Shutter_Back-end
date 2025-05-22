@@ -124,7 +124,7 @@ namespace ShutterManagement.Business.Services
                         await Add(options);
                         var manageproduct = dbContext.TblManagePartnersProducts.Where(x=> x.ProductId == options.ProductId
                         && x.TenantId == AppConstant.LoggedInTenantId && x.IsAvailable == true && x.IsActive == true && x.IsDelete == false)
-                            .Select(y=> y.ManageProductId).FirstOrDefault();  
+                            .FirstOrDefault();  
                         if (options.OptionId != Guid.Empty)
                         {
                             foreach (var item in model.Options)
@@ -150,20 +150,23 @@ namespace ShutterManagement.Business.Services
                                     await optionsTypeService.Add(optionsType);
                                     if (!AppConstant.IsTenant)
                                     {
-                                        TblManagePartnersProductsOption managePartnerProductOption = new TblManagePartnersProductsOption
+                                        if (manageproduct != null)
                                         {
-                                            ManageProductId = manageproduct,
-                                            OptionId = options.OptionId,
-                                            OptionTypeId = optionsType.OptionTypeId,
-                                            TaxId = options.TaxId,
-                                            TenantId = AppConstant.LoggedInTenantId,
-                                            IsActive = true,
-                                            IsDelete = false,
-                                            IsAvailable = true,
-                                            CreatedAt = DateTime.Now,
-                                            CreatedBy = AppConstant.LoggedInUserID,
-                                        };
-                                        await managePartnersProductsOptions.Add(managePartnerProductOption);
+                                            TblManagePartnersProductsOption managePartnerProductOption = new TblManagePartnersProductsOption
+                                            {
+                                                ManageProductId = manageproduct.ManageProductId,
+                                                OptionId = options.OptionId,
+                                                OptionTypeId = optionsType.OptionTypeId,
+                                                TaxId = options.TaxId,
+                                                TenantId = AppConstant.LoggedInTenantId,
+                                                IsActive = true,
+                                                IsDelete = false,
+                                                IsAvailable = true,
+                                                CreatedAt = DateTime.Now,
+                                                CreatedBy = AppConstant.LoggedInUserID,
+                                            };
+                                            await managePartnersProductsOptions.Add(managePartnerProductOption);
+                                        }
                                         //dbContext.Add(managePartnerProductOption);
                                         //await dbContext.SaveChangesAsync();
                                     }
@@ -505,35 +508,24 @@ namespace ShutterManagement.Business.Services
                         var InsertRecords = model.Options.Where(a1 => !OptionsTypes.Any(a2 => a1.OptionType == a2.OptionType && a1.AdditionalCost == a2.AdditionalCost && a1.IsDefault == a2.IsDefault)).ToList();
                         var DeleteRecords = OptionsTypes.Where(a1 => !model.Options.Any(a2 => a1.OptionType == a2.OptionType && a1.AdditionalCost == a2.AdditionalCost && a1.IsDefault == a2.IsDefault)).ToList();
 
-                        //foreach(var item in DeleteRecords)
-                        //{
-                        //    var Ismanageproductexist = await dbContext.TblManagePartnersProductsOptions.Where
-                        //   (x => x.TenantId == AppConstant.LoggedInTenantId
-                        //   && x.IsActive == true && x.IsAvailable == true && x.IsDelete == false && x.OptionTypeId == item.OptionTypeId).FirstOrDefaultAsync();
-                        //   if(Ismanageproductexist != null)
-                        //    {
-                        //        Ismanageproductexist.IsActive = false;
-                        //        Ismanageproductexist.IsDelete = true;
-                        //        Ismanageproductexist.IsAvailable = false;
-                        //        dbContext.Update(Ismanageproductexist);
-                        //        await dbContext.SaveChangesAsync();
-                        //    }
-                        //}
                         foreach (var item in DeleteRecords)
                         {
-                            var Ismanageproductexist = managePartnersProductsOptions.GetAllQuerable().Where
-                            (x => x.TenantId == AppConstant.LoggedInTenantId
-                             && x.IsActive == true && x.IsAvailable == true && x.IsDelete == false && x.OptionTypeId ==
-                             item.OptionTypeId).FirstOrDefault();
+                            var Ismanageproductexist = await managePartnersProductsOptions.GetAllQuerable().Where
+                           (x => x.TenantId == AppConstant.LoggedInTenantId
+                           && x.IsActive == true && x.IsAvailable == true && x.IsDelete == false && x.OptionTypeId == item.OptionTypeId).FirstOrDefaultAsync();
                             if (Ismanageproductexist != null)
                             {
                                 Ismanageproductexist.IsActive = false;
                                 Ismanageproductexist.IsDelete = true;
                                 Ismanageproductexist.IsAvailable = false;
+
                                 await managePartnersProductsOptions.Update(Ismanageproductexist);
-                                //dbContext.TblManagePartnersProductsOptions.Update(Ismanageproductexist);
+                                //dbContext.Update(Ismanageproductexist);
                                 //await dbContext.SaveChangesAsync();
                             }
+                        }
+                        foreach (var item in DeleteRecords)
+                        {
                             var data = optionsTypeService.GetAllQuerable().Where(x => x.OptionTypeId == item.OptionTypeId
                              && x.IsDelete == false).FirstOrDefault();
                             data.IsDelete = true;
