@@ -201,6 +201,8 @@ namespace ShutterManagement.Business.Services
                                            OptionTypeId = estimateOption.OptionTypeid.ToString(),
                                            OptionTypeName = Convert.ToString(estimateOption.OptionName + " - " + estimateOption.OptionTypeName),
                                        }).ToList(); item.Options = Options.Select(x => x.OptionTypeName).ToArray();
+
+                        item.OptionTaxDetails = Options;
                         //item.OptionsPrice = Options.Select(x => x.OptionPrice).ToArray();
                     }
                 }
