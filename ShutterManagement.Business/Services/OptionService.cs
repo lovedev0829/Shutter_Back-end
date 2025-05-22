@@ -24,19 +24,16 @@ namespace ShutterManagement.Business.Services
         private readonly IOptionsTypeService optionsTypeService;
         private readonly ClaimsProperty claimsProperty;
         private readonly ITenantService tenantService;
-        private readonly IManagePartnersProducts managePartnersProducts;
-        private readonly TblManagePartnersProductsOption managePartnersProductsOptions;
 
         public OptionService(ShutterDBContext context, IOptionsTypeService optionsTypeService,
-            ClaimsProperty claimsProperty, ITenantService tenantService,IManagePartnersProducts managePartnersProducts
-            ,TblManagePartnersProductsOption managePartnersProductsOptions)
+            ClaimsProperty claimsProperty, ITenantService tenantService
+            )
         {
             _context = context;
             this.optionsTypeService = optionsTypeService;
             this.claimsProperty = claimsProperty;
             this.tenantService = tenantService;
-            this.managePartnersProducts = managePartnersProducts;
-            this.managePartnersProductsOptions = managePartnersProductsOptions;
+          
         }
 
         public async Task<IResponseVm<string>> ActiveInActive(Guid Id)
@@ -123,7 +120,7 @@ namespace ShutterManagement.Business.Services
                             IsDelete = false
                         };
                         await Add(options);
-                        var manageproduct = managePartnersProducts.GetAllQuerable().Where(x=> x.ProductId == options.ProductId
+                        var manageproduct = dbContext.TblManagePartnersProducts.Where(x=> x.ProductId == options.ProductId
                         && x.TenantId == AppConstant.LoggedInTenantId && x.IsAvailable == true && x.IsActive == true && x.IsDelete == false)
                             .Select(y=> y.ManageProductId).FirstOrDefault();  
                         if (options.OptionId != Guid.Empty)
