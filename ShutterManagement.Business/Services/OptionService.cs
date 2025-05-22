@@ -128,6 +128,7 @@ namespace ShutterManagement.Business.Services
                                         IsDelete = false
                                     };
                                     await optionsTypeService.Add(optionsType);
+
                                 }
                                 else
                                 {
