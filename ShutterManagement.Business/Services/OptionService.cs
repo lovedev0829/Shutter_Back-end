@@ -268,7 +268,8 @@ namespace ShutterManagement.Business.Services
                        ProductName = product != null ? product.ProductName : "",
                        ProductTypeId = op.ProductTypeId,
                        ProductTypeName = productType != null ? productType.ProductName : "",
-                       IsTaxAvailable = op.IsTaxApplied
+                       IsTaxAvailable = op.IsTaxApplied,
+                       
                        }).ToList();
                     }
 
@@ -301,6 +302,7 @@ namespace ShutterManagement.Business.Services
                                ProductTypeId = x.ProductTypeId,
                                ProductTypeName = dbContext.MstProductTypes.Where(y => y.ProductId == x.ProductTypeId).Select(z => z.ProductName).FirstOrDefault(),
                                IsTaxAvailable = x.IsTaxApplied,
+                               
 
                            })
                            .ToList();
@@ -317,6 +319,7 @@ namespace ShutterManagement.Business.Services
                                 IsDefault = x.IsDefault,
                                 OptionType = x.OptionType,
                                 OptionTypeId = x.OptionTypeId,
+                                SortOrder=x.SortOrder,
                                 //Unit = x.Unit
                             })
                             .ToList();

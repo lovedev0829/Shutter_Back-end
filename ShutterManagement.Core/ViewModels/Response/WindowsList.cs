@@ -31,6 +31,8 @@ namespace ShutterManagement.Core.ViewModels.Response
         public decimal? BuildWidth { get; set; }
         public decimal? BuildHeight { get; set; }
 
+        public int? SortOrder { get; set; }
+
         public List<WindowOptions>? WindowOptions { get; set; }
     }
 

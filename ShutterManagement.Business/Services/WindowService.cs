@@ -521,6 +521,8 @@ namespace ShutterManagement.Business.Services
                             ProductName = p.FirstOrDefault().wp.Product.ProductName ?? "",
                             BuildHeight = p.FirstOrDefault().wp.BuildHeight,
                             BuildWidth = p.FirstOrDefault().wp.BuildWidth,
+                            SortOrder=p.FirstOrDefault().wp.SortOrder,
+                            
                             WindowOptions = p.Select(o => new WindowOptions
                             {
                                 WindowProductId = o.wp.WindowProductId,
