@@ -1042,7 +1042,7 @@ namespace ShutterManagement.Business.Services
 
                 if (IsTenant)
                 {
-                    var JobList = (from t2 in _context.TblJobs
+                    var JobList = (from t2 in _context.TblJobs.OrderByDescending(x => x.CreatedAt)
                                    join t1 in _context.TblAddresses on t2.AddressId equals t1.AddressId into addr
                                    from t1 in addr.DefaultIfEmpty()
                                    join t3 in _context.MstJobTypes on t2.JobType equals t3.Id into jobType
@@ -1329,7 +1329,7 @@ namespace ShutterManagement.Business.Services
 
                 if (IsTenant)
                 {
-                    var JobList = (from t2 in _context.TblJobs
+                    var JobList = (from t2 in _context.TblJobs.OrderByDescending(x => x.CreatedAt)
                                   join t1 in _context.TblAddresses on t2.AddressId equals t1.AddressId into addr
                                   from t1 in addr.DefaultIfEmpty() 
                                   join t3 in _context.MstJobTypes on t2.JobType equals t3.Id into jobType

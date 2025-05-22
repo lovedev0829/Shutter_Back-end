@@ -301,7 +301,7 @@ namespace ShutterManagement.Controllers
             {
                 filter1.TenantId = AppConstant.LoggedInTenantId.ToString().ToLower();
             }
-
+            filter1.RecordPerPage= 10;
             var result = await jobService.GetAllJobsTenant_SubTenant(filter1);
             return Ok(result);
         }

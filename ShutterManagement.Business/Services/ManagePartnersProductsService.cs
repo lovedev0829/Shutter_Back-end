@@ -360,6 +360,12 @@ namespace ShutterManagement.Business.Services
                                 ? GetManagePartnerProductData(filter)
                                 : GetDefaultProductData(filter);
 
+                        //var queryable = productlist.AsQueryable();
+
+                        //queryable = Paginate.ApplyColumnFilters(queryable, filter.ColumnFilters);
+                        //queryable = Paginate.ApplySorting(queryable, filter.SortColumn, filter.SortDirection);
+
+
                         var pagination = Paginate.Pagination(productlist, filter);
 
                         productlist.DistinctBy(x => x.ProductName);

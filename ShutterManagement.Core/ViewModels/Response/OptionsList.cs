@@ -34,6 +34,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? OptionType { get; set; }
         public decimal? AdditionalCost { get; set; }
         public bool? IsDefault { get; set; }
-        
+        public int? SortOrder { get; set; }
+
     }
 }

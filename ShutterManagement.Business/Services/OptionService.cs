@@ -123,6 +123,7 @@ namespace ShutterManagement.Business.Services
                                         IsDefault = item.IsDefault,
                                         CreatedAt = DateTime.Now,
                                         CreatedBy = AppConstant.LoggedInUserID,
+                                        SortOrder=item.SortOrder,
                                         IsActive = true,
                                         IsDelete = false
                                     };
@@ -264,7 +265,7 @@ namespace ShutterManagement.Business.Services
                     foreach (var item in IsOptionExists)
                     {
 
-                        var optionsType = optionsTypeService.GetAllQuerable().
+                        var optionsType = optionsTypeService.GetAllQuerable().OrderBy(x=>x.SortOrder).
                             Where(x => x.IsDelete == false && x.OptionId == item.OptionId).OrderBy(x => x.CreatedAt)
                             .Select(x => new OptionsType
                             {
@@ -416,6 +417,7 @@ namespace ShutterManagement.Business.Services
                                     IsDefault = item.IsDefault,
                                     CreatedAt = DateTime.Now,
                                     CreatedBy = AppConstant.LoggedInUserID,
+                                    SortOrder = item.SortOrder,
                                     IsActive = true,
                                     IsDelete = false
                                 };

@@ -44,5 +44,6 @@ namespace ShutterManagement.Core.ViewModels.Request
         public decimal? AdditionalCost { get; set; }
 
         public bool? IsDefault { get; set; }
+        public int? SortOrder { get; set; }
     }
 }
