@@ -236,10 +236,10 @@ namespace ShutterManagement.Business.Services
                     //        .Select(m => m.OptionId)
                     //        .ToList();
 
-                    //    allOptions = allOptions
-                    //        .Where(x => assignedOptionIds.Contains(x.OptionId))
-                    //        .ToList();
-                    //}
+                        allOptions = allOptions
+                            .Where(x => assignedOptionIds.Contains(x.OptionId) || x.TenantId == AppConstant.LoggedInTenantId)
+                            .ToList();
+                    }
 
                     var IsOptionExists = allOptions
                         .Select(x => new OptionsList
