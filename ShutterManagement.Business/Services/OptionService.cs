@@ -306,7 +306,7 @@ namespace ShutterManagement.Business.Services
                                 where op.IsDelete == false
                            && op.TenantId == AppConstant.LoggedInTenantId
                            && p.TenantId == op.TenantId
-                           && (opp == null || (opp.IsDelete == false && opp.IsAvailable == true))
+                          // && (opp == null || (opp.IsDelete == false && opp.IsAvailable == true))
                           && p.IsAvailable == true
                           orderby op.CreatedAt descending
 
