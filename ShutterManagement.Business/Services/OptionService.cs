@@ -508,20 +508,24 @@ namespace ShutterManagement.Business.Services
                         var InsertRecords = model.Options.Where(a1 => !OptionsTypes.Any(a2 => a1.OptionType == a2.OptionType && a1.AdditionalCost == a2.AdditionalCost && a1.IsDefault == a2.IsDefault)).ToList();
                         var DeleteRecords = OptionsTypes.Where(a1 => !model.Options.Any(a2 => a1.OptionType == a2.OptionType && a1.AdditionalCost == a2.AdditionalCost && a1.IsDefault == a2.IsDefault)).ToList();
 
-                        foreach (var item in DeleteRecords)
+                        if (!AppConstant.IsTenant)
                         {
-                            var Ismanageproductexist = await managePartnersProductsOptions.GetAllQuerable().Where
-                           (x => x.TenantId == AppConstant.LoggedInTenantId
-                           && x.IsActive == true && x.IsAvailable == true && x.IsDelete == false && x.OptionTypeId == item.OptionTypeId).FirstOrDefaultAsync();
-                            if (Ismanageproductexist != null)
-                            {
-                                Ismanageproductexist.IsActive = false;
-                                Ismanageproductexist.IsDelete = true;
-                                Ismanageproductexist.IsAvailable = false;
 
-                                await managePartnersProductsOptions.Update(Ismanageproductexist);
-                                //dbContext.Update(Ismanageproductexist);
-                                //await dbContext.SaveChangesAsync();
+                            foreach (var item in DeleteRecords)
+                            {
+                                var Ismanageproductexist = managePartnersProductsOptions.GetAllQuerable().Where
+                               (x => x.TenantId == AppConstant.LoggedInTenantId
+                               && x.IsActive == true && x.IsAvailable == true && x.IsDelete == false && x.OptionTypeId == item.OptionTypeId).FirstOrDefault();
+                                if (Ismanageproductexist != null)
+                                {
+                                    Ismanageproductexist.IsActive = false;
+                                    Ismanageproductexist.IsDelete = true;
+                                    Ismanageproductexist.IsAvailable = false;
+
+                                    await managePartnersProductsOptions.Update(Ismanageproductexist);
+                                    //dbContext.Update(Ismanageproductexist);
+                                    //await dbContext.SaveChangesAsync();
+                                }
                             }
                         }
                         foreach (var item in DeleteRecords)
@@ -535,6 +539,7 @@ namespace ShutterManagement.Business.Services
 
                         foreach (var item in InsertRecords)
                         {
+                            
                             var IsOptionTypeExists = await optionsTypeService.AnyAsync(x => x.IsActive == true
                                 && x.IsDelete == false && x.OptionId == IsOptionExists.OptionId && x.OptionType ==
                                 item.OptionType);
@@ -558,23 +563,28 @@ namespace ShutterManagement.Business.Services
 
                                 if (!AppConstant.IsTenant)
                                 {
-                                    
-                                    TblManagePartnersProductsOption managePartnerProductOption = new TblManagePartnersProductsOption
+                                    var manageproduct = dbContext.TblManagePartnersProducts.Where(x => x.ProductId == IsOptionExists.ProductId
+                                   && x.TenantId == AppConstant.LoggedInTenantId && x.IsAvailable == true && x.IsActive == true && x.IsDelete == false)
+                            .FirstOrDefault();
+                                    if (manageproduct != null)
                                     {
-                                        ManageProductId = IsOptionExists.OptionId,
-                                        OptionId = IsOptionExists.OptionId,
-                                        OptionTypeId = optionsType.OptionTypeId,
-                                        TaxId = IsOptionExists.TaxId,
-                                        TenantId = AppConstant.LoggedInTenantId,
-                                        IsActive = true,
-                                        IsDelete = false,
-                                        IsAvailable = true,
-                                        CreatedAt = DateTime.Now,
-                                        CreatedBy = AppConstant.LoggedInUserID,
-                                    };
-                                    await managePartnersProductsOptions.Add(managePartnerProductOption);
-                                    //dbContext.TblManagePartnersProductsOptions.Add(managePartnerProductOption);
-                                    //await dbContext.SaveChangesAsync();
+                                        TblManagePartnersProductsOption managePartnerProductOption = new TblManagePartnersProductsOption
+                                        {
+                                            ManageProductId = manageproduct.ManageProductId,
+                                            OptionId = IsOptionExists.OptionId,
+                                            OptionTypeId = optionsType.OptionTypeId,
+                                            TaxId = IsOptionExists.TaxId,
+                                            TenantId = AppConstant.LoggedInTenantId,
+                                            IsActive = true,
+                                            IsDelete = false,
+                                            IsAvailable = true,
+                                            CreatedAt = DateTime.Now,
+                                            CreatedBy = AppConstant.LoggedInUserID,
+                                        };
+                                        await managePartnersProductsOptions.Add(managePartnerProductOption);
+                                        //dbContext.TblManagePartnersProductsOptions.Add(managePartnerProductOption);
+                                        //await dbContext.SaveChangesAsync();
+                                    }
                                 }
                             }
                         }
