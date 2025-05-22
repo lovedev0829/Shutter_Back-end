@@ -476,8 +476,8 @@ namespace ShutterManagement.Business.Services
         {
             return dbContext.TblWindows
                 .Where(w => w.IsDelete == false && w.TenantId == AppConstant.LoggedInTenantId)
-                .OrderBy(w => w.Label)
-                .GroupJoin(dbContext.TblWindowProducts.OrderByDescending(s => s.CreatedAt),
+                .OrderBy(w => w.CreatedAt)
+                .GroupJoin(dbContext.TblWindowProducts,
                     w => w.WindowId,
                     wp => wp.WindowId,
                     (w, windowProducts) => new { w, windowProducts })
