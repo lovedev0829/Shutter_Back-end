@@ -246,7 +246,7 @@ namespace ShutterManagement.Business.Services
                 FileLogger.Log($"Fetched {estimates.Count} estimates.");
 
                 // Get product types and filter records based on search and status
-                var filteredEstimates = ApplyFilters(estimates, filter);
+                var filteredEstimates = await ApplyFilters(estimates, filter);
 
                 // Paginate the filtered results
                 var paginatedEstimates = Paginate.Pagination(filteredEstimates, filter);
@@ -1158,10 +1158,9 @@ namespace ShutterManagement.Business.Services
                                    .ToList();
         }
 
-        private List<EstimateList> ApplyFilters(List<TblEstimate> estimates, Pagination filter)
+        private async Task<List<EstimateList>> ApplyFilters(List<TblEstimate> estimates, Pagination filter)
         {
             var estimateList = new List<EstimateList>();
-
 
             foreach (var estimate in estimates)
             {
@@ -1184,72 +1183,87 @@ namespace ShutterManagement.Business.Services
                     Tax = estimate.TaxAmount,
                     TermsCondition = estimate.TermsCondition,
                     IsTaxApplicable = estimate.IsTaxApplied,
+                    jobDetails = new JobDetails() // Ensure jobDetails is not null
                 };
-                var Userdetails = dbContext.TblUsers
-                  .Where(x => x.Id == estimate.CreatedBy && x.IsDelete == false)
-                  .FirstOrDefault();
-                e.CreatedBy = Userdetails.FirstName + " " + Userdetails.LastName;
 
-                e.jobDetails.FirstName = Userdetails.FirstName;
-                e.jobDetails.LastName = Userdetails.LastName;
+                // Fetch user details
+                var user = dbContext.TblUsers
+                    .FirstOrDefault(x => x.Id == estimate.CreatedBy && !(bool)x.IsDelete);
 
-                var Tenant = dbContext.TblTenants.Where(e => e.TenantId == estimate.TenantId && e.IsDelete == false).FirstOrDefault();
-                var tenantdetails = dbContext.TblTenantBrandingInfos
-                 .Where(tb => tb.Id == Tenant.BrandingInfo)
-                    .FirstOrDefault();
-                e.primarycolor = tenantdetails.PrimaryColor;
-                e.CompanyName = tenantdetails.CompanyName;
-                var taxdetails = taxRate.GetAllQuerable()
-                     .Where(x => x.TaxRateId == estimate.TaxId && x.IsDelete == false)
-                    .FirstOrDefault();
-
-                if (taxdetails != null)
+                if (user != null)
                 {
-                    var region1 = region.GetAllQuerable()
-                        .Where(x => x.Id == taxdetails.Region && x.IsDelete == false)
-                        .Select(pt => pt.RegionName)
-                        .FirstOrDefault();
+                    e.CreatedBy = $"{user.FirstName} {user.LastName}";
+                    e.jobDetails.FirstName = user.FirstName;
+                    e.jobDetails.LastName = user.LastName;
+                }
 
-                    e.TaxRate = taxdetails.Rate;
-                    e.Region = region1 ?? "";
+                // Fetch tenant and branding info
+                var tenant = dbContext.TblTenants
+                    .FirstOrDefault(t => t.TenantId == estimate.TenantId && !(bool)t.IsDelete);
+
+                if (tenant != null)
+                {
+                    var brandingInfo = dbContext.TblTenantBrandingInfos
+                        .FirstOrDefault(tb => tb.Id == tenant.BrandingInfo);
+
+                    if (brandingInfo != null)
+                    {
+                        e.primarycolor = brandingInfo.PrimaryColor;
+                        e.CompanyName = brandingInfo.CompanyName;
+                    }
+                }
+
+                // Tax and region details
+                var taxDetails = taxRate.GetAllQuerable()
+                    .FirstOrDefault(t => t.TaxRateId == estimate.TaxId && !(bool)t.IsDelete);
+
+                if (taxDetails != null)
+                {
+                    e.TaxRate = taxDetails.Rate;
+                    e.Region = region.GetAllQuerable()
+                        .Where(r => r.Id == taxDetails.Region && !(bool)r.IsDelete)
+                        .Select(r => r.RegionName)
+                        .FirstOrDefault() ?? "";
                 }
                 else
                 {
                     e.TaxRate = 0;
                     e.Region = "";
                 }
+
                 // Fetch and add related products and options
-                AddEstimateProducts(estimate, e);
+                await AddEstimateProducts(estimate, e);
                 estimateList.Add(e);
-
-
             }
 
-            // Filter records based on search value and status
             var filteredRecords = estimateList
                 .Where(x =>
                     (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
-                    (string.IsNullOrEmpty(filter.JobStatus.ToLower()) ? true : x.jobDetails.JobStatus.ToLower() == filter.JobStatus.ToLower()) &&
-                    (string.IsNullOrEmpty(filter.JobId?.ToLower()) ? true : x.JobId?.ToString().ToLower() == filter.JobId.ToLower()) &&
-                    (string.IsNullOrEmpty(filter.EstimationId?.ToLower()) ? true : x.EstimateId.ToString().ToLower() == filter.EstimationId.ToLower()) &&
+                    (string.IsNullOrWhiteSpace(filter.JobStatus) ||
+                        string.Equals(x.jobDetails?.JobStatus, filter.JobStatus, StringComparison.OrdinalIgnoreCase)) &&
+                    (string.IsNullOrWhiteSpace(filter.JobId) ||
+                        string.Equals(x.JobId?.ToString(), filter.JobId, StringComparison.OrdinalIgnoreCase)) &&
+                    (string.IsNullOrWhiteSpace(filter.EstimationId) ||
+                        string.Equals(x.EstimateId.ToString(), filter.EstimationId, StringComparison.OrdinalIgnoreCase)) &&
                     (string.IsNullOrWhiteSpace(filter.SearchValue) ||
-                    ((x.Notes ?? "").Contains(filter.SearchValue)
-                     || (x.JobId.ToString().ToLower() ?? "").Contains(filter.SearchValue)
-                     || (x.jobDetails?.ContactId?.ToString().ToLower() ?? "").Contains(filter.CustomerId)
-                     || (x.Status ?? "").Contains(filter.SearchValue)
-                     || (x.EstimateId.ToString()).Contains(filter.SearchValue)
-                     || (x.EstimateCode ?? "").Contains(filter.SearchValue)
-                     || (x.EstimateName ?? "").Contains(filter.SearchValue)
-                     || (x.TermsCondition ?? "").Contains(filter.SearchValue)
-                     || (x.jobDetails.JobStatus.ToLower() ?? "").Contains(filter.SearchValue)
-                     || (x.DiscountCoupon ?? "").Contains(filter.SearchValue)
-                     || (x.jobDetails.JobName.ToLower() ?? "").Contains(filter.SearchValue)
-                     || (x.GrandTotal.ToString() ?? "").Contains(filter.SearchValue)))
-                ).ToList();
+                        (x.Notes ?? "").Contains(filter.SearchValue, StringComparison.OrdinalIgnoreCase) ||
+                        (x.JobId?.ToString() ?? "").Contains(filter.SearchValue, StringComparison.OrdinalIgnoreCase) ||
+                        (x.jobDetails?.ContactId?.ToString() ?? "").Contains(filter.CustomerId ?? "", StringComparison.OrdinalIgnoreCase) ||
+                        (x.Status ?? "").Contains(filter.SearchValue, StringComparison.OrdinalIgnoreCase) ||
+                        (x.EstimateId.ToString() ?? "").Contains(filter.SearchValue, StringComparison.OrdinalIgnoreCase) ||
+                        (x.EstimateCode ?? "").Contains(filter.SearchValue, StringComparison.OrdinalIgnoreCase) ||
+                        (x.EstimateName ?? "").Contains(filter.SearchValue, StringComparison.OrdinalIgnoreCase) ||
+                        (x.TermsCondition ?? "").Contains(filter.SearchValue, StringComparison.OrdinalIgnoreCase) ||
+                        (x.jobDetails?.JobStatus ?? "").Contains(filter.SearchValue, StringComparison.OrdinalIgnoreCase) ||
+                        (x.DiscountCoupon ?? "").Contains(filter.SearchValue, StringComparison.OrdinalIgnoreCase) ||
+                        (x.jobDetails?.JobName ?? "").Contains(filter.SearchValue, StringComparison.OrdinalIgnoreCase) ||
+                        (x.GrandTotal.ToString() ?? "").Contains(filter.SearchValue, StringComparison.OrdinalIgnoreCase)))
+                .ToList();
 
             return filteredRecords;
         }
-        private void AddJobDetails(EstimateList e)
+
+        private async Task AddJobDetails(EstimateList e)
         {
 
             var jobdetails1 = (from j1 in dbContext.TblJobs
@@ -1284,7 +1298,7 @@ namespace ShutterManagement.Business.Services
 
         }
 
-        private async void AddEstimateProducts(TblEstimate estimate, EstimateList e)
+        private async Task AddEstimateProducts(TblEstimate estimate, EstimateList e)
         {
             try
             {
@@ -1354,7 +1368,7 @@ namespace ShutterManagement.Business.Services
                     };
                     e.EstimateProductList.Add(estimateProduct);
                 }
-                AddJobDetails(e);
+                await AddJobDetails(e);
                 e.IsTaxApplied = await IsTaxApplied((Guid)e.JobId);
             }
             catch (Exception ex)
