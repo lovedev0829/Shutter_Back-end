@@ -120,9 +120,9 @@ namespace ShutterManagement.Business.Services
                             IsDelete = false
                         };
                         await Add(options);
-                        var manageproduct = await dbContext.TblManagePartnersProducts.Where(x=> x.ProductId == options.ProductId
+                        var manageproduct = dbContext.TblManagePartnersProducts.Where(x=> x.ProductId == options.ProductId
                         && x.TenantId == AppConstant.LoggedInTenantId && x.IsAvailable == true && x.IsActive == true && x.IsDelete == false)
-                            .Select(y=> y.ManageProductId).FirstOrDefaultAsync();  
+                            .Select(y=> y.ManageProductId).FirstOrDefault();  
                         if (options.OptionId != Guid.Empty)
                         {
                             foreach (var item in model.Options)
