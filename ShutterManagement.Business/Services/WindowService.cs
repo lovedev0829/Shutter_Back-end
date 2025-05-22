@@ -472,11 +472,9 @@ namespace ShutterManagement.Business.Services
 
 
         #region private methods
-        // Helper methods
-
         private List<WindowsList> FetchWindowsData()
         {
-            return dbContext.TblWindows.OrderBy(s=>s.CreatedAt)
+            return dbContext.TblWindows.OrderByDescending(s=>s.CreatedAt)
                 .Where(w => w.IsDelete == false && w.TenantId == AppConstant.LoggedInTenantId)
                 .OrderBy(w => w.Label)
                 .GroupJoin(dbContext.TblWindowProducts,
