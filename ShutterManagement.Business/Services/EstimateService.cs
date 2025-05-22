@@ -504,131 +504,132 @@ namespace ShutterManagement.Business.Services
                             }
                         }
                     }
+                    foreach (var item in WindowProductData)
+                    {
+                        var optionMSRPDict = await CalculateOptionPrice(
+                            item.OptionsTypeIds,
+                            (decimal)item.Quantity,
+                            (decimal)item.Height,
+                            (decimal)item.Width,
+                              false
+                               );
+                        item.OptionTaxDetails.ForEach(x =>
+                        {
+                            x.OptionPrice = optionMSRPDict.OptionMSRP.Where(y => y.Key == x.OptionTypeId.ToString()).FirstOrDefault().Value;
+
+                        });
+                        item.AdditionalCost = optionMSRPDict.TotalCost;
+                        //item.IsTaxApplied = await IsTaxApplied((Guid)item.JobId);
+                        //item.TotalTaxAmount = item.IsTaxAvailable == true
+                        //? CalculateTotalTaxAmount(item.TotalPrice, item.MunicipalityTax, item.CityTax, item.StateTax)
+                        //: 0.0m;
+                    }
                     //if (!IsBreakdown)
                     //{
-                    //    // Use a loop to await IstaxApplied asynchronously for each item
-                    //    var forProduct = WindowProductData;
+                        //    // Use a loop to await IstaxApplied asynchronously for each item
+                        //    var forProduct = WindowProductData;
 
 
 
-                    //    foreach (var item in WindowProductData)
-                    //    {
-                    //        //decimal? taxAmount = 0.0m;
+                        //    foreach (var item in WindowProductData)
+                        //    {
+                        //        //decimal? taxAmount = 0.0m;
 
-                    //        //if (item.IsTaxAvailable == true)
-                    //        //{
-                    //        //    var taxRate = (item.CityTax ?? 0) + (item.StateTax ?? 0) + (item.MunicipalityTax ?? 0);
-                    //        //    taxAmount = ((item.TotalPrice ?? 0) * taxRate) / 100;
-                    //        //}
+                        //        //if (item.IsTaxAvailable == true)
+                        //        //{
+                        //        //    var taxRate = (item.CityTax ?? 0) + (item.StateTax ?? 0) + (item.MunicipalityTax ?? 0);
+                        //        //    taxAmount = ((item.TotalPrice ?? 0) * taxRate) / 100;
+                        //        //}
 
-                    //        //var isTaxApplied = await IsTaxApplied((Guid)item.JobId);
+                        //        //var isTaxApplied = await IsTaxApplied((Guid)item.JobId);
 
-                    //        //// Prepare OptionTaxDetails list
-                    //        //var optionTaxDetails = new List<OptionTaxVM>();
-                    //        //if (item.OptionIds != null && item.OptionsPrice != null)
-                    //        //{
-                    //        //    for (int i = 0; i < item.OptionIds.Length; i++)
-                    //        //    {
-                    //        //        decimal price = item.OptionsPrice[i];
-                    //        //        optionTaxDetails.Add(new OptionTaxVM
-                    //        //        {
-                    //        //            OptionId = item.OptionIds[i],
-                    //        //            TaxName = item.OptionTaxNames != null && i < item.OptionTaxNames.Length ? item.OptionTaxNames[i] : string.Empty,
-                    //        //            OptionPrice = price,
-                    //        //            CityTaxAmount = ((price * (item.OptionCityTaxes?[i] ?? 0)) / 100),
-                    //        //            StateTaxAmount = ((price * (item.OptionStateTaxes?[i] ?? 0)) / 100),
-                    //        //            MunicipalityTaxAmount = ((price * (item.OptionMunicipalities?[i] ?? 0)) / 100),
-                    //        //        });
-                    //        //    }
-                    //        //}
-
-
-                    //        //forProduct.Add(new WindowProdcutDetailsForEstimate
-                    //        //{
-                    //        //    // Window Properties
-                    //        //    WindowId = item.WindowId,
-                    //        //    AddressId = item.AddressId,
-                    //        //    Label = item.Label,
-                    //        //    Width = item.Width,
-                    //        //    Height = item.Height,
-                    //        //    ArchHeight = item.ArchHeight,
-                    //        //    Quantity = item.Quantity ?? 0.0m,
-                    //        //    JobId = item.JobId,
-                    //        //    OptionsTypeIds = item.OptionsTypeIds,
-                    //        //    Options = item.Options,
-                    //        //    OptionsPrice = item.OptionsPrice,
-                    //        //    WindowProdcutId = item.WindowProdcutId,
-                    //        //    ProductId = item.ProductId,
-                    //        //    BuildWidth = item.BuildWidth,
-                    //        //    BuildHeight = item.BuildHeight,
-                    //        //    ProductName = item.ProductName,
-                    //        //    ProductWidth = item.Width,
-                    //        //    ProductHeight = item.Height,
-                    //        //    ProductArchHeight = item.ArchHeight,
-                    //        //    Area = item.Area,
-                    //        //    Length = item.Length,
-                    //        //    AdditionalCost = await CalculateOptionPrice(item.OptionsTypeIds , (decimal)item.Quantity),
-                    //        //    AdditionalWidth = item.AdditionalWidth,
-                    //        //    Markup = item.Markup,
-                    //        //    ProductTypeName = item.ProductTypeName,
-                    //        //    TotalPrice = item.TotalPrice ?? 0.0m,
-                    //        //    //IsTaxApplied = isTaxApplied,
-                    //        //    Price = item.Price ?? 0.0m,
-                    //        //    IsComponentAvailable = item.IsComponentAvailable,
-                    //        //    // Product  Tax Related Field
-                    //        //    IsTaxAvailable = item.IsTaxAvailable,
-                    //        //    TotalTaxAmount = taxAmount??0.0m,
-                    //        //    MunicipalityTax= ((item.TotalPrice ?? 0) * item.MunicipalityTax) / 100,
-                    //        //    CityTax=((item.TotalPrice ?? 0) * item.CityTax ?? 0) / 100,
-                    //        //    StateTax= ((item.TotalPrice ?? 0) * item.StateTax ?? 0) / 100,
+                        //        //// Prepare OptionTaxDetails list
+                        //        //var optionTaxDetails = new List<OptionTaxVM>();
+                        //        //if (item.OptionIds != null && item.OptionsPrice != null)
+                        //        //{
+                        //        //    for (int i = 0; i < item.OptionIds.Length; i++)
+                        //        //    {
+                        //        //        decimal price = item.OptionsPrice[i];
+                        //        //        optionTaxDetails.Add(new OptionTaxVM
+                        //        //        {
+                        //        //            OptionId = item.OptionIds[i],
+                        //        //            TaxName = item.OptionTaxNames != null && i < item.OptionTaxNames.Length ? item.OptionTaxNames[i] : string.Empty,
+                        //        //            OptionPrice = price,
+                        //        //            CityTaxAmount = ((price * (item.OptionCityTaxes?[i] ?? 0)) / 100),
+                        //        //            StateTaxAmount = ((price * (item.OptionStateTaxes?[i] ?? 0)) / 100),
+                        //        //            MunicipalityTaxAmount = ((price * (item.OptionMunicipalities?[i] ?? 0)) / 100),
+                        //        //        });
+                        //        //    }
+                        //        //}
 
 
-                    //        //    // Option Tax Related Fields
-                    //        //    OptionIds = item.OptionIds,
-                    //        //    OptionCityTaxe = item.OptionTaxDetails?.Sum(x => x.CityTaxAmount) ?? 0.0m,
-                    //        //    OptionMunicipalityTax = item.OptionTaxDetails?.Sum(x => x.MunicipalityTaxAmount) ?? 0.0m,
-                    //        //    OptionStateTax = item.OptionTaxDetails?.Sum(x => x.StateTaxAmount) ?? 0.0m,
-                    //        //    OptionTaxNames = item.OptionTaxDetails?.Select(x => x.TaxName).ToArray(),
-                    //        //    OptionTaxRateIds = item.OptionTaxDetails?.Select(x => (Guid)x.TaxId).ToArray(),
-                    //        //    WindowOptionId = item.OptionTaxDetails?.Select(x => x.WindowOptionId).ToArray(),
-                    //        //    OptionTaxDetails = item.OptionTaxDetails
+                        //        //forProduct.Add(new WindowProdcutDetailsForEstimate
+                        //        //{
+                        //        //    // Window Properties
+                        //        //    WindowId = item.WindowId,
+                        //        //    AddressId = item.AddressId,
+                        //        //    Label = item.Label,
+                        //        //    Width = item.Width,
+                        //        //    Height = item.Height,
+                        //        //    ArchHeight = item.ArchHeight,
+                        //        //    Quantity = item.Quantity ?? 0.0m,
+                        //        //    JobId = item.JobId,
+                        //        //    OptionsTypeIds = item.OptionsTypeIds,
+                        //        //    Options = item.Options,
+                        //        //    OptionsPrice = item.OptionsPrice,
+                        //        //    WindowProdcutId = item.WindowProdcutId,
+                        //        //    ProductId = item.ProductId,
+                        //        //    BuildWidth = item.BuildWidth,
+                        //        //    BuildHeight = item.BuildHeight,
+                        //        //    ProductName = item.ProductName,
+                        //        //    ProductWidth = item.Width,
+                        //        //    ProductHeight = item.Height,
+                        //        //    ProductArchHeight = item.ArchHeight,
+                        //        //    Area = item.Area,
+                        //        //    Length = item.Length,
+                        //        //    AdditionalCost = await CalculateOptionPrice(item.OptionsTypeIds , (decimal)item.Quantity),
+                        //        //    AdditionalWidth = item.AdditionalWidth,
+                        //        //    Markup = item.Markup,
+                        //        //    ProductTypeName = item.ProductTypeName,
+                        //        //    TotalPrice = item.TotalPrice ?? 0.0m,
+                        //        //    //IsTaxApplied = isTaxApplied,
+                        //        //    Price = item.Price ?? 0.0m,
+                        //        //    IsComponentAvailable = item.IsComponentAvailable,
+                        //        //    // Product  Tax Related Field
+                        //        //    IsTaxAvailable = item.IsTaxAvailable,
+                        //        //    TotalTaxAmount = taxAmount??0.0m,
+                        //        //    MunicipalityTax= ((item.TotalPrice ?? 0) * item.MunicipalityTax) / 100,
+                        //        //    CityTax=((item.TotalPrice ?? 0) * item.CityTax ?? 0) / 100,
+                        //        //    StateTax= ((item.TotalPrice ?? 0) * item.StateTax ?? 0) / 100,
 
 
+                        //        //    // Option Tax Related Fields
+                        //        //    OptionIds = item.OptionIds,
+                        //        //    OptionCityTaxe = item.OptionTaxDetails?.Sum(x => x.CityTaxAmount) ?? 0.0m,
+                        //        //    OptionMunicipalityTax = item.OptionTaxDetails?.Sum(x => x.MunicipalityTaxAmount) ?? 0.0m,
+                        //        //    OptionStateTax = item.OptionTaxDetails?.Sum(x => x.StateTaxAmount) ?? 0.0m,
+                        //        //    OptionTaxNames = item.OptionTaxDetails?.Select(x => x.TaxName).ToArray(),
+                        //        //    OptionTaxRateIds = item.OptionTaxDetails?.Select(x => (Guid)x.TaxId).ToArray(),
+                        //        //    WindowOptionId = item.OptionTaxDetails?.Select(x => x.WindowOptionId).ToArray(),
+                        //        //    OptionTaxDetails = item.OptionTaxDetails
 
 
 
-                    //        //});
-                    //    }
 
-                    //    responseVm.Data = forProduct.DistinctBy(x => x.WindowProdcutId).ToList();
-                    //    responseVm.TotalRecords = WindowProductData.Count;
 
-                    //}
-                    //else
-                    //{
-                        foreach (var item in WindowProductData)
-                        {
-                            var optionMSRPDict = await CalculateOptionPrice(
-                                item.OptionsTypeIds,
-                                (decimal)item.Quantity,
-                                (decimal)item.Height,
-                                (decimal)item.Width,
-                                  false
-                                   );
-                            item.OptionTaxDetails.ForEach(x =>
-                            {
-                                x.OptionPrice = optionMSRPDict.OptionMSRP.Where(y => y.Key == x.OptionTypeId.ToString()).FirstOrDefault().Value;
+                        //        //});
+                        //    }
+                        if (!IsBreakdown) { 
+                        responseVm.Data = WindowProductData.DistinctBy(x => x.WindowProdcutId).ToList();
+                        responseVm.TotalRecords = WindowProductData.DistinctBy(x => x.WindowProdcutId).Count();
 
-                            });
-                            item.AdditionalCost = optionMSRPDict.TotalCost;
-                            //item.IsTaxApplied = await IsTaxApplied((Guid)item.JobId);
-                            //item.TotalTaxAmount = item.IsTaxAvailable == true
-                            //? CalculateTotalTaxAmount(item.TotalPrice, item.MunicipalityTax, item.CityTax, item.StateTax)
-                            //: 0.0m;
-                        }
+                    }
+                    else
+                    {
+                        
                         responseVm.Data = WindowProductData;
                         responseVm.TotalRecords = WindowProductData.Count;
-                    //}
+                    }
                 }
             }
             catch (Exception ex)
@@ -677,7 +678,7 @@ namespace ShutterManagement.Business.Services
         {
             decimal ComponentSubTotal = 0.00M;
 
-            foreach (var item in data)
+            foreach (var item in data.DistinctBy(x=>x.ComponentId))
             {
                 var formula = item.ExpressionFormulae ?? "";
 
