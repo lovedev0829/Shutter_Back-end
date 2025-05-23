@@ -489,7 +489,7 @@ namespace ShutterManagement.Business.Services
                                 }
 
                                 var itemsWithPricingExpression = data.Data
-                                    .Where(x => x.PricingExpression != null)
+                                    .Where(x => x.ComponentId != null)
                                     .ToList();
 
                                 if (itemsWithPricingExpression.Any())
@@ -633,8 +633,8 @@ namespace ShutterManagement.Business.Services
                             ComponentPriceWithoutMarkup = (decimal)(ComponentPriceWithoutMarkup + (productMarkup.WholeSalePrice));
                         }
                     }
+                    Wholesale += Convert.ToDecimal(Convert.ToDecimal(ComponentPriceWithoutMarkup).ToString("0.00"));
                 }
-                Wholesale += Convert.ToDecimal(Convert.ToDecimal(ComponentPriceWithoutMarkup).ToString("0.0000"));
                 if (!(bool)iswholesale)
                 {
                     var ComponentPriceWithMarkup = (ComponentPriceWithoutMarkup * (100 + item.MarkupPercentage)) / 100;
@@ -1440,7 +1440,7 @@ namespace ShutterManagement.Business.Services
 
             }
             subtotal += (decimal)windowproductdetails.Data.DistinctBy(x => x.WindowProdcutId).Sum(x => x.TotalPrice);
-            additionalCostAsOptionPrice += (decimal)windowproductdetails.Data.DistinctBy(x => x.WindowProdcutId).Sum(x => x.AdditionalCost);
+            additionalCostAsOptionPrice += (decimal)windowproductdetails.Data.Sum(x => x.AdditionalCost);
 
 
             SumofSubtotalandAdditionalCost = subtotal + additionalCostAsOptionPrice;
