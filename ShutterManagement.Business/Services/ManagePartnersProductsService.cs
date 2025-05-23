@@ -140,12 +140,12 @@ namespace ShutterManagement.Business.Services
                                         }
                                         if (item.MarkupOptionType == EnumValue.GetEnumValue(PriceType.Fixed))
                                         {
-                                             minSellingPrice1 = (decimal)((-1) * IsManagepartneroptiontype.MaxPrice);
-                                             maxSellingPrice1 = (decimal)IsManagepartneroptiontype.MaxPrice;
+                                             minSellingPrice1 = (decimal)((-1) * IsManagepartneroptiontype.MaxPrice??0.0m);
+                                             maxSellingPrice1 = IsManagepartneroptiontype.MaxPrice ?? 0.0m;
                                         }
                                         if (item.PartnerSellingPrice >= minSellingPrice1 && item.PartnerSellingPrice <= maxSellingPrice1)
                                         {
-                                            IsManagepartneroptiontype.PartnerSellingPrice = item.PartnerSellingPrice;
+                                            IsManagepartneroptiontype.PartnerSellingPrice = item.PartnerSellingPrice??0.0m;
                                             IsManagepartneroptiontype.TaxId = item.TaxRateId;
                                             await managePartnersProductsOptions.Update(IsManagepartneroptiontype);
                                             if (!AppConstant.IsTenant)
