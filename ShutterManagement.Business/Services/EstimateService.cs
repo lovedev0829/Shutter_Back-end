@@ -1167,7 +1167,7 @@ namespace ShutterManagement.Business.Services
 
             foreach (var estimate in estimates)
             {
-                var e = new EstimateList
+                var estimateDetails = new EstimateList
                 {
                     EstimateId = estimate.EstimateId,
                     CreatedDate = estimate.CreatedAt,
@@ -1183,7 +1183,7 @@ namespace ShutterManagement.Business.Services
                     //additionalCostAsOptionPrice = estimate.AdditionalCost,
                     GrandTotal = estimate.GrandTotal,
                     Notes = estimate.Notes,
-                    Tax = estimate.TaxAmount,
+                    Tax = estimate.TotaltaxAmount,
                     TermsCondition = estimate.TermsCondition,
                     IsTaxApplicable = estimate.IsTaxApplied,
                     jobDetails = new JobDetails() // Ensure jobDetails is not null
@@ -1195,9 +1195,9 @@ namespace ShutterManagement.Business.Services
 
                 if (user != null)
                 {
-                    e.CreatedBy = $"{user.FirstName} {user.LastName}";
-                    e.jobDetails.FirstName = user.FirstName;
-                    e.jobDetails.LastName = user.LastName;
+                    estimateDetails.CreatedBy = $"{user.FirstName} {user.LastName}";
+                    estimateDetails.jobDetails.FirstName = user.FirstName;
+                    estimateDetails.jobDetails.LastName = user.LastName;
                 }
 
                 // Fetch tenant and branding info
@@ -1211,8 +1211,8 @@ namespace ShutterManagement.Business.Services
 
                     if (brandingInfo != null)
                     {
-                        e.primarycolor = brandingInfo.PrimaryColor;
-                        e.CompanyName = brandingInfo.CompanyName;
+                        estimateDetails.primarycolor = brandingInfo.PrimaryColor;
+                        estimateDetails.CompanyName = brandingInfo.CompanyName;
                     }
                 }
 
@@ -1222,21 +1222,21 @@ namespace ShutterManagement.Business.Services
 
                 //if (taxDetails != null)
                 //{
-                //    e.TaxRate = taxDetails.Rate;
-                //    e.Region = region.GetAllQuerable()
+                //    estimateDetails.TaxRate = taxDetails.Rate;
+                //    estimateDetails.Region = region.GetAllQuerable()
                 //        .Where(r => r.Id == taxDetails.Region && !(bool)r.IsDelete)
                 //        .Select(r => r.RegionName)
                 //        .FirstOrDefault() ?? "";
                 //}
                 //else
                 //{
-                //    e.TaxRate = 0;
-                //    e.Region = "";
+                //    estimateDetails.TaxRate = 0;
+                //    estimateDetails.Region = "";
                 //}
 
                 // Fetch and add related products and options
-                await AddEstimateProducts(estimate, e);
-                estimateList.Add(e);
+                await AddEstimateProducts(estimate, estimateDetails);
+                estimateList.Add(estimateDetails);
             }
 
             var filteredRecords = estimateList
