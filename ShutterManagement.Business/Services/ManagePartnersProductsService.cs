@@ -428,6 +428,8 @@ namespace ShutterManagement.Business.Services
                                           TaxRateId = o1.TaxId,
                                       }).Distinct().ToList();
 
+
+
                     var optionIds = allOptions.Select(o => o.OptionId).ToList();
 
                     var allOptionTypes = (from o1 in dbContext.TblManagePartnersProductsOptions.OrderByDescending(o => o.CreatedAt)
@@ -449,7 +451,7 @@ namespace ShutterManagement.Business.Services
                                               TaxRateId = (o1 != null ? o1.TaxId : Guid.Empty) ?? Guid.Empty,
 
                                           }).ToList();
-                    //decimal wholesale1 = Price * (1 + (wholeSalePrice / 100));
+
 
                     var productTasks = products.Select(product =>
                     {
@@ -479,6 +481,7 @@ namespace ShutterManagement.Business.Services
                                 {
                                     OptionId = opt.OptionId,
                                     OptionName = opt.OptionName,
+                                    TaxRateId = allOptionTypes.DistinctBy(x => x.TaxRateId).Select(s => s.TaxRateId).FirstOrDefault(),
                                     optionTypes = allOptionTypes
                                         .Where(ot => ot.OptionId == opt.OptionId)
                                         .Select(optt =>
