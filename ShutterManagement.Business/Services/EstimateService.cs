@@ -645,7 +645,7 @@ namespace ShutterManagement.Business.Services
                         var productMarkup = dbContext.TblManagePartnersProducts.Where(x => x.ProductId == item.ProductId && x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
                         if (productMarkup.MarkupType == "Percentage")
                         {
-                            ComponentPriceWithProductMarkup = (decimal)(ComponentPriceWithProductMarkup * (1 + (productMarkup.PartnerSellingPrice) / 100));
+                            ComponentPriceWithProductMarkup = (decimal)(ComponentPriceWithProductMarkup * (1 + (productMarkup.PartnerSellingPrice ?? 0) / 100));
                         }
                         if (productMarkup.MarkupType == "Fixed")
                         {
