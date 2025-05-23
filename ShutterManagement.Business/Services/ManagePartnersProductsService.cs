@@ -146,7 +146,7 @@ namespace ShutterManagement.Business.Services
                                         if (item.PartnerSellingPrice >= minSellingPrice1 && item.PartnerSellingPrice <= maxSellingPrice1)
                                         {
                                             IsManagepartneroptiontype.PartnerSellingPrice = item.PartnerSellingPrice??0.0m;
-                                            IsManagepartneroptiontype.TaxId = item.TaxRateId;
+                                            IsManagepartneroptiontype.TaxId = item.TaxRateId;  
                                             await managePartnersProductsOptions.Update(IsManagepartneroptiontype);
                                             if (!AppConstant.IsTenant)
                                             {
