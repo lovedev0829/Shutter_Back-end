@@ -45,7 +45,13 @@ public partial class TblEstimateWindowProductComponent
 
     public Guid? WindowId { get; set; }
 
+    public Guid? EstimateWindowProductId { get; set; }
+
     public virtual TblEstimate Estimate { get; set; } = null!;
+
+    public virtual TblEstimateWindowProduct? EstimateWindowProduct { get; set; }
+
+    public virtual ICollection<TblEstimateWindowProductComponentMaterial> TblEstimateWindowProductComponentMaterials { get; set; } = new List<TblEstimateWindowProductComponentMaterial>();
 
     public virtual TblTenant? Tenant { get; set; }
 }

@@ -69,9 +69,15 @@ public partial class TblEstimateWindowProduct
 
     public Guid? TaxId { get; set; }
 
+    public Guid? EstWindowId { get; set; }
+
+    public virtual TblEstimateWindow? EstWindow { get; set; }
+
     public virtual TblEstimate Estimate { get; set; } = null!;
 
     public virtual TblTaxRate? Tax { get; set; }
+
+    public virtual ICollection<TblEstimateWindowProductComponent> TblEstimateWindowProductComponents { get; set; } = new List<TblEstimateWindowProductComponent>();
 
     public virtual ICollection<TblEstimateWindowProductOption> TblEstimateWindowProductOptions { get; set; } = new List<TblEstimateWindowProductOption>();
 
