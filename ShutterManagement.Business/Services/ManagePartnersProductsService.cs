@@ -531,9 +531,10 @@ namespace ShutterManagement.Business.Services
                     });
 
                     //var productList = await Task.WhenAll(productTasks);
+                    productlist = productTasks.ToList();
 
                     responseVm.IsSuccess = true;
-                    responseVm.Data = productTasks.ToList();
+                    responseVm.Data = productlist;
                     responseVm.Message = AppConstant.FetchSuccessMsg;
                     responseVm.TotalRecords = productTasks.Count();
                 }
