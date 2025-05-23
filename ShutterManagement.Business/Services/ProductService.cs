@@ -285,6 +285,8 @@ namespace ShutterManagement.Business.Services
                                        join p in dbContext.TblProducts on mp.ProductId equals p.ProductId
                                        join pt in dbContext.MstProductTypes on p.ProductType equals pt.ProductId.ToString()
                                        join tax in dbContext.TblTaxRates on p.TaxId equals tax.TaxRateId
+                                       into PTax
+                                       from taxdata in PTax.DefaultIfEmpty()
                                        where mp.TenantId == AppConstant.LoggedInTenantId
                                              && mp.IsDelete == false
                                              && mp.IsAvailable == true
@@ -296,7 +298,7 @@ namespace ShutterManagement.Business.Services
                                            Markup = p.Markup,
                                            Notes = p.Notes,
                                            TaxId = p.TaxId,
-                                           TaxName = tax.TaxName??"",
+                                           TaxName = taxdata.TaxName ?? "",
                                            IsTaxAvailable = p.IsTaxApplied,
                                            ProductType = pt.ProductId.ToString().ToLower(),
                                            ProductTypeName = pt.ProductName,
