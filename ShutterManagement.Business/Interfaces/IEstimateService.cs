@@ -28,8 +28,13 @@ namespace ShutterManagement.Business.Interfaces
         Task<bool> IsTaxApplied(Guid JobId);
         NCalc.Expression CalculateExpression(string formula, dynamic values);
         Task<IResponseVm<string>> EstimationUniqueName();
-
+        Task<OptionPriceResult> CalculateOptionPrice(
+                 string[] optionTypeIds,
+                 decimal? quantity,
+                 decimal? height,
+                 decimal? width,
+                 bool? IsManageProduct);
         //Task<IResponseVm<List<EstimationBreakdown>>> EstimationBreakdown(Guid windowProductId);
-       
+
     }
 }

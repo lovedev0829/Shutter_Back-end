@@ -301,7 +301,7 @@ namespace ShutterManagement.Controllers
             {
                 filter1.TenantId = AppConstant.LoggedInTenantId.ToString().ToLower();
             }
-
+            filter1.RecordPerPage= 10;
             var result = await jobService.GetAllJobsTenant_SubTenant(filter1);
             return Ok(result);
         }
@@ -566,9 +566,9 @@ namespace ShutterManagement.Controllers
         //}
         [HttpGet]
         [Route("GetAllOption")]
-        public async Task<IActionResult> GetAllOption(string ProductId)
+        public async Task<IActionResult> GetAllOption(string ProductId, bool? IsManageProductOption = false)
         {
-            var res = await option.GetAll_Option(filter);
+            var res = await option.GetAll_Option(filter, IsManageProductOption);
             res.Data = res.Data?.Where(x => x.IsActive == true && x.ProductId == Guid.Parse(ProductId)).ToList();
             return Ok(res);
         }
@@ -600,16 +600,20 @@ namespace ShutterManagement.Controllers
             return Ok(res);
         }
 
-        [HttpGet]
+        [HttpPost]
         [Route("GetAllExpression")]
-        public async Task<IActionResult> GetAllExpression(Guid ProductId)
+        public async Task<IActionResult> GetAllExpression(Pagination filter)
         {
-
-            filter.SearchValue = ProductId.ToString();
             var res = await expression.Get_AllExpression(filter);
             res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
+            if(filter.IsOptionExpression !=null)
+            {
+                res.Data = res.Data?.Where(x => x.IsOptionExpression == filter.IsOptionExpression).ToList();
+                res.TotalRecords = res.Data.Count();
+            }
             return Ok(res);
         }
+
 
         [HttpPost]
         [Route("SettingById")]
@@ -688,7 +692,7 @@ namespace ShutterManagement.Controllers
             var res = await taxService.GetAll_Tax(filter);
             DateTime current = Convert.ToDateTime(DateTime.Now.ToShortDateString());
             var d = res.Data
-        .Where(x => x.IsActive == true && x.EffectiveDate <= current && x.ExpiryDate >= current)
+        .Where(x => x.IsActive == true/* && x.EffectiveDate <= current && x.ExpiryDate >= current*/)
         .ToList();
             res.Data = d;
             return Ok(res);

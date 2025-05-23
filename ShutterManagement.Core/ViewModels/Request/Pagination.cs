@@ -44,6 +44,10 @@ namespace ShutterManagement.Core.ViewModels.Request
         public int Status { get; set; } = 2;
         [DefaultValue("")]
         public string? Vendor { get; set; } = "";
+
+       
+        public bool? IsOptionExpression { get; set; } = false;
+
         [DefaultValue("")]
         public string? CustomerId { get; set; } = "";
 

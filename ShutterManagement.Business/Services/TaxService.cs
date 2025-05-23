@@ -10,6 +10,7 @@ using ShutterManagement.Core.ViewModels;
 using ShutterManagement.DAL.Context;
 using ShutterManagement.Services;
 using ShutterManagement.Core;
+using ShutterManagement.Core.Common;
 
 namespace ShutterManagement.Business.Services
 {
@@ -73,10 +74,10 @@ namespace ShutterManagement.Business.Services
                 {
                     var tax = new TblTaxRate
                     {
-                        Region = model.Region,
-                        Rate = model.Rate,
-                        EffectiveDate = model.EffectiveDate,
-                        ExpiryDate = model.ExpiryDate,
+                        TaxName = model.TaxName,
+                        Municipality = model.Municipality,
+                        State = model.State,
+                        City = model.City,
                         IsActive = true,
                         IsDelete = false,
                         CreatedAt = DateTime.Now,
@@ -147,18 +148,16 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var taxlist = (from t2 in dbContext.TblTaxRates.OrderByDescending(x => x.CreatedAt)
-                              join t1 in dbContext.MstRegions on t2.Region equals t1.Id
                               where t2.TenantId == AppConstant.LoggedInTenantId && t2.IsDelete == false
                               select new GetAllTax
                               {
                                   TaxRateId = t2.TaxRateId,
-                                  Rate = t2.Rate,
-                                  EffectiveDate = t2.EffectiveDate,
-                                  ExpiryDate = t2.ExpiryDate,
-                                  IsActive = t2.IsActive,
-                                  Region = t2.Region,
-                                  RegionName = t1.RegionName,
+                                  TaxName = t2.TaxName??"",
+                                  Municipality = t2.Municipality ?? null,
+                                  State = t2.State ?? null,
+                                  City = t2.City ?? null,
                                   TenantId = t2.TenantId.ToString(),
+                                  IsActive = t2.IsActive,
 
                               }).ToList();
                 
@@ -166,33 +165,33 @@ namespace ShutterManagement.Business.Services
                 var FilterRecords = taxlist
                                     .Where(x =>
                                     (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
-                                    (string.IsNullOrEmpty(filter.Region) ? true : (filter.Region == x.Region.ToString())) &&
                                     (string.IsNullOrEmpty(filter.TenantId) ? true : (filter.TenantId == x.TenantId.ToString())) &&
                                     (filter.SearchValue != "" ?
                                     (x.TaxRateId.ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
-                                    (x.Region.ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
-                                    (x.Rate.ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
-                                    (x.RegionName ?? "" ).ToLower().Contains(filter.SearchValue)
+                                    (x.TaxName.ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
+                                    (x.Municipality.ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
+                                    (x.State.ToString() ?? "" ).ToLower().Contains(filter.SearchValue)||
+                                    (x.City.ToString() ?? "" ).ToLower().Contains(filter.SearchValue)
                                     : true)).ToList();
 
 
 
-                var TakenRecords = FilterRecords
-                                    .Skip((filter.PageNo - 1) * filter.RecordPerPage).Take(filter.RecordPerPage).ToList();
+                var TakenRecords =Paginate.Pagination(FilterRecords,filter);
 
 
 
                 responseVm.Data = TakenRecords.Select(x => new GetAllTax
                 {
                     TaxRateId = x.TaxRateId,
-                    Rate = x.Rate,
-                    Region = x.Region,
-                    RegionName = x.RegionName,
-                    EffectiveDate = x.EffectiveDate,
-                    ExpiryDate = x.ExpiryDate,
+                    TaxName = x.TaxName,
+                    Municipality = x.Municipality,
+                    State = x.State,
+                    City = x.City,
                     IsActive = x.IsActive,
                     TenantId = x.TenantId,
                 }).ToList();
+
+
                 responseVm.IsSuccess = true;
                 responseVm.Message = $"{AppConstant.FetchSuccessMsg}";
                 responseVm.TotalRecords = FilterRecords.Count;
@@ -221,10 +220,10 @@ namespace ShutterManagement.Business.Services
             
                 if (IsTaxExist != null)
                 {
-                    IsTaxExist.Region = model.Region;
-                    IsTaxExist.Rate = model.Rate;
-                    IsTaxExist.EffectiveDate = model.EffectiveDate;
-                    IsTaxExist.ExpiryDate = model.ExpiryDate;
+                    IsTaxExist.TaxName = model.TaxName;
+                    IsTaxExist.Municipality = model.Municipality;
+                    IsTaxExist.State = model.State;
+                    IsTaxExist.City = model.City;
                     IsTaxExist.UpdatedAt = DateTime.Now;
                     IsTaxExist.ModifiedBy = AppConstant.LoggedInUserID;
                     var res = Update(IsTaxExist);

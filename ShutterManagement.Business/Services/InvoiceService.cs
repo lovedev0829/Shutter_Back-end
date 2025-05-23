@@ -353,7 +353,7 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-                var invoicesQuery = (from i in GetAllQuerable()
+                var invoicesQuery = (from i in GetAllQuerable().OrderByDescending(x => x.CreatedAt)
                                      join j in dbContext.TblJobs on i.JobId equals j.JobId
                                      join c in dbContext.TblContacts on j.ContactId equals c.ContactId
                                      join d in dbContext.TblEstimates on i.EstimateId equals d.EstimateId

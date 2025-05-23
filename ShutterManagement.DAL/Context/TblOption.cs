@@ -31,9 +31,21 @@ public partial class TblOption
 
     public Guid? ProductId { get; set; }
 
+    public bool? IsTaxApplied { get; set; }
+
+    public Guid? TaxId { get; set; }
+
+    public decimal? Markup { get; set; }
+
+    public Guid? OptionExpression { get; set; }
+
+    public string? Unit { get; set; }
+
     public virtual TblProduct? Product { get; set; }
 
     public virtual MstProductType? ProductType { get; set; }
+
+    public virtual TblTaxRate? Tax { get; set; }
 
     public virtual ICollection<TblManagePartnersProductsOption> TblManagePartnersProductsOptions { get; set; } = new List<TblManagePartnersProductsOption>();
 

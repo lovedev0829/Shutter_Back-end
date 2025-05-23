@@ -7,8 +7,10 @@ using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.Core.ViewModels.Response;
 using ShutterManagement.DAL.Context;
 using ShutterManagement.Services;
+using Stripe;
 using System;
 using System.Collections.Generic;
+using System.Data.Entity;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
@@ -22,14 +24,18 @@ namespace ShutterManagement.Business.Services
         private readonly IOptionsTypeService optionsTypeService;
         private readonly ClaimsProperty claimsProperty;
         private readonly ITenantService tenantService;
+        private readonly IManagePartnersProductsOptions managePartnersProductsOptions;
 
         public OptionService(ShutterDBContext context, IOptionsTypeService optionsTypeService,
-            ClaimsProperty claimsProperty, ITenantService tenantService)
+            ClaimsProperty claimsProperty, ITenantService tenantService,
+            IManagePartnersProductsOptions managePartnersProductsOptions
+            )
         {
             _context = context;
             this.optionsTypeService = optionsTypeService;
             this.claimsProperty = claimsProperty;
             this.tenantService = tenantService;
+            this.managePartnersProductsOptions = managePartnersProductsOptions;
         }
 
         public async Task<IResponseVm<string>> ActiveInActive(Guid Id)
@@ -38,7 +44,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsActive == true && x.IsDelete == false);
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
                 if (IsTenant)
                 {
                     var IsOptionExists = GetAllQuerable()
@@ -46,6 +52,17 @@ namespace ShutterManagement.Business.Services
                                    && c.TenantId == AppConstant.LoggedInTenantId
                                    && c.IsDelete == false)
                        .FirstOrDefault();
+                    var isManageproductoption = managePartnersProductsOptions.GetAllQuerable().Where
+                        (x => x.OptionId == Id && x.IsDelete == false && x.IsActive == true && x.TenantId == AppConstant.LoggedInTenantId).
+                        FirstOrDefault();
+                    if(isManageproductoption != null)
+                    {
+                        isManageproductoption.IsActive = !isManageproductoption.IsActive;
+                        isManageproductoption.UpdatedAt = DateTime.Now;
+                        isManageproductoption.ModifiedBy = AppConstant.LoggedInTenantId;
+                        dbContext.TblManagePartnersProductsOptions.Update(isManageproductoption);
+                        await dbContext.SaveChangesAsync();
+                    }
                     if (IsOptionExists != null)
                     {
                         IsOptionExists.IsActive = !IsOptionExists.IsActive;
@@ -77,7 +94,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null);
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId);
                 if (IsTenant)
                 {
                     var message = "";
@@ -93,13 +110,21 @@ namespace ShutterManagement.Business.Services
                             OptionName = model.OptionName.Trim(),
                             ProductTypeId = model.ProductTypeId,
                             ProductId = model.ProductId,
+                            Markup = model.Markup,
+                            OptionExpression = model.OptionExpression,
+                            Unit = model.Unit.Trim(),
                             CreatedAt = DateTime.Now,
                             CreatedBy = AppConstant.LoggedInUserID,
                             TenantId = AppConstant.LoggedInTenantId,
+                            IsTaxApplied = model.IsTaxAvailable,
+                            TaxId = model.TaxId,
                             IsActive = true,
                             IsDelete = false
                         };
                         await Add(options);
+                        var manageproduct = dbContext.TblManagePartnersProducts.Where(x=> x.ProductId == options.ProductId
+                        && x.TenantId == AppConstant.LoggedInTenantId && x.IsAvailable == true && x.IsActive == true && x.IsDelete == false)
+                            .FirstOrDefault();  
                         if (options.OptionId != Guid.Empty)
                         {
                             foreach (var item in model.Options)
@@ -111,16 +136,40 @@ namespace ShutterManagement.Business.Services
                                     TblOptionsType optionsType = new TblOptionsType
                                     {
                                         OptionId = options.OptionId,
+                                        OptionTypeId = Guid.NewGuid(),
                                         OptionType = item.OptionType.Trim(),
                                         AdditionalCost = item.AdditionalCost,
-                                        Unit = item.Unit.Trim(),
+                                        // Unit = item.Unit.Trim(),
                                         IsDefault = item.IsDefault,
                                         CreatedAt = DateTime.Now,
                                         CreatedBy = AppConstant.LoggedInUserID,
+                                        SortOrder=item.SortOrder,
                                         IsActive = true,
                                         IsDelete = false
                                     };
                                     await optionsTypeService.Add(optionsType);
+                                    if (!AppConstant.IsTenant)
+                                    {
+                                        if (manageproduct != null)
+                                        {
+                                            TblManagePartnersProductsOption managePartnerProductOption = new TblManagePartnersProductsOption
+                                            {
+                                                ManageProductId = manageproduct.ManageProductId,
+                                                OptionId = options.OptionId,
+                                                OptionTypeId = optionsType.OptionTypeId,
+                                                TaxId = options.TaxId,
+                                                TenantId = AppConstant.LoggedInTenantId,
+                                                IsActive = true,
+                                                IsDelete = false,
+                                                IsAvailable = true,
+                                                CreatedAt = DateTime.Now,
+                                                CreatedBy = AppConstant.LoggedInUserID,
+                                            };
+                                            await managePartnersProductsOptions.Add(managePartnerProductOption);
+                                        }
+                                        //dbContext.Add(managePartnerProductOption);
+                                        //await dbContext.SaveChangesAsync();
+                                    }
                                 }
                                 else
                                 {
@@ -146,7 +195,7 @@ namespace ShutterManagement.Business.Services
                     }
                     else
                     {
-                        responseVm.Message = AppConstant.AlreadyExists;
+                        responseVm.Message = "Option Name" + " " + AppConstant.AlreadyExists;
                     }
                 }
                 else
@@ -166,7 +215,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsActive == true && x.IsDelete == false);
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
                 if (IsTenant)
                 {
                     var IsOptionExists = GetAllQuerable()
@@ -174,6 +223,18 @@ namespace ShutterManagement.Business.Services
                                    && c.TenantId == AppConstant.LoggedInTenantId
                                    && c.IsDelete == false)
                        .FirstOrDefault();
+                    var isManageproductoption = managePartnersProductsOptions.GetAllQuerable().Where
+                     (x => x.OptionId == Id && x.IsDelete == false && x.IsActive == true && x.TenantId == AppConstant.LoggedInTenantId).
+                     FirstOrDefault();
+                    if (isManageproductoption != null)
+                    {
+                        isManageproductoption.IsActive = false;
+                        isManageproductoption.IsDelete = true;
+                        isManageproductoption.UpdatedAt = DateTime.Now;
+                        isManageproductoption.ModifiedBy = AppConstant.LoggedInTenantId;
+                        dbContext.TblManagePartnersProductsOptions.Update(isManageproductoption);
+                        await dbContext.SaveChangesAsync();
+                    }
                     if (IsOptionExists != null)
                     {
                         IsOptionExists.IsDelete = true;
@@ -201,7 +262,7 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        public async Task<IResponseVm<List<OptionsList>>> GetAll_Option(Pagination filter)
+        public async Task<IResponseVm<List<OptionsList>>> GetAll_Option(Pagination filter,bool? IsManageProductOption=false)
         {
             IResponseVm<List<OptionsList>> responseVm = new ResponseVm<List<OptionsList>>();
             try
@@ -210,48 +271,76 @@ namespace ShutterManagement.Business.Services
                     x.TenantId == AppConstant.LoggedInTenantId &&
                     x.IsActive == true &&
                     x.IsDelete == false);
-
                 if (tenant != null)
                 {
                     bool isSubTenant = tenant.ParentTenantId != null;
 
                     var allOptions = (await GetAll())
-                        .Where(x => x.IsDelete == false && x.IsActive == true &&
-                                    (x.TenantId == AppConstant.LoggedInTenantId ||
-                                     x.TenantId.ToString().ToLower() == AppConstant.LoggedInParentTenantId.ToLower()))
+                        .Where(x => x.IsDelete == false &&
+                                    (x.TenantId == AppConstant.LoggedInTenantId))
+                        //||
+                        // x.TenantId.ToString().ToLower() == AppConstant.LoggedInParentTenantId.ToLower())
                         .OrderByDescending(x => x.CreatedAt)
                         .ToList();
+                    var finalOptions = allOptions;
 
-                    
-                    if (isSubTenant)
+                    if (IsManageProductOption == true)
                     {
                         var assignedOptionIds = dbContext.TblManagePartnersProductsOptions
-                            .Where(m => m.TenantId == AppConstant.LoggedInTenantId && m.IsAvailable == true && m.IsDelete==false && m.IsActive==true)
+                            .Where(m => m.TenantId == AppConstant.LoggedInTenantId
+                                        && m.IsAvailable == true
+                                        && m.IsDelete == false
+                                        && m.IsActive == true)
                             .Select(m => m.OptionId)
                             .ToList();
 
-                        allOptions = allOptions
+                        // Load all options once
+                        var allOption = await GetAll(x => x.IsActive == true && x.IsDelete == false);
+
+                        // Filter managed options that match the assigned IDs and tenant conditions
+                        //var tenantOptions = allOptions
+                        //    .Where(x => x.IsDelete == false
+                        //                && x.TenantId == AppConstant.LoggedInTenantId)
+                        //    .OrderByDescending(x => x.CreatedAt)
+                        //    .ToList();
+
+                        var managedOptions = allOption
                             .Where(x => assignedOptionIds.Contains(x.OptionId))
+                            .DistinctBy(x=> x.OptionName)
+                            .ToList();
+
+                        finalOptions = managedOptions
+                            //.Union(tenantOptions)
+                            .OrderByDescending(o => o.OptionId)
                             .ToList();
                     }
 
-                    var IsOptionExists = allOptions
-                        .Select(x => new OptionsList
-                        {
-                            OptionId = x.OptionId,
-                            IsActive = x.IsActive,
-                            OptionName = x.OptionName,
-                            ProductId = x.ProductId,
-                            ProductName = dbContext.TblProducts.Where(y => y.ProductId == x.ProductId).Select(z => z.ProductName).FirstOrDefault(),
-                            ProductTypeId = x.ProductTypeId,
-                            ProductTypeName = dbContext.MstProductTypes.Where(y => y.ProductId == x.ProductTypeId).Select(z => z.ProductName).FirstOrDefault()
-                        })
-                        .ToList();
 
+                    var IsOptionExists = finalOptions
+                           .Select(x => new OptionsList
+                           {
+                               OptionId = x.OptionId,
+                               IsActive = x.IsActive,
+                               OptionName = x.OptionName ?? "",
+                               TaxId = x.TaxId ?? null,
+                               TaxName = dbContext.TblTaxRates.Where(y => y.TaxRateId == x.TaxId).Select(z => z.TaxName).FirstOrDefault() ?? "",
+                               ProductId = x.ProductId,
+                               Unit = x.Unit,
+                               Markup = x.Markup ?? 0.0m,
+                               OptionExpression = x.OptionExpression.ToString() ?? "",
+                               ProductName = dbContext.TblProducts.Where(y => y.ProductId == x.ProductId).Select(z => z.ProductName).FirstOrDefault(),
+                               ProductTypeId = x.ProductTypeId,
+                               ProductTypeName = dbContext.MstProductTypes.Where(y => y.ProductId == x.ProductTypeId).Select(z => z.ProductName).FirstOrDefault(),
+                               IsTaxAvailable = x.IsTaxApplied,
+
+
+                           })
+                           .ToList();
+                 
                     foreach (var item in IsOptionExists)
                     {
 
-                        var optionsType = optionsTypeService.GetAllQuerable().
+                        var optionsType = optionsTypeService.GetAllQuerable().OrderBy(x=>x.SortOrder).
                             Where(x => x.IsDelete == false && x.OptionId == item.OptionId).OrderBy(x => x.CreatedAt)
                             .Select(x => new OptionsType
                             {
@@ -259,7 +348,8 @@ namespace ShutterManagement.Business.Services
                                 IsDefault = x.IsDefault,
                                 OptionType = x.OptionType,
                                 OptionTypeId = x.OptionTypeId,
-                                Unit = x.Unit
+                                SortOrder=x.SortOrder,
+                                //Unit = x.Unit
                             })
                             .ToList();
                         item.Options = optionsType;
@@ -270,11 +360,14 @@ namespace ShutterManagement.Business.Services
                     var FilterRecords = IsOptionExists
                                     .Where(x =>
                                     (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
-                                     (string.IsNullOrEmpty(filter.ProductType) ? true : (filter.ProductType == x.ProductId.ToString())) &&
+                                     (string.IsNullOrEmpty(filter.ProductType) ? true : (filter.ProductType == x.ProductTypeId.ToString())) &&
                                     (string.IsNullOrEmpty(filter.SearchValue) ? true :
                                     (x.OptionId.ToString() == filter.SearchValue)
                                     || (x.ProductName?.ToLower() ?? "").Contains(filter?.SearchValue)
                                     || (x.OptionName?.ToLower() ?? "").Contains(filter?.SearchValue)
+                                    || (x.Markup?.ToString().ToLower() ?? "").Contains(filter?.SearchValue)
+                                    || (x.OptionExpression?.ToString().ToLower() ?? "").Contains(filter?.SearchValue)
+                                    || (x.TaxName?.ToLower() ?? "").Contains(filter?.SearchValue)
                                     || (x.ProductTypeName?.ToLower() ?? "").Contains(filter?.SearchValue)))
                                     .ToList();
 
@@ -291,11 +384,13 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.FetchSuccessMsg;
                     responseVm.TotalRecords = FilterRecords.Count();
                 }
+
                 else
                 {
                     responseVm.Message = AppConstant.AccessDenied;
                 }
             }
+
             catch (Exception ex)
             {
                 responseVm.Message = $"Error: {ex.Message}";
@@ -308,7 +403,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsActive == true && x.IsDelete == false);
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
                 if (IsTenant)
                 {
                     var IsOptionExists = GetAllQuerable()
@@ -329,18 +424,22 @@ namespace ShutterManagement.Business.Services
                         responseVm.Message = "Option Name " + AppConstant.AlreadyExists;
                         return responseVm;
                     }
-                    TblOption options = new TblOption
-                    {
-                        OptionId = Guid.NewGuid(),
-                        OptionName = model.OptionName,
-                        ProductId = model.ProductId,
-                        ProductTypeId = model.ProductTypeId,
-                        CreatedAt = DateTime.Now,
-                        CreatedBy = AppConstant.LoggedInUserID,
-                        TenantId = AppConstant.LoggedInTenantId,
-                        IsActive = true,
-                        IsDelete = false
-                    };
+
+
+                    //TblOption options = new TblOption
+                    //{
+                    //    OptionId = Guid.NewGuid(),
+                    //    OptionName = model.OptionName,
+                    //    ProductId = model.ProductId,
+                    //    ProductTypeId = model.ProductTypeId,
+                    //    CreatedAt = DateTime.Now,
+                    //    CreatedBy = AppConstant.LoggedInUserID,
+                    //    TenantId = AppConstant.LoggedInTenantId,
+                    //    IsTaxApplied = model.IsTaxAvailable,
+                    //    TaxId = model.TaxId,
+                    //    IsActive = true,
+                    //    IsDelete = false
+                    //};
 
                     if (IsOptionExists != null)
                     {
@@ -348,7 +447,13 @@ namespace ShutterManagement.Business.Services
                         IsOptionExists.ModifiedBy = AppConstant.LoggedInUserID;
                         IsOptionExists.UpdatedAt = DateTime.Now;
                         IsOptionExists.ProductId = model.ProductId;
+                        IsOptionExists.Markup = model.Markup;
                         IsOptionExists.ProductTypeId = model.ProductTypeId;
+                        IsOptionExists.Unit = model.Unit.Trim();
+                        IsOptionExists.OptionExpression = model.OptionExpression;
+                        IsOptionExists.IsTaxApplied = model.IsTaxAvailable;
+                        IsOptionExists.TaxId = model.TaxId;
+
 
                         await Update(IsOptionExists);
 
@@ -359,13 +464,40 @@ namespace ShutterManagement.Business.Services
                             IsDefault = x.IsDefault,
                             OptionType = x.OptionType,
                             OptionTypeId = x.OptionTypeId,
-                            Unit = x.Unit
+                            // Unit = x.Unit
                         }).ToArray();
+                        //var Ismanageproductexist = await dbContext.TblManagePartnersProductsOptions.Where
+                        //    (x => x.OptionId == IsOptionExists.OptionId && x.TenantId == AppConstant.LoggedInTenantId
+                        //    && x.IsActive == true && x.IsAvailable == true && x.IsDelete == false).FirstOrDefaultAsync();
+                        //if(Ismanageproductexist != null)
+                        //{ 
+                        //    Ismanageproductexist.TaxId = AppConstant.LoggedInTenantId;
+                        //}
 
 
-                        var InsertRecords = model.Options.Where(a1 => !OptionsTypes.Any(a2 => a1.OptionType == a2.OptionType && a1.AdditionalCost == a2.AdditionalCost && a1.IsDefault == a2.IsDefault && a1.Unit == a2.Unit)).ToList();
-                        var DeleteRecords = OptionsTypes.Where(a1 => !model.Options.Any(a2 => a1.OptionType == a2.OptionType && a1.AdditionalCost == a2.AdditionalCost && a1.IsDefault == a2.IsDefault && a1.Unit == a2.Unit)).ToList();
+                        var InsertRecords = model.Options.Where(a1 => !OptionsTypes.Any(a2 => a1.OptionType == a2.OptionType && a1.AdditionalCost == a2.AdditionalCost && a1.IsDefault == a2.IsDefault)).ToList();
+                        var DeleteRecords = OptionsTypes.Where(a1 => !model.Options.Any(a2 => a1.OptionType == a2.OptionType && a1.AdditionalCost == a2.AdditionalCost && a1.IsDefault == a2.IsDefault)).ToList();
 
+                        if (!AppConstant.IsTenant)
+                        {
+
+                            foreach (var item in DeleteRecords)
+                            {
+                                var Ismanageproductexist = managePartnersProductsOptions.GetAllQuerable().Where
+                               (x => x.TenantId == AppConstant.LoggedInTenantId
+                               && x.IsActive == true && x.IsAvailable == true && x.IsDelete == false && x.OptionTypeId == item.OptionTypeId).FirstOrDefault();
+                                if (Ismanageproductexist != null)
+                                {
+                                    Ismanageproductexist.IsActive = false;
+                                    Ismanageproductexist.IsDelete = true;
+                                    Ismanageproductexist.IsAvailable = false;
+
+                                    await managePartnersProductsOptions.Update(Ismanageproductexist);
+                                    //dbContext.Update(Ismanageproductexist);
+                                    //await dbContext.SaveChangesAsync();
+                                }
+                            }
+                        }
                         foreach (var item in DeleteRecords)
                         {
                             var data = optionsTypeService.GetAllQuerable().Where(x => x.OptionTypeId == item.OptionTypeId
@@ -377,23 +509,53 @@ namespace ShutterManagement.Business.Services
 
                         foreach (var item in InsertRecords)
                         {
+                            
                             var IsOptionTypeExists = await optionsTypeService.AnyAsync(x => x.IsActive == true
-                                && x.IsDelete == false && x.OptionId == IsOptionExists.OptionId && x.OptionType == item.OptionType);
+                                && x.IsDelete == false && x.OptionId == IsOptionExists.OptionId && x.OptionType ==
+                                item.OptionType);
                             if (!IsOptionTypeExists)
                             {
                                 TblOptionsType optionsType = new TblOptionsType
                                 {
                                     OptionId = IsOptionExists.OptionId,
+                                    OptionTypeId = Guid.NewGuid(),
                                     OptionType = item.OptionType,
                                     AdditionalCost = item.AdditionalCost,
-                                    Unit = item.Unit,
+                                    //Unit = item.Unit,
                                     IsDefault = item.IsDefault,
                                     CreatedAt = DateTime.Now,
                                     CreatedBy = AppConstant.LoggedInUserID,
+                                    SortOrder = item.SortOrder,
                                     IsActive = true,
                                     IsDelete = false
                                 };
                                 await optionsTypeService.Add(optionsType);
+
+                                if (!AppConstant.IsTenant)
+                                {
+                                    var manageproduct = dbContext.TblManagePartnersProducts.Where(x => x.ProductId == IsOptionExists.ProductId
+                                   && x.TenantId == AppConstant.LoggedInTenantId && x.IsAvailable == true && x.IsActive == true && x.IsDelete == false)
+                            .FirstOrDefault();
+                                    if (manageproduct != null)
+                                    {
+                                        TblManagePartnersProductsOption managePartnerProductOption = new TblManagePartnersProductsOption
+                                        {
+                                            ManageProductId = manageproduct.ManageProductId,
+                                            OptionId = IsOptionExists.OptionId,
+                                            OptionTypeId = optionsType.OptionTypeId,
+                                            TaxId = IsOptionExists.TaxId,
+                                            TenantId = AppConstant.LoggedInTenantId,
+                                            IsActive = true,
+                                            IsDelete = false,
+                                            IsAvailable = true,
+                                            CreatedAt = DateTime.Now,
+                                            CreatedBy = AppConstant.LoggedInUserID,
+                                        };
+                                        await managePartnersProductsOptions.Add(managePartnerProductOption);
+                                        //dbContext.TblManagePartnersProductsOptions.Add(managePartnerProductOption);
+                                        //await dbContext.SaveChangesAsync();
+                                    }
+                                }
                             }
                         }
                         responseVm.IsSuccess = true;
@@ -416,7 +578,6 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
-
 
     }
 }

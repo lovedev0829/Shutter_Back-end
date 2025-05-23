@@ -48,7 +48,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("Validate")]
-        [Authorize(Roles = "ExpressionAdd")]
+        [Authorize(Roles = "ExpressionAdd,OptionExpressionAdd")]
         public async Task<IActionResult> ValidateExpression(ValidateExpression Expression)
         {
             var result = await _EstimateService.ValidateExpression(Expression);

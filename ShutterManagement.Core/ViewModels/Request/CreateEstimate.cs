@@ -33,6 +33,8 @@ namespace ShutterManagement.Core.ViewModels.Request
         [Default("")]
         public string? Notes { get; set; }
 
+        public bool? IsTaxApplicable { get; set; } =false;
+
         [Default("")]
         public Guid? DiscountId { get; set; }
         [Default("")]
@@ -47,6 +49,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         [Default(0.00)]
         [Required]
         public decimal? GrandTotal { get; set; }
+
     }
 
     public class ProductListing
@@ -55,4 +58,32 @@ namespace ShutterManagement.Core.ViewModels.Request
 
         public decimal ProductPrice { get; set; }
     }
+
+    public class DimensionModel
+    {
+        public decimal? Quantity { get; set; }
+        public decimal? BuildHeight { get; set; }
+        public decimal? BuildWidth { get; set; }
+        public decimal? Optionprice { get; set; }
+        public bool? IsView { get; set; }
+        public string? Unit { get; set; }
+    }
+
+    //public class OptionPriceResult
+    //{
+    //    public List<decimal> OptionWholesale { get; set; } = new List<decimal>();
+    //    public List<decimal> OptionMSRP { get; set; } = new List<decimal>();
+    //    public decimal TotalCost { get; set; } = 0.0m; 
+    //}
+
+    public class OptionPriceResult
+    {
+        public decimal TotalCost { get; set; } = 0;
+
+        public Dictionary<string, decimal> OptionWholesale { get; set; } = new Dictionary<string, decimal>();
+        public Dictionary<string, decimal> OptionMSRP { get; set; } = new Dictionary<string, decimal>();
+    }
+
+
+
 }

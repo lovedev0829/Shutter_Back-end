@@ -21,7 +21,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("Create")]
-        [Authorize(Roles = "ExpressionAdd")]
+        [Authorize(Roles = "ExpressionAdd,OptionExpressionAdd")]
         public async Task<IActionResult> Create([FromBody] CreateExpression model)
         {
             var result = await expression.Create_Expression(model);
@@ -30,7 +30,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("Update")]
-        [Authorize(Roles = "ExpressionEdit")]
+        [Authorize(Roles = "ExpressionEdit,OptionExpressionEdit")]
         public async Task<IActionResult> Update([FromBody] UpdateExpression model)
         {
             var result = await expression.Update_Expression(model);
@@ -39,7 +39,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("Delete")]
-        [Authorize(Roles = "ExpressionDelete")]
+        [Authorize(Roles = "ExpressionDelete,OptionExpressionDelete")]
         public async Task<IActionResult> Delete(Guid ExpressionId)
         {
             var result = await expression.Delete(ExpressionId);
@@ -48,7 +48,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("ActiveInActive")]
-        [Authorize(Roles = "ExpressionEdit")]
+        [Authorize(Roles = "ExpressionEdit,OptionExpressionEdit")]
         public async Task<IActionResult> ActiveInactive(Guid ExpressionId)
         {
             var result = await expression.ActiveInActive(ExpressionId);
@@ -57,12 +57,13 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("GetAll")]
-        [Authorize(Roles = "ExpressionView")]
+        [Authorize(Roles = "ExpressionView,OptionExpressionView")]
         public async Task<IActionResult> GetAll_Expression(Pagination filter)
         {
             var result = await expression.Get_AllExpression(filter);
+            result.Data = result.Data.Where(x => x.IsOptionExpression == Convert.ToBoolean(filter.IsOptionExpression)).ToList();
+            result.TotalRecords = result.Data.Count;
             return Ok(result);
-        }
-
+        }   
     }
 }

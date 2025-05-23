@@ -83,16 +83,15 @@ namespace ShutterManagement.Business.Services
                 {
                     ExpressionFormulae = model.ExpressionFormulae,
                     ExpressionName = model.ExpressionName,
-                    //ProductId = model.ProductId,
                     ProductType = model.ProductTypeId,
                     FormulaeArray = string.Join(", ", model.FormulaeArray),
                     DisplayArray = string.Join(", ", model.displayArray),
                     IsActive = true,
                     IsDelete = false,
-                    OptionId = string.IsNullOrEmpty(model.OptionId) ? null : Guid.Parse(model.OptionId),
                     CreatedAt = DateTime.Now,
                     CreatedBy = AppConstant.LoggedInUserID,
-                    TenantId = AppConstant.LoggedInTenantId
+                    TenantId = AppConstant.LoggedInTenantId,
+                    IsOptionExpression = model.IsOptionExpression,
                 };
                 var res = await Add(expression);
                 responseVm.IsSuccess = true;
@@ -128,9 +127,9 @@ namespace ShutterManagement.Business.Services
                     IsExpressionExist.ExpressionName = model.ExpressionName;
                     IsExpressionExist.ExpressionFormulae = model.ExpressionFormulae;
                     IsExpressionExist.ProductType = model.ProductTypeId;
-                    //IsExpressionExist.ProductId = model.ProductId;
+                    IsExpressionExist.IsOptionExpression = model.IsOptionExpression;
                     IsExpressionExist.UpdateAt = DateTime.Now;
-                    IsExpressionExist.OptionId = string.IsNullOrEmpty(model.OptionId) ? null : Guid.Parse(model.OptionId);
+                  //  IsExpressionExist.OptionId = string.IsNullOrEmpty(model.OptionId) ? null : Guid.Parse(model.OptionId);
                     IsExpressionExist.ModifiedBy = AppConstant.LoggedInUserID;
                     IsExpressionExist.FormulaeArray = string.Join(", ", model.FormulaeArray);
                     IsExpressionExist.DisplayArray = string.Join(", ", model.displayArray);
@@ -193,16 +192,16 @@ namespace ShutterManagement.Business.Services
                                       select new GetExpression
                                       {
                                           ExpressionId = t1.Id,
-                                          ExpressionName = t1.ExpressionName,
+                                          ExpressionName = t1.ExpressionName ?? "",
                                           ExpressionFormulae = t1.ExpressionFormulae,
                                           formulaeArray = !string.IsNullOrEmpty(t1.FormulaeArray) ? t1.FormulaeArray.Split(new[] { ", " }, StringSplitOptions.TrimEntries) : new string[0],
                                           displayArray = !string.IsNullOrEmpty(t1.DisplayArray) ? t1.DisplayArray.Split(new[] { ", " }, StringSplitOptions.TrimEntries) : new string[0],
-                                          ProductId = t1.ProductId,
-                                          OptionId = t1.OptionId,
-                                          ProductTypeId = t1.ProductType,
-                                          ProductTypeName = t2.ProductName,
+                                          ProductTypeId = t1.ProductType ?? Guid.Empty,
+                                          ProductTypeName = t2.ProductName ?? "",
+                                          IsOptionExpression = t1.IsOptionExpression ?? false,
                                           IsActive = t1.IsActive,
                                           TenantId = t1.TenantId,
+                                          
                                       }).ToList();
 
                 filter.SearchValue = filter.SearchValue?.Trim().ToLower();
@@ -211,6 +210,7 @@ namespace ShutterManagement.Business.Services
                     .Where(x =>
                         (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
                         (string.IsNullOrEmpty(filter.TenantId) ? true : (filter.TenantId == x.TenantId.ToString())) &&
+                        (string.IsNullOrEmpty(filter.ProductType) ? true : (filter.ProductType == x.ProductTypeId.ToString())) &&
                         (filter.SearchValue != "" ?
                             (x.ExpressionId.ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
                             (x.ProductId.ToString() ?? "").ToLower().Contains(filter.SearchValue) ||

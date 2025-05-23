@@ -27,7 +27,7 @@ public partial class TblOptionsType
 
     public bool? IsDefault { get; set; }
 
-    public string? Unit { get; set; }
+    public int? SortOrder { get; set; }
 
     public virtual TblOption? Option { get; set; }
 

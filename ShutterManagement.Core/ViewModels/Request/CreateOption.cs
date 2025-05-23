@@ -19,7 +19,16 @@ namespace ShutterManagement.Core.ViewModels.Request
         [DefaultValue("")]
         [Required]
         public string? OptionName { get; set; }
+        public decimal? Markup { get; set; }
+        public Guid? OptionExpression { get; set; }
+
+        [DefaultValue("")]
+        [Required]
+        public string? Unit { get; set; }
         public Options[]? Options { get; set; }
+
+        public bool? IsTaxAvailable { get; set; }
+        public Guid? TaxId { get; set; }
     }
 
     public class Options
@@ -34,10 +43,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         //[Required]
         public decimal? AdditionalCost { get; set; }
 
-        [DefaultValue("")]
-        [Required]
-        public string? Unit { get; set; }
-
         public bool? IsDefault { get; set; }
+        public int? SortOrder { get; set; }
     }
 }

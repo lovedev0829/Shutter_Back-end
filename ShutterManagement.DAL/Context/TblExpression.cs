@@ -35,5 +35,7 @@ public partial class TblExpression
 
     public Guid? OptionId { get; set; }
 
+    public bool? IsOptionExpression { get; set; }
+
     public virtual MstProductType? ProductTypeNavigation { get; set; }
 }

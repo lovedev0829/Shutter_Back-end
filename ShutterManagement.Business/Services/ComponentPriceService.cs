@@ -1,4 +1,6 @@
 ﻿using Microsoft.Extensions.Options;
+using Microsoft.VisualBasic.FileIO;
+using MimeKit;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core;
 using ShutterManagement.Core.ViewModels;
@@ -52,6 +54,14 @@ namespace ShutterManagement.Business.Services
                         Name = "Material__" + x.ProductType + "__" + x.MaterialName
                     });
                     ChipData.AddRange(MaterialData);
+
+                    var MaterialDataUnit = Materials.Data.Select(x => new ComponentPrice
+                    {
+                        Type = "Materials",
+                        ComponentName = x.MaterialName + " - Unit",
+                        Name = "Material__" + x.ProductType + "__" + x.MaterialName + "__Unit"
+                    });
+                    ChipData.AddRange(MaterialDataUnit);
                 }
                 if (!string.IsNullOrEmpty(Option))
                 {
@@ -74,7 +84,7 @@ namespace ShutterManagement.Business.Services
                 {
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.FetchSuccessMsg;
-                    responseVm.Data = ChipData;
+                    responseVm.Data = ChipData.OrderBy(x => x.ComponentName);
                 }
             }
             catch (Exception ex)
@@ -83,7 +93,6 @@ namespace ShutterManagement.Business.Services
             }
             return responseVm;
         }
-
         public async Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> GetProductDataForView(Guid WindowProductId, string EstimateID)
         {
             IResponseVm<List<WindowProdcutDetailsForEstimate>> responseVm = new ResponseVm<List<WindowProdcutDetailsForEstimate>>();
@@ -124,11 +133,12 @@ namespace ShutterManagement.Business.Services
                       IsRated = estimatewindow.IsRated,
                       TotalPrice = estimate.TotalPrice,
                       // WindowProduct Properties
+                      
                       WindowProdcutId = estwindowProduct.WindowProductId,
                       ProductId = estwindowProduct.ProductId,
                       BuildWidth = estimatewindow.BuildWidth,
                       BuildHeight = estimatewindow.BuildHeight,
-
+                      EstimateWindowProductId = estwindowProduct.EstimateWindowProductId,
                       // Product Properties
                       ProductName = estwindowProduct.ProductName,
                       ProductWidth = estwindowProduct.Width,
@@ -172,25 +182,34 @@ namespace ShutterManagement.Business.Services
 
                 if (query != null && query.Count > 0)
                 {
-                    foreach (var item in query.DistinctBy(x => x.ProductId))
+                    foreach (var item in query.DistinctBy(x =>x.ProductId))
                     {
-                        var Options = (from windowOption in dbContext.WindowOptions
-                                       join optionType in dbContext.TblOptionsTypes on windowOption.OptionTypeId equals optionType.OptionTypeId
-                                       join options in dbContext.TblOptions on optionType.OptionId equals options.OptionId
-                                       where windowOption.WindowProductId == item.WindowProdcutId
-                                       select new
+                        var Options = (from estimateOption in dbContext.TblEstimateWindowProductOptions
+                                       join optionType in dbContext.TblOptionsTypes on estimateOption.OptionTypeid equals optionType.OptionTypeId
+                                       join option in dbContext.TblOptions on optionType.OptionId equals option.OptionId
+                                       where estimateOption.EstimateWindowProductId == item.EstimateWindowProductId
+                                       select new OptionTaxVM
                                        {
-                                           OptionTypeId = optionType.OptionTypeId,
-                                           OptionTypeName = Convert.ToString(options.OptionName + " - " + optionType.OptionType),
-                                           OptionPrice = optionType.AdditionalCost ?? 0m
+                                           TaxId = estimateOption.TaxId,
+                                           TaxName = estimateOption.TaxName ?? "",
+                                           MunicipalityTax = estimateOption.MunicipilityTax,
+                                           StateTax = estimateOption.StateTax,
+                                           CityTax = estimateOption.CityTax,
+                                           OptionPrice = estimateOption.OptionPrice,
+                                           OptionName = estimateOption.OptionName ?? "",
+                                           OptionId = estimateOption.Optionid.ToString(),
+                                           OptionTypeId = estimateOption.OptionTypeid.ToString(),
+                                           OptionTypeName = estimateOption.OptionTypeName,
                                        }).ToList();
                         item.Options = Options.Select(x => x.OptionTypeName).ToArray();
-                        item.OptionsPrice = Options.Select(x => x.OptionPrice).ToArray();
+
+                        item.OptionTaxDetails = Options;
+                        //item.OptionsPrice = Options.Select(x => x.OptionPrice).ToArray();
                     }
                 }
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.FetchSuccessMsg;
-                responseVm.Data = query;
+                responseVm.Data = query.DistinctBy(y => y.ComponentId).ToList();
                 return responseVm;
             }
             //    else
@@ -215,9 +234,16 @@ namespace ShutterManagement.Business.Services
                  (from window in dbContext.TblWindows
                   join windowProduct in dbContext.TblWindowProducts on window.WindowId equals windowProduct.WindowId
                   join product in dbContext.TblProducts on windowProduct.ProductId equals product.ProductId
+                  join tax in dbContext.TblTaxRates on product.TaxId equals tax.TaxRateId into PTax
+                  from taxdata in PTax.DefaultIfEmpty()
+                //    from taxdata in PTax
+                //.Where(t => t.TenantId == AppConstant.LoggedInTenantId && t.IsDelete==false)
+                //.DefaultIfEmpty()
+
                   join productType in dbContext.MstProductTypes on product.ProductType equals productType.ProductId.ToString()
                   join productComponent in dbContext.TblProductComponents on product.ProductId equals productComponent.ProductId into productcomponents
                   from productComponent in productcomponents.DefaultIfEmpty()
+                  .Where(x => x.IsActive == true)
                   join expression in dbContext.TblExpressions on productComponent.PricingExpression equals expression.Id.ToString() into PExpressions
                   from expression in PExpressions.DefaultIfEmpty()
                   join component in dbContext.TblComponents on productComponent.ComponentId equals component.ComponentId into components
@@ -231,6 +257,7 @@ namespace ShutterManagement.Business.Services
                   && windowProduct.IsActive == true && windowProduct.IsDelete == false
                   && product.IsActive == true && product.IsDelete == false
                   && productType.IsActive == true && productType.IsDelete == false
+
                   //&& productComponent.IsActive == true && productComponent.IsDelete == false
                   //&& component.IsActive == true && component.IsDelete == false
                   //&& expression.IsActive == true && expression.IsDelete == false
@@ -295,25 +322,116 @@ namespace ShutterManagement.Business.Services
                       UnitOfMeasurement = material.UnitOfMeasurement,
                       StockQuantity = material.StockQuantity,
                       ReorderLevel = material.ReorderLevel,
-                      IsCutSheet = material.IsCutSheet
+                      IsCutSheet = material.IsCutSheet,
+
+                      // Tax Details 
+                      TaxRateId = taxdata.TaxRateId,
+                      TaxName = taxdata.TaxName,
+                      MunicipalityTax= taxdata.Municipality,
+                      StateTax= taxdata.State,
+                      CityTax = taxdata.City,
+                      IsTaxAvailable = product.IsTaxApplied,
+
+
+
                   }).ToList();
                 if (query != null && query.Count > 0)
                 {
                     foreach (var item in query.DistinctBy(x => x.ProductId))
                     {
-                        var Options = (from windowOption in dbContext.WindowOptions
-                                       join optionType in dbContext.TblOptionsTypes on windowOption.OptionTypeId equals optionType.OptionTypeId
-                                       join options in dbContext.TblOptions on optionType.OptionId equals options.OptionId
-                                       where windowOption.WindowProductId == item.WindowProdcutId
-                                       select new
-                                       {
-                                           OptionTypeId = optionType.OptionTypeId,
-                                           OptionTypeName = Convert.ToString(options.OptionName + " - " + optionType.OptionType),
-                                           OptionPrice = optionType.AdditionalCost ?? 0m,
-                                       }).ToList();
-                        item.OptionsId = Options.Select(x => x.OptionTypeId.ToString()).ToArray();
-                        item.Options = Options.Select(x => x.OptionTypeName).ToArray();
-                        item.OptionsPrice = Options.Select(x => x.OptionPrice).ToArray();
+
+                        //for Partner
+                        if (!string.IsNullOrEmpty(AppConstant.LoggedInParentTenantId))
+                        {
+                            var ManageProductDetails = dbContext.TblManagePartnersProducts
+                                    .FirstOrDefault(x => x.ProductId == item.ProductId && x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+
+                            if (ManageProductDetails != null)
+                            {
+                                var ProductTaxByPartner = dbContext.TblTaxRates.FirstOrDefault(x => x.TaxRateId == ManageProductDetails.TaxId);
+                                if (ProductTaxByPartner != null)
+                                {
+                                    item.MunicipalityTax = ProductTaxByPartner.Municipality;
+                                    item.StateTax = ProductTaxByPartner.State;
+                                    item.CityTax = ProductTaxByPartner.City;
+                                    item.TaxName = ProductTaxByPartner.TaxName;
+                                    item.TaxRateId = ProductTaxByPartner.TaxRateId;
+                                }
+                                else
+                                {
+                                    item.MunicipalityTax = 0.0m;
+                                    item.StateTax = 0.0m;
+                                    item.CityTax = 0.0m;
+                                    item.TaxName = "";
+                                    item.TaxRateId = Guid.Empty;
+                                }
+
+                                var TaxOptionByPartner = from windowOptions in dbContext.WindowOptions
+                                                         join partnerOptions in dbContext.TblManagePartnersProductsOptions on windowOptions.OptionTypeId equals partnerOptions.OptionTypeId
+                                                         join optionValues in dbContext.TblOptionsTypes on partnerOptions.OptionTypeId equals optionValues.OptionTypeId
+                                                         join options in dbContext.TblOptions on optionValues.OptionId equals options.OptionId
+                                                         join taxDetails in dbContext.TblTaxRates.Where(x => x.TenantId == AppConstant.LoggedInTenantId) on partnerOptions.TaxId equals taxDetails.TaxRateId into PTax
+                                                         from tax in PTax.DefaultIfEmpty()
+                                                         where partnerOptions.IsActive == true
+                                                         && partnerOptions.TenantId == AppConstant.LoggedInTenantId &&
+                                                         partnerOptions.ManageProductId == ManageProductDetails.ManageProductId &&
+                                                         windowOptions.WindowId == item.WindowId &&
+                                                         windowOptions.IsActive == true
+                                                         select new OptionTaxVM
+                                                         {
+                                                             TaxId = (tax != null  && tax.TaxRateId != Guid.Empty ? tax.TaxRateId : item.TaxRateId) ?? item.TaxRateId ?? Guid.Empty,
+                                                             TaxName = (tax.TaxRateId != Guid.Empty ? tax.TaxName : item.TaxName) ?? item.TaxName ?? "",
+                                                             MunicipalityTax = (tax.TaxRateId != Guid.Empty ? tax.Municipality : item.MunicipalityTax) ?? item.MunicipalityTax ?? 0.0m,
+                                                             StateTax = (tax.TaxRateId != Guid.Empty ? tax.State : item.StateTax) ?? item.StateTax ??  0.0m,
+                                                             CityTax = (tax.TaxRateId != Guid.Empty ? tax.City : item.CityTax) ?? item.CityTax ?? 0.0m,
+                                                             OptionPrice = optionValues.AdditionalCost,
+                                                             OptionId = options.OptionId.ToString(),
+                                                             OptionTypeId = optionValues.OptionTypeId.ToString(),
+                                                             OptionName = options.OptionName ?? "",
+                                                             OptionTypeName =  optionValues.OptionType ?? "",
+                                                             WindowOptionId = windowOptions.WindowoptionId,
+                                                             //IsTaxAvailable = opt.IsTaxApplied ?? false
+                                                         };
+
+                                item.OptionTaxDetails = TaxOptionByPartner != null ? TaxOptionByPartner.ToList() : null;
+
+                            }
+
+                        }
+
+                        else
+                        {
+                            var TaxOptionForTenant = from windowOptions in dbContext.WindowOptions
+                                                     join optionValues in dbContext.TblOptionsTypes on windowOptions.OptionTypeId equals optionValues.OptionTypeId
+                                                     join options in dbContext.TblOptions on optionValues.OptionId equals options.OptionId
+                                                    join taxDetails in dbContext.TblTaxRates.Where(x=>x.TenantId == AppConstant.LoggedInTenantId) on options.TaxId equals taxDetails.TaxRateId into PTax
+                                                         from tax in PTax.DefaultIfEmpty() 
+                                                     where options.IsActive == true
+                                                     && windowOptions.TenantId == AppConstant.LoggedInTenantId &&
+                                                      windowOptions.WindowId == item.WindowId &&
+                                                     options.ProductId == item.ProductId &&
+                                                     windowOptions.IsActive == true
+                                                     select new OptionTaxVM
+                                                     {
+                                                         TaxId = (tax != null && tax.TaxRateId != Guid.Empty ? tax.TaxRateId : item.TaxRateId) ?? item.TaxRateId ?? Guid.Empty,
+                                                         TaxName = (tax.TaxRateId != Guid.Empty ? tax.TaxName : item.TaxName) ?? item.TaxName ?? "",
+                                                         MunicipalityTax = (tax.TaxRateId != Guid.Empty ? tax.Municipality : item.MunicipalityTax) ?? item.MunicipalityTax ?? 0.0m,
+                                                         StateTax = (tax.TaxRateId != Guid.Empty ? tax.State : item.StateTax) ?? item.StateTax ?? 0.0m,
+                                                         CityTax = (tax.TaxRateId != Guid.Empty ? tax.City : item.CityTax) ?? item.CityTax ?? 0.0m,
+                                                         OptionPrice = optionValues.AdditionalCost,
+                                                         OptionId = options.OptionId.ToString(),
+                                                         OptionTypeId = optionValues.OptionTypeId.ToString(),
+                                                         OptionName = options.OptionName ?? "",
+                                                         OptionTypeName =  optionValues.OptionType ?? "",
+                                                         WindowOptionId = windowOptions.WindowoptionId,
+                                                        // IsTaxAvailable = options.IsTaxApplied ?? false
+                                                     };
+                            item.OptionTaxDetails = TaxOptionForTenant.ToList();
+                          
+                        }
+                        item.OptionsTypeIds = item.OptionTaxDetails.Select(x => x.OptionTypeId.ToString()).ToArray();
+                        item.OptionIds = item.OptionTaxDetails.Select(x => x.OptionId.ToString()).ToArray();
+                        item.Options = item.OptionTaxDetails.Select(x => x.OptionName + " - " + x.OptionTypeName).ToArray();
                     }
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.FetchSuccessMsg;
@@ -331,5 +449,34 @@ namespace ShutterManagement.Business.Services
             }
             return responseVm;
         }
+
+
+
+
+        private OptionTaxVM CalculateOptionTax(dynamic option, WindowProdcutDetailsForEstimate item)
+        {
+            var taxId = (option.IsTaxApplied == true && option.TaxRateId != null) ? option.TaxRateId : item.TaxRateId;
+            var cityTaxRate = (option.IsTaxApplied == true && option.CityTax > 0) ? option.CityTax : item.CityTax;
+            var stateTaxRate = (option.IsTaxApplied == true && option.StateTax > 0) ? option.StateTax : item.StateTax;
+            var municipalityTaxRate = (option.IsTaxApplied == true && option.Municipality > 0) ? option.Municipality : item.MunicipalityTax;
+
+            var cityTaxAmount = (option.OptionPrice * cityTaxRate) / 100;
+            var stateTaxAmount = (option.OptionPrice * stateTaxRate) / 100;
+            var municipalityTaxAmount = (option.OptionPrice * municipalityTaxRate) / 100;
+
+            return new OptionTaxVM
+            {
+                OptionId = option.Optionid.ToString(),
+                WindowOptionId = option.WindowOptionId,
+                TaxId = taxId,
+                TaxName = (option.IsTaxApplied == true && !string.IsNullOrEmpty(option.TaxName)) ? option.TaxName : item.TaxName,
+                OptionPrice = option.OptionPrice,
+                CityTaxAmount = cityTaxAmount??0.0m,
+                StateTaxAmount = stateTaxAmount ?? 0.0m,
+                MunicipalityTaxAmount = municipalityTaxAmount ?? 0.0m,
+                IsTaxAvailable = option.IsTaxApplied
+            };
+        }
+
     }
 }

@@ -201,6 +201,7 @@ namespace ShutterManagement.Business.Services
                             BuildHeight = items.BuildHeight,
                             CreatedAt = DateTime.Now,
                             CreatedBy = AppConstant.LoggedInUserID,
+                            SortOrder=items.SortOrder,
                             IsActive = true,
                             IsDelete = false,
                             TenantId = AppConstant.LoggedInTenantId
@@ -471,19 +472,17 @@ namespace ShutterManagement.Business.Services
 
 
         #region private methods
-        // Helper methods
-
         private List<WindowsList> FetchWindowsData()
         {
             return dbContext.TblWindows
                 .Where(w => w.IsDelete == false && w.TenantId == AppConstant.LoggedInTenantId)
-                .OrderBy(w => w.Label)
+                .OrderBy(w => w.CreatedAt)
                 .GroupJoin(dbContext.TblWindowProducts,
                     w => w.WindowId,
                     wp => wp.WindowId,
                     (w, windowProducts) => new { w, windowProducts })
                 .SelectMany(
-                    x => x.windowProducts.Where(x=>x.IsDelete == false).DefaultIfEmpty(),
+                    x => x.windowProducts.Where(x=>x.IsDelete == false).OrderBy(x=>x.SortOrder).DefaultIfEmpty(),
                     (x, wp) => new { x.w, wp })
                 .GroupJoin(dbContext.WindowOptions,
                     x => x.wp.WindowProductId,
@@ -522,6 +521,8 @@ namespace ShutterManagement.Business.Services
                             ProductName = p.FirstOrDefault().wp.Product.ProductName ?? "",
                             BuildHeight = p.FirstOrDefault().wp.BuildHeight,
                             BuildWidth = p.FirstOrDefault().wp.BuildWidth,
+                            SortOrder=p.FirstOrDefault().wp.SortOrder,
+                            
                             WindowOptions = p.Select(o => new WindowOptions
                             {
                                 WindowProductId = o.wp.WindowProductId,
@@ -665,6 +666,7 @@ namespace ShutterManagement.Business.Services
                 ProductTypeId = product.ProductTypeId,
                 BuildHeight = product.BuildHeight,
                 BuildWidth = product.BuildWidth,
+                SortOrder = product.SortOrder,
                 CreatedAt = DateTime.Now,
                 CreatedBy = AppConstant.LoggedInUserID,
                 IsActive = true,

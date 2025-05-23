@@ -31,6 +31,8 @@ namespace ShutterManagement.Core.ViewModels.Request
         public string? MarkupType { get; set; }
         [DefaultValue("")]
         public string? TenantId { get; set; }
+
+        public Guid? TaxRateId { get; set; }
         public ManagePartnerProductOptions[]? ManagePartnerProductOptions { get; set; }
        // public ManagerPartnerProducts[]? managerPartnerProducts { get; set; }
     }
@@ -68,5 +70,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         [DefaultValue("")]
         public decimal? PartnerSellingPrice { get; set; }
         public string? TenantId { get; set; }
+
+        public Guid? TaxRateId { get; set; }
     }
 }

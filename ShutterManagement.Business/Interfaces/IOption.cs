@@ -15,7 +15,7 @@ namespace ShutterManagement.Business.Interfaces
     {
         Task<IResponseVm<string>> Create_Option(CreateOption model);
         Task<IResponseVm<string>> Update_Option(UpdateOption model);
-        Task<IResponseVm<List<OptionsList>>> GetAll_Option(Pagination filter);
+        Task<IResponseVm<List<OptionsList>>> GetAll_Option(Pagination filter, bool? IsManageProductOption=false);
         Task<IResponseVm<string>> ActiveInActive(Guid Id);
         Task<IResponseVm<string>> Delete(Guid Id);
     }

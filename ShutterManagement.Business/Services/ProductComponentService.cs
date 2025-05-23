@@ -112,7 +112,23 @@ namespace ShutterManagement.Business.Services
                                     x.IsDelete == false)
                         .FirstOrDefault();
 
-                    
+                    var productComp = GetAllQuerable().Where(x => x.ProductId ==
+                    productcomponent.ProductId && x.IsDelete == false &&
+                    x.TenantId == AppConstant.LoggedInTenantId).Count();
+
+                    if(productComp == 1 && productcomponent.ProductComponentId == Id)
+                    {
+                        var IsProductExist = dbContext.TblProducts.Where
+                            (x => x.ProductId == productcomponent.ProductId).FirstOrDefault();
+                        if(IsProductExist != null)
+                        {
+                            IsProductExist.IsComponentAvailable = false;
+                            IsProductExist.UpdatedAt = DateTime.Now;
+                            IsProductExist.ModifiedBy = AppConstant.LoggedInUserID;
+                             dbContext.TblProducts.Update(IsProductExist);
+                             await dbContext.SaveChangesAsync();
+                        }
+                    }
 
                     if (productcomponent != null)
                     {
@@ -123,6 +139,7 @@ namespace ShutterManagement.Business.Services
 
                         await Update(productcomponent);
 
+                        //var getallcomponents = GetAllQuerable().(x => x.P)
                         responseVm.IsSuccess = true;
                         responseVm.Message = AppConstant.DeleteSuccessMsg;
                     }

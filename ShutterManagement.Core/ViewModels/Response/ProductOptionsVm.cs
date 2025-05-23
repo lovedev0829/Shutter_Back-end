@@ -24,6 +24,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public decimal? MaxSellingPrice { get; set; }
     
         public decimal? MinSellingPrice { get; set; }
+        public Guid? TaxRateId { get; set; }
 
         public List<ProductOptionsList> Options { get; set; }
     }
@@ -34,12 +35,16 @@ namespace ShutterManagement.Core.ViewModels.Response
         public Guid? ProductId { get; set; }
 
         public string? OptionName { get; set; }
+       public Guid? TaxRateId { get; set; }
+
+
 
         public List<ProductOptionTypeList> optionTypes { get; set; }
     }
 
     public class ProductOptionTypeList
     {
+        public Guid? TaxRateId { get; set; }
         public Guid? OptionTypeId { get; set; }
 
         public string? OptionTypeName { get; set; }
@@ -59,6 +64,9 @@ namespace ShutterManagement.Core.ViewModels.Response
     public class MSRPVm
     {
         public decimal? msrp { get; set; }
+     
+            public Dictionary<string, decimal> OptionWholesale { get; set; } = new Dictionary<string, decimal>();
+            public Dictionary<string, decimal> OptionMSRP { get; set; } = new Dictionary<string, decimal>();
         public decimal? basecost { get; set; }
     }
 }

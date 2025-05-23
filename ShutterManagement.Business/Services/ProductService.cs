@@ -110,7 +110,13 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = "ProductName " + AppConstant.AlreadyExists;
                     return responseVm;
                 }
+                if(model.IsTaxAvailable==true && model.TaxId==null)
+                {
+                    responseVm.Message = "Please select tax";
+                    return responseVm;
+                }
 
+               
                 var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
                 if (IsTenant)
                 {
@@ -133,7 +139,10 @@ namespace ShutterManagement.Business.Services
                         IsActive = true,
                         IsDelete = false,
                         TenantId = AppConstant.LoggedInTenantId,
-                        IsComponentAvailable = model.IsComponentAvailable
+                        IsComponentAvailable = model.IsComponentAvailable,
+                        IsTaxApplied = model.IsTaxAvailable,
+                        TaxId = model.TaxId,
+                        
                     };
 
                     await Add(product);
@@ -275,6 +284,7 @@ namespace ShutterManagement.Business.Services
                         productList = (from mp in dbContext.TblManagePartnersProducts.OrderByDescending(x => x.CreatedAt)
                                        join p in dbContext.TblProducts on mp.ProductId equals p.ProductId
                                        join pt in dbContext.MstProductTypes on p.ProductType equals pt.ProductId.ToString()
+                                       join tax in dbContext.TblTaxRates on p.TaxId equals tax.TaxRateId
                                        where mp.TenantId == AppConstant.LoggedInTenantId
                                              && mp.IsDelete == false
                                              && mp.IsAvailable == true
@@ -285,6 +295,9 @@ namespace ShutterManagement.Business.Services
                                            ProductName = p.ProductName,
                                            Markup = p.Markup,
                                            Notes = p.Notes,
+                                           TaxId = p.TaxId,
+                                           TaxName = tax.TaxName??"",
+                                           IsTaxAvailable = p.IsTaxApplied,
                                            ProductType = pt.ProductId.ToString().ToLower(),
                                            ProductTypeName = pt.ProductName,
                                            TenantId = p.TenantId,
@@ -297,6 +310,8 @@ namespace ShutterManagement.Business.Services
                         // Parent or regular tenant: Fetch directly from TblProducts
                         productList = (from p in dbContext.TblProducts.OrderByDescending(x => x.CreatedAt)
                                        join pt in dbContext.MstProductTypes on p.ProductType equals pt.ProductId.ToString()
+                                       join tax in dbContext.TblTaxRates on p.TaxId equals tax.TaxRateId into PTax
+                                       from taxdata in PTax.DefaultIfEmpty()
                                        where p.IsDelete == false &&
                                              (p.TenantId == AppConstant.LoggedInTenantId || p.TenantId.ToString() == AppConstant.LoggedInParentTenantId)
                                        select new ProductListVm
@@ -307,6 +322,9 @@ namespace ShutterManagement.Business.Services
                                            Notes = p.Notes,
                                            ProductType = pt.ProductId.ToString().ToLower(),
                                            ProductTypeName = pt.ProductName,
+                                           TaxId = p.TaxId,
+                                           TaxName = taxdata.TaxName ?? "",
+                                           IsTaxAvailable = p.IsTaxApplied,
                                            TenantId = p.TenantId,
                                            IsActive = p.IsActive,
                                            IsComponentAvailable = p.IsComponentAvailable,
@@ -346,6 +364,7 @@ namespace ShutterManagement.Business.Services
                                  (x.ProductName ?? "").ToLower().Contains(filter.SearchValue) ||
                                  (x.Notes ?? "").ToLower().Contains(filter.SearchValue) ||
                                  (x.Markup.ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
+                                 (x.TaxName.ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
                                  (x.ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
                                  (x.ProductTypeName ?? "").ToLower().Contains(filter.SearchValue))
                              ).ToList();
@@ -424,6 +443,8 @@ namespace ShutterManagement.Business.Services
                         IsProductExists.UpdatedAt = DateTime.Now;
                         IsProductExists.ModifiedBy = AppConstant.LoggedInUserID;
                         IsProductExists.IsComponentAvailable = model.IsComponentAvailable;
+                        IsProductExists.IsTaxApplied = model.IsTaxAvailable;
+                        IsProductExists.TaxId = model.TaxId;
                         await Update(IsProductExists);
                         responseVm.IsSuccess = true;
                         responseVm.Message = AppConstant.UpdateSuccessMsg;
