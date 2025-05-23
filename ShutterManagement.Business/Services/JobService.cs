@@ -1210,6 +1210,7 @@ namespace ShutterManagement.Business.Services
                         IsJobExist.Notes = model.Notes.Trim();
                         IsJobExist.GhlStageId = model.GHL_StageId;
                         IsJobExist.GhlStageName = stage?.GhlStageName?.Trim() ?? "";
+                        IsJobExist.AddressId = model?.AddressId;
                         IsJobExist.AttachmentAny = arrayString;
                         IsJobExist.UpdatedAt = DateTime.Now;
                         IsJobExist.ModifiedBy = AppConstant.LoggedInUserID;
@@ -1261,6 +1262,7 @@ namespace ShutterManagement.Business.Services
                         IsJobExist.GhlStageId = model.GHL_StageId;
                         IsJobExist.GhlStageName = stage?.GhlStageName?.Trim() ?? "";
                         IsJobExist.AttachmentAny = arrayString;
+                        IsJobExist.AddressId = model.AddressId;
                         IsJobExist.UpdatedAt = DateTime.Now;
                         IsJobExist.ModifiedBy = AppConstant.LoggedInUserID ?? Guid.Empty;
                         var res = await Update(IsJobExist);
