@@ -107,18 +107,18 @@ namespace ShutterManagement.Business.Services
                             decimal? maxSellingPrice = 0.0m;
                             if (model.MarkupType == EnumValue.GetEnumValue(PriceType.Percentage))
                             {
-                                minSellingPrice = (-1) * (decimal)IsManagePartnerProductExist.MaxPartnerPrice;
-                                maxSellingPrice = (decimal)IsManagePartnerProductExist.MaxPartnerPrice;
+                                minSellingPrice = (-1) * IsManagePartnerProductExist.MaxPartnerPrice??0.0m;
+                                maxSellingPrice = IsManagePartnerProductExist.MaxPartnerPrice??0.0m;
                             }
                             if (model.MarkupType == EnumValue.GetEnumValue(PriceType.Fixed))
                             {
-                                minSellingPrice = (-1) * (decimal)IsManagePartnerProductExist.MaxPartnerPrice;
-                                maxSellingPrice = (decimal)IsManagePartnerProductExist.MaxPartnerPrice;
+                                minSellingPrice = (-1) * IsManagePartnerProductExist.MaxPartnerPrice??0.0m;
+                                maxSellingPrice = IsManagePartnerProductExist.MaxPartnerPrice??0.0m;
                             }
 
                             if (model.PartnerSellingPrice >= minSellingPrice && model.PartnerSellingPrice <= maxSellingPrice)
                             {
-                                IsManagePartnerProductExist.PartnerSellingPrice = model.PartnerSellingPrice;
+                                IsManagePartnerProductExist.PartnerSellingPrice = model.PartnerSellingPrice??0.0m;
                                 IsManagePartnerProductExist.TaxId = model.TaxRateId;
                                 await Update(IsManagePartnerProductExist);
                                 foreach (var item in model.ManagePartnerProductOptions)
@@ -135,12 +135,12 @@ namespace ShutterManagement.Business.Services
                                         decimal maxSellingPrice1 = 0.0m;
                                         if (item.MarkupOptionType == EnumValue.GetEnumValue(PriceType.Percentage))
                                         {
-                                            minSellingPrice1 = (decimal)((-1) * IsManagepartneroptiontype.MaxPrice);
-                                             maxSellingPrice1 = (decimal)IsManagepartneroptiontype.MaxPrice;
+                                            minSellingPrice1 = ((-1) * IsManagepartneroptiontype.MaxPrice ?? 0.0m);
+                                             maxSellingPrice1 = IsManagepartneroptiontype.MaxPrice??0.0m;
                                         }
                                         if (item.MarkupOptionType == EnumValue.GetEnumValue(PriceType.Fixed))
                                         {
-                                             minSellingPrice1 = (decimal)((-1) * IsManagepartneroptiontype.MaxPrice??0.0m);
+                                             minSellingPrice1 = ((-1) * IsManagepartneroptiontype.MaxPrice??0.0m);
                                              maxSellingPrice1 = IsManagepartneroptiontype.MaxPrice ?? 0.0m;
                                         }
                                         if (item.PartnerSellingPrice >= minSellingPrice1 && item.PartnerSellingPrice <= maxSellingPrice1)
@@ -364,7 +364,6 @@ namespace ShutterManagement.Business.Services
                                 : GetDefaultProductData(filter);
 
                         //var queryable = productlist.AsQueryable();
-
                         //queryable = Paginate.ApplyColumnFilters(queryable, filter.ColumnFilters);
                         //queryable = Paginate.ApplySorting(queryable, filter.SortColumn, filter.SortDirection);
 
