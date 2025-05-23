@@ -478,11 +478,11 @@ namespace ShutterManagement.Business.Services
 
                                 if (itemsWithoutPricingExpression.Any())
                                 {
-                                    var additionalCost = itemsWithoutPricingExpression
-                                        .SelectMany(x => x.OptionsPrice ?? Array.Empty<decimal>())
-                                        .Sum();
+                                    //var additionalCost = itemsWithoutPricingExpression
+                                    //    .SelectMany(x => x.OptionsPrice ?? Array.Empty<decimal>())
+                                    //    .Sum();
 
-                                    itemsWithoutPricingExpression.ForEach(x => x.AdditionalCost = additionalCost);
+                                    //itemsWithoutPricingExpression.ForEach(x => x.AdditionalCost = additionalCost);
                                     itemsWithoutPricingExpression.ForEach(x => x.IsComponentAvailable = false);
                                     WindowProductData.AddRange(itemsWithoutPricingExpression);
                                     responseVm.IsSuccess = true;
