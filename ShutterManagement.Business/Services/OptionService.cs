@@ -295,7 +295,7 @@ namespace ShutterManagement.Business.Services
                             .ToList();
 
                         // Load all options once
-                        var allOption = await GetAll();
+                        var allOption = await GetAll(x => x.IsActive == true && x.IsDelete == false);
 
                         // Filter managed options that match the assigned IDs and tenant conditions
                         //var tenantOptions = allOptions
