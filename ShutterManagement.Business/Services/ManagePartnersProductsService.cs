@@ -417,7 +417,8 @@ namespace ShutterManagement.Business.Services
                     var allOptions = (from o1 in dbContext.TblManagePartnersProductsOptions.OrderByDescending(x => x.CreatedAt)
                                       join o2 in dbContext.TblOptions on o1.OptionId equals o2.OptionId
                                       join o3 in dbContext.TblManagePartnersProducts on o1.ManageProductId equals o3.ManageProductId
-                                      where o1.IsDelete == false && o1.IsActive == true &&
+                                      where o1.IsDelete == false && o1.IsActive == true && 
+                                      o2.IsActive == true && o2.IsDelete == false &&
                                             productIds.Contains((Guid)o2.ProductId) &&
                                             o1.TenantId == AppConstant.LoggedInTenantId
                                       select new ProductOptionsList
