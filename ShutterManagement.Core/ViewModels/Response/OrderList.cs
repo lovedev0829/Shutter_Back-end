@@ -94,6 +94,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public decimal? ProductPrice { get; set; }
 
         public decimal? Price { get; set; }
+        public decimal? WholesalePrice { get; set; }
         public EstimateWindowLists EstimateWindowDetails { get; set; } = new EstimateWindowLists();
 
         public string[] Options { get; set; } = [];

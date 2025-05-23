@@ -1426,6 +1426,7 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.TaxName).HasMaxLength(200);
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
             entity.Property(e => e.Version).HasMaxLength(3);
+            entity.Property(e => e.WholeSalePrice).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.Width).HasColumnType("decimal(10, 2)");
 
             entity.HasOne(d => d.Tax).WithMany(p => p.TblOrderWindowProducts)

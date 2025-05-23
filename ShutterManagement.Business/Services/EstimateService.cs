@@ -471,8 +471,9 @@ namespace ShutterManagement.Business.Services
                         {
                             if (data.IsSuccess && data.Data != null)
                             {
+                                
                                 var itemsWithoutPricingExpression = data.Data
-                                    .Where(x => x.PricingExpression == null)
+                                    .Where(x => x.ComponentId == null)
                                     .ToList();
 
                                 if (itemsWithoutPricingExpression.Any())
@@ -482,7 +483,7 @@ namespace ShutterManagement.Business.Services
                                         .Sum();
 
                                     itemsWithoutPricingExpression.ForEach(x => x.AdditionalCost = additionalCost);
-
+                                    itemsWithoutPricingExpression.ForEach(x => x.IsComponentAvailable = false);
                                     WindowProductData.AddRange(itemsWithoutPricingExpression);
                                     responseVm.IsSuccess = true;
                                 }
@@ -594,18 +595,21 @@ namespace ShutterManagement.Business.Services
         {
             decimal ComponentSubTotal = 0.00M;
             decimal Wholesale = 0.00M;
-
+            var IsSubtenants = (await tenantService.GetAll()).Where
+                    (t => t.TenantId == AppConstant.LoggedInTenantId && (t.ParentTenantId != null || !string.IsNullOrEmpty(t.ParentTenantId.ToString()))
+                    && t.IsActive == true && t.IsDelete == false)
+                  .FirstOrDefault();
             foreach (var item in data.DistinctBy(x => x.ComponentId))
             {
                 var formula = item.ExpressionFormulae ?? "";
 
-                if ((bool)iswholesale)
-                {
-                    item.BuildHeight = 1;
-                    item.BuildWidth = 1;
-                    item.Quantity = 1;
+                //if((bool)iswholesale)
+                //{
+                //    item.BuildHeight = 1;
+                //    item.BuildWidth = 1;
+                //    item.Quantity = 1;
 
-                }
+                //}    
                 // Define an expression with a nudget and a custom function
                 var expression = CalculateExpression(formula, item);
                 var res = expression.Evaluate();
@@ -613,15 +617,29 @@ namespace ShutterManagement.Business.Services
                 //item.AdditionalCost = Convert.ToDecimal(item.OptionsPrice.Sum());
                 //finalSubTotal = (decimal)item.AdditionalCost + finalSubTotal;
                 var ComponentPriceWithoutMarkup = ComponentPrice;
+                
+
+                if ((bool)iswholesale)
+                {
+                    if (IsSubtenants != null)
+                    {
+                        var productMarkup = dbContext.TblManagePartnersProducts.Where(x => x.ProductId == item.ProductId && x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
+                        if (productMarkup.MarkupType == "Percentage")
+                        {
+                            ComponentPriceWithoutMarkup = (decimal)(ComponentPriceWithoutMarkup * (1 + (productMarkup.WholeSalePrice) / 100));
+                        }
+                        if (productMarkup.MarkupType == "Fixed")
+                        {
+                            ComponentPriceWithoutMarkup = (decimal)(ComponentPriceWithoutMarkup + (productMarkup.WholeSalePrice));
+                        }
+                    }
+                }
                 Wholesale += Convert.ToDecimal(Convert.ToDecimal(ComponentPriceWithoutMarkup).ToString("0.0000"));
                 if (!(bool)iswholesale)
                 {
                     var ComponentPriceWithMarkup = (ComponentPriceWithoutMarkup * (100 + item.MarkupPercentage)) / 100;
                     var ComponentPriceWithProductMarkup = (ComponentPriceWithMarkup * (100 + item.Markup)) / 100;
-                    var IsSubtenants = (await tenantService.GetAll()).Where
-                       (t => t.TenantId == AppConstant.LoggedInTenantId && (t.ParentTenantId != null || !string.IsNullOrEmpty(t.ParentTenantId.ToString()))
-                       && t.IsActive == true && t.IsDelete == false)
-                     .FirstOrDefault();
+                   
                     if (IsSubtenants != null)
                     {
                         var productMarkup = dbContext.TblManagePartnersProducts.Where(x => x.ProductId == item.ProductId && x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();

@@ -1065,6 +1065,7 @@ namespace ShutterManagement.Business.Services
                     x.Price,
                     x.ProductTypeName,
                     x.ProductPrice,
+                    x.WholeSalePrice,
                 }).ToList();
 
         
@@ -1105,6 +1106,7 @@ namespace ShutterManagement.Business.Services
                     Price = p.Price,
                     ProductPrice = p.ProductPrice,
                     Options = Options.Select(x => x.OptionName).ToArray(),
+                    WholesalePrice = p.WholeSalePrice,
                     EstimateWindowDetails = WindowDetails.Where(x => x.WindowId == p.WindowId).Select(x => new EstimateWindowLists
                     {
                         ArchHeight = x.ArchHeight,
@@ -1227,6 +1229,7 @@ namespace ShutterManagement.Business.Services
                 Municipality = estimateWindowProductDetails.Municipality,
                 City = estimateWindowProductDetails.City,
                 State = estimateWindowProductDetails.State,
+                WholeSalePrice = estimateWindowProductDetails.WholeSalePrice,
             };
 
             await orderWindowProductService.Add(tblOrderWindowProduct);
