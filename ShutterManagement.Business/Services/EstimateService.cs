@@ -1216,23 +1216,23 @@ namespace ShutterManagement.Business.Services
                     }
                 }
 
-                // Tax and region details
-                var taxDetails = taxRate.GetAllQuerable()
-                    .FirstOrDefault(t => t.TaxRateId == estimate.TaxId && !(bool)t.IsDelete);
+                //// Tax and region details
+                //var taxDetails = taxRate.GetAllQuerable()
+                //    .FirstOrDefault(t => t.TaxRateId == estimate.TaxId && !(bool)t.IsDelete);
 
-                if (taxDetails != null)
-                {
-                    e.TaxRate = taxDetails.Rate;
-                    e.Region = region.GetAllQuerable()
-                        .Where(r => r.Id == taxDetails.Region && !(bool)r.IsDelete)
-                        .Select(r => r.RegionName)
-                        .FirstOrDefault() ?? "";
-                }
-                else
-                {
-                    e.TaxRate = 0;
-                    e.Region = "";
-                }
+                //if (taxDetails != null)
+                //{
+                //    e.TaxRate = taxDetails.Rate;
+                //    e.Region = region.GetAllQuerable()
+                //        .Where(r => r.Id == taxDetails.Region && !(bool)r.IsDelete)
+                //        .Select(r => r.RegionName)
+                //        .FirstOrDefault() ?? "";
+                //}
+                //else
+                //{
+                //    e.TaxRate = 0;
+                //    e.Region = "";
+                //}
 
                 // Fetch and add related products and options
                 await AddEstimateProducts(estimate, e);
@@ -1534,8 +1534,8 @@ namespace ShutterManagement.Business.Services
                 DiscountCoupon = model.DiscountCoupon,
                 GrandTotal = grandtotal,
                 JobId = model.JobId,
-                //TaxId = model.taxRateId,
-                //TaxAmount = model.Tax,
+                TaxId = model.taxRateId,
+                TaxAmount = model.Tax,
                 TermsCondition = model.TermsCondition,
                 CreatedBy = AppConstant.LoggedInUserID,
                 CreatedAt = DateTime.Now,
