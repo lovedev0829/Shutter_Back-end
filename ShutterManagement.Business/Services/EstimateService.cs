@@ -913,7 +913,7 @@ public async Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> BuildEstim
                     }
                     subtotal += (decimal)windowproductdetails.Data.DistinctBy(x => x.WindowProdcutId).Sum(x => x.TotalPrice);
                     additionalCost += (decimal)windowproductdetails.Data.DistinctBy(x => x.WindowProdcutId).Sum(x => x.AdditionalCost);
-                    totalTaxAmount += (decimal)windowproductdetails.Data.DistinctBy(x => x.WindowProdcutId).Sum(x => x.TotalTaxAmount);
+                    
                 }
                 SumofSubtotalandAdditionalCost = subtotal + additionalCost;
                 //if (string.IsNullOrEmpty((model.taxRateId).ToString()) && string.IsNullOrEmpty(model.DiscountCoupon))
@@ -961,9 +961,10 @@ public async Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> BuildEstim
                 bool isTaxExemptionInContact = GetIsTaxExemptByWindowId(windowproductdetails.Data.Select(s => s.WindowId).FirstOrDefault());
                 if (model.IsTaxApplicable == true && isTaxExemptionInContact)
                 {
+                    var productTaxAmount = windowproductdetails.Data.DistinctBy(x => x.WindowProdcutId).Sum(x => x.TotalTaxAmount) ?? 0.0m;
+                    var optionTaxAmount = windowproductdetails.Data.DistinctBy(x => x.WindowProdcutId).SelectMany(x => x.OptionTaxDetails).Sum(x => x.TotalTaxAmount) ?? 0.0m;
+                    totalTaxAmount = optionTaxAmount + productTaxAmount;
                     grandtotal = grandtotal + totalTaxAmount;
-
-                    grandtotal = grandtotal + windowproductdetails.Data.SelectMany(x => x.OptionTaxDetails).Sum(x => (decimal)x.TotalTaxAmount);
                 }
 
 
@@ -976,7 +977,7 @@ public async Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> BuildEstim
                 estimate.JobId = model.JobId;
                 estimate.TaxId = model.taxRateId;
                 estimate.TaxAmount = model.Tax;
-                estimate.TotalPrice = subtotal;
+                estimate.TotalPrice = SumofSubtotalandAdditionalCost;
                 estimate.AdditionalCost = additionalCost;
                 estimate.TermsCondition = model.TermsCondition;
                 estimate.ModifiedBy = AppConstant.LoggedInUserID;
@@ -1191,7 +1192,7 @@ public async Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> BuildEstim
 
             foreach (var estimate in estimates)
             {
-                var e = new EstimateList
+                var estimateDetails = new EstimateList
                 {
                     EstimateId = estimate.EstimateId,
                     CreatedDate = estimate.CreatedAt,
@@ -1204,10 +1205,10 @@ public async Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> BuildEstim
                     EstimateName = estimate.EstimateName,
                     EstimateCode = estimate.EstimateCode,
                     SubTotal = estimate.TotalPrice,
-                    //additionalCost = estimate.AdditionalCost,
+                    //additionalCostAsOptionPrice = estimate.AdditionalCost,
                     GrandTotal = estimate.GrandTotal,
                     Notes = estimate.Notes,
-                    Tax = estimate.TaxAmount,
+                    Tax = estimate.TotaltaxAmount,
                     TermsCondition = estimate.TermsCondition,
                     IsTaxApplicable = estimate.IsTaxApplied,
                     jobDetails = new JobDetails() // Ensure jobDetails is not null
@@ -1219,9 +1220,9 @@ public async Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> BuildEstim
 
                 if (user != null)
                 {
-                    e.CreatedBy = $"{user.FirstName} {user.LastName}";
-                    e.jobDetails.FirstName = user.FirstName;
-                    e.jobDetails.LastName = user.LastName;
+                    estimateDetails.CreatedBy = $"{user.FirstName} {user.LastName}";
+                    estimateDetails.jobDetails.FirstName = user.FirstName;
+                    estimateDetails.jobDetails.LastName = user.LastName;
                 }
 
                 // Fetch tenant and branding info
@@ -1235,32 +1236,32 @@ public async Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> BuildEstim
 
                     if (brandingInfo != null)
                     {
-                        e.primarycolor = brandingInfo.PrimaryColor;
-                        e.CompanyName = brandingInfo.CompanyName;
+                        estimateDetails.primarycolor = brandingInfo.PrimaryColor;
+                        estimateDetails.CompanyName = brandingInfo.CompanyName;
                     }
                 }
 
-                // Tax and region details
-                var taxDetails = taxRate.GetAllQuerable()
-                    .FirstOrDefault(t => t.TaxRateId == estimate.TaxId && !(bool)t.IsDelete);
+                //// Tax and region details
+                //var taxDetails = taxRate.GetAllQuerable()
+                //    .FirstOrDefault(t => t.TaxRateId == estimate.TaxId && !(bool)t.IsDelete);
 
-                if (taxDetails != null)
-                {
-                    e.TaxRate = taxDetails.Rate;
-                    e.Region = region.GetAllQuerable()
-                        .Where(r => r.Id == taxDetails.Region && !(bool)r.IsDelete)
-                        .Select(r => r.RegionName)
-                        .FirstOrDefault() ?? "";
-                }
-                else
-                {
-                    e.TaxRate = 0;
-                    e.Region = "";
-                }
+                //if (taxDetails != null)
+                //{
+                //    estimateDetails.TaxRate = taxDetails.Rate;
+                //    estimateDetails.Region = region.GetAllQuerable()
+                //        .Where(r => r.Id == taxDetails.Region && !(bool)r.IsDelete)
+                //        .Select(r => r.RegionName)
+                //        .FirstOrDefault() ?? "";
+                //}
+                //else
+                //{
+                //    estimateDetails.TaxRate = 0;
+                //    estimateDetails.Region = "";
+                //}
 
                 // Fetch and add related products and options
-                await AddEstimateProducts(estimate, e);
-                estimateList.Add(e);
+                await AddEstimateProducts(estimate, estimateDetails);
+                estimateList.Add(estimateDetails);
             }
 
             var filteredRecords = estimateList
@@ -1492,7 +1493,7 @@ public async Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> BuildEstim
             decimal subtotal = 0.0M;
             decimal SumofSubtotalandAdditionalCost = 0.0M;
             decimal grandtotal = 0m;
-            decimal additionalCost = 0m;
+            decimal additionalCostAsOptionPrice = 0m;
             decimal totalTaxAmount = 0.0m;
             Guid? taxRateId = null;
             Guid? discountId = null;
@@ -1513,10 +1514,10 @@ public async Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> BuildEstim
 
             }
             subtotal += (decimal)windowproductdetails.Data.DistinctBy(x => x.WindowProdcutId).Sum(x => x.TotalPrice);
-            additionalCost += (decimal)windowproductdetails.Data.DistinctBy(x => x.WindowProdcutId).Sum(x => x.AdditionalCost);
+            additionalCostAsOptionPrice += (decimal)windowproductdetails.Data.DistinctBy(x => x.WindowProdcutId).Sum(x => x.AdditionalCost);
 
 
-            SumofSubtotalandAdditionalCost = subtotal + additionalCost;
+            SumofSubtotalandAdditionalCost = subtotal + additionalCostAsOptionPrice;
 
 
 
@@ -1544,7 +1545,7 @@ public async Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> BuildEstim
                 var productTaxAmount = windowproductdetails.Data.DistinctBy(x => x.WindowProdcutId).Sum(x => x.TotalTaxAmount) ?? 0.0m;
                 var optionTaxAmount = windowproductdetails.Data.DistinctBy(x => x.WindowProdcutId).SelectMany(x => x.OptionTaxDetails).Sum(x => x.TotalTaxAmount) ?? 0.0m;
                 totalTaxAmount = optionTaxAmount + productTaxAmount;
-                grandtotal = grandtotal + totalTaxAmount;
+                grandtotal += totalTaxAmount;
             }
 
             string EstimationCode = EstimationUniqueName().Result.Data;
@@ -1558,16 +1559,16 @@ public async Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> BuildEstim
                 DiscountCoupon = model.DiscountCoupon,
                 GrandTotal = grandtotal,
                 JobId = model.JobId,
-                //TaxId = model.taxRateId,
-                //TaxAmount = model.Tax,
+                TaxId = model.taxRateId,
+                TaxAmount = model.Tax,
                 TermsCondition = model.TermsCondition,
                 CreatedBy = AppConstant.LoggedInUserID,
                 CreatedAt = DateTime.Now,
                 TenantId = AppConstant.LoggedInTenantId,
                 IsActive = true,
                 IsDelete = false,
-                TotalPrice = subtotal,
-                //AdditionalCost = additionalCost,
+                TotalPrice = SumofSubtotalandAdditionalCost,
+                //AdditionalCost = additionalCostAsOptionPrice,
                 IsTaxApplied = model.IsTaxApplicable,
                 TotaltaxAmount = totalTaxAmount,
                 Status = EnumValue.GetEnumValue(Estimation.New),
@@ -1669,8 +1670,8 @@ public async Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> BuildEstim
                     return; // Return early if window not found
                 }
 
-                await AddWindowToEstimate(windowData, windowProductData, estimateId);
-                await AddProductToEstimate(windowProductData, estimateId, product.ProductPrice);
+                var EstimateWindow =  await AddWindowToEstimate(windowData, windowProductData, estimateId);
+                var EstimateWindowProduct = await AddProductToEstimate(windowProductData, estimateId, product.ProductPrice, EstimateWindow);
                 if (!string.IsNullOrEmpty(Message))
                 {
                     return;
@@ -1680,7 +1681,7 @@ public async Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> BuildEstim
                 if (isComponentAvailable)
                 {
                     await AddComponentsToEstimate((Guid)windowProductData.ProductId, (Guid)windowProductData.WindowId, estimateId,
-                        windowProdcutDetailsForEstimates.Where(x => x.WindowProdcutId == product.WindowProductId).ToList());
+                        windowProdcutDetailsForEstimates.Where(x => x.WindowProdcutId == product.WindowProductId).ToList(), EstimateWindowProduct);
                 }
                 if (!string.IsNullOrEmpty(Message))
                 {
@@ -1689,7 +1690,7 @@ public async Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> BuildEstim
             }
         }
 
-        private async Task AddWindowToEstimate(TblWindow windowData, TblWindowProduct windowProductData, Guid estimateId)
+        private async Task<TblEstimateWindow> AddWindowToEstimate(TblWindow windowData, TblWindowProduct windowProductData, Guid estimateId)
         {
             FileLogger.Log($"Adding window data for window {windowData.WindowId} to estimate...");
             TblEstimateWindow tblEstimateWindow = new TblEstimateWindow
@@ -1715,16 +1716,17 @@ public async Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> BuildEstim
             };
 
             await estimateWindowService.Add(tblEstimateWindow);
+            return tblEstimateWindow;
         }
 
-        private async Task AddProductToEstimate(TblWindowProduct windowProductData, Guid estimateId, decimal? ProductPrice)
+        private async Task<TblEstimateWindowProduct> AddProductToEstimate(TblWindowProduct windowProductData, Guid estimateId, decimal? ProductPrice, TblEstimateWindow tblEstimateWindow)
         {
             FileLogger.Log($"Adding product data for product {windowProductData.ProductId} to estimate...");
             var productData = (await productService.GetAll()).Where(x => x.ProductId == windowProductData.ProductId && x.IsDelete == false).FirstOrDefault();
             if (productData == null)
             {
                 Message = "Product " + AppConstant.NoDataFound;
-                return; // Return early if product data not found
+                return null; // Return early if product data not found
             }
             var ProductTypeName = mstProductType.GetAllQuerable().Where(x => x.ProductId.ToString() == productData.ProductType).Select(x => x.ProductName).FirstOrDefault();
             Guid[] arr = { windowProductData.WindowProductId };
@@ -1744,6 +1746,7 @@ public async Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> BuildEstim
 
             TblEstimateWindowProduct tblEstimateWindowProduct = new TblEstimateWindowProduct
             {
+                EstWindowId = tblEstimateWindow.EstWindowId,
                 WindowId = (Guid)windowProductData.WindowId,
                 ProductName = productData.ProductName,
                 Height = windowProductData.BuildHeight,
@@ -1787,7 +1790,7 @@ public async Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> BuildEstim
                     optionTaxDetails
                 );
             }
-
+            return tblEstimateWindowProduct;
         }
 
 
@@ -1876,7 +1879,7 @@ public async Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> BuildEstim
         }
 
 
-        private async Task AddComponentsToEstimate(Guid productId, Guid WindowId, Guid estimateId, List<WindowProdcutDetailsForEstimate> windowProdcutDetailsForEstimates)
+        private async Task AddComponentsToEstimate(Guid productId, Guid WindowId, Guid estimateId, List<WindowProdcutDetailsForEstimate> windowProdcutDetailsForEstimates, TblEstimateWindowProduct tblEstimateWindowProduct)
         {
             FileLogger.Log($"Adding components for product {productId} to estimate...");
 
@@ -1896,8 +1899,8 @@ public async Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> BuildEstim
                 }
                 //expressionList.Add(Guid.Parse(componentData.PricingExpression ?? ""));
                 var componentPrice = windowProdcutDetailsForEstimates.Where(x => x.ComponentId == component.ComponentId && x.WindowId == WindowId).Select(x => x.Price).FirstOrDefault();
-                await AddComponentToEstimateWindow(componentData, WindowId, (Guid)component.ProductId, estimateId, componentPrice ?? 0.0m);
-                await AddComponentMaterialsToEstimate(componentData.ComponentId, estimateId, WindowId);
+                var EstimateWindowProductComponent = await AddComponentToEstimateWindow(componentData, WindowId, (Guid)component.ProductId, estimateId, componentPrice ?? 0.0m, tblEstimateWindowProduct.EstimateWindowProductId);
+                await AddComponentMaterialsToEstimate(componentData.ComponentId, estimateId, WindowId, EstimateWindowProductComponent);
                 if (!string.IsNullOrEmpty(Message))
                 {
                     return;
@@ -1905,7 +1908,7 @@ public async Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> BuildEstim
             }
         }
 
-        private async Task AddComponentToEstimateWindow(TblComponent componentData, Guid WindowId, Guid ProductId, Guid estimateId, decimal Price)
+        private async Task<TblEstimateWindowProductComponent> AddComponentToEstimateWindow(TblComponent componentData, Guid WindowId, Guid ProductId, Guid estimateId, decimal Price, Guid EstimateWindowProductId)
         {
             FileLogger.Log($"Adding component {componentData.ComponentName} to estimate...");
             var PricingExpressionId = dbContext.TblProductComponents.Where(x => x.ComponentId ==
@@ -1918,6 +1921,7 @@ public async Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> BuildEstim
             && x.IsDelete == false).Select(x => x.ProductName).FirstOrDefault();
             TblEstimateWindowProductComponent tblEstimateWindowProductComponent = new TblEstimateWindowProductComponent
             {
+                EstimateWindowProductId = EstimateWindowProductId,
                 EstimateWindowProductComponentId = Guid.NewGuid(),
                 ProductId = ProductId,
                 ComponentId = componentData.ComponentId,
@@ -1939,9 +1943,10 @@ public async Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> BuildEstim
             };
 
             await estimateWindowProductComponentService.Add(tblEstimateWindowProductComponent);
+            return tblEstimateWindowProductComponent;
         }
 
-        private async Task AddComponentMaterialsToEstimate(Guid componentId, Guid estimateId, Guid WindowId)
+        private async Task AddComponentMaterialsToEstimate(Guid componentId, Guid estimateId, Guid WindowId, TblEstimateWindowProductComponent tblEstimateWindowProductComponent)
         {
             FileLogger.Log($"Adding materials for component {componentId} to estimate...");
             var componentMaterialData = (await componentMaterialService.GetAll()).Where(x => x.ComponentId == componentId && x.IsDelete == false).ToList();
@@ -1960,17 +1965,19 @@ public async Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> BuildEstim
                     return; // Return early if material data not found
                 }
 
-                await AddMaterialToEstimate(materialData, (Guid)material.ComponentId, estimateId, WindowId);
+                await AddMaterialToEstimate(materialData, (Guid)material.ComponentId, estimateId, WindowId, tblEstimateWindowProductComponent.EstimateWindowProductComponentId);
 
             }
         }
 
-        private async Task AddMaterialToEstimate(TblRawMaterial materialData, Guid ComponentId, Guid estimateId, Guid WindowId)
+        private async Task AddMaterialToEstimate(TblRawMaterial materialData, Guid ComponentId, Guid estimateId, Guid WindowId, Guid EstimateWindowProductComponentId)
         {
             FileLogger.Log($"Adding material {materialData.MaterialName} to estimate...");
             TblEstimateWindowProductComponentMaterial tblEstimateWindowProductComponentMaterial = new TblEstimateWindowProductComponentMaterial
             {
+
                 EstimateWindowProductComponentMaterialId = Guid.NewGuid(),
+                EstimateWindowProductComponentId = EstimateWindowProductComponentId,
                 ComponentId = ComponentId,
                 IsDelete = false,
                 IsActive = true,

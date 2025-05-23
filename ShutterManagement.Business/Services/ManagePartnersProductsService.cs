@@ -146,7 +146,7 @@ namespace ShutterManagement.Business.Services
                                         if (item.PartnerSellingPrice >= minSellingPrice1 && item.PartnerSellingPrice <= maxSellingPrice1)
                                         {
                                             IsManagepartneroptiontype.PartnerSellingPrice = item.PartnerSellingPrice??0.0m;
-                                            IsManagepartneroptiontype.TaxId = item.TaxRateId;
+                                            IsManagepartneroptiontype.TaxId = item.TaxRateId;  
                                             await managePartnersProductsOptions.Update(IsManagepartneroptiontype);
                                             if (!AppConstant.IsTenant)
                                             {
@@ -481,7 +481,9 @@ namespace ShutterManagement.Business.Services
                                 {
                                     OptionId = opt.OptionId,
                                     OptionName = opt.OptionName,
-                                    TaxRateId = allOptionTypes.DistinctBy(x => x.OptionTypeId).Select(s => s.TaxRateId).FirstOrDefault(),
+                                    TaxRateId = allOptionTypes.Where(x => x.OptionId == opt.OptionId).Select(x => x.TaxRateId).Distinct().Count() == 1
+                                    ? allOptionTypes.First(x => x.OptionId == opt.OptionId).TaxRateId
+                                    : Guid.Empty,
                                     optionTypes = allOptionTypes
                                         .Where(ot => ot.OptionId == opt.OptionId)
                                         .Select(optt =>
