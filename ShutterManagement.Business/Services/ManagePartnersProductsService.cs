@@ -455,22 +455,22 @@ namespace ShutterManagement.Business.Services
 
                     var productTasks = products.Select(product =>
                     {
-                        var calculateprice = CalculateMSRP((Guid)product.ProductId).Result;
-                        decimal baseCost = calculateprice.Data.basecost ?? 0.0m;
-                        var msrp = calculateprice.Data.msrp ?? 0.0m;
+                        //var calculateprice = CalculateMSRP((Guid)product.ProductId).Result;
+                        //decimal baseCost = calculateprice.Data.basecost ?? 0.0m;
+                        //var msrp = calculateprice.Data.msrp ?? 0.0m;
 
-                        var (maxSellingPrice, minSellingPrice, wholesale) = (calculateprice.Data != null ?
-                           CalculateSellingPrices(baseCost, (decimal)msrp, (decimal)product.WholeSalePrice, (decimal)product.MaxPartnerPrice, product.PriceType) : (0.0m, 0.0m, 0.0m));
+                        //var (maxSellingPrice, minSellingPrice, wholesale) = (calculateprice.Data != null ?
+                        //   CalculateSellingPrices(baseCost, (decimal)msrp, (decimal)product.WholeSalePrice, (decimal)product.MaxPartnerPrice, product.PriceType) : (0.0m, 0.0m, 0.0m));
 
                         return new ProductOptionsVm
                         {
                             ProductId = product.ProductId,
                             ProductName = product.ProductName,
                             IsAvailable = product.IsAvailable,
-                            WholeSalePrice = wholesale,
+                            WholeSalePrice = 0.0m,
                             MaxPartnerPrice = product.MaxPartnerPrice,
-                            MaxSellingPrice = maxSellingPrice,
-                            MinSellingPrice = minSellingPrice,
+                            MaxSellingPrice = 0.0m,
+                            MinSellingPrice = 0.0m,
                             PartnerSellingPrice = product.PartnerSellingPrice,
                             MarkupType = product.MarkupType,
                             TaxRateId = product.TaxRateId,
@@ -488,33 +488,33 @@ namespace ShutterManagement.Business.Services
                                         {  // Fetch Wholesale and MSRP from the dictionaries
                                             
 
-                                            if(calculateprice.Data.OptionWholesale.TryGetValue(optt.OptionTypeId.ToString(), out decimal dictWholesale))
-                                            {
-                                                dictWholesale = dictWholesale;
-                                            }
-                                            else
-                                            {
-                                                dictWholesale = 0.0m;
-                                            }
-                                            if(calculateprice.Data.OptionMSRP.TryGetValue(optt.OptionTypeId.ToString(), out decimal dictMSRP))
-                                            {
-                                                dictMSRP = dictMSRP;
-                                            }
-                                            else
-                                            {
-                                                dictMSRP = 0.0m;
-                                            }
+                                            //if(calculateprice.Data.OptionWholesale.TryGetValue(optt.OptionTypeId.ToString(), out decimal dictWholesale))
+                                            //{
+                                            //    dictWholesale = dictWholesale;
+                                            //}
+                                            //else
+                                            //{
+                                            //    dictWholesale = 0.0m;
+                                            //}
+                                            //if(calculateprice.Data.OptionMSRP.TryGetValue(optt.OptionTypeId.ToString(), out decimal dictMSRP))
+                                            //{
+                                            //    dictMSRP = dictMSRP;
+                                            //}
+                                            //else
+                                            //{
+                                            //    dictMSRP = 0.0m;
+                                            //}
 
-                                            var (maxSellingPrice, minSellingPrice, calculatedWholesale) =
-                                               calculateprice.Data != null
-                                               ? CalculateSellingPrices(
-                                                 dictWholesale,                                
-                                                 dictMSRP,                                      
-                                                 optt.WholeSalePrice ?? 0.0m,                   
-                                                 optt.MaxPrice ?? 0.0m,                         
-                                                 optt.MarkupOptionType                         
-                                                  )
-                                               : (0.0m, 0.0m, 0.0m);
+                                            //var (maxSellingPrice, minSellingPrice, calculatedWholesale) =
+                                            //   calculateprice.Data != null
+                                            //   ? CalculateSellingPrices(
+                                            //     dictWholesale,                                
+                                            //     dictMSRP,                                      
+                                            //     optt.WholeSalePrice ?? 0.0m,                   
+                                            //     optt.MaxPrice ?? 0.0m,                         
+                                            //     optt.MarkupOptionType                         
+                                            //      )
+                                            //   : (0.0m, 0.0m, 0.0m);
 
 
                                             return new ProductOptionTypeList
@@ -525,7 +525,7 @@ namespace ShutterManagement.Business.Services
                                                 Price = optt.Price,
                                                 TaxRateId = optt.TaxRateId,
                                                 PartnerSellingPrice = optt.PartnerSellingPrice,
-                                                WholeSalePrice = Math.Round(calculatedWholesale, 2),
+                                                WholeSalePrice = 0.0m,
                                                 MarkupOptionType = optt.MarkupOptionType
                                             };
                                         }).ToList()
