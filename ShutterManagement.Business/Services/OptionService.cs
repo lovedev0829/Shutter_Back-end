@@ -271,7 +271,6 @@ namespace ShutterManagement.Business.Services
                     x.TenantId == AppConstant.LoggedInTenantId &&
                     x.IsActive == true &&
                     x.IsDelete == false);
-                var IsOptionExists = new List<OptionsList>();
                 if (tenant != null)
                 {
                     bool isSubTenant = tenant.ParentTenantId != null;
@@ -283,68 +282,41 @@ namespace ShutterManagement.Business.Services
                         // x.TenantId.ToString().ToLower() == AppConstant.LoggedInParentTenantId.ToLower())
                         .OrderByDescending(x => x.CreatedAt)
                         .ToList();
-                    //if (issubtenant)
-                    //{
-                    //    isoptionexists = (
-                    //            from op in dbcontext.tbloptions
-                    //            join p in dbcontext.tblmanagepartnersproducts
-                    //              on op.productid equals p.productid
-                    //            //join opp in dbcontext.tblmanagepartnersproductsoptions
-                    //            //on p.manageproductid equals opp.manageproductid
-                    //            //into optiontype from
-                    //            //opp in optiontype.defaultifempty()
+                    var finalOptions = allOptions;
 
-                    //            join tax in dbcontext.tbltaxrates
-                    //             on op.taxid equals tax.taxrateid into taxgroup
-                    //            from tax in taxgroup.defaultifempty()
-
-                    //            join prod in dbcontext.tblproducts
-                    //            on op.productid equals prod.productid into productgroup
-                    //            from product in productgroup.defaultifempty()
-
-                    //            join pt in dbcontext.mstproducttypes
-                    //             on op.producttypeid equals pt.productid into ptgroup
-                    //            from producttype in ptgroup.defaultifempty()
-
-                    //            where op.isdelete == false
-                    //       && op.tenantid == appconstant.loggedintenantid
-                    //       && p.tenantid == op.tenantid
-                    //      // && (opp == null || (opp.isdelete == false && opp.isavailable == true))
-                    //      && p.isavailable == true
-                    //      orderby op.createdat descending
-
-                    //    select new optionslist
-                    //    {
-                    //    optionid = op.optionid,
-                    //    isactive = op.isactive,
-                    //    optionname = op.optionname ?? "",
-                    //    taxid = op.taxid,
-                    //    taxname = tax != null ? tax.taxname : "",
-                    //   productid = op.productid,
-                    //    unit = op.unit,
-                    //   markup = op.markup ?? 0.0m,
-                    //   optionexpression = op.optionexpression != null ? op.optionexpression.tostring() : "",
-                    //   productname = product != null ? product.productname : "",
-                    //   producttypeid = op.producttypeid,
-                    //   producttypename = producttype != null ? producttype.productname : "",
-                    //   istaxavailable = op.istaxapplied,
-
-                    //   }).tolist();
-                    //}
-
-                    if ((bool)IsManageProductOption)
+                    if (IsManageProductOption == true)
                     {
                         var assignedOptionIds = dbContext.TblManagePartnersProductsOptions
-                            .Where(m => m.TenantId == AppConstant.LoggedInTenantId && m.IsAvailable == true && m.IsDelete == false && m.IsActive == true)
+                            .Where(m => m.TenantId == AppConstant.LoggedInTenantId
+                                        && m.IsAvailable == true
+                                        && m.IsDelete == false
+                                        && m.IsActive == true)
                             .Select(m => m.OptionId)
                             .ToList();
 
-                        allOptions = allOptions
-                        .Where(x => assignedOptionIds.Contains(x.OptionId) || x.TenantId == AppConstant.LoggedInTenantId)
-                        .ToList();
+                        // Load all options once
+                        var allOption = await GetAll();
+
+                        // Filter managed options that match the assigned IDs and tenant conditions
+                        //var tenantOptions = allOptions
+                        //    .Where(x => x.IsDelete == false
+                        //                && x.TenantId == AppConstant.LoggedInTenantId)
+                        //    .OrderByDescending(x => x.CreatedAt)
+                        //    .ToList();
+
+                        var managedOptions = allOption
+                            .Where(x => assignedOptionIds.Contains(x.OptionId))
+                            .DistinctBy(x=> x.OptionName)
+                            .ToList();
+
+                        finalOptions = managedOptions
+                            //.Union(tenantOptions)
+                            .OrderByDescending(o => o.OptionId)
+                            .ToList();
                     }
-                    
-                        IsOptionExists = allOptions
+
+
+                    var IsOptionExists = finalOptions
                            .Select(x => new OptionsList
                            {
                                OptionId = x.OptionId,
@@ -364,8 +336,7 @@ namespace ShutterManagement.Business.Services
 
                            })
                            .ToList();
-                   
-                    
+                 
                     foreach (var item in IsOptionExists)
                     {
 
