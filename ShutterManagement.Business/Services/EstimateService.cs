@@ -1647,7 +1647,8 @@ namespace ShutterManagement.Business.Services
                 {
                     return;
                 }
-                bool isComponentAvailable = (bool)windowProdcutDetailsForEstimates.Where(x => x.WindowProdcutId == product.WindowProductId).Select(y => y.IsComponentAvailable).FirstOrDefault();
+                var windowComponentData = windowProdcutDetailsForEstimates.Where(x => x.WindowProdcutId == product.WindowProductId).FirstOrDefault();
+                bool isComponentAvailable = (windowComponentData != null ? windowComponentData.IsComponentAvailable : false) ?? false;
                 if (isComponentAvailable)
                 {
                     await AddComponentsToEstimate((Guid)windowProductData.ProductId, (Guid)windowProductData.WindowId, estimateId,
@@ -1799,7 +1800,7 @@ namespace ShutterManagement.Business.Services
                 estimateWindowOptions.Add(optionEntity);
             }
 
-            await dbContext.TblEstimateWindowProductOptions.AddRangeAsync(estimateWindowOptions);
+            dbContext.TblEstimateWindowProductOptions.AddRange(estimateWindowOptions);
             await dbContext.SaveChangesAsync();
         }
 
