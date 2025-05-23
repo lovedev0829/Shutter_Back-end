@@ -28,6 +28,8 @@ namespace ShutterManagement.Core.ViewModels.Response
         public decimal? BuildWidth { get; set; }
         public decimal? BuildHeight { get; set; }
 
+        public decimal? WholesalePrice { get; set; } = 0.0m;
+
         // Product Properties
         public string? ProductName { get; set; }
 
@@ -43,6 +45,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string[]? OptionsTypeIds { get; set; } = [];
         public decimal[]? OptionsPrice { get; set; } = [];
         public decimal? AdditionalCost { get; set; } = 0.0m;
+       
 
         // ProductType Properties
         public string? ProductTypeName { get; set; }
