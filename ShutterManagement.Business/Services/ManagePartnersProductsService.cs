@@ -158,7 +158,7 @@ namespace ShutterManagement.Business.Services
                                                 {
                                                     IsOptionvalueExist.TaxId = item.TaxRateId;
                                                     dbContext.TblOptions.Update(IsOptionvalueExist);
-                                                    dbContext.SaveChangesAsync();
+                                                   await dbContext.SaveChangesAsync();
                                                 }
                                             }
                                         }
@@ -425,7 +425,7 @@ namespace ShutterManagement.Business.Services
                                           OptionId = o1.OptionId,
                                           ProductId = o2.ProductId,
                                           OptionName = o2.OptionName,
-                                        //  TaxRateId = (o1 != null ? o1.TaxId : Guid.Empty) ?? Guid.Empty,
+                                          TaxRateId = o1.TaxId,
                                       }).Distinct().ToList();
 
                     var optionIds = allOptions.Select(o => o.OptionId).ToList();
@@ -531,9 +531,10 @@ namespace ShutterManagement.Business.Services
                     });
 
                     //var productList = await Task.WhenAll(productTasks);
+                    productlist = productTasks.ToList();
 
                     responseVm.IsSuccess = true;
-                    responseVm.Data = productTasks.ToList();
+                    responseVm.Data = productlist;
                     responseVm.Message = AppConstant.FetchSuccessMsg;
                     responseVm.TotalRecords = productTasks.Count();
                 }
@@ -584,7 +585,8 @@ namespace ShutterManagement.Business.Services
                 {
                     OptionId = o.OptionId,
                     ProductId = o.ProductId,
-                    OptionName = o.OptionName
+                    OptionName = o.OptionName,
+                    TaxRateId = o.TaxId,
                 }).ToList();
 
             var optionIds = options.Select(o => o.OptionId).ToList();
