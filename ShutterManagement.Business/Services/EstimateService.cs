@@ -435,7 +435,7 @@ namespace ShutterManagement.Business.Services
                     foreach (var windowProductId in windowProductIds)
                     {
                         var productData = await componentPriceService.GetProductDataForView(windowProductId, EstimateId);
-                        data1.AddRange(productData.Data.OrderBy(x=>x.ComponentName).OrderBy(x=>x.OptionTaxDetails.Select(x=>x.OptionName)));
+                        data1.AddRange(productData.Data.OrderBy(x=>x.ComponentName));
                     }
 
                     // Set tax for each item in data1
@@ -536,14 +536,14 @@ namespace ShutterManagement.Business.Services
                     
                     if (!IsBreakdown)
                     {
-                        responseVm.Data = WindowProductData.DistinctBy(x => x.WindowProdcutId).OrderBy(x => x.ComponentName).OrderBy(x => x.OptionTaxDetails.Select(x => x.OptionName)).ToList();
+                        responseVm.Data = WindowProductData.DistinctBy(x => x.WindowProdcutId).OrderBy(x => x.ComponentName).ToList();
                         responseVm.TotalRecords = WindowProductData.DistinctBy(x => x.WindowProdcutId).Count();
 
                     }
                     else
                     {
 
-                        responseVm.Data = WindowProductData.DistinctBy(x => x.ComponentId).OrderBy(x => x.ComponentName).OrderBy(x => x.OptionTaxDetails.Select(x => x.OptionName)).ToList();
+                        responseVm.Data = WindowProductData.DistinctBy(x => x.ComponentId).OrderBy(x => x.ComponentName).ToList();
                         responseVm.TotalRecords = WindowProductData.DistinctBy(x => x.ComponentId).Count();
                     }
                 }
