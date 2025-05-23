@@ -25,6 +25,7 @@ using Antlr.Runtime;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 using Stripe;
 using Microsoft.EntityFrameworkCore;
+using static Microsoft.AspNetCore.Hosting.Internal.HostingApplication;
 
 namespace ShutterManagement.Business.Services
 {
@@ -93,8 +94,8 @@ namespace ShutterManagement.Business.Services
             IRegion region, ITaxExemption taxExemption, IDiscountService discountservice,
             ISubtenantProductMarkup subtenantProductMarkup, ITenantBrandingService tenantBrandingService,
             INotificationService notification
-            ,IMstProductType mstProductType ,
-            JobStatusAndStageMapping statusAndStageMapping,IGHLConfiguration gHLConfiguration
+            , IMstProductType mstProductType,
+            JobStatusAndStageMapping statusAndStageMapping, IGHLConfiguration gHLConfiguration
             //IManagePartnersProducts managePartnersProducts
             )
         {
@@ -131,7 +132,7 @@ namespace ShutterManagement.Business.Services
             this.mstProductType = mstProductType;
             this.statusAndStageMapping = statusAndStageMapping;
             this.gHLConfiguration = gHLConfiguration;
-           // this.managePartnersProducts = managePartnersProducts;
+            // this.managePartnersProducts = managePartnersProducts;
         }
 
         public async Task<IResponseVm<string>> ActiveInActiveEstimate(Guid EstimateId)
@@ -200,7 +201,7 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = "Estimate " + AppConstant.NoDataFound;
                     return responseVm;
                 }
-             
+
                 // Mark the estimate as deleted
                 estimate.IsActive = false;
                 estimate.IsDelete = true;
@@ -241,7 +242,7 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.TenantNotFound;
                     return responseVm;
                 }
-               
+
                 // Log the number of estimates fetched
                 FileLogger.Log($"Fetched {estimates.Count} estimates.");
 
@@ -455,7 +456,7 @@ namespace ShutterManagement.Business.Services
                     if (!isTenantExists)
                     {
                         responseVm.Message = AppConstant.TenantNotFound;
-                        return responseVm; 
+                        return responseVm;
                     }
                     if (windowProductIds == null || windowProductIds.Length == 0)
                     {
@@ -526,107 +527,108 @@ namespace ShutterManagement.Business.Services
                     }
                     //if (!IsBreakdown)
                     //{
-                        //    // Use a loop to await IstaxApplied asynchronously for each item
-                        //    var forProduct = WindowProductData;
+                    //    // Use a loop to await IstaxApplied asynchronously for each item
+                    //    var forProduct = WindowProductData;
 
 
 
-                        //    foreach (var item in WindowProductData)
-                        //    {
-                        //        //decimal? taxAmount = 0.0m;
+                    //    foreach (var item in WindowProductData)
+                    //    {
+                    //        //decimal? taxAmount = 0.0m;
 
-                        //        //if (item.IsTaxAvailable == true)
-                        //        //{
-                        //        //    var taxRate = (item.CityTax ?? 0) + (item.StateTax ?? 0) + (item.MunicipalityTax ?? 0);
-                        //        //    taxAmount = ((item.TotalPrice ?? 0) * taxRate) / 100;
-                        //        //}
+                    //        //if (item.IsTaxAvailable == true)
+                    //        //{
+                    //        //    var taxRate = (item.CityTax ?? 0) + (item.StateTax ?? 0) + (item.MunicipalityTax ?? 0);
+                    //        //    taxAmount = ((item.TotalPrice ?? 0) * taxRate) / 100;
+                    //        //}
 
-                        //        //var isTaxApplied = await IsTaxApplied((Guid)item.JobId);
+                    //        //var isTaxApplied = await IsTaxApplied((Guid)item.JobId);
 
-                        //        //// Prepare OptionTaxDetails list
-                        //        //var optionTaxDetails = new List<OptionTaxVM>();
-                        //        //if (item.OptionIds != null && item.OptionsPrice != null)
-                        //        //{
-                        //        //    for (int i = 0; i < item.OptionIds.Length; i++)
-                        //        //    {
-                        //        //        decimal price = item.OptionsPrice[i];
-                        //        //        optionTaxDetails.Add(new OptionTaxVM
-                        //        //        {
-                        //        //            OptionId = item.OptionIds[i],
-                        //        //            TaxName = item.OptionTaxNames != null && i < item.OptionTaxNames.Length ? item.OptionTaxNames[i] : string.Empty,
-                        //        //            OptionPrice = price,
-                        //        //            CityTaxAmount = ((price * (item.OptionCityTaxes?[i] ?? 0)) / 100),
-                        //        //            StateTaxAmount = ((price * (item.OptionStateTaxes?[i] ?? 0)) / 100),
-                        //        //            MunicipalityTaxAmount = ((price * (item.OptionMunicipalities?[i] ?? 0)) / 100),
-                        //        //        });
-                        //        //    }
-                        //        //}
-
-
-                        //        //forProduct.Add(new WindowProdcutDetailsForEstimate
-                        //        //{
-                        //        //    // Window Properties
-                        //        //    WindowId = item.WindowId,
-                        //        //    AddressId = item.AddressId,
-                        //        //    Label = item.Label,
-                        //        //    Width = item.Width,
-                        //        //    Height = item.Height,
-                        //        //    ArchHeight = item.ArchHeight,
-                        //        //    Quantity = item.Quantity ?? 0.0m,
-                        //        //    JobId = item.JobId,
-                        //        //    OptionsTypeIds = item.OptionsTypeIds,
-                        //        //    Options = item.Options,
-                        //        //    OptionsPrice = item.OptionsPrice,
-                        //        //    WindowProdcutId = item.WindowProdcutId,
-                        //        //    ProductId = item.ProductId,
-                        //        //    BuildWidth = item.BuildWidth,
-                        //        //    BuildHeight = item.BuildHeight,
-                        //        //    ProductName = item.ProductName,
-                        //        //    ProductWidth = item.Width,
-                        //        //    ProductHeight = item.Height,
-                        //        //    ProductArchHeight = item.ArchHeight,
-                        //        //    Area = item.Area,
-                        //        //    Length = item.Length,
-                        //        //    AdditionalCost = await CalculateOptionPrice(item.OptionsTypeIds , (decimal)item.Quantity),
-                        //        //    AdditionalWidth = item.AdditionalWidth,
-                        //        //    Markup = item.Markup,
-                        //        //    ProductTypeName = item.ProductTypeName,
-                        //        //    TotalPrice = item.TotalPrice ?? 0.0m,
-                        //        //    //IsTaxApplied = isTaxApplied,
-                        //        //    Price = item.Price ?? 0.0m,
-                        //        //    IsComponentAvailable = item.IsComponentAvailable,
-                        //        //    // Product  Tax Related Field
-                        //        //    IsTaxAvailable = item.IsTaxAvailable,
-                        //        //    TotalTaxAmount = taxAmount??0.0m,
-                        //        //    MunicipalityTax= ((item.TotalPrice ?? 0) * item.MunicipalityTax) / 100,
-                        //        //    CityTax=((item.TotalPrice ?? 0) * item.CityTax ?? 0) / 100,
-                        //        //    StateTax= ((item.TotalPrice ?? 0) * item.StateTax ?? 0) / 100,
+                    //        //// Prepare OptionTaxDetails list
+                    //        //var optionTaxDetails = new List<OptionTaxVM>();
+                    //        //if (item.OptionIds != null && item.OptionsPrice != null)
+                    //        //{
+                    //        //    for (int i = 0; i < item.OptionIds.Length; i++)
+                    //        //    {
+                    //        //        decimal price = item.OptionsPrice[i];
+                    //        //        optionTaxDetails.Add(new OptionTaxVM
+                    //        //        {
+                    //        //            OptionId = item.OptionIds[i],
+                    //        //            TaxName = item.OptionTaxNames != null && i < item.OptionTaxNames.Length ? item.OptionTaxNames[i] : string.Empty,
+                    //        //            OptionPrice = price,
+                    //        //            CityTaxAmount = ((price * (item.OptionCityTaxes?[i] ?? 0)) / 100),
+                    //        //            StateTaxAmount = ((price * (item.OptionStateTaxes?[i] ?? 0)) / 100),
+                    //        //            MunicipalityTaxAmount = ((price * (item.OptionMunicipalities?[i] ?? 0)) / 100),
+                    //        //        });
+                    //        //    }
+                    //        //}
 
 
-                        //        //    // Option Tax Related Fields
-                        //        //    OptionIds = item.OptionIds,
-                        //        //    OptionCityTaxe = item.OptionTaxDetails?.Sum(x => x.CityTaxAmount) ?? 0.0m,
-                        //        //    OptionMunicipalityTax = item.OptionTaxDetails?.Sum(x => x.MunicipalityTaxAmount) ?? 0.0m,
-                        //        //    OptionStateTax = item.OptionTaxDetails?.Sum(x => x.StateTaxAmount) ?? 0.0m,
-                        //        //    OptionTaxNames = item.OptionTaxDetails?.Select(x => x.TaxName).ToArray(),
-                        //        //    OptionTaxRateIds = item.OptionTaxDetails?.Select(x => (Guid)x.TaxId).ToArray(),
-                        //        //    WindowOptionId = item.OptionTaxDetails?.Select(x => x.WindowOptionId).ToArray(),
-                        //        //    OptionTaxDetails = item.OptionTaxDetails
+                    //        //forProduct.Add(new WindowProdcutDetailsForEstimate
+                    //        //{
+                    //        //    // Window Properties
+                    //        //    WindowId = item.WindowId,
+                    //        //    AddressId = item.AddressId,
+                    //        //    Label = item.Label,
+                    //        //    Width = item.Width,
+                    //        //    Height = item.Height,
+                    //        //    ArchHeight = item.ArchHeight,
+                    //        //    Quantity = item.Quantity ?? 0.0m,
+                    //        //    JobId = item.JobId,
+                    //        //    OptionsTypeIds = item.OptionsTypeIds,
+                    //        //    Options = item.Options,
+                    //        //    OptionsPrice = item.OptionsPrice,
+                    //        //    WindowProdcutId = item.WindowProdcutId,
+                    //        //    ProductId = item.ProductId,
+                    //        //    BuildWidth = item.BuildWidth,
+                    //        //    BuildHeight = item.BuildHeight,
+                    //        //    ProductName = item.ProductName,
+                    //        //    ProductWidth = item.Width,
+                    //        //    ProductHeight = item.Height,
+                    //        //    ProductArchHeight = item.ArchHeight,
+                    //        //    Area = item.Area,
+                    //        //    Length = item.Length,
+                    //        //    AdditionalCost = await CalculateOptionPrice(item.OptionsTypeIds , (decimal)item.Quantity),
+                    //        //    AdditionalWidth = item.AdditionalWidth,
+                    //        //    Markup = item.Markup,
+                    //        //    ProductTypeName = item.ProductTypeName,
+                    //        //    TotalPrice = item.TotalPrice ?? 0.0m,
+                    //        //    //IsTaxApplied = isTaxApplied,
+                    //        //    Price = item.Price ?? 0.0m,
+                    //        //    IsComponentAvailable = item.IsComponentAvailable,
+                    //        //    // Product  Tax Related Field
+                    //        //    IsTaxAvailable = item.IsTaxAvailable,
+                    //        //    TotalTaxAmount = taxAmount??0.0m,
+                    //        //    MunicipalityTax= ((item.TotalPrice ?? 0) * item.MunicipalityTax) / 100,
+                    //        //    CityTax=((item.TotalPrice ?? 0) * item.CityTax ?? 0) / 100,
+                    //        //    StateTax= ((item.TotalPrice ?? 0) * item.StateTax ?? 0) / 100,
 
 
+                    //        //    // Option Tax Related Fields
+                    //        //    OptionIds = item.OptionIds,
+                    //        //    OptionCityTaxe = item.OptionTaxDetails?.Sum(x => x.CityTaxAmount) ?? 0.0m,
+                    //        //    OptionMunicipalityTax = item.OptionTaxDetails?.Sum(x => x.MunicipalityTaxAmount) ?? 0.0m,
+                    //        //    OptionStateTax = item.OptionTaxDetails?.Sum(x => x.StateTaxAmount) ?? 0.0m,
+                    //        //    OptionTaxNames = item.OptionTaxDetails?.Select(x => x.TaxName).ToArray(),
+                    //        //    OptionTaxRateIds = item.OptionTaxDetails?.Select(x => (Guid)x.TaxId).ToArray(),
+                    //        //    WindowOptionId = item.OptionTaxDetails?.Select(x => x.WindowOptionId).ToArray(),
+                    //        //    OptionTaxDetails = item.OptionTaxDetails
 
 
 
-                        //        //});
-                        //    }
-                        if (!IsBreakdown) { 
+
+
+                    //        //});
+                    //    }
+                    if (!IsBreakdown)
+                    {
                         responseVm.Data = WindowProductData.DistinctBy(x => x.WindowProdcutId).ToList();
                         responseVm.TotalRecords = WindowProductData.DistinctBy(x => x.WindowProdcutId).Count();
 
                     }
                     else
                     {
-                        
+
                         responseVm.Data = WindowProductData.DistinctBy(x => x.ComponentId).ToList();
                         responseVm.TotalRecords = WindowProductData.DistinctBy(x => x.ComponentId).Count();
                     }
@@ -678,7 +680,7 @@ namespace ShutterManagement.Business.Services
         {
             decimal ComponentSubTotal = 0.00M;
 
-            foreach (var item in data.DistinctBy(x=>x.ComponentId))
+            foreach (var item in data.DistinctBy(x => x.ComponentId))
             {
                 var formula = item.ExpressionFormulae ?? "";
 
@@ -698,11 +700,11 @@ namespace ShutterManagement.Business.Services
                 if (IsSubtenants != null)
                 {
                     var productMarkup = dbContext.TblManagePartnersProducts.Where(x => x.ProductId == item.ProductId && x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
-                    if(productMarkup.MarkupType == "Percentage")
+                    if (productMarkup.MarkupType == "Percentage")
                     {
                         ComponentPriceWithProductMarkup = (decimal)(ComponentPriceWithProductMarkup * (1 + (productMarkup.PartnerSellingPrice) / 100));
                     }
-                    if(productMarkup.MarkupType == "Fixed")
+                    if (productMarkup.MarkupType == "Fixed")
                     {
                         ComponentPriceWithProductMarkup = (decimal)(ComponentPriceWithProductMarkup + (productMarkup.PartnerSellingPrice));
                     }
@@ -716,10 +718,10 @@ namespace ShutterManagement.Business.Services
 
                     //var taxAmount = await ApplySubtenantTax(item, productMarkup.TaxId, (decimal)ComponentPriceWithProductMarkup);
 
-                   // ComponentPriceWithProductMarkup = ComponentPriceWithProductMarkup + taxAmount;
+                    // ComponentPriceWithProductMarkup = ComponentPriceWithProductMarkup + taxAmount;
 
                 }
-                
+
 
 
                 //if (item.IsTaxAvailable == true)
@@ -729,7 +731,7 @@ namespace ShutterManagement.Business.Services
 
                 //}
 
-               
+
 
                 item.Price = Convert.ToDecimal(Convert.ToDecimal(ComponentPriceWithProductMarkup).ToString("0.0000"));
                 item.MunicipalityTaxAmount = (item.Price * item.MunicipalityTax / 100);
@@ -1088,7 +1090,7 @@ namespace ShutterManagement.Business.Services
                                 if (!updateResponse.IsSuccess)
                                 {
                                     FileLogger.Log(updateResponse.Message);
-                                   // responseVm.IsSuccess = false;
+                                    // responseVm.IsSuccess = false;
                                     //responseVm.Message = updateResponse.Message;
                                     //return responseVm;
                                 }
@@ -1128,7 +1130,7 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        
+
         private async Task<List<TblEstimate>> FetchEstimates(Pagination filter)
         {
             if (string.IsNullOrEmpty(filter.TenantId))
@@ -1284,7 +1286,7 @@ namespace ShutterManagement.Business.Services
                                    JobType = j4.JobTypeName,
                                    FirstName = con.FirstName,
                                    LastName = con.LastName,
-                                   Suffix = con.Suffix??"",
+                                   Suffix = con.Suffix ?? "",
                                    JobStatus = j1.JobStatus.ToString().ToLower(),
                                    AssignedPersonnel = j5.FirstName + " " + j5.LastName,
                                    Address = j3.StreetAddress + " " + j3.City + " " + j3.State + " " + j3.ZipCode,
@@ -1325,11 +1327,10 @@ namespace ShutterManagement.Business.Services
                 e.WindowProductId = productList.Select(p => (Guid)p.WindowProductId).Distinct().ToArray();
                 foreach (var p in productList)
                 {
-                    var Options = (from windowOption in dbContext.WindowOptions
-                                   join estimateOption in dbContext.TblEstimateWindowProductOptions on windowOption.OptionTypeId equals estimateOption.WindowOptionId
-                                   join optionType in dbContext.TblOptionsTypes on estimateOption.WindowOptionId equals optionType.OptionTypeId
+                    var Options = (from estimateOption in dbContext.TblEstimateWindowProductOptions
+                                   join optionType in dbContext.TblOptionsTypes on estimateOption.OptionTypeid equals optionType.OptionTypeId
                                    join option in dbContext.TblOptions on optionType.OptionId equals option.OptionId
-                                   where windowOption.WindowProductId == p.WindowProductId
+                                   where estimateOption.EstimateWindowProductId == p.EstimateWindowProductId
                                    select new OptionTaxVM
                                    {
                                        TaxId = estimateOption.TaxId,
@@ -1342,8 +1343,9 @@ namespace ShutterManagement.Business.Services
                                        OptionId = estimateOption.Optionid.ToString(),
                                        OptionTypeId = estimateOption.OptionTypeid.ToString(),
                                        OptionTypeName = Convert.ToString(estimateOption.OptionName + " - " + estimateOption.OptionTypeName),
-                                   }).ToList(); 
-                    
+                                   }).ToList();
+
+
                     var WindowDetails = estimateWindowService.GetAllQuerable()
                         .Where(x => x.EstimateId == estimate.EstimateId && x.IsDelete == false)
                         .ToList();
@@ -1365,7 +1367,7 @@ namespace ShutterManagement.Business.Services
                         ProductTypeName = p.ProductTypeName,
                         WindowProductId = p.WindowProductId,
                         TotalPrice = p.Price,
-                        additionalCost = Options.Select(x=>x.OptionPrice).Sum(),
+                        additionalCost = Options.Select(x => x.OptionPrice).Sum(),
                         ProductPrice = p.ProductPrice,
                         Options = Options.Select(x => x.OptionTypeName).ToArray(),
                         IsComponentAvailable = IsComponenetAvailable,
@@ -1471,7 +1473,7 @@ namespace ShutterManagement.Business.Services
             Guid? discountId = null;
             var PricedProductsList = model.ProductsList.Where(x => x.ProductPrice != null && x.ProductPrice > 0).ToList();
             var windowproductdetails = await BuildEstimate(model.ProductsList.Select(x => x.WindowProductId).ToArray(), true);
-            
+
 
             if (windowproductdetails.Data != null && windowproductdetails.Data.Any())
             {
@@ -1482,42 +1484,43 @@ namespace ShutterManagement.Business.Services
                         .Where(p => Ids.Contains(p.WindowProductId))
                         .Select(x => x.ProductPrice).Sum();
                 }
-               
+
 
             }
-               subtotal += (decimal)windowproductdetails.Data.DistinctBy(x => x.WindowProdcutId).Sum(x => x.TotalPrice);
-               additionalCost += (decimal)windowproductdetails.Data.DistinctBy(x => x.WindowProdcutId).Sum(x => x.AdditionalCost);
+            subtotal += (decimal)windowproductdetails.Data.DistinctBy(x => x.WindowProdcutId).Sum(x => x.TotalPrice);
+            additionalCost += (decimal)windowproductdetails.Data.DistinctBy(x => x.WindowProdcutId).Sum(x => x.AdditionalCost);
 
-            totalTaxAmount += (decimal)windowproductdetails.Data.DistinctBy(x => x.WindowProdcutId).Sum(x => x.TotalTaxAmount);
+
             SumofSubtotalandAdditionalCost = subtotal + additionalCost;
 
-            
 
-                if (string.IsNullOrEmpty((model.taxRateId).ToString()))
-                {
-                    taxRateId = Guid.Empty;
-                }
-                else
-                {
-                    taxRateId = model.taxRateId;
-                }
-                if (string.IsNullOrEmpty(model.DiscountId.ToString()) && string.IsNullOrEmpty(model.DiscountCoupon))
-                {
-                    discountId = Guid.Empty;
-                }
-                else
-                {
-                    discountId = model.DiscountId;
-                }
-                grandtotal = await CalculateGrandTotal(discountId, SumofSubtotalandAdditionalCost, taxRateId) ?? 0m;
 
-                bool isTaxExemptionInContact = GetIsTaxExemptByWindowId(windowproductdetails.Data.Select(s=>s.WindowId).FirstOrDefault());
-                if (model.IsTaxApplicable==true && isTaxExemptionInContact)
-                {
-                    grandtotal = grandtotal + totalTaxAmount;
+            if (string.IsNullOrEmpty((model.taxRateId).ToString()))
+            {
+                taxRateId = Guid.Empty;
+            }
+            else
+            {
+                taxRateId = model.taxRateId;
+            }
+            if (string.IsNullOrEmpty(model.DiscountId.ToString()) && string.IsNullOrEmpty(model.DiscountCoupon))
+            {
+                discountId = Guid.Empty;
+            }
+            else
+            {
+                discountId = model.DiscountId;
+            }
+            grandtotal = await CalculateGrandTotal(discountId, SumofSubtotalandAdditionalCost, taxRateId) ?? 0m;
 
-                grandtotal = grandtotal + windowproductdetails.Data.SelectMany(x => x.OptionTaxDetails).Sum(x => (decimal)x.TotalTaxAmount);
-                }
+            bool isTaxExemptionInContact = GetIsTaxExemptByWindowId(windowproductdetails.Data.Select(s => s.WindowId).FirstOrDefault());
+            if (model.IsTaxApplicable == true && isTaxExemptionInContact)
+            {
+                var productTaxAmount = windowproductdetails.Data.DistinctBy(x => x.WindowProdcutId).Sum(x => x.TotalTaxAmount) ?? 0.0m;
+                var optionTaxAmount = windowproductdetails.Data.DistinctBy(x => x.WindowProdcutId).SelectMany(x => x.OptionTaxDetails).Sum(x => x.TotalTaxAmount) ?? 0.0m;
+                totalTaxAmount = optionTaxAmount + productTaxAmount;
+                grandtotal = grandtotal + totalTaxAmount;
+            }
 
             string EstimationCode = EstimationUniqueName().Result.Data;
             TblEstimate createEstimate = new TblEstimate
@@ -1530,8 +1533,8 @@ namespace ShutterManagement.Business.Services
                 DiscountCoupon = model.DiscountCoupon,
                 GrandTotal = grandtotal,
                 JobId = model.JobId,
-                TaxId = model.taxRateId,
-                TaxAmount = model.Tax,
+                //TaxId = model.taxRateId,
+                //TaxAmount = model.Tax,
                 TermsCondition = model.TermsCondition,
                 CreatedBy = AppConstant.LoggedInUserID,
                 CreatedAt = DateTime.Now,
@@ -1539,9 +1542,9 @@ namespace ShutterManagement.Business.Services
                 IsActive = true,
                 IsDelete = false,
                 TotalPrice = subtotal,
-                AdditionalCost = additionalCost,
-                IsTaxApplied= model.IsTaxApplicable,
-                TotaltaxAmount= totalTaxAmount,
+                //AdditionalCost = additionalCost,
+                IsTaxApplied = model.IsTaxApplicable,
+                TotaltaxAmount = totalTaxAmount,
                 Status = EnumValue.GetEnumValue(Estimation.New),
             };
             var res = await Add(createEstimate);
@@ -1689,7 +1692,7 @@ namespace ShutterManagement.Business.Services
             await estimateWindowService.Add(tblEstimateWindow);
         }
 
-        private async Task AddProductToEstimate(TblWindowProduct windowProductData, Guid estimateId,decimal? ProductPrice)
+        private async Task AddProductToEstimate(TblWindowProduct windowProductData, Guid estimateId, decimal? ProductPrice)
         {
             FileLogger.Log($"Adding product data for product {windowProductData.ProductId} to estimate...");
             var productData = (await productService.GetAll()).Where(x => x.ProductId == windowProductData.ProductId && x.IsDelete == false).FirstOrDefault();
@@ -1712,7 +1715,7 @@ namespace ShutterManagement.Business.Services
             //{
             //     taxDetailsInProductId = GetTaxDetailsByProductId(productData.ProductId);
             //}
-            
+
 
             TblEstimateWindowProduct tblEstimateWindowProduct = new TblEstimateWindowProduct
             {
@@ -1741,10 +1744,10 @@ namespace ShutterManagement.Business.Services
                 ProductTypeName = ProductTypeName,
                 ProductPrice = ProductPrice,
                 TaxId = productData.TaxId,
-                TaxName= (buildEstimate.Data.FirstOrDefault() != null ? buildEstimate.Data.FirstOrDefault().TaxName : "")??"",
-                Municipality= MunicipalityTax,
-                City= CityTax,
-                State= Statetax,
+                TaxName = (buildEstimate.Data.FirstOrDefault() != null ? buildEstimate.Data.FirstOrDefault().TaxName : "") ?? "",
+                Municipality = MunicipalityTax,
+                City = CityTax,
+                State = Statetax,
             };
 
             await estimateWindowProductService.Add(tblEstimateWindowProduct);
@@ -1791,10 +1794,10 @@ namespace ShutterManagement.Business.Services
                     IsDelete = false,
                     OptionName = option.OptionName,
                     TaxName = option.TaxName,
-                     OptionTypeid = Guid.Parse(option.OptionTypeId),
-                     OptionTypeName = option.OptionTypeName,
-                     Optionid = Guid.Parse(option.OptionId),
-                     OptionPrice = option.OptionPrice,
+                    OptionTypeid = Guid.Parse(option.OptionTypeId),
+                    OptionTypeName = option.OptionTypeName,
+                    Optionid = Guid.Parse(option.OptionId),
+                    OptionPrice = option.OptionPrice,
                 };
 
                 estimateWindowOptions.Add(optionEntity);
@@ -1817,7 +1820,7 @@ namespace ShutterManagement.Business.Services
                                      && c.IsDelete == false
                                select c.IsTaxExemption).FirstOrDefault();
 
-            return isTaxExempt?? false;
+            return isTaxExempt ?? false;
         }
 
 
@@ -1828,7 +1831,7 @@ namespace ShutterManagement.Business.Services
                 .Select(p => new { p.TaxId, p.IsTaxApplied })
                 .FirstOrDefault();
 
-            if (productData == null || !productData.IsTaxApplied==false)
+            if (productData == null || !productData.IsTaxApplied == false)
                 return null;
 
             var taxDetails = dbContext.TblTaxRates
@@ -1848,13 +1851,10 @@ namespace ShutterManagement.Business.Services
         }
 
 
-
-
-
-        private async Task AddComponentsToEstimate(Guid productId,Guid WindowId, Guid estimateId, List<WindowProdcutDetailsForEstimate> windowProdcutDetailsForEstimates)
+        private async Task AddComponentsToEstimate(Guid productId, Guid WindowId, Guid estimateId, List<WindowProdcutDetailsForEstimate> windowProdcutDetailsForEstimates)
         {
             FileLogger.Log($"Adding components for product {productId} to estimate...");
-            
+
             var productComponentData = (await productComponentService.GetAll()).Where(x => x.ProductId == productId && x.IsDelete == false).ToList();
             if (productComponentData == null || productComponentData.Count == 0)
             {
@@ -1871,8 +1871,8 @@ namespace ShutterManagement.Business.Services
                 }
                 //expressionList.Add(Guid.Parse(componentData.PricingExpression ?? ""));
                 var componentPrice = windowProdcutDetailsForEstimates.Where(x => x.ComponentId == component.ComponentId && x.WindowId == WindowId).Select(x => x.Price).FirstOrDefault();
-                await AddComponentToEstimateWindow(componentData,WindowId, (Guid)component.ProductId, estimateId, componentPrice ?? 0.0m);
-                await AddComponentMaterialsToEstimate(componentData.ComponentId, estimateId,WindowId);
+                await AddComponentToEstimateWindow(componentData, WindowId, (Guid)component.ProductId, estimateId, componentPrice ?? 0.0m);
+                await AddComponentMaterialsToEstimate(componentData.ComponentId, estimateId, WindowId);
                 if (!string.IsNullOrEmpty(Message))
                 {
                     return;
@@ -1880,7 +1880,7 @@ namespace ShutterManagement.Business.Services
             }
         }
 
-        private async Task AddComponentToEstimateWindow(TblComponent componentData,Guid WindowId, Guid ProductId, Guid estimateId, decimal Price)
+        private async Task AddComponentToEstimateWindow(TblComponent componentData, Guid WindowId, Guid ProductId, Guid estimateId, decimal Price)
         {
             FileLogger.Log($"Adding component {componentData.ComponentName} to estimate...");
             var PricingExpressionId = dbContext.TblProductComponents.Where(x => x.ComponentId ==
@@ -1916,7 +1916,7 @@ namespace ShutterManagement.Business.Services
             await estimateWindowProductComponentService.Add(tblEstimateWindowProductComponent);
         }
 
-        private async Task AddComponentMaterialsToEstimate(Guid componentId, Guid estimateId,Guid WindowId)
+        private async Task AddComponentMaterialsToEstimate(Guid componentId, Guid estimateId, Guid WindowId)
         {
             FileLogger.Log($"Adding materials for component {componentId} to estimate...");
             var componentMaterialData = (await componentMaterialService.GetAll()).Where(x => x.ComponentId == componentId && x.IsDelete == false).ToList();
@@ -1935,12 +1935,12 @@ namespace ShutterManagement.Business.Services
                     return; // Return early if material data not found
                 }
 
-                await AddMaterialToEstimate(materialData, (Guid)material.ComponentId, estimateId,WindowId);
+                await AddMaterialToEstimate(materialData, (Guid)material.ComponentId, estimateId, WindowId);
 
             }
         }
 
-        private async Task AddMaterialToEstimate(TblRawMaterial materialData, Guid ComponentId, Guid estimateId,Guid WindowId)
+        private async Task AddMaterialToEstimate(TblRawMaterial materialData, Guid ComponentId, Guid estimateId, Guid WindowId)
         {
             FileLogger.Log($"Adding material {materialData.MaterialName} to estimate...");
             TblEstimateWindowProductComponentMaterial tblEstimateWindowProductComponentMaterial = new TblEstimateWindowProductComponentMaterial
@@ -2131,14 +2131,14 @@ namespace ShutterManagement.Business.Services
 
                 //if (IsManageProduct == true)
                 //{
-                    result.OptionWholesale[optionTypeId] = OptionWholesale;
-                    result.OptionMSRP[optionTypeId] = OptionMSRP;
-                  
-            //}
+                result.OptionWholesale[optionTypeId] = OptionWholesale;
+                result.OptionMSRP[optionTypeId] = OptionMSRP;
+
+                //}
 
 
-            // Apply tenant-specific logic
-            if (!isTenant)
+                // Apply tenant-specific logic
+                if (!isTenant)
                 {
                     OptionMSRP = ApplySubtenantMarkup(option.OptionTypeId, OptionMSRP);
                 }
@@ -2183,8 +2183,8 @@ namespace ShutterManagement.Business.Services
 
             if (taxId != null)
             {
-                var subtenantTax =  dbContext.TblTaxRates
-                    .Where(x => x.TaxRateId == taxId && x.IsDelete == false && x.TenantId==AppConstant.LoggedInTenantId)
+                var subtenantTax = dbContext.TblTaxRates
+                    .Where(x => x.TaxRateId == taxId && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId)
                     .FirstOrDefault();
 
                 if (subtenantTax != null)
@@ -2204,13 +2204,6 @@ namespace ShutterManagement.Business.Services
 
             return taxAmount;
         }
-
-        
-
-
-
-
-
 
     }
 }
