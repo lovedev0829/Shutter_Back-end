@@ -716,6 +716,10 @@ public partial class ShutterDBContext : DbContext
                 .HasColumnType("datetime");
             entity.Property(e => e.Width).HasColumnType("decimal(10, 2)");
 
+            entity.HasOne(d => d.EstWindow).WithMany(p => p.TblEstimateWindowProducts)
+                .HasForeignKey(d => d.EstWindowId)
+                .HasConstraintName("FK__TblEstima__EstWi__50D0E6F9");
+
             entity.HasOne(d => d.Estimate).WithMany(p => p.TblEstimateWindowProducts)
                 .HasForeignKey(d => d.EstimateId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -762,6 +766,10 @@ public partial class ShutterDBContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__TblEstima__Estim__05C3D225");
 
+            entity.HasOne(d => d.EstimateWindowProduct).WithMany(p => p.TblEstimateWindowProductComponents)
+                .HasForeignKey(d => d.EstimateWindowProductId)
+                .HasConstraintName("FK__TblEstima__Estim__51C50B32");
+
             entity.HasOne(d => d.Tenant).WithMany(p => p.TblEstimateWindowProductComponents)
                 .HasForeignKey(d => d.TenantId)
                 .HasConstraintName("FK__TblEstima__Tenan__04CFADEC");
@@ -798,6 +806,10 @@ public partial class ShutterDBContext : DbContext
                 .HasForeignKey(d => d.EstimateId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__EstimateW__Estim__1BB31344");
+
+            entity.HasOne(d => d.EstimateWindowProductComponent).WithMany(p => p.TblEstimateWindowProductComponentMaterials)
+                .HasForeignKey(d => d.EstimateWindowProductComponentId)
+                .HasConstraintName("FK__TblEstima__Estim__52B92F6B");
 
             entity.HasOne(d => d.ProductTypeNavigation).WithMany(p => p.TblEstimateWindowProductComponentMaterials)
                 .HasForeignKey(d => d.ProductType)
