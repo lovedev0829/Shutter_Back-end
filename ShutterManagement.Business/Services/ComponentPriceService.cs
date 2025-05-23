@@ -133,11 +133,12 @@ namespace ShutterManagement.Business.Services
                       IsRated = estimatewindow.IsRated,
                       TotalPrice = estimate.TotalPrice,
                       // WindowProduct Properties
+                      
                       WindowProdcutId = estwindowProduct.WindowProductId,
                       ProductId = estwindowProduct.ProductId,
                       BuildWidth = estimatewindow.BuildWidth,
                       BuildHeight = estimatewindow.BuildHeight,
-
+                      EstimateWindowProductId = estwindowProduct.EstimateWindowProductId,
                       // Product Properties
                       ProductName = estwindowProduct.ProductName,
                       ProductWidth = estwindowProduct.Width,
@@ -181,13 +182,12 @@ namespace ShutterManagement.Business.Services
 
                 if (query != null && query.Count > 0)
                 {
-                    foreach (var item in query.DistinctBy(x => x.ProductId))
+                    foreach (var item in query.DistinctBy(x =>x.ProductId))
                     {
-                        var Options = (from windowOption in dbContext.WindowOptions
-                                       join estimateOption in dbContext.TblEstimateWindowProductOptions on windowOption.OptionTypeId equals estimateOption.WindowOptionId
-                                       join optionType in dbContext.TblOptionsTypes on estimateOption.WindowOptionId equals optionType.OptionTypeId
+                        var Options = (from estimateOption in dbContext.TblEstimateWindowProductOptions
+                                       join optionType in dbContext.TblOptionsTypes on estimateOption.OptionTypeid equals optionType.OptionTypeId
                                        join option in dbContext.TblOptions on optionType.OptionId equals option.OptionId
-                                       where windowOption.WindowProductId == item.WindowProdcutId
+                                       where estimateOption.EstimateWindowProductId == item.EstimateWindowProductId
                                        select new OptionTaxVM
                                        {
                                            TaxId = estimateOption.TaxId,
@@ -200,7 +200,8 @@ namespace ShutterManagement.Business.Services
                                            OptionId = estimateOption.Optionid.ToString(),
                                            OptionTypeId = estimateOption.OptionTypeid.ToString(),
                                            OptionTypeName = Convert.ToString(estimateOption.OptionName + " - " + estimateOption.OptionTypeName),
-                                       }).ToList(); item.Options = Options.Select(x => x.OptionTypeName).ToArray();
+                                       }).ToList();
+                        item.Options = Options.Select(x => x.OptionTypeName).ToArray();
 
                         item.OptionTaxDetails = Options;
                         //item.OptionsPrice = Options.Select(x => x.OptionPrice).ToArray();
@@ -208,7 +209,7 @@ namespace ShutterManagement.Business.Services
                 }
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.FetchSuccessMsg;
-                responseVm.Data = query;
+                responseVm.Data = query.DistinctBy(y => y.ComponentId).ToList();
                 return responseVm;
             }
             //    else

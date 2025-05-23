@@ -24,6 +24,7 @@ namespace ShutterManagement.Core.ViewModels.Response
 
         // WindowProduct Properties
         public Guid? WindowProdcutId { get; set; }
+        public Guid? EstimateWindowProductId { get; set; }
         public Guid? ProductId { get; set; }
         public decimal? BuildWidth { get; set; }
         public decimal? BuildHeight { get; set; }
