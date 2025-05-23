@@ -1348,6 +1348,7 @@ public async Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> BuildEstim
                         x.Price,
                         x.ProductTypeName,
                         x.ProductPrice,
+                        x.WholeSalePrice,
                     }).ToList();
 
                 e.WindowProductId = productList.Select(p => (Guid)p.WindowProductId).Distinct().ToArray();
@@ -1397,6 +1398,7 @@ public async Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> BuildEstim
                         ProductPrice = p.ProductPrice,
                         Options = Options.Select(x => x.OptionTypeName).ToArray(),
                         IsComponentAvailable = IsComponenetAvailable,
+                        WholesalePrice = p.WholeSalePrice,
                         EstimateWindowDetails = WindowDetails.Where(x => x.WindowId == p.WindowId).Select(x => new EstimateWindowList
                         {
                             ArchHeight = x.ArchHeight,
@@ -1669,13 +1671,14 @@ public async Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> BuildEstim
                     Message = "Window " + AppConstant.NoDataFound;
                     return; // Return early if window not found
                 }
-
+                var wholesaleprice = windowProdcutDetailsForEstimates.Where(x => x.WindowProdcutId == product.WindowProductId).Select(x => x.WholesalePrice).FirstOrDefault() ?? 0.0m;
                 var EstimateWindow =  await AddWindowToEstimate(windowData, windowProductData, estimateId);
-                var EstimateWindowProduct = await AddProductToEstimate(windowProductData, estimateId, product.ProductPrice, EstimateWindow);
+                var EstimateWindowProduct = await AddProductToEstimate(windowProductData, estimateId, product.ProductPrice, EstimateWindow, wholesaleprice);
                 if (!string.IsNullOrEmpty(Message))
                 {
                     return;
                 }
+              
                 var windowComponentData = windowProdcutDetailsForEstimates.Where(x => x.WindowProdcutId == product.WindowProductId).FirstOrDefault();
                 bool isComponentAvailable = (windowComponentData != null ? windowComponentData.IsComponentAvailable : false) ?? false;
                 if (isComponentAvailable)
@@ -1719,7 +1722,7 @@ public async Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> BuildEstim
             return tblEstimateWindow;
         }
 
-        private async Task<TblEstimateWindowProduct> AddProductToEstimate(TblWindowProduct windowProductData, Guid estimateId, decimal? ProductPrice, TblEstimateWindow tblEstimateWindow)
+        private async Task<TblEstimateWindowProduct> AddProductToEstimate(TblWindowProduct windowProductData, Guid estimateId, decimal? ProductPrice, TblEstimateWindow tblEstimateWindow,decimal? wholesale)
         {
             FileLogger.Log($"Adding product data for product {windowProductData.ProductId} to estimate...");
             var productData = (await productService.GetAll()).Where(x => x.ProductId == windowProductData.ProductId && x.IsDelete == false).FirstOrDefault();
@@ -1776,6 +1779,7 @@ public async Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> BuildEstim
                 Municipality = MunicipalityTax,
                 City = CityTax,
                 State = Statetax,
+                WholeSalePrice = wholesale
             };
 
             await estimateWindowProductService.Add(tblEstimateWindowProduct);

@@ -71,6 +71,8 @@ public partial class TblEstimateWindowProduct
 
     public Guid? EstWindowId { get; set; }
 
+    public decimal? WholeSalePrice { get; set; }
+
     public virtual TblEstimateWindow? EstWindow { get; set; }
 
     public virtual TblEstimate Estimate { get; set; } = null!;
