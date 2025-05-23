@@ -626,11 +626,11 @@ namespace ShutterManagement.Business.Services
                         var productMarkup = dbContext.TblManagePartnersProducts.Where(x => x.ProductId == item.ProductId && x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
                         if (productMarkup.MarkupType == "Percentage")
                         {
-                            ComponentPriceWithoutMarkup = (decimal)(ComponentPriceWithoutMarkup * (1 + (productMarkup.WholeSalePrice) / 100));
+                            ComponentPriceWithoutMarkup = (decimal)(ComponentPriceWithoutMarkup * (1 + (productMarkup.WholeSalePrice ?? 0) / 100));
                         }
                         if (productMarkup.MarkupType == "Fixed")
                         {
-                            ComponentPriceWithoutMarkup = (decimal)(ComponentPriceWithoutMarkup + (productMarkup.WholeSalePrice));
+                            ComponentPriceWithoutMarkup = (decimal)(ComponentPriceWithoutMarkup + (productMarkup.WholeSalePrice ?? 0));
                         }
                     }
                     Wholesale += Convert.ToDecimal(Convert.ToDecimal(ComponentPriceWithoutMarkup).ToString("0.00"));
@@ -649,7 +649,7 @@ namespace ShutterManagement.Business.Services
                         }
                         if (productMarkup.MarkupType == "Fixed")
                         {
-                            ComponentPriceWithProductMarkup = (decimal)(ComponentPriceWithProductMarkup + (productMarkup.PartnerSellingPrice));
+                            ComponentPriceWithProductMarkup = (decimal)(ComponentPriceWithProductMarkup + (productMarkup.PartnerSellingPrice ?? 0));
                         }
                         //else
                         //{

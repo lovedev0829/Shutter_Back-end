@@ -585,7 +585,7 @@ namespace ShutterManagement.Business.Services
             var productIds = products.Select(p => p.ProductId).ToList();
 
             var options = dbContext.TblOptions
-                .Where(o => o.IsActive == true && o.IsDelete == false && productIds.Contains((Guid)o.ProductId))
+                .Where(o => o.IsActive == true && o.IsDelete == false && o.TenantId == AppConstant.LoggedInTenantId && productIds.Contains((Guid)o.ProductId))
                 .Select(o => new ProductOptionsList
                 {
                     OptionId = o.OptionId,
