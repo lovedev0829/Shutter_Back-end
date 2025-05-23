@@ -199,7 +199,7 @@ namespace ShutterManagement.Business.Services
                                            OptionName = estimateOption.OptionName ?? "",
                                            OptionId = estimateOption.Optionid.ToString(),
                                            OptionTypeId = estimateOption.OptionTypeid.ToString(),
-                                           OptionTypeName = Convert.ToString(estimateOption.OptionName + " - " + estimateOption.OptionTypeName),
+                                           OptionTypeName = estimateOption.OptionTypeName,
                                        }).ToList();
                         item.Options = Options.Select(x => x.OptionTypeName).ToArray();
 

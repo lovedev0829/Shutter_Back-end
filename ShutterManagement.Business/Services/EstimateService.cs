@@ -830,7 +830,7 @@ namespace ShutterManagement.Business.Services
                 {
                     if (windowproductdetails.Data.Any(x => x.TotalPrice == null))
                     {
-                        var Ids = windowproductdetails.Data.Select(x => x.WindowProdcutId).ToList();
+                        var Ids = windowproductdetails.Data.Where(x=> x.TotalPrice == null).Select(x => x.WindowProdcutId).Distinct().ToList();
                         subtotal = PricedProductsList
                             .Where(p => Ids.Contains(p.WindowProductId))
                             .Select(x => x.ProductPrice).FirstOrDefault();
@@ -1431,7 +1431,7 @@ namespace ShutterManagement.Business.Services
             {
                 if (windowproductdetails.Data.Any(x => x.TotalPrice == null))
                 {
-                    var Ids = windowproductdetails.Data.Select(x => x.WindowProdcutId).ToList();
+                    var Ids = windowproductdetails.Data.Where(x => x.TotalPrice == null).Select(x => x.WindowProdcutId).Distinct().ToList();
                     subtotal = PricedProductsList
                         .Where(p => Ids.Contains(p.WindowProductId))
                         .Select(x => x.ProductPrice).Sum();
@@ -1439,7 +1439,7 @@ namespace ShutterManagement.Business.Services
 
 
             }
-            subtotal += (decimal)windowproductdetails.Data.DistinctBy(x => x.WindowProdcutId).Sum(x => x.TotalPrice);
+            subtotal += (decimal)windowproductdetails.Data.Where(x => x.TotalPrice != null).DistinctBy(x => x.WindowProdcutId).Sum(x => x.TotalPrice);
             additionalCostAsOptionPrice += (decimal)windowproductdetails.Data.DistinctBy(x => x.WindowProdcutId).Sum(x => x.AdditionalCost);
 
 
@@ -1485,8 +1485,7 @@ namespace ShutterManagement.Business.Services
                 DiscountCoupon = model.DiscountCoupon,
                 GrandTotal = grandtotal,
                 JobId = model.JobId,
-                TaxId = model.taxRateId,
-                TaxAmount = model.Tax,
+                TaxAmount = totalTaxAmount,
                 TermsCondition = model.TermsCondition,
                 CreatedBy = AppConstant.LoggedInUserID,
                 CreatedAt = DateTime.Now,
