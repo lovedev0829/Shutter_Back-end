@@ -449,10 +449,10 @@ namespace ShutterManagement.Business.Services
                             var windowproductdetails = await estimateService.BuildEstimate(model.WindowProductId, false, model.EstimateId.ToString(), true);
                             if (windowproductdetails.Data != null && windowproductdetails.Data.Any())
                             {
-                                additionalCost = (decimal)windowproductdetails.Data.ToList().DistinctBy(x => x.AdditionalCost).FirstOrDefault().AdditionalCost;
-                                subtotal = (decimal)windowproductdetails.Data.Sum(x => x.Price);
+                                additionalCost = windowproductdetails.Data.ToList().DistinctBy(x => x.AdditionalCost).FirstOrDefault().AdditionalCost??0.0m;
+                                subtotal = windowproductdetails.Data.Sum(x => x.Price)??0.0m;
                                 SumofSubtotalandAdditionalCost = subtotal + additionalCost;
-                                totalTaxAmount += (decimal)windowproductdetails.Data.DistinctBy(x => x.WindowProdcutId).Sum(x => x.TotalTaxAmount);
+                                totalTaxAmount += windowproductdetails.Data.DistinctBy(x => x.WindowProdcutId).Sum(x => x.TotalTaxAmount)??0.0m;
                             }
                             //if (string.IsNullOrEmpty((model.taxRateId).ToString()) && string.IsNullOrEmpty(model.DiscountCoupon))
                             //{

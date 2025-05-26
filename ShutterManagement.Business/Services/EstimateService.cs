@@ -502,6 +502,7 @@ namespace ShutterManagement.Business.Services
                                         x.WholesalePrice = Convert.ToDecimal(wholesale.ToString("0.00"));
                                     });
 
+
                                     var componentPrice = await CalculateEstimate(itemsWithPricingExpression, false);
                                     itemsWithPricingExpression.ForEach(x =>
                                     {
@@ -692,6 +693,7 @@ namespace ShutterManagement.Business.Services
                             x.TotalTaxAmount = x.MunicipalityTaxAmount + x.StateTaxAmount + x.CityTaxAmount;
                         });
                     }
+
                     ComponentSubTotal += Convert.ToDecimal(Convert.ToDecimal(ComponentPriceWithProductMarkup).ToString("0.0000"));
                 }
             }
