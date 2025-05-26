@@ -156,6 +156,15 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
                 var IsExpressionExist = GetAllQuerable().Where(e => e.Id == ExpressionId && e.TenantId == AppConstant.LoggedInTenantId && e.IsDelete == false).FirstOrDefault();
+                bool IsProductExpressionExist = dbContext.TblProductComponents.Any(x => x.PricingExpression == ExpressionId.ToString() && x.IsActive ==
+                true && x.IsDelete == false);
+                var IsOptionExpressionExist = dbContext.TblOptions.Any(x => x.OptionExpression.ToString() == ExpressionId.ToString() && x.IsActive ==
+               true && x.IsDelete == false);
+                if (IsProductExpressionExist || IsOptionExpressionExist)
+                {
+                    responseVm.Message = "Expression can be Deleted. It's already is in use.";
+                    return responseVm;
+                }
                 if (IsExpressionExist != null)
                 {
                     IsExpressionExist.IsActive = false;
