@@ -1071,8 +1071,8 @@ namespace ShutterManagement.Business.Services
         
 
 
-            e.WindowProductId = productList.DistinctBy(x=>x.ProductId).Select(p => (Guid)p.WindowProductId).ToArray();
-            foreach (var p in productList)
+            e.WindowProductId = productList.DistinctBy(x=>x.WindowProductId).Select(p => (Guid)p.WindowProductId).ToArray();
+            foreach (var p in productList.DistinctBy(x => x.WindowProductId))
             {
                 var Options = (from windowOption in dbContext.WindowOptions
                                join optionType in dbContext.TblOptionsTypes on windowOption.OptionTypeId equals optionType.OptionTypeId
