@@ -501,8 +501,23 @@ namespace ShutterManagement.Business.Services
                                     {
                                         x.WholesalePrice = Convert.ToDecimal(wholesale.ToString("0.00"));
                                     });
+                                    //var optionMSRPDict = await CalculateOptionPrice(
+                                    //itemsWithPricingExpression.Select(y => y.OptionsPrice).ToList(),
+                                    //(decimal)itemsWithPricingExpression.Quantity,
+                                    //(decimal)item.Height,
+                                    //(decimal)item.Width,
+                                    //false
+                                    // );
 
+                                    //// Set option prices for each option tax detail
+                                    //foreach (var x in item.OptionTaxDetails)
+                                    //{
+                                    //    optionMSRPDict.OptionMSRP.TryGetValue(x.OptionTypeId.ToString(), out var price);
+                                    //    x.OptionPrice = price;
+                                    //}
 
+                                    //// Set total additional cost
+                                    //item.AdditionalCost = optionMSRPDict.TotalCost;
                                     var componentPrice = await CalculateEstimate(itemsWithPricingExpression, false);
                                     itemsWithPricingExpression.ForEach(x =>
                                     {
@@ -517,19 +532,19 @@ namespace ShutterManagement.Business.Services
                     }
                     foreach (var item in WindowProductData)
                     {
-                        var optionMSRPDict = await CalculateOptionPrice(
-                            item.OptionsTypeIds,
-                            (decimal)item.Quantity,
-                            (decimal)item.Height,
-                            (decimal)item.Width,
-                              false
-                               );
-                        item.OptionTaxDetails.ForEach(x =>
-                        {
-                            x.OptionPrice = optionMSRPDict.OptionMSRP.Where(y => y.Key == x.OptionTypeId.ToString()).FirstOrDefault().Value;
+                        //var optionMSRPDict = await CalculateOptionPrice(
+                        //    item.OptionsTypeIds,
+                        //    (decimal)item.Quantity,
+                        //    (decimal)item.Height,
+                        //    (decimal)item.Width,
+                        //      false
+                        //       );
+                        //item.OptionTaxDetails.ForEach(x =>
+                        //{
+                        //    x.OptionPrice = optionMSRPDict.OptionMSRP.Where(y => y.Key == x.OptionTypeId.ToString()).FirstOrDefault().Value;
 
-                        });
-                        item.AdditionalCost = optionMSRPDict.TotalCost;
+                        //});
+                        //item.AdditionalCost = optionMSRPDict.TotalCost;
                         //item.IsTaxApplied = await IsTaxApplied((Guid)item.JobId);
                         //item.TotalTaxAmount = item.IsTaxAvailable == true
                         //? CalculateTotalTaxAmount(item.TotalPrice, item.MunicipalityTax, item.CityTax, item.StateTax)
@@ -675,8 +690,21 @@ namespace ShutterManagement.Business.Services
 
                     //}
 
+                    var optionMSRPDict = await CalculateOptionPrice(
+                     item.OptionsTypeIds,
+                     (decimal)item.Quantity,
+                     (decimal)item.Height,
+                     (decimal)item.Width,
+                      false
+                     );
 
+                    foreach (var x in item.OptionTaxDetails)
+                    {
+                        optionMSRPDict.OptionMSRP.TryGetValue(x.OptionTypeId.ToString(), out var price);
+                        x.OptionPrice = price;
+                    }
 
+                    item.AdditionalCost = optionMSRPDict.TotalCost;
                     item.Price = Convert.ToDecimal(Convert.ToDecimal(ComponentPriceWithProductMarkup).ToString("0.0000"));
                     item.MunicipalityTaxAmount = (item.Price * item.MunicipalityTax / 100);
                     item.StateTaxAmount = (item.Price * item.StateTax / 100);
