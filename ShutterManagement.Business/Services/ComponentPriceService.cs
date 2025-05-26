@@ -244,13 +244,13 @@ namespace ShutterManagement.Business.Services
                   join productComponent in dbContext.TblProductComponents on product.ProductId equals productComponent.ProductId into productcomponents
                   from productComponent in productcomponents.DefaultIfEmpty()
                   .Where(x => x.IsActive == true)
-                  join expression in dbContext.TblExpressions on productComponent.PricingExpression equals expression.Id.ToString() into PExpressions
+                  join expression in dbContext.TblExpressions.Where(y => y.IsActive == true) on productComponent.PricingExpression equals expression.Id.ToString() into PExpressions
                   from expression in PExpressions.DefaultIfEmpty()
-                  join component in dbContext.TblComponents on productComponent.ComponentId equals component.ComponentId into components
+                  join component in dbContext.TblComponents.Where(y => y.IsActive == true) on productComponent.ComponentId equals component.ComponentId into components
                   from component in components.DefaultIfEmpty()
-                  join componentMaterial in dbContext.TblComponentMaterials on component.ComponentId equals componentMaterial.ComponentId into MComponent
+                  join componentMaterial in dbContext.TblComponentMaterials.Where(y => y.IsActive == true) on component.ComponentId equals componentMaterial.ComponentId into MComponent
                   from componentMaterial in MComponent.DefaultIfEmpty()
-                  join material in dbContext.TblRawMaterials on componentMaterial.RawMaterialId equals material.RawMaterialId into materials
+                  join material in dbContext.TblRawMaterials.Where(y => y.IsActive == true) on componentMaterial.RawMaterialId equals material.RawMaterialId into materials
                   from material in materials.DefaultIfEmpty()
                   where windowProduct.WindowProductId == WindowProductId
                   && window.IsActive == true && window.IsDelete == false
