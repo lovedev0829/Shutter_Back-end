@@ -503,7 +503,7 @@ namespace ShutterManagement.Business.Services
                                     var componentPrice = await CalculateEstimate(data.Data, false);
                                     data.Data.ForEach(x =>
                                     {
-                                        x.TotalPrice = Convert.ToDecimal(componentPrice.ToString("0.00"));
+                                        x.TotalPrice = componentPrice != null && componentPrice > 0.0m ? Convert.ToDecimal(componentPrice.ToString("0.00")) : null;
                                     });
 
                                     WindowProductData.AddRange(data.Data);
@@ -614,16 +614,15 @@ namespace ShutterManagement.Business.Services
                 //    item.Quantity = 1;
 
                 //}    
-                if (!string.IsNullOrEmpty(formula))
-                {
-                    // Define an expression with a nudget and a custom function
-                    var expression = CalculateExpression(formula, item);
-                    var res = expression.Evaluate();
-                    var ComponentPrice = Convert.ToDecimal(res);
+                if (!string.IsNullOrEmpty(formula)) { 
+                // Define an expression with a nudget and a custom function
+                var expression = CalculateExpression(formula, item);
+                var res = expression.Evaluate();
+                var ComponentPrice = Convert.ToDecimal(res);
 
-                    //item.AdditionalCost = Convert.ToDecimal(item.OptionsPrice.Sum());
-                    //finalSubTotal = (decimal)item.AdditionalCost + finalSubTotal;
-                    var ComponentPriceWithoutMarkup = ComponentPrice;
+                //item.AdditionalCost = Convert.ToDecimal(item.OptionsPrice.Sum());
+                //finalSubTotal = (decimal)item.AdditionalCost + finalSubTotal;
+                var ComponentPriceWithoutMarkup = ComponentPrice;
 
 
                     if ((bool)iswholesale)
@@ -704,40 +703,40 @@ namespace ShutterManagement.Business.Services
                         item.TotalTaxAmount = item.MunicipalityTaxAmount + item.StateTaxAmount + item.CityTaxAmount;
                         ComponentSubTotal += Convert.ToDecimal(Convert.ToDecimal(ComponentPriceWithProductMarkup).ToString("0.0000"));
                     }
-                }
-                var optionMSRPDict = await CalculateOptionPrice(
-                         item.OptionsTypeIds,
-                         (decimal)item.Quantity,
-                         (decimal)item.Height,
-                         (decimal)item.Width,
-                          false
-                          );
-                item.AdditionalCost = optionMSRPDict.TotalCost;
-                foreach (var x in item.OptionTaxDetails)
-                {
-                    optionMSRPDict.OptionMSRP.TryGetValue(x.OptionTypeId.ToString(), out var price);
-                    x.OptionPrice = price;
-                }
-                if (item.OptionTaxDetails != null && item.OptionTaxDetails.Count > 0)
-                {
-                    item.OptionTaxDetails.ForEach(x =>
+                    }
+                    var optionMSRPDict = await CalculateOptionPrice(
+                             item.OptionsTypeIds,
+                             (decimal)item.Quantity,
+                             (decimal)item.Height,
+                             (decimal)item.Width,
+                              false
+                              );
+                    item.AdditionalCost = optionMSRPDict.TotalCost;
+                    foreach (var x in item.OptionTaxDetails)
                     {
-                        x.MunicipalityTaxAmount = (x.OptionPrice * x.MunicipalityTax / 100);
-                        x.StateTaxAmount = (x.OptionPrice * x.StateTax / 100);
-                        x.CityTaxAmount = (x.OptionPrice * x.CityTax / 100);
-                        x.TotalTaxAmount = x.MunicipalityTaxAmount + x.StateTaxAmount + x.CityTaxAmount;
-                    });
+                        optionMSRPDict.OptionMSRP.TryGetValue(x.OptionTypeId.ToString(), out var price);
+                        x.OptionPrice = price;
+                    }
+                    if (item.OptionTaxDetails != null && item.OptionTaxDetails.Count > 0)
+                    {
+                        item.OptionTaxDetails.ForEach(x =>
+                        {
+                            x.MunicipalityTaxAmount = (x.OptionPrice * x.MunicipalityTax / 100);
+                            x.StateTaxAmount = (x.OptionPrice * x.StateTax / 100);
+                            x.CityTaxAmount = (x.OptionPrice * x.CityTax / 100);
+                            x.TotalTaxAmount = x.MunicipalityTaxAmount + x.StateTaxAmount + x.CityTaxAmount;
+                        });
+                    }
+
+
                 }
 
 
-            }
+                //if ((bool)iswholesale)
+                //{
 
-
-            //if ((bool)iswholesale)
-            //{
-
-            //}
-            return ComponentSubTotal;
+                //}
+                return ComponentSubTotal;
         }
 
         public NCalc.Expression CalculateExpression(string formula, dynamic values)
@@ -866,15 +865,15 @@ namespace ShutterManagement.Business.Services
                 {
                     if (windowproductdetails.Data.Any(x => x.TotalPrice == null))
                     {
-                        var Ids = windowproductdetails.Data.Where(x=> x.TotalPrice == null).Select(x => x.WindowProdcutId).Distinct().ToList();
+                        var Ids = windowproductdetails.Data.Where(x => x.TotalPrice == null).Select(x => x.WindowProdcutId).Distinct().ToList();
                         subtotal = PricedProductsList
                             .Where(p => Ids.Contains(p.WindowProductId))
-                            .Select(x => x.ProductPrice).FirstOrDefault();
+                            .Select(x => x.ProductPrice).Sum();
                     }
-                    subtotal += (decimal)windowproductdetails.Data.DistinctBy(x => x.WindowProdcutId).Sum(x => x.TotalPrice);
-                    additionalCost += (decimal)windowproductdetails.Data.DistinctBy(x => x.WindowProdcutId).Sum(x => x.AdditionalCost);
 
                 }
+                subtotal += (decimal)windowproductdetails.Data.Where(x => x.TotalPrice != null).DistinctBy(x => x.WindowProdcutId).Sum(x => x.TotalPrice);
+                additionalCost += (decimal)windowproductdetails.Data.Sum(x => x.AdditionalCost);
                 SumofSubtotalandAdditionalCost = subtotal + additionalCost;
                 //if (string.IsNullOrEmpty((model.taxRateId).ToString()) && string.IsNullOrEmpty(model.DiscountCoupon))
                 //{
