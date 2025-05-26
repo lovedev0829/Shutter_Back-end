@@ -476,7 +476,6 @@ namespace ShutterManagement.Business.Services
         {
             return dbContext.TblWindows
                 .Where(w => w.IsDelete == false && w.TenantId == AppConstant.LoggedInTenantId)
-                .OrderBy(w => w.CreatedAt)
                 .GroupJoin(dbContext.TblWindowProducts,
                     w => w.WindowId,
                     wp => wp.WindowId,
@@ -502,6 +501,7 @@ namespace ShutterManagement.Business.Services
                     AddressId = g.FirstOrDefault().w.AddressId,
                     JobId = g.FirstOrDefault().w.JobId,
                     Label = g.FirstOrDefault().w.Label,
+                    CreatedAt = g.FirstOrDefault().w.CreatedAt,
                     Quantity = g.FirstOrDefault().w.Quantity,
                     ArchHeight = g.FirstOrDefault().w.ArchHeight,
                     Height = g.FirstOrDefault().w.Height,
@@ -523,6 +523,7 @@ namespace ShutterManagement.Business.Services
                             BuildWidth = p.FirstOrDefault().wp.BuildWidth,
                             SortOrder=p.FirstOrDefault().wp.SortOrder,
                             
+                            
                             WindowOptions = p.Select(o => new WindowOptions
                             {
                                 WindowProductId = o.wp.WindowProductId,
@@ -531,7 +532,9 @@ namespace ShutterManagement.Business.Services
                                 //AdditionalCost = o.op.AdditionalCost.GetValueOrDefault(),
                             }).ToList()
                         }).ToList()
-                }).ToList();
+                }).OrderByDescending(s=>s.CreatedAt)
+
+                .ToList();
         }
 
         private List<WindowsList> ApplyFilters(List<WindowsList> windowsData, Pagination filter)

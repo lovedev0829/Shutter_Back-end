@@ -17,6 +17,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string[]? Photo { get; set; } = new string[] {};
         public string? Notes { get; set; }
         public bool? IsActive { get; set; }
+        public DateTime? CreatedAt { get; set; }
         public Guid? TenantId { get; set; }
         public List<ProductList>? ProductDetails { get; set; }
     }

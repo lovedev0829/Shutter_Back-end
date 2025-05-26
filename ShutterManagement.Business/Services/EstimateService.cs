@@ -1736,10 +1736,10 @@ namespace ShutterManagement.Business.Services
                     WindowProductId = windowProductId,
                     WindowOptionId = option.WindowOptionId,
                     EstimateWindowProductId = estimateWindowProductId,
-                    TaxId = option.TaxId,
-                    CityTax = option.CityTaxAmount,
-                    StateTax = option.StateTaxAmount,
-                    MunicipilityTax = option.MunicipalityTaxAmount,
+                    TaxId = option.TaxId != Guid.Empty? option.TaxId:null,
+                    CityTax = option.CityTaxAmount??0.0m,
+                    StateTax = option.StateTaxAmount??0.0m,
+                    MunicipilityTax = option.MunicipalityTaxAmount??0.0m,
                     CreatedAt = DateTime.Now,
                     UpdatedAt = DateTime.Now,
                     TenantId = AppConstant.LoggedInTenantId,
@@ -1749,10 +1749,10 @@ namespace ShutterManagement.Business.Services
                     IsDelete = false,
                     OptionName = option.OptionName,
                     TaxName = option.TaxName,
-                    OptionTypeid = Guid.Parse(option.OptionTypeId),
+                    OptionTypeid =Guid.TryParse(option.OptionTypeId, out var optionTypeId) && optionTypeId != Guid.Empty ? optionTypeId : null,
                     OptionTypeName = option.OptionTypeName,
-                    Optionid = Guid.Parse(option.OptionId),
-                    OptionPrice = option.OptionPrice,
+                    Optionid = Guid.TryParse(option.OptionId, out var optionId) && optionId != Guid.Empty ? optionId : null,
+                    OptionPrice = option.OptionPrice??0.0m,
                 };
 
                 estimateWindowOptions.Add(optionEntity);
