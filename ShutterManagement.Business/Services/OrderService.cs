@@ -151,7 +151,7 @@ namespace ShutterManagement.Business.Services
                 {
                     decimal subtotal = 0m;
                     decimal additionalCost = 0m;
-                    decimal SumofSubtotalandAdditionalCost = 0.0M;
+                    decimal SumofSubtotalandAdditionalCost = 0.0m;
                     decimal grandtotal = 0m;
                     Guid? taxRateId = null;
                     Guid? discountId = null;
@@ -159,9 +159,9 @@ namespace ShutterManagement.Business.Services
                     var windowproductdetails = await estimateService.BuildEstimate(updateOrder.WindowProductId, false, updateOrder.EstimateId.ToString(), true);
                     if (windowproductdetails.Data != null && windowproductdetails.Data.Any())
                     {
-                        additionalCost = (decimal)windowproductdetails.Data.ToList().DistinctBy(x => x.AdditionalCost).FirstOrDefault().AdditionalCost;
-                        subtotal = (decimal)windowproductdetails.Data.Sum(x => x.Price);
-                        totalTaxAmount += (decimal)windowproductdetails.Data.DistinctBy(x => x.WindowProdcutId).Sum(x => x.TotalTaxAmount);
+                        additionalCost = windowproductdetails.Data.ToList().DistinctBy(x => x.AdditionalCost).FirstOrDefault().AdditionalCost ?? 0.0m;
+                        subtotal = windowproductdetails.Data.Sum(x => x.Price) ?? 0.0m;
+                        totalTaxAmount += windowproductdetails.Data.DistinctBy(x => x.WindowProdcutId).Sum(x => x.TotalTaxAmount) ?? 0.0m;
                         SumofSubtotalandAdditionalCost = subtotal + additionalCost;
                     }
                     //if (string.IsNullOrEmpty((updateOrder.taxRateId).ToString()) && string.IsNullOrEmpty(updateOrder.DiscountCoupon))
@@ -509,7 +509,7 @@ namespace ShutterManagement.Business.Services
                             orderExist.DiscountCoupon = model.DiscountCoupon;
                             orderExist.GrandTotal = grandtotal;
                             orderExist.JobId = model.JobId;
-                            orderExist.TaxId = model.taxRateId;
+                            orderExist.TaxId = model.taxRateId!=Guid.Empty? model.taxRateId:null;
                             orderExist.TaxAmount = model.Tax;
                             orderExist.TotalPrice = subtotal;
                             orderExist.AdditionalCost = additionalCost;
@@ -1263,7 +1263,7 @@ namespace ShutterManagement.Business.Services
                     WindowProductId = windowProductId,
                     WindowOptionId = option.WindowOptionId,
                     OrderWindowProductId = OrderWindowProductId,
-                    TaxId = option.TaxId,
+                    TaxId = option.TaxId!=Guid.Empty? option.TaxId:null,
                     CityTax = option.CityTax,
                     StateTax = option.StateTax,
                     MunicipilityTax = option.MunicipilityTax,
