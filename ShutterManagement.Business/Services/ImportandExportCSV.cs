@@ -959,6 +959,7 @@ namespace ShutterManagement.Business.Services
 
             try
             {
+                filter.RecordPerPage = 1000;
                 var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
                 if (!isTenantExists)
                 {
