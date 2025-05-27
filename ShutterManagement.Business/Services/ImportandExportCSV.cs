@@ -24,6 +24,7 @@ using System.Diagnostics.Metrics;
 using ShutterManagement.Core.Common;
 using System.ComponentModel.DataAnnotations;
 using AutoMapper.Internal;
+using Stripe;
 
 namespace ShutterManagement.Business.Services
 {
@@ -108,7 +109,7 @@ namespace ShutterManagement.Business.Services
                     }
                 }
 
-                byte[] fileBytes = await File.ReadAllBytesAsync(filePathWithName);
+                byte[] fileBytes = await System.IO.File.ReadAllBytesAsync(filePathWithName);
                 string base64Data = Convert.ToBase64String(fileBytes);
 
                 responseVm.IsSuccess = true;
@@ -116,7 +117,7 @@ namespace ShutterManagement.Business.Services
                 responseVm.Data = base64Data;
 
                 // Clean up temporary file
-                File.Delete(filePathWithName);
+                System.IO.File.Delete(filePathWithName);
             }
             catch (Exception ex)
             {
@@ -155,13 +156,13 @@ namespace ShutterManagement.Business.Services
                     }
                 }
 
-                byte[] fileBytes = await File.ReadAllBytesAsync(filePathWithName);
+                byte[] fileBytes = await System.IO.File.ReadAllBytesAsync(filePathWithName);
                 string base64Data = Convert.ToBase64String(fileBytes);
 
                 responseVm.IsSuccess = true;
                 responseVm.Message = "Material Sample Downloaded successfully..";
                 responseVm.Data = base64Data;
-                File.Delete(filePathWithName);
+                System.IO.File.Delete(filePathWithName);
             }
             catch (Exception ex)
             {
@@ -958,6 +959,7 @@ namespace ShutterManagement.Business.Services
 
             try
             {
+                filter.RecordPerPage = 1000;
                 var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
                 if (!isTenantExists)
                 {
@@ -1106,13 +1108,16 @@ namespace ShutterManagement.Business.Services
                 "Height"
                 };
 
-
+                var csvBuilder = new StringBuilder();
                 var dynamicHeaders = GetDynamicHeaders(estimateResponse.Data, "ComponentName");
 
-                var headers = commonHeaders.Concat(dynamicHeaders).ToList();
+                var optionHeaders = GetOptionNameTypeHeaders(estimateResponse.Data);
 
-                var csvBuilder = new StringBuilder();
-                csvBuilder.AppendLine(string.Join(",", headers));
+                var finalHeaders = commonHeaders.Concat(dynamicHeaders).Concat(optionHeaders).Concat(new[] { "Sub Total", "Total" }).ToList();
+
+                csvBuilder.AppendLine(string.Join(",", finalHeaders));
+
+
 
                 foreach (var breakdownGroup in estimateResponse.Data.GroupBy(d => d.GetType().GetProperty("WindowId")?.GetValue(d)))
                 {
@@ -1124,6 +1129,18 @@ namespace ShutterManagement.Business.Services
                     var componentPrices = GetComponentPrices(breakdownGroup, "ComponentName", "Price");
 
                     rowValues.AddRange(dynamicHeaders.Select(header => componentPrices.GetValueOrDefault(header, "0")));
+
+                    var optionValues = GetOptionPriceValues(firstEntry);
+                    rowValues.AddRange(optionHeaders.Select(header => optionValues.GetValueOrDefault(header, "0")));
+
+                    // Add Sub Total and Total
+                    decimal subTotal = GetDynamicValue(firstEntry, "totalPrice");  
+                    decimal additionalCost = GetDynamicValue(firstEntry, "additionalCost");
+
+                    decimal total = subTotal + additionalCost;
+
+                    rowValues.Add($"${subTotal.ToString("F2")}");
+                    rowValues.Add($"${total.ToString("F2")}");
 
                     csvBuilder.AppendLine(string.Join(",", rowValues));
                 }
@@ -1143,6 +1160,39 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
+
+        private decimal GetDynamicValue(object obj, string propertyName)
+        {
+            if (obj == null || string.IsNullOrEmpty(propertyName))
+                return 0;
+
+            var type = obj.GetType();
+
+            // Find property case-insensitive
+            var property = type.GetProperties()
+                               .FirstOrDefault(p => string.Equals(p.Name, propertyName, StringComparison.OrdinalIgnoreCase));
+
+            if (property == null)
+                return 0;
+
+            var value = property.GetValue(obj);
+
+            if (value == null)
+                return 0;
+
+            // Try parse decimal from value
+            if (value is decimal dec)
+                return dec;
+
+            if (decimal.TryParse(value.ToString(), out decimal result))
+                return result;
+
+            return 0;
+        }
+
+
+
+
 
         private List<string> GetDynamicHeaders(IEnumerable<object> data, string propertyName)
         {
@@ -1186,7 +1236,7 @@ namespace ShutterManagement.Business.Services
 
                 if (!string.IsNullOrEmpty(componentName))
                 {
-                    componentPrices[componentName] = componentPrice ?? "0";
+                    componentPrices[componentName] = $"${componentPrice}"  ?? "0";
                 }
             }
             return componentPrices;
@@ -1200,6 +1250,49 @@ namespace ShutterManagement.Business.Services
                 Message = message
             };
         }
+
+        private List<string> GetOptionNameTypeHeaders(IEnumerable<object> data)
+        {
+            return data
+                .SelectMany(d =>
+                {
+                    var optionTaxDetails = d.GetType().GetProperty("OptionTaxDetails")?.GetValue(d) as IEnumerable<object>;
+                    return optionTaxDetails ?? new List<object>();
+                })
+                .Select(option =>
+                {
+                    var name = option.GetType().GetProperty("OptionName")?.GetValue(option)?.ToString();
+                    var type = option.GetType().GetProperty("OptionTypeName")?.GetValue(option)?.ToString();
+                    return $"{name} - {type}";
+                })
+                .Where(header => !string.IsNullOrWhiteSpace(header))
+                .Distinct()
+                .ToList();
+        }
+
+        private Dictionary<string, string> GetOptionPriceValues(object entry)
+        {
+            var optionPrices = new Dictionary<string, string>();
+
+            var optionList = entry.GetType().GetProperty("OptionTaxDetails")?.GetValue(entry) as IEnumerable<object>;
+
+            if (optionList != null)
+            {
+                foreach (var option in optionList)
+                {
+                    var name = option.GetType().GetProperty("OptionName")?.GetValue(option)?.ToString();
+                    var type = option.GetType().GetProperty("OptionTypeName")?.GetValue(option)?.ToString();
+                    var price = option.GetType().GetProperty("OptionPrice")?.GetValue(option)?.ToString() ?? "0";
+
+                    var key = $"{name} - {type}";
+                    optionPrices[key] = $"${price}";
+                }
+            }
+
+            return optionPrices;
+        }
+
+
 
         #endregion End Export Breakdowns
 
