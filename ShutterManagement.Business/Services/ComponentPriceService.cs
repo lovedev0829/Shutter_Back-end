@@ -148,6 +148,7 @@ namespace ShutterManagement.Business.Services
                       Length = estwindowProduct.Length,
                       AdditionalWidth = estwindowProduct.AdditionalWidth,
                       Markup = estwindowProduct.Markup,
+                      ProductPrice = estwindowProduct.ProductPrice,
 
                       // ProductType Properties
                       ProductTypeName = estwindowProduct.ProductTypeName,

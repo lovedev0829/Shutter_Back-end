@@ -439,10 +439,10 @@ namespace ShutterManagement.Business.Services
                     }
 
                     // Set tax for each item in data1
-                    foreach (var item in data1)
-                    {
-                        item.IsTaxApplied = await IsTaxApplied((Guid)item.JobId);
-                    }
+                    //foreach (var item in data1)
+                    //{
+                    //    item.IsTaxApplied = await IsTaxApplied((Guid)item.JobId);
+                    //}
                     responseVm.IsSuccess = true;
                     responseVm.Data = data1;
                     responseVm.TotalRecords = data1.Count;
