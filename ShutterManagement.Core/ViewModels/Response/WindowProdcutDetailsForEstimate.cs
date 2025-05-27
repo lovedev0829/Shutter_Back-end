@@ -45,7 +45,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string[]? Options { get; set; } = [];
         public string[]? OptionsTypeIds { get; set; } = [];
         public decimal[]? OptionsPrice { get; set; } = [];
-        public decimal? AdditionalCost { get; set; } = 0.0m;
+        //public decimal? AdditionalCost { get; set; } = 0.0m;
         public decimal? ProductPrice { get; set; }
 
 
@@ -61,6 +61,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? ComponentName { get; set; }
         public decimal? MarkupPercentage { get; set; }
         public decimal? Price { get; set; }
+        public decimal? AdditionalCost { get; set; }
         
 
         // Expression Properties
