@@ -1074,14 +1074,31 @@ namespace ShutterManagement.Business.Services
             e.WindowProductId = productList.DistinctBy(x=>x.WindowProductId).Select(p => (Guid)p.WindowProductId).ToArray();
             foreach (var p in productList.DistinctBy(x => x.WindowProductId))
             {
-                var Options = (from windowOption in dbContext.WindowOptions
-                               join optionType in dbContext.TblOptionsTypes on windowOption.OptionTypeId equals optionType.OptionTypeId
-                               join options in dbContext.TblOptions on optionType.OptionId equals options.OptionId
-                               where windowOption.WindowProductId == p.WindowProductId
-                               select new
+                var Options = (from orderOption in dbContext.TblOrderWindowProductOptions
+                               join optionType in dbContext.TblOptionsTypes on orderOption.OptionTypeid equals optionType.OptionTypeId
+                               join option in dbContext.TblOptions on optionType.OptionId equals option.OptionId
+                               where orderOption.OrderWindowProductId == p.WindowProductId
+                               select new OptionTaxVM
                                {
-                                   OptionName = Convert.ToString(options.OptionName + " - " + optionType.OptionType)
+                                   TaxId = orderOption.TaxId,
+                                   TaxName = orderOption.TaxName ?? "",
+                                   MunicipalityTax = orderOption.MunicipilityTax,
+                                   StateTax = orderOption.StateTax,
+                                   CityTax = orderOption.CityTax,
+                                   OptionPrice = orderOption.OptionPrice,
+                                   OptionName = orderOption.OptionName ?? "",
+                                   OptionId = orderOption.Optionid.ToString(),
+                                   OptionTypeId = orderOption.OptionTypeid.ToString(),
+                                   OptionTypeName = Convert.ToString(orderOption.OptionName + " - " + orderOption.OptionTypeName),
                                }).ToList();
+                //var Options = (from windowOption in dbContext.WindowOptions
+                //               join optionType in dbContext.TblOptionsTypes on windowOption.OptionTypeId equals optionType.OptionTypeId
+                //               join options in dbContext.TblOptions on optionType.OptionId equals options.OptionId
+                //               where windowOption.WindowProductId == p.WindowProductId
+                //               select new
+                //               {
+                //                   OptionName = Convert.ToString(options.OptionName + " - " + optionType.OptionType)
+                //               }).ToList();
                 var WindowDetails = orderWindowService.GetAllQuerable()
                     .Where(x => x.OrderId == order.OrderId && x.IsDelete == false)
                     .ToList();
@@ -1102,6 +1119,7 @@ namespace ShutterManagement.Business.Services
                     Height = p.Height,
                     ArchHeight = p.ArchHeight,
                     ProductName = p.ProductName,
+                    additionalCost = Options.Select(x => x.OptionPrice).Sum(),
                     WindowProductId = p.WindowProductId,
                     Price = p.Price,
                     ProductPrice = p.ProductPrice,
@@ -1273,7 +1291,12 @@ namespace ShutterManagement.Business.Services
                     CreatedBy = AppConstant.LoggedInUserID,
                     ModifiedBy = AppConstant.LoggedInUserID,
                     IsActive = true,
-                    IsDelete = false
+                    IsDelete = false,
+                    Optionid = option.Optionid,
+                    OptionName = option.OptionName,
+                    OptionTypeName = option.OptionTypeName,
+                    OptionPrice = option.OptionPrice,
+                    TaxName = option.TaxName,
                 };
 
                 estimateWindowOptions.Add(optionEntity);

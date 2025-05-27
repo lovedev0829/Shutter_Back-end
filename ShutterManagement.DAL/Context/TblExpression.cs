@@ -31,6 +31,9 @@ public partial class TblExpression
 
     public string? DisplayArray { get; set; }
 
+    public Guid? ProductId { get; set; }
+
+    public Guid? OptionId { get; set; }
 
     public bool? IsOptionExpression { get; set; }
 
