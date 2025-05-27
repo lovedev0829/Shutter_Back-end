@@ -26,6 +26,7 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 using Stripe;
 using Microsoft.EntityFrameworkCore;
 using static Microsoft.AspNetCore.Hosting.Internal.HostingApplication;
+using System.ComponentModel;
 
 namespace ShutterManagement.Business.Services
 {
@@ -767,7 +768,12 @@ namespace ShutterManagement.Business.Services
                                     .Where(x => x.ProductType.ToString() == info[1] && x.MaterialName == info[2] && x.IsActive == true &&
                                                 (x.TenantId == AppConstant.LoggedInTenantId || x.TenantId.ToString() == AppConstant.LoggedInParentTenantId)).FirstOrDefault();
                                 val = query.UnitCost;
-                                var wasteFactor = componentMaterialService.GetAllQuerable().Where(x => x.RawMaterialId == query.RawMaterialId).Select(x => x.WasteFactor).FirstOrDefault();
+                                Guid ComponentId = values.ComponentId ?? Guid.Empty;
+                                var wasteFactor = componentMaterialService.GetAllQuerable()
+                     .Where(x => x.RawMaterialId == query.RawMaterialId && x.ComponentId == ComponentId && x.IsDelete == false
+                       && x.TenantId == AppConstant.LoggedInTenantId || x.TenantId.ToString() == AppConstant.LoggedInParentTenantId)
+                                 .Select(x => x.WasteFactor)
+                                .FirstOrDefault();
                                 if (wasteFactor != null)
                                     val = (Convert.ToDecimal(val) * (100 + (wasteFactor ?? 0)) / 100);
                             }
