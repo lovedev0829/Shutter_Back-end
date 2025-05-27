@@ -535,7 +535,7 @@ namespace ShutterManagement.Business.Services
                             //? CalculateTotalTaxAmount(item.TotalPrice, item.MunicipalityTax, item.CityTax, item.StateTax)
                             //: 0.0m;
                         }
-                        item.TotalTaxAmount = item.IsTaxAvailable == true
+                        item.TotalTaxAmount = item.IsTaxAvailable == true 
                             ? CalculateTotalTaxAmount(item.TotalPrice, item.MunicipalityTax, item.CityTax, item.StateTax)
                             : 0.0m;
                     }
@@ -600,6 +600,7 @@ namespace ShutterManagement.Business.Services
         {
             decimal ComponentSubTotal = 0.00M;
             decimal Wholesale = 0.00M;
+            bool isContactIsTaxDocument = false;
             var IsSubtenants = (await tenantService.GetAll()).Where
                     (t => t.TenantId == AppConstant.LoggedInTenantId && (t.ParentTenantId != null || !string.IsNullOrEmpty(t.ParentTenantId.ToString()))
                     && t.IsActive == true && t.IsDelete == false)
@@ -697,11 +698,24 @@ namespace ShutterManagement.Business.Services
                         //}
 
                         //item.AdditionalCost = optionMSRPDict.TotalCost;
+                         isContactIsTaxDocument = GetIsTaxExemptByWindowId(item.WindowId);
+                        
+
                         item.Price = Convert.ToDecimal(Convert.ToDecimal(ComponentPriceWithProductMarkup).ToString("0.00"));
-                        item.MunicipalityTaxAmount = (item.Price * item.MunicipalityTax / 100);
-                        item.StateTaxAmount = (item.Price * item.StateTax / 100);
-                        item.CityTaxAmount = (item.Price * item.CityTax / 100);
-                        item.TotalTaxAmount = item.MunicipalityTaxAmount + item.StateTaxAmount + item.CityTaxAmount;
+                        if (isContactIsTaxDocument == false)
+                        {
+                            item.MunicipalityTaxAmount = 0.0m;
+                            item.StateTaxAmount = 0.0m;
+                            item.CityTaxAmount = 0.0m;
+                            item.TotalTaxAmount = 0.0m;
+                        }
+                        else
+                        {
+                            item.MunicipalityTaxAmount = (item.Price * item.MunicipalityTax / 100);
+                            item.StateTaxAmount = (item.Price * item.StateTax / 100);
+                            item.CityTaxAmount = (item.Price * item.CityTax / 100);
+                            item.TotalTaxAmount = item.MunicipalityTaxAmount + item.StateTaxAmount + item.CityTaxAmount;
+                        }
                         ComponentSubTotal += Convert.ToDecimal(Convert.ToDecimal(ComponentPriceWithProductMarkup).ToString("0.00"));
                     }
                     }
@@ -718,14 +732,14 @@ namespace ShutterManagement.Business.Services
                         optionMSRPDict.OptionMSRP.TryGetValue(x.OptionTypeId.ToString(), out var price);
                         x.OptionPrice = price;
                     }
-                    if (item.OptionTaxDetails != null && item.OptionTaxDetails.Count > 0)
+                    if (item.OptionTaxDetails != null && item.OptionTaxDetails.Count > 0 && isContactIsTaxDocument==true)
                     {
                         item.OptionTaxDetails.ForEach(x =>
                         {
                             x.MunicipalityTaxAmount = (x.OptionPrice * x.MunicipalityTax / 100);
                             x.StateTaxAmount = (x.OptionPrice * x.StateTax / 100);
                             x.CityTaxAmount = (x.OptionPrice * x.CityTax / 100);
-                            x.TotalTaxAmount = x.MunicipalityTaxAmount + x.StateTaxAmount + x.CityTaxAmount;
+                            x.TotalTaxAmount = (x.MunicipalityTaxAmount + x.StateTaxAmount + x.CityTaxAmount);
                         });
                     }
                 }
@@ -1807,7 +1821,7 @@ namespace ShutterManagement.Business.Services
                                where w.WindowId == windowId
                                      && w.IsDelete == false
                                      && j.IsDelete == false
-                                     && c.IsDelete == false
+                                     && c.IsDelete == false && c.TenantId==AppConstant.LoggedInTenantId
                                select c.IsTaxExemption).FirstOrDefault();
 
             return isTaxExempt ?? false;
