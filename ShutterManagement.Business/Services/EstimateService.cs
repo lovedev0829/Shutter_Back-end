@@ -566,7 +566,7 @@ namespace ShutterManagement.Business.Services
         private decimal CalculateTotalTaxAmount(decimal? totalPrice, decimal? municipality, decimal? city, decimal? state)
         {
             decimal basePrice = totalPrice ?? 0.0m;
-            decimal totalTaxRate = (municipality ?? 0) + (city ?? 0) + (state ?? 0);
+            decimal totalTaxRate = (municipality ?? 0.0m) + (city ?? 0.0m) + (state ?? 0.0m);
             return (basePrice * totalTaxRate) / 100;
         }
 
@@ -652,11 +652,11 @@ namespace ShutterManagement.Business.Services
                             var productMarkup = dbContext.TblManagePartnersProducts.Where(x => x.ProductId == item.ProductId && x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
                             if (productMarkup.MarkupType == "Percentage")
                             {
-                                ComponentPriceWithProductMarkup = (decimal)(ComponentPriceWithProductMarkup * (1 + (productMarkup.PartnerSellingPrice ?? 0) / 100));
+                                ComponentPriceWithProductMarkup = (ComponentPriceWithProductMarkup * (1 + (productMarkup.PartnerSellingPrice ?? 0) / 100))??0.0m;
                             }
                             if (productMarkup.MarkupType == "Fixed")
                             {
-                                ComponentPriceWithProductMarkup = (decimal)(ComponentPriceWithProductMarkup + (productMarkup.PartnerSellingPrice ?? 0));
+                                ComponentPriceWithProductMarkup = (ComponentPriceWithProductMarkup + (productMarkup.PartnerSellingPrice ?? 0))??0.0m;
                             }
                             //else
                             //{
@@ -696,12 +696,12 @@ namespace ShutterManagement.Business.Services
                         //}
 
                         //item.AdditionalCost = optionMSRPDict.TotalCost;
-                        item.Price = Convert.ToDecimal(Convert.ToDecimal(ComponentPriceWithProductMarkup).ToString("0.0000"));
+                        item.Price = Convert.ToDecimal(Convert.ToDecimal(ComponentPriceWithProductMarkup).ToString("0.00"));
                         item.MunicipalityTaxAmount = (item.Price * item.MunicipalityTax / 100);
                         item.StateTaxAmount = (item.Price * item.StateTax / 100);
                         item.CityTaxAmount = (item.Price * item.CityTax / 100);
                         item.TotalTaxAmount = item.MunicipalityTaxAmount + item.StateTaxAmount + item.CityTaxAmount;
-                        ComponentSubTotal += Convert.ToDecimal(Convert.ToDecimal(ComponentPriceWithProductMarkup).ToString("0.0000"));
+                        ComponentSubTotal += Convert.ToDecimal(Convert.ToDecimal(ComponentPriceWithProductMarkup).ToString("0.00"));
                     }
                     }
                     var optionMSRPDict = await CalculateOptionPrice(
