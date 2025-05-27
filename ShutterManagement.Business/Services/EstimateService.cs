@@ -727,11 +727,7 @@ namespace ShutterManagement.Business.Services
                             x.TotalTaxAmount = x.MunicipalityTaxAmount + x.StateTaxAmount + x.CityTaxAmount;
                         });
                     }
-
-
                 }
-
-
                 //if ((bool)iswholesale)
                 //{
 
@@ -1528,7 +1524,7 @@ namespace ShutterManagement.Business.Services
                 IsActive = true,
                 IsDelete = false,
                 TotalPrice = SumofSubtotalandAdditionalCost,
-                //AdditionalCost = additionalCostAsOptionPrice,
+                AdditionalCost = additionalCostAsOptionPrice,
                 IsTaxApplied = model.IsTaxApplicable,
                 TotaltaxAmount = totalTaxAmount,
                 Status = EnumValue.GetEnumValue(Estimation.New),
