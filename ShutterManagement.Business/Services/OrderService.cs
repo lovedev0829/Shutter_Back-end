@@ -1068,16 +1068,13 @@ namespace ShutterManagement.Business.Services
                     x.WholeSalePrice,
                 }).ToList();
 
-        
-
-
             e.WindowProductId = productList.DistinctBy(x=>x.WindowProductId).Select(p => (Guid)p.WindowProductId).ToArray();
             foreach (var p in productList.DistinctBy(x => x.WindowProductId))
             {
                 var Options = (from orderOption in dbContext.TblOrderWindowProductOptions
-                               join optionType in dbContext.TblOptionsTypes on orderOption.OptionTypeid equals optionType.OptionTypeId
-                               join option in dbContext.TblOptions on optionType.OptionId equals option.OptionId
-                               where orderOption.OrderWindowProductId == p.WindowProductId
+                               //join optionType in dbContext.TblOptionsTypes on orderOption.OptionTypeid equals optionType.OptionTypeId
+                               //join option in dbContext.TblOptions on optionType.OptionId equals option.OptionId
+                               where orderOption.WindowProductId == p.WindowProductId
                                select new OptionTaxVM
                                {
                                    TaxId = orderOption.TaxId,
@@ -1292,6 +1289,7 @@ namespace ShutterManagement.Business.Services
                     ModifiedBy = AppConstant.LoggedInUserID,
                     IsActive = true,
                     IsDelete = false,
+                    OptionTypeid = option.OptionTypeid,
                     Optionid = option.Optionid,
                     OptionName = option.OptionName,
                     OptionTypeName = option.OptionTypeName,
@@ -1301,8 +1299,8 @@ namespace ShutterManagement.Business.Services
 
                 estimateWindowOptions.Add(optionEntity);
             }
-
-           // await dbContext.TblEstimateWindowProductOptions.AddRangeAsync(estimateWindowOptions);
+            await dbContext.TblOrderWindowProductOptions.AddRangeAsync(estimateWindowOptions);
+          //  await dbContext.TblOrderWindowProductOption.AddRangeAsync(estimateWindowOptions);
             await dbContext.SaveChangesAsync();
         }
 
