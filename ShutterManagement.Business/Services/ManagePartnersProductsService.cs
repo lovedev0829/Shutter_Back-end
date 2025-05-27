@@ -450,7 +450,7 @@ namespace ShutterManagement.Business.Services
                                               MarkupOptionType = o1.MarkupOptionType ?? EnumValue.GetEnumValue(PriceType.Fixed),
                                               TaxRateId = (o1 != null ? o1.TaxId : Guid.Empty) ?? Guid.Empty,
 
-                                          }).ToList();
+                                          }).Distinct().ToList();
 
 
                     var productTasks = products.Select(product =>
