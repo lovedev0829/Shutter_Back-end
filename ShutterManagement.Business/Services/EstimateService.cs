@@ -1467,8 +1467,6 @@ namespace ShutterManagement.Business.Services
                         .Where(p => Ids.Contains(p.WindowProductId))
                         .Select(x => x.ProductPrice).Sum();
                 }
-
-
             }
             subtotal += (decimal)windowproductdetails.Data.Where(x => x.TotalPrice != null).DistinctBy(x => x.WindowProdcutId).Sum(x => x.TotalPrice);
             additionalCostAsOptionPrice += (decimal)windowproductdetails.Data.Sum(x => x.AdditionalCost);
