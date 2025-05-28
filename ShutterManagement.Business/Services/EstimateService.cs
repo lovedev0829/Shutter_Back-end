@@ -643,7 +643,7 @@ namespace ShutterManagement.Business.Services
                             }
                         }
                         Wholesale += Convert.ToDecimal(Convert.ToDecimal(ComponentPriceWithoutMarkup).ToString("0.00"));
-                        return Wholesale;
+                        continue;
                     }
                     if (!(bool)iswholesale)
                     {
@@ -738,7 +738,8 @@ namespace ShutterManagement.Business.Services
                 }
             }
 
-            return ComponentSubTotal;
+
+            return iswholesale ?? false ? Wholesale : ComponentSubTotal;
         }
 
         public NCalc.Expression CalculateExpression(string formula, dynamic values)
