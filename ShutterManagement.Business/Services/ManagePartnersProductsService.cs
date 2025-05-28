@@ -119,7 +119,7 @@ namespace ShutterManagement.Business.Services
                             if (model.PartnerSellingPrice >= minSellingPrice && model.PartnerSellingPrice <= maxSellingPrice)
                             {
                                 IsManagePartnerProductExist.PartnerSellingPrice = model.PartnerSellingPrice??0.0m;
-                                IsManagePartnerProductExist.TaxId = model.TaxRateId;
+                                IsManagePartnerProductExist.TaxId = model.TaxRateId!=Guid.Empty? model.TaxRateId:null;
                                 await Update(IsManagePartnerProductExist);
                                 foreach (var item in model.ManagePartnerProductOptions)
                                 {
@@ -146,7 +146,7 @@ namespace ShutterManagement.Business.Services
                                         if (item.PartnerSellingPrice >= minSellingPrice1 && item.PartnerSellingPrice <= maxSellingPrice1)
                                         {
                                             IsManagepartneroptiontype.PartnerSellingPrice = item.PartnerSellingPrice??0.0m;
-                                            IsManagepartneroptiontype.TaxId = item.TaxRateId;  
+                                            IsManagepartneroptiontype.TaxId = item.TaxRateId!=Guid.Empty? item.TaxRateId:null;  
                                             await managePartnersProductsOptions.Update(IsManagepartneroptiontype);
                                             if (!AppConstant.IsTenant)
                                             {
@@ -156,7 +156,7 @@ namespace ShutterManagement.Business.Services
                                                 FirstOrDefaultAsync();
                                                 if (IsOptionvalueExist != null)
                                                 {
-                                                    IsOptionvalueExist.TaxId = item.TaxRateId;
+                                                    IsOptionvalueExist.TaxId = item.TaxRateId != Guid.Empty ? item.TaxRateId : null;
                                                     dbContext.TblOptions.Update(IsOptionvalueExist);
                                                    await dbContext.SaveChangesAsync();
                                                 }
@@ -450,7 +450,7 @@ namespace ShutterManagement.Business.Services
                                               MarkupOptionType = o1.MarkupOptionType ?? EnumValue.GetEnumValue(PriceType.Fixed),
                                               TaxRateId = (o1 != null ? o1.TaxId : Guid.Empty) ?? Guid.Empty,
 
-                                          }).ToList();
+                                          }).Distinct().ToList();
 
 
                     var productTasks = products.Select(product =>

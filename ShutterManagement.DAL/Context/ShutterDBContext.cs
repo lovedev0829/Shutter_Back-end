@@ -1487,6 +1487,7 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.CityTax).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
             entity.Property(e => e.MunicipilityTax).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.OptionPrice).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.StateTax).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
 

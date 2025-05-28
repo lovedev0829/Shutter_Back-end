@@ -273,13 +273,13 @@ namespace ShutterManagement.Business.Services
                     //    return responseVm;
                     //}
 
-                    bool IsUserEmailExists = await userService.AnyAsync(x => x.Email == model.UserEmail && x.TenantId.ToString() == model.TenantId && x.IsDelete == false && x.IsTenantAdmin == false);
+                    bool IsUserEmailExists = await userService.AnyAsync(x => x.Email == model.UserEmail && x.TenantId.ToString() != model.TenantId && x.IsDelete == false && x.IsTenantAdmin == false);
                     if (IsUserEmailExists)
                     {
                         responseVm.Message = "User Email " + AppConstant.AlreadyExists;
                         return responseVm;
                     }
-                    var TenantDetails = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId.ToString() != model.TenantId).Select(x => x.BrandingInfo).ToList();
+                    var TenantDetails = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId.ToString() != model.TenantId && x.ParentTenantId == AppConstant.LoggedInTenantId).Select(x => x.BrandingInfo).ToList();
                     bool IsTenantEmailExists = await tenantBrandingService.AnyAsync(x => x.Email == model.Email && x.IsDelete == false && TenantDetails.Contains(x.Id));
                     if (IsTenantEmailExists)
                     {

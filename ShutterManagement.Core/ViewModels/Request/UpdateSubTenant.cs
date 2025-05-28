@@ -12,9 +12,9 @@ namespace ShutterManagement.Core.ViewModels.Request
     {
         public string? TenantId { get; set; }
         [DefaultValue("")]
-        [MinLength(8), MaxLength(12)]
+        [MinLength(6), MaxLength(24)]
         [RegularExpression(@"^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,12}$",
-        ErrorMessage = "Password must be 8-12 chars with letter, number & special char.")]
+         ErrorMessage = "Password must be 6-12 digit with char")]
         public string? Password { get; set; }
         //public string? ParentTenantId { get; set; }
     }
