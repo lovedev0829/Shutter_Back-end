@@ -777,9 +777,9 @@ namespace ShutterManagement.Business.Services
                                 if (ComponentId != null)
                                 {
                                     var wasteFactor = componentMaterialService.GetAllQuerable()
-                                    .Where(x => x.RawMaterialId == query.RawMaterialId && x.ComponentId.ToString() == ComponentId && x.IsDelete == false
-                                   && x.TenantId == AppConstant.LoggedInTenantId || x.TenantId.ToString() == AppConstant.LoggedInParentTenantId)
-                                     .Select(x => x.WasteFactor)
+                                    .Where(x => x.RawMaterialId == query.RawMaterialId && x.ComponentId.ToString() == ComponentId.ToString() && x.IsDelete == false
+                                   && (x.TenantId == AppConstant.LoggedInTenantId || x.TenantId.ToString() == AppConstant.LoggedInParentTenantId))
+                                    .Select(x => x.WasteFactor)
                                     .FirstOrDefault();
                                     if (wasteFactor != null)
                                         val = (Convert.ToDecimal(val) * (100 + (wasteFactor ?? 0)) / 100);
