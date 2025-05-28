@@ -773,14 +773,17 @@ namespace ShutterManagement.Business.Services
                                     .Where(x => x.ProductType.ToString() == info[1] && x.MaterialName == info[2] && x.IsActive == true &&
                                                 (x.TenantId == AppConstant.LoggedInTenantId || x.TenantId.ToString() == AppConstant.LoggedInParentTenantId)).FirstOrDefault();
                                 val = query.UnitCost;
-                                Guid ComponentId = values.ComponentId ?? Guid.Empty;
-                                var wasteFactor = componentMaterialService.GetAllQuerable()
-                     .Where(x => x.RawMaterialId == query.RawMaterialId && x.ComponentId == ComponentId && x.IsDelete == false
-                       && x.TenantId == AppConstant.LoggedInTenantId || x.TenantId.ToString() == AppConstant.LoggedInParentTenantId)
-                                 .Select(x => x.WasteFactor)
-                                .FirstOrDefault();
-                                if (wasteFactor != null)
-                                    val = (Convert.ToDecimal(val) * (100 + (wasteFactor ?? 0)) / 100);
+                                object ComponentId = GetProperty.GetColumnValue(values, "ComponentId");
+                                if (ComponentId != null)
+                                {
+                                    var wasteFactor = componentMaterialService.GetAllQuerable()
+                                    .Where(x => x.RawMaterialId == query.RawMaterialId && x.ComponentId.ToString() == ComponentId && x.IsDelete == false
+                                   && x.TenantId == AppConstant.LoggedInTenantId || x.TenantId.ToString() == AppConstant.LoggedInParentTenantId)
+                                     .Select(x => x.WasteFactor)
+                                    .FirstOrDefault();
+                                    if (wasteFactor != null)
+                                        val = (Convert.ToDecimal(val) * (100 + (wasteFactor ?? 0)) / 100);
+                                }
                             }
                             else if (info.Length == 4 && info[0] == "Material" && info[3] == "Unit")
                             {
@@ -813,6 +816,7 @@ namespace ShutterManagement.Business.Services
 
             return new NCalc.Expression(formula);
         }
+
 
         public async Task<IResponseVm<string>> Update_Estimate(UpdatetEstimate model)
         {
