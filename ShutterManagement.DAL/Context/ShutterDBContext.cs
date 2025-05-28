@@ -693,6 +693,7 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.Area).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.City).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.Color).HasMaxLength(100);
+            entity.Property(e => e.ComponentMarkup).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
@@ -702,7 +703,9 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.Length).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.Markup).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.Municipality).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.OptionMarkup).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.Price).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.ProductMarkup).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.ProductName).HasMaxLength(255);
             entity.Property(e => e.ProductPrice).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.ProductType)

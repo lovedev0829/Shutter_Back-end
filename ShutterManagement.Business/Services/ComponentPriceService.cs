@@ -139,6 +139,9 @@ namespace ShutterManagement.Business.Services
                       BuildWidth = estimatewindow.BuildWidth,
                       BuildHeight = estimatewindow.BuildHeight,
                       EstimateWindowProductId = estwindowProduct.EstimateWindowProductId,
+                      ComponentMarkup = estwindowProduct.ComponentMarkup,
+                      ProductMarkup = estwindowProduct.ProductMarkup,
+                      OptionMarkup = estwindowProduct.OptionMarkup,
                       // Product Properties
                       ProductName = estwindowProduct.ProductName,
                       ProductWidth = estwindowProduct.Width,
@@ -426,6 +429,7 @@ namespace ShutterManagement.Business.Services
                                                              OptionName = options.OptionName ?? "",
                                                              OptionTypeName =  optionValues.OptionType ?? "",
                                                              WindowOptionId = windowOptions.WindowoptionId,
+                                                             OptionMarkup = options.Markup ?? 0.0m, 
                                                              //IsTaxAvailable = opt.IsTaxApplied ?? false
                                                          };
                                 // Propagate to ALL items with the same ProductId

@@ -47,6 +47,9 @@ namespace ShutterManagement.Core.ViewModels.Response
         public decimal[]? OptionsPrice { get; set; } = [];
         //public decimal? AdditionalCost { get; set; } = 0.0m;
         public decimal? ProductPrice { get; set; }
+        public decimal? ComponentMarkup { get; set; }
+        public decimal? ProductMarkup { get; set; }
+        public decimal? OptionMarkup { get; set; }
 
 
         // ProductType Properties
@@ -150,6 +153,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public decimal? CityTaxAmount { get; set; }
         public decimal? StateTaxAmount { get; set; }
         public decimal? MunicipalityTaxAmount { get; set; }
+        public decimal? OptionMarkup { get; set; }
 
         public decimal? TotalTaxAmount { get; set; }
     }

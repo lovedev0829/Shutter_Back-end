@@ -73,6 +73,12 @@ public partial class TblEstimateWindowProduct
 
     public decimal? WholeSalePrice { get; set; }
 
+    public decimal? ProductMarkup { get; set; }
+
+    public decimal? ComponentMarkup { get; set; }
+
+    public decimal? OptionMarkup { get; set; }
+
     public virtual TblEstimateWindow? EstWindow { get; set; }
 
     public virtual TblEstimate Estimate { get; set; } = null!;
