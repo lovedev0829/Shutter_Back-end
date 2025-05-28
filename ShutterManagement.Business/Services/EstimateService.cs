@@ -777,7 +777,7 @@ namespace ShutterManagement.Business.Services
                                 if (ComponentId != null)
                                 {
                                     var wasteFactor = componentMaterialService.GetAllQuerable()
-                                    .Where(x => x.RawMaterialId == query.RawMaterialId && x.ComponentId.ToString() == ComponentId && x.IsDelete == false
+                                    .Where(x => x.RawMaterialId == query.RawMaterialId && x.ComponentId.ToString() == ComponentId.ToString() && x.IsDelete == false
                                    && x.TenantId == AppConstant.LoggedInTenantId || x.TenantId.ToString() == AppConstant.LoggedInParentTenantId)
                                      .Select(x => x.WasteFactor)
                                     .FirstOrDefault();
