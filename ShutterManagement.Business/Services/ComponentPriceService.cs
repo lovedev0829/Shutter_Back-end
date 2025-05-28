@@ -426,6 +426,7 @@ namespace ShutterManagement.Business.Services
                                                              OptionName = options.OptionName ?? "",
                                                              OptionTypeName =  optionValues.OptionType ?? "",
                                                              WindowOptionId = windowOptions.WindowoptionId,
+                                                             OptionMarkup = options.Markup ?? 0.0m, 
                                                              //IsTaxAvailable = opt.IsTaxApplied ?? false
                                                          };
                                 // Propagate to ALL items with the same ProductId

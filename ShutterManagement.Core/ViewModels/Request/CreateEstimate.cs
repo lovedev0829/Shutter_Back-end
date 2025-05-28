@@ -78,7 +78,8 @@ namespace ShutterManagement.Core.ViewModels.Request
 
     public class OptionPriceResult
     {
-        public decimal TotalCost { get; set; } = 0;
+        public decimal? TotalCost { get; set; } = 0;
+        public decimal? OptionMarkup { get; set; } = 0;
 
         public Dictionary<string, decimal> OptionWholesale { get; set; } = new Dictionary<string, decimal>();
         public Dictionary<string, decimal> OptionMSRP { get; set; } = new Dictionary<string, decimal>();
