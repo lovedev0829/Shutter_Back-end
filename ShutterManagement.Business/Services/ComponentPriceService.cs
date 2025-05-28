@@ -204,14 +204,14 @@ namespace ShutterManagement.Business.Services
                                            OptionTypeId = estimateOption.OptionTypeid.ToString(),
                                            OptionTypeName = estimateOption.OptionTypeName,
                                        }).ToList();
-
+                        distinctItem.OptionTaxDetails = Options;
                         // Propagate to ALL items with the same ProductId
                         var matchingItems = query.Where(x => x.ProductId == distinctItem.ProductId).ToList();
                         foreach (var item in matchingItems)
                         {
                             item.Options = Options.Select(x => x.OptionTypeName).ToArray();
                             item.AdditionalCost = Options.Select(x => x.OptionPrice).Sum();
-                            item.OptionTaxDetails = Options;
+                            //item.OptionTaxDetails = Options;
                         }
                     }
 
@@ -437,9 +437,9 @@ namespace ShutterManagement.Business.Services
                                     item.OptionTaxDetails = TaxOptionByPartner.ToList();
                                     item.OptionsTypeIds = distinctItem.OptionTaxDetails.Select(x => x.OptionTypeId.ToString()).ToArray();
                                     item.OptionIds = distinctItem.OptionTaxDetails.Select(x => x.OptionId.ToString()).ToArray();
-                                    item.Options = distinctItem.OptionTaxDetails.Select(x => x.OptionName + " - " + x.OptionTypeName).ToArray();
+                                    //item.Options = distinctItem.OptionTaxDetails.Select(x => x.OptionName + " - " + x.OptionTypeName).ToArray();
                                 }
-                                //distinctItem.OptionTaxDetails = TaxOptionByPartner != null ? TaxOptionByPartner.ToList() : null;
+                                distinctItem.OptionTaxDetails = TaxOptionByPartner != null ? TaxOptionByPartner.ToList() : null;
 
                             }
 
@@ -473,6 +473,8 @@ namespace ShutterManagement.Business.Services
                                                         // IsTaxAvailable = options.IsTaxApplied ?? false
                                                      };
                             // Propagate to ALL items with the same ProductId
+                            distinctItem.OptionTaxDetails = TaxOptionForTenant != null ? TaxOptionForTenant.ToList() : null;
+
                             var matchingItems = query.Where(x => x.ProductId == distinctItem.ProductId).ToList();
                             foreach (var item in matchingItems)
                             {
@@ -481,7 +483,7 @@ namespace ShutterManagement.Business.Services
                                 item.OptionTaxDetails = TaxOptionForTenant.ToList();
                                 item.OptionsTypeIds = distinctItem.OptionTaxDetails.Select(x => x.OptionTypeId.ToString()).ToArray();
                                 item.OptionIds = distinctItem.OptionTaxDetails.Select(x => x.OptionId.ToString()).ToArray();
-                                item.Options = distinctItem.OptionTaxDetails.Select(x => x.OptionName + " - " + x.OptionTypeName).ToArray();
+                                //item.Options = distinctItem.OptionTaxDetails.Select(x => x.OptionName + " - " + x.OptionTypeName).ToArray();
                             }
                         }
 

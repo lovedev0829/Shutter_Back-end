@@ -489,7 +489,7 @@ namespace ShutterManagement.Business.Services
 
                                     //itemsWithoutPricingExpression.ForEach(x => x.AdditionalCost = additionalCost);
                                     itemsWithoutPricingExpression.ForEach(x => x.IsComponentAvailable = false);
-                                    WindowProductData.AddRange(itemsWithoutPricingExpression);
+                                    //WindowProductData.AddRange(itemsWithoutPricingExpression);
                                     responseVm.IsSuccess = true;
                                 }
 
@@ -1454,7 +1454,7 @@ namespace ShutterManagement.Business.Services
                 }
             }
             subtotal += (decimal)windowproductdetails.Data.Where(x => x.TotalPrice != null).DistinctBy(x => x.WindowProdcutId).Sum(x => x.TotalPrice);
-            additionalCostAsOptionPrice += (decimal)windowproductdetails.Data.Sum(x => x.AdditionalCost);
+            additionalCostAsOptionPrice += (decimal)windowproductdetails.Data.DistinctBy(x=>x.ProductId).Sum(x => x.AdditionalCost);
 
 
             SumofSubtotalandAdditionalCost = subtotal + additionalCostAsOptionPrice;
