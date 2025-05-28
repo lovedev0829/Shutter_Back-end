@@ -509,6 +509,8 @@ namespace ShutterManagement.Business.Services
                                 data.Data.ForEach(x =>
                                 {
                                     x.TotalPrice = componentPrice != null && componentPrice > 0.0m ? Convert.ToDecimal(componentPrice.ToString("0.00")) : null;
+                                    x.ProductPrice = x.TotalPrice;
+
                                 });
 
                                 WindowProductData.AddRange(data.Data);
