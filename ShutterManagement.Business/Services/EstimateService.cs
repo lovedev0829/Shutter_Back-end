@@ -681,23 +681,24 @@ namespace ShutterManagement.Business.Services
                         }
                         ComponentSubTotal += Convert.ToDecimal(Convert.ToDecimal(ComponentPriceWithoutMarkup).ToString("0.00"));
                         var ProductownMarkup = (((ComponentPriceWithoutMarkup + CompoenentownMarkup) * distinctItem.Markup) / 100) ?? 0.0m;
-                        ProductMarkup += ProductownMarkup;
-                      
-                        var ComponentPriceWithAllMarkup = ComponentPriceWithoutMarkup + (distinctItem.ProductMarkup + distinctItem.ComponentMarkup);
+
+                        var ComponentPriceWithAllMarkup = ComponentPriceWithoutMarkup + ProductownMarkup + CompoenentownMarkup;// (distinctItem.ProductMarkup ?? 0.0m) + (distinctItem.ComponentMarkup ?? 0.0m);
                         if (IsSubtenants != null)
                         {
                             var productMarkup = dbContext.TblManagePartnersProducts.Where(x => x.ProductId == distinctItem.ProductId && x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
                             if (productMarkup.MarkupType == "Percentage")
                             {
-                                ComponentPriceWithAllMarkup = (ComponentPriceWithAllMarkup * (1 + (productMarkup.PartnerSellingPrice ?? 0) / 100)) ?? 0.0m;
+                                ProductownMarkup += (ComponentPriceWithAllMarkup *  (productMarkup.PartnerSellingPrice ?? 0) / 100);
                             }
                             if (productMarkup.MarkupType == "Fixed")
                             {
-                                ComponentPriceWithAllMarkup = (ComponentPriceWithAllMarkup + (productMarkup.PartnerSellingPrice ?? 0)) ?? 0.0m;
+                                ProductownMarkup += (ComponentPriceWithAllMarkup + (productMarkup.PartnerSellingPrice ?? 0));
                             }
-                            ComponentSubTotal = ComponentPriceWithAllMarkup ?? 0.0m;
-                            ComponentSubTotal = Convert.ToDecimal(Convert.ToDecimal(ComponentSubTotal).ToString("0.00"));
+                            //ComponentSubTotal = ComponentPriceWithAllMarkup;
+                            //ComponentSubTotal = Convert.ToDecimal(Convert.ToDecimal(ComponentSubTotal).ToString("0.00"));
                         }
+                        ProductMarkup += ProductownMarkup;
+
                     }
                     //distinctItem.ProductMarkup = ProductMarkup;
                     //distinctItem.ComponentMarkup = ComponentMarkup;
