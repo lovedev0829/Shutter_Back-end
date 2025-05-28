@@ -209,7 +209,7 @@ namespace ShutterManagement.Business.Services
                         var matchingItems = query.Where(x => x.ProductId == distinctItem.ProductId).ToList();
                         foreach (var item in matchingItems)
                         {
-                            item.Options = Options.Select(x => x.OptionTypeName).ToArray();
+                            item.Options = distinctItem.OptionTaxDetails.Select(x => x.OptionName + " - " + x.OptionTypeName).ToArray();
                             item.AdditionalCost = Options.Select(x => x.OptionPrice).Sum();
                             //item.OptionTaxDetails = Options;
                         }
@@ -429,17 +429,18 @@ namespace ShutterManagement.Business.Services
                                                              //IsTaxAvailable = opt.IsTaxApplied ?? false
                                                          };
                                 // Propagate to ALL items with the same ProductId
+                                distinctItem.OptionTaxDetails = TaxOptionByPartner != null ? TaxOptionByPartner.ToList() : null;
+
                                 var matchingItems = query.Where(x => x.ProductId == distinctItem.ProductId).ToList();
                                 foreach (var item in matchingItems)
                                 {
-                                    item.Options = TaxOptionByPartner.Select(x => x.OptionTypeName).ToArray();
+                                    //item.Options = TaxOptionByPartner.Select(x => x.OptionTypeName).ToArray();
                                     item.AdditionalCost = TaxOptionByPartner.Select(x => x.OptionPrice).Sum();
-                                    item.OptionTaxDetails = TaxOptionByPartner.ToList();
+                                    //item.OptionTaxDetails = TaxOptionByPartner.ToList();
                                     item.OptionsTypeIds = distinctItem.OptionTaxDetails.Select(x => x.OptionTypeId.ToString()).ToArray();
                                     item.OptionIds = distinctItem.OptionTaxDetails.Select(x => x.OptionId.ToString()).ToArray();
-                                    //item.Options = distinctItem.OptionTaxDetails.Select(x => x.OptionName + " - " + x.OptionTypeName).ToArray();
+                                    item.Options = distinctItem.OptionTaxDetails.Select(x => x.OptionName + " - " + x.OptionTypeName).ToArray();
                                 }
-                                distinctItem.OptionTaxDetails = TaxOptionByPartner != null ? TaxOptionByPartner.ToList() : null;
 
                             }
 
@@ -478,12 +479,11 @@ namespace ShutterManagement.Business.Services
                             var matchingItems = query.Where(x => x.ProductId == distinctItem.ProductId).ToList();
                             foreach (var item in matchingItems)
                             {
-                                item.Options = TaxOptionForTenant.Select(x => x.OptionTypeName).ToArray();
                                 item.AdditionalCost = TaxOptionForTenant.Select(x => x.OptionPrice).Sum();
-                                item.OptionTaxDetails = TaxOptionForTenant.ToList();
+                               // item.OptionTaxDetails = TaxOptionForTenant.ToList();
                                 item.OptionsTypeIds = distinctItem.OptionTaxDetails.Select(x => x.OptionTypeId.ToString()).ToArray();
                                 item.OptionIds = distinctItem.OptionTaxDetails.Select(x => x.OptionId.ToString()).ToArray();
-                                //item.Options = distinctItem.OptionTaxDetails.Select(x => x.OptionName + " - " + x.OptionTypeName).ToArray();
+                                item.Options = distinctItem.OptionTaxDetails.Select(x => x.OptionName + " - " + x.OptionTypeName).ToArray();
                             }
                         }
 
