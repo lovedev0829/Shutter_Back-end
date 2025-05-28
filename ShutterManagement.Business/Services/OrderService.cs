@@ -1210,7 +1210,7 @@ namespace ShutterManagement.Business.Services
             }
 
             var estimateWindowProductDetails = estimateWindowProduct.GetAllQuerable().Where(x => x.EstimateId == estimateId).FirstOrDefault();
-            var estimateWindowProductOptionDetails = dbContext.TblEstimateWindowProductOptions.Where(s => s.WindowProductId == windowProductData.WindowProductId).ToList();
+            var estimateWindowProductOptionDetails = dbContext.TblEstimateWindowProductOptions.Where(s => s.EstimateWindowProductId == estimateWindowProductDetails.EstimateWindowProductId).ToList();
             TblOrderWindowProduct tblOrderWindowProduct = new TblOrderWindowProduct
             {
                 OrderWindowProductId = Guid.NewGuid(),

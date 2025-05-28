@@ -708,7 +708,7 @@ namespace ShutterManagement.Business.Services
                 foreach (var item in matchingItems)
                 {
                     item.AdditionalCost = distinctItem.AdditionalCost;
-                    item.OptionTaxDetails = distinctItem.OptionTaxDetails;
+                    //item.OptionTaxDetails = distinctItem.OptionTaxDetails;
                 }
             }
 
