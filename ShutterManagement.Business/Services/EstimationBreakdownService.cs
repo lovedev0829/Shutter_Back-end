@@ -214,9 +214,7 @@ namespace ShutterManagement.Business.Services
                 // Step 1: Get relevant window product IDs for the estimate
                 Guid[] windowProductIds = estimateWindowProductService.GetAllQuerable()
                     .Where(x => x.EstimateId == EstimationId)
-                    .Select(x => x.WindowProductId)
-                    .Where(id => id.HasValue)
-                    .Select(id => id.Value)
+                    .Select(x => (Guid)x.WindowProductId)
                     .ToArray();
 
                 // Step 2: Build estimate from service

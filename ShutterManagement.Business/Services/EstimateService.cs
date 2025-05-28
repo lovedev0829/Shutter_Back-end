@@ -1315,6 +1315,9 @@ namespace ShutterManagement.Business.Services
                         x.ProductTypeName,
                         x.ProductPrice,
                         x.WholeSalePrice,
+                        x.ProductMarkup,
+                        x.OptionMarkup,
+                        x.ComponentMarkup
                     }).ToList();
 
                 e.WindowProductId = productList.Select(p => (Guid)p.WindowProductId).Distinct().ToArray();
@@ -1365,6 +1368,9 @@ namespace ShutterManagement.Business.Services
                         Options = Options.Select(x => x.OptionTypeName).ToArray(),
                         IsComponentAvailable = IsComponenetAvailable,
                         WholesalePrice = p.WholeSalePrice,
+                        ProductMarkup = p.ProductMarkup,
+                        ComponentMarkup = p.ComponentMarkup,
+                        OptionMarkup = p.OptionMarkup,
                         EstimateWindowDetails = WindowDetails.Where(x => x.WindowId == p.WindowId).Select(x => new EstimateWindowList
                         {
                             ArchHeight = x.ArchHeight,
@@ -1480,9 +1486,11 @@ namespace ShutterManagement.Business.Services
                 }
             }
             subtotal += (decimal)windowproductdetails.Data.Where(x => x.TotalPrice != null).DistinctBy(x => x.WindowProdcutId).Sum(x => x.TotalPrice);
+            var ComponentMarkup = (decimal)windowproductdetails.Data.Where(x => x.ComponentMarkup != null).DistinctBy(x => x.ProductId).Sum(x => x.ComponentMarkup);
+            var ProductMarkup = (decimal)windowproductdetails.Data.Where(x => x.ProductMarkup != null).DistinctBy(x => x.ProductId).Sum(x => x.ProductMarkup);
+            var OptionMarkup = (decimal)windowproductdetails.Data.Where(x => x.OptionMarkup != null).DistinctBy(x => x.ProductId).Sum(x => x.OptionMarkup);
             additionalCostAsOptionPrice += (decimal)windowproductdetails.Data.DistinctBy(x=>x.ProductId).Sum(x => x.AdditionalCost);
-
-
+            subtotal += (ComponentMarkup+ProductMarkup+OptionMarkup);
             SumofSubtotalandAdditionalCost = subtotal + additionalCostAsOptionPrice;
 
 
@@ -1635,8 +1643,12 @@ namespace ShutterManagement.Business.Services
                     return; // Return early if window not found
                 }
                 var wholesaleprice = windowProdcutDetailsForEstimates.Where(x => x.WindowProdcutId == product.WindowProductId).Select(x => x.WholesalePrice).FirstOrDefault() ?? 0.0m;
+                var ComponentMarkup = windowProdcutDetailsForEstimates.Where(x => x.WindowProdcutId == product.WindowProductId).Select(x => x.ComponentMarkup).FirstOrDefault() ?? 0.0m;
+                var ProductMarkup = windowProdcutDetailsForEstimates.Where(x => x.WindowProdcutId == product.WindowProductId).Select(x => x.ProductMarkup).FirstOrDefault() ?? 0.0m;
+                var OptionMarkup = windowProdcutDetailsForEstimates.Where(x => x.WindowProdcutId == product.WindowProductId).Select(x => x.OptionMarkup).FirstOrDefault() ?? 0.0m;
                 var EstimateWindow = await AddWindowToEstimate(windowData, windowProductData, estimateId);
-                var EstimateWindowProduct = await AddProductToEstimate(windowProductData, estimateId, product.ProductPrice, EstimateWindow, wholesaleprice);
+                var EstimateWindowProduct = await AddProductToEstimate(windowProductData, estimateId, product.ProductPrice, EstimateWindow, wholesaleprice
+                    , OptionMarkup, ProductMarkup, ComponentMarkup);
                 if (!string.IsNullOrEmpty(Message))
                 {
                     return;
@@ -1685,7 +1697,8 @@ namespace ShutterManagement.Business.Services
             return tblEstimateWindow;
         }
 
-        private async Task<TblEstimateWindowProduct> AddProductToEstimate(TblWindowProduct windowProductData, Guid estimateId, decimal? ProductPrice, TblEstimateWindow tblEstimateWindow, decimal? wholesale)
+        private async Task<TblEstimateWindowProduct> AddProductToEstimate(TblWindowProduct windowProductData, Guid estimateId, decimal? ProductPrice, TblEstimateWindow tblEstimateWindow, 
+            decimal? wholesale,decimal? OptionMarkup,decimal? ProductMarkup, decimal? ComponentMarkup)
         {
             FileLogger.Log($"Adding product data for product {windowProductData.ProductId} to estimate...");
             var productData = (await productService.GetAll()).Where(x => x.ProductId == windowProductData.ProductId && x.IsDelete == false).FirstOrDefault();
@@ -1742,7 +1755,10 @@ namespace ShutterManagement.Business.Services
                 Municipality = MunicipalityTax,
                 City = CityTax,
                 State = Statetax,
-                WholeSalePrice = wholesale
+                WholeSalePrice = wholesale,
+                ComponentMarkup = ComponentMarkup,
+                ProductMarkup = ProductMarkup,
+                OptionMarkup = OptionMarkup,
             };
 
             await estimateWindowProductService.Add(tblEstimateWindowProduct);

@@ -139,6 +139,9 @@ namespace ShutterManagement.Business.Services
                       BuildWidth = estimatewindow.BuildWidth,
                       BuildHeight = estimatewindow.BuildHeight,
                       EstimateWindowProductId = estwindowProduct.EstimateWindowProductId,
+                      ComponentMarkup = estwindowProduct.ComponentMarkup,
+                      ProductMarkup = estwindowProduct.ProductMarkup,
+                      OptionMarkup = estwindowProduct.OptionMarkup,
                       // Product Properties
                       ProductName = estwindowProduct.ProductName,
                       ProductWidth = estwindowProduct.Width,
