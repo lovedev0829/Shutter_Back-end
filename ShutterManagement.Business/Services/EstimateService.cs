@@ -1483,7 +1483,7 @@ namespace ShutterManagement.Business.Services
             if (model.IsTaxApplicable == true && isTaxExemptionInContact)
             {
                 var productTaxAmount = windowproductdetails.Data.DistinctBy(x => x.WindowProdcutId).Sum(x => x.TotalTaxAmount) ?? 0.0m;
-                var optionTaxAmount = windowproductdetails.Data.DistinctBy(x => x.WindowProdcutId).SelectMany(x => x.OptionTaxDetails).Sum(x => x.TotalTaxAmount) ?? 0.0m;
+                var optionTaxAmount = windowproductdetails.Data.SelectMany(x => x.OptionTaxDetails).Sum(x => x.TotalTaxAmount) ?? 0.0m;
                 totalTaxAmount = optionTaxAmount + productTaxAmount;
                 grandtotal += totalTaxAmount;
             }
