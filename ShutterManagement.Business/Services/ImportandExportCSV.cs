@@ -1134,7 +1134,7 @@ namespace ShutterManagement.Business.Services
                     rowValues.AddRange(optionHeaders.Select(header => optionValues.GetValueOrDefault(header, "0")));
 
                     // Add Sub Total and Total
-                    decimal subTotal = GetDynamicValue(firstEntry, "totalPrice");  
+                    decimal subTotal = GetDynamicValue(firstEntry, "productPrice");  
                     decimal additionalCost = GetDynamicValue(firstEntry, "additionalCost");
 
                     decimal total = subTotal + additionalCost;

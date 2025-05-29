@@ -1172,7 +1172,7 @@ namespace ShutterManagement.Business.Services
                 return;
             }
 
-            var estimateWindowProductDetails = estimateWindowProduct.GetAllQuerable().Where(x => x.EstimateId == estimateId).FirstOrDefault();
+            var estimateWindowProductDetails = estimateWindowProduct.GetAllQuerable().Where(x => x.EstimateId == estimateId && x.ProductId.ToString() == windowProductData.ProductId.ToString()).FirstOrDefault();
             var estimateWindowProductOptionDetails = dbContext.TblEstimateWindowProductOptions.Where(s => s.EstimateWindowProductId == estimateWindowProductDetails.EstimateWindowProductId).ToList();
             TblOrderWindowProduct tblOrderWindowProduct = new TblOrderWindowProduct
             {
