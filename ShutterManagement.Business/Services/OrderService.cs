@@ -160,35 +160,10 @@ namespace ShutterManagement.Business.Services
                     if (windowproductdetails.Data != null && windowproductdetails.Data.Any())
                     {
                         additionalCost = windowproductdetails.Data.ToList().DistinctBy(x => x.AdditionalCost).FirstOrDefault().AdditionalCost ?? 0.0m;
-                        subtotal = windowproductdetails.Data.Sum(x => x.Price) ?? 0.0m;
-                        totalTaxAmount += windowproductdetails.Data.DistinctBy(x => x.WindowProdcutId).Sum(x => x.TotalTaxAmount) ?? 0.0m;
-                        SumofSubtotalandAdditionalCost = subtotal + additionalCost;
+                        subtotal = windowproductdetails.Data.ToList().FirstOrDefault().TotalPrice ?? 0.0m;
+                        totalTaxAmount = windowproductdetails.Data.ToList().FirstOrDefault().TotalTaxAmount ?? 0.0m;
+                        //SumofSubtotalandAdditionalCost = subtotal + additionalCost;
                     }
-                    //if (string.IsNullOrEmpty((updateOrder.taxRateId).ToString()) && string.IsNullOrEmpty(updateOrder.DiscountCoupon))
-                    //{
-                    //    grandtotal = SumofSubtotalandAdditionalCost;
-                    //}
-                    //else
-                    //{
-                    //    if (string.IsNullOrEmpty((updateOrder.taxRateId).ToString()))
-                    //    {
-                    //        taxRateId = Guid.Empty;
-                    //    }
-                    //    else
-                    //    {
-                    //        taxRateId = updateOrder.taxRateId;
-                    //    }
-                    //    if (string.IsNullOrEmpty(updateOrder.DiscountId.ToString()))
-                    //    {
-                    //        discountId = Guid.Empty;
-                    //    }
-                    //    else
-                    //    {
-                    //        discountId = updateOrder.DiscountId;
-                    //    }
-                    //    grandtotal = await estimateService.CalculateGrandTotal(discountId, SumofSubtotalandAdditionalCost, taxRateId) ?? 0m;
-                    //}
-
                     if (string.IsNullOrEmpty((updateOrder.taxRateId).ToString()))
                     {
                         taxRateId = Guid.Empty;
@@ -205,14 +180,14 @@ namespace ShutterManagement.Business.Services
                     {
                         discountId = updateOrder.DiscountId;
                     }
-                    grandtotal = await estimateService.CalculateGrandTotal(discountId, SumofSubtotalandAdditionalCost, taxRateId) ?? 0m;
+                    grandtotal = await estimateService.CalculateGrandTotal(discountId, subtotal, taxRateId) ?? 0m;
 
                     bool isTaxExemptionInContact = GetIsTaxExemptByWindowId(windowproductdetails.Data.Select(s => s.WindowId).FirstOrDefault());
                     if (updateOrder.IsTaxApplicable == true && isTaxExemptionInContact)
                     {
                         grandtotal = grandtotal + totalTaxAmount;
 
-                        grandtotal = grandtotal + windowproductdetails.Data.SelectMany(x => x.OptionTaxDetails).Sum(x => (decimal)x.TotalTaxAmount);
+                        //grandtotal = grandtotal + windowproductdetails.Data.SelectMany(x => x.OptionTaxDetails).Sum(x => x.TotalTaxAmount) ?? 0.0m;
                     }
 
 
@@ -279,7 +254,7 @@ namespace ShutterManagement.Business.Services
                 .Select(x => new ProductListing
                 {
                     WindowProductId = (Guid)x.WindowProductId,
-                    ProductPrice =(decimal)x.ProductPrice
+                    ProductPrice =(decimal)x.ProductPrice,
                 })
                 .ToList();
 
@@ -450,34 +425,14 @@ namespace ShutterManagement.Business.Services
                             if (windowproductdetails.Data != null && windowproductdetails.Data.Any())
                             {
                                 additionalCost = windowproductdetails.Data.ToList().DistinctBy(x => x.AdditionalCost).FirstOrDefault().AdditionalCost??0.0m;
+                                var ProductMarkup = windowproductdetails.Data.ToList().DistinctBy(x => x.ProductId).FirstOrDefault().ProductMarkup ?? 0.0m;
+                                var ComponentMarkup = windowproductdetails.Data.ToList().DistinctBy(x => x.ProductId).FirstOrDefault().ComponentMarkup ??0.0m;
+                                var OptionMarkup = windowproductdetails.Data.ToList().DistinctBy(x => x.ProductId).FirstOrDefault().OptionMarkup ??0.0m;
                                 subtotal = windowproductdetails.Data.Sum(x => x.Price)??0.0m;
+                                subtotal = (ProductMarkup + ComponentMarkup + OptionMarkup);
                                 SumofSubtotalandAdditionalCost = subtotal + additionalCost;
                                 totalTaxAmount += windowproductdetails.Data.DistinctBy(x => x.WindowProdcutId).Sum(x => x.TotalTaxAmount)??0.0m;
                             }
-                            //if (string.IsNullOrEmpty((model.taxRateId).ToString()) && string.IsNullOrEmpty(model.DiscountCoupon))
-                            //{
-                            //    grandtotal = SumofSubtotalandAdditionalCost;
-                            //}
-                            //else
-                            //{
-                            //    if (string.IsNullOrEmpty((model.taxRateId).ToString()))
-                            //    {
-                            //        taxRateId = Guid.Empty;
-                            //    }
-                            //    else
-                            //    {
-                            //        taxRateId = model.taxRateId;
-                            //    }
-                            //    if (string.IsNullOrEmpty(model.DiscountId.ToString()))
-                            //    {
-                            //        discountId = Guid.Empty;
-                            //    }
-                            //    else
-                            //    {
-                            //        discountId = model.DiscountId;
-                            //    }
-                            //    grandtotal = await estimateService.CalculateGrandTotal(discountId, SumofSubtotalandAdditionalCost, taxRateId) ?? 0m;
-                            //}
                             if (string.IsNullOrEmpty((model.taxRateId).ToString()))
                             {
                                 taxRateId = Guid.Empty;
@@ -1066,6 +1021,9 @@ namespace ShutterManagement.Business.Services
                     x.ProductTypeName,
                     x.ProductPrice,
                     x.WholeSalePrice,
+                    x.ProductMarkup,
+                    x.ComponentMarkup,
+                    x.OptionMarkup
                 }).ToList();
 
             e.WindowProductId = productList.DistinctBy(x=>x.WindowProductId).Select(p => (Guid)p.WindowProductId).ToArray();
@@ -1074,7 +1032,7 @@ namespace ShutterManagement.Business.Services
                 var Options = (from orderOption in dbContext.TblOrderWindowProductOptions
                                //join optionType in dbContext.TblOptionsTypes on orderOption.OptionTypeid equals optionType.OptionTypeId
                                //join option in dbContext.TblOptions on optionType.OptionId equals option.OptionId
-                               where orderOption.WindowProductId == p.WindowProductId
+                               where orderOption.OrderWindowProductId == p.OrderWindowProductId 
                                select new OptionTaxVM
                                {
                                    TaxId = orderOption.TaxId,
@@ -1120,6 +1078,9 @@ namespace ShutterManagement.Business.Services
                     WindowProductId = p.WindowProductId,
                     Price = p.Price,
                     ProductPrice = p.ProductPrice,
+                    ProductMarkup = p.ProductMarkup,
+                    ComponentMarkup = p.ComponentMarkup,
+                    OptionMarkup = p.OptionMarkup,
                     Options = Options.Select(x => x.OptionName).ToArray(),
                     WholesalePrice = p.WholeSalePrice,
                     EstimateWindowDetails = WindowDetails.Where(x => x.WindowId == p.WindowId).Select(x => new EstimateWindowLists
@@ -1198,7 +1159,8 @@ namespace ShutterManagement.Business.Services
             await orderWindowService.Add(tblOrderWindow);
         }
 
-        private async Task AddProductToOrder(TblWindowProduct windowProductData, Guid estimateId, Guid OrderId, string Version,decimal? ProductPrice)
+        private async Task AddProductToOrder(TblWindowProduct windowProductData, Guid estimateId, Guid OrderId, string Version,
+            decimal? ProductPrice)
         {
             FileLogger.Log($"Adding product data for product {windowProductData.ProductId} to order...");
             var productData = (await productService.GetAll()).Where(x => x.ProductId == windowProductData.ProductId && x.IsDelete == false).FirstOrDefault();
@@ -1208,8 +1170,7 @@ namespace ShutterManagement.Business.Services
                 Message = "Product " + AppConstant.NoDataFound;
                 return;
             }
-
-            var estimateWindowProductDetails = estimateWindowProduct.GetAllQuerable().Where(x => x.EstimateId == estimateId).FirstOrDefault();
+            var estimateWindowProductDetails = estimateWindowProduct.GetAllQuerable().Where(x => x.EstimateId == estimateId && x.ProductId.ToString() == windowProductData.ProductId.ToString()).FirstOrDefault();
             var estimateWindowProductOptionDetails = dbContext.TblEstimateWindowProductOptions.Where(s => s.EstimateWindowProductId == estimateWindowProductDetails.EstimateWindowProductId).ToList();
             TblOrderWindowProduct tblOrderWindowProduct = new TblOrderWindowProduct
             {
@@ -1245,6 +1206,9 @@ namespace ShutterManagement.Business.Services
                 City = estimateWindowProductDetails.City,
                 State = estimateWindowProductDetails.State,
                 WholeSalePrice = estimateWindowProductDetails.WholeSalePrice,
+                ProductMarkup = estimateWindowProductDetails.ProductMarkup,
+                ComponentMarkup = estimateWindowProductDetails.ComponentMarkup,
+                OptionMarkup = estimateWindowProductDetails.OptionMarkup,
             };
 
             await orderWindowProductService.Add(tblOrderWindowProduct);
@@ -1259,7 +1223,6 @@ namespace ShutterManagement.Business.Services
                     optionTaxDetails
                 );
             }
-
         }
 
 

@@ -75,6 +75,12 @@ public partial class TblOrderWindowProduct
 
     public decimal? WholeSalePrice { get; set; }
 
+    public decimal? ProductMarkup { get; set; }
+
+    public decimal? ComponentMarkup { get; set; }
+
+    public decimal? OptionMarkup { get; set; }
+
     public virtual TblTaxRate? Tax { get; set; }
 
     public virtual ICollection<TblOrderWindowProductOption> TblOrderWindowProductOptions { get; set; } = new List<TblOrderWindowProductOption>();

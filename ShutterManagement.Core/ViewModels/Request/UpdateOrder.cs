@@ -16,4 +16,13 @@ namespace ShutterManagement.Core.ViewModels.Request
 
         
     }
+    //public class ProductListingsInOrder
+    //{
+    //    public Guid WindowProductId { get; set; }
+
+    //    public decimal ProductPrice { get; set; }
+    //    public decimal ProductMarkup{ get; set; }
+    //    public decimal ComponentMarkup { get; set; }
+    //    public decimal OptionMarkup { get; set; }
+    //}
 }
