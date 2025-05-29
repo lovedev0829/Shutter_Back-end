@@ -602,11 +602,11 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("GetAllExpression")]
-        public async Task<IActionResult> GetAllExpression(Pagination filter)
+        public async Task<IActionResult> GetAllExpression()
         {
             var res = await expression.Get_AllExpression(filter);
             res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
-            if(filter.IsOptionExpression !=null)
+            if(filter.IsOptionExpression ==true)
             {
                 res.Data = res.Data?.Where(x => x.IsOptionExpression == filter.IsOptionExpression).ToList();
                 res.TotalRecords = res.Data.Count();
