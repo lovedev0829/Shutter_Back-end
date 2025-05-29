@@ -609,7 +609,6 @@ namespace ShutterManagement.Controllers
             if(filter.IsOptionExpression ==true)
             {
                 res.Data = res.Data?.Where(x => x.IsOptionExpression == filter.IsOptionExpression).ToList();
-                res.TotalRecords = res.Data.Count();
             }
             return Ok(res);
         }
