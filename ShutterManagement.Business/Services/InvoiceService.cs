@@ -632,7 +632,7 @@ namespace ShutterManagement.Business.Services
                     Terms = estimationDetails?.TermsCondition ?? "",
                     Note = estimationDetails?.Notes ?? "",
                     OrderId = orderDetails?.OrderName ?? "",
-                    Taxes = estimationDetails?.TaxAmount.ToString() ?? "",
+                    Taxes = estimationDetails?.TotaltaxAmount.ToString() ?? "",
                     Discount = estimationDetails?.DiscountAmount.ToString() ?? "",
                     Additionalcost = estimationDetails?.AdditionalCost.ToString() ?? "",
                     ProductListHtml = GenerateProductListHtml(productList)
@@ -1072,7 +1072,7 @@ namespace ShutterManagement.Business.Services
             {
                 //decimal? unitprice = product.TotalPrice / product.WindowQty;
 
-                decimal? effectiveTotalPrice = product.TotalPrice > 0 ? product.TotalPrice.Value : product.ProductPrice;
+                decimal? effectiveTotalPrice = product.ProductPrice > 0 ? product.ProductPrice.Value : product.ProductPrice;
                 decimal? unitprice = effectiveTotalPrice / product.WindowQty;
                 productListHtml.Append($@"
     <tr style='background-color: #efefef;'>
