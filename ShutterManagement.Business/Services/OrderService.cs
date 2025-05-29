@@ -429,34 +429,14 @@ namespace ShutterManagement.Business.Services
                             if (windowproductdetails.Data != null && windowproductdetails.Data.Any())
                             {
                                 additionalCost = windowproductdetails.Data.ToList().DistinctBy(x => x.AdditionalCost).FirstOrDefault().AdditionalCost??0.0m;
+                                var ProductMarkup = windowproductdetails.Data.ToList().DistinctBy(x => x.ProductId).FirstOrDefault().ProductMarkup ?? 0.0m;
+                                var ComponentMarkup = windowproductdetails.Data.ToList().DistinctBy(x => x.ProductId).FirstOrDefault().ComponentMarkup ??0.0m;
+                                var OptionMarkup = windowproductdetails.Data.ToList().DistinctBy(x => x.ProductId).FirstOrDefault().OptionMarkup ??0.0m;
                                 subtotal = windowproductdetails.Data.Sum(x => x.Price)??0.0m;
+                                subtotal = (ProductMarkup + ComponentMarkup + OptionMarkup);
                                 SumofSubtotalandAdditionalCost = subtotal + additionalCost;
                                 totalTaxAmount += windowproductdetails.Data.DistinctBy(x => x.WindowProdcutId).Sum(x => x.TotalTaxAmount)??0.0m;
                             }
-                            //if (string.IsNullOrEmpty((model.taxRateId).ToString()) && string.IsNullOrEmpty(model.DiscountCoupon))
-                            //{
-                            //    grandtotal = SumofSubtotalandAdditionalCost;
-                            //}
-                            //else
-                            //{
-                            //    if (string.IsNullOrEmpty((model.taxRateId).ToString()))
-                            //    {
-                            //        taxRateId = Guid.Empty;
-                            //    }
-                            //    else
-                            //    {
-                            //        taxRateId = model.taxRateId;
-                            //    }
-                            //    if (string.IsNullOrEmpty(model.DiscountId.ToString()))
-                            //    {
-                            //        discountId = Guid.Empty;
-                            //    }
-                            //    else
-                            //    {
-                            //        discountId = model.DiscountId;
-                            //    }
-                            //    grandtotal = await estimateService.CalculateGrandTotal(discountId, SumofSubtotalandAdditionalCost, taxRateId) ?? 0m;
-                            //}
                             if (string.IsNullOrEmpty((model.taxRateId).ToString()))
                             {
                                 taxRateId = Guid.Empty;
