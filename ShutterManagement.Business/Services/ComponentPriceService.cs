@@ -132,6 +132,7 @@ namespace ShutterManagement.Business.Services
                       JobId = estimate.JobId,
                       IsRated = estimatewindow.IsRated,
                       TotalPrice = estimate.TotalPrice,
+                      TotalTaxAmount = estimate.TotaltaxAmount,
                       // WindowProduct Properties
                       
                       WindowProdcutId = estwindowProduct.WindowProductId,
