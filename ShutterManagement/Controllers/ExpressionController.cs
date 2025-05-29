@@ -61,8 +61,11 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> GetAll_Expression(Pagination filter)
         {
             var result = await expression.Get_AllExpression(filter);
-            result.Data = result.Data.Where(x => x.IsOptionExpression == Convert.ToBoolean(filter.IsOptionExpression)).ToList();
-            result.TotalRecords = result.Data.Count;
+            if (filter.IsOptionExpression == true)
+            {
+                result.Data = result.Data.Where(x => x.IsOptionExpression == Convert.ToBoolean(filter.IsOptionExpression)).ToList();
+                result.TotalRecords = result.Data.Count;
+            }
             return Ok(result);
         }   
     }
