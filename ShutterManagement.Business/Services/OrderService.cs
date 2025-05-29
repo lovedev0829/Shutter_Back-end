@@ -279,7 +279,8 @@ namespace ShutterManagement.Business.Services
                 .Select(x => new ProductListing
                 {
                     WindowProductId = (Guid)x.WindowProductId,
-                    ProductPrice =(decimal)x.ProductPrice
+                    ProductPrice =(decimal)x.ProductPrice,
+                    
                 })
                 .ToList();
 
@@ -1074,7 +1075,7 @@ namespace ShutterManagement.Business.Services
                 var Options = (from orderOption in dbContext.TblOrderWindowProductOptions
                                //join optionType in dbContext.TblOptionsTypes on orderOption.OptionTypeid equals optionType.OptionTypeId
                                //join option in dbContext.TblOptions on optionType.OptionId equals option.OptionId
-                               where orderOption.WindowProductId == p.WindowProductId
+                               where orderOption.OrderWindowProductId == p.OrderWindowProductId
                                select new OptionTaxVM
                                {
                                    TaxId = orderOption.TaxId,
@@ -1209,7 +1210,7 @@ namespace ShutterManagement.Business.Services
                 return;
             }
 
-            var estimateWindowProductDetails = estimateWindowProduct.GetAllQuerable().Where(x => x.EstimateId == estimateId).FirstOrDefault();
+            var estimateWindowProductDetails = estimateWindowProduct.GetAllQuerable().Where(x => x.EstimateId == estimateId && x.ProductId.ToString() == windowProductData.ProductId.ToString()).FirstOrDefault();
             var estimateWindowProductOptionDetails = dbContext.TblEstimateWindowProductOptions.Where(s => s.EstimateWindowProductId == estimateWindowProductDetails.EstimateWindowProductId).ToList();
             TblOrderWindowProduct tblOrderWindowProduct = new TblOrderWindowProduct
             {
