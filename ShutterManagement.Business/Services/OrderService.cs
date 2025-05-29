@@ -160,13 +160,9 @@ namespace ShutterManagement.Business.Services
                     if (windowproductdetails.Data != null && windowproductdetails.Data.Any())
                     {
                         additionalCost = windowproductdetails.Data.ToList().DistinctBy(x => x.AdditionalCost).FirstOrDefault().AdditionalCost ?? 0.0m;
-                        subtotal = windowproductdetails.Data.Sum(x => x.Price) ?? 0.0m;
-                        totalTaxAmount += windowproductdetails.Data.DistinctBy(x => x.WindowProdcutId).Sum(x => x.TotalTaxAmount) ?? 0.0m;
-                        var ComponentMarkup = windowproductdetails.Data.DistinctBy(x => x.ProductId).Sum(x => x.ComponentMarkup) ?? 0.0m;
-                        var ProductMarkup = windowproductdetails.Data.DistinctBy(x => x.ProductId).Sum(x => x.ProductMarkup) ?? 0.0m;
-                        var OptionMarkup = windowproductdetails.Data.DistinctBy(x => x.ProductId).Sum(x => x.OptionMarkup) ?? 0.0m;
-                        subtotal += (ProductMarkup + ComponentMarkup + OptionMarkup);
-                        SumofSubtotalandAdditionalCost = subtotal + additionalCost;
+                        subtotal = windowproductdetails.Data.ToList().FirstOrDefault().TotalPrice ?? 0.0m;
+                        totalTaxAmount = windowproductdetails.Data.ToList().FirstOrDefault().TotalTaxAmount ?? 0.0m;
+                        //SumofSubtotalandAdditionalCost = subtotal + additionalCost;
                     }
                     if (string.IsNullOrEmpty((updateOrder.taxRateId).ToString()))
                     {
@@ -184,14 +180,14 @@ namespace ShutterManagement.Business.Services
                     {
                         discountId = updateOrder.DiscountId;
                     }
-                    grandtotal = await estimateService.CalculateGrandTotal(discountId, SumofSubtotalandAdditionalCost, taxRateId) ?? 0m;
+                    grandtotal = await estimateService.CalculateGrandTotal(discountId, subtotal, taxRateId) ?? 0m;
 
                     bool isTaxExemptionInContact = GetIsTaxExemptByWindowId(windowproductdetails.Data.Select(s => s.WindowId).FirstOrDefault());
                     if (updateOrder.IsTaxApplicable == true && isTaxExemptionInContact)
                     {
                         grandtotal = grandtotal + totalTaxAmount;
 
-                        grandtotal = grandtotal + windowproductdetails.Data.SelectMany(x => x.OptionTaxDetails).Sum(x => (decimal)x.TotalTaxAmount);
+                        //grandtotal = grandtotal + windowproductdetails.Data.SelectMany(x => x.OptionTaxDetails).Sum(x => x.TotalTaxAmount) ?? 0.0m;
                     }
 
 
@@ -1036,7 +1032,8 @@ namespace ShutterManagement.Business.Services
                 var Options = (from orderOption in dbContext.TblOrderWindowProductOptions
                                //join optionType in dbContext.TblOptionsTypes on orderOption.OptionTypeid equals optionType.OptionTypeId
                                //join option in dbContext.TblOptions on optionType.OptionId equals option.OptionId
-                               where orderOption.WindowProductId == p.WindowProductId
+                               where orderOption.WindowProductId == p.WindowProductId && orderOption.OrderWindowProductId
+                               == p.OrderWindowProductId
                                select new OptionTaxVM
                                {
                                    TaxId = orderOption.TaxId,
