@@ -1090,7 +1090,11 @@ namespace ShutterManagement.Business.Services
                 //decimal? unitprice = product.TotalPrice / product.WindowQty;
 
                 decimal? effectiveTotalPrice = product.ProductPrice > 0 ? product.ProductPrice.Value : product.ProductPrice;
-                decimal? unitprice = effectiveTotalPrice??0.0m / product.WindowQty;
+                decimal? unitprice = (product.ProductPrice + product.ComponentMarkup + product.ProductMarkup) / product.WindowQty;
+                decimal? optionprice = (product.additionalCost + product.OptionMarkup);
+                decimal? subtotal = (product.ProductPrice + product.ComponentMarkup + product.ProductMarkup + optionprice);
+
+
                 productListHtml.Append($@"
     <tr style='background-color: #efefef;'>
         <td style='text-align: center; padding: 5px 5px;'>{++i}</td>
@@ -1100,8 +1104,9 @@ namespace ShutterManagement.Business.Services
         <td style='text-align: center; padding: 5px 5px;'>{product.WindowQty??0}</td>
         <td style='text-align: center; padding: 5px 5px;'>{product.Width??0}</td>
         <td style='text-align: center; padding: 5px 5px;'>{product.Height ?? 0}</td>
-        <td style='text-align: center; padding: 5px 5px;'>{unitprice??0.0m:F2}</td>
-        <td style='text-align: center; padding: 5px 5px;'>{effectiveTotalPrice??0.0m:F2}</td>
+        <td style='text-align: center; padding: 5px 5px;'>{unitprice ?? 0.0m:F2}</td>
+        <td style='text-align: center; padding: 5px 5px;'>{optionprice ?? 0.0m:F2}</td>
+        <td style='text-align: center; padding: 5px 5px;'>{subtotal ?? 0.0m:F2}</td>
     </tr>");
             }
 
