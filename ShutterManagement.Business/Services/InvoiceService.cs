@@ -536,8 +536,9 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.AccessDenied;
                     return responseVm;
                 }
+
                 // Guid? templateId = Guid.Parse("3A49D48B-CA1D-4E0E-9E1F-A22E7529EF47");
-                await stripeConfiguration.GetStripeConfiguration(AppConstant.LoggedInTenantId.ToString());
+                //await stripeConfiguration.GetStripeConfiguration(AppConstant.LoggedInTenantId.ToString());
 
                 var invoiceTemplate = dbContext.TblTemplates.FirstOrDefault(c =>
                     c.TemplateCategory == EnumValue.GetEnumValue(EmailTemplateType.EstimatePDF)  &&
@@ -1079,7 +1080,7 @@ namespace ShutterManagement.Business.Services
         <td style='text-align: center; padding: 5px 5px;'>{++i}</td>
         <td style='text-align: center; padding: 5px 5px;'>{product.ProductTypeName??""}</td>
         <td style='text-align: center; padding: 5px 5px;'>{product.ProductName??""}</td>
-        <td style='text-align: center; padding: 5px 5px;'>{string.Join(", ", product.Options.ToString()??"")}</td>
+        <td style='text-align: center; padding: 5px 5px;'>{string.Join(", ", product.Options)}</td>
         <td style='text-align: center; padding: 5px 5px;'>{product.WindowQty??0}</td>
         <td style='text-align: center; padding: 5px 5px;'>{product.Width??0}</td>
         <td style='text-align: center; padding: 5px 5px;'>{product.Height ?? 0}</td>
