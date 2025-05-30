@@ -653,7 +653,7 @@ namespace ShutterManagement.Business.Services
                 if (pdfBytes == null || pdfBytes.Data == null || pdfBytes.Data.Length == 0)
                 {
                     responseVm.IsSuccess = false;
-                    responseVm.Message = "PDF generation failed. No data returned.";
+                    responseVm.Message = pdfBytes.Message;
                     return responseVm;
                 }
 
@@ -668,8 +668,11 @@ namespace ShutterManagement.Business.Services
                 var fileName = $"Invoice_{Guid.NewGuid()}.pdf";
                 var savePath = Path.Combine(rootPath, fileName);
 
-                await using var stream = new FileStream(savePath, FileMode.Create, FileAccess.Write, FileShare.None, 4096, useAsync: true);
-                await stream.WriteAsync(pdfBytes.Data, 0, pdfBytes.Data.Length);
+                using (var stream = new FileStream(savePath, FileMode.Create, FileAccess.Write, FileShare.None))
+                {
+                    await stream.WriteAsync(pdfBytes.Data, 0, pdfBytes.Data.Length);
+                }
+
 
                 var pdfBase64 = Convert.ToBase64String(pdfBytes.Data);
 
@@ -1173,9 +1176,9 @@ namespace ShutterManagement.Business.Services
                 {
                     GlobalSettings = new GlobalSettings
                     {
-                        ColorMode = DinkToPdf.ColorMode.Color,
+                        ColorMode = ColorMode.Color,
                         Orientation = Orientation.Portrait,
-                        PaperSize = DinkToPdf.PaperKind.A4
+                        PaperSize = PaperKind.A4
                     },
                     Objects = { new ObjectSettings { HtmlContent = htmlContent } }
                 };
@@ -1196,10 +1199,10 @@ namespace ShutterManagement.Business.Services
                 response.IsSuccess = false;
                 response.Message = "PDF generation failed: required native library not found. Please ensure wkhtmltox or DinkToPdf native DLL is present.";
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 response.IsSuccess = false;
-                response.Message = "An unexpected error occurred while generating the PDF.";
+                response.Message = $"An unexpected error occurred while generating the PDF. {ex.StackTrace}";
             }
 
             return response;
