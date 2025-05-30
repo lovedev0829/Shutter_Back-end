@@ -656,9 +656,9 @@ namespace ShutterManagement.Business.Services
 
                 await using (var stream = new FileStream(savePath, FileMode.Create))
                 {
-                    await stream.WriteAsync(pdfBytes, 0, pdfBytes.Length);
+                    await stream.WriteAsync(pdfBytes.Data, 0, pdfBytes.Data.Length);
                 }
-                var pdfBase64 = Convert.ToBase64String(pdfBytes);
+                var pdfBase64 = Convert.ToBase64String(pdfBytes.Data);
 
 
 
@@ -729,7 +729,7 @@ namespace ShutterManagement.Business.Services
                     var emailAttachment = new EmailAttachment
                     {
                         FileName = $"{estimationDetails.EstimateCode}.pdf",
-                        Stream = new MemoryStream(pdfBytes),
+                        Stream = new MemoryStream(pdfBytes.Data),
                         MediaType = "application/pdf"
                     };
 
@@ -795,7 +795,7 @@ namespace ShutterManagement.Business.Services
                     var emailAttachment = new EmailAttachment
                     {
                         FileName = $"{IsOrderExists?.OrderName}.pdf",
-                        Stream = new MemoryStream(pdfBytes),
+                        Stream = new MemoryStream(pdfBytes.Data),
                         MediaType = "application/pdf"
                     };
 
@@ -931,10 +931,10 @@ namespace ShutterManagement.Business.Services
 
                     await using (var stream = new FileStream(InvicesavePath, FileMode.Create))
                     {
-                        await stream.WriteAsync(pdfBytesInvoice, 0, pdfBytesInvoice.Length);
+                        await stream.WriteAsync(pdfBytesInvoice.Data, 0, pdfBytesInvoice.Data.Length);
                     }
 
-                    var InvoicepdfBase64 = Convert.ToBase64String(pdfBytesInvoice);
+                    var InvoicepdfBase64 = Convert.ToBase64String(pdfBytesInvoice.Data);
 
                     string paymentLink = string.Empty;
                     bool isStripeConfigured = !string.IsNullOrEmpty(AppConstant.Stripe_SecretKey) && IsStripeApiKeyValid();
@@ -1024,7 +1024,7 @@ namespace ShutterManagement.Business.Services
                     var emailAttachment = new EmailAttachment
                     {
                         FileName = $"{invoiceDetails?.InvoiceNumber}.pdf",
-                        Stream = new MemoryStream(pdfBytesInvoice),
+                        Stream = new MemoryStream(pdfBytesInvoice.Data),
                         MediaType = "application/pdf"
                     };
 
@@ -1149,21 +1149,48 @@ namespace ShutterManagement.Business.Services
                 .Replace("{{taxes}}", data.Taxes ?? "");
         }
 
-        public byte[] GenerateInvoicePdf(string htmlContent)
+        public ResponseVm<byte[]> GenerateInvoicePdf(string htmlContent)
         {
-            var pdfDocument = new HtmlToPdfDocument
-            {
-                GlobalSettings = new GlobalSettings
-                {
-                    ColorMode = DinkToPdf.ColorMode.Color,
-                    Orientation = Orientation.Portrait,
-                    PaperSize = DinkToPdf.PaperKind.A4
-                },
-                Objects = { new ObjectSettings { HtmlContent = htmlContent } }
-            };
+            var response = new ResponseVm<byte[]>();
 
-            return converter.Convert(pdfDocument);
+            try
+            {
+                var pdfDocument = new HtmlToPdfDocument
+                {
+                    GlobalSettings = new GlobalSettings
+                    {
+                        ColorMode = DinkToPdf.ColorMode.Color,
+                        Orientation = Orientation.Portrait,
+                        PaperSize = DinkToPdf.PaperKind.A4
+                    },
+                    Objects = { new ObjectSettings { HtmlContent = htmlContent } }
+                };
+
+                byte[] pdfBytes = converter.Convert(pdfDocument);
+
+                response.IsSuccess = true;
+                response.Message = "PDF generated successfully.";
+                response.Data = pdfBytes;
+            }
+            catch (BadImageFormatException)
+            {
+                response.IsSuccess = false;
+                response.Message = "PDF generation failed: platform mismatch. Please ensure application and native libraries match (e.g., x64).";
+            }
+            catch (DllNotFoundException)
+            {
+                response.IsSuccess = false;
+                response.Message = "PDF generation failed: required native library not found. Please ensure wkhtmltox or DinkToPdf native DLL is present.";
+            }
+            catch (Exception)
+            {
+                response.IsSuccess = false;
+                response.Message = "An unexpected error occurred while generating the PDF.";
+            }
+
+            return response;
         }
+
 
 
 
