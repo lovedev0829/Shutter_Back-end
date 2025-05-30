@@ -46,12 +46,13 @@ namespace ShutterManagement.Business.Services
         private readonly StripeService _stripeService;
         private readonly IStripeConfiguration stripeConfiguration;
         private readonly JobStatusAndStageMapping statusAndStageMapping;
+        private readonly ITemplatesService templatesService;
 
         public InvoiceService(ITenantService tenantService, IInvoicePaymentService invoicePaymentService,
             IHostEnvironment environment, IConverter converter ,IContactService contactService 
             ,IEstimateService estimateService, ITenantBrandingService tenantBrandingService,IUserService userService 
             ,IJobService jobService,IOrderService orderService,StripeService stripeService ,
-            IStripeConfiguration stripeConfiguration,JobStatusAndStageMapping statusAndStageMapping)
+            IStripeConfiguration stripeConfiguration,JobStatusAndStageMapping statusAndStageMapping ,ITemplatesService templatesService)
         {
             this.tenantService = tenantService;
             this.invoicePaymentService = invoicePaymentService;
@@ -66,6 +67,7 @@ namespace ShutterManagement.Business.Services
             _stripeService = stripeService;
             this.stripeConfiguration = stripeConfiguration;
             this.statusAndStageMapping = statusAndStageMapping;
+            this.templatesService = templatesService;
         }
 
         #region Create  update ActiveInActive Delete Getall
@@ -541,11 +543,14 @@ namespace ShutterManagement.Business.Services
                 // Guid? templateId = Guid.Parse("3A49D48B-CA1D-4E0E-9E1F-A22E7529EF47");
                 await stripeConfiguration.GetStripeConfiguration(AppConstant.LoggedInTenantId.ToString());
 
-                var invoiceTemplate = dbContext.TblTemplates.FirstOrDefault(c =>
-                    c.TemplateCategory == EnumValue.GetEnumValue(EmailTemplateType.EstimatePDF)  &&
-                    c.IsDelete == false);
+                var invoiceTemplate = templatesService.GetAllQuerable().Where(c =>
+                c.TemplateCategory.Equals(EnumValue.GetEnumValue(EmailTemplateType.EstimatePDF)) &&
+                c.IsDelete==false)
+                .Select(x => x.TemplateValue)
+                .FirstOrDefault();
 
-                
+
+
 
                 if (invoiceTemplate == null)
                 {
@@ -641,7 +646,7 @@ namespace ShutterManagement.Business.Services
                     ProductListHtml = GenerateProductListHtml(productList)
                 };
 
-                var htmlContent = ReplaceTemplatePlaceholders(invoiceTemplate.TemplateValue ?? "", invoiceData);
+                var htmlContent = ReplaceTemplatePlaceholders(invoiceTemplate, invoiceData);
 
                 var pdfBytes = GenerateInvoicePdf(htmlContent);
 
