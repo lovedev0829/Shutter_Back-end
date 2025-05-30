@@ -566,7 +566,7 @@ namespace ShutterManagement.Controllers
         //}
         [HttpGet]
         [Route("GetAllOption")]
-        public async Task<IActionResult> GetAllOption(string ProductId, bool? IsManageProductOption = false)
+        public async Task<IActionResult> GetAllOption(string ProductId, bool IsManageProductOption = false)
         {
             var res = await option.GetAll_Option(filter, IsManageProductOption);
             res.Data = res.Data?.Where(x => x.IsActive == true && x.ProductId == Guid.Parse(ProductId)).ToList();
