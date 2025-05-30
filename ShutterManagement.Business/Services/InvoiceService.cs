@@ -27,6 +27,7 @@ using Microsoft.Extensions.Options;
 using ShutterManagement.Stripe;
 using Microsoft.Extensions.Logging;
 using Stripe;
+using System.Data.Entity;
 
 namespace ShutterManagement.Business.Services
 {
@@ -539,7 +540,7 @@ namespace ShutterManagement.Business.Services
                 // Guid? templateId = Guid.Parse("3A49D48B-CA1D-4E0E-9E1F-A22E7529EF47");
                 await stripeConfiguration.GetStripeConfiguration(AppConstant.LoggedInTenantId.ToString());
 
-                var invoiceTemplate = dbContext.TblTemplates.FirstOrDefault(c =>
+                var invoiceTemplate = await dbContext.TblTemplates.FirstOrDefaultAsync(c =>
                     c.TemplateCategory == EnumValue.GetEnumValue(EmailTemplateType.EstimatePDF)  &&
                     c.IsDelete == false);
 
@@ -565,7 +566,7 @@ namespace ShutterManagement.Business.Services
 
 
 
-                var estimationDetails = dbContext.TblEstimates.FirstOrDefault(c =>
+                var estimationDetails = await dbContext.TblEstimates.FirstOrDefaultAsync(c =>
                     c.EstimateId == model.EstimationId &&
                     c.TenantId == AppConstant.LoggedInTenantId &&
                     c.IsDelete == false);
@@ -578,12 +579,12 @@ namespace ShutterManagement.Business.Services
 
 
 
-                var userDetails = dbContext.TblUsers.FirstOrDefault(c =>
+                var userDetails = await dbContext.TblUsers.FirstOrDefaultAsync(c =>
                    c.Id == estimationDetails.CreatedBy &&
                    c.TenantId == AppConstant.LoggedInTenantId &&
                    c.IsDelete == false);
 
-                var orderDetails = dbContext.TblOrders.FirstOrDefault(c =>
+                var orderDetails = await dbContext.TblOrders.FirstOrDefaultAsync(c =>
                    c.OrderId == model.OrderId &&
                    c.TenantId == AppConstant.LoggedInTenantId &&
                    c.IsDelete == false);
@@ -600,10 +601,10 @@ namespace ShutterManagement.Business.Services
                 string customerState = null;
                 if (stateId.HasValue)
                 {
-                    customerState = dbContext.MstStates
-                        .Where(x => x.Id == stateId.Value)
+                    customerState = await dbContext.MstStates
+                        .Where(x => x.Id == stateId)
                         .Select(y => y.StateName)
-                        .FirstOrDefault();
+                        .FirstOrDefaultAsync();
                 }
 
                 var invoiceData = new InvoiceDataModel
@@ -612,7 +613,7 @@ namespace ShutterManagement.Business.Services
                     PreparedBy = userDetails?.FirstName + " " + userDetails?.LastName,
                     CustomerId = customerDetails?.ContactUniqueId ?? "",
                     CustomerCity = customerDetails?.billingAddressVm?.City ?? "",
-                    CustomerState = customerState,
+                    CustomerState = customerState??"",
                     CustomerZipCode = customerDetails?.billingAddressVm?.ZipCode ?? "",
                     HomePhone = customerDetails?.billingAddressVm?.PhoneNumber ?? "",
                     CompanyStreetAddress = tenantInfoDetails?.StreetAddress ?? "",
@@ -638,7 +639,7 @@ namespace ShutterManagement.Business.Services
                     ProductListHtml = GenerateProductListHtml(productList)
                 };
 
-                var htmlContent = ReplaceTemplatePlaceholders(invoiceTemplate.TemplateValue, invoiceData);
+                var htmlContent = ReplaceTemplatePlaceholders(invoiceTemplate.TemplateValue ?? "", invoiceData);
 
                 var pdfBytes = GenerateInvoicePdf(htmlContent);
 
@@ -1073,18 +1074,18 @@ namespace ShutterManagement.Business.Services
                 //decimal? unitprice = product.TotalPrice / product.WindowQty;
 
                 decimal? effectiveTotalPrice = product.ProductPrice > 0 ? product.ProductPrice.Value : product.ProductPrice;
-                decimal? unitprice = effectiveTotalPrice / product.WindowQty;
+                decimal? unitprice = effectiveTotalPrice??0.0m / product.WindowQty;
                 productListHtml.Append($@"
     <tr style='background-color: #efefef;'>
         <td style='text-align: center; padding: 5px 5px;'>{++i}</td>
-        <td style='text-align: center; padding: 5px 5px;'>{product.ProductTypeName}</td>
-        <td style='text-align: center; padding: 5px 5px;'>{product.ProductName}</td>
-        <td style='text-align: center; padding: 5px 5px;'>{string.Join(", ", product.Options)}</td>
-        <td style='text-align: center; padding: 5px 5px;'>{product.WindowQty}</td>
-        <td style='text-align: center; padding: 5px 5px;'>{product.Width}</td>
-        <td style='text-align: center; padding: 5px 5px;'>{product.Height}</td>
-        <td style='text-align: center; padding: 5px 5px;'>{unitprice:F2}</td>
-        <td style='text-align: center; padding: 5px 5px;'>{effectiveTotalPrice:F2}</td>
+        <td style='text-align: center; padding: 5px 5px;'>{product.ProductTypeName??""}</td>
+        <td style='text-align: center; padding: 5px 5px;'>{product.ProductName??""}</td>
+        <td style='text-align: center; padding: 5px 5px;'>{string.Join(", ", product.Options.ToString()??"")}</td>
+        <td style='text-align: center; padding: 5px 5px;'>{product.WindowQty??0}</td>
+        <td style='text-align: center; padding: 5px 5px;'>{product.Width??0}</td>
+        <td style='text-align: center; padding: 5px 5px;'>{product.Height ?? 0}</td>
+        <td style='text-align: center; padding: 5px 5px;'>{unitprice??0.0m:F2}</td>
+        <td style='text-align: center; padding: 5px 5px;'>{effectiveTotalPrice??0.0m:F2}</td>
     </tr>");
             }
 
