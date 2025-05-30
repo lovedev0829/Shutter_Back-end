@@ -537,12 +537,15 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
+
                 // Guid? templateId = Guid.Parse("3A49D48B-CA1D-4E0E-9E1F-A22E7529EF47");
-                //await stripeConfiguration.GetStripeConfiguration(AppConstant.LoggedInTenantId.ToString());
+                await stripeConfiguration.GetStripeConfiguration(AppConstant.LoggedInTenantId.ToString());
 
                 var invoiceTemplate = dbContext.TblTemplates.FirstOrDefault(c =>
                     c.TemplateCategory == EnumValue.GetEnumValue(EmailTemplateType.EstimatePDF)  &&
                     c.IsDelete == false);
+
+                
 
                 if (invoiceTemplate == null)
                 {
@@ -554,6 +557,8 @@ namespace ShutterManagement.Business.Services
 
                 var customerDetails = (await contactService.GetAll_Contact(filter,false))
                     .Data.FirstOrDefault(x => x.ContactId == model.ContactId && x.IsActive == true);
+
+                
 
                 var tenantDetails = tenantService.GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true).FirstOrDefault();
                 if (tenantDetails == null)
@@ -595,14 +600,11 @@ namespace ShutterManagement.Business.Services
                     .FirstOrDefault(x => x.IsActive == true)
                     ?.EstimateProductList ?? new List<EstimateProductList>();
 
-
-                var stateId = customerDetails?.billingAddressVm?.StateId;
-
-                string customerState = null;
-                if (stateId.HasValue)
+                string customerState = "";
+                if (!string.IsNullOrEmpty(customerDetails?.billingAddressVm?.StateId.ToString()))
                 {
                     customerState = dbContext.MstStates
-                        .Where(x => x.Id == stateId)
+                        .Where(x => x.Id == customerDetails.billingAddressVm.StateId)
                         .Select(y => y.StateName)
                         .FirstOrDefault();
                 }
@@ -643,9 +645,8 @@ namespace ShutterManagement.Business.Services
 
                 var pdfBytes = GenerateInvoicePdf(htmlContent);
 
-                var tenantId = AppConstant.LoggedInTenantId.ToString();
             
-                var rootPath = Path.Combine(AppConstant.FileUploadPath, tenantId);
+                var rootPath = Path.Combine(AppConstant.FileUploadPath, AppConstant.LoggedInTenantId.ToString());
                 FileLogger.Log($"Invoice File Path for payment {rootPath}");
                 if (!Directory.Exists(rootPath))
                 {
@@ -1059,7 +1060,7 @@ namespace ShutterManagement.Business.Services
             catch (Exception ex)
             {
                 responseVm.IsSuccess = false;
-                responseVm.Message = $"{AppConstant.ExceptionError}: {ex.Message}";
+                responseVm.Message = $"{AppConstant.ExceptionError}: {ex.Message} :{ex.StackTrace}";
             }
 
             return responseVm;
