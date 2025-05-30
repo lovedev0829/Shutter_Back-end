@@ -7,7 +7,7 @@ public partial class TblManagePartnersProductsOption
 {
     public Guid ManageProductOptionId { get; set; }
 
-    public Guid ManageProductId { get; set; }
+    public Guid? ManageProductId { get; set; }
 
     public Guid? OptionId { get; set; }
 
@@ -40,6 +40,8 @@ public partial class TblManagePartnersProductsOption
     public string? MarkupOptionType { get; set; }
 
     public Guid? TaxId { get; set; }
+
+    public bool? IsPartnerOption { get; set; }
 
     public virtual TblManagePartnersProduct? ManageProduct { get; set; }
 

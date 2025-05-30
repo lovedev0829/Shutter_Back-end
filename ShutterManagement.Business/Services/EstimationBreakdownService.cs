@@ -284,12 +284,16 @@ namespace ShutterManagement.Business.Services
                         UnitCost = item.UnitCost,
                         Non_Rated_UnitCost = item.Non_Rated_UnitCost,
                         UnitOfMeasurement = item.UnitOfMeasurement,
+                        ProductMarkup = item.ProductMarkup,
+                        ComponentMarkup = item.ComponentMarkup,
+                        OptionMarkup = item.OptionMarkup,
                         StockQuantity = item.StockQuantity,
                         ReorderLevel = item.ReorderLevel,
                         ProductPrice = item.ProductPrice,
                         IsCutSheet = item.IsCutSheet,
                         TotalPrice = item.ProductPrice,
-                        IsTaxApplied = item.IsTaxApplied
+                        IsTaxApplied = item.IsTaxApplied,
+                        OptionTaxDetails = item.OptionTaxDetails,
                     });
                 }
 

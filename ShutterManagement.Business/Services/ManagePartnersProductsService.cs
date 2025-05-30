@@ -126,7 +126,7 @@ namespace ShutterManagement.Business.Services
                                     var IsManagepartneroptiontype = managePartnersProductsOptions.GetAllQuerable().
                                         Where(x => x.OptionId == item.OptionId && x.OptionTypeId == item.OptionTypeId && x.ManageProductId.ToString().ToLower()
                                         == IsManagePartnerProductExist.ManageProductId.ToString().ToLower() &&
-                                        x.IsActive == true && x.IsDelete == false && x.IsAvailable == true).FirstOrDefault();
+                                        x.IsActive == true && x.IsDelete == false && x.IsAvailable == true && x.IsPartnerOption == false).FirstOrDefault();
                                     if (IsManagepartneroptiontype != null)
                                     {
                                         var optionprice = optionsTypeService.GetAllQuerable().Where(x => x.OptionTypeId == IsManagepartneroptiontype.OptionTypeId
@@ -321,6 +321,7 @@ namespace ShutterManagement.Business.Services
                 OptionId = model.OptionId,
                 OptionTypeId = model.OptionTypeId,
                 IsAvailable = model.IsAvailable,
+                IsPartnerOption = false,
                 WholeSalePrice = model.WholeSalePrice,
                 MaxPrice = model.MaxPrice,
                 CreatedAt = DateTime.Now,
@@ -418,7 +419,8 @@ namespace ShutterManagement.Business.Services
                                       join o3 in dbContext.TblManagePartnersProducts on o1.ManageProductId equals o3.ManageProductId
                                       where o1.IsDelete == false && o1.IsActive == true && 
                                       o2.IsActive == true && o2.IsDelete == false &&
-                                            productIds.Contains((Guid)o2.ProductId) &&
+                                      o1.IsAvailable == true &&
+                                            productIds.Contains((Guid)o3.ProductId) &&
                                             o1.TenantId == AppConstant.LoggedInTenantId
                                       select new ProductOptionsList
                                       {
@@ -599,7 +601,7 @@ namespace ShutterManagement.Business.Services
             var optionTypes = (from o1 in dbContext.TblOptionsTypes
                                join o2 in dbContext.TblManagePartnersProductsOptions on o1.OptionTypeId equals o2.OptionTypeId into joined
                                from o2 in joined.Where(x => string.IsNullOrEmpty(filter.TenantId) ||
-                               (x.TenantId.ToString() == filter.TenantId && x.IsDelete == false && x.IsActive == true)).DefaultIfEmpty()
+                               (x.TenantId.ToString() == filter.TenantId && x.IsPartnerOption == false && x.IsDelete == false && x.IsActive == true)).DefaultIfEmpty()
                                    //from o2 in joined.DefaultIfEmpty() 
                                join o3 in dbContext.TblManagePartnersProducts on o2.ManageProductId equals o3.ManageProductId
                                into manageproductId
@@ -723,6 +725,7 @@ namespace ShutterManagement.Business.Services
             }
             return responseVm;
         }
+
         public async Task<IResponseVm<MSRPVm>> CalculateMSRPData(Guid productId)
         {
             var responseVm = new ResponseVm<MSRPVm>();
@@ -800,8 +803,6 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
-
-
 
         //public async Task<IResponseVm<MSRPVm>> CalculateMSRPData(Guid productId)
         //{
@@ -1061,7 +1062,7 @@ namespace ShutterManagement.Business.Services
         private async Task DeleteOptions(Guid manageproductId)
         {
             var IsManagePartnerProductOptionExist = managePartnersProductsOptions.GetAllQuerable().Where(x => x.ManageProductId == manageproductId &&
-               x.IsActive == true && x.IsDelete == false).FirstOrDefault();
+               x.IsActive == true && x.IsDelete == false && x.IsPartnerOption == false).FirstOrDefault();
             if (IsManagePartnerProductOptionExist != null)
             {
                 IsManagePartnerProductOptionExist.IsActive = false;
