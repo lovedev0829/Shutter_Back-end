@@ -27,7 +27,6 @@ using Microsoft.Extensions.Options;
 using ShutterManagement.Stripe;
 using Microsoft.Extensions.Logging;
 using Stripe;
-using System.Data.Entity;
 
 namespace ShutterManagement.Business.Services
 {
@@ -540,7 +539,7 @@ namespace ShutterManagement.Business.Services
                 // Guid? templateId = Guid.Parse("3A49D48B-CA1D-4E0E-9E1F-A22E7529EF47");
                 await stripeConfiguration.GetStripeConfiguration(AppConstant.LoggedInTenantId.ToString());
 
-                var invoiceTemplate = await dbContext.TblTemplates.FirstOrDefaultAsync(c =>
+                var invoiceTemplate = dbContext.TblTemplates.FirstOrDefault(c =>
                     c.TemplateCategory == EnumValue.GetEnumValue(EmailTemplateType.EstimatePDF)  &&
                     c.IsDelete == false);
 
@@ -566,7 +565,7 @@ namespace ShutterManagement.Business.Services
 
 
 
-                var estimationDetails = await dbContext.TblEstimates.FirstOrDefaultAsync(c =>
+                var estimationDetails = dbContext.TblEstimates.FirstOrDefault(c =>
                     c.EstimateId == model.EstimationId &&
                     c.TenantId == AppConstant.LoggedInTenantId &&
                     c.IsDelete == false);
@@ -579,12 +578,12 @@ namespace ShutterManagement.Business.Services
 
 
 
-                var userDetails = await dbContext.TblUsers.FirstOrDefaultAsync(c =>
+                var userDetails = dbContext.TblUsers.FirstOrDefault(c =>
                    c.Id == estimationDetails.CreatedBy &&
                    c.TenantId == AppConstant.LoggedInTenantId &&
                    c.IsDelete == false);
 
-                var orderDetails = await dbContext.TblOrders.FirstOrDefaultAsync(c =>
+                var orderDetails = dbContext.TblOrders.FirstOrDefault(c =>
                    c.OrderId == model.OrderId &&
                    c.TenantId == AppConstant.LoggedInTenantId &&
                    c.IsDelete == false);
@@ -601,10 +600,10 @@ namespace ShutterManagement.Business.Services
                 string customerState = null;
                 if (stateId.HasValue)
                 {
-                    customerState = await dbContext.MstStates
+                    customerState = dbContext.MstStates
                         .Where(x => x.Id == stateId)
                         .Select(y => y.StateName)
-                        .FirstOrDefaultAsync();
+                        .FirstOrDefault();
                 }
 
                 var invoiceData = new InvoiceDataModel
