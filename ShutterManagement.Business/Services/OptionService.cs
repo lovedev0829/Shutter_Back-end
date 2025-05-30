@@ -158,6 +158,7 @@ namespace ShutterManagement.Business.Services
                                                 OptionId = options.OptionId,
                                                 OptionTypeId = optionsType.OptionTypeId,
                                                 TaxId = options.TaxId,
+                                                IsPartnerOption = true,
                                                 TenantId = AppConstant.LoggedInTenantId,
                                                 IsActive = true,
                                                 IsDelete = false,
