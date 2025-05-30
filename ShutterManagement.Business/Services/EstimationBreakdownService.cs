@@ -207,90 +207,90 @@ namespace ShutterManagement.Business.Services
 
         public async Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> GetProductBreakdown(Guid EstimationId, string WindowProductId = "")
         {
-            IResponseVm<List<WindowProdcutDetailsForEstimate>> responseVm = new ResponseVm<List<WindowProdcutDetailsForEstimate>>();
+            var responseVm = new ResponseVm<List<WindowProdcutDetailsForEstimate>>();
 
             try
             {
                 // Step 1: Get relevant window product IDs for the estimate
                 Guid[] windowProductIds = estimateWindowProductService.GetAllQuerable()
                     .Where(x => x.EstimateId == EstimationId)
-                    .Select(x => (Guid)x.WindowProductId)
+                    .Select(x => x.WindowProductId ?? Guid.Empty)
+                    .Where(id => id != Guid.Empty)
                     .ToArray();
 
                 // Step 2: Build estimate from service
                 var estimateResponse = await estimateService.BuildEstimate(windowProductIds, true, EstimationId.ToString(), true);
+                var estimateData = estimateResponse?.Data ?? new List<WindowProdcutDetailsForEstimate>();
 
                 // Step 3: Filter if WindowProductId(s) provided
-                List<WindowProdcutDetailsForEstimate> filteredList = new List<WindowProdcutDetailsForEstimate>();
+                var filteredList = new List<WindowProdcutDetailsForEstimate>();
+
+                List<Guid> filterIds = new();
 
                 if (!string.IsNullOrWhiteSpace(WindowProductId))
                 {
-                    List<Guid> guidList = WindowProductId.Split(',')
+                    filterIds = WindowProductId
+                        .Split(',')
                         .Select(id => Guid.TryParse(id.Trim(), out var guid) ? guid : Guid.Empty)
                         .Where(guid => guid != Guid.Empty)
                         .ToList();
-
-                    foreach (var guid in guidList)
-                    {
-                        var matchedItem = estimateResponse.Data
-                            .FirstOrDefault(x => x.WindowProdcutId.HasValue && x.WindowProdcutId.Value == guid);
-
-                        if (matchedItem != null)
-                        {
-                            filteredList.Add(new WindowProdcutDetailsForEstimate
-                            {
-                                IsView = matchedItem.IsView,
-                                WindowId = matchedItem.WindowId,
-                                AddressId = matchedItem.AddressId,
-                                Label = matchedItem.Label,
-                                Width = matchedItem.Width,
-                                Height = matchedItem.Height,
-                                ArchHeight = matchedItem.ArchHeight,
-                                Quantity = matchedItem.Quantity,
-                                JobId = matchedItem.JobId,
-                                IsRated = matchedItem.IsRated,
-                                WindowProdcutId = matchedItem.WindowProdcutId,
-                                ProductId = matchedItem.ProductId,
-                                BuildWidth = matchedItem.BuildWidth,
-                                BuildHeight = matchedItem.BuildHeight,
-                                ProductName = matchedItem.ProductName,
-                                ProductWidth = matchedItem.ProductWidth,
-                                ProductHeight = matchedItem.ProductHeight,
-                                ProductArchHeight = matchedItem.ProductArchHeight,
-                                Area = matchedItem.Area,
-                                Length = matchedItem.Length,
-                                AdditionalWidth = matchedItem.AdditionalWidth,
-                                Markup = matchedItem.Markup,
-                                Options = matchedItem.Options,
-                                OptionsPrice = matchedItem.OptionsPrice,
-                                AdditionalCost = matchedItem.AdditionalCost,
-                                ProductTypeName = matchedItem.ProductTypeName,
-                                ComponentId = matchedItem.ComponentId,
-                                ComponentQuantity = matchedItem.ComponentQuantity,
-                                ComponentName = matchedItem.ComponentName,
-                                MarkupPercentage = matchedItem.MarkupPercentage,
-                                Price = matchedItem.Price,
-                                PricingExpression = matchedItem.PricingExpression,
-                                ExpressionFormulae = matchedItem.ExpressionFormulae,
-                                RawMaterialId = matchedItem.RawMaterialId,
-                                MaterialQuantity = matchedItem.MaterialQuantity,
-                                WasteFactor = matchedItem.WasteFactor,
-                                MaterialName = matchedItem.MaterialName,
-                                UnitCost = matchedItem.UnitCost,
-                                Non_Rated_UnitCost = matchedItem.Non_Rated_UnitCost,
-                                UnitOfMeasurement = matchedItem.UnitOfMeasurement,
-                                StockQuantity = matchedItem.StockQuantity,
-                                ReorderLevel = matchedItem.ReorderLevel,
-                                IsCutSheet = matchedItem.IsCutSheet,
-                                TotalPrice = matchedItem.TotalPrice,
-                                IsTaxApplied = matchedItem.IsTaxApplied
-                            });
-                        }
-                    }
                 }
-                else
+
+                var itemsToBind = string.IsNullOrWhiteSpace(WindowProductId)
+                    ? estimateData
+                    : estimateData.Where(x => x.WindowProdcutId.HasValue && filterIds.Contains(x.WindowProdcutId.Value)).ToList();
+
+                foreach (var item in itemsToBind)
                 {
-                    filteredList = estimateResponse.Data;
+                    filteredList.Add(new WindowProdcutDetailsForEstimate
+                    {
+                        IsView = item.IsView,
+                        WindowId = item.WindowId,
+                        AddressId = item.AddressId,
+                        Label = item.Label,
+                        Width = item.Width,
+                        Height = item.Height,
+                        ArchHeight = item.ArchHeight,
+                        Quantity = item.Quantity,
+                        JobId = item.JobId,
+                        IsRated = item.IsRated,
+                        WindowProdcutId = item.WindowProdcutId,
+                        ProductId = item.ProductId,
+                        BuildWidth = item.BuildWidth,
+                        BuildHeight = item.BuildHeight,
+                        ProductName = item.ProductName,
+                        ProductWidth = item.ProductWidth,
+                        ProductHeight = item.ProductHeight,
+                        ProductArchHeight = item.ProductArchHeight,
+                        Area = item.Area,
+                        Length = item.Length,
+                        AdditionalWidth = item.AdditionalWidth,
+                        Markup = item.Markup,
+                        Options = item.Options,
+                        OptionsPrice = item.OptionsPrice,
+                        AdditionalCost = item.AdditionalCost,
+                        ProductTypeName = item.ProductTypeName,
+                        ComponentId = item.ComponentId,
+                        ComponentQuantity = item.ComponentQuantity,
+                        ComponentName = item.ComponentName,
+                        MarkupPercentage = item.MarkupPercentage,
+                        Price = item.Price,
+                        PricingExpression = item.PricingExpression,
+                        ExpressionFormulae = item.ExpressionFormulae,
+                        RawMaterialId = item.RawMaterialId,
+                        MaterialQuantity = item.MaterialQuantity,
+                        WasteFactor = item.WasteFactor,
+                        MaterialName = item.MaterialName,
+                        UnitCost = item.UnitCost,
+                        Non_Rated_UnitCost = item.Non_Rated_UnitCost,
+                        UnitOfMeasurement = item.UnitOfMeasurement,
+                        StockQuantity = item.StockQuantity,
+                        ReorderLevel = item.ReorderLevel,
+                        ProductPrice = item.ProductPrice,
+                        IsCutSheet = item.IsCutSheet,
+                        TotalPrice = item.ProductPrice,
+                        IsTaxApplied = item.IsTaxApplied
+                    });
                 }
 
                 // Step 4: Return final response
@@ -301,11 +301,15 @@ namespace ShutterManagement.Business.Services
             }
             catch (Exception ex)
             {
-                responseVm.Message = ex.Message;
+                responseVm.Message = $"Error: {ex.Message}";
+                responseVm.IsSuccess = false;
+                responseVm.Data = new List<WindowProdcutDetailsForEstimate>();
+                responseVm.TotalRecords = 0;
             }
 
             return responseVm;
         }
+
 
         public async Task<IResponseVm<List<object>>> GetProductListForEstimation(Guid EstimationId)
         {
