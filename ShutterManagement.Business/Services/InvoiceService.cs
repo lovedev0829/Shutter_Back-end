@@ -656,7 +656,7 @@ namespace ShutterManagement.Business.Services
                 var fileName = $"Invoice_{Guid.NewGuid()}.pdf";
                 var savePath = Path.Combine(rootPath, fileName);
 
-                await using (var stream = new FileStream(savePath, FileMode.Create))
+                using (var stream = new FileStream(savePath, FileMode.Create))
                 {
                     await stream.WriteAsync(pdfBytes.Data, 0, pdfBytes.Data.Length);
                 }
