@@ -1113,7 +1113,7 @@ namespace ShutterManagement.Business.Services
 
                 var optionHeaders = GetOptionNameTypeHeaders(estimateResponse.Data);
 
-                var finalHeaders = commonHeaders.Concat(dynamicHeaders).Concat(optionHeaders).Concat(new[] { "Sub Total", "Total" }).ToList();
+                var finalHeaders = commonHeaders.Concat(dynamicHeaders).Concat(optionHeaders).Concat(new[] { "Sub Total","Over Head","Total" }).ToList();
 
                 csvBuilder.AppendLine(string.Join(",", finalHeaders));
 
@@ -1136,11 +1136,18 @@ namespace ShutterManagement.Business.Services
                     // Add Sub Total and Total
                     decimal subTotal = GetDynamicValue(firstEntry, "productPrice");  
                     decimal additionalCost = GetDynamicValue(firstEntry, "additionalCost");
+                    decimal componentMarkup = GetDynamicValue(firstEntry, "componentMarkup");
+                    decimal productMarkup = GetDynamicValue(firstEntry, "productMarkup");
+                    decimal optionMarkup = GetDynamicValue(firstEntry, "optionMarkup");
 
                     decimal total = subTotal + additionalCost;
 
+                    decimal OverHead = componentMarkup+productMarkup+optionMarkup;
+
                     rowValues.Add($"${subTotal.ToString("F2")}");
+                    rowValues.Add($"${OverHead.ToString("F2")}");
                     rowValues.Add($"${total.ToString("F2")}");
+                    
 
                     csvBuilder.AppendLine(string.Join(",", rowValues));
                 }

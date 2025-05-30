@@ -536,12 +536,16 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.AccessDenied;
                     return responseVm;
                 }
+
+
                 // Guid? templateId = Guid.Parse("3A49D48B-CA1D-4E0E-9E1F-A22E7529EF47");
                 await stripeConfiguration.GetStripeConfiguration(AppConstant.LoggedInTenantId.ToString());
 
                 var invoiceTemplate = dbContext.TblTemplates.FirstOrDefault(c =>
                     c.TemplateCategory == EnumValue.GetEnumValue(EmailTemplateType.EstimatePDF)  &&
                     c.IsDelete == false);
+
+                
 
                 if (invoiceTemplate == null)
                 {
@@ -553,6 +557,8 @@ namespace ShutterManagement.Business.Services
 
                 var customerDetails = (await contactService.GetAll_Contact(filter,false))
                     .Data.FirstOrDefault(x => x.ContactId == model.ContactId && x.IsActive == true);
+
+                
 
                 var tenantDetails = tenantService.GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true).FirstOrDefault();
                 if (tenantDetails == null)
@@ -594,14 +600,11 @@ namespace ShutterManagement.Business.Services
                     .FirstOrDefault(x => x.IsActive == true)
                     ?.EstimateProductList ?? new List<EstimateProductList>();
 
-
-                var stateId = customerDetails?.billingAddressVm?.StateId;
-
-                string customerState = null;
-                if (stateId.HasValue)
+                string customerState = "";
+                if (!string.IsNullOrEmpty(customerDetails?.billingAddressVm?.StateId.ToString()))
                 {
                     customerState = dbContext.MstStates
-                        .Where(x => x.Id == stateId.Value)
+                        .Where(x => x.Id == customerDetails.billingAddressVm.StateId)
                         .Select(y => y.StateName)
                         .FirstOrDefault();
                 }
@@ -612,7 +615,7 @@ namespace ShutterManagement.Business.Services
                     PreparedBy = userDetails?.FirstName + " " + userDetails?.LastName,
                     CustomerId = customerDetails?.ContactUniqueId ?? "",
                     CustomerCity = customerDetails?.billingAddressVm?.City ?? "",
-                    CustomerState = customerState,
+                    CustomerState = customerState??"",
                     CustomerZipCode = customerDetails?.billingAddressVm?.ZipCode ?? "",
                     HomePhone = customerDetails?.billingAddressVm?.PhoneNumber ?? "",
                     CompanyStreetAddress = tenantInfoDetails?.StreetAddress ?? "",
@@ -632,20 +635,26 @@ namespace ShutterManagement.Business.Services
                     Terms = estimationDetails?.TermsCondition ?? "",
                     Note = estimationDetails?.Notes ?? "",
                     OrderId = orderDetails?.OrderName ?? "",
-                    Taxes = estimationDetails?.TaxAmount.ToString() ?? "",
+                    Taxes = estimationDetails?.TotaltaxAmount.ToString() ?? "",
                     Discount = estimationDetails?.DiscountAmount.ToString() ?? "",
                     Additionalcost = estimationDetails?.AdditionalCost.ToString() ?? "",
                     ProductListHtml = GenerateProductListHtml(productList)
                 };
 
-                var htmlContent = ReplaceTemplatePlaceholders(invoiceTemplate.TemplateValue, invoiceData);
+                var htmlContent = ReplaceTemplatePlaceholders(invoiceTemplate.TemplateValue ?? "", invoiceData);
 
                 var pdfBytes = GenerateInvoicePdf(htmlContent);
 
-                var tenantId = AppConstant.LoggedInTenantId.ToString();
-            
-                var rootPath = Path.Combine(AppConstant.FileUploadPath, tenantId);
+                if (pdfBytes == null || pdfBytes.Data == null || pdfBytes.Data.Length == 0)
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = "PDF generation failed. No data returned.";
+                    return responseVm;
+                }
+
+                var rootPath = Path.Combine(AppConstant.FileUploadPath, AppConstant.LoggedInTenantId.ToString());
                 FileLogger.Log($"Invoice File Path for payment {rootPath}");
+
                 if (!Directory.Exists(rootPath))
                 {
                     Directory.CreateDirectory(rootPath);
@@ -654,11 +663,11 @@ namespace ShutterManagement.Business.Services
                 var fileName = $"Invoice_{Guid.NewGuid()}.pdf";
                 var savePath = Path.Combine(rootPath, fileName);
 
-                await using (var stream = new FileStream(savePath, FileMode.Create))
-                {
-                    await stream.WriteAsync(pdfBytes, 0, pdfBytes.Length);
-                }
-                var pdfBase64 = Convert.ToBase64String(pdfBytes);
+                await using var stream = new FileStream(savePath, FileMode.Create, FileAccess.Write, FileShare.None, 4096, useAsync: true);
+                await stream.WriteAsync(pdfBytes.Data, 0, pdfBytes.Data.Length);
+
+                var pdfBase64 = Convert.ToBase64String(pdfBytes.Data);
+
 
 
 
@@ -729,7 +738,7 @@ namespace ShutterManagement.Business.Services
                     var emailAttachment = new EmailAttachment
                     {
                         FileName = $"{estimationDetails.EstimateCode}.pdf",
-                        Stream = new MemoryStream(pdfBytes),
+                        Stream = new MemoryStream(pdfBytes.Data),
                         MediaType = "application/pdf"
                     };
 
@@ -795,7 +804,7 @@ namespace ShutterManagement.Business.Services
                     var emailAttachment = new EmailAttachment
                     {
                         FileName = $"{IsOrderExists?.OrderName}.pdf",
-                        Stream = new MemoryStream(pdfBytes),
+                        Stream = new MemoryStream(pdfBytes.Data),
                         MediaType = "application/pdf"
                     };
 
@@ -929,12 +938,12 @@ namespace ShutterManagement.Business.Services
                     var InvoicefileName = $"Invoice_{Guid.NewGuid()}.pdf";
                     var InvicesavePath = Path.Combine(rootPathInvoice, InvoicefileName);
 
-                    await using (var stream = new FileStream(InvicesavePath, FileMode.Create))
+                    await using (var stream1 = new FileStream(InvicesavePath, FileMode.Create))
                     {
-                        await stream.WriteAsync(pdfBytesInvoice, 0, pdfBytesInvoice.Length);
+                        await stream1.WriteAsync(pdfBytesInvoice.Data, 0, pdfBytesInvoice.Data.Length);
                     }
 
-                    var InvoicepdfBase64 = Convert.ToBase64String(pdfBytesInvoice);
+                    var InvoicepdfBase64 = Convert.ToBase64String(pdfBytesInvoice.Data);
 
                     string paymentLink = string.Empty;
                     bool isStripeConfigured = !string.IsNullOrEmpty(AppConstant.Stripe_SecretKey) && IsStripeApiKeyValid();
@@ -1024,7 +1033,7 @@ namespace ShutterManagement.Business.Services
                     var emailAttachment = new EmailAttachment
                     {
                         FileName = $"{invoiceDetails?.InvoiceNumber}.pdf",
-                        Stream = new MemoryStream(pdfBytesInvoice),
+                        Stream = new MemoryStream(pdfBytesInvoice.Data),
                         MediaType = "application/pdf"
                     };
 
@@ -1058,7 +1067,7 @@ namespace ShutterManagement.Business.Services
             catch (Exception ex)
             {
                 responseVm.IsSuccess = false;
-                responseVm.Message = $"{AppConstant.ExceptionError}: {ex.Message}";
+                responseVm.Message = $"{AppConstant.ExceptionError}: {ex.Message} :{ex.StackTrace}";
             }
 
             return responseVm;
@@ -1072,19 +1081,19 @@ namespace ShutterManagement.Business.Services
             {
                 //decimal? unitprice = product.TotalPrice / product.WindowQty;
 
-                decimal? effectiveTotalPrice = product.TotalPrice > 0 ? product.TotalPrice.Value : product.ProductPrice;
-                decimal? unitprice = effectiveTotalPrice / product.WindowQty;
+                decimal? effectiveTotalPrice = product.ProductPrice > 0 ? product.ProductPrice.Value : product.ProductPrice;
+                decimal? unitprice = effectiveTotalPrice??0.0m / product.WindowQty;
                 productListHtml.Append($@"
     <tr style='background-color: #efefef;'>
         <td style='text-align: center; padding: 5px 5px;'>{++i}</td>
-        <td style='text-align: center; padding: 5px 5px;'>{product.ProductTypeName}</td>
-        <td style='text-align: center; padding: 5px 5px;'>{product.ProductName}</td>
+        <td style='text-align: center; padding: 5px 5px;'>{product.ProductTypeName??""}</td>
+        <td style='text-align: center; padding: 5px 5px;'>{product.ProductName??""}</td>
         <td style='text-align: center; padding: 5px 5px;'>{string.Join(", ", product.Options)}</td>
-        <td style='text-align: center; padding: 5px 5px;'>{product.WindowQty}</td>
-        <td style='text-align: center; padding: 5px 5px;'>{product.Width}</td>
-        <td style='text-align: center; padding: 5px 5px;'>{product.Height}</td>
-        <td style='text-align: center; padding: 5px 5px;'>{unitprice:F2}</td>
-        <td style='text-align: center; padding: 5px 5px;'>{effectiveTotalPrice:F2}</td>
+        <td style='text-align: center; padding: 5px 5px;'>{product.WindowQty??0}</td>
+        <td style='text-align: center; padding: 5px 5px;'>{product.Width??0}</td>
+        <td style='text-align: center; padding: 5px 5px;'>{product.Height ?? 0}</td>
+        <td style='text-align: center; padding: 5px 5px;'>{unitprice??0.0m:F2}</td>
+        <td style='text-align: center; padding: 5px 5px;'>{effectiveTotalPrice??0.0m:F2}</td>
     </tr>");
             }
 
@@ -1149,21 +1158,48 @@ namespace ShutterManagement.Business.Services
                 .Replace("{{taxes}}", data.Taxes ?? "");
         }
 
-        public byte[] GenerateInvoicePdf(string htmlContent)
+        public ResponseVm<byte[]> GenerateInvoicePdf(string htmlContent)
         {
-            var pdfDocument = new HtmlToPdfDocument
-            {
-                GlobalSettings = new GlobalSettings
-                {
-                    ColorMode = DinkToPdf.ColorMode.Color,
-                    Orientation = Orientation.Portrait,
-                    PaperSize = DinkToPdf.PaperKind.A4
-                },
-                Objects = { new ObjectSettings { HtmlContent = htmlContent } }
-            };
+            var response = new ResponseVm<byte[]>();
 
-            return converter.Convert(pdfDocument);
+            try
+            {
+                var pdfDocument = new HtmlToPdfDocument
+                {
+                    GlobalSettings = new GlobalSettings
+                    {
+                        ColorMode = DinkToPdf.ColorMode.Color,
+                        Orientation = Orientation.Portrait,
+                        PaperSize = DinkToPdf.PaperKind.A4
+                    },
+                    Objects = { new ObjectSettings { HtmlContent = htmlContent } }
+                };
+
+                byte[] pdfBytes = converter.Convert(pdfDocument);
+
+                response.IsSuccess = true;
+                response.Message = "PDF generated successfully.";
+                response.Data = pdfBytes;
+            }
+            catch (BadImageFormatException)
+            {
+                response.IsSuccess = false;
+                response.Message = "PDF generation failed: platform mismatch. Please ensure application and native libraries match (e.g., x64).";
+            }
+            catch (DllNotFoundException)
+            {
+                response.IsSuccess = false;
+                response.Message = "PDF generation failed: required native library not found. Please ensure wkhtmltox or DinkToPdf native DLL is present.";
+            }
+            catch (Exception)
+            {
+                response.IsSuccess = false;
+                response.Message = "An unexpected error occurred while generating the PDF.";
+            }
+
+            return response;
         }
+
 
 
 
