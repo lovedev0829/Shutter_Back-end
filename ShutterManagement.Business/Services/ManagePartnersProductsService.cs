@@ -126,7 +126,7 @@ namespace ShutterManagement.Business.Services
                                     var IsManagepartneroptiontype = managePartnersProductsOptions.GetAllQuerable().
                                         Where(x => x.OptionId == item.OptionId && x.OptionTypeId == item.OptionTypeId && x.ManageProductId.ToString().ToLower()
                                         == IsManagePartnerProductExist.ManageProductId.ToString().ToLower() &&
-                                        x.IsActive == true && x.IsDelete == false && x.IsAvailable == true).FirstOrDefault();
+                                        x.IsActive == true && x.IsDelete == false && x.IsAvailable == true && x.IsPartnerOption == false).FirstOrDefault();
                                     if (IsManagepartneroptiontype != null)
                                     {
                                         var optionprice = optionsTypeService.GetAllQuerable().Where(x => x.OptionTypeId == IsManagepartneroptiontype.OptionTypeId

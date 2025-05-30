@@ -665,6 +665,7 @@ public async Task<IResponseVm<string>> Update_Option(UpdateOption model)
                                     OptionId = IsOptionExists.OptionId,
                                     OptionTypeId = optionsType.OptionTypeId,
                                     TaxId = IsOptionExists.TaxId,
+                                    IsPartnerOption = true,
                                     TenantId = AppConstant.LoggedInTenantId,
                                     IsActive = true,
                                     IsDelete = false,
