@@ -6,10 +6,12 @@ using System.Threading.Tasks;
 using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.Core.ViewModels.Response;
 using ShutterManagement.Core.ViewModels;
+using ShutterManagement.Interfaces;
+using ShutterManagement.DAL.Context;
 
 namespace ShutterManagement.Business.Interfaces
 {
-    public interface ITemplatesService
+    public interface ITemplatesService : IGenericRepository<TblTemplate>
     {
         Task<IResponseVm<string>> Create_Temaplate(CreateTemplate model);
         Task<IResponseVm<dynamic>> Update_Template(UpdateTemplate model);

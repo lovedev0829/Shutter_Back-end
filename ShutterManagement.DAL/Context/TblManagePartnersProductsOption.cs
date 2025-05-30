@@ -41,6 +41,8 @@ public partial class TblManagePartnersProductsOption
 
     public Guid? TaxId { get; set; }
 
+    public bool? IsPartnerOption { get; set; }
+
     public virtual TblManagePartnersProduct? ManageProduct { get; set; }
 
     public virtual TblOption? Option { get; set; }
