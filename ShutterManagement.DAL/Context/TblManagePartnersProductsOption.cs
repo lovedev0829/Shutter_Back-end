@@ -7,7 +7,7 @@ public partial class TblManagePartnersProductsOption
 {
     public Guid ManageProductOptionId { get; set; }
 
-    public Guid? ManageProductId { get; set; }
+    public Guid ManageProductId { get; set; }
 
     public Guid? OptionId { get; set; }
 
