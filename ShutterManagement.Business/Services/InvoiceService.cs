@@ -645,9 +645,16 @@ namespace ShutterManagement.Business.Services
 
                 var pdfBytes = GenerateInvoicePdf(htmlContent);
 
-            
+                if (pdfBytes == null || pdfBytes.Data == null || pdfBytes.Data.Length == 0)
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = "PDF generation failed. No data returned.";
+                    return responseVm;
+                }
+
                 var rootPath = Path.Combine(AppConstant.FileUploadPath, AppConstant.LoggedInTenantId.ToString());
                 FileLogger.Log($"Invoice File Path for payment {rootPath}");
+
                 if (!Directory.Exists(rootPath))
                 {
                     Directory.CreateDirectory(rootPath);
@@ -656,11 +663,11 @@ namespace ShutterManagement.Business.Services
                 var fileName = $"Invoice_{Guid.NewGuid()}.pdf";
                 var savePath = Path.Combine(rootPath, fileName);
 
-                using (var stream = new FileStream(savePath, FileMode.Create))
-                {
-                    await stream.WriteAsync(pdfBytes.Data, 0, pdfBytes.Data.Length);
-                }
+                await using var stream = new FileStream(savePath, FileMode.Create, FileAccess.Write, FileShare.None, 4096, useAsync: true);
+                await stream.WriteAsync(pdfBytes.Data, 0, pdfBytes.Data.Length);
+
                 var pdfBase64 = Convert.ToBase64String(pdfBytes.Data);
+
 
 
 
