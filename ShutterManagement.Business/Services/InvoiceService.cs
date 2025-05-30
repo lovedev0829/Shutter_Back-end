@@ -938,9 +938,9 @@ namespace ShutterManagement.Business.Services
                     var InvoicefileName = $"Invoice_{Guid.NewGuid()}.pdf";
                     var InvicesavePath = Path.Combine(rootPathInvoice, InvoicefileName);
 
-                    await using (var stream = new FileStream(InvicesavePath, FileMode.Create))
+                    await using (var stream1 = new FileStream(InvicesavePath, FileMode.Create))
                     {
-                        await stream.WriteAsync(pdfBytesInvoice.Data, 0, pdfBytesInvoice.Data.Length);
+                        await stream1.WriteAsync(pdfBytesInvoice.Data, 0, pdfBytesInvoice.Data.Length);
                     }
 
                     var InvoicepdfBase64 = Convert.ToBase64String(pdfBytesInvoice.Data);
