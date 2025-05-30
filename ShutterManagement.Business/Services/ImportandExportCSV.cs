@@ -1146,7 +1146,7 @@ namespace ShutterManagement.Business.Services
 
                     rowValues.Add($"${subTotal.ToString("F2")}");
                     rowValues.Add($"${OverHead.ToString("F2")}");
-                    rowValues.Add($"${total.ToString("F2")}");
+                    rowValues.Add($"${OverHead+ subTotal.ToString("F2")}");
                     
 
                     csvBuilder.AppendLine(string.Join(",", rowValues));
