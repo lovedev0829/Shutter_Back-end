@@ -544,10 +544,10 @@ namespace ShutterManagement.Business.Services
                 await stripeConfiguration.GetStripeConfiguration(AppConstant.LoggedInTenantId.ToString());
 
                 var invoiceTemplate = templatesService.GetAllQuerable().Where(c =>
-        c.TemplateCategory.Equals(EnumValue.GetEnumValue(EmailTemplateType.EstimatePDF)) &&
-        c.IsDelete==false)
-    .Select(x => x.TemplateValue)
-    .FirstOrDefault();
+                c.TemplateCategory.Equals(EnumValue.GetEnumValue(EmailTemplateType.EstimatePDF)) &&
+                c.IsDelete==false)
+                .Select(x => x.TemplateValue)
+                .FirstOrDefault();
 
 
 
