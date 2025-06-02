@@ -34,4 +34,8 @@ public partial class TblEmailConfiguration
     public bool? IsActive { get; set; }
 
     public bool? IsDelete { get; set; }
+
+    public string? From { get; set; }
+
+    public string? AccessToken { get; set; }
 }

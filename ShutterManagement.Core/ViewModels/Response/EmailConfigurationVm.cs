@@ -25,7 +25,9 @@ namespace ShutterManagement.Core.ViewModels.Response
         public Guid? EmailType { get; set; }
         public string? EmailTypeName { get; set; }
 
+        public string? From { get; set; }
 
+        public string? AccessToken { get; set; }
         public Guid? TenantId { get; set; }
         public bool? IsActive { get; set; }
 

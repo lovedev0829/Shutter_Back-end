@@ -19,25 +19,25 @@ namespace ShutterManagement.Core.ViewModels.Request
         [DefaultValue("")]
         public int? Port { get; set; }
 
-        [Required]
         [DefaultValue("")]
         public string? Username { get; set; }
 
-        [Required]
         [DefaultValue("")]
         public string? Password { get; set; }
 
-        [Required]
         [DefaultValue("")]
         public bool? UseSsl { get; set; }
 
-        [Required]
         [DefaultValue("")]
         public string? ReplyTo { get; set; }
 
         [Required]
         [DefaultValue(null)]
         public Guid? EmailType { get; set; }
+
+        public string? From { get; set; }
+
+        public string? AccessToken { get; set; }
 
     }
 }

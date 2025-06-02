@@ -43,6 +43,8 @@ namespace ShutterManagement.Business.Services
                         ReplyTo = emailConfiguration.ReplyTo ?? "",
                         EmailTypeName = dbContext.TblEmailTypes.Where(x => x.Id == emailConfiguration.EmailType).Select(s => s.Name).FirstOrDefault()??"",
                         EmailType = emailConfiguration.EmailType,
+                        From = emailConfiguration.From,
+                        AccessToken = emailConfiguration.AccessToken,
                         TenantId = emailConfiguration.TenantId,
                         IsActive = emailConfiguration.IsActive
                     };
@@ -79,6 +81,8 @@ namespace ShutterManagement.Business.Services
                     existingConfig.UseSsl = emailConfigurationVm.UseSsl;
                     existingConfig.ReplyTo = emailConfigurationVm.ReplyTo;
                     existingConfig.EmailType = emailConfigurationVm.EmailType;
+                    existingConfig.From = emailConfigurationVm.From;
+                    existingConfig.AccessToken = emailConfigurationVm.AccessToken;
                     existingConfig.ModifiedBy = AppConstant.LoggedInUserID;
                     existingConfig.ModifiedAt = DateTime.Now;
 

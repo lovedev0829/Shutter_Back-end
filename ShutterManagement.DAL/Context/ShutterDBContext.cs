@@ -598,6 +598,7 @@ public partial class ShutterDBContext : DbContext
 
             entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.From).HasMaxLength(255);
             entity.Property(e => e.ModifiedAt).HasColumnType("datetime");
             entity.Property(e => e.Password).HasMaxLength(500);
             entity.Property(e => e.ReplyTo).HasMaxLength(255);
@@ -608,11 +609,11 @@ public partial class ShutterDBContext : DbContext
 
         modelBuilder.Entity<TblEmailType>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__tblEmail__3214EC0775A8BEEE");
+            entity.HasKey(e => e.Id).HasName("PK__tblEmail__3214EC076EF4B1D0");
 
             entity.ToTable("tblEmailType", "dbo");
 
-            entity.Property(e => e.Id).ValueGeneratedNever();
+            entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
             entity.Property(e => e.Description).HasMaxLength(255);
             entity.Property(e => e.IsOauth).HasColumnName("IsOAuth");
