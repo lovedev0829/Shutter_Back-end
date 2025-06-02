@@ -602,6 +602,7 @@ namespace ShutterManagement.Business.Services
             }
         }
 
+
         private async Task<decimal> CalculateEstimate(List<WindowProdcutDetailsForEstimate> data, bool? iswholesale = false)
         {
             decimal ComponentSubTotal = 0.00M;
@@ -667,9 +668,9 @@ namespace ShutterManagement.Business.Services
                         //}
                         isContactIsTaxDocument = GetIsTaxExemptByWindowId(distinctItem.WindowId);
                         distinctItem.Price = Convert.ToDecimal(Convert.ToDecimal(ComponentPriceWithoutMarkup).ToString("0.00"));
-                        if (isContactIsTaxDocument == true && distinctItem.IsTaxAvailable==true)
+                        if (isContactIsTaxDocument == true && distinctItem.IsTaxAvailable == true)
                         {
-                            distinctItem.MunicipalityTaxAmount = ((distinctItem.Price + distinctItem .OptionMarkup)* distinctItem.MunicipalityTax / 100);
+                            distinctItem.MunicipalityTaxAmount = ((distinctItem.Price + distinctItem.OptionMarkup) * distinctItem.MunicipalityTax / 100);
                             distinctItem.StateTaxAmount = ((distinctItem.Price + distinctItem.OptionMarkup) * distinctItem.StateTax / 100);
                             distinctItem.CityTaxAmount = ((distinctItem.Price + distinctItem.OptionMarkup) * distinctItem.CityTax / 100);
                             distinctItem.TotalTaxAmount = distinctItem.MunicipalityTaxAmount + distinctItem.StateTaxAmount + distinctItem.CityTaxAmount;
@@ -691,7 +692,7 @@ namespace ShutterManagement.Business.Services
                             var productMarkup = dbContext.TblManagePartnersProducts.Where(x => x.ProductId == distinctItem.ProductId && x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
                             if (productMarkup.MarkupType == "Percentage")
                             {
-                                ProductownMarkup += (ComponentPriceWithAllMarkup *  (productMarkup.PartnerSellingPrice ?? 0) / 100);
+                                ProductownMarkup += (ComponentPriceWithAllMarkup * (productMarkup.PartnerSellingPrice ?? 0) / 100);
                             }
                             if (productMarkup.MarkupType == "Fixed")
                             {
@@ -706,28 +707,37 @@ namespace ShutterManagement.Business.Services
                     //distinctItem.ProductMarkup = ProductMarkup;
                     //distinctItem.ComponentMarkup = ComponentMarkup;
                 }
-                var optionMSRPDict = await CalculateOptionPrice(distinctItem.OptionsTypeIds,(decimal)distinctItem.Quantity,(decimal)distinctItem.Height,(decimal)distinctItem.Width,false );
+                var optionMSRPDict = await CalculateOptionPrice(distinctItem.OptionsTypeIds, (decimal)distinctItem.Quantity, (decimal)distinctItem.Height, (decimal)distinctItem.Width, false);
                 distinctItem.AdditionalCost = optionMSRPDict.TotalCost;
                 distinctItem.OptionMarkup = optionMSRPDict.OptionMarkup;
-                foreach (var x in distinctItem.OptionTaxDetails)
+
+                decimal OptionPriceAfterPartnerMarkup = 0.0m;
+                var optionTaxDetails = data.Where(x => x.OptionTaxDetails != null && x.OptionTaxDetails.Count > 0 && x.ProductId == distinctItem.ProductId
+                && x.WindowProdcutId == distinctItem.WindowProdcutId).DistinctBy(x => x.ProductId).FirstOrDefault().OptionTaxDetails;
+                foreach (var x in optionTaxDetails)
                 {
                     optionMSRPDict.OptionMSRP.TryGetValue(x.OptionTypeId.ToString(), out var price);
                     x.OptionPrice = price;
                     if (IsSubtenants != null)
                     {
                         //x.OptionPrice = x.OptionPrice;
-                        var Optionprice = ApplySubtenantMarkup(x.OptionTypeId, x.OptionPrice ?? 0.0m,distinctItem.OptionMarkup ?? 0.0m);
+                        var Optionprice = ApplySubtenantMarkup(x.OptionTypeId, x.OptionPrice ?? 0.0m, distinctItem.OptionMarkup ?? 0.0m);
                         x.OptionPrice = Optionprice;
+                        OptionPriceAfterPartnerMarkup += Optionprice;
                     }
+                }
+                if (OptionPriceAfterPartnerMarkup > 0)
+                {
+                    distinctItem.AdditionalCost = OptionPriceAfterPartnerMarkup;
                 }
                 if (distinctItem.OptionTaxDetails != null && distinctItem.OptionTaxDetails.Count > 0 && isContactIsTaxDocument)
                 {
                     distinctItem.OptionTaxDetails.ForEach(x =>
                     {
-                        x.MunicipalityTaxAmount = ((x.OptionPrice +x.OptionMarkup) * x.MunicipalityTax / 100);
-                        x.StateTaxAmount = ((x.OptionPrice + x.OptionMarkup) * x.StateTax / 100);
-                        x.CityTaxAmount = ((x.OptionPrice + x.OptionMarkup) * x.CityTax / 100);
-                        x.TotalTaxAmount = (x.MunicipalityTaxAmount + x.StateTaxAmount + x.CityTaxAmount)??0.0m;
+                        x.MunicipalityTaxAmount = (x.OptionPrice * x.MunicipalityTax / 100);
+                        x.StateTaxAmount = (x.OptionPrice * x.StateTax / 100);
+                        x.CityTaxAmount = (x.OptionPrice * x.CityTax / 100);
+                        x.TotalTaxAmount = x.MunicipalityTaxAmount + x.StateTaxAmount + x.CityTaxAmount;
                     });
                 }
                 else
