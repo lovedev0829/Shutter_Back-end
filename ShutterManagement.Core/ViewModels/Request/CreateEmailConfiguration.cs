@@ -25,7 +25,6 @@ namespace ShutterManagement.Core.ViewModels.Request
         [DefaultValue("")]
         public string? Password { get; set; }
 
-        [DefaultValue("")]
         public bool? UseSsl { get; set; }
 
         [DefaultValue("")]
