@@ -539,7 +539,7 @@ namespace ShutterManagement.Business.Services
                         //    item.AdditionalCost = optionMSRPDict.TotalCost;
                         //    item.IsTaxApplied = await IsTaxApplied((Guid)item.JobId);
                         //}
-                        var ProductPriceWithMarkup = item.TotalPrice +item.ComponentMarkup+ item.ProductMarkup;
+                        var ProductPriceWithMarkup = (item.TotalPrice +item.ComponentMarkup+ item.ProductMarkup);
 
                         item.TotalTaxAmount = item.IsTaxAvailable == true && isContactIsTaxDocument==true
                             ? CalculateTotalTaxAmount(ProductPriceWithMarkup, item.MunicipalityTax, item.CityTax, item.StateTax)
@@ -724,10 +724,10 @@ namespace ShutterManagement.Business.Services
                 {
                     distinctItem.OptionTaxDetails.ForEach(x =>
                     {
-                        x.MunicipalityTaxAmount = (x.OptionPrice * x.MunicipalityTax / 100);
-                        x.StateTaxAmount = (x.OptionPrice * x.StateTax / 100);
-                        x.CityTaxAmount = (x.OptionPrice * x.CityTax / 100);
-                        x.TotalTaxAmount = x.MunicipalityTaxAmount + x.StateTaxAmount + x.CityTaxAmount;
+                        x.MunicipalityTaxAmount = ((x.OptionPrice +x.OptionMarkup) * x.MunicipalityTax / 100);
+                        x.StateTaxAmount = ((x.OptionPrice + x.OptionMarkup) * x.StateTax / 100);
+                        x.CityTaxAmount = ((x.OptionPrice + x.OptionMarkup) * x.CityTax / 100);
+                        x.TotalTaxAmount = (x.MunicipalityTaxAmount + x.StateTaxAmount + x.CityTaxAmount)??0.0m;
                     });
                 }
                 else
