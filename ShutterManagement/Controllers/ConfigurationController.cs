@@ -13,10 +13,12 @@ namespace ShutterManagement.Controllers
     {
         private readonly IGHLConfiguration gHLConfiguration;
         private readonly IStripeConfiguration stripeConfiguration;
+        private readonly IEmailConfigurationService emailConfigurationService;
 
-        public ConfigurationController(IGHLConfiguration gHLConfiguration,IStripeConfiguration stripeConfiguration) {
+        public ConfigurationController(IGHLConfiguration gHLConfiguration,IStripeConfiguration stripeConfiguration ,IEmailConfigurationService emailConfigurationService) {
             this.gHLConfiguration = gHLConfiguration;
             this.stripeConfiguration = stripeConfiguration;
+            this.emailConfigurationService = emailConfigurationService;
         }
 
         [HttpGet]
@@ -80,6 +82,34 @@ namespace ShutterManagement.Controllers
         }
 
 
+        // Email Configuration APIs
+        [HttpPost]
+        [Route("AddOrUpdateEmailConfiguration")]
+        [Authorize(Roles = "EmailConfigurationEdit")]
+        public async Task<IActionResult> AddOrUpdateEmailConfiguration(CreateEmailConfiguration model)
+        {
+            var res = await emailConfigurationService.AddOrUpdateEmailConfiguration(model);
+            return Ok(res);
+        }
+
+
+        [HttpGet]
+        [Route("GetEmailConfiguration")]
+        [Authorize(Roles = "EmailConfigurationView")]
+        public async Task<IActionResult> GetEmailConfiguration()
+        {
+            var res = await emailConfigurationService.GetAll_EmailConfigurations();
+            return Ok(res);
+        }
+
+        [HttpGet]
+        [Route("GetEmailTypeConfiguration")]
+        [Authorize(Roles = "EmailConfigurationView")]
+        public async Task<IActionResult> GetEmailTypeConfiguration()
+        {
+            var res = await emailConfigurationService.GetAll_EmailTypeConfigurations();
+            return Ok(res);
+        }
 
 
 

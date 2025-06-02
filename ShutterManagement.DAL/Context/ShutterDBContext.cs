@@ -55,6 +55,10 @@ public partial class ShutterDBContext : DbContext
 
     public virtual DbSet<TblDiscount> TblDiscounts { get; set; }
 
+    public virtual DbSet<TblEmailConfiguration> TblEmailConfigurations { get; set; }
+
+    public virtual DbSet<TblEmailType> TblEmailTypes { get; set; }
+
     public virtual DbSet<TblEstimate> TblEstimates { get; set; }
 
     public virtual DbSet<TblEstimateApproved> TblEstimateApproveds { get; set; }
@@ -584,6 +588,36 @@ public partial class ShutterDBContext : DbContext
             entity.HasOne(d => d.Customer).WithMany(p => p.TblDiscounts)
                 .HasForeignKey(d => d.CustomerId)
                 .HasConstraintName("FK_Customer");
+        });
+
+        modelBuilder.Entity<TblEmailConfiguration>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__EmailCon__3214EC07F0945E3A");
+
+            entity.ToTable("TblEmailConfiguration", "dbo");
+
+            entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.ModifiedAt).HasColumnType("datetime");
+            entity.Property(e => e.Password).HasMaxLength(500);
+            entity.Property(e => e.ReplyTo).HasMaxLength(255);
+            entity.Property(e => e.SmtpServer).HasMaxLength(255);
+            entity.Property(e => e.UseSsl).HasColumnName("UseSSL");
+            entity.Property(e => e.Username).HasMaxLength(255);
+        });
+
+        modelBuilder.Entity<TblEmailType>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__tblEmail__3214EC0775A8BEEE");
+
+            entity.ToTable("tblEmailType", "dbo");
+
+            entity.Property(e => e.Id).ValueGeneratedNever();
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.Description).HasMaxLength(255);
+            entity.Property(e => e.IsOauth).HasColumnName("IsOAuth");
+            entity.Property(e => e.ModifiedAt).HasColumnType("datetime");
+            entity.Property(e => e.Name).HasMaxLength(50);
         });
 
         modelBuilder.Entity<TblEstimate>(entity =>
