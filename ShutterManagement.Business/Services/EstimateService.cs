@@ -713,17 +713,20 @@ namespace ShutterManagement.Business.Services
 
                 decimal OptionPriceAfterPartnerMarkup = 0.0m;
                 var optionTaxDetails = data.Where(x => x.OptionTaxDetails != null && x.OptionTaxDetails.Count > 0 && x.ProductId == distinctItem.ProductId
-                && x.WindowProdcutId == distinctItem.WindowProdcutId).DistinctBy(x => x.ProductId).FirstOrDefault().OptionTaxDetails;
-                foreach (var x in optionTaxDetails)
+                && x.WindowProdcutId == distinctItem.WindowProdcutId).DistinctBy(x => x.ProductId).FirstOrDefault();
+                if (optionTaxDetails != null && optionTaxDetails.OptionTaxDetails != null && optionTaxDetails.OptionTaxDetails.Count > 0)
                 {
-                    optionMSRPDict.OptionMSRP.TryGetValue(x.OptionTypeId.ToString(), out var price);
-                    x.OptionPrice = price;
-                    if (IsSubtenants != null)
+                    foreach (var x in optionTaxDetails.OptionTaxDetails)
                     {
-                        //x.OptionPrice = x.OptionPrice;
-                        var Optionprice = ApplySubtenantMarkup(x.OptionTypeId, x.OptionPrice ?? 0.0m, distinctItem.OptionMarkup ?? 0.0m);
-                        x.OptionPrice = Optionprice;
-                        OptionPriceAfterPartnerMarkup += Optionprice;
+                        optionMSRPDict.OptionMSRP.TryGetValue(x.OptionTypeId.ToString(), out var price);
+                        x.OptionPrice = price;
+                        if (IsSubtenants != null)
+                        {
+                            //x.OptionPrice = x.OptionPrice;
+                            var Optionprice = ApplySubtenantMarkup(x.OptionTypeId, x.OptionPrice ?? 0.0m, distinctItem.OptionMarkup ?? 0.0m);
+                            x.OptionPrice = Optionprice;
+                            OptionPriceAfterPartnerMarkup += Optionprice;
+                        }
                     }
                 }
                 if (OptionPriceAfterPartnerMarkup > 0)
