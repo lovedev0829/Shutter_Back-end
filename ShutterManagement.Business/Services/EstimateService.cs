@@ -422,7 +422,7 @@ namespace ShutterManagement.Business.Services
             }
             return responseVm;
         }
-        public async Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> BuildEstimate(Guid[] windowProductIds, bool IsBreakdown, string EstimateId = "", bool IsView = false)
+        public async Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> BuildEstimate(Guid[] windowProductIds, bool IsBreakdown, string EstimateId = "", bool IsView = false, List<ProductListing> products = null )
         {
             IResponseVm<List<WindowProdcutDetailsForEstimate>> responseVm = new ResponseVm<List<WindowProdcutDetailsForEstimate>>();
             FileLogger.Log("Start: Calculate Estimate price...");
@@ -500,12 +500,12 @@ namespace ShutterManagement.Business.Services
 
                                 // data.Data.Select(x => x.BuildHeight).First();
 
-                                var wholesale = await CalculateEstimate(data.Data, true);
+                                var wholesale = await CalculateEstimate(data.Data, true, products);
                                 data.Data.ForEach(x =>
                                 {
                                     x.WholesalePrice = Convert.ToDecimal(wholesale.ToString("0.00"));
                                 });
-                                var componentPrice = await CalculateEstimate(data.Data, false);
+                                var componentPrice = await CalculateEstimate(data.Data, false, products);
                                 data.Data.ForEach(x =>
                                 {
                                     x.TotalPrice = componentPrice != null && componentPrice > 0.0m ? Convert.ToDecimal(componentPrice.ToString("0.00")) : null;
@@ -603,7 +603,7 @@ namespace ShutterManagement.Business.Services
         }
 
 
-        private async Task<decimal> CalculateEstimate(List<WindowProdcutDetailsForEstimate> data, bool? iswholesale = false)
+        private async Task<decimal> CalculateEstimate(List<WindowProdcutDetailsForEstimate> data, bool? iswholesale = false, List<ProductListing> products = null)
         {
             decimal ComponentSubTotal = 0.00M;
             decimal ComponentMarkup = 0.00M;
@@ -689,14 +689,14 @@ namespace ShutterManagement.Business.Services
                         // (distinctItem.ProductMarkup ?? 0.0m) + (distinctItem.ComponentMarkup ?? 0.0m);
                         if (IsSubtenants != null)
                         {
-                            var productMarkup = dbContext.TblManagePartnersProducts.Where(x => x.ProductId == distinctItem.ProductId && x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
-                            if (productMarkup.MarkupType == "Percentage")
+                            var partnerProductMarkup = dbContext.TblManagePartnersProducts.Where(x => x.ProductId == distinctItem.ProductId && x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
+                            if (partnerProductMarkup.MarkupType == "Percentage")
                             {
-                                ProductownMarkup += (ComponentPriceWithAllMarkup * (productMarkup.PartnerSellingPrice ?? 0) / 100);
+                                ProductownMarkup += (ComponentPriceWithAllMarkup * (partnerProductMarkup.PartnerSellingPrice ?? 0) / 100);
                             }
-                            if (productMarkup.MarkupType == "Fixed")
+                            if (partnerProductMarkup.MarkupType == "Fixed")
                             {
-                                ProductownMarkup += (ComponentPriceWithAllMarkup + (productMarkup.PartnerSellingPrice ?? 0));
+                                ProductownMarkup += (ComponentPriceWithAllMarkup + (partnerProductMarkup.PartnerSellingPrice ?? 0));
                             }
                             //ComponentSubTotal = ComponentPriceWithAllMarkup;
                             //ComponentSubTotal = Convert.ToDecimal(Convert.ToDecimal(ComponentSubTotal).ToString("0.00"));
@@ -706,6 +706,31 @@ namespace ShutterManagement.Business.Services
                     }
                     //distinctItem.ProductMarkup = ProductMarkup;
                     //distinctItem.ComponentMarkup = ComponentMarkup;
+                }
+                if(distinctItem.ComponentId ==null || distinctItem.ComponentId == Guid.Empty)
+                {
+                    if (products != null && products.Count > 0)
+                    {
+                        var productPriceWithputComponent = products.Where(x => x.WindowProductId == distinctItem.WindowProdcutId).Select(x => x.ProductPrice).FirstOrDefault();
+                        var ProductownMarkup = ((productPriceWithputComponent * distinctItem.Markup) / 100) ?? 0.0m;
+
+                        // (distinctItem.ProductMarkup ?? 0.0m) + (distinctItem.ComponentMarkup ?? 0.0m);
+                        if (IsSubtenants != null)
+                        {
+                            var partnerProductMarkup = dbContext.TblManagePartnersProducts.Where(x => x.ProductId == distinctItem.ProductId && x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
+                            if (partnerProductMarkup.MarkupType == "Percentage")
+                            {
+                                ProductownMarkup += ((ProductownMarkup + productPriceWithputComponent) * (partnerProductMarkup.PartnerSellingPrice ?? 0) / 100);
+                            }
+                            if (partnerProductMarkup.MarkupType == "Fixed")
+                            {
+                                ProductownMarkup += (ProductownMarkup + productPriceWithputComponent + (partnerProductMarkup.PartnerSellingPrice ?? 0));
+                            }
+                            //ComponentSubTotal = ComponentPriceWithAllMarkup;
+                            //ComponentSubTotal = Convert.ToDecimal(Convert.ToDecimal(ComponentSubTotal).ToString("0.00"));
+                        }
+                        ProductMarkup += ProductownMarkup;
+                    }
                 }
                 var optionMSRPDict = await CalculateOptionPrice(distinctItem.OptionsTypeIds, (decimal)distinctItem.Quantity, (decimal)distinctItem.Height, (decimal)distinctItem.Width, false);
                 distinctItem.AdditionalCost = optionMSRPDict.TotalCost;
@@ -1508,7 +1533,7 @@ namespace ShutterManagement.Business.Services
             Guid? taxRateId = null;
             Guid? discountId = null;
             var PricedProductsList = model.ProductsList.Where(x => x.ProductPrice != null && x.ProductPrice > 0).ToList();
-            var windowproductdetails = await BuildEstimate(model.ProductsList.Select(x => x.WindowProductId).ToArray(), true);
+            var windowproductdetails = await BuildEstimate(model.ProductsList.Select(x => x.WindowProductId).ToArray(), true,"",false, model.ProductsList);
 
 
             if (windowproductdetails.Data != null && windowproductdetails.Data.Any())
