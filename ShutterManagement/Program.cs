@@ -183,6 +183,7 @@ builder.Services.AddScoped<IjobStageStatusAutomAtionHistory,JobStageStatusAutoma
 builder.Services.AddScoped<IManagePartnersProducts,ManagePartnersProductsService>();
 builder.Services.AddScoped<IManagePartnersProductsOptions,ManagePartnersProductsOptionService>();
 builder.Services.AddScoped<IEmailConfigurationService, EmailConfigurationService>();
+builder.Services.AddScoped<MS365Configuration>();
 // Add services to the DI container
 builder.Services.AddHttpClient<GhlService>(); // Register HttpClient for GhlService
 builder.Services.AddScoped<GhlService>(); // Register GhlService as a scoped dependency

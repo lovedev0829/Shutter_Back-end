@@ -17,6 +17,9 @@ namespace ShutterManagement.GHLv2
         public string? RefreshToken { get; set; }
 
         [JsonProperty("expires_in")]
-        public int? ExpiresIn { get; set; }
+        public int ExpiresIn { get; set; }
+
+        [JsonProperty("ext_expires_in")]
+        public int ext_expires_in { get; set; }
     }
 }

@@ -128,6 +128,14 @@ namespace ShutterManagement.Core
         public static string GHL_Marketplace_RedirectUri { get; set; } = string.Empty;
         public static string GHL_Marketplace_TokenURL { get; set; } = string.Empty;
 
+
+        //Microsoft365 Credentials
+        public static string Micorsoft365_ClientId { get; set; } = string.Empty;
+        public static string Micorsoft365_ClientSecret { get; set; } = string.Empty;
+        public static string Micorsoft365_RedirectUri { get; set; } = string.Empty;
+        public static string Micorsoft365_tenantId { get; set; } = string.Empty;
+        public static string Micorsoft365_scopes { get; set; } = string.Empty;
+
         //Stripe Configuration
 
         public static string Stripe_SecretKey { get; set; } = string.Empty;

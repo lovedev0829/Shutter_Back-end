@@ -22,6 +22,11 @@ namespace ShutterManagement
             AppConstant.GHL_Marketplace_RedirectUri = Configuration["GoHighLevelOAuthSettings:RedirectUri"]  ?? "";
             AppConstant.GHL_Marketplace_TokenURL = Configuration["GoHighLevelOAuthSettings:TokenUrl"] ?? "";
             AppConstant.GHL_Version= Configuration["GoHighLevelOAuthSettings:Version"] ?? "";
+            AppConstant.Micorsoft365_ClientId = Configuration["Microsoft365Credentials:ClientId"] ?? "";
+            AppConstant.Micorsoft365_ClientSecret = Configuration["Microsoft365Credentials:ClientSecret"] ?? "";
+            AppConstant.Micorsoft365_RedirectUri = Configuration["Microsoft365Credentials:RedirectUri"] ?? "";
+            AppConstant.Micorsoft365_tenantId = Configuration["Microsoft365Credentials:tenantId"] ?? "";
+            AppConstant.Micorsoft365_scopes = Configuration["Microsoft365Credentials:scopes"] ?? "";
             //AppConstant.IsAdminRolesShow = Convert.ToBoolean(Configuration["IsAdminRolesShow"] ?? "false");
         }
     }
