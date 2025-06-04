@@ -22,6 +22,7 @@ using System.Text.Json;
 using ShutterManagement.GHL.Services;
 using ShutterManagement.Stripe;
 using ShutterManagement.GHLv2;
+using ShutterManagement.Core.ViewModels.Response;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -193,9 +194,12 @@ builder.Services.AddSingleton(typeof(IConverter), new SynchronizedConverter(new 
 
 builder.Services.Configure<GoHighLevelOAuthSettings>(builder.Configuration.GetSection("GoHighLevelOAuthSettings"));
 builder.Services.Configure<StripeSettings>(builder.Configuration.GetSection("Stripe"));
+builder.Services.Configure<GoogleOAuthSettings>(builder.Configuration.GetSection("GoogleOAuth"));
+builder.Services.AddScoped<GoogleAuthService>();
+
 
 // Register the StripeService as a singleton
- builder.Services.AddSingleton<StripeService>();
+builder.Services.AddSingleton<StripeService>();
 
 var app = builder.Build();
 
