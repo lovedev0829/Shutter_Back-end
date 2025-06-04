@@ -164,6 +164,46 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
+
+
+        public async Task<bool> IsMicrosoftAccessTokenValid(string accessToken)
+        {
+            using var client = new HttpClient();
+            try
+            {
+                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+                var response = await client.GetAsync("https://graph.microsoft.com/v1.0/me");
+                return response.IsSuccessStatusCode;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public async Task<string> RefreshMicrosoft365AccessToken(string refreshToken)
+        {
+            var values = new Dictionary<string, string>
+            {
+                ["client_id"] = AppConstant.Micorsoft365_ClientId,
+                ["client_secret"] = AppConstant.Micorsoft365_ClientSecret,
+                ["grant_type"] = "refresh_token",
+                ["refresh_token"] = refreshToken,
+                ["scope"] = "https://outlook.office365.com/SMTP.Send offline_access"
+            };
+
+            using var client = new HttpClient();
+            var content = new FormUrlEncodedContent(values);
+            var response = await client.PostAsync(
+                $"https://login.microsoftonline.com/{AppConstant.Micorsoft365_tenantId}/oauth2/v2.0/token",
+                content);
+
+            var json = await response.Content.ReadAsStringAsync();
+            dynamic tokenResult = JsonConvert.DeserializeObject(json);
+            return tokenResult?.access_token;
+        }
+
+
         public class EmailMessageModel
         {
             public string From { get; set; }

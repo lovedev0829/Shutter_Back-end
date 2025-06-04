@@ -144,5 +144,11 @@ namespace ShutterManagement.Core
         public static string Stripe_CancelUrl { get; set; } = "http://192.168.0.22:5500/payment_cancel";
         public static string Stripe_SuccessUrl { get; set; } = "http://192.168.0.22:5500/payment_success";
 
+
+        // smtp host info for Oauth 
+
+        public static string smtpHost_Google { get; set; } = "smtp.gmail.com";
+        public static string smtpHost_MSOffice365 { get; set; } = "smtp.office365.com";
+
     }
 }

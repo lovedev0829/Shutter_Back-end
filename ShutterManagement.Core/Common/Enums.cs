@@ -78,6 +78,16 @@ namespace ShutterManagement.Core.Common
         OrderSheet
     }
 
+    public enum EmailSendType
+    {
+        [EnumMember(Value = "Google")]
+        Google,
+        [EnumMember(Value = "SMTP")]
+        SMTP,
+        [EnumMember(Value = "Microsoft365")]
+        Microsoft365
+    }
+
 
     public enum ModuleName
     {

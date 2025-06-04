@@ -57,10 +57,10 @@ public class GoogleAuthController : ControllerBase
 
             if (getAccessTokenFromDb.AccessExpirationtime < DateTime.Now)
             {
-                getAccessTokenFromDb.AccessToken = await _googleAuthService.RefreshAccessTokenAsync(getAccessTokenFromDb.RefreshToken);
+                getAccessTokenFromDb.AccessToken = await _googleAuthService.GoogleRefreshAccessToken(getAccessTokenFromDb.RefreshToken);
                 getAccessTokenFromDb.AccessExpirationtime = DateTime.Now.AddHours(1);
             }
-            var Request = new GmailOAuthEmailRequest
+            var Request = new OAuthEmailRequest
             {
                 FromEmail = request.FromEmail,
                 ToEmail = request.ToEmail,
@@ -70,7 +70,7 @@ public class GoogleAuthController : ControllerBase
                 AccessToken = getAccessTokenFromDb.AccessToken
             };
 
-            await EmailHelper.SendEmailWithGoogleOAuth(Request);
+            await EmailHelper.SendEmailWithOAuth(Request);
         }
         else
         {
