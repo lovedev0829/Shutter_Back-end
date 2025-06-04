@@ -527,7 +527,9 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                
+                 var emailConfiGurationExist = dbContext.TblEmailConfigurations
+                    .Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false)
+                    .FirstOrDefault();
 
                 FileLogger.Log($"Stripe Configuration{AppConstant.LoggedInTenantId.ToString()}");
                 var isTenantValid = await tenantService.AnyAsync(x =>
@@ -743,19 +745,43 @@ namespace ShutterManagement.Business.Services
     </div>";
 
 
-                    var emailAttachment = new EmailAttachment
+                    //var emailAttachment = new EmailAttachment
+                    //{
+                    //    FileName = $"{estimationDetails.EstimateCode}.pdf",
+                    //    Stream = new MemoryStream(pdfBytes.Data),
+                    //    MediaType = "application/pdf"
+                    //};
+
+                    //var emailSent = EmailHelper.SendEmailWithAttachment(
+                    //    customerDetails.Email,
+                    //    "Estimate Approval Link and PDF",
+                    //    emailBody,
+                    //    new List<EmailAttachment> { emailAttachment }
+                    //);
+
+                    var emailSendAttach = new EmailAttachments
                     {
                         FileName = $"{estimationDetails.EstimateCode}.pdf",
                         Stream = new MemoryStream(pdfBytes.Data),
                         MediaType = "application/pdf"
                     };
 
-                    var emailSent = EmailHelper.SendEmailWithAttachment(
-                        customerDetails.Email,
-                        "Estimate Approval Link and PDF",
-                        emailBody,
-                        new List<EmailAttachment> { emailAttachment }
-                    );
+
+                    var emailRequest = new GmailOAuthEmailRequest
+                    {
+                        FromEmail = emailConfiGurationExist.From,
+                        ToEmail = customerDetails.Email,
+                        Subject = "Estimate Approval Link and PDF",
+                        Body = emailBody,
+                        UserEmail = emailConfiGurationExist.Username,
+                        AccessToken = emailConfiGurationExist.AccessToken,
+                        Attachments = new List<EmailAttachments> { emailSendAttach }
+                    };
+
+                    // Send email
+                    var emailSentResponse = await EmailHelper.SendEmailWithGoogleOAuth(emailRequest);
+
+
 
                     responseVm.IsSuccess = true;
                     responseVm.Message = "Email Send SuccessFully.";

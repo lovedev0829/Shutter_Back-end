@@ -1,4 +1,7 @@
-﻿using ShutterManagement.Business.Interfaces;
+﻿using MailKit.Net.Smtp;
+using MailKit.Security;
+using MimeKit;
+using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core;
 using ShutterManagement.Core.ViewModels;
 using ShutterManagement.Core.ViewModels.Request;
@@ -151,6 +154,6 @@ namespace ShutterManagement.Business.Services
         }
 
 
-
+      
     }
 }

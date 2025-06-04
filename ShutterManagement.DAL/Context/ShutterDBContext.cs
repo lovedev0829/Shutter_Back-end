@@ -597,10 +597,12 @@ public partial class ShutterDBContext : DbContext
             entity.ToTable("TblEmailConfiguration", "dbo");
 
             entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.AccessExpirationtime).HasColumnType("datetime");
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
             entity.Property(e => e.From).HasMaxLength(255);
             entity.Property(e => e.ModifiedAt).HasColumnType("datetime");
             entity.Property(e => e.Password).HasMaxLength(500);
+            entity.Property(e => e.RefreshExpirationtime).HasColumnType("datetime");
             entity.Property(e => e.ReplyTo).HasMaxLength(255);
             entity.Property(e => e.SmtpServer).HasMaxLength(255);
             entity.Property(e => e.UseSsl).HasColumnName("UseSSL");
