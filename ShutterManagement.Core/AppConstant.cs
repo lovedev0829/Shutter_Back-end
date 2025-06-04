@@ -128,6 +128,14 @@ namespace ShutterManagement.Core
         public static string GHL_Marketplace_RedirectUri { get; set; } = string.Empty;
         public static string GHL_Marketplace_TokenURL { get; set; } = string.Empty;
 
+
+        //Microsoft365 Credentials
+        public static string Micorsoft365_ClientId { get; set; } = string.Empty;
+        public static string Micorsoft365_ClientSecret { get; set; } = string.Empty;
+        public static string Micorsoft365_RedirectUri { get; set; } = string.Empty;
+        public static string Micorsoft365_tenantId { get; set; } = string.Empty;
+        public static string Micorsoft365_scopes { get; set; } = string.Empty;
+
         //Stripe Configuration
 
         public static string Stripe_SecretKey { get; set; } = string.Empty;
@@ -135,6 +143,12 @@ namespace ShutterManagement.Core
         public static string Stripe_WebhookSecret { get; set; } = string.Empty;
         public static string Stripe_CancelUrl { get; set; } = "http://192.168.0.22:5500/payment_cancel";
         public static string Stripe_SuccessUrl { get; set; } = "http://192.168.0.22:5500/payment_success";
+
+
+        // smtp host info for Oauth 
+
+        public static string smtpHost_Google { get; set; } = "smtp.gmail.com";
+        public static string smtpHost_MSOffice365 { get; set; } = "smtp.office365.com";
 
     }
 }

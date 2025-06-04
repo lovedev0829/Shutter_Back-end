@@ -47,12 +47,15 @@ namespace ShutterManagement.Business.Services
         private readonly IStripeConfiguration stripeConfiguration;
         private readonly JobStatusAndStageMapping statusAndStageMapping;
         private readonly ITemplatesService templatesService;
+        private readonly GoogleAuthService googleAuthService;
+        private readonly IEmailConfigurationService emailConfigurationService;
 
         public InvoiceService(ITenantService tenantService, IInvoicePaymentService invoicePaymentService,
             IHostEnvironment environment, IConverter converter ,IContactService contactService 
             ,IEstimateService estimateService, ITenantBrandingService tenantBrandingService,IUserService userService 
             ,IJobService jobService,IOrderService orderService,StripeService stripeService ,
-            IStripeConfiguration stripeConfiguration,JobStatusAndStageMapping statusAndStageMapping ,ITemplatesService templatesService)
+            IStripeConfiguration stripeConfiguration,JobStatusAndStageMapping statusAndStageMapping ,
+            ITemplatesService templatesService,GoogleAuthService googleAuthService,IEmailConfigurationService emailConfigurationService)
         {
             this.tenantService = tenantService;
             this.invoicePaymentService = invoicePaymentService;
@@ -68,6 +71,8 @@ namespace ShutterManagement.Business.Services
             this.stripeConfiguration = stripeConfiguration;
             this.statusAndStageMapping = statusAndStageMapping;
             this.templatesService = templatesService;
+            this.googleAuthService = googleAuthService;
+            this.emailConfigurationService = emailConfigurationService;
         }
 
         #region Create  update ActiveInActive Delete Getall
@@ -527,7 +532,6 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                
 
                 FileLogger.Log($"Stripe Configuration{AppConstant.LoggedInTenantId.ToString()}");
                 var isTenantValid = await tenantService.AnyAsync(x =>
@@ -743,19 +747,50 @@ namespace ShutterManagement.Business.Services
     </div>";
 
 
-                    var emailAttachment = new EmailAttachment
+                    //var emailAttachment = new EmailAttachment
+                    //{
+                    //    FileName = $"{estimationDetails.EstimateCode}.pdf",
+                    //    Stream = new MemoryStream(pdfBytes.Data),
+                    //    MediaType = "application/pdf"
+                    //};
+
+                    //var emailSent = EmailHelper.SendEmailWithAttachment(
+                    //    customerDetails.Email,
+                    //    "Estimate Approval Link and PDF",
+                    //    emailBody,
+                    //    new List<EmailAttachment> { emailAttachment }
+                    //);
+
+                    var emailSendAttach = new EmailAttachments
                     {
                         FileName = $"{estimationDetails.EstimateCode}.pdf",
                         Stream = new MemoryStream(pdfBytes.Data),
                         MediaType = "application/pdf"
                     };
+                    var Emailconfigurationdata = googleAuthService.ValidateAndRefreshEmailOauthAccessToken();
+                    if(Emailconfigurationdata == null )
+                    {
+                        responseVm.IsSuccess = false;
+                        responseVm.Message = "Email Configuration not found. Please add configurations.";
+                        return responseVm;
+                    }
 
-                    var emailSent = EmailHelper.SendEmailWithAttachment(
-                        customerDetails.Email,
-                        "Estimate Approval Link and PDF",
-                        emailBody,
-                        new List<EmailAttachment> { emailAttachment }
-                    );
+                    var emailRequest = new OAuthEmailRequest
+                    {
+                        FromEmail = Emailconfigurationdata.Result?.Data?.From ?? "",
+                        ToEmail = customerDetails?.Email ?? "",
+                        Subject = "Estimate Approval Link and PDF",
+                        Body = emailBody,
+                        UserEmail = Emailconfigurationdata.Result?.Data?.Username ?? "",
+                        AccessToken = Emailconfigurationdata.Result?.Data?.AccessToken ?? "",
+                        EmailType = Emailconfigurationdata.Result?.Data?.EmailTypeName ?? "",
+                        Attachments = new List<EmailAttachments> { emailSendAttach }
+                    };
+
+                    // Send email
+                    var emailSentResponse = await EmailHelper.SendEmailWithOAuth(emailRequest);
+
+
 
                     responseVm.IsSuccess = true;
                     responseVm.Message = "Email Send SuccessFully.";
@@ -809,23 +844,49 @@ namespace ShutterManagement.Business.Services
     </div>";
 
 
-                    var emailAttachment = new EmailAttachment
+                    var emailAttachment = new EmailAttachments
                     {
                         FileName = $"{IsOrderExists?.OrderName}.pdf",
                         Stream = new MemoryStream(pdfBytes.Data),
                         MediaType = "application/pdf"
                     };
 
-                    var emailSent = EmailHelper.SendEmailWithAttachment(
-                        customerDetails.Email,
-                        "Order Approval Link and PDF",
-                        emailBody,
-                        new List<EmailAttachment> { emailAttachment }
-                    );
+                    //var emailSent = EmailHelper.SendEmailWithAttachment(
+                    //    customerDetails.Email,
+                    //    "Order Approval Link and PDF",
+                    //    emailBody,
+                    //    new List<EmailAttachment> { emailAttachment }
+                    //);
+
+                    var Emailconfigurationdata = googleAuthService.ValidateAndRefreshEmailOauthAccessToken();
+                    if (Emailconfigurationdata == null)
+                    {
+                        responseVm.IsSuccess = false;
+                        responseVm.Message = "Email Configuration not found. Please add configurations.";
+                        return responseVm;
+                    }
+
+                    var emailRequest = new OAuthEmailRequest
+                    {
+                        FromEmail = Emailconfigurationdata.Result?.Data?.From ?? "",
+                        ToEmail = customerDetails?.Email ?? "",
+                        Subject = "Order Approval Link and PDF",
+                        Body = emailBody,
+                        UserEmail = Emailconfigurationdata.Result?.Data?.Username ?? "",
+                        AccessToken = Emailconfigurationdata.Result?.Data?.AccessToken ?? "",
+                        EmailType = Emailconfigurationdata.Result?.Data?.EmailTypeName ?? "",
+                        Attachments = new List<EmailAttachments> { emailAttachment }
+                    };
+
+                    // Send email
+                    var emailSentResponse = await EmailHelper.SendEmailWithOAuth(emailRequest);
+
+                    System.IO.File.Delete(savePath);
 
                     responseVm.IsSuccess = true;
-                    responseVm.Message = "Email Send SuccessFully.";
-                    System.IO.File.Delete(savePath);
+                    responseVm.Message = emailSentResponse.Message;
+                    return responseVm;
+                   
 
 
 
@@ -1038,19 +1099,44 @@ namespace ShutterManagement.Business.Services
     </div>
 </div>";
 
-                    var emailAttachment = new EmailAttachment
+                    var emailAttachment = new EmailAttachments
                     {
                         FileName = $"{invoiceDetails?.InvoiceNumber}.pdf",
                         Stream = new MemoryStream(pdfBytesInvoice.Data),
                         MediaType = "application/pdf"
                     };
 
-                    var emailSent = EmailHelper.SendEmailWithAttachment(
-                        customerDetails.Email,
-                        AppConstant.InvoicePaymentLinkandPDF,
-                        emailBody,
-                        new List<EmailAttachment> { emailAttachment }
-                    );
+                    //var emailSent = EmailHelper.SendEmailWithAttachment(
+                    //    customerDetails.Email,
+                    //    AppConstant.InvoicePaymentLinkandPDF,
+                    //    emailBody,
+                    //    new List<EmailAttachment> { emailAttachment }
+                    //);
+
+                    var Emailconfigurationdata = googleAuthService.ValidateAndRefreshEmailOauthAccessToken();
+                    if (Emailconfigurationdata == null)
+                    {
+                        responseVm.IsSuccess = false;
+                        responseVm.Message = "Email Configuration not found. Please add configurations.";
+                        return responseVm;
+                    }
+
+                    var emailRequest = new OAuthEmailRequest
+                    {
+                        FromEmail = Emailconfigurationdata.Result?.Data?.From ?? "",
+                        ToEmail = customerDetails?.Email ?? "",
+                        Subject = AppConstant.InvoicePaymentLinkandPDF,
+                        Body = emailBody,
+                        UserEmail = Emailconfigurationdata.Result?.Data?.Username ?? "",
+                        AccessToken = Emailconfigurationdata.Result?.Data?.AccessToken ?? "",
+                        EmailType = Emailconfigurationdata.Result?.Data?.EmailTypeName ?? "",
+                        Attachments = new List<EmailAttachments> { emailAttachment }
+                    };
+
+                    // Send email
+                    var emailSentResponse = await EmailHelper.SendEmailWithOAuth(emailRequest);
+
+
 
                     responseVm.IsSuccess = true;
                     responseVm.Message = isStripeConfigured

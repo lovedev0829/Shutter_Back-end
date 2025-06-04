@@ -23,6 +23,7 @@ using ShutterManagement.GHLv2;
 using System.Runtime.InteropServices;
 using ShutterManagment.GHL.ViewModel.Request;
 using Microsoft.OpenApi.Extensions;
+using static ShutterManagement.Business.Services.MS365Configuration;
 
 namespace ShutterManagement.Controllers
 {
@@ -69,6 +70,7 @@ namespace ShutterManagement.Controllers
         private readonly GHLService_v2 gHLService_V2;
         private readonly IJobSchedule jobSchedule;
         private readonly IStateService stateService;
+        private readonly MS365Configuration mS365Configuration;
         private readonly IAuthService authService;
 
         public CommonController(IMasterCreate masterCreate, 
@@ -84,7 +86,8 @@ namespace ShutterManagement.Controllers
             ITaxRate taxService,IEstimateService estimateService, IAuthService authService,
             IEstimationBreakdownService estimationBreakdownService, ILocationService locationService,
            IDashboard dashboard, INotificationService notification, IGHLConfiguration gHLConfiguration,IStripeConfiguration stripeConfiguration,
-           GhlService ghlService ,IPaymentsService paymentsService ,GHLService_v2 gHLService_V2,IJobSchedule jobSchedule,IStateService stateService)
+           GhlService ghlService ,IPaymentsService paymentsService ,GHLService_v2 gHLService_V2,IJobSchedule jobSchedule,
+           IStateService stateService,MS365Configuration mS365Configuration)
         {
             this.masterCreate = masterCreate;
             this.fileUpload = fileUpload;
@@ -134,6 +137,7 @@ namespace ShutterManagement.Controllers
             this.gHLService_V2 = gHLService_V2;
             this.jobSchedule = jobSchedule;
             this.stateService = stateService;
+            this.mS365Configuration = mS365Configuration;
         }
 
 
@@ -998,6 +1002,44 @@ namespace ShutterManagement.Controllers
             }
               
         }
+
+        [HttpGet]
+      //  [AllowAnonymous]
+        [Route("MSLogin")]
+        public async Task<IActionResult> MS_Login()
+        {
+            var authUrl = await mS365Configuration.GetAuthorizationurl();
+            return Ok(new { authorizationUrl = authUrl });
+        }
+
+        private string ExtractCodeFromUrl(string url)
+        {
+            var uri = new Uri(url);
+            var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+            return query["code"];
+        }
+
+        [HttpGet]
+        [AllowAnonymous]
+        [Route("ExchangeCodeForTokensAsync")]
+        public async Task<IActionResult> ExchangeCodeForTokensAsync([FromQuery] string code)
+        {
+            if (string.IsNullOrEmpty(code))
+                return BadRequest("Missing authorization code.");
+
+            var tokens = await mS365Configuration.ExchangeCodeForTokensAsync(code);
+            return Ok(tokens);
+        }
+
+
+        [HttpPost("SendMailWithAttachment")]
+        public async Task<IActionResult> SendMailWithAttachment([FromForm] EmailMessageModel model)
+        {
+            var result = await mS365Configuration.SendEmail(model);
+            return Ok(result);
+        }
+
+
 
 
     }
