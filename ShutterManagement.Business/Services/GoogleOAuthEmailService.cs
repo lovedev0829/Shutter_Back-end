@@ -200,16 +200,15 @@ namespace ShutterManagement.Business.Services
         }
 
 
+
         public async Task<IResponseVm<EmailConfigurationVm?>> ValidateAndRefreshEmailOauthAccessToken()
         {
-
             IResponseVm<EmailConfigurationVm> responseVm = new ResponseVm<EmailConfigurationVm>();
 
             try
             {
-                var emailConfig =  emailConfigurationService.GetAllQuerable()
-                    .Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false).FirstOrDefault();
-
+                var emailConfig = emailConfigurationService.GetAllQuerable()
+                    .FirstOrDefault(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive==true && x.IsDelete==false);
 
                 if (emailConfig == null)
                 {
@@ -217,14 +216,10 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-
-                if (emailConfig.RefreshExpirationtime <= DateTime.Now)
-                {
-                    responseVm.Message = "Your authentication has expired. Please reconnect your email to continue sending emails.";
-                    return responseVm;
-                }
-
-                var emailType = dBContext.TblEmailTypes.Where(s => s.Id == emailConfig.EmailType).Select(x => x.Name).FirstOrDefault();
+                var emailType = dBContext.TblEmailTypes
+                    .Where(s => s.Id == emailConfig.EmailType)
+                    .Select(x => x.Name)
+                    .FirstOrDefault();
 
                 if (string.IsNullOrEmpty(emailType))
                 {
@@ -232,48 +227,65 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
+                var lowerEmailType = emailType.ToLower();
+
+                if (emailType == EnumValue.GetEnumValue(EmailSendType.SMTP))
+                {
+                    // For SMTP, no token check needed, return directly
+                    return SuccessResponse(emailConfig, emailType);
+                }
+
+                // If refresh token expired
+                if (emailConfig.RefreshExpirationtime <= DateTime.Now)
+                {
+                    responseVm.Message = "Your authentication has expired. Please reconnect your email to continue sending emails.";
+                    return responseVm;
+                }
+
                 bool isAccessTokenExpired = emailConfig.AccessExpirationtime <= DateTime.Now;
                 bool isAccessTokenValid = false;
 
-                switch (emailType.ToLower())
+                switch (lowerEmailType)
                 {
                     case "google":
                         isAccessTokenValid = await IsGoogleAccessTokenValid(emailConfig.AccessToken);
+
                         if (!isAccessTokenValid || isAccessTokenExpired)
                         {
                             var newAccessToken = await GoogleRefreshAccessToken(emailConfig.RefreshToken);
-                            if (!string.IsNullOrEmpty(newAccessToken))
-                            {
-                                emailConfig.AccessToken = newAccessToken;
-                                emailConfig.AccessExpirationtime = DateTime.Now.AddHours(1);
-                                await emailConfigurationService.Update(emailConfig);
-                                responseVm.Message = "Google access token refreshed.";
-                            }
-                            else
+
+                            if (string.IsNullOrEmpty(newAccessToken))
                             {
                                 responseVm.Message = "Failed to refresh Google access token.";
                                 return responseVm;
                             }
+
+                            emailConfig.AccessToken = newAccessToken;
+                            emailConfig.AccessExpirationtime = DateTime.Now.AddHours(1);
+                            await emailConfigurationService.Update(emailConfig);
+
+                            responseVm.Message = "Google access token refreshed.";
                         }
                         break;
 
                     case "microsoft365":
                         isAccessTokenValid = await mS365Configuration.IsMicrosoftAccessTokenValid(emailConfig.AccessToken);
+
                         if (!isAccessTokenValid || isAccessTokenExpired)
                         {
                             var newAccessToken = await mS365Configuration.RefreshMicrosoft365AccessToken(emailConfig.RefreshToken);
-                            if (!string.IsNullOrEmpty(newAccessToken))
-                            {
-                                emailConfig.AccessToken = newAccessToken;
-                                emailConfig.AccessExpirationtime = DateTime.Now.AddHours(1);
-                                await emailConfigurationService.Update(emailConfig);
-                                responseVm.Message = "Microsoft 365 access token refreshed.";
-                            }
-                            else
+
+                            if (string.IsNullOrEmpty(newAccessToken))
                             {
                                 responseVm.Message = "Failed to refresh Microsoft 365 access token.";
                                 return responseVm;
                             }
+
+                            emailConfig.AccessToken = newAccessToken;
+                            emailConfig.AccessExpirationtime = DateTime.Now.AddHours(1);
+                            await emailConfigurationService.Update(emailConfig);
+
+                            responseVm.Message = "Microsoft 365 access token refreshed.";
                         }
                         break;
 
@@ -282,7 +294,23 @@ namespace ShutterManagement.Business.Services
                         return responseVm;
                 }
 
-                var vm = new EmailConfigurationVm
+                // Return success response
+                return SuccessResponse(emailConfig, emailType);
+            }
+            catch (Exception ex)
+            {
+                responseVm.Message = "Exception: " + ex.Message;
+                return responseVm;
+            }
+        }
+
+        // Helper to generate response
+        private IResponseVm<EmailConfigurationVm> SuccessResponse(TblEmailConfiguration emailConfig, string emailType)
+        {
+            return new ResponseVm<EmailConfigurationVm>
+            {
+                IsSuccess = true,
+                Data = new EmailConfigurationVm
                 {
                     Id = emailConfig.Id,
                     SmtpServer = emailConfig.SmtpServer,
@@ -297,18 +325,127 @@ namespace ShutterManagement.Business.Services
                     AccessToken = emailConfig.AccessToken,
                     TenantId = emailConfig.TenantId,
                     IsActive = emailConfig.IsActive
-                };
-
-                responseVm.IsSuccess = true;
-                responseVm.Data = vm;
-            }
-            catch (Exception ex)
-            {
-                responseVm.Message = "Exception: " + ex.Message;
-            }
-
-            return responseVm;
+                }
+            };
         }
+
+
+
+        //public async Task<IResponseVm<EmailConfigurationVm?>> ValidateAndRefreshEmailOauthAccessToken()
+        //{
+
+        //    IResponseVm<EmailConfigurationVm> responseVm = new ResponseVm<EmailConfigurationVm>();
+
+        //    try
+        //    {
+        //        var emailConfig =  emailConfigurationService.GetAllQuerable()
+        //            .Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false).FirstOrDefault();
+
+
+        //        if (emailConfig == null)
+        //        {
+        //            responseVm.Message = "No email configuration found.";
+        //            return responseVm;
+        //        }
+
+             
+
+
+        //        var emailType = dBContext.TblEmailTypes.Where(s => s.Id == emailConfig.EmailType).Select(x => x.Name).FirstOrDefault();
+
+        //        if (string.IsNullOrEmpty(emailType))
+        //        {
+        //            responseVm.Message = "Email type is not defined.";
+        //            return responseVm;
+        //        }
+        //        if(emailType==EnumValue.GetEnumValue(EmailSendType.SMTP))
+        //        {
+        //            // it work without refeshh token or any other it work normally like skipp for check any expiration and get return emailConfig data 
+        //        }
+
+        //        if (emailConfig.RefreshExpirationtime <= DateTime.Now)
+        //        {
+        //            responseVm.Message = "Your authentication has expired. Please reconnect your email to continue sending emails.";
+        //            return responseVm;
+        //        }
+
+        //        bool isAccessTokenExpired = emailConfig.AccessExpirationtime <= DateTime.Now;
+        //        bool isAccessTokenValid = false;
+
+        //        switch (emailType.ToLower())
+        //        {
+        //            case "google":
+        //                isAccessTokenValid = await IsGoogleAccessTokenValid(emailConfig.AccessToken);
+        //                if (!isAccessTokenValid || isAccessTokenExpired)
+        //                {
+        //                    var newAccessToken = await GoogleRefreshAccessToken(emailConfig.RefreshToken);
+        //                    if (!string.IsNullOrEmpty(newAccessToken))
+        //                    {
+        //                        emailConfig.AccessToken = newAccessToken;
+        //                        emailConfig.AccessExpirationtime = DateTime.Now.AddHours(1);
+        //                        await emailConfigurationService.Update(emailConfig);
+        //                        responseVm.Message = "Google access token refreshed.";
+        //                    }
+        //                    else
+        //                    {
+        //                        responseVm.Message = "Failed to refresh Google access token.";
+        //                        return responseVm;
+        //                    }
+        //                }
+        //                break;
+
+        //            case "microsoft365":
+        //                isAccessTokenValid = await mS365Configuration.IsMicrosoftAccessTokenValid(emailConfig.AccessToken);
+        //                if (!isAccessTokenValid || isAccessTokenExpired)
+        //                {
+        //                    var newAccessToken = await mS365Configuration.RefreshMicrosoft365AccessToken(emailConfig.RefreshToken);
+        //                    if (!string.IsNullOrEmpty(newAccessToken))
+        //                    {
+        //                        emailConfig.AccessToken = newAccessToken;
+        //                        emailConfig.AccessExpirationtime = DateTime.Now.AddHours(1);
+        //                        await emailConfigurationService.Update(emailConfig);
+        //                        responseVm.Message = "Microsoft 365 access token refreshed.";
+        //                    }
+        //                    else
+        //                    {
+        //                        responseVm.Message = "Failed to refresh Microsoft 365 access token.";
+        //                        return responseVm;
+        //                    }
+        //                }
+        //                break;
+
+        //            default:
+        //                responseVm.Message = $"Unsupported Email Type: {emailType}";
+        //                return responseVm;
+        //        }
+
+        //        var vm = new EmailConfigurationVm
+        //        {
+        //            Id = emailConfig.Id,
+        //            SmtpServer = emailConfig.SmtpServer,
+        //            Port = emailConfig.Port,
+        //            Username = emailConfig.Username,
+        //            Password = emailConfig.Password,
+        //            UseSsl = emailConfig.UseSsl,
+        //            ReplyTo = emailConfig.ReplyTo,
+        //            EmailType = emailConfig.EmailType,
+        //            EmailTypeName = emailType,
+        //            From = emailConfig.From,
+        //            AccessToken = emailConfig.AccessToken,
+        //            TenantId = emailConfig.TenantId,
+        //            IsActive = emailConfig.IsActive
+        //        };
+
+        //        responseVm.IsSuccess = true;
+        //        responseVm.Data = vm;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        responseVm.Message = "Exception: " + ex.Message;
+        //    }
+
+        //    return responseVm;
+        //}
 
 
 
