@@ -553,21 +553,16 @@ namespace ShutterManagement.Business.Services
                 .Select(x => x.TemplateValue)
                 .FirstOrDefault();
 
-
-
-
                 if (invoiceTemplate == null)
                 {
                     responseVm.IsSuccess = false;
                     responseVm.Message = AppConstant.NoDataFound;
                     return responseVm;
                 }
-               
 
                 var customerDetails = (await contactService.GetAll_Contact(filter,false))
                     .Data.FirstOrDefault(x => x.ContactId == model.ContactId && x.IsActive == true);
 
-                
 
                 var tenantDetails = tenantService.GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true).FirstOrDefault();
                 if (tenantDetails == null)
@@ -644,8 +639,8 @@ namespace ShutterManagement.Business.Services
                     Terms = estimationDetails?.TermsCondition ?? "",
                     Note = estimationDetails?.Notes ?? "",
                     OrderId = orderDetails?.OrderName ?? "",
-                    Taxes = estimationDetails?.TotaltaxAmount.ToString() ?? "",
-                    Discount = estimationDetails?.DiscountAmount.ToString() ?? "",
+                    Taxes = estimationDetails?.TotaltaxAmount??0.0m,
+                    Discount = estimationDetails?.DiscountAmount?? 0.0m,
                     Additionalcost = estimationDetails?.AdditionalCost.ToString() ?? "",
                     ProductListHtml = GenerateProductListHtml(productList)
                 };
@@ -1262,8 +1257,21 @@ namespace ShutterManagement.Business.Services
                 .Replace("{{balancedue}}", data.DueAmount ?? "")
                 .Replace("{{invoiceno}}", data.InvoiceNo ?? "")
                 .Replace("{{additionalcost}}", data.Additionalcost ?? "")
-                .Replace("{{discount}}", data.Discount ?? "")
-                .Replace("{{taxes}}", data.Taxes ?? "");
+                .Replace("{{discount}}", (data.Discount > 0
+    ? $@"<tr>
+<td style=""padding: 5px 5px; font-weight: 700; font-size: 14px;"">Discount :</td>
+<td style=""text-align: end; padding: 5px 20px; font-weight: 700; font-size: 14px;"">${data.Discount}</td>
+</tr>"
+    : ""))
+
+.Replace("{{taxes}}", (data.Taxes > 0
+    ? $@"<tr>
+<td style=""padding: 5px 5px; font-weight: 700; font-size: 14px;"">Taxes :</td>
+<td style=""text-align: end; padding: 5px 20px; font-weight: 700; font-size: 14px;"">${data.Taxes}</td>
+</tr>"
+    : ""));
+
+
         }
 
         public ResponseVm<byte[]> GenerateInvoicePdf(string htmlContent)

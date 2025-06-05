@@ -30,7 +30,7 @@ public class GoogleAuthController : ControllerBase
     }
 
     [HttpGet("start-auth")]
-    public IActionResult StartGoogleAuth()
+    public IActionResult StartGoogleAuth(string OauthType)
     {
        
         var Respose = _googleAuthService.GenerateGoogleOAuthUrl();
