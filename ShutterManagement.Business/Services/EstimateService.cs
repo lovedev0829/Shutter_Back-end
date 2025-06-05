@@ -403,7 +403,7 @@ namespace ShutterManagement.Business.Services
                 var validate = CalculateExpression(formula, model);
                 if (validate.HasErrors())
                 {
-                    responseVm.Message = "There is some issue in Expression.";
+                    responseVm.Message = "There is some issue in Expression. " + validate.Error;
                     return responseVm;
                 }
                 var res = validate.Evaluate();
