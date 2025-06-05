@@ -11,12 +11,10 @@ namespace ShutterManagement.Core.ViewModels.Request
 {
     public class CreateEmailConfiguration
     {
-        [Required]
         [DefaultValue("")]
         public string? SmtpServer { get; set; }
 
-        [Required]
-        [DefaultValue("")]
+        [DefaultValue(0)]
         public int? Port { get; set; }
 
         [DefaultValue("")]
@@ -30,7 +28,6 @@ namespace ShutterManagement.Core.ViewModels.Request
         [DefaultValue("")]
         public string? ReplyTo { get; set; }
 
-        [Required]
         [DefaultValue(null)]
         public Guid? EmailType { get; set; }
 

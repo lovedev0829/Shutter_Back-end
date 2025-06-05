@@ -14,6 +14,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static Org.BouncyCastle.Math.EC.ECCurve;
 
 namespace ShutterManagement.Business.Services
 {
@@ -29,69 +30,56 @@ namespace ShutterManagement.Business.Services
         }
         public async Task<IResponseVm<EmailConfigurationVm>> GetAll_EmailConfigurations()
         {
-
             IResponseVm<EmailConfigurationVm> responseVm = new ResponseVm<EmailConfigurationVm>();
+
             try
             {
-                var emailConfiguration = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false && x.IsActive == true).FirstOrDefault();
-                if (emailConfiguration != null)
+                var emailConfig = GetAllQuerable()
+                    .FirstOrDefault(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false && x.IsActive == true);
+
+                string emailTypeName = string.Empty;
+
+                if (emailConfig != null)
                 {
-                    var emailtypename = dbContext.TblEmailTypes.Where(x => x.Id == emailConfiguration.EmailType).Select(s => s.Name).FirstOrDefault() ?? "";
-                    if(emailtypename==EnumValue.GetEnumValue(EmailSendType.SMTP))
+                    emailTypeName = dbContext.TblEmailTypes
+                       .Where(x => x.Id == emailConfig.EmailType)
+                       .Select(x => x.Name)
+                       .FirstOrDefault() ?? string.Empty;
+
+                    var configVm = new EmailConfigurationVm
                     {
-                        var emailConfigurationRes = new EmailConfigurationVm
-                        {
-                            Id = emailConfiguration.Id,
-                            SmtpServer = emailConfiguration.SmtpServer ?? "",
-                            Port = emailConfiguration.Port,
-                            Username = emailConfiguration.Username ?? "",
-                            Password = emailConfiguration.Password ?? "",
-                            UseSsl = emailConfiguration.UseSsl,
-                            ReplyTo = emailConfiguration.ReplyTo ?? "",
-                            EmailTypeName = emailtypename ?? "",
-                            EmailType = emailConfiguration.EmailType,
-                            From = emailConfiguration.From,
-                            TenantId = emailConfiguration.TenantId,
-                            IsActive = emailConfiguration.IsActive
-                        };
-                        responseVm.Data = emailConfigurationRes;
-                    }
-                    else if(emailtypename == EnumValue.GetEnumValue(EmailSendType.Google) || emailtypename == EnumValue.GetEnumValue(EmailSendType.Microsoft365))
-                    {
-                        var emailConfigurationResGoogleMS = new EmailConfigurationVm
-                        {
-                            Id = emailConfiguration.Id,
-                            SmtpServer = "",
-                            Port = 0,
-                            Username = emailConfiguration.Username ?? "",
-                            Password =  "",
-                            UseSsl = false,
-                            ReplyTo = emailConfiguration.ReplyTo ?? "",
-                            EmailTypeName = emailtypename ?? "",
-                            EmailType = emailConfiguration.EmailType,
-                            From = emailConfiguration.From,
-                            TenantId = emailConfiguration.TenantId,
-                            IsActive = emailConfiguration.IsActive
-                        };
-                        responseVm.Data = emailConfigurationResGoogleMS;
-                    }
+                        Id = emailConfig.Id,
+                        Username = emailConfig.Username ?? string.Empty,
+                        Password = (emailTypeName == EnumValue.GetEnumValue(EmailSendType.SMTP)) ? emailConfig.Password ?? string.Empty : string.Empty,
+                        UseSsl = (emailTypeName == EnumValue.GetEnumValue(EmailSendType.SMTP)) ? emailConfig.UseSsl : false,
+                        SmtpServer = (emailTypeName == EnumValue.GetEnumValue(EmailSendType.SMTP)) ? emailConfig.SmtpServer ?? string.Empty : string.Empty,
+                        Port = (emailTypeName == EnumValue.GetEnumValue(EmailSendType.SMTP)) ? emailConfig.Port : 0,
+                        ReplyTo = emailConfig.ReplyTo ?? string.Empty,
+                        EmailTypeName = emailTypeName ?? "",
+                        EmailType = emailConfig.EmailType ?? null,
+                        From = emailConfig.From ?? "",
+                        TenantId = emailConfig.TenantId ?? null,
+                        IsActive = emailConfig.IsActive ?? false,
+                    };
+                    responseVm.Data = configVm;
                     responseVm.IsSuccess = true;
-                    responseVm.Message = AppConstant.UpdateSuccessMsg;
+                    responseVm.Message = AppConstant.FetchSuccessMsg;
                 }
                 else
                 {
-                    responseVm.IsSuccess = true;
-                    responseVm.Message = AppConstant.FetchSuccessMsg;
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = AppConstant.NoDataFound;
+                    return responseVm;
                 }
             }
             catch (Exception ex)
             {
-                responseVm.IsSuccess = false;
                 responseVm.Message = ex.Message;
             }
-            return responseVm;
 
+            return responseVm;
         }
+
 
         public async Task<IResponseVm<string>> AddOrUpdateEmailConfiguration(CreateEmailConfiguration emailConfigurationVm)
         {
