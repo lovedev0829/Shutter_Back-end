@@ -787,7 +787,15 @@ namespace ShutterManagement.Business.Services
                     item.ProductMarkup = ProductMarkup;
                     item.ComponentMarkup = ComponentMarkup;
                     //item.OptionTaxDetails = distinctItem.OptionTaxDetails;
+                    if (IsSubtenants != null)
+                    {
+                        //item.ProductMarkup = 0.0m;
+                        //item.ComponentMarkup = 0.0m;
+                        item.OptionMarkup = 0.0m;
+                    }
                 }
+                
+               
             }
 
 
