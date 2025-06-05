@@ -924,7 +924,7 @@ namespace ShutterManagement.Business.Services
                 Guid? taxRateId = null;
                 Guid? discountId = null;
                 var PricedProductsList = model.ProductsList.Where(x => x.ProductPrice != null && x.ProductPrice > 0).ToList();
-                var windowproductdetails = await BuildEstimate(model.ProductsList.Select(x => x.WindowProductId).ToArray(), false);
+                var windowproductdetails = await BuildEstimate(model.ProductsList.Select(x => x.WindowProductId).ToArray(), false, "", false, model.ProductsList);
                 if (windowproductdetails.Data != null && windowproductdetails.Data.Any())
                 {
                     if (windowproductdetails.Data.Any(x => x.TotalPrice == null))
