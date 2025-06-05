@@ -376,15 +376,15 @@ namespace ShutterManagement.Business.Services
                         }
                         var Estimation = estimateWindowService.GetAllQuerable().Where(x => x.WindowId == WindowId &&
                         x.IsActive == true && x.IsDelete == false).ToList();
-                        if (Estimation.Count > 0 && Estimation != null)
+                        if (Estimation != null && Estimation.Count > 0)
                         {
                             foreach (var item in Estimation)
                             {
-                                Estimatestatus.IsActive = false;
-                                Estimatestatus.IsDelete = true;
-                                Estimatestatus.UpdatedAt = DateTime.Now;
-                                Estimatestatus.ModifiedBy = AppConstant.LoggedInUserID;
-                                dbContext.Update(Estimatestatus);
+                                item.IsActive = false;
+                                item.IsDelete = true;
+                                item.UpdatedAt = DateTime.Now;
+                                item.ModifiedBy = AppConstant.LoggedInUserID;
+                                dbContext.Update(item);
                                 await dbContext.SaveChangesAsync();
                             }
                         }
