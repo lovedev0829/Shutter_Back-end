@@ -788,7 +788,7 @@ namespace ShutterManagement.Business.Services
                     var emailResponse = await SendEmailWithOAuth(estimationDetails.EstimateCode, pdfBytes.Data, emailBody, customerDetails?.Email ?? "", "Estimate Approval Link and PDF");
 
                     responseVm.IsSuccess = true;
-                    responseVm.Message = "Email Send SuccessFully.";
+                    responseVm.Message = emailResponse.Message;
                     System.IO.File.Delete(savePath);
 
                 }
@@ -1533,7 +1533,6 @@ namespace ShutterManagement.Business.Services
                 Stream = new MemoryStream(pdfData),
                 MediaType = "application/pdf"
             };
-
             var emailConfig = googleAuthService.ValidateAndRefreshEmailOauthAccessToken();
             if (emailConfig == null || emailConfig.Result?.Data == null)
             {
@@ -1551,7 +1550,12 @@ namespace ShutterManagement.Business.Services
                 Subject = subject,
                 Body = emailBody,
                 UserEmail = config.Username ?? "",
+                Username = config.Username ?? "",
+                SmtpServer = config.SmtpServer ?? "",
+                Port = config.Port??0,
                 AccessToken = config.AccessToken ?? "",
+                Password = config.Password ?? "",
+                UseSsl = config.UseSsl ?? true,
                 EmailType = config.EmailTypeName ?? "",
                 Attachments = new List<EmailAttachments> { emailSendAttach }
             };
