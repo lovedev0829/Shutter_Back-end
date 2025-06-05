@@ -3,6 +3,7 @@ using MailKit.Security;
 using MimeKit;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core;
+using ShutterManagement.Core.Common;
 using ShutterManagement.Core.ViewModels;
 using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.Core.ViewModels.Response;
@@ -35,28 +36,51 @@ namespace ShutterManagement.Business.Services
                 var emailConfiguration = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false && x.IsActive == true).FirstOrDefault();
                 if (emailConfiguration != null)
                 {
-                    responseVm.Data = new EmailConfigurationVm
+                    var emailtypename = dbContext.TblEmailTypes.Where(x => x.Id == emailConfiguration.EmailType).Select(s => s.Name).FirstOrDefault() ?? "";
+                    if(emailtypename==EnumValue.GetEnumValue(EmailSendType.SMTP))
                     {
-                        Id = emailConfiguration.Id,
-                        SmtpServer = emailConfiguration.SmtpServer??"",
-                        Port = emailConfiguration.Port,
-                        Username = emailConfiguration.Username??"",
-                        Password = emailConfiguration.Password ?? "",
-                        UseSsl = emailConfiguration.UseSsl,
-                        ReplyTo = emailConfiguration.ReplyTo ?? "",
-                        EmailTypeName = dbContext.TblEmailTypes.Where(x => x.Id == emailConfiguration.EmailType).Select(s => s.Name).FirstOrDefault()??"",
-                        EmailType = emailConfiguration.EmailType,
-                        From = emailConfiguration.From,
-                        AccessToken = emailConfiguration.AccessToken,
-                        TenantId = emailConfiguration.TenantId,
-                        IsActive = emailConfiguration.IsActive
-                    };
+                        var emailConfigurationRes = new EmailConfigurationVm
+                        {
+                            Id = emailConfiguration.Id,
+                            SmtpServer = emailConfiguration.SmtpServer ?? "",
+                            Port = emailConfiguration.Port,
+                            Username = emailConfiguration.Username ?? "",
+                            Password = emailConfiguration.Password ?? "",
+                            UseSsl = emailConfiguration.UseSsl,
+                            ReplyTo = emailConfiguration.ReplyTo ?? "",
+                            EmailTypeName = emailtypename ?? "",
+                            EmailType = emailConfiguration.EmailType,
+                            From = emailConfiguration.From,
+                            TenantId = emailConfiguration.TenantId,
+                            IsActive = emailConfiguration.IsActive
+                        };
+                        responseVm.Data = emailConfigurationRes;
+                    }
+                    else if(emailtypename == EnumValue.GetEnumValue(EmailSendType.Google) || emailtypename == EnumValue.GetEnumValue(EmailSendType.Microsoft365))
+                    {
+                        var emailConfigurationResGoogleMS = new EmailConfigurationVm
+                        {
+                            Id = emailConfiguration.Id,
+                            SmtpServer = "",
+                            Port = 0,
+                            Username = emailConfiguration.Username ?? "",
+                            Password =  "",
+                            UseSsl = false,
+                            ReplyTo = emailConfiguration.ReplyTo ?? "",
+                            EmailTypeName = emailtypename ?? "",
+                            EmailType = emailConfiguration.EmailType,
+                            From = emailConfiguration.From,
+                            TenantId = emailConfiguration.TenantId,
+                            IsActive = emailConfiguration.IsActive
+                        };
+                        responseVm.Data = emailConfigurationResGoogleMS;
+                    }
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.UpdateSuccessMsg;
                 }
                 else
                 {
-                    responseVm.IsSuccess = false;
+                    responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.FetchSuccessMsg;
                 }
             }
@@ -77,6 +101,7 @@ namespace ShutterManagement.Business.Services
                 var existingConfig = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false && x.IsActive==true).FirstOrDefault();
                 if (existingConfig != null)
                 {
+
                     existingConfig.SmtpServer = emailConfigurationVm.SmtpServer;
                     existingConfig.Port = emailConfigurationVm.Port;
                     existingConfig.Username = emailConfigurationVm.Username;
