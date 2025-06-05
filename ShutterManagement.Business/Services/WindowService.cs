@@ -307,16 +307,29 @@ namespace ShutterManagement.Business.Services
                 FileLogger.Log($"Delete window process started for WindowId: {WindowId}.");
 
                 var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false && (bool)x.IsActive == true);
-                var Estimatestatus = new TblEstimate();
-                var WindowUsedInEstimation =estimateWindowService.GetAllQuerable().Where(x => x.WindowId == WindowId && x.IsDelete == false).FirstOrDefault();
+                List<TblEstimate> Estimatestatus = new List<TblEstimate>();
+                var WindowUsedInEstimation = estimateWindowService.GetAllQuerable().Where(x => x.WindowId == WindowId && x.IsDelete == false).FirstOrDefault();
                 if (WindowUsedInEstimation != null)
                 {
-                      Estimatestatus = dbContext.TblEstimates.Where(x => x.EstimateId == WindowUsedInEstimation.EstimateId && x.IsDelete == false)
-                      .FirstOrDefault();
-                    if (Estimatestatus.Status == EnumValue.GetEnumValue(Estimation.GenerateOrder))
+                    Estimatestatus = dbContext.TblEstimates.Where(x => x.EstimateId == WindowUsedInEstimation.EstimateId && x.IsDelete == false).ToList();
+                    if (Estimatestatus.Any())
                     {
-                        responseVm.Message = "Window used in Estimation.It's not alllowed to delete.";
-                        return responseVm;
+                        bool isInGenerateOrderStatus = Estimatestatus
+                            .Any(x => x.Status == EnumValue.GetEnumValue(Estimation.GenerateOrder));
+
+                        if (isInGenerateOrderStatus)
+                        {
+                            responseVm.Message = "Window used in Estimation. It's not allowed to delete.";
+                            return responseVm;
+                        }
+                        foreach (var item in Estimatestatus)
+                        {
+                                item.IsActive = false;
+                                item.IsDelete = true;
+                                item.UpdatedAt = DateTime.Now;
+                                item.ModifiedBy = AppConstant.LoggedInTenantId;
+                                dbContext.TblEstimates.Update(item);
+                        }
                     }
                 }
                 if (IsTenant)
@@ -373,15 +386,15 @@ namespace ShutterManagement.Business.Services
                         }
                         var Estimation = estimateWindowService.GetAllQuerable().Where(x => x.WindowId == WindowId &&
                         x.IsActive == true && x.IsDelete == false).ToList();
-                        if (Estimation.Count > 0)
+                        if (Estimation != null && Estimation.Count > 0)
                         {
                             foreach (var item in Estimation)
                             {
-                                Estimatestatus.IsActive = false;
-                                Estimatestatus.IsDelete = true;
-                                Estimatestatus.UpdatedAt = DateTime.Now;
-                                Estimatestatus.ModifiedBy = AppConstant.LoggedInUserID;
-                                dbContext.Update(Estimatestatus);
+                                item.IsActive = false;
+                                item.IsDelete = true;
+                                item.UpdatedAt = DateTime.Now;
+                                item.ModifiedBy = AppConstant.LoggedInUserID;
+                                dbContext.Update(item);
                                 await dbContext.SaveChangesAsync();
                             }
                         }
