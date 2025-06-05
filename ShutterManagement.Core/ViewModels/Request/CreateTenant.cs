@@ -16,6 +16,8 @@ namespace ShutterManagement.Core.ViewModels.Request
         [RegularExpression(@"^(?=.*[A-Za-z])(?=.*\d).{6,24}$",
          ErrorMessage = "Password must be 6-12 letters and numbers")]
         public string? Password { get; set; }
+        public bool? IsGHLConfigSameAsTenant { get; set; }
+        public string? GHLUserId { get; set; }
        
     }
 }
