@@ -237,7 +237,7 @@ namespace ShutterManagement.Business.Services
 
                 switch (emailType.ToLower())
                 {
-                    case "Google":
+                    case "google":
                         isAccessTokenValid = await IsGoogleAccessTokenValid(emailConfig.AccessToken);
                         if (!isAccessTokenValid || isAccessTokenExpired)
                         {
@@ -257,7 +257,7 @@ namespace ShutterManagement.Business.Services
                         }
                         break;
 
-                    case "Microsoft365":
+                    case "microsoft365":
                         isAccessTokenValid = await mS365Configuration.IsMicrosoftAccessTokenValid(emailConfig.AccessToken);
                         if (!isAccessTokenValid || isAccessTokenExpired)
                         {

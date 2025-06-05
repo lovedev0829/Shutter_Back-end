@@ -761,36 +761,36 @@ namespace ShutterManagement.Business.Services
                     //    new List<EmailAttachment> { emailAttachment }
                     //);
 
-                    var emailSendAttach = new EmailAttachments
-                    {
-                        FileName = $"{estimationDetails.EstimateCode}.pdf",
-                        Stream = new MemoryStream(pdfBytes.Data),
-                        MediaType = "application/pdf"
-                    };
-                    var Emailconfigurationdata = googleAuthService.ValidateAndRefreshEmailOauthAccessToken();
-                    if(Emailconfigurationdata == null )
-                    {
-                        responseVm.IsSuccess = false;
-                        responseVm.Message = "Email Configuration not found. Please add configurations.";
-                        return responseVm;
-                    }
+                    //var emailSendAttach = new EmailAttachments
+                    //{
+                    //    FileName = $"{estimationDetails.EstimateCode}.pdf",
+                    //    Stream = new MemoryStream(pdfBytes.Data),
+                    //    MediaType = "application/pdf"
+                    //};
+                    //var Emailconfigurationdata = googleAuthService.ValidateAndRefreshEmailOauthAccessToken();
+                    //if(Emailconfigurationdata == null )
+                    //{
+                    //    responseVm.IsSuccess = false;
+                    //    responseVm.Message = "Email Configuration not found. Please add configurations.";
+                    //    return responseVm;
+                    //}
 
-                    var emailRequest = new OAuthEmailRequest
-                    {
-                        FromEmail = Emailconfigurationdata.Result?.Data?.From ?? "",
-                        ToEmail = customerDetails?.Email ?? "",
-                        Subject = "Estimate Approval Link and PDF",
-                        Body = emailBody,
-                        UserEmail = Emailconfigurationdata.Result?.Data?.Username ?? "",
-                        AccessToken = Emailconfigurationdata.Result?.Data?.AccessToken ?? "",
-                        EmailType = Emailconfigurationdata.Result?.Data?.EmailTypeName ?? "",
-                        Attachments = new List<EmailAttachments> { emailSendAttach }
-                    };
+                    //var emailRequest = new OAuthEmailRequest
+                    //{
+                    //    FromEmail = Emailconfigurationdata.Result?.Data?.From ?? "",
+                    //    ToEmail = customerDetails?.Email ?? "",
+                    //    Subject = "Estimate Approval Link and PDF",
+                    //    Body = emailBody,
+                    //    UserEmail = Emailconfigurationdata.Result?.Data?.Username ?? "",
+                    //    AccessToken = Emailconfigurationdata.Result?.Data?.AccessToken ?? "",
+                    //    EmailType = Emailconfigurationdata.Result?.Data?.EmailTypeName ?? "",
+                    //    Attachments = new List<EmailAttachments> { emailSendAttach }
+                    //};
 
-                    // Send email
-                    var emailSentResponse = await EmailHelper.SendEmailWithOAuth(emailRequest);
+                    //// Send email
+                    //var emailSentResponse = await EmailHelper.SendEmailWithOAuth(emailRequest);
 
-
+                    var emailResponse = await SendEmailWithOAuth(estimationDetails.EstimateCode, pdfBytes.Data, emailBody, customerDetails?.Email ?? "", "Estimate Approval Link and PDF");
 
                     responseVm.IsSuccess = true;
                     responseVm.Message = "Email Send SuccessFully.";
@@ -844,12 +844,12 @@ namespace ShutterManagement.Business.Services
     </div>";
 
 
-                    var emailAttachment = new EmailAttachments
-                    {
-                        FileName = $"{IsOrderExists?.OrderName}.pdf",
-                        Stream = new MemoryStream(pdfBytes.Data),
-                        MediaType = "application/pdf"
-                    };
+                    //var emailAttachment = new EmailAttachments
+                    //{
+                    //    FileName = $"{IsOrderExists?.OrderName}.pdf",
+                    //    Stream = new MemoryStream(pdfBytes.Data),
+                    //    MediaType = "application/pdf"
+                    //};
 
                     //var emailSent = EmailHelper.SendEmailWithAttachment(
                     //    customerDetails.Email,
@@ -858,33 +858,42 @@ namespace ShutterManagement.Business.Services
                     //    new List<EmailAttachment> { emailAttachment }
                     //);
 
-                    var Emailconfigurationdata = googleAuthService.ValidateAndRefreshEmailOauthAccessToken();
-                    if (Emailconfigurationdata == null)
+                    //var Emailconfigurationdata = googleAuthService.ValidateAndRefreshEmailOauthAccessToken();
+                    //if (Emailconfigurationdata == null)
+                    //{
+                    //    responseVm.IsSuccess = false;
+                    //    responseVm.Message = "Email Configuration not found. Please add configurations.";
+                    //    return responseVm;
+                    //}
+
+                    //var emailRequest = new OAuthEmailRequest
+                    //{
+                    //    FromEmail = Emailconfigurationdata.Result?.Data?.From ?? "",
+                    //    ToEmail = customerDetails?.Email ?? "",
+                    //    Subject = "Order Approval Link and PDF",
+                    //    Body = emailBody,
+                    //    UserEmail = Emailconfigurationdata.Result?.Data?.Username ?? "",
+                    //    AccessToken = Emailconfigurationdata.Result?.Data?.AccessToken ?? "",
+                    //    EmailType = Emailconfigurationdata.Result?.Data?.EmailTypeName ?? "",
+                    //    Attachments = new List<EmailAttachments> { emailAttachment }
+                    //};
+
+                    //// Send email
+                    //var emailSentResponse = await EmailHelper.SendEmailWithOAuth(emailRequest);
+
+                    var emailResponse = await SendEmailWithOAuth(estimationDetails.EstimateCode,pdfBytes.Data,emailBody,customerDetails?.Email ?? "","Estimate For Approval");
+
+                    if (!emailResponse.IsSuccess)
                     {
                         responseVm.IsSuccess = false;
-                        responseVm.Message = "Email Configuration not found. Please add configurations.";
+                        responseVm.Message = emailResponse.Message;
                         return responseVm;
                     }
-
-                    var emailRequest = new OAuthEmailRequest
-                    {
-                        FromEmail = Emailconfigurationdata.Result?.Data?.From ?? "",
-                        ToEmail = customerDetails?.Email ?? "",
-                        Subject = "Order Approval Link and PDF",
-                        Body = emailBody,
-                        UserEmail = Emailconfigurationdata.Result?.Data?.Username ?? "",
-                        AccessToken = Emailconfigurationdata.Result?.Data?.AccessToken ?? "",
-                        EmailType = Emailconfigurationdata.Result?.Data?.EmailTypeName ?? "",
-                        Attachments = new List<EmailAttachments> { emailAttachment }
-                    };
-
-                    // Send email
-                    var emailSentResponse = await EmailHelper.SendEmailWithOAuth(emailRequest);
 
                     System.IO.File.Delete(savePath);
 
                     responseVm.IsSuccess = true;
-                    responseVm.Message = emailSentResponse.Message;
+                    responseVm.Message = emailResponse.Message;
                     return responseVm;
                    
 
@@ -1099,44 +1108,44 @@ namespace ShutterManagement.Business.Services
     </div>
 </div>";
 
-                    var emailAttachment = new EmailAttachments
-                    {
-                        FileName = $"{invoiceDetails?.InvoiceNumber}.pdf",
-                        Stream = new MemoryStream(pdfBytesInvoice.Data),
-                        MediaType = "application/pdf"
-                    };
+                    //var emailAttachment = new EmailAttachments
+                    //{
+                    //    FileName = $"{invoiceDetails?.InvoiceNumber}.pdf",
+                    //    Stream = new MemoryStream(pdfBytesInvoice.Data),
+                    //    MediaType = "application/pdf"
+                    //};
 
-                    //var emailSent = EmailHelper.SendEmailWithAttachment(
-                    //    customerDetails.Email,
-                    //    AppConstant.InvoicePaymentLinkandPDF,
-                    //    emailBody,
-                    //    new List<EmailAttachment> { emailAttachment }
-                    //);
+                    ////var emailSent = EmailHelper.SendEmailWithAttachment(
+                    ////    customerDetails.Email,
+                    ////    AppConstant.InvoicePaymentLinkandPDF,
+                    ////    emailBody,
+                    ////    new List<EmailAttachment> { emailAttachment }
+                    ////);
 
-                    var Emailconfigurationdata = googleAuthService.ValidateAndRefreshEmailOauthAccessToken();
-                    if (Emailconfigurationdata == null)
-                    {
-                        responseVm.IsSuccess = false;
-                        responseVm.Message = "Email Configuration not found. Please add configurations.";
-                        return responseVm;
-                    }
+                    //var Emailconfigurationdata = googleAuthService.ValidateAndRefreshEmailOauthAccessToken();
+                    //if (Emailconfigurationdata == null)
+                    //{
+                    //    responseVm.IsSuccess = false;
+                    //    responseVm.Message = "Email Configuration not found. Please add configurations.";
+                    //    return responseVm;
+                    //}
 
-                    var emailRequest = new OAuthEmailRequest
-                    {
-                        FromEmail = Emailconfigurationdata.Result?.Data?.From ?? "",
-                        ToEmail = customerDetails?.Email ?? "",
-                        Subject = AppConstant.InvoicePaymentLinkandPDF,
-                        Body = emailBody,
-                        UserEmail = Emailconfigurationdata.Result?.Data?.Username ?? "",
-                        AccessToken = Emailconfigurationdata.Result?.Data?.AccessToken ?? "",
-                        EmailType = Emailconfigurationdata.Result?.Data?.EmailTypeName ?? "",
-                        Attachments = new List<EmailAttachments> { emailAttachment }
-                    };
+                    //var emailRequest = new OAuthEmailRequest
+                    //{
+                    //    FromEmail = Emailconfigurationdata.Result?.Data?.From ?? "",
+                    //    ToEmail = customerDetails?.Email ?? "",
+                    //    Subject = AppConstant.InvoicePaymentLinkandPDF,
+                    //    Body = emailBody,
+                    //    UserEmail = Emailconfigurationdata.Result?.Data?.Username ?? "",
+                    //    AccessToken = Emailconfigurationdata.Result?.Data?.AccessToken ?? "",
+                    //    EmailType = Emailconfigurationdata.Result?.Data?.EmailTypeName ?? "",
+                    //    Attachments = new List<EmailAttachments> { emailAttachment }
+                    //};
 
-                    // Send email
-                    var emailSentResponse = await EmailHelper.SendEmailWithOAuth(emailRequest);
+                    //// Send email
+                    //var emailSentResponse = await EmailHelper.SendEmailWithOAuth(emailRequest);
 
-
+                    var emailResponse = await SendEmailWithOAuth(invoiceDetails?.InvoiceNumber, pdfBytesInvoice.Data, emailBody, customerDetails?.Email ?? "", AppConstant.InvoicePaymentLinkandPDF);
 
                     responseVm.IsSuccess = true;
                     responseVm.Message = isStripeConfigured
@@ -1502,5 +1511,45 @@ namespace ShutterManagement.Business.Services
 
 
         #endregion Invoice_Generate_Methods
+
+
+        // this is a common method for sending emails
+
+        public async Task<IResponseVm<string>> SendEmailWithOAuth(string filename,byte[] pdfData,string emailBody,string customerEmail,string subject)
+        {
+            var responseVm = new ResponseVm<string>();
+
+            var emailSendAttach = new EmailAttachments
+            {
+                FileName = $"{filename}.pdf",
+                Stream = new MemoryStream(pdfData),
+                MediaType = "application/pdf"
+            };
+
+            var emailConfig = googleAuthService.ValidateAndRefreshEmailOauthAccessToken();
+            if (emailConfig == null || emailConfig.Result?.Data == null)
+            {
+                responseVm.IsSuccess = false;
+                responseVm.Message = "Email Configuration not found. Please add configurations.";
+                return responseVm;
+            }
+
+            var config = emailConfig.Result.Data;
+
+            var emailRequest = new OAuthEmailRequest
+            {
+                FromEmail = config.From ?? "",
+                ToEmail = customerEmail ?? "",
+                Subject = subject,
+                Body = emailBody,
+                UserEmail = config.Username ?? "",
+                AccessToken = config.AccessToken ?? "",
+                EmailType = config.EmailTypeName ?? "",
+                Attachments = new List<EmailAttachments> { emailSendAttach }
+            };
+
+            return await EmailHelper.SendEmailWithOAuth(emailRequest);
+        }
+
     }
 }
