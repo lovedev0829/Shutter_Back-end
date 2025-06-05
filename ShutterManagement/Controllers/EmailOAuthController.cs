@@ -1,4 +1,5 @@
-﻿using MailKit.Security;
+﻿using Azure;
+using MailKit.Security;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using MimeKit;
@@ -15,37 +16,57 @@ using System.Web;
 
 [ApiController]
 [Route("[controller]")]
-public class GoogleAuthController : ControllerBase
+public class EmailOAuthController : ControllerBase
 {
     private readonly GoogleAuthService _googleAuthService;
 
     private readonly IConfiguration _config;
     private readonly IEmailConfigurationService emailConfigurationService;
+    private readonly MS365Configuration mS365Configuration;
 
-    public GoogleAuthController(GoogleAuthService authService, IConfiguration config,IEmailConfigurationService emailConfigurationService)
+    public EmailOAuthController(GoogleAuthService authService, IConfiguration config,
+        IEmailConfigurationService emailConfigurationService,MS365Configuration mS365Configuration)
     {
         _googleAuthService = authService;
         _config = config;
         this.emailConfigurationService = emailConfigurationService;
+        this.mS365Configuration = mS365Configuration;
     }
 
     [HttpGet("start-auth")]
-    public IActionResult StartGoogleAuth()
+    public IActionResult StartGoogleAuth(string OauthType)
     {
-       
-        var Respose = _googleAuthService.GenerateGoogleOAuthUrl();
-        return  Ok(Respose);
+       if(OauthType==EnumValue.GetEnumValue(EmailSendType.Google))
+        {
+            var Respose = _googleAuthService.GenerateGoogleOAuthUrl();
+            return Ok(Respose);
+        }
+        else if (OauthType == EnumValue.GetEnumValue(EmailSendType.Microsoft365))
+        {
+            var ResponseMS  = mS365Configuration.GetAuthorizationurl();
+            return Ok(ResponseMS);
+        }
+        return Ok(new { message = "Invalid OAuth Type" });
  
     }
 
 
 
     [HttpGet("/api/auth/callback")]
-    public async Task<IActionResult> OAuthCallback([FromQuery] string code)
+    public async Task<IActionResult> OAuthCallback(string OauthType, string code)
     {
-        var token = await _googleAuthService.ExchangeCodeForTokenAsync(code);
 
-        return Ok(token);
+        if (OauthType == EnumValue.GetEnumValue(EmailSendType.Google))
+        {
+            var ResposeGoogle = await _googleAuthService.ExchangeCodeForTokenAsync(code);
+            return Ok(ResposeGoogle);
+        }
+        else if (OauthType == EnumValue.GetEnumValue(EmailSendType.Microsoft365))
+        {
+            var ResponseMS = mS365Configuration.ExchangeCodeForTokensAsync(code);
+            return Ok(ResponseMS);
+        }
+        return Ok(new { message = "Invalid OAuth Type" });
     }
 
     [HttpPost("send")]
