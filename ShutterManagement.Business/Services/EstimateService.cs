@@ -748,7 +748,7 @@ namespace ShutterManagement.Business.Services
                         if (IsSubtenants != null)
                         {
                             //x.OptionPrice = x.OptionPrice;
-                            var Optionprice = ApplySubtenantMarkup(x.OptionTypeId, x.OptionPrice ?? 0.0m, distinctItem.OptionMarkup ?? 0.0m);
+                            var Optionprice = ApplySubtenantMarkup(x.OptionTypeId, x.OptionPrice ?? 0.0m, x.OptionMarkup ?? 0.0m);
                             x.OptionPrice = Optionprice;
                             OptionPriceAfterPartnerMarkup += Optionprice;
                         }
