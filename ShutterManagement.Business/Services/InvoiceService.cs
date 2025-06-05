@@ -543,8 +543,6 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-
-                // Guid? templateId = Guid.Parse("3A49D48B-CA1D-4E0E-9E1F-A22E7529EF47");
                 await stripeConfiguration.GetStripeConfiguration(AppConstant.LoggedInTenantId.ToString());
 
                 var invoiceTemplate = templatesService.GetAllQuerable().Where(c =>
@@ -586,8 +584,6 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-
-
                 var userDetails = dbContext.TblUsers.FirstOrDefault(c =>
                    c.Id == estimationDetails.CreatedBy &&
                    c.TenantId == AppConstant.LoggedInTenantId &&
@@ -607,10 +603,7 @@ namespace ShutterManagement.Business.Services
                 string customerState = "";
                 if (!string.IsNullOrEmpty(customerDetails?.billingAddressVm?.StateId.ToString()))
                 {
-                    customerState = dbContext.MstStates
-                        .Where(x => x.Id == customerDetails.billingAddressVm.StateId)
-                        .Select(y => y.StateName)
-                        .FirstOrDefault();
+                    customerState = dbContext.MstStates.Where(x => x.Id == customerDetails.billingAddressVm.StateId).Select(y => y.StateName??"").FirstOrDefault();
                 }
 
                 var invoiceData = new InvoiceDataModel
@@ -714,76 +707,44 @@ namespace ShutterManagement.Business.Services
                     string approvalEmailLink = $"{AppConstant.UIBaseURL}contacts/estimate/preview/{IsEstimateExists?.EstimateId}";
 
                     var emailBody = $@"
-     <div style='font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px;'>
-        <p><strong>Dear {customerDetails?.FirstName+" "+ customerDetails?.LastName},</strong></p>
+<div style='font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px; margin: auto; background: #f9f9f9; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);'>
+    <div style='background: white; padding: 20px; border-radius: 10px;'>
 
-        <p>Please find your invoice attached for your reference.</p>
+        <p style='font-size: 16px; margin-bottom: 10px;'>
+            <strong>Dear {customerDetails?.FirstName} {customerDetails?.LastName},</strong>
+        </p>
 
-        <p><strong>You can approve  your estimate - {estimationDetails?.EstimateCode}by clicking the link below:</strong></p>
+        <p style='font-size: 15px;'>
+            Please review the attached <strong>estimate</strong> prepared for your consideration.
+        </p>
 
-        <p>
-            <a href='{approvalEmailLink}'>
-                Approval Estimate
+        <p style='font-size: 15px;'>
+            You can approve your estimate - <strong>{estimationDetails?.EstimateCode}</strong> by clicking the link below:
+        </p>
+
+        <div style='text-align: center; margin: 25px 0;'>
+            <a href='{approvalEmailLink}' 
+               style='background-color: #0066cc; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold;'>
+                View Estimate
             </a>
+        </div>
+
+        <p style='font-size: 15px;'>
+            Once approved, an invoice will be automatically created for you to pay online or visit us to complete the payment.
         </p>
 
-        <p><strong>Thank you for your business!</strong></p>
-
-        
-        
-
-        <p>
-            <img src='{tenantInfoDetails?.Logo}' alt='Company Logo' height='50px' 
-                 style='margin-top: 10px; display: block;'>
+        <p style='font-size: 15px; margin-top: 30px;'>
+            Thank you for your business!
         </p>
-<p>Best regards,</p>
-<p><strong>{tenantInfoDetails?.CompanyName}</strong></p>
-<p>Shutter Management and Estimation System</p>
-    </div>";
 
+        <img src='{tenantInfoDetails?.Logo}' alt='Company Logo' height='50' style='margin-top: 20px; display: block;' />
 
-                    //var emailAttachment = new EmailAttachment
-                    //{
-                    //    FileName = $"{estimationDetails.EstimateCode}.pdf",
-                    //    Stream = new MemoryStream(pdfBytes.Data),
-                    //    MediaType = "application/pdf"
-                    //};
+        <p style='font-size: 15px; margin-top: 20px;'>Best regards,</p>
+        <p style='font-size: 15px; font-weight: bold;'>{tenantInfoDetails?.CompanyName}</p>
+        <p style='font-size: 14px;'>Shutter Management and Estimation System</p>
+    </div>
+</div>";
 
-                    //var emailSent = EmailHelper.SendEmailWithAttachment(
-                    //    customerDetails.Email,
-                    //    "Estimate Approval Link and PDF",
-                    //    emailBody,
-                    //    new List<EmailAttachment> { emailAttachment }
-                    //);
-
-                    //var emailSendAttach = new EmailAttachments
-                    //{
-                    //    FileName = $"{estimationDetails.EstimateCode}.pdf",
-                    //    Stream = new MemoryStream(pdfBytes.Data),
-                    //    MediaType = "application/pdf"
-                    //};
-                    //var Emailconfigurationdata = googleAuthService.ValidateAndRefreshEmailOauthAccessToken();
-                    //if(Emailconfigurationdata == null )
-                    //{
-                    //    responseVm.IsSuccess = false;
-                    //    responseVm.Message = "Email Configuration not found. Please add configurations.";
-                    //    return responseVm;
-                    //}
-
-                    //var emailRequest = new OAuthEmailRequest
-                    //{
-                    //    FromEmail = Emailconfigurationdata.Result?.Data?.From ?? "",
-                    //    ToEmail = customerDetails?.Email ?? "",
-                    //    Subject = "Estimate Approval Link and PDF",
-                    //    Body = emailBody,
-                    //    UserEmail = Emailconfigurationdata.Result?.Data?.Username ?? "",
-                    //    AccessToken = Emailconfigurationdata.Result?.Data?.AccessToken ?? "",
-                    //    EmailType = Emailconfigurationdata.Result?.Data?.EmailTypeName ?? "",
-                    //    Attachments = new List<EmailAttachments> { emailSendAttach }
-                    //};
-
-                    //// Send email
-                    //var emailSentResponse = await EmailHelper.SendEmailWithOAuth(emailRequest);
 
                     var emailResponse = await SendEmailWithOAuth(estimationDetails.EstimateCode, pdfBytes.Data, emailBody, customerDetails?.Email ?? "", "Estimate Approval Link and PDF");
 
@@ -838,44 +799,6 @@ namespace ShutterManagement.Business.Services
         <p>Shutter Management and Estimation System</p>
     </div>";
 
-
-                    //var emailAttachment = new EmailAttachments
-                    //{
-                    //    FileName = $"{IsOrderExists?.OrderName}.pdf",
-                    //    Stream = new MemoryStream(pdfBytes.Data),
-                    //    MediaType = "application/pdf"
-                    //};
-
-                    //var emailSent = EmailHelper.SendEmailWithAttachment(
-                    //    customerDetails.Email,
-                    //    "Order Approval Link and PDF",
-                    //    emailBody,
-                    //    new List<EmailAttachment> { emailAttachment }
-                    //);
-
-                    //var Emailconfigurationdata = googleAuthService.ValidateAndRefreshEmailOauthAccessToken();
-                    //if (Emailconfigurationdata == null)
-                    //{
-                    //    responseVm.IsSuccess = false;
-                    //    responseVm.Message = "Email Configuration not found. Please add configurations.";
-                    //    return responseVm;
-                    //}
-
-                    //var emailRequest = new OAuthEmailRequest
-                    //{
-                    //    FromEmail = Emailconfigurationdata.Result?.Data?.From ?? "",
-                    //    ToEmail = customerDetails?.Email ?? "",
-                    //    Subject = "Order Approval Link and PDF",
-                    //    Body = emailBody,
-                    //    UserEmail = Emailconfigurationdata.Result?.Data?.Username ?? "",
-                    //    AccessToken = Emailconfigurationdata.Result?.Data?.AccessToken ?? "",
-                    //    EmailType = Emailconfigurationdata.Result?.Data?.EmailTypeName ?? "",
-                    //    Attachments = new List<EmailAttachments> { emailAttachment }
-                    //};
-
-                    //// Send email
-                    //var emailSentResponse = await EmailHelper.SendEmailWithOAuth(emailRequest);
-
                     var emailResponse = await SendEmailWithOAuth(estimationDetails.EstimateCode,pdfBytes.Data,emailBody,customerDetails?.Email ?? "","Estimate For Approval");
 
                     if (!emailResponse.IsSuccess)
@@ -890,23 +813,14 @@ namespace ShutterManagement.Business.Services
                     responseVm.IsSuccess = true;
                     responseVm.Message = emailResponse.Message;
                     return responseVm;
-                   
-
-
 
                 }
 
                 else if (model.DocumentType == EstimateDocumentType.InvoicePaymentForEmail)
                 {
-                    
-
-                    //Guid? invoiceTemplateId = Guid.Parse("E9E279C4-1F54-476B-BCDF-778BD1634894");
-
                     var invoiceForEmailTemplate = dbContext.TblTemplates.FirstOrDefault(c =>
                         c.TemplateCategory == EnumValue.GetEnumValue(EmailTemplateType.InvoicePDF) &&
                         c.IsDelete == false);
-
-                   
 
                     if (invoiceForEmailTemplate == null)
                     {
@@ -926,11 +840,7 @@ namespace ShutterManagement.Business.Services
                     }
 
                     var invoiceDetails = dbContext.TblInvoices
-                        .FirstOrDefault(x => x.InvoiceId == model.InvoiceId &&
-                                             x.TenantId == AppConstant.LoggedInTenantId &&
-                                             x.IsDelete == false);
-
-                   
+                        .FirstOrDefault(x => x.InvoiceId == model.InvoiceId && x.TenantId == AppConstant.LoggedInTenantId &&x.IsDelete == false);
 
                     if (invoiceDetails == null)
                     {
@@ -948,18 +858,13 @@ namespace ShutterManagement.Business.Services
                         })
                         .ToList();
 
-                    var estimationDetail = dbContext.TblEstimates.FirstOrDefault(c =>
-                   c.EstimateId == model.EstimationId &&
-                   c.TenantId == AppConstant.LoggedInTenantId &&
-                   c.IsDelete == false);
+                    var estimationDetail = dbContext.TblEstimates.FirstOrDefault(c =>c.EstimateId == model.EstimationId && c.TenantId == AppConstant.LoggedInTenantId && c.IsDelete == false);
                     if (estimationDetail == null)
                     {
                         responseVm.IsSuccess = false;
                         responseVm.Message = $"EstimationDetails " + AppConstant.NoDataFound;
                         return responseVm;
                     }
-
-
 
                     var invoiceDataModel = new InvoiceDataModel
                     {
@@ -973,7 +878,7 @@ namespace ShutterManagement.Business.Services
                         CompanyStreetAddress = tenantInfoDetails?.StreetAddress ?? "",
                         CompanyCity = tenantInfoDetails?.City ?? "",
                         CompanyCountry = tenantInfoDetails?.Country ?? "",
-                        CompanyZipCode = tenantInfoDetails?.ZipCode ?? "",
+                        CompanyZipCode = tenantInfoDetails?.ZipCode ?? "", 
                         CustomerStreetAddress = customerDetails?.billingAddressVm?.StreetAddress ?? "",
                         MobilePhone = customerDetails?.PhoneNumber ?? "",
                         TenantCompanyName = tenantInfoDetails?.CompanyName ?? "",
@@ -1102,43 +1007,6 @@ namespace ShutterManagement.Business.Services
         <p style='text-align: center; font-size: 14px;'>Shutter Management and Estimation System</p>
     </div>
 </div>";
-
-                    //var emailAttachment = new EmailAttachments
-                    //{
-                    //    FileName = $"{invoiceDetails?.InvoiceNumber}.pdf",
-                    //    Stream = new MemoryStream(pdfBytesInvoice.Data),
-                    //    MediaType = "application/pdf"
-                    //};
-
-                    ////var emailSent = EmailHelper.SendEmailWithAttachment(
-                    ////    customerDetails.Email,
-                    ////    AppConstant.InvoicePaymentLinkandPDF,
-                    ////    emailBody,
-                    ////    new List<EmailAttachment> { emailAttachment }
-                    ////);
-
-                    //var Emailconfigurationdata = googleAuthService.ValidateAndRefreshEmailOauthAccessToken();
-                    //if (Emailconfigurationdata == null)
-                    //{
-                    //    responseVm.IsSuccess = false;
-                    //    responseVm.Message = "Email Configuration not found. Please add configurations.";
-                    //    return responseVm;
-                    //}
-
-                    //var emailRequest = new OAuthEmailRequest
-                    //{
-                    //    FromEmail = Emailconfigurationdata.Result?.Data?.From ?? "",
-                    //    ToEmail = customerDetails?.Email ?? "",
-                    //    Subject = AppConstant.InvoicePaymentLinkandPDF,
-                    //    Body = emailBody,
-                    //    UserEmail = Emailconfigurationdata.Result?.Data?.Username ?? "",
-                    //    AccessToken = Emailconfigurationdata.Result?.Data?.AccessToken ?? "",
-                    //    EmailType = Emailconfigurationdata.Result?.Data?.EmailTypeName ?? "",
-                    //    Attachments = new List<EmailAttachments> { emailAttachment }
-                    //};
-
-                    //// Send email
-                    //var emailSentResponse = await EmailHelper.SendEmailWithOAuth(emailRequest);
 
                     var emailResponse = await SendEmailWithOAuth(invoiceDetails?.InvoiceNumber, pdfBytesInvoice.Data, emailBody, customerDetails?.Email ?? "", AppConstant.InvoicePaymentLinkandPDF);
 
