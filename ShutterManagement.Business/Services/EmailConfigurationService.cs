@@ -41,10 +41,7 @@ namespace ShutterManagement.Business.Services
 
                 if (emailConfig != null)
                 {
-                    emailTypeName = dbContext.TblEmailTypes
-                       .Where(x => x.Id == emailConfig.EmailType)
-                       .Select(x => x.Name)
-                       .FirstOrDefault() ?? string.Empty;
+                    emailTypeName = dbContext.TblEmailTypes.Where(x => x.Id == emailConfig.EmailType).Select(x => x.Name).FirstOrDefault() ?? string.Empty;
 
                     var configVm = new EmailConfigurationVm
                     {

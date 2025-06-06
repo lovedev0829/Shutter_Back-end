@@ -1868,8 +1868,10 @@ public partial class ShutterDBContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.FirstName).HasMaxLength(128);
+            entity.Property(e => e.GhluserId).HasColumnName("GHLUserId");
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
+            entity.Property(e => e.IsGhlconfigSameAsTenant).HasColumnName("IsGHLConfigSameAsTenant");
             entity.Property(e => e.LastName).HasMaxLength(128);
             entity.Property(e => e.MiddleName).HasMaxLength(128);
             entity.Property(e => e.ModifiedBy).HasColumnName("ModifiedBY");

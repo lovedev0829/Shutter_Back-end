@@ -52,10 +52,13 @@ public class EmailOAuthController : ControllerBase
 
 
 
-    [HttpGet("/api/auth/callback")]
+    [HttpGet("auth/callback")]
     public async Task<IActionResult> OAuthCallback(string OauthType, string code)
     {
-
+        if (OauthType == string.Empty && code == string.Empty)
+        {
+            return Ok(new { message = "OauthType and code are required." });
+        }
         if (OauthType == EnumValue.GetEnumValue(EmailSendType.Google))
         {
             var ResposeGoogle = await _googleAuthService.ExchangeCodeForTokenAsync(code);
