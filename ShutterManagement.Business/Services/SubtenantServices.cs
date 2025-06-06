@@ -29,9 +29,10 @@ namespace ShutterManagement.Business.Services
         private readonly ClaimsProperty claimsProperty;
         private readonly ITenantBrandingService tenantBrandingService;
         private readonly INotificationService notification;
+        private readonly GoogleAuthService googleAuthService;
 
         public SubtenantServices(DataServices dataServices, IUserService userService
-            , ClaimsProperty claimsProperty, ITenantBrandingService tenantBrandingService,INotificationService notification
+            , ClaimsProperty claimsProperty, ITenantBrandingService tenantBrandingService,INotificationService notification,GoogleAuthService googleAuthService
             )
         {
             this.dataServices = dataServices;
@@ -39,6 +40,7 @@ namespace ShutterManagement.Business.Services
             this.claimsProperty = claimsProperty;
             this.tenantBrandingService = tenantBrandingService;
             this.notification = notification;
+            this.googleAuthService = googleAuthService;
         }
 
         public async Task<IResponseVm<string>> SubTenantCreate(CreateTenant model)
@@ -235,7 +237,9 @@ namespace ShutterManagement.Business.Services
                     .FirstOrDefault(x => x.IsDelete==false && x.TemplateCategory == EnumValue.GetEnumValue(EmailTemplateType.WelcomeEmail));
 
                 var emailContent = EmailHelper.ReplacePlaceholdersForlWelcomeEmail(template?.TemplateValue, welcomeModel);
-                EmailHelper.WelcomeEmail(model.Email, emailContent);
+                await googleAuthService.WelcomeEmailWithOauth(model.Email, emailContent);
+
+
             }
             catch (Exception ex)
             {
