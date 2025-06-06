@@ -10,6 +10,7 @@ using ShutterManagement.Core.Common;
 using ShutterManagement.Core.ViewModels;
 using ShutterManagement.Core.ViewModels.Response;
 using ShutterManagement.DAL.Context;
+using ShutterManagement.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,7 +19,7 @@ using System.Threading.Tasks;
 
 namespace ShutterManagement.Business.Services
 {
-    public class GoogleAuthService
+    public class GoogleAuthService : BaseRepository<ShutterDBContext, TblEmailType>
     {
         private readonly IConfiguration _config;
         private readonly IEmailConfigurationService emailConfigurationService;
@@ -26,9 +27,10 @@ namespace ShutterManagement.Business.Services
         private readonly ITenantService tenant;
         private readonly ShutterDBContext dBContext;
         private readonly MS365Configuration mS365Configuration;
+        private readonly EmailTypeService emailTypeService;
 
         public GoogleAuthService(IConfiguration config,IEmailConfigurationService emailConfigurationService,
-            ClaimsProperty claimsProperty,ITenantService tenant,ShutterDBContext dBContext,MS365Configuration mS365Configuration)
+            ClaimsProperty claimsProperty,ITenantService tenant,ShutterDBContext dBContext,MS365Configuration mS365Configuration,EmailTypeService emailTypeService)
         {
             _config = config;
             this.emailConfigurationService = emailConfigurationService;
@@ -36,6 +38,7 @@ namespace ShutterManagement.Business.Services
             this.tenant = tenant;
             this.dBContext = dBContext;
             this.mS365Configuration = mS365Configuration;
+            this.emailTypeService = emailTypeService;
         }
 
         public string GetAuthUrl(string userEmail)
@@ -216,9 +219,9 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-                var emailType = dBContext.TblEmailTypes
+                var emailType = emailTypeService.GetAllQuerable()
                     .Where(s => s.Id == emailConfig.EmailType)
-                    .Select(x => x.Name)
+                    .Select(x => x.Name??"")
                     .FirstOrDefault();
 
                 if (string.IsNullOrEmpty(emailType))
@@ -348,7 +351,7 @@ namespace ShutterManagement.Business.Services
         //            return responseVm;
         //        }
 
-             
+
 
 
         //        var emailType = dBContext.TblEmailTypes.Where(s => s.Id == emailConfig.EmailType).Select(x => x.Name).FirstOrDefault();
@@ -478,6 +481,39 @@ namespace ShutterManagement.Business.Services
         //}
 
 
+        public  async Task<IResponseVm<string>> WelcomeEmailWithOauth(string Email, string content)
+        {
+            var emailConfig = await ValidateAndRefreshEmailOauthAccessToken();
+            if (emailConfig == null || emailConfig?.Data == null)
+            {
+                return new ResponseVm<string>
+                {
+                    IsSuccess = false,
+                    Message = "Email Configuration not found. Please add configurations."
+                };
+            }
+
+            var config = emailConfig?.Data;
+
+            OAuthEmailRequest vm = new OAuthEmailRequest
+            {
+                FromEmail = config.From ?? "",
+                ToEmail = Email,
+                Subject = AppConstant.Sub_WelcomeEmail,
+                Body = content,
+                UserEmail = config.Username ?? "",
+                Username = config.Username ?? "",
+                SmtpServer = config.SmtpServer ?? "",
+                Port = config.Port ?? 0,
+                AccessToken = config.AccessToken ?? "",
+                Password = config.Password ?? "",
+                UseSsl = config.UseSsl ?? true,
+                EmailType = config.EmailTypeName ?? "",
+                Attachments = null
+            };
+
+            return await EmailHelper.SendEmailWithOAuth(vm);
+        }
 
 
 
