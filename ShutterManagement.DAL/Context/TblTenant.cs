@@ -35,6 +35,10 @@ public partial class TblTenant
 
     public string? Suffix { get; set; }
 
+    public bool? IsGhlconfigSameAsTenant { get; set; }
+
+    public string? GhluserId { get; set; }
+
     public virtual TblTenantBrandingInfo? BrandingInfoNavigation { get; set; }
 
     public virtual ICollection<TblTenant> InverseParentTenant { get; set; } = new List<TblTenant>();
