@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 using System.Web;
 
 [ApiController]
-[Route("[controller]")]
+[Route("api/[controller]")]
 public class EmailOAuthController : ControllerBase
 {
     private readonly GoogleAuthService _googleAuthService;
@@ -33,7 +33,7 @@ public class EmailOAuthController : ControllerBase
         this.mS365Configuration = mS365Configuration;
     }
 
-    [HttpGet("start-auth")]
+    [HttpGet("LoginOauth")]
     public IActionResult StartGoogleAuth(string OauthType)
     {
        if(OauthType==EnumValue.GetEnumValue(EmailSendType.Google))
@@ -52,7 +52,7 @@ public class EmailOAuthController : ControllerBase
 
 
 
-    [HttpGet("auth/callback")]
+    [HttpGet("Callback")]
     public async Task<IActionResult> OAuthCallback(string OauthType, string code)
     {
         if (OauthType == string.Empty && code == string.Empty)
