@@ -9,7 +9,7 @@ namespace ShutterManagement.Core.ViewModels.Response
     public class JobTitlesList
     {
         public Guid? Id { get; set; }
-        public string? Name { get; set; }
+        public string? JobTitleName { get; set; }
         public bool? IsActive { get; set; }
     }
 }

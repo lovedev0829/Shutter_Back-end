@@ -32,23 +32,37 @@ namespace ShutterManagement.Business.Services
             this.claimsProperty = claimsProperty;
         }
 
-        public async Task<string> GetAuthorizationurl()
+        public async Task<IResponseVm<string>> GetAuthorizationurl()
         {
-            var query = new Dictionary<string, string>
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+            try
+            {
+                var query = new Dictionary<string, string>
              {
              { "client_id", AppConstant.Micorsoft365_ClientId },
              { "client_secret", AppConstant.Micorsoft365_ClientSecret },
              { "response_type", "code" },
              { "redirect_uri", AppConstant.Micorsoft365_RedirectUri },
              { "response_mode", "query" },
-              { "scope", "https://outlook.office365.com/SMTP.Send offline_access" },
+             { "scope", "https://outlook.office365.com/SMTP.Send offline_access" },
              { "state", Guid.NewGuid().ToString() }
-            };
+                };
 
-            string authUrl = $"https://login.microsoftonline.com/{AppConstant.Micorsoft365_tenantId}/oauth2/v2.0/authorize?" +
-                             string.Join("&", query.Select(kvp => $"{kvp.Key}={Uri.EscapeDataString(kvp.Value)}"));
+                string authUrl = $"https://login.microsoftonline.com/{AppConstant.Micorsoft365_tenantId}/oauth2/v2.0/authorize?" + string.Join("&", query.Select(kvp => $"{kvp.Key}={Uri.EscapeDataString(kvp.Value)}"));
 
-            return authUrl;
+                responseVm.IsSuccess = true;
+                responseVm.Message = "Authorization URL generated successfully.";
+                responseVm.Data = authUrl;
+            }
+            catch (Exception ex)
+            {
+                responseVm.IsSuccess = false;
+                responseVm.Message = "Error while generating Authorization URL: " + ex.Message;
+                responseVm.Data = null;
+            }
+
+
+            return responseVm;
         }
 
         public async Task<IResponseVm<string>> ExchangeCodeForTokensAsync(string code)

@@ -186,11 +186,11 @@ namespace ShutterManagement.Services
                 return responseVm;
             }
 
-            var TenantHomePageData = tenantService.GetAllQuerable().Where(x => x.Code == CompanyCode
-            && x.IsDelete == false && x.IsActive == true).FirstOrDefault();
+            var TenantHomePageData = await tenantService.GetAllQuerable().Where(x => x.Code == CompanyCode
+            && x.IsDelete == false && x.IsActive == true).FirstOrDefaultAsync();
             if (TenantHomePageData != null)
             {
-                var brandInfo = tenantBrandingService.GetAllQuerable().Where(x => x.Id == TenantHomePageData.BrandingInfo).FirstOrDefault();
+                var brandInfo = await tenantBrandingService.GetAllQuerable().Where(x => x.Id == TenantHomePageData.BrandingInfo).FirstOrDefaultAsync();
                 if (brandInfo != null)
                 {
                     HomePageContent homePageContent = new HomePageContent
