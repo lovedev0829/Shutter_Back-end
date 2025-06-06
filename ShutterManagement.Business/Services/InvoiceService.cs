@@ -829,9 +829,7 @@ namespace ShutterManagement.Business.Services
                         return responseVm;
                     }
 
-                    var paymentDetails = dbContext.TblInvoicePayments
-                        .FirstOrDefault(x => x.InvoiceId == model.InvoiceId &&
-                                             x.IsDelete == false);
+                    var paymentDetails = dbContext.TblInvoicePayments.FirstOrDefault(x => x.InvoiceId == model.InvoiceId &&x.IsDelete == false);
 
                     if (paymentDetails == null)
                     {
