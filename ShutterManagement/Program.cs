@@ -31,8 +31,16 @@ IConfiguration configuration= builder.Configuration;
 builder.Configuration.AddConstants();
 
 builder.Services.AddDbContext<ShutterDBContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
-    sqlOptions => sqlOptions.CommandTimeout(180)));
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        sqlOptions =>
+        {
+            sqlOptions.CommandTimeout(180);
+            sqlOptions.EnableRetryOnFailure(
+                maxRetryCount: 3,
+                maxRetryDelay: TimeSpan.FromSeconds(10),
+                errorNumbersToAdd: null); // Optional: add specific error codes if needed
+        }));
 
 builder.Services.AddCors(options =>
 {
