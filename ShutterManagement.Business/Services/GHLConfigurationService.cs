@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO.Compression;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
@@ -10,11 +11,16 @@ using Microsoft.Extensions.Configuration;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core;
 using ShutterManagement.Core.Common;
+using ShutterManagement.Core.SPModel.SP_Responses;
 using ShutterManagement.Core.ViewModels;
 using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.Core.ViewModels.Response;
 using ShutterManagement.DAL.Context;
+using ShutterManagement.GHL.Services;
 using ShutterManagement.Services;
+using ShutterManagment.GHL.ViewModel.Request;
+using ShutterManagment.GHL.ViewModel.Response;
+using Stripe;
 
 
 namespace ShutterManagement.Business.Services
@@ -24,12 +30,16 @@ namespace ShutterManagement.Business.Services
         private readonly ClaimsProperty claimsProperty;
         private readonly GoHighLevelOAuthService goHighLevelOAuthService;
         private readonly IConfiguration configuration;
+        private readonly GHLService_v2 gHLService_V2;
 
-        public GHLConfigurationService(ClaimsProperty claimsProperty, GoHighLevelOAuthService goHighLevelOAuthService, IConfiguration configuration)
+        public GHLConfigurationService(ClaimsProperty claimsProperty, 
+            GoHighLevelOAuthService goHighLevelOAuthService, IConfiguration configuration,
+            GHLService_v2 gHLService_V2)
         {
             this.claimsProperty = claimsProperty;
             this.goHighLevelOAuthService = goHighLevelOAuthService;
             this.configuration = configuration;
+            this.gHLService_V2 = gHLService_V2;
         }
 
         //This method to set the GHLConfiguration in AppConstant...
@@ -410,6 +420,167 @@ namespace ShutterManagement.Business.Services
                 response.Message = ex.Message;
             }
             return Task.FromResult(response);
+        }
+
+
+        public async Task<IResponseVm<string>> UpdateGHlConfigforPartner(CreateGHLConfigforPartner model)
+        {
+            IResponseVm<string> response = new ResponseVm<string>();
+            try
+            {
+                var IsSubtenant = dbContext.TblTenants.Where(x => x.TenantId.ToString() == model.PartnerId
+                && x.ParentTenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false).FirstOrDefault();
+                if (IsSubtenant != null)
+                {
+                    IsSubtenant.IsGhlconfigSameAsTenant = model.IsGHLConfigSameasTenant;
+                    IsSubtenant.GhluserId = model.GHLUserId;
+                    IsSubtenant.ModifiedBy = AppConstant.LoggedInUserID;
+                    IsSubtenant.UpdatedAt = DateTime.Now;
+
+                    dbContext.TblTenants.Update(IsSubtenant);
+                    dbContext.SaveChanges();
+
+                    response.IsSuccess = true;
+                    response.Message = "GHL User added successfully.";
+                }
+            }
+            catch(Exception ex)
+            {
+                response.Message = ex.Message;  
+            }
+            return response;
+        }
+
+        public async Task<IResponseVm<string>> SyncContactandJobforPartner(string TenantId)
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+            try
+            {
+                var subtenantdetails = dbContext.TblTenants.Where(x => x.TenantId.ToString() == TenantId
+                && x.ParentTenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false).FirstOrDefault();
+
+                if ((bool)subtenantdetails.IsGhlconfigSameAsTenant)
+                {
+                    await GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
+                    var ghlContact = await gHLService_V2.GetOpportunityforPartner(subtenantdetails.GhluserId);
+                    foreach (var item in ghlContact.Data.opportunities)
+                    {
+                        var IsContactExist = dbContext.TblContacts.Where(x => x.Email == item.contact.Email && x.TenantId.ToString() == TenantId && x.IsArchive == false && x.IsActive == true && x.IsDelete
+                        == false).FirstOrDefault();
+                        if (IsContactExist != null)
+                        {
+                            IsContactExist.FirstName = item.contact.Name;
+                            IsContactExist.LastName = item.contact.Name;
+                            IsContactExist.PhoneNumber = item.contact.Phone;
+                            IsContactExist.Email = item.contact.Email;
+                            IsContactExist.UpdatedAt = DateTime.Now;
+                            IsContactExist.ModifiedBy = AppConstant.LoggedInUserID;
+                            dbContext.TblContacts.Update(IsContactExist);
+                            await dbContext.SaveChangesAsync();
+                        }
+                        else
+                        {
+                            //generate unique version
+                            int Version = dbContext.TblContacts.Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt)
+                                .Select(p => (p.ContactUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries).Length == 3 ? Convert.ToInt32(p.ContactUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries)[2]) : 0)).FirstOrDefault();
+                            Version += 1;
+                            var contactUniqueId = GenerateUniqueId.GenerateUniqueIds(ModuleName.Contact, AppConstant.LoggedInCompanyCode, Version);
+                            TblContact CreateContact = new TblContact
+                            {
+                                ContactId = Guid.NewGuid(),
+                                // ContactType = item.contact.,
+                                FirstName = item.contact.Name,
+                                LastName = item.contact.Name,
+                                PhoneNumber = item.contact.Phone,
+                                Email = item.contact.Email,
+                                ContactUniqueId = contactUniqueId,
+                                IsTaxExemption = false,
+                                IsBillingAddressSameAsAddress = false,
+                                CreatedBy = AppConstant.LoggedInUserID,
+                                CreatedAt = DateTime.Now,
+                                TenantId = Guid.Parse(TenantId),
+                                IsActive = true,
+                                IsArchive = false,
+                                IsDelete = false
+                            };
+                            dbContext.TblContacts.Add(CreateContact);
+                            var res = await dbContext.SaveChangesAsync();
+                            if (CreateContact.LastSync == null && CreateContact.GhlcontactId == null)
+                            {
+                                CreateContact.LastSync = DateTime.Now;
+                                CreateContact.GhlcontactId = item.contact.Id;
+                                dbContext.TblContacts.Update(CreateContact);
+                                await dbContext.SaveChangesAsync();
+                            }
+                            var jobExist = dbContext.TblJobs.Where(x => x.JobName == item.name && x.ContactId.ToString() == item.contactId.ToString()
+                            && x.IsDelete == false && x.IsActive == true && x.TenantId.ToString() == TenantId).FirstOrDefault();
+                            if (jobExist != null)
+                            {
+                                var stageId1 = dbContext.TblGhlStages.Where(x => x.GhlStageId.ToLower() == item.pipelineStageId.ToLower())
+                                    .FirstOrDefault();
+                                jobExist.JobName = item.name?.Trim();
+                                jobExist.GhlStageId = Guid.Parse(item.pipelineStageId);
+                                jobExist.GhlStageName = stageId1?.GhlStageName?.Trim() ?? string.Empty;
+                                jobExist.GhluserId = subtenantdetails.GhluserId ?? string.Empty;
+                                jobExist.GhlOpportunityId = item.id ?? string.Empty;
+                                dbContext.TblJobs.Update(jobExist);
+                                await dbContext.SaveChangesAsync();
+                            }
+                            else
+                            {
+                                int Version1 = dbContext.TblJobs.Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt)
+                                         .Select(p => (p.JobUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries).Length == 3 ? Convert.ToInt32(p.JobUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries)[2]) : 0)).FirstOrDefault();
+                                Version1 += 1;
+                                var generateUnique = GenerateUniqueId.GenerateUniqueIds(ModuleName.Job, AppConstant.LoggedInCompanyCode, Version);
+                                Guid jobtype = Guid.Parse("34623376-9CE3-4C9B-A538-2D3129B1A6B2");
+                                var stageId = dbContext.TblGhlStages.Where(x => x.GhlStageId.ToLower() == item.pipelineStageId.ToLower())
+                                    .FirstOrDefault();
+                               var jobstatus = dbContext.MstJobStatuses.Where(x => x.JobStatusName.ToLower() == stageId.GhlStageName.ToLower()).Select(x => x.JobStatusId).FirstOrDefault();
+                                TblJob job = new TblJob
+                                {
+                                    AddressId = null,
+                                    ContactId = CreateContact.ContactId,
+                                    JobName = item.name?.Trim(),
+                                    JobType = jobtype,
+                                    AssignedPersonnel = Guid.Empty,
+                                    // ScheduledDate = model.ScheduledDate,
+                                    JobStatus = jobstatus,
+                                    Notes = string.Empty,
+                                    JobUniqueId = generateUnique,
+                                    GhlStageId = Guid.Parse(item.pipelineStageId),
+                                    GhlStageName = stageId?.GhlStageName?.Trim() ?? string.Empty,
+                                    GhlContactId = item.contactId ?? string.Empty,
+                                    TenantId = Guid.Parse(TenantId),
+                                    IsActive = true,
+                                    IsDelete = false,
+                                    CreatedAt = DateTime.Now,
+                                    CreatedBy = AppConstant.LoggedInUserID ?? Guid.Empty,
+                                    GhluserId = subtenantdetails.GhluserId ?? string.Empty,
+                                    GhlOpportunityId = item.id ?? string.Empty
+                                };
+                                dbContext.TblJobs.Add(job);
+                                await dbContext.SaveChangesAsync();
+                                //responseVm.IsSuccess = true;
+                                //responseVm.Message = AppConstant.InsertSuccessMsg;
+                            }
+                        }
+                    }
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = "Contact and Opportunity synced successfully for Partner.";
+                }
+
+                else
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = "Please , Select GHL User.";
+                }
+            }
+            catch (Exception ex)
+            {
+                responseVm.Message = ex.Message;
+            }
+            return responseVm;
+
         }
     }
 }

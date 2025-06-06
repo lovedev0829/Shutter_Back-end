@@ -1056,9 +1056,10 @@ namespace ShutterManagement.Business.Services
                                    from p2 in tenant.DefaultIfEmpty()
                                    join t5 in _context.MstJobStatuses on t2.JobStatus equals t5.JobStatusId into jobStatus
                                    from t5 in jobStatus.DefaultIfEmpty()
-                                   join t6 in _context.TblContacts on t2.ContactId equals t6.ContactId into contact
+                                   join t6 in _context.TblContacts.Where(x=> x.IsActive == true && x.IsDelete == false) on 
+                                   t2.ContactId equals t6.ContactId into contact
                                    from t6 in contact.DefaultIfEmpty()
-                                   where t2.TenantId == AppConstant.LoggedInTenantId && t2.IsDelete == false && t6.IsActive == true && t6.IsDelete == false
+                                   where t2.TenantId == AppConstant.LoggedInTenantId && t2.IsDelete == false
                                    select new GetAllJobsdetails
                                    {
                                        IsActive = t2.IsActive,

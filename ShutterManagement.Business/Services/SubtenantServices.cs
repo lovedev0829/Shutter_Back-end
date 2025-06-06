@@ -543,5 +543,6 @@ namespace ShutterManagement.Business.Services
 
         }
 
+
     }
 }

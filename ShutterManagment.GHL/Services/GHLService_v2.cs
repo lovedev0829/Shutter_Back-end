@@ -1172,14 +1172,17 @@ namespace ShutterManagement.GHL.Services
             public string ContactId { get; set; }
         }
 
-        public async Task<IResponseVm<GHLJobAssignedtoPartner>> GetOpportunityforPartner()
+        public async Task<IResponseVm<GHLJobAssignedtoPartner>> GetOpportunityforPartner(string GHLUserId)
         {
             var responseVm = new ResponseVm<GHLJobAssignedtoPartner>();
 
             try
             {
                 FileLogger.Log("Fetching Opportunities...");
-                var requestUrl = "https://services.leadconnectorhq.com/opportunities/search?location_id=PTnICMN0mKr03kzJQqPQ&pipeline_id=CFoi90n88zrDhMFP8R2I&assigned_to=d8heZIvtIbd5OphFusfb";
+
+                var PipelineId = dBContext.TblGhlStages.Where(x => x.GhlPipelineName.ToLower() == AppConstant.GHL_PipelineId.ToLower() && x.IsActive == true).
+                    Select(x => x.GhlPipelineId).FirstOrDefault();
+                var requestUrl = $"{AppConstant.GHL_BaseAddress}/opportunities/search?location_id={AppConstant.GHL_Locationd}&pipeline_id={PipelineId}&assigned_to={GHLUserId}";
 
                 using var requestMessage = new HttpRequestMessage(HttpMethod.Get, requestUrl);
 

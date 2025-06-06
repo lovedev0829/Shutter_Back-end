@@ -1039,16 +1039,5 @@ namespace ShutterManagement.Controllers
             return Ok(result);
         }
 
-
-        [HttpGet]
-        [Route("GetOpportunitySearch")]
-        public async Task<IActionResult> GetOpportunityforPartner()
-        {
-            await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
-            var result = await gHLService_V2.GetOpportunityforPartner();
-            return Ok(result);
-
-        }
-
     }
 }
