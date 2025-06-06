@@ -1,20 +1,11 @@
-﻿2025-06-03 18:58:51 : No Stripe configuration found for Tenant ID:
-Data: [
-  "6c4f5afb-1508-47e8-8161-2079a1a144f0"
-]
+﻿2025-06-06 13:41:18 : Successfully fetched 10 estimates.
 
-5XlmgQ8pBgwKIRaPXUarF4xkwi"
-]
+ The source IQueryable doesn't implement IDbAsyncEnumerable<ShutterManagement.DAL.Context.TblEstimateWindowProduct>. Only sources that implement IDbAsyncEnumerable can be used for Entity Framework asynchronous operations. For more details see http://go.microsoft.com/fwlink/?LinkId=287068.
+   at System.Data.Entity.QueryableExtensions.AsDbAsyncEnumerable[T](IQueryable`1 source)
+   at System.Data.Entity.QueryableExtensions.ToListAsync[TSource](IQueryable`1 source)
+   at ShutterManagement.Business.Services.EstimateService.AddEstimateProducts(TblEstimate estimate, EstimateList e) in D:\Shutter\ShutterManagement.Business\Services\EstimateService.cs:line 1291
 
-ehgxLz43sSNbkHxJmwEPKIgtx6A3hXjjSpmhscjF5tgs9cxvW6W00vduKGkpL"
-]
-
-zJQqPQ",
-    "LastSync": "2025-06-03T15:10:38.423",
-    "GeneratedToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0ZW5hbnRfaWQiOiI4OTg5ZGZlNy00YzExLTRjMjgtOGM5OS1lYWI1NWM5NWE2MTMiLCJqdGkiOiI3MzAzMDg4OC0xY2RlLTRhOTItYmEyMS0wNjQyMWM3OWNhMDIiLCJpYXQiOjE3NDU4MjEwOTQsIm5iZiI6MTc0NTgyMTA5NCwiZXhwIjoxNzQ1ODI0Njk0LCJpc3MiOiJTaHV0dGVyTWFuYWdlbWVudCIsImF1ZCI6IlNodXR0ZXJNYW5hZ2VtZW50In0.v_5vb_b70eKAeD0dsxxhL9WTgXvMxOpzT_FG4RGzt8U",
-    "RefreshToken": "",
-    "AccessToken": "",
-    "RefreshExpirationtime": "2026-06-03T15:10:38.423",
+ntime": "2026-06-03T15:10:38.423",
     "AccessExpirationtime": "2025-06-04T15:10:38.423",
     "CalendarName": "MsrhAADdSWWdJt2dMJYB",
     "IsActive": true,
