@@ -285,10 +285,10 @@ namespace ShutterManagement.Business.Services
                              join material in dbContext.TblRawMaterials.Where(y => y.IsActive == true) on componentMaterial.RawMaterialId equals material.RawMaterialId into materialJoin
                              from material in materialJoin.DefaultIfEmpty()
                              where windowProduct.WindowProductId == windowProductId
-                             && window.IsActive == true && !window.IsDelete == true
-                             && windowProduct.IsActive == true && !windowProduct.IsDelete == true
-                             && product.IsActive == true && !product.IsDelete == true
-                             && productType.IsActive == true && !productType.IsDelete == true
+                             && window.IsActive == true && window.IsDelete == false
+                             && windowProduct.IsActive == true && windowProduct.IsDelete == false
+                             && product.IsActive == true && product.IsDelete == false
+                             && productType.IsActive == true && productType.IsDelete == false
                              select new WindowProdcutDetailsForEstimate
                              {
                                  WindowId = window.WindowId,
