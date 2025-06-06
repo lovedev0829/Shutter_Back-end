@@ -27,6 +27,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var JobTitleList = (await GetAll()).Where(x => x.IsDelete == false).OrderByDescending(x => x.CreatedAt).ToList();
+
                 filter.SearchValue = (filter.SearchValue?.Trim() ?? "").ToLower();
                 var FilterRecords = JobTitleList
                                     .Where(x =>
@@ -37,6 +38,7 @@ namespace ShutterManagement.Business.Services
                                     ) : true)).ToList();
                 var TakenRecords = FilterRecords
                                     .Skip((filter.PageNo - 1) * filter.RecordPerPage).Take(filter.RecordPerPage).ToList();
+
                 if (TakenRecords != null && TakenRecords.Count > 0)
                 {
                     responseVm.Data = TakenRecords.Select(x => new JobTitlesList
@@ -51,6 +53,7 @@ namespace ShutterManagement.Business.Services
                 }
                 else
                 {
+                    responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.NoDataFound;
                 }
             }

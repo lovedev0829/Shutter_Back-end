@@ -271,12 +271,11 @@ namespace ShutterManagement.Business.Services
                 var query = (from window in dbContext.TblWindows
                              join windowProduct in dbContext.TblWindowProducts on window.WindowId equals windowProduct.WindowId
                              join product in dbContext.TblProducts on windowProduct.ProductId equals product.ProductId
-                             join tax in dbContext.TblTaxRates on product.TaxId equals tax.TaxRateId into taxJoin
+                             join tax in dbContext.TblTaxRates.Where(x => x.IsActive == true) on product.TaxId equals tax.TaxRateId into taxJoin
                              from taxdata in taxJoin.DefaultIfEmpty()
                              join productType in dbContext.MstProductTypes on product.ProductType equals productType.ProductId.ToString()
-                             join productComponent in dbContext.TblProductComponents on product.ProductId equals productComponent.ProductId into componentJoin
+                             join productComponent in dbContext.TblProductComponents.Where(x => x.IsActive == true) on product.ProductId equals productComponent.ProductId into componentJoin
                              from productComponent in componentJoin.DefaultIfEmpty()
-                             where productComponent.IsActive == true
                              join expression in dbContext.TblExpressions.Where(y => y.IsActive == true) on productComponent.PricingExpression equals expression.Id.ToString() into expressionJoin
                              from expression in expressionJoin.DefaultIfEmpty()
                              join component in dbContext.TblComponents.Where(y => y.IsActive == true) on productComponent.ComponentId equals component.ComponentId into compJoin
