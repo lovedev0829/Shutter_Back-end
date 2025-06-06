@@ -42,7 +42,7 @@ namespace ShutterManagement.Business.Services
                     responseVm.Data = TakenRecords.Select(x => new JobTitlesList
                     {
                         Id = x.Id,
-                        Name = x.JobTitleName,
+                        JobTitleName = x.JobTitleName,
                         IsActive = x.IsActive,
                     }).ToList();
                     responseVm.IsSuccess = true;
