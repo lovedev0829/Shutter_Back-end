@@ -29,11 +29,11 @@ namespace ShutterManagement.Services
         private readonly IMapper mapper;
         private readonly INotificationService notification;
         private readonly ITenantBrandingService tenantBrandingService;
-        private readonly GoogleAuthService googleAuthService;
+       // private readonly GoogleAuthService googleAuthService;
 
         public UserService(DataServices dataServices, IRoleService roleService
             , ClaimsProperty claimsProperty, IUserRoleService userRoleService
-            , IMapper mapper,INotificationService notification,ITenantBrandingService tenantBrandingService,GoogleAuthService googleAuthService)
+            , IMapper mapper,INotificationService notification,ITenantBrandingService tenantBrandingService/*,GoogleAuthService googleAuthService*/)
         {
             _dataServices = dataServices;
             this.roleService = roleService;
@@ -42,7 +42,7 @@ namespace ShutterManagement.Services
             this.mapper = mapper;
             this.notification = notification;
             this.tenantBrandingService = tenantBrandingService;
-            this.googleAuthService = googleAuthService;
+            //this.googleAuthService = googleAuthService;
         }
 
         public async Task<IResponseVm<string>> Create(CreateUser UserDetails)
@@ -157,7 +157,7 @@ namespace ShutterManagement.Services
 
                         var WelcomeTemplate = dbContext.TblTemplates.Where(x => x.IsDelete == false && x.TemplateCategory.ToLower() == EnumValue.GetEnumValue(EmailTemplateType.WelcomeEmail)).FirstOrDefault();
                         var emailContent = EmailHelper.ReplacePlaceholdersForlWelcomeEmail(WelcomeTemplate?.TemplateValue, welcomemodel);
-                        await googleAuthService.WelcomeEmailWithOauth(UserDetails.Email, emailContent);
+                        //await googleAuthService.WelcomeEmailWithOauth(UserDetails.Email, emailContent);
 
                         result.IsSuccess = true;
                         result.Message = AppConstant.InsertSuccessMsg;
