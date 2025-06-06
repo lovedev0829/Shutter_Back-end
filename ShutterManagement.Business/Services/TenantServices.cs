@@ -28,10 +28,10 @@ namespace ShutterManagement.Business.Services
         private readonly ClaimsProperty claimsProperty;
         private readonly IUserService userService;
         private readonly INotificationService notification;
-        private readonly GoogleAuthService googleAuthService;
+       // private readonly GoogleAuthService googleAuthService;
 
         public TenantServices(DataServices dataServices, IMapper mapper, ITenantBrandingService tenantBrandingService
-            , ClaimsProperty claimsProperty, IUserService userService,INotificationService notification,GoogleAuthService googleAuthService
+            , ClaimsProperty claimsProperty, IUserService userService,INotificationService notification/*,GoogleAuthService googleAuthService*/
             )
         {
             this.dataServices = dataServices;
@@ -40,7 +40,7 @@ namespace ShutterManagement.Business.Services
             this.claimsProperty = claimsProperty;
             this.userService = userService;
             this.notification = notification;
-            this.googleAuthService = googleAuthService;
+            //this.googleAuthService = googleAuthService;
         }
 
         public async Task<IResponseVm<string>> TenantCreate(CreateTenant model)
@@ -205,7 +205,7 @@ namespace ShutterManagement.Business.Services
                 if (WelcomeTemplate != null)
                 {
                     var emailContent = EmailHelper.ReplacePlaceholdersForlWelcomeEmail(WelcomeTemplate.TemplateValue, welcomemodel);
-                   await  googleAuthService.WelcomeEmailWithOauth(model.Email, emailContent);
+                   //await  googleAuthService.WelcomeEmailWithOauth(model.Email, emailContent);
                 }
             }
             catch (Exception ex)
