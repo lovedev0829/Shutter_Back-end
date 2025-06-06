@@ -854,7 +854,8 @@ namespace ShutterManagement.Business.Services
                         IsActive = true,
                         IsDelete = false,
                         CreatedAt = DateTime.Now,
-                        CreatedBy = AppConstant.LoggedInUserID ?? Guid.Empty 
+                        CreatedBy = AppConstant.LoggedInUserID ?? Guid.Empty,
+                        GhluserId = model.GHLUserId ?? string.Empty
                     };
 
                        var res = await Add(job);
@@ -1265,6 +1266,7 @@ namespace ShutterManagement.Business.Services
                         IsJobExist.AddressId = model.AddressId;
                         IsJobExist.UpdatedAt = DateTime.Now;
                         IsJobExist.ModifiedBy = AppConstant.LoggedInUserID ?? Guid.Empty;
+                        IsJobExist.GhluserId = model.GHLUserId ?? string.Empty;
                         var res = await Update(IsJobExist);
                         responseVm.IsSuccess = true;
                         responseVm.Message = AppConstant.UpdateSuccessMsg;
@@ -1289,6 +1291,7 @@ namespace ShutterManagement.Business.Services
                             lastasync = DateTime.Now,
                             locationId = model.locationId,
                             ContactId = contact1,
+                            GHLUserId = model.GHLUserId,
 
                         };
                         var CreateJob = await Create(Jobcreated);
@@ -1517,12 +1520,18 @@ namespace ShutterManagement.Business.Services
                 try 
                 { 
                 var addressId = Guid.Empty;
+                    var GHLUserId = "";
                 var contact1 = new TblContact();
                 if (opportunitydata != null)
                 {
                     contact1 = contact.GetAllQuerable().Where(x => x.GhlcontactId == opportunitydata.contact_id && x.IsDelete == false)
                          .FirstOrDefault();
                    //     addressId = (Guid)contact1.PrimaryAddress;
+                }
+                if(opportunitydata.Users != null)
+                {
+                 GHLUserId = dbContext.TblGhlUsers.Where(x => x.GhlEmail == opportunitydata.Users.email && x.TenantId
+                     == AppConstant.LoggedInTenantId && x.IsDelete == false && x.IsActive == true).Select(x=> x.GhlUserId).FirstOrDefault();
                 }
                 Guid jobtype = Guid.Parse("34623376-9CE3-4C9B-A538-2D3129B1A6B2");
                 var stageId = dbContext.TblGhlStages.Where(x => x.GhlStageName.ToLower() == opportunitydata.pipleline_stage.ToLower()).
@@ -1540,7 +1549,8 @@ namespace ShutterManagement.Business.Services
                     locationId = opportunitydata.location.id,
                     GHL_ContactId = opportunitydata.contact_id,
                     lastasync = DateTime.Now,
-                    GHL_jobstatus = jobstatus.ToString()
+                    GHL_jobstatus = jobstatus.ToString(),
+                    GHLUserId = GHLUserId,
                 };
                     await gHLConfiguration.GetGHLConfiguration(opportunitydata.WebhookTenantId);
                     var res = await Create(job);
@@ -1564,11 +1574,17 @@ namespace ShutterManagement.Business.Services
                 {
                     var addressId = Guid.Empty;
                     var contact1 = new TblContact();
+                    var GHLUserId = "";
                     if (opportunitydata != null)
                     {
                         contact1 = contact.GetAllQuerable().Where(x => x.GhlcontactId == opportunitydata.contact_id && x.IsDelete == false).
                              FirstOrDefault();
                         //addressId = (Guid)contact1.PrimaryAddress;
+                    }
+                    if (opportunitydata.Users != null)
+                    {
+                        GHLUserId = dbContext.TblGhlUsers.Where(x => x.GhlEmail == opportunitydata.Users.email && x.TenantId
+                            == AppConstant.LoggedInTenantId && x.IsDelete == false && x.IsActive == true).Select(x => x.GhlUserId).FirstOrDefault();
                     }
                     Guid jobtype = Guid.Parse("34623376-9CE3-4C9B-A538-2D3129B1A6B2");
                     var stageId = dbContext.TblGhlStages.Where(x => x.GhlStageName.ToLower() == opportunitydata.pipleline_stage.ToLower()).
@@ -1587,8 +1603,8 @@ namespace ShutterManagement.Business.Services
                         locationId = opportunitydata.location.id,
                         GHL_ContactId = opportunitydata.contact_id,
                         lastasync = DateTime.Now,
-                        GHL_jobstatus = jobstatus.ToString()
-
+                        GHL_jobstatus = jobstatus.ToString(),
+                        GHLUserId = GHLUserId,
                     };
                     await gHLConfiguration.GetGHLConfiguration(opportunitydata.WebhookTenantId);
                     var res = await UpdateJob(job);
@@ -1604,6 +1620,27 @@ namespace ShutterManagement.Business.Services
             }
         }
 
+        //public async Task<IResponseVm<string>> GHLJobAssignedtoPartner(CreateJob model)
+        //{
+        //    IResponseVm<string> responseVm = new ResponseVm<string>();  
+        //    try
+        //    {
+        //        var IsSubtenant = tenantService.GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true 
+        //        && x.IsDelete == false).FirstOrDefault();
+        //        if(IsSubtenant != null)
+        //        {
+        //            var JobExist = GetAllQuerable().Where()
+        //            TblJob job = new TblJob()
+        //            {
+
+        //            };
+        //        }
+        //    }
+        //    catch(Exception ex)
+        //    {
+
+        //    }
+        //}
 
     }
 }
