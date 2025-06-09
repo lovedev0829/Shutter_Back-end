@@ -21,6 +21,7 @@ using ShutterManagment.GHL.ViewModel.Response;
 using System.Linq.Dynamic.Core;
 using System.Reflection;
 using System.Linq.Expressions;
+using Azure;
 
 namespace ShutterManagement.Business.Services
 {
@@ -1350,7 +1351,6 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
-
 
 
     }

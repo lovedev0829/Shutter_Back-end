@@ -386,21 +386,22 @@ namespace ShutterManagement.Business.Services
             try
             {
                 string formula = model.Expression ?? "";
+                
                 var validate = CalculateExpression(formula, model);
-                var parser = new Core.Common.Parser(validate.ParsedExpression.ToString());
-                var result = parser.ParseExpression();
+                //var parser = new Core.Common.Parser(model.CalculateExpression ?? "");
+                //var result = parser.ParseExpression();
 
-                if (!result.IsValid) { 
-                    responseVm.Message = ("Syntax Errors:");
-                    foreach (var error in result.Errors)
-                    responseVm.Message += "--"+ error;
-                    return responseVm; // Return early if there are syntax errors
-                }
-                //if (validate.HasErrors())
-                //{
-                //    responseVm.Message = "There is some issue in Expression. " + validate.Error;
-                //    return responseVm;
+                //if (!result.IsValid) { 
+                //    responseVm.Message = ("Syntax Errors:");
+                //    foreach (var error in result.Errors)
+                //    responseVm.Message += "--"+ error;
+                //    return responseVm; // Return early if there are syntax errors
                 //}
+                if (validate.HasErrors())
+                {
+                    responseVm.Message = "There is some issue in Expression. " + validate.Error;
+                    return responseVm;
+                }
                 var res = validate.Evaluate();
                 responseVm.IsSuccess = true;
                 responseVm.Message = "Expression is correct. You can add this expression now.";
@@ -789,6 +790,7 @@ namespace ShutterManagement.Business.Services
 
                 formula = formula?.Replace(placeholder, replacement);
             }
+            //values.CalculateExpression = formula;
                 return new NCalc.Expression(formula);
         }
 

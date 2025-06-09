@@ -5,6 +5,7 @@ using ShutterManagement.Core.ViewModels;
 using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.Core.ViewModels.Response;
 using ShutterManagement.DAL.Context;
+using ShutterManagement.GHL.Services;
 using ShutterManagement.Services;
 using Stripe;
 using System;
@@ -21,7 +22,8 @@ namespace ShutterManagement.Business.Services
             private readonly ITenantService tenantService;
             private readonly ClaimsProperty claimsProperty;
 
-        public StripeConfigurationService(ITenantService tenantService,ClaimsProperty claimsProperty){
+        public StripeConfigurationService(ITenantService tenantService,ClaimsProperty claimsProperty
+            ){
                 this.tenantService = tenantService;
                 this.claimsProperty = claimsProperty;
         }
@@ -161,6 +163,7 @@ namespace ShutterManagement.Business.Services
         }
 
 
+       
 
     }
 }

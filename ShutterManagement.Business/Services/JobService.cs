@@ -854,7 +854,8 @@ namespace ShutterManagement.Business.Services
                         IsActive = true,
                         IsDelete = false,
                         CreatedAt = DateTime.Now,
-                        CreatedBy = AppConstant.LoggedInUserID ?? Guid.Empty 
+                        CreatedBy = AppConstant.LoggedInUserID ?? Guid.Empty,
+                        GhluserId = model.GHLUserId ?? string.Empty
                     };
 
                        var res = await Add(job);
@@ -1055,36 +1056,37 @@ namespace ShutterManagement.Business.Services
                                    from p2 in tenant.DefaultIfEmpty()
                                    join t5 in _context.MstJobStatuses on t2.JobStatus equals t5.JobStatusId into jobStatus
                                    from t5 in jobStatus.DefaultIfEmpty()
-                                   join t6 in _context.TblContacts on t2.ContactId equals t6.ContactId into contact
+                                   join t6 in _context.TblContacts.Where(x => x.IsActive == true && x.IsDelete == false) on
+                                   t2.ContactId equals t6.ContactId into contact
                                    from t6 in contact.DefaultIfEmpty()
-                                   where t2.TenantId == AppConstant.LoggedInTenantId && t2.IsDelete == false && t6.IsActive == true && t6.IsDelete == false
+                                   where t2.TenantId == AppConstant.LoggedInTenantId && t2.IsDelete == false
                                    select new GetAllJobsdetails
                                    {
                                        IsActive = t2.IsActive,
                                        JobId = t2.JobId,
-                                       JobName = t2.JobName??"",
+                                       JobName = t2.JobName ?? "",
                                        ContactId = t2.ContactId,
-                                       ContactFirstName = t6.FirstName??"",
-                                       ContactLasttName = t6.LastName??"",
-                                       Suffix = t6.Suffix??"",
-                                       AddressId = t2.AddressId??null,
-                                       JobType = t3.Id,
-                                       JobTypeName = t3.JobTypeName??"",
-                                       AssignedPersonnel = t4.Id,
-                                       AssignedPersonnelName = t4.FirstName + " " + t4.LastName??"",
-                                       ScheduledDate = t2.ScheduledDate,
-                                       JobStatus = t5.JobStatusId,
-                                       JobStatusName = t5.JobStatusName??"",
-                                       Notes = t2.Notes??"",
-                                       AttachmentsAny = t2.AttachmentAny.Split(",", StringSplitOptions.RemoveEmptyEntries).ToArray(),
-                                       Label = t1.Label??"",
-                                       StreetAddress = t1.StreetAddress??"",
-                                       City = t1.City??"",
+                                       ContactFirstName = t6.FirstName ?? "",
+                                       ContactLasttName = t6.LastName ?? "",
+                                       Suffix = t6.Suffix ?? "",
+                                       AddressId = (t2.AddressId != null || t2.AddressId != Guid.Empty) ? t2.AddressId : null,
+                                       JobType = (t2.JobType != null || t2.JobType != Guid.Empty) ? t2.JobType : Guid.Empty,
+                                       JobTypeName = t3.JobTypeName != string.Empty ? t3.JobTypeName : "",
+                                       AssignedPersonnel = t2.AssignedPersonnel != Guid.Empty ? t2.AssignedPersonnel : Guid.Empty,
+                                       AssignedPersonnelName = t2.AssignedPersonnel != null ? t4.FirstName + " " + t4.LastName : "",
+                                       ScheduledDate = t2.ScheduledDate != null ? t2.ScheduledDate : null,
+                                       JobStatus = (t2.JobStatus != null || t2.JobStatus != Guid.Empty) ? t2.JobStatus : Guid.Empty,
+                                       JobStatusName = (t2.JobStatus != null || t2.JobStatus != Guid.Empty) ? t5.JobStatusName : string.Empty,
+                                       Notes = (!string.IsNullOrWhiteSpace(t2.Notes) || t2.Notes != null) ? t2.Notes : string.Empty,
+                                       AttachmentsAny = string.IsNullOrWhiteSpace(t2.AttachmentAny) ? Array.Empty<string>(): t2.AttachmentAny.Split(",", StringSplitOptions.RemoveEmptyEntries).ToArray(),
+                                       Label = t1.Label != null ? t1.Label : "",
+                                       StreetAddress = t1.StreetAddress != null ? t1.StreetAddress : "",
+                                       City = t1.City != null ? t1.City : string.Empty,
                                        //State = dbContext.MstStates.Where(s => s.Id == t1.State).Select(y => y.StateName ?? "").FirstOrDefault(),
-                                       ZipCode = t1.ZipCode??"",
-                                       JobUniqueCode = t2.JobUniqueId??"",
-                                       GHL_StageId = t2.GhlStageId ?? Guid.Empty,
-                                       GHL_StageName = t2.GhlStageName??"",
+                                       ZipCode = t1.ZipCode != null ? t1.ZipCode : string.Empty,
+                                       JobUniqueCode = t2.JobUniqueId ?? "",
+                                       GHL_StageId = t2.GhlStageId != null ? t2.GhlStageId : Guid.Empty,
+                                       GHL_StageName = (!string.IsNullOrWhiteSpace(t2.GhlStageName) || t2.GhlStageName != null) ? t2.GhlStageName : "",
                                    }).ToList();
                     filter.SearchValue = filter.SearchValue?.Trim().ToLower();
                     var FilterRecords = JobList
@@ -1265,6 +1267,7 @@ namespace ShutterManagement.Business.Services
                         IsJobExist.AddressId = model.AddressId;
                         IsJobExist.UpdatedAt = DateTime.Now;
                         IsJobExist.ModifiedBy = AppConstant.LoggedInUserID ?? Guid.Empty;
+                        IsJobExist.GhluserId = model.GHLUserId ?? string.Empty;
                         var res = await Update(IsJobExist);
                         responseVm.IsSuccess = true;
                         responseVm.Message = AppConstant.UpdateSuccessMsg;
@@ -1289,6 +1292,7 @@ namespace ShutterManagement.Business.Services
                             lastasync = DateTime.Now,
                             locationId = model.locationId,
                             ContactId = contact1,
+                            GHLUserId = model.GHLUserId,
 
                         };
                         var CreateJob = await Create(Jobcreated);
@@ -1363,21 +1367,21 @@ namespace ShutterManagement.Business.Services
                                              Suffix = t6.Suffix??"",
                                              ContactEmail = t6.Email,
                                              ContactPhone = t6.PhoneNumber,
-                                             AddressId = t2.AddressId,
-                                             JobType = t3.Id,
-                                             JobTypeName = t3.JobTypeName,
-                                             AssignedPersonnel = t4.Id,
-                                             AssignedPersonnelName = t4.FirstName + " " + t4.LastName,
-                                             ScheduledDate = t2.ScheduledDate,
-                                             JobStatus = t5.JobStatusId,
-                                             JobStatusName = t5.JobStatusName,
-                                             Notes = t2.Notes,
-                                             AttachmentsAny = t2.AttachmentAny,
-                                             Label = t1.Label,
-                                             StreetAddress = t1.StreetAddress,
-                                             City = t1.City,
-                                             State = s.StateName??"",
-                                             ZipCode = t1.ZipCode,
+                                             AddressId = t2.AddressId != null ? t2.AddressId : Guid.Empty,
+                                             JobType = (t2.JobType != null || t2.JobType != Guid.Empty) ? t3.Id : Guid.Empty,
+                                             JobTypeName = (t2.JobType != null || t2.JobType != Guid.Empty) ? t3.JobTypeName : "",
+                                             AssignedPersonnel = (t2.AssignedPersonnel != null || t2.AssignedPersonnel != Guid.Empty) ? t4.Id : Guid.Empty,
+                                             AssignedPersonnelName = (t2.AssignedPersonnel != null || t2.AssignedPersonnel != Guid.Empty) ? t4.FirstName + " " + t4.LastName : "",
+                                             ScheduledDate = t2.ScheduledDate != null ? t2.ScheduledDate : null,
+                                             JobStatus = (t2.JobStatus != null || t2.JobStatus != Guid.Empty) ? t2.JobStatus : Guid.Empty,
+                                             JobStatusName = (t2.JobStatus != null || t2.JobStatus != Guid.Empty) ? t5.JobStatusName : string.Empty,
+                                             Notes = (!string.IsNullOrWhiteSpace(t2.Notes) || t2.Notes != null) ? t2.Notes : string.Empty,
+                                             AttachmentsAny = t2.AttachmentAny != null ? t2.AttachmentAny : "",
+                                             Label = t1.Label != null ? t1.Label : "",
+                                             StreetAddress = t2.AddressId != null ? t1.StreetAddress :"",
+                                             City = t2.AddressId != null ? t1.City : "" ,
+                                             State = t2.AddressId != null ? s.StateName : "",
+                                             ZipCode = t2.AddressId != null ?  t1.ZipCode :"",
                                              JobUniqueCode = t2.JobUniqueId,
                                              CreatedBy = t2.CreatedBy.ToString(),
                                              CreatedbyUsername = p1.FirstName + " " + p1.LastName,
@@ -1517,12 +1521,18 @@ namespace ShutterManagement.Business.Services
                 try 
                 { 
                 var addressId = Guid.Empty;
+                    var GHLUserId = "";
                 var contact1 = new TblContact();
                 if (opportunitydata != null)
                 {
                     contact1 = contact.GetAllQuerable().Where(x => x.GhlcontactId == opportunitydata.contact_id && x.IsDelete == false)
                          .FirstOrDefault();
                    //     addressId = (Guid)contact1.PrimaryAddress;
+                }
+                if(opportunitydata.Users != null)
+                {
+                 GHLUserId = dbContext.TblGhlUsers.Where(x => x.GhlEmail == opportunitydata.Users.email && x.TenantId
+                     == AppConstant.LoggedInTenantId && x.IsDelete == false && x.IsActive == true).Select(x=> x.GhlUserId).FirstOrDefault();
                 }
                 Guid jobtype = Guid.Parse("34623376-9CE3-4C9B-A538-2D3129B1A6B2");
                 var stageId = dbContext.TblGhlStages.Where(x => x.GhlStageName.ToLower() == opportunitydata.pipleline_stage.ToLower()).
@@ -1540,7 +1550,8 @@ namespace ShutterManagement.Business.Services
                     locationId = opportunitydata.location.id,
                     GHL_ContactId = opportunitydata.contact_id,
                     lastasync = DateTime.Now,
-                    GHL_jobstatus = jobstatus.ToString()
+                    GHL_jobstatus = jobstatus.ToString(),
+                    GHLUserId = GHLUserId,
                 };
                     await gHLConfiguration.GetGHLConfiguration(opportunitydata.WebhookTenantId);
                     var res = await Create(job);
@@ -1564,11 +1575,17 @@ namespace ShutterManagement.Business.Services
                 {
                     var addressId = Guid.Empty;
                     var contact1 = new TblContact();
+                    var GHLUserId = "";
                     if (opportunitydata != null)
                     {
                         contact1 = contact.GetAllQuerable().Where(x => x.GhlcontactId == opportunitydata.contact_id && x.IsDelete == false).
                              FirstOrDefault();
                         //addressId = (Guid)contact1.PrimaryAddress;
+                    }
+                    if (opportunitydata.Users != null)
+                    {
+                        GHLUserId = dbContext.TblGhlUsers.Where(x => x.GhlEmail == opportunitydata.Users.email && x.TenantId
+                            == AppConstant.LoggedInTenantId && x.IsDelete == false && x.IsActive == true).Select(x => x.GhlUserId).FirstOrDefault();
                     }
                     Guid jobtype = Guid.Parse("34623376-9CE3-4C9B-A538-2D3129B1A6B2");
                     var stageId = dbContext.TblGhlStages.Where(x => x.GhlStageName.ToLower() == opportunitydata.pipleline_stage.ToLower()).
@@ -1587,8 +1604,8 @@ namespace ShutterManagement.Business.Services
                         locationId = opportunitydata.location.id,
                         GHL_ContactId = opportunitydata.contact_id,
                         lastasync = DateTime.Now,
-                        GHL_jobstatus = jobstatus.ToString()
-
+                        GHL_jobstatus = jobstatus.ToString(),
+                        GHLUserId = GHLUserId,
                     };
                     await gHLConfiguration.GetGHLConfiguration(opportunitydata.WebhookTenantId);
                     var res = await UpdateJob(job);
@@ -1604,6 +1621,27 @@ namespace ShutterManagement.Business.Services
             }
         }
 
+        //public async Task<IResponseVm<string>> GHLJobAssignedtoPartner(CreateJob model)
+        //{
+        //    IResponseVm<string> responseVm = new ResponseVm<string>();  
+        //    try
+        //    {
+        //        var IsSubtenant = tenantService.GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true 
+        //        && x.IsDelete == false).FirstOrDefault();
+        //        if(IsSubtenant != null)
+        //        {
+        //            var JobExist = GetAllQuerable().Where()
+        //            TblJob job = new TblJob()
+        //            {
+
+        //            };
+        //        }
+        //    }
+        //    catch(Exception ex)
+        //    {
+
+        //    }
+        //}
 
     }
 }
