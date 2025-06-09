@@ -443,6 +443,10 @@ namespace ShutterManagement.Business.Services
                     response.IsSuccess = true;
                     response.Message = "GHL User added successfully.";
                 }
+                else
+                {
+                    response.Message = AppConstant.NoDataFound;
+                }
             }
             catch(Exception ex)
             {
