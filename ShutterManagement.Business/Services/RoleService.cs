@@ -148,6 +148,13 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var RoleDetails = GetAllQuerable().Where(x => x.Id.ToString() == RoleId && x.IsShow == false && x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
+
+                bool IsRoleExistInUser = dbContext.TblUserRoles.Any(x => x.RoleId.ToString() == RoleId && x.IsDelete == false && x.IsActive == true);
+                if(IsRoleExistInUser)
+                {
+                    responseVm.Message = "This role cannot be deleted because it is currently assigned to user.";
+                    return responseVm;
+                }
                 if (RoleDetails != null)
                 {
                     RoleDetails.IsActive = false;
