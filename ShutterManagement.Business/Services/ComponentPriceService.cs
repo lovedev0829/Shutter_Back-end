@@ -52,7 +52,7 @@ namespace ShutterManagement.Business.Services
                     {
                         Type = "Materials",
                         ComponentName = x.MaterialName,
-                        Name = "Material__" + x.ProductType + "__" + x.MaterialName
+                        Name = "Material__" + x.ProductType + "__" + x.MaterialId
                     });
                     ChipData.AddRange(MaterialData);
 
@@ -60,7 +60,7 @@ namespace ShutterManagement.Business.Services
                     {
                         Type = "Materials",
                         ComponentName = x.MaterialName + " - Unit",
-                        Name = "Material__" + x.ProductType + "__" + x.MaterialName + "__Unit"
+                        Name = "Material__" + x.ProductType + "__" + x.MaterialId + "__Unit"
                     });
                     ChipData.AddRange(MaterialDataUnit);
                 }

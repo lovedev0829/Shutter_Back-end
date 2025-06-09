@@ -741,7 +741,7 @@ namespace ShutterManagement.Business.Services
                         {
                             var material = materialService.GetAllQuerable()
                                 .FirstOrDefault(x => x.ProductType.ToString() == info[1] &&
-                                                     x.MaterialName == info[2] &&
+                                                     (x.MaterialName == info[2] || x.RawMaterialId.ToString() == info[2]) &&
                                                      x.IsActive == true &&
                                                      (x.TenantId == AppConstant.LoggedInTenantId ||
                                                       x.TenantId.ToString() == AppConstant.LoggedInParentTenantId));
@@ -768,7 +768,7 @@ namespace ShutterManagement.Business.Services
                         {
                             var materialUnit = materialService.GetAllQuerable()
                                 .Where(x => x.ProductType.ToString() == info[1] &&
-                                            x.MaterialName == info[2] &&
+                                            (x.MaterialName == info[2] || x.RawMaterialId.ToString() == info[2]) &&
                                             x.IsActive == true &&
                                             (x.TenantId == AppConstant.LoggedInTenantId ||
                                              x.TenantId.ToString() == AppConstant.LoggedInParentTenantId))
