@@ -1,5 +1,6 @@
 ﻿using Azure;
 using MailKit.Security;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using MimeKit;
@@ -34,6 +35,7 @@ public class EmailOAuthController : ControllerBase
     }
 
     [HttpGet("LoginOauth")]
+    [Authorize(Roles = "EmailConfigurationEdit")]
     public IActionResult StartGoogleAuth(string OauthType)
     {
        if(OauthType==EnumValue.GetEnumValue(EmailSendType.Google))
@@ -53,6 +55,7 @@ public class EmailOAuthController : ControllerBase
 
 
     [HttpGet("Callback")]
+    [Authorize(Roles = "EmailConfigurationEdit")]
     public async Task<IActionResult> OAuthCallback(string OauthType, string code)
     {
         if (OauthType == string.Empty && code == string.Empty)
