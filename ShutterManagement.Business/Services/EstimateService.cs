@@ -7,27 +7,13 @@ using ShutterManagement.Core.ViewModels;
 using ShutterManagement.Core;
 using ShutterManagement.DAL.Context;
 using ShutterManagement.Services;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using ShutterManagement.Core.Common;
-using static Azure.Core.HttpHeader;
-using Azure;
 using System.Data.Entity;
 using Microsoft.AspNetCore.Http;
-using Newtonsoft.Json.Linq;
 using System.Text.RegularExpressions;
-using System.Linq.Expressions;
 using NCalc;
 using Antlr.Runtime;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-using Stripe;
 using Microsoft.EntityFrameworkCore;
-using static Microsoft.AspNetCore.Hosting.Internal.HostingApplication;
-using System.ComponentModel;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace ShutterManagement.Business.Services
 {
@@ -145,10 +131,10 @@ namespace ShutterManagement.Business.Services
                 // Log the start of the operation
                 FileLogger.Log($"Start: Toggling Active/Inactive status for Estimate with ID: {EstimateId}");
 
-                var estimate = await GetAllQuerable()
+                var estimate = GetAllQuerable()
                     .Where(c => c.EstimateId == EstimateId
                     && c.TenantId == AppConstant.LoggedInTenantId && c.IsDelete == false)
-                    .FirstOrDefaultAsync();
+                    .FirstOrDefault();
 
                 if (estimate == null)
                 {
@@ -191,10 +177,10 @@ namespace ShutterManagement.Business.Services
                 // Log the start of the operation
                 FileLogger.Log($"Start: Deleting Estimate with ID: {EstimateId}");
 
-                var estimate = await GetAllQuerable()
+                var estimate = GetAllQuerable()
                     .Where(c => c.EstimateId == EstimateId
                     && c.TenantId == AppConstant.LoggedInTenantId && c.IsDelete == false)
-                    .FirstOrDefaultAsync();
+                    .FirstOrDefault();
 
                 if (estimate == null)
                 {
@@ -401,11 +387,20 @@ namespace ShutterManagement.Business.Services
             {
                 string formula = model.Expression ?? "";
                 var validate = CalculateExpression(formula, model);
-                if (validate.HasErrors())
-                {
-                    responseVm.Message = "There is some issue in Expression. " + validate.Error;
-                    return responseVm;
+                var parser = new Core.Common.Parser(validate.ParsedExpression.ToString());
+                var result = parser.ParseExpression();
+
+                if (!result.IsValid) { 
+                    responseVm.Message = ("Syntax Errors:");
+                    foreach (var error in result.Errors)
+                    responseVm.Message += "--"+ error;
+                    return responseVm; // Return early if there are syntax errors
                 }
+                //if (validate.HasErrors())
+                //{
+                //    responseVm.Message = "There is some issue in Expression. " + validate.Error;
+                //    return responseVm;
+                //}
                 var res = validate.Evaluate();
                 responseVm.IsSuccess = true;
                 responseVm.Message = "Expression is correct. You can add this expression now.";
@@ -794,11 +789,8 @@ namespace ShutterManagement.Business.Services
 
                 formula = formula?.Replace(placeholder, replacement);
             }
-
-            return new NCalc.Expression(formula);
+                return new NCalc.Expression(formula);
         }
-
-
 
         public async Task<IResponseVm<string>> Update_Estimate(UpdatetEstimate model)
         {
