@@ -248,7 +248,11 @@ namespace ShutterManagement.Business.Services
                     var IsComponentInProduct = await productService.AnyAsync(x => x.ComponentId == Id && x.IsActive == true && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
                     if (!IsComponentInProduct)
                     {
-                        if (IsComponentExists != null)
+                        responseVm.Message = "Component exists in Product";
+                        return responseVm;
+                    }
+                    
+                    if (IsComponentExists != null)
                         {
                             var IsMaterialInComponent = _componentMaterial.GetAllQuerable().Where
                             (x => x.ComponentId == Id && x.IsDelete == false
@@ -280,11 +284,7 @@ namespace ShutterManagement.Business.Services
                         {
                             responseVm.Message = $"{AppConstant.NoDataFound}";
                         }
-                    }
-                    else
-                    {
-                        responseVm.Message = "Component exists in Product";
-                    }
+                   
 
                 }
                 else

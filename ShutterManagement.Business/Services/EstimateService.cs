@@ -1288,14 +1288,14 @@ namespace ShutterManagement.Business.Services
         {
             try
             {
-                var windowProducts = await estimateWindowProductService.GetAllQuerable()
+                var windowProducts = estimateWindowProductService.GetAllQuerable()
                     .Where(x => x.EstimateId == estimate.EstimateId && x.IsDelete == false)
-                    .ToListAsync();
+                    .ToList();
 
                 var productIds = windowProducts.Select(x => x.EstimateWindowProductId).ToList();
                 var windowIds = windowProducts.Select(x => x.WindowId).Distinct().ToList();
 
-                var allOptions = await (
+                var allOptions = (
                     from estimateOption in dbContext.TblEstimateWindowProductOptions
                     join optionType in dbContext.TblOptionsTypes on estimateOption.OptionTypeid equals optionType.OptionTypeId
                     join option in dbContext.TblOptions on optionType.OptionId equals option.OptionId
@@ -1316,20 +1316,20 @@ namespace ShutterManagement.Business.Services
                             OptionTypeId = estimateOption.OptionTypeid.ToString(),
                             OptionTypeName = estimateOption.OptionName + " - " + estimateOption.OptionTypeName
                         }
-                    }).ToListAsync();
+                    }).ToList();
 
-                var windowDetails = await estimateWindowService.GetAllQuerable()
+                var windowDetails = estimateWindowService.GetAllQuerable()
                     .Where(x => x.EstimateId == estimate.EstimateId && x.IsDelete == false)
-                    .ToListAsync();
+                    .ToList();
 
-                var labelQtyMap = await windowService.GetAllQuerable()
+                var labelQtyMap = windowService.GetAllQuerable()
                     .Where(w => windowIds.Contains(w.WindowId) && w.IsDelete == false)
-                    .ToDictionaryAsync(w => w.WindowId);
+                    .ToDictionary(w => w.WindowId);
 
-                var componentFlags = await estimateWindowProductComponentService.GetAllQuerable()
+                var componentFlags = estimateWindowProductComponentService.GetAllQuerable()
                     .Where(x => x.EstimateId == estimate.EstimateId && x.IsDelete == false)
                     .Select(x => new { x.WindowId, x.ProductId })
-                    .ToListAsync();
+                    .ToList();
 
                 e.WindowProductId = windowProducts.Select(p => (Guid)p.WindowProductId).Distinct().ToArray();
 

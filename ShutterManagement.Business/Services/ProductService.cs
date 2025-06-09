@@ -206,10 +206,7 @@ namespace ShutterManagement.Business.Services
                                     && c.IsDelete == false)
                         .FirstOrDefault();
 
-                    bool isProductUsed =
-                  dbContext.TblEstimateWindowProducts.Any(p => p.ProductId == ProductId && p.IsDelete == false);
-
-
+                    bool isProductUsed = dbContext.TblEstimateWindowProducts.Any(p => p.ProductId == ProductId && p.IsDelete == false);
 
                     if (isProductUsed)
                     {
