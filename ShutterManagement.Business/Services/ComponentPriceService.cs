@@ -380,8 +380,8 @@ namespace ShutterManagement.Business.Services
 
             if (!string.IsNullOrEmpty(AppConstant.LoggedInParentTenantId))
             {
-                var manageProduct = await dbContext.TblManagePartnersProducts
-                    .FirstOrDefaultAsync(x => x.ProductId == product.ProductId && x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+                var manageProduct = dbContext.TblManagePartnersProducts
+                    .FirstOrDefault(x => x.ProductId == product.ProductId && x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
 
                 if (manageProduct == null)
                     return new List<OptionTaxVM>();
