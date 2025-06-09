@@ -26,5 +26,6 @@ namespace ShutterManagement.Business.Interfaces
         Task<IResponseVm<string>> ContactFromGHL(GHLContactTrigger contactData);
         Task<IResponseVm<string>> UpdateContactFromGHL(GHLContactTrigger contactData);
         Task<IResponseVm<string>> ContactSync();
+      //  Task<IResponseVm<string>> SyncContactandJobforPartner(string TenantId);
     }
 }

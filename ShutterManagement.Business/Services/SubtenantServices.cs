@@ -29,6 +29,7 @@ namespace ShutterManagement.Business.Services
         private readonly ClaimsProperty claimsProperty;
         private readonly ITenantBrandingService tenantBrandingService;
         private readonly INotificationService notification;
+        private readonly IGHLConfiguration gHLConfiguration;
         private readonly GoogleAuthService googleAuthService;
 
         public SubtenantServices(DataServices dataServices, IUserService userService
@@ -40,6 +41,7 @@ namespace ShutterManagement.Business.Services
             this.claimsProperty = claimsProperty;
             this.tenantBrandingService = tenantBrandingService;
             this.notification = notification;
+            this.gHLConfiguration = gHLConfiguration;
             this.googleAuthService = googleAuthService;
         }
 
@@ -127,12 +129,13 @@ namespace ShutterManagement.Business.Services
                         new SqlParameter("@UserPhoneNumber", SqlDbType.NVarChar) { SqlValue = model.UserPhoneNumber },
                         new SqlParameter("@Password", SqlDbType.NVarChar) { SqlValue = HashPassword },
                         new SqlParameter("@LoggedInUser", SqlDbType.UniqueIdentifier) { SqlValue = AppConstant.LoggedInUserID },
-
+                        new SqlParameter("@@IsGHLConfigSameAsTenant", SqlDbType.Bit) { SqlValue = model.IsGHLConfigSameAsTenant },
+                        new SqlParameter("@@GHLUserId", SqlDbType.NVarChar) { SqlValue = model.GHLUserId},
                         new SqlParameter("@Action", SqlDbType.NVarChar) { SqlValue = "Create" },
                     };
 
                 await dataServices.CallSP("sp_TenantCRUD", null, sqlParameters);
-             
+            
                 var AddedTenant = GetAllQuerable().Where(x => x.FirstName == model.FirstName && x.Code == model.Code).FirstOrDefault();
              
                 if (AddedTenant != null)
@@ -542,6 +545,7 @@ namespace ShutterManagement.Business.Services
             return responseVm;
 
         }
+
 
     }
 }
