@@ -45,7 +45,7 @@ public class EmailOAuthController : ControllerBase
         }
         else if (OauthType == EnumValue.GetEnumValue(EmailSendType.Microsoft365))
         {
-            var ResponseMS  = mS365Configuration.GetAuthorizationurl();
+            var ResponseMS  = mS365Configuration.GetAuthorizationurl().Result;
             return Ok(ResponseMS);
         }
         return Ok(new { message = "Invalid OAuth Type" });
@@ -69,40 +69,40 @@ public class EmailOAuthController : ControllerBase
         }
         else if (OauthType == EnumValue.GetEnumValue(EmailSendType.Microsoft365))
         {
-            var ResponseMS = mS365Configuration.ExchangeCodeForTokensAsync(code);
+            var ResponseMS = await mS365Configuration.ExchangeCodeForTokensAsync(code);
             return Ok(ResponseMS);
         }
         return Ok(new { message = "Invalid OAuth Type" });
     }
 
-    [HttpPost("send")]
-    public async Task<IActionResult> Send([FromBody] EmailRequest request)
-    {
-        var getAccessTokenFromDb = emailConfigurationService.GetAllQuerable().Where(x=>x.From==request.FromEmail && x.TenantId==AppConstant.LoggedInTenantId).FirstOrDefault();
-        if (getAccessTokenFromDb != null)
-        {
+    //[HttpPost("send")]
+    //public async Task<IActionResult> Send([FromBody] EmailRequest request)
+    //{
+    //    var getAccessTokenFromDb = emailConfigurationService.GetAllQuerable().Where(x=>x.From==request.FromEmail && x.TenantId==AppConstant.LoggedInTenantId).FirstOrDefault();
+    //    if (getAccessTokenFromDb != null)
+    //    {
 
-            if (getAccessTokenFromDb.AccessExpirationtime < DateTime.Now)
-            {
-                getAccessTokenFromDb.AccessToken = await _googleAuthService.GoogleRefreshAccessToken(getAccessTokenFromDb.RefreshToken);
-                getAccessTokenFromDb.AccessExpirationtime = DateTime.Now.AddHours(1);
-            }
-            var Request = new OAuthEmailRequest
-            {
-                FromEmail = request.FromEmail,
-                ToEmail = request.ToEmail,
-                Subject = request.Subject,
-                Body = request.Body,
-                UserEmail = request.FromEmail,
-                AccessToken = getAccessTokenFromDb.AccessToken
-            };
+    //        if (getAccessTokenFromDb.AccessExpirationtime < DateTime.Now)
+    //        {
+    //            getAccessTokenFromDb.AccessToken = await _googleAuthService.GoogleRefreshAccessToken(getAccessTokenFromDb.RefreshToken);
+    //            getAccessTokenFromDb.AccessExpirationtime = DateTime.Now.AddHours(1);
+    //        }
+    //        var Request = new OAuthEmailRequest
+    //        {
+    //            FromEmail = request.FromEmail,
+    //            ToEmail = request.ToEmail,
+    //            Subject = request.Subject,
+    //            Body = request.Body,
+    //            UserEmail = request.FromEmail,
+    //            AccessToken = getAccessTokenFromDb.AccessToken
+    //        };
 
-            await EmailHelper.SendEmailWithOAuth(Request);
-        }
-        else
-        {
-            return Ok(getAccessTokenFromDb);
-        }
-        return Ok(getAccessTokenFromDb);
-    }
+    //        await EmailHelper.SendEmailWithOAuth(Request);
+    //    }
+    //    else
+    //    {
+    //        return Ok(getAccessTokenFromDb);
+    //    }
+    //    return Ok(getAccessTokenFromDb);
+    //}
 }
