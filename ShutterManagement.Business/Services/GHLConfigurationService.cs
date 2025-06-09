@@ -657,6 +657,27 @@ namespace ShutterManagement.Business.Services
 
         //}
 
+        public async Task<IResponseVm<GetGhlConfigforPartner>> GetGHlConfigforPartner(string TenantId)
+        {
+            IResponseVm<GetGhlConfigforPartner> response = new ResponseVm<GetGhlConfigforPartner>();
+            try
+            {
+                var IsSubtenant = dbContext.TblTenants.Where(x => x.TenantId.ToString() == TenantId
+                && x.ParentTenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false)
+                    .Select(x => new GetGhlConfigforPartner
+                    {
+                        IsGHLConfigSameasTenant = x.IsGhlconfigSameAsTenant,
+                        GHLUserId = x.GhluserId,
+                    }).FirstOrDefault();
+                response.IsSuccess = true;
+                response.Data = IsSubtenant;
+            }
+            catch(Exception ex)
+            {
+                response.Message = ex.Message;
+            }
+            return response;
+        }
         public async Task<IResponseVm<string>> SyncContactandJobforPartner(string TenantId)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();

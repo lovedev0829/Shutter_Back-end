@@ -32,5 +32,7 @@ namespace ShutterManagement.Business.Interfaces
         Task<IResponseVm<string>> DeleteGHLConfiguration(Guid? configurationid);
         Task<IResponseVm<string>> UpdateGHlConfigforPartner(CreateGHLConfigforPartner model);
         Task<IResponseVm<string>> SyncContactandJobforPartner(string TenantId);
+
+        Task<IResponseVm<GetGhlConfigforPartner>> GetGHlConfigforPartner(string TenantId);
     }
 }

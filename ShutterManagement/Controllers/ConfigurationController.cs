@@ -132,6 +132,15 @@ namespace ShutterManagement.Controllers
             return Ok(res);
         }
 
+        [HttpPost]
+        [Route("GetGhlConfigforPartner")]
+        //[Authorize(Roles = "Tenan")]
+        public async Task<IActionResult> GetGhlConfigforPartner(string TenantId)
+        {
+            var res = await gHLConfiguration.GetGHlConfigforPartner(TenantId);
+            return Ok(res);
+        }
+
 
 
 

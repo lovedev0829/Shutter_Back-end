@@ -14,4 +14,10 @@ namespace ShutterManagement.Core.ViewModels.Request
 
         public string? PartnerId { get; set; }
     }
+
+    public class GetGhlConfigforPartner
+    {
+        public string? GHLUserId { get; set; }
+        public bool? IsGHLConfigSameasTenant { get; set; }
+    }
 }
