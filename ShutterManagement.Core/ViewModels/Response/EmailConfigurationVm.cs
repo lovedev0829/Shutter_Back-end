@@ -30,6 +30,11 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? AccessToken { get; set; }
         public Guid? TenantId { get; set; }
         public bool? IsActive { get; set; }
+        public bool? IsConnected { get; set; }
+
+        public DateTime? RefreshExpirationtime { get; set; }
+
+        public DateTime? AccessExpirationtime { get; set; }
 
 
     }

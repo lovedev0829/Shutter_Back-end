@@ -38,9 +38,16 @@ namespace ShutterManagement.Business.Services
                     .FirstOrDefault(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false && x.IsActive == true);
 
                 string emailTypeName = string.Empty;
+               
+
 
                 if (emailConfig != null)
                 {
+                    bool? isConnected = false;
+                    if (emailConfig.RefreshExpirationtime.HasValue)
+                    {
+                        isConnected = emailConfig.RefreshExpirationtime.Value > DateTime.Now;
+                    }
                     emailTypeName = dbContext.TblEmailTypes.Where(x => x.Id == emailConfig.EmailType).Select(x => x.Name).FirstOrDefault() ?? string.Empty;
 
                     var configVm = new EmailConfigurationVm
@@ -55,6 +62,9 @@ namespace ShutterManagement.Business.Services
                         EmailTypeName = emailTypeName ?? "",
                         EmailType = emailConfig.EmailType ?? null,
                         From = emailConfig.From ?? "",
+                        AccessExpirationtime = emailConfig.AccessExpirationtime ?? null,
+                        RefreshExpirationtime = emailConfig.RefreshExpirationtime ?? null,
+                        IsConnected = isConnected ?? false,
                         TenantId = emailConfig.TenantId ?? null,
                         IsActive = emailConfig.IsActive ?? false,
                     };

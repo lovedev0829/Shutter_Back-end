@@ -683,9 +683,15 @@ namespace ShutterManagement.Business.Services
                     {
                         if (GetIsTaxExemptByWindowId(item.WindowId))
                         {
-                            x.MunicipalityTaxAmount = (x.OptionPrice * x.MunicipalityTax / 100);
-                            x.StateTaxAmount = (x.OptionPrice * x.StateTax / 100);
-                            x.CityTaxAmount = (x.OptionPrice * x.CityTax / 100);
+                            decimal? TenantOptionMarkupPriceWithOriginalPrice = 0.0m;
+                            if (!isSubtenant)
+                            {
+                                TenantOptionMarkupPriceWithOriginalPrice = (x.OptionPrice + x.OptionMarkup) ?? 0.0m;
+                            }
+
+                            x.MunicipalityTaxAmount = ((x.OptionPrice + TenantOptionMarkupPriceWithOriginalPrice ?? 0.0m) * x.MunicipalityTax / 100);
+                            x.StateTaxAmount = ((x.OptionPrice + TenantOptionMarkupPriceWithOriginalPrice ?? 0.0m) * x.StateTax / 100);
+                            x.CityTaxAmount = ((x.OptionPrice + TenantOptionMarkupPriceWithOriginalPrice ?? 0.0m) * x.CityTax / 100);
                             x.TotalTaxAmount = x.MunicipalityTaxAmount + x.StateTaxAmount + x.CityTaxAmount;
                         }
                         else
