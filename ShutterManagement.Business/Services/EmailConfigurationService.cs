@@ -62,9 +62,9 @@ namespace ShutterManagement.Business.Services
                         EmailTypeName = emailTypeName ?? "",
                         EmailType = emailConfig.EmailType ?? null,
                         From = emailConfig.From ?? "",
-                        AccessExpirationtime = emailConfig.AccessExpirationtime ?? null,
-                        RefreshExpirationtime = emailConfig.RefreshExpirationtime ?? null,
-                        IsConnected = isConnected ?? false,
+                        AccessExpirationtime = (emailTypeName != EnumValue.GetEnumValue(EmailSendType.SMTP)) ? emailConfig.AccessExpirationtime ?? null : null,
+                        RefreshExpirationtime = (emailTypeName != EnumValue.GetEnumValue(EmailSendType.SMTP)) ? emailConfig.RefreshExpirationtime ?? null : null,
+                        IsConnected = (emailTypeName == EnumValue.GetEnumValue(EmailSendType.SMTP)) ? isConnected : false,
                         TenantId = emailConfig.TenantId ?? null,
                         IsActive = emailConfig.IsActive ?? false,
                     };
@@ -105,7 +105,10 @@ namespace ShutterManagement.Business.Services
                     existingConfig.ReplyTo = emailConfigurationVm.ReplyTo;
                     existingConfig.EmailType = emailConfigurationVm.EmailType;
                     existingConfig.From = emailConfigurationVm.From;
-                    existingConfig.AccessToken = emailConfigurationVm.AccessToken;
+                    existingConfig.AccessToken = null;
+                    existingConfig.RefreshToken = null;
+                    existingConfig.AccessExpirationtime = null;
+                    existingConfig.RefreshExpirationtime = null;
                     existingConfig.ModifiedBy = AppConstant.LoggedInUserID;
                     existingConfig.ModifiedAt = DateTime.Now;
 
