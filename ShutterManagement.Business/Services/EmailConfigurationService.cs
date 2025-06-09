@@ -38,9 +38,16 @@ namespace ShutterManagement.Business.Services
                     .FirstOrDefault(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false && x.IsActive == true);
 
                 string emailTypeName = string.Empty;
+               
+
 
                 if (emailConfig != null)
                 {
+                    bool? isConnected = false;
+                    if (emailConfig.RefreshExpirationtime.HasValue)
+                    {
+                        isConnected = emailConfig.RefreshExpirationtime.Value > DateTime.Now;
+                    }
                     emailTypeName = dbContext.TblEmailTypes.Where(x => x.Id == emailConfig.EmailType).Select(x => x.Name).FirstOrDefault() ?? string.Empty;
 
                     var configVm = new EmailConfigurationVm
@@ -55,6 +62,9 @@ namespace ShutterManagement.Business.Services
                         EmailTypeName = emailTypeName ?? "",
                         EmailType = emailConfig.EmailType ?? null,
                         From = emailConfig.From ?? "",
+                        AccessExpirationtime = (emailTypeName != EnumValue.GetEnumValue(EmailSendType.SMTP)) ? emailConfig.AccessExpirationtime ?? null : null,
+                        RefreshExpirationtime = (emailTypeName != EnumValue.GetEnumValue(EmailSendType.SMTP)) ? emailConfig.RefreshExpirationtime ?? null : null,
+                        IsConnected = (emailTypeName == EnumValue.GetEnumValue(EmailSendType.SMTP)) ? true : isConnected,
                         TenantId = emailConfig.TenantId ?? null,
                         IsActive = emailConfig.IsActive ?? false,
                     };
@@ -95,7 +105,10 @@ namespace ShutterManagement.Business.Services
                     existingConfig.ReplyTo = emailConfigurationVm.ReplyTo;
                     existingConfig.EmailType = emailConfigurationVm.EmailType;
                     existingConfig.From = emailConfigurationVm.From;
-                    existingConfig.AccessToken = emailConfigurationVm.AccessToken;
+                    existingConfig.AccessToken = null;
+                    existingConfig.RefreshToken = null;
+                    existingConfig.AccessExpirationtime = null;
+                    existingConfig.RefreshExpirationtime = null;
                     existingConfig.ModifiedBy = AppConstant.LoggedInUserID;
                     existingConfig.ModifiedAt = DateTime.Now;
 

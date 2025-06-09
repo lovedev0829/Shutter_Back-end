@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core.Common;
+using ShutterManagement.Core.ViewModels;
 using ShutterManagement.Core.ViewModels.Request;
 
 namespace ShutterManagement.Controllers
@@ -15,7 +16,8 @@ namespace ShutterManagement.Controllers
         private readonly IStripeConfiguration stripeConfiguration;
         private readonly IEmailConfigurationService emailConfigurationService;
 
-        public ConfigurationController(IGHLConfiguration gHLConfiguration,IStripeConfiguration stripeConfiguration ,IEmailConfigurationService emailConfigurationService) {
+        public ConfigurationController(IGHLConfiguration gHLConfiguration,IStripeConfiguration stripeConfiguration ,
+            IEmailConfigurationService emailConfigurationService) {
             this.gHLConfiguration = gHLConfiguration;
             this.stripeConfiguration = stripeConfiguration;
             this.emailConfigurationService = emailConfigurationService;
@@ -110,6 +112,35 @@ namespace ShutterManagement.Controllers
             var res = await emailConfigurationService.GetAll_EmailTypeConfigurations();
             return Ok(res);
         }
+
+      
+        [HttpPost]
+        [Route("UpdateGHlConfigforPartner")]
+        //[Authorize(Roles = "Tenan")]
+        public async Task<IActionResult> UpdateGHlConfigforPartner(CreateGHLConfigforPartner model)
+        {
+            var res = await gHLConfiguration.UpdateGHlConfigforPartner(model);
+            return Ok(res);
+        }
+
+        [HttpPost]
+        [Route("SyncContactandJobforPartner")]
+        //[Authorize(Roles = "Tenan")]
+        public async Task<IActionResult> SyncContactandJobforPartner(string TenantId)
+        {
+            var res = await gHLConfiguration.SyncContactandJobforPartner(TenantId);
+            return Ok(res);
+        }
+
+        [HttpPost]
+        [Route("GetGhlConfigforPartner")]
+        //[Authorize(Roles = "Tenan")]
+        public async Task<IActionResult> GetGhlConfigforPartner(string TenantId)
+        {
+            var res = await gHLConfiguration.GetGHlConfigforPartner(TenantId);
+            return Ok(res);
+        }
+
 
 
 

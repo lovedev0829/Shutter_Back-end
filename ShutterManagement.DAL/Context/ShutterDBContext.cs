@@ -1084,6 +1084,7 @@ public partial class ShutterDBContext : DbContext
                 .HasMaxLength(100)
                 .IsUnicode(false)
                 .HasColumnName("GHL_StageName");
+            entity.Property(e => e.GhluserId).HasColumnName("GHLUserId");
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
             entity.Property(e => e.JobName).HasMaxLength(250);

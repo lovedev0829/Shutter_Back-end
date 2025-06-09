@@ -51,6 +51,8 @@ public partial class TblJob
 
     public DateTime? LastAsync { get; set; }
 
+    public string? GhluserId { get; set; }
+
     public virtual TblAddress? Address { get; set; }
 
     public virtual TblContact? Contact { get; set; }

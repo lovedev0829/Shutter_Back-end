@@ -199,5 +199,6 @@ namespace ShutterManagement.Controllers
             return Ok(result);
 
         }
+
     }
 }

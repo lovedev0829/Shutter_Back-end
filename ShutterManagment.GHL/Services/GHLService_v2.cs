@@ -2,6 +2,7 @@
 using Azure.Core;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using MimeKit;
 using Newtonsoft.Json;
 using Org.BouncyCastle.Asn1.X509.Qualified;
 using Org.BouncyCastle.Crypto;
@@ -14,6 +15,8 @@ using ShutterManagement.Core.ViewModels.Response;
 using ShutterManagement.DAL.Context;
 using ShutterManagment.GHL.ViewModel.Request;
 using ShutterManagment.GHL.ViewModel.Response;
+using System;
+
 //using System.Globalization;
 using System.Net;
 using System.Net.Http;
@@ -1168,6 +1171,61 @@ namespace ShutterManagement.GHL.Services
             [JsonProperty("id")]
             public string ContactId { get; set; }
         }
+
+        public async Task<IResponseVm<GHLJobAssignedtoPartner>> GetOpportunityforPartner(string GHLUserId)
+        {
+            var responseVm = new ResponseVm<GHLJobAssignedtoPartner>();
+
+            try
+            {
+                FileLogger.Log("Fetching Opportunities...");
+
+                var PipelineId = dBContext.TblGhlStages.Where(x => x.GhlPipelineName.ToLower() == AppConstant.GHL_PipelineId.ToLower() && x.IsActive == true).
+                    Select(x => x.GhlPipelineId).FirstOrDefault();
+                var requestUrl = $"{AppConstant.GHL_BaseAddress}/opportunities/search?location_id={AppConstant.GHL_Locationd}&pipeline_id={PipelineId}&assigned_to={GHLUserId}";
+
+                using var requestMessage = new HttpRequestMessage(HttpMethod.Get, requestUrl);
+
+                // Set the necessary headers (Authorization and Version)
+                requestMessage.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
+                requestMessage.Headers.Add("Version", AppConstant.GHL_Version);
+
+                // Send the request using the _httpClient
+                HttpResponseMessage response = await _httpClient.SendAsync(requestMessage);
+
+                // Ensure the status code indicates success (200-299 range)
+                response.EnsureSuccessStatusCode();
+
+                // Read and parse the response content as a string
+                var json = await response.Content.ReadAsStringAsync();
+
+                // Deserialize the response to the GetGHLAppointment object
+                var result = System.Text.Json.JsonSerializer.Deserialize<GHLJobAssignedtoPartner>(json, new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                });
+
+                responseVm.IsSuccess = true;
+                responseVm.Data = result;
+            }
+            catch (HttpRequestException httpEx)
+            {
+                FileLogger.Log($"HTTP Request error: {httpEx.Message}");
+                responseVm.IsSuccess = false;
+                responseVm.Message = $"HTTP error: {httpEx.Message}";
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Log($"Unexpected error: {ex.Message}");
+                responseVm.IsSuccess = false;
+                responseVm.Message = $"Unexpected error: {ex.Message}";
+            }
+
+            return responseVm;
+        }
+
+
 
 
     }

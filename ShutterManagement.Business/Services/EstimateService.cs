@@ -7,27 +7,13 @@ using ShutterManagement.Core.ViewModels;
 using ShutterManagement.Core;
 using ShutterManagement.DAL.Context;
 using ShutterManagement.Services;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using ShutterManagement.Core.Common;
-using static Azure.Core.HttpHeader;
-using Azure;
 using System.Data.Entity;
 using Microsoft.AspNetCore.Http;
-using Newtonsoft.Json.Linq;
 using System.Text.RegularExpressions;
-using System.Linq.Expressions;
 using NCalc;
 using Antlr.Runtime;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-using Stripe;
 using Microsoft.EntityFrameworkCore;
-using static Microsoft.AspNetCore.Hosting.Internal.HostingApplication;
-using System.ComponentModel;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace ShutterManagement.Business.Services
 {
@@ -145,10 +131,10 @@ namespace ShutterManagement.Business.Services
                 // Log the start of the operation
                 FileLogger.Log($"Start: Toggling Active/Inactive status for Estimate with ID: {EstimateId}");
 
-                var estimate = await GetAllQuerable()
+                var estimate = GetAllQuerable()
                     .Where(c => c.EstimateId == EstimateId
                     && c.TenantId == AppConstant.LoggedInTenantId && c.IsDelete == false)
-                    .FirstOrDefaultAsync();
+                    .FirstOrDefault();
 
                 if (estimate == null)
                 {
@@ -191,10 +177,10 @@ namespace ShutterManagement.Business.Services
                 // Log the start of the operation
                 FileLogger.Log($"Start: Deleting Estimate with ID: {EstimateId}");
 
-                var estimate = await GetAllQuerable()
+                var estimate = GetAllQuerable()
                     .Where(c => c.EstimateId == EstimateId
                     && c.TenantId == AppConstant.LoggedInTenantId && c.IsDelete == false)
-                    .FirstOrDefaultAsync();
+                    .FirstOrDefault();
 
                 if (estimate == null)
                 {
@@ -400,7 +386,17 @@ namespace ShutterManagement.Business.Services
             try
             {
                 string formula = model.Expression ?? "";
+                
                 var validate = CalculateExpression(formula, model);
+                //var parser = new Core.Common.Parser(model.CalculateExpression ?? "");
+                //var result = parser.ParseExpression();
+
+                //if (!result.IsValid) { 
+                //    responseVm.Message = ("Syntax Errors:");
+                //    foreach (var error in result.Errors)
+                //    responseVm.Message += "--"+ error;
+                //    return responseVm; // Return early if there are syntax errors
+                //}
                 if (validate.HasErrors())
                 {
                     responseVm.Message = "There is some issue in Expression. " + validate.Error;
@@ -683,9 +679,15 @@ namespace ShutterManagement.Business.Services
                     {
                         if (GetIsTaxExemptByWindowId(item.WindowId))
                         {
-                            x.MunicipalityTaxAmount = (x.OptionPrice * x.MunicipalityTax / 100);
-                            x.StateTaxAmount = (x.OptionPrice * x.StateTax / 100);
-                            x.CityTaxAmount = (x.OptionPrice * x.CityTax / 100);
+                            decimal? TenantOptionMarkupPriceWithOriginalPrice = 0.0m;
+                            if (!isSubtenant)
+                            {
+                                TenantOptionMarkupPriceWithOriginalPrice = (x.OptionPrice + x.OptionMarkup) ?? 0.0m;
+                            }
+
+                            x.MunicipalityTaxAmount = ((x.OptionPrice + TenantOptionMarkupPriceWithOriginalPrice ?? 0.0m) * x.MunicipalityTax / 100);
+                            x.StateTaxAmount = ((x.OptionPrice + TenantOptionMarkupPriceWithOriginalPrice ?? 0.0m) * x.StateTax / 100);
+                            x.CityTaxAmount = ((x.OptionPrice + TenantOptionMarkupPriceWithOriginalPrice ?? 0.0m) * x.CityTax / 100);
                             x.TotalTaxAmount = x.MunicipalityTaxAmount + x.StateTaxAmount + x.CityTaxAmount;
                         }
                         else
@@ -788,11 +790,9 @@ namespace ShutterManagement.Business.Services
 
                 formula = formula?.Replace(placeholder, replacement);
             }
-
-            return new NCalc.Expression(formula);
+            //values.CalculateExpression = formula;
+                return new NCalc.Expression(formula);
         }
-
-
 
         public async Task<IResponseVm<string>> Update_Estimate(UpdatetEstimate model)
         {

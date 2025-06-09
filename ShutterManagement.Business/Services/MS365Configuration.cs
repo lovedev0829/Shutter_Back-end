@@ -90,7 +90,19 @@ namespace ShutterManagement.Business.Services
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    responseVm.Message = $"Token exchange failed: {json}";
+                   
+                    try
+                    {
+                        var errorResponse = JsonConvert.DeserializeObject<dynamic>(json);
+                        string errorDescription = errorResponse?.error_description != null ? (string)errorResponse.error_description : "Unknown error occurred.";
+
+                        responseVm.Message = $"Token exchange failed: {errorDescription}";
+                    }
+                    catch
+                    {
+                        responseVm.Message = $"Token exchange failed: {json}";
+                    }
+
                     return responseVm;
                 }
 

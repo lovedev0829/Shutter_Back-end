@@ -124,7 +124,26 @@ namespace ShutterManagement.Business.Services
                 using var client = new HttpClient();
                 var content = new FormUrlEncodedContent(values);
                 var response = await client.PostAsync("https://oauth2.googleapis.com/token", content);
+
                 var result = await response.Content.ReadAsStringAsync();
+
+                if (!response.IsSuccessStatusCode)
+                {
+
+                    try
+                    {
+                        var errorResponse = JsonConvert.DeserializeObject<dynamic>(result);
+                        string errorDescription = errorResponse?.error_description != null ? (string)errorResponse.error_description : "Unknown error occurred.";
+
+                        responseVm.Message = $"Token exchange failed: {errorDescription}";
+                    }
+                    catch
+                    {
+                        responseVm.Message = $"Token exchange failed: {result}";
+                    }
+
+                    return responseVm;
+                }
 
                 var tokenResponse = JsonConvert.DeserializeObject<GoogleTokenResponse>(result);
 

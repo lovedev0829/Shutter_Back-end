@@ -77,23 +77,23 @@ namespace ShutterManagment.GHL.ViewModel.Response
 
     public class User
     {
-        public string id { get; set; }
-        public string name { get; set; }
-        public string firstName { get; set; }
-        public string lastName { get; set; }
-        public string email { get; set; }
+        public string? id { get; set; }
+        public string? name { get; set; }
+        public string? firstName { get; set; }
+        public string? lastName { get; set; }
+        public string? email { get; set; }
         // Add these fields for calendar info
         public string? CalendarId { get; set; }
         public string? CalendarName { get; set; }
-        public Permissions permissions { get; set; }
-        public Roles roles { get; set; }
-        public List<string> scopes { get; set; }
-        public List<string> scopesAssignedToOnly { get; set; }
-        public LcPhone lcPhone { get; set; }
-        public bool deleted { get; set; }
-        public string membershipContactId { get; set; }
-        public string freshdeskContactId { get; set; }
-        public List<Calendar> Calendars { get; set; } // <-- Add this
+        public Permissions? permissions { get; set; }
+        public Roles? roles { get; set; }
+        public List<string>? scopes { get; set; }
+        public List<string>? scopesAssignedToOnly { get; set; }
+        public LcPhone? lcPhone { get; set; }
+        public bool? deleted { get; set; }
+        public string? membershipContactId { get; set; }
+        public string? freshdeskContactId { get; set; }
+        public List<Calendar>? Calendars { get; set; } // <-- Add this
 
         
     }
