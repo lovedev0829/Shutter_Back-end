@@ -64,7 +64,7 @@ namespace ShutterManagement.Business.Services
                         From = emailConfig.From ?? "",
                         AccessExpirationtime = (emailTypeName != EnumValue.GetEnumValue(EmailSendType.SMTP)) ? emailConfig.AccessExpirationtime ?? null : null,
                         RefreshExpirationtime = (emailTypeName != EnumValue.GetEnumValue(EmailSendType.SMTP)) ? emailConfig.RefreshExpirationtime ?? null : null,
-                        IsConnected = (emailTypeName == EnumValue.GetEnumValue(EmailSendType.SMTP)) ? isConnected : false,
+                        IsConnected = (emailTypeName == EnumValue.GetEnumValue(EmailSendType.SMTP)) ? true : isConnected,
                         TenantId = emailConfig.TenantId ?? null,
                         IsActive = emailConfig.IsActive ?? false,
                     };
