@@ -26,6 +26,7 @@ namespace ShutterManagement.Core.SPModel.SP_Responses
         public Guid? TenantId { get; set; }
         public string? ParentTenantId { get; set; }
         public bool? IsTenant { get; set; }
+        public bool? IsGHLConfigSameAsTenant { get; set; }
 
     }
 }

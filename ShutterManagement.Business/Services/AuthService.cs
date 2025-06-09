@@ -86,6 +86,7 @@ namespace ShutterManagement.Services
                     PrimaryColor = reader.GetString(reader.GetOrdinal("PrimaryColor")),
                     SecondaryColor = reader.GetString(reader.GetOrdinal("SecondaryColor")),
                     CompanyName = reader.GetString(reader.GetOrdinal("CompanyName")),
+                    IsGHLConfigSameAsTenant = reader.GetBoolean(reader.GetOrdinal("IsGHLConfigSameAsTenant"))
                 };
             },
              new SqlParameter("@Username", SqlDbType.NVarChar, 100) { SqlValue = user.Username },
@@ -161,6 +162,10 @@ namespace ShutterManagement.Services
                         Url = x.Url
                     })
                     .DistinctBy(x=>x.RoleName).ToArray();
+             
+                   bool IsGHLConfigSameAsTenant = (bool)UserDetails[0].IsGHLConfigSameAsTenant;
+                
+                responseVm.Data.IsGHLConfigSameAsTenant = IsGHLConfigSameAsTenant;
                 responseVm.Data.Token = TokenValue;
                 responseVm.Data.IsTenant = IsTenant;
                 responseVm.IsSuccess = true;

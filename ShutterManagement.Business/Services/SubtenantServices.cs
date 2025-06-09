@@ -129,8 +129,6 @@ namespace ShutterManagement.Business.Services
                         new SqlParameter("@UserPhoneNumber", SqlDbType.NVarChar) { SqlValue = model.UserPhoneNumber },
                         new SqlParameter("@Password", SqlDbType.NVarChar) { SqlValue = HashPassword },
                         new SqlParameter("@LoggedInUser", SqlDbType.UniqueIdentifier) { SqlValue = AppConstant.LoggedInUserID },
-                        new SqlParameter("@@IsGHLConfigSameAsTenant", SqlDbType.Bit) { SqlValue = model.IsGHLConfigSameAsTenant },
-                        new SqlParameter("@@GHLUserId", SqlDbType.NVarChar) { SqlValue = model.GHLUserId},
                         new SqlParameter("@Action", SqlDbType.NVarChar) { SqlValue = "Create" },
                     };
 
