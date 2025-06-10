@@ -82,7 +82,7 @@ namespace ShutterManagement.Business.Services
 
                 using var client = new HttpClient();
                 var response = await client.PostAsync(
-                    $"https://login.microsoftonline.com/{AppConstant.Micorsoft365_tenantId}/oauth2/v2.0/token",
+                    $"https://login.microsoftonline.com/Common/oauth2/v2.0/token",
                     new FormUrlEncodedContent(tokenRequest)
                 );
 
