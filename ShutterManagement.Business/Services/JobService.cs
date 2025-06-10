@@ -770,7 +770,7 @@ namespace ShutterManagement.Business.Services
                 var TenantId = Guid.Empty;
                 var IsTenantValid = false;
                 TblGhlStage stage = new TblGhlStage();
-                Guid? jobStatus = Guid.Empty;
+                Guid jobStatus = Guid.Empty;
                 if (model.locationId != null)
                 {
                     //await gHLConfiguration.GetGHLConfiguration(model.locationId);
@@ -781,7 +781,7 @@ namespace ShutterManagement.Business.Services
                         IsTenantValid = true;
                         
                         stage.GhlStageName = model.GHL_StageName;
-                        jobStatus = Guid.Parse(model.GHL_jobstatus);
+                        Guid.TryParse(model.GHL_jobstatus,out jobStatus);
                         IsAddressExist = true;
                         //else
                         //{
@@ -802,7 +802,7 @@ namespace ShutterManagement.Business.Services
                     var JobStatusResponse = await statusAndStageMapping.GetJobStatusByName(EnumValue.GetEnumValue(JobStatus.New));
                     if(JobStatusResponse.IsSuccess)
                     {
-                        jobStatus = JobStatusResponse.Data.JobStatusId;
+                        jobStatus = JobStatusResponse.Data.JobStatusId ?? Guid.Empty;
                     }
                 }
                     if (!IsTenantValid)
@@ -843,7 +843,7 @@ namespace ShutterManagement.Business.Services
                         JobType = model.JobType,
                         AssignedPersonnel = model.AssignedPersonnel ?? Guid.Empty, 
                         ScheduledDate = model.ScheduledDate,
-                        JobStatus = jobStatus,
+                        JobStatus = jobStatus != Guid.Empty ? jobStatus : null,
                         Notes = model.Notes ?? string.Empty,
                         AttachmentAny = arrayString,
                         JobUniqueId = generateUnique,
@@ -1531,8 +1531,8 @@ namespace ShutterManagement.Business.Services
                 }
                 if(opportunitydata.Users != null)
                 {
-                 GHLUserId = dbContext.TblGhlUsers.Where(x => x.GhlEmail == opportunitydata.Users.email && x.TenantId
-                     == AppConstant.LoggedInTenantId && x.IsDelete == false && x.IsActive == true).Select(x=> x.GhlUserId).FirstOrDefault();
+                 GHLUserId = (dbContext.TblGhlUsers.Where(x => x.GhlEmail == opportunitydata.Users.email && x.TenantId
+                     == AppConstant.LoggedInTenantId && x.IsDelete == false && x.IsActive == true).Select(x=> x.GhlUserId).FirstOrDefault()) ?? string.Empty;
                 }
                 Guid jobtype = Guid.Parse("34623376-9CE3-4C9B-A538-2D3129B1A6B2");
                     // Get Stage ID
@@ -1555,7 +1555,7 @@ namespace ShutterManagement.Business.Services
                     JobType = jobtype,
                     AssignedPersonnel = Guid.Empty,
                     GhlOpportunityId = opportunitydata.id,
-                    GHL_StageId = stageId == "" ? Guid.Empty : Guid.Parse(stageId) ,
+                    GHL_StageId = stageId == "" ? null : Guid.Parse(stageId) ,
                     GHL_StageName = opportunitydata.pipleline_stage,
                     locationId = opportunitydata.location.id,
                     GHL_ContactId = opportunitydata.contact_id,
