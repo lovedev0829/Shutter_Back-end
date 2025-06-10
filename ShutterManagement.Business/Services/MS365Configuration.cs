@@ -15,6 +15,7 @@ using MailKit.Security;
 using MimeKit;
 using MailKit.Security;
 using Microsoft.AspNetCore.Http;
+using ShutterManagement.Core.Common;
 
 namespace ShutterManagement.Business.Services
 {
@@ -107,16 +108,19 @@ namespace ShutterManagement.Business.Services
                 }
 
                 var tokenResult = JsonConvert.DeserializeObject<TokenResponse>(json);
+                FileLogger.Log($"TokenResposnse after authentication of MS365 {tokenResult}");
                 var config = (await emailConfigurationService.GetAll()).
                     Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false)
                     .FirstOrDefault();
+                FileLogger.Log($"Configuration of Email {config}");
                 if (config != null)
                 {
                     config.AccessToken = tokenResult.AccessToken;
                     config.RefreshToken = tokenResult.RefreshToken;
                     config.AccessExpirationtime = DateTime.Now.AddHours(1);
                     config.RefreshExpirationtime = DateTime.Now.AddHours(1);
-                    await emailConfigurationService.Update(config);
+                    var res = await emailConfigurationService.Update(config);
+                    FileLogger.Log($"Configuration added in Database {res}");
                     responseVm.IsSuccess = true;
                     responseVm.Message = "Microsoft 365 Email Configuration done Successfully.";
                 }
