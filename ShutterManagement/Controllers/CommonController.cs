@@ -1003,41 +1003,13 @@ namespace ShutterManagement.Controllers
               
         }
 
-        [HttpGet]
-      //  [AllowAnonymous]
-        [Route("MSLogin")]
-        public async Task<IActionResult> MS_Login()
-        {
-            var authUrl = await mS365Configuration.GetAuthorizationurl();
-            return Ok(new { authorizationUrl = authUrl });
-        }
 
-        private string ExtractCodeFromUrl(string url)
-        {
-            var uri = new Uri(url);
-            var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
-            return query["code"];
-        }
-
-        [HttpGet]
-        [AllowAnonymous]
-        [Route("ExchangeCodeForTokensAsync")]
-        public async Task<IActionResult> ExchangeCodeForTokensAsync([FromQuery] string code)
-        {
-            if (string.IsNullOrEmpty(code))
-                return BadRequest("Missing authorization code.");
-
-            var tokens = await mS365Configuration.ExchangeCodeForTokensAsync(code);
-            return Ok(tokens);
-        }
-
-
-        [HttpPost("SendMailWithAttachment")]
-        public async Task<IActionResult> SendMailWithAttachment([FromForm] EmailMessageModel model)
-        {
-            var result = await mS365Configuration.SendEmail(model);
-            return Ok(result);
-        }
+        //[HttpPost("SendMailWithAttachment")]
+        //public async Task<IActionResult> SendMailWithAttachment([FromForm] EmailMessageModel model)
+        //{
+        //    var result = await mS365Configuration.SendEmail(model);
+        //    return Ok(result);
+        //}
 
     }
 }

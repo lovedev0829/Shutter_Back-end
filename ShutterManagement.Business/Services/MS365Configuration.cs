@@ -107,7 +107,7 @@ namespace ShutterManagement.Business.Services
                 }
 
                 var tokenResult = JsonConvert.DeserializeObject<TokenResponse>(json);
-                var config = emailConfigurationService.GetAllQuerable().
+                var config = (await emailConfigurationService.GetAll()).
                     Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false)
                     .FirstOrDefault();
                 if (config != null)
