@@ -1525,7 +1525,7 @@ namespace ShutterManagement.Business.Services
                 var contact1 = new TblContact();
                 if (opportunitydata != null)
                 {
-                    contact1 = contact.GetAllQuerable().Where(x => x.GhlcontactId == opportunitydata.contact_id && x.IsDelete == false)
+                    contact1 = contact.GetAllQuerable().Where(x => x.GhlcontactId == opportunitydata.contact_id && x.IsDelete == false && x.IsActive == true)
                          .FirstOrDefault();
                    //     addressId = (Guid)contact1.PrimaryAddress;
                 }
@@ -1535,9 +1535,19 @@ namespace ShutterManagement.Business.Services
                      == AppConstant.LoggedInTenantId && x.IsDelete == false && x.IsActive == true).Select(x=> x.GhlUserId).FirstOrDefault();
                 }
                 Guid jobtype = Guid.Parse("34623376-9CE3-4C9B-A538-2D3129B1A6B2");
-                var stageId = dbContext.TblGhlStages.Where(x => x.GhlStageName.ToLower() == opportunitydata.pipleline_stage.ToLower()).
-                    Select(x => x.GhlStageId).FirstOrDefault();
-                var jobstatus = dbContext.MstJobStatuses.Where(x => x.JobStatusName.ToLower() == opportunitydata.status.ToLower()).Select(x=> x.JobStatusId).FirstOrDefault();
+                    // Get Stage ID
+                    var stageId = (dbContext.TblGhlStages
+                        .Where(x => x.GhlStageName.ToLower() == opportunitydata.pipleline_stage.ToLower())
+                        .Select(x => x.GhlStageId ?? "")
+                        .FirstOrDefault()) ?? string.Empty;
+
+                    // Get Job Status ID
+                    var jobstatus = (dbContext.MstJobStatuses
+                        .Where(x => x.JobStatusName.ToLower() == opportunitydata.status.ToLower())
+                        .Select(x => (Guid)x.JobStatusId)
+                        .FirstOrDefault());
+
+                    var jobstatuss = (jobstatus != null && jobstatus != Guid.Empty) ? jobstatus.ToString() : "";
                 var job = new CreateJob
                 {
                     ContactId = contact1.ContactId,
@@ -1545,12 +1555,12 @@ namespace ShutterManagement.Business.Services
                     JobType = jobtype,
                     AssignedPersonnel = Guid.Empty,
                     GhlOpportunityId = opportunitydata.id,
-                    GHL_StageId = Guid.Parse(stageId),
+                    GHL_StageId = stageId == "" ? Guid.Empty : Guid.Parse(stageId) ,
                     GHL_StageName = opportunitydata.pipleline_stage,
                     locationId = opportunitydata.location.id,
                     GHL_ContactId = opportunitydata.contact_id,
                     lastasync = DateTime.Now,
-                    GHL_jobstatus = jobstatus.ToString(),
+                    GHL_jobstatus = jobstatuss,
                     GHLUserId = GHLUserId,
                 };
                     await gHLConfiguration.GetGHLConfiguration(opportunitydata.WebhookTenantId);
@@ -1588,9 +1598,20 @@ namespace ShutterManagement.Business.Services
                             == AppConstant.LoggedInTenantId && x.IsDelete == false && x.IsActive == true).Select(x => x.GhlUserId).FirstOrDefault();
                     }
                     Guid jobtype = Guid.Parse("34623376-9CE3-4C9B-A538-2D3129B1A6B2");
-                    var stageId = dbContext.TblGhlStages.Where(x => x.GhlStageName.ToLower() == opportunitydata.pipleline_stage.ToLower()).
-                        Select(x => x.GhlStageId).FirstOrDefault();
-                    var jobstatus = dbContext.MstJobStatuses.Where(x => x.JobStatusName.ToLower() == opportunitydata.status.ToLower()).Select(x => x.JobStatusId).FirstOrDefault();
+                    // Get Stage ID
+                    var stageId = (dbContext.TblGhlStages
+                        .Where(x => x.GhlStageName.ToLower() == opportunitydata.pipleline_stage.ToLower())
+                        .Select(x => x.GhlStageId ?? "")
+                        .FirstOrDefault()) ?? string.Empty;
+
+                    // Get Job Status ID
+                    var jobstatus = (dbContext.MstJobStatuses
+                        .Where(x => x.JobStatusName.ToLower() == opportunitydata.status.ToLower())
+                        .Select(x => (Guid)x.JobStatusId)
+                        .FirstOrDefault());
+
+                    var jobstatuss = (jobstatus != null && jobstatus != Guid.Empty) ? jobstatus.ToString() : "";
+                 
                     var job = new UpdateJob
                     {
                         ContactId = contact1.ContactId,
@@ -1604,7 +1625,7 @@ namespace ShutterManagement.Business.Services
                         locationId = opportunitydata.location.id,
                         GHL_ContactId = opportunitydata.contact_id,
                         lastasync = DateTime.Now,
-                        GHL_jobstatus = jobstatus.ToString(),
+                        GHL_jobstatus = jobstatuss,
                         GHLUserId = GHLUserId,
                     };
                     await gHLConfiguration.GetGHLConfiguration(opportunitydata.WebhookTenantId);
@@ -1621,27 +1642,6 @@ namespace ShutterManagement.Business.Services
             }
         }
 
-        //public async Task<IResponseVm<string>> GHLJobAssignedtoPartner(CreateJob model)
-        //{
-        //    IResponseVm<string> responseVm = new ResponseVm<string>();  
-        //    try
-        //    {
-        //        var IsSubtenant = tenantService.GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true 
-        //        && x.IsDelete == false).FirstOrDefault();
-        //        if(IsSubtenant != null)
-        //        {
-        //            var JobExist = GetAllQuerable().Where()
-        //            TblJob job = new TblJob()
-        //            {
-
-        //            };
-        //        }
-        //    }
-        //    catch(Exception ex)
-        //    {
-
-        //    }
-        //}
 
     }
 }
