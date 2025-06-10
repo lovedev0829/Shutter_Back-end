@@ -48,7 +48,7 @@ namespace ShutterManagement.Business.Services
              { "state", Guid.NewGuid().ToString() }
                 };
 
-                string authUrl = $"https://login.microsoftonline.com/{AppConstant.Micorsoft365_tenantId}/oauth2/v2.0/authorize?" + string.Join("&", query.Select(kvp => $"{kvp.Key}={Uri.EscapeDataString(kvp.Value)}"));
+                string authUrl = $"https://login.microsoftonline.com/Common/oauth2/v2.0/authorize?" + string.Join("&", query.Select(kvp => $"{kvp.Key}={Uri.EscapeDataString(kvp.Value)}"));
 
                 responseVm.IsSuccess = true;
                 responseVm.Message = "Authorization URL generated successfully.";
