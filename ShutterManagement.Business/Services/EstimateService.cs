@@ -386,7 +386,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 string formula = model.Expression ?? "";
-                
+                //var a = new NCalc.Expression(formula);
                 var validate = CalculateExpression(formula, model);
                 //var parser = new Core.Common.Parser(model.CalculateExpression ?? "");
                 //var result = parser.ParseExpression();
@@ -397,9 +397,17 @@ namespace ShutterManagement.Business.Services
                 //    responseVm.Message += "--"+ error;
                 //    return responseVm; // Return early if there are syntax errors
                 //}
+                
                 if (validate.HasErrors())
                 {
-                    responseVm.Message = "There is some issue in Expression. " + validate.Error;
+                    string errorMessgae = validate.Error;
+                    const string pattern = @"at line \d+:\d+";
+                    var matches = Regex.Matches(errorMessgae ?? string.Empty, pattern);
+                    foreach (Match match in matches)
+                    {
+                        errorMessgae = errorMessgae.Replace(match.Value, "");
+                    }
+                        responseVm.Message = "There is some issue in Expression. " + errorMessgae;
                     return responseVm;
                 }
                 var res = validate.Evaluate();
@@ -414,7 +422,7 @@ namespace ShutterManagement.Business.Services
             }
             catch (Exception ex)
             {
-                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+                responseVm.Message = ex.Message;
             }
             return responseVm;
         }
@@ -775,7 +783,7 @@ namespace ShutterManagement.Business.Services
                                 .Select(x => x.UnitOfMeasurement)
                                 .FirstOrDefault();
 
-                            formula = formula?.Replace(placeholder, $"'{materialUnit}'");
+                            formula = formula?.Replace(placeholder, $"' {materialUnit} '");
                             continue;
                         }
                     }
@@ -788,7 +796,7 @@ namespace ShutterManagement.Business.Services
                     _ => Convert.ToDecimal(val).ToString("N2")
                 };
 
-                formula = formula?.Replace(placeholder, replacement);
+                formula = formula?.Replace(placeholder, " " +replacement + " ");
             }
             //values.CalculateExpression = formula;
                 return new NCalc.Expression(formula);
