@@ -40,7 +40,7 @@ public class EmailOAuthController : ControllerBase
     {
        if(OauthType==EnumValue.GetEnumValue(EmailSendType.Google))
         {
-            var Respose = _googleAuthService.GenerateGoogleOAuthUrl();
+            var Respose = _googleAuthService.GenerateGoogleOAuthUrl().Result;
             return Ok(Respose);
         }
         else if (OauthType == EnumValue.GetEnumValue(EmailSendType.Microsoft365))
@@ -51,7 +51,6 @@ public class EmailOAuthController : ControllerBase
         return Ok(new { message = "Invalid OAuth Type" });
  
     }
-
 
 
     [HttpGet("Callback")]

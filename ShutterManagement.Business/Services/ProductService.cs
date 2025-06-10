@@ -467,10 +467,6 @@ namespace ShutterManagement.Business.Services
         }
 
        
-
-
-
-
     }
 }
 
