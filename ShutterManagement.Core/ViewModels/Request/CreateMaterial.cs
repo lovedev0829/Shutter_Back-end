@@ -48,6 +48,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         public Guid? VendorId { get; set; }
 
         //[DefaultValue("")]
+        [MaxLength(50)]
         [RegularExpression(@"^[A-Za-z0-9_-]+", ErrorMessage = AppConstant.SKUError)]
         public string? SKU { get; set; }
 
