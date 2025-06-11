@@ -63,8 +63,7 @@ namespace ShutterManagement.Business.Services
                     .ToList();
                         foreach (var component in IsProductInComponent)
                         {
-                            component.IsActive = false;
-                            component.IsDelete = true;
+                            component.IsActive = !component.IsActive;
                             component.UpdatedAt = DateTime.Now;
                             component.ModifiedBy = AppConstant.LoggedInUserID;
                             await productComponentService.Update(component);

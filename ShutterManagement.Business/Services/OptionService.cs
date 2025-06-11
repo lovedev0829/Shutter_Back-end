@@ -102,6 +102,16 @@ namespace ShutterManagement.Business.Services
                     var IsOptionNameExists = await AnyAsync(x => x.OptionName == model.OptionName.Trim()
                     && x.IsActive == true && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId
                     && x.ProductId == model.ProductId && x.ProductTypeId == model.ProductTypeId);
+                    if(IsOptionNameExists)
+                    {
+                       if(!AppConstant.IsTenant)
+                        {
+                            responseVm.Message = $"OptionName {AppConstant.AlreadyExists}.Please contact to administrator.";
+                            return responseVm;
+                        }
+                        responseVm.Message = $"OptionName {AppConstant.AlreadyExists}.";
+                        return responseVm;
+                    }
                     if (!IsOptionNameExists)
                     {
                         TblOption options = new TblOption
