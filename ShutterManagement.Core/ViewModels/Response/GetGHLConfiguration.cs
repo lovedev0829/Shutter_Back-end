@@ -20,7 +20,10 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? ClientSecret { get; set; }
         public string? RedirectURI { get; set; }
         public string? Refresh_Token { get; set; }
+        public DateTime? RefreshExpirationtime { get; set; }
         public string? Access_Token { get; set; }
+        public DateTime? AccessExpirationtime { get; set; }
+        public bool? IsConnected { get; set; }
     
     }
 }
