@@ -206,8 +206,10 @@ namespace ShutterManagement.GHL.Services
             IResponseVm<List<PipelineAndStage>> responseVm = new ResponseVm<List<PipelineAndStage>>();
             try
             {
+                
                 var gHLStages = dBContext.TblGhlStages
-                    .Where(x => x.TenantId == AppConstant.LoggedInTenantId).OrderBy(x => x.StageOrder)
+                    .Where(x => x.TenantId == AppConstant.LoggedInTenantId && (x.GhlPipelineName.ToLower() == AppConstant.GHL_PipelineId.ToLower() || x.GhlPipelineId.ToLower()
+                    == AppConstant.GHL_PipelineId.ToLower())).OrderBy(x => x.StageOrder)
                     .ToList();
 
                 var stageList = new List<PipelineAndStage>();
