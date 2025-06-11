@@ -1029,6 +1029,8 @@ namespace ShutterManagement.Business.Services
             e.WindowProductId = productList.DistinctBy(x=>x.WindowProductId).Select(p => (Guid)p.WindowProductId).ToArray();
             foreach (var p in productList.DistinctBy(x => x.WindowProductId))
             {
+                if (p == null)
+                    continue;
                 var Options = (from orderOption in dbContext.TblOrderWindowProductOptions
                                //join optionType in dbContext.TblOptionsTypes on orderOption.OptionTypeid equals optionType.OptionTypeId
                                //join option in dbContext.TblOptions on optionType.OptionId equals option.OptionId
@@ -1066,8 +1068,8 @@ namespace ShutterManagement.Business.Services
                 EstimateProductLists estimateProduct = new EstimateProductLists
                 {
                     EstimateWindowProductId = p.OrderWindowProductId,
-                    Label = WindowQty_Label.Label,
-                    WindowQty = WindowQty_Label.Quantity,
+                    Label = WindowQty_Label?.Label?? "",
+                    WindowQty = WindowQty_Label?.Quantity ??0.0m,
                     ProductType = p.ProductType,
                     ProductTypeName = p.ProductTypeName,
                     Width = p.Width,
