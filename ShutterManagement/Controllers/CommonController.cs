@@ -832,12 +832,12 @@ namespace ShutterManagement.Controllers
             {
                 var pipelineResult = await gHLService_V2.GetAndSaveDefaultPipelineAndStage();
                 var CheckStageMapping = await gHLConfiguration.CheckStageMapping();
-                if(!CheckStageMapping.IsSuccess)
+                if (!CheckStageMapping.IsSuccess)
                 {
-                    return BadRequest(CheckStageMapping);
+                    return Ok(CheckStageMapping);
                 }
 
-                
+
                 var contact = await contactService.ContactSync();
                 var opportunityResult = await jobService.SyncOpportunitiesFromGhl();
                 var appointment = await jobSchedule.AppointmentSync();

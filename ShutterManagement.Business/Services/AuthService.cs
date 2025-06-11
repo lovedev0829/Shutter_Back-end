@@ -554,6 +554,13 @@ namespace ShutterManagement.Services
 
             string TokenValue = tokenHandler.WriteToken(token);
 
+            var GHLConfig = gHLConfiguration.GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true
+            && x.IsDelete == false).FirstOrDefault();
+            if(GHLConfig != null)
+            {
+                GHLConfig.GeneratedToken = TokenValue;
+                await gHLConfiguration.Update(GHLConfig);
+            }
             result.IsSuccess = true;
             result.Data = TokenValue;
             FileLogger.Log("IsSuccess", true);
@@ -696,17 +703,7 @@ namespace ShutterManagement.Services
             return response;
         }
 
-
-
-
-
-
-
-
     }
-
-
-
 }
 
 

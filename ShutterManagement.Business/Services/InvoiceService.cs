@@ -557,7 +557,7 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.NoDataFound;
                     return responseVm;
                 }
-
+                filter.RecordPerPage = 1000;
                 var customerDetails = (await contactService.GetAll_Contact(filter,false))
                     .Data.FirstOrDefault(x => x.ContactId == model.ContactId && x.IsActive == true);
 

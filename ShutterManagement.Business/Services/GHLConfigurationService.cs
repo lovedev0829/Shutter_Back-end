@@ -161,9 +161,14 @@ namespace ShutterManagement.Business.Services
                         return responseVm;
                     }
                 }
+                bool? isConnected = false;
+                if (gHLConfiguration.RefreshExpirationtime.HasValue)
+                {
+                    isConnected = gHLConfiguration.RefreshExpirationtime.Value > DateTime.Now;
+                }
                 responseVm.Data = new GetGHLConfiguration
                 {
-                    Id= gHLConfiguration.Id,
+                    Id = gHLConfiguration.Id,
                     LocationId = gHLConfiguration?.LocationId ?? "",
                     PipelineId = gHLConfiguration?.PipelineId ?? "",
                     LastSync = gHLConfiguration?.LastSync ?? null,
@@ -171,6 +176,9 @@ namespace ShutterManagement.Business.Services
                     GeneratedToken = gHLConfiguration?.GeneratedToken ?? "",
                     Refresh_Token = gHLConfiguration?.RefreshToken ?? "",
                     Access_Token = gHLConfiguration?.AccessToken ?? "",
+                    RefreshExpirationtime = gHLConfiguration?.RefreshExpirationtime ?? null,
+                    AccessExpirationtime = gHLConfiguration?.AccessExpirationtime ?? null,
+                    IsConnected = isConnected ?? false,
                 };
                 FileLogger.Log($"Failed to retrieve refresh token in link to ghl{responseVm?.Data}");
 
