@@ -1123,7 +1123,10 @@ namespace ShutterManagement.Business.Services
                     List<GhlContactAdd> contactsUpdateToGHL = new List<GhlContactAdd>();
                     foreach (var ghlcontact in getGHLContacts)
                     {
-                        var existingContact = getAppContacts.FirstOrDefault(x => x.GhlcontactId == ghlcontact.id);
+                        var existingContact = getAppContacts.FirstOrDefault(x => x.GhlcontactId == ghlcontact.id &&
+                        x.TenantId == AppConstant.LoggedInTenantId && x.IsArchive == false && x.IsActive == true
+                        && x.IsDelete == false
+                      );
                         var IsContactExists = GetAllQuerable()
                           .Where(c => (c.Email == ghlcontact.email || c.PhoneNumber == ghlcontact.phone)
                                       && c.TenantId == AppConstant.LoggedInTenantId && c.IsDelete == false).OrderByDescending(x => x.CreatedAt)

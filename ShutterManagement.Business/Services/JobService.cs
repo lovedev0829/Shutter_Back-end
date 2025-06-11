@@ -452,7 +452,8 @@ namespace ShutterManagement.Business.Services
 
                         var stage = stages?.Data.FirstOrDefault(x => x.GhlStageId == opportunity.PipelineStageId);
                         var dbcontact = _context.TblContacts
-                            .FirstOrDefault(x => x.GhlcontactId == opportunity.Contact.Id);
+                            .FirstOrDefault(x => x.GhlcontactId == opportunity.Contact.Id && x.TenantId == AppConstant.LoggedInTenantId
+                            && x.IsDelete == false && x.IsActive == true && x.IsArchive == false);
 
                         if (dbcontact == null)
                         {
@@ -1088,8 +1089,8 @@ namespace ShutterManagement.Business.Services
                                        GHL_StageId = t2.GhlStageId != null ? t2.GhlStageId : Guid.Empty,
                                        GHL_StageName = (!string.IsNullOrWhiteSpace(t2.GhlStageName) || t2.GhlStageName != null) ? t2.GhlStageName : "",
                                    }).ToList();
-                    filter.SearchValue = filter.SearchValue?.Trim().ToLower();
-                    var FilterRecords = JobList
+                                   filter.SearchValue = filter.SearchValue?.Trim().ToLower();
+                                   var FilterRecords = JobList
                                     .Where(x =>
                                     (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
                                       (string.IsNullOrEmpty(filter.JobStatus) ? true : (filter.JobStatus == x.JobStatus.ToString())) &&
