@@ -80,7 +80,10 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = "CompanyName " + AppConstant.AlreadyExists;
                     return responseVm;
                 }
-                bool IsUserEmailExists = await userService.AnyAsync(x => x.Email == model.UserEmail && x.IsDelete == false && x.IsTenantAdmin == true && x.TenantId==AppConstant.LoggedInTenantId);
+                var AlltenantId = GetAllQuerable().Where(x => x.ParentTenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false)
+                    .Select(x => x.TenantId).ToList();
+                bool IsUserEmailExists = await userService.AnyAsync(x => x.Email.ToLower() == model.UserEmail.ToLower() && x.IsDelete == false
+                && x.IsTenantAdmin == true && AlltenantId.Contains((Guid)x.TenantId));
                 if (IsUserEmailExists)
                 {
                     responseVm.Message = "User Email " + AppConstant.AlreadyExists;
