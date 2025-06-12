@@ -334,7 +334,11 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = "Atleast one window is required.";
                     return responseVm; // Return early if window not exists
                 }
-
+                if(model.ProductsList.Any(x => x.ProductPrice < 0))
+                {
+                    responseVm.Message = "Product Price can't be negative.";
+                    return responseVm; // Return early if window not exists
+                }
                 // Create and add the estimate
                 EstimateComponent createEstimate = await CreateEstimateRecord(model);
                 if (createEstimate.EstimateId != Guid.Empty)
