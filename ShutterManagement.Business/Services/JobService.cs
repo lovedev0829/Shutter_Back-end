@@ -1355,7 +1355,8 @@ namespace ShutterManagement.Business.Services
                                   from t6 in contact.DefaultIfEmpty()
                                   join s in  _context.MstStates on t1.State equals s.Id into state
                                   from s in state.DefaultIfEmpty()
-                                  where t6.IsDelete == false && t6.IsActive == true && t2.IsActive == true && t2.IsDelete == false && t2.TenantId == AppConstant.LoggedInTenantId || subTenantlist.Contains((Guid)t2.TenantId)
+                                  where t6.IsDelete == false && t6.IsActive == true && t2.IsActive == true && t2.IsDelete == false &&
+                                  (t2.TenantId == AppConstant.LoggedInTenantId || subTenantlist.Contains((Guid)t2.TenantId))
                                          select new GetAllJobsSubtenant_tenant
                                          {
                                              IsActive = t2.IsActive,
