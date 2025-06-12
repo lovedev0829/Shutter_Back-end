@@ -100,7 +100,7 @@ namespace ShutterManagement.Business.Services
                     var message = "";
                     bool alloptiontypeadded = true;
                     var IsOptionNameExists = await AnyAsync(x => x.OptionName == model.OptionName.Trim()
-                    && x.IsActive == true && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId
+                    && x.IsActive == true && x.IsDelete == false && (x.TenantId == AppConstant.LoggedInTenantId || x.TenantId.ToString() == AppConstant.LoggedInParentTenantId)
                     && x.ProductId == model.ProductId && x.ProductTypeId == model.ProductTypeId);
                     if(IsOptionNameExists)
                     {

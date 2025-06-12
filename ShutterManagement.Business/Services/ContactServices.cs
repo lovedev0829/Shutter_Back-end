@@ -22,6 +22,7 @@ using System.Linq.Dynamic.Core;
 using System.Reflection;
 using System.Linq.Expressions;
 using Azure;
+using System.Globalization;
 
 namespace ShutterManagement.Business.Services
 {
@@ -199,17 +200,17 @@ namespace ShutterManagement.Business.Services
                     TblContact CreateContact = new TblContact
                     {
                         ContactId = Guid.NewGuid(),
-                        ContactType = model.ContactType,
-                        FirstName = model.FirstName,
-                        LastName = model.LastName,
-                        Suffix = model.Suffix,
+                        ContactType = model.ContactType??"",
+                        FirstName = model.FirstName??"",
+                        LastName = model.LastName ?? "",
+                        Suffix = model.Suffix??"",
                         // Name = model.Name,
-                        PhoneNumber = model.PhoneNumber,
-                        Email = model.Email,
-                        Website = model.Website,
-                        Notes = model.Notes,
-                        Referral = model.Referral,
-                        ContactUniqueId = contactUniqueId,
+                        PhoneNumber = model.PhoneNumber ?? "",
+                        Email = model.Email??"",
+                        Website = model.Website ?? "",
+                        Notes = model.Notes ??"",
+                        Referral = model.Referral ?? "",
+                        ContactUniqueId = contactUniqueId ??"",
                         IsTaxExemption = model.IsTaxExemption,
                         IsBillingAddressSameAsAddress = model.IsBillingAddressSameAsAddress,
                         CreatedBy = AppConstant.LoggedInUserID,
@@ -223,7 +224,7 @@ namespace ShutterManagement.Business.Services
                     if (model.lastAsync != null && model.GHLContactId != null)
                     {
                         res.LastSync = model.lastAsync;
-                        res.GhlcontactId = model.GHLContactId;
+                        res.GhlcontactId = model.GHLContactId??"";
                         await Update(res);
                     }
 
@@ -252,14 +253,14 @@ namespace ShutterManagement.Business.Services
                                 AddressId = Guid.NewGuid(),
                                 ContactId = res.ContactId,
                                 Label = "Primary Address",
-                                FirstName = model.BillingAddressVm?.FirstName,
-                                LastName = model.BillingAddressVm?.LastName,
-                                Phone = model.BillingAddressVm?.PhoneNumber,
-                                Email = model.BillingAddressVm?.Email,
-                                City = model.BillingAddressVm?.City,
-                                State = stateId,
-                                ZipCode = model.BillingAddressVm?.ZipCode,
-                                StreetAddress = model.BillingAddressVm?.StreetAddress,
+                                FirstName = model.BillingAddressVm?.FirstName ?? "",
+                                LastName = model.BillingAddressVm?.LastName ??"",
+                                Phone = model.BillingAddressVm?.PhoneNumber??"",
+                                Email = model.BillingAddressVm?.Email??"",
+                                City = model.BillingAddressVm?.City??"",
+                                State = stateId ?? Guid.Empty,
+                                ZipCode = model.BillingAddressVm?.ZipCode??"",
+                                StreetAddress = model.BillingAddressVm?.StreetAddress??"",
                                 CreatedAt = DateTime.Now,
                                 IsActive = true,
                                 IsDelete = false,
@@ -279,7 +280,7 @@ namespace ShutterManagement.Business.Services
                             TblTaxExemption taxExemption1 = new TblTaxExemption
                             {
                                 ContactId = res.ContactId,
-                                ExemptionCertificate = arrayString,
+                                ExemptionCertificate = arrayString ??"",
                                 EffectiveDate = model.TaxExemptionVm?.EffectiveDate,
                                 ExpiryDate = model.TaxExemptionVm?.ExpiryDate,
                                 CreatedAt = DateTime.Now,
@@ -388,16 +389,16 @@ namespace ShutterManagement.Business.Services
 
                         if (contact != null)
                         {
-                            contact.ContactType = model.ContactType;
-                            contact.FirstName = model.FirstName;
-                            contact.LastName = model.LastName;
-                            contact.Suffix = model.Suffix;
-                            contact.PhoneNumber = model.PhoneNumber;
-                            contact.Email = model.Email;
-                            contact.Website = model.Website;
-                            contact.Notes = model.Notes;
-                            contact.Referral = model.Referral;
-                            contact.IsTaxExemption = model.IsTaxExemption;
+                            contact.ContactType = model.ContactType??"";
+                            contact.FirstName = model.FirstName??"";
+                            contact.LastName = model.LastName??"";
+                            contact.Suffix = model.Suffix ??"";
+                            contact.PhoneNumber = model.PhoneNumber ??"";
+                            contact.Email = model.Email ??"";
+                            contact.Website = model.Website ??"";
+                            contact.Notes = model.Notes ??"";
+                            contact.Referral = model.Referral ?? "";
+                            contact.IsTaxExemption = model.IsTaxExemption ;
                             contact.IsBillingAddressSameAsAddress = model.IsBillingAddressSameAsAddress;
                             contact.ModifiedBy = TenantId;
                             contact.UpdatedAt = DateTime.Now;
@@ -409,15 +410,15 @@ namespace ShutterManagement.Business.Services
                         {
                             var contactCreate = new Sp_Contact
                             {
-                                ContactType = model.ContactType,
-                                FirstName = model.FirstName,
-                                LastName = model.LastName,
-                                Suffix=model.Suffix,
-                                Email = model.Email,
-                                PhoneNumber = model.PhoneNumber,
+                                ContactType = model.ContactType ?? "",
+                                FirstName = model.FirstName??"",
+                                LastName = model.LastName??"",
+                                Suffix=model.Suffix??"",
+                                Email = model.Email??"",
+                                PhoneNumber = model.PhoneNumber ?? "",
                                 lastAsync = model.lastAsync,
                                 GHLContactId = model.GHLContactId,
-                                locationId = model.locationId
+                                locationId = model.locationId ?? ""
                             };
 
                             var res = await Create_Contact(contactCreate);
@@ -1014,13 +1015,13 @@ namespace ShutterManagement.Business.Services
                 {
                     var contact = new Sp_Contact
                     {
-                        ContactType = contactData.contact_type,
-                        FirstName = contactData.first_name,
-                        LastName = contactData.last_name,
-                        Email = contactData.email,
-                        PhoneNumber = contactData.phone,
-                        locationId = contactData.location.id,
-                        GHLContactId = contactData.contact_id,
+                        ContactType = contactData.contact_type??"",
+                        FirstName = contactData.first_name??"",
+                        LastName = contactData.last_name??"",
+                        Email = contactData.email??"",
+                        PhoneNumber = contactData.phone ?? "",
+                        locationId = contactData?.location?.id??"",
+                        GHLContactId = contactData?.contact_id??"",
                         lastAsync = DateTime.Now,
                     };
                     //if (contactData.location != null)
@@ -1138,7 +1139,7 @@ namespace ShutterManagement.Business.Services
                         {
                             if (ghlcontact.dateUpdated.ToLocalTime() > existingContact.UpdatedAt)
                             {
-                                existingContact.FirstName = ghlcontact.firstName;
+                                existingContact.FirstName = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(ghlcontact.firstNameLowerCase ?? string.Empty);
                                 existingContact.Email = ghlcontact.email;
                                 existingContact.PhoneNumber = ghlcontact.phone;
                                 existingContact.UpdatedAt = DateTime.Now;
@@ -1188,8 +1189,8 @@ namespace ShutterManagement.Business.Services
                             var newContact = new Sp_Contact
                             {
                                 ContactType = ghlcontact.type,
-                                FirstName = ghlcontact.firstName,
-                                LastName = ghlcontact.lastName,
+                                FirstName = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(ghlcontact.firstNameLowerCase ?? string.Empty),
+                                LastName = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(ghlcontact.lastNameLowerCase ?? string.Empty),
                                 Email = ghlcontact.email,
                                 PhoneNumber = ghlcontact.phone,
                                 //locationId = ghlcontact.locationId,
@@ -1254,8 +1255,8 @@ namespace ShutterManagement.Business.Services
                                 {
                                     var newContactToAddToGHL = new GhlContactAdd
                                     {
-                                        FirstName = existingGHLContact.firstName,
-                                        LastName = existingGHLContact.lastName,
+                                        FirstName = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(existingGHLContact.firstNameLowerCase ?? string.Empty),
+                                        LastName = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(existingGHLContact.lastNameLowerCase ?? string.Empty),
                                         Email = existingGHLContact.email,
                                         Phone = existingGHLContact.phone,
                                         ContactType = existingGHLContact.type,
@@ -1267,8 +1268,8 @@ namespace ShutterManagement.Business.Services
                                 {
                                     var updatecontact = new UpdateContact
                                     {
-                                        FirstName = existingGHLContact.firstName,
-                                        LastName = existingGHLContact.lastName,
+                                        FirstName = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(existingGHLContact.firstNameLowerCase ?? string.Empty),
+                                        LastName = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(existingGHLContact.lastNameLowerCase ?? string.Empty),
                                         Email = existingGHLContact.email,
                                         PhoneNumber = existingGHLContact.phone,
                                         ContactType = existingGHLContact.type,

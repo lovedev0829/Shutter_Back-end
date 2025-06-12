@@ -314,7 +314,7 @@ namespace ShutterManagement.Business.Services
                                  Markup = product.Markup,
                                  IsComponentAvailable = product.IsComponentAvailable,
                                  ProductTypeName = productType.ProductName,
-                                 ComponentId = productComponent.ComponentId,
+                                 ComponentId = component.ComponentId,
                                  ComponentQuantity = productComponent.Quantity,
                                  ComponentName = component.ComponentName,
                                  MarkupPercentage = component.MarkupPercentage,
@@ -390,7 +390,9 @@ namespace ShutterManagement.Business.Services
                                     join partnerOptions in dbContext.TblManagePartnersProductsOptions on windowOptions.OptionTypeId equals partnerOptions.OptionTypeId
                                     join optionValues in dbContext.TblOptionsTypes on partnerOptions.OptionTypeId equals optionValues.OptionTypeId
                                     join options in dbContext.TblOptions on optionValues.OptionId equals options.OptionId
-                                    join taxDetails in dbContext.TblTaxRates.Where(x => x.TenantId == AppConstant.LoggedInTenantId) on partnerOptions.TaxId equals taxDetails.TaxRateId into taxJoin
+                                    join taxDetails in dbContext.TblTaxRates.Where(x => x.TenantId == AppConstant.LoggedInTenantId) on
+                                    (partnerOptions.TaxId == null || partnerOptions.TaxId == Guid.Empty ? manageProduct.TaxId : partnerOptions.TaxId)
+                                    equals taxDetails.TaxRateId into taxJoin
                                     from tax in taxJoin.DefaultIfEmpty()
                                     where partnerOptions.IsActive == true && partnerOptions.TenantId == AppConstant.LoggedInTenantId
                                           && partnerOptions.ManageProductId == manageProduct.ManageProductId
@@ -398,11 +400,11 @@ namespace ShutterManagement.Business.Services
                                           && windowOptions.IsActive == true
                                     select new OptionTaxVM
                                     {
-                                        TaxId = (tax != null && tax.TaxRateId != Guid.Empty ? tax.TaxRateId : product.TaxRateId) ?? Guid.Empty,
-                                        TaxName = (tax.TaxRateId != Guid.Empty ? tax.TaxName : product.TaxName) ?? "",
-                                        MunicipalityTax = (tax.TaxRateId != Guid.Empty ? tax.Municipality : product.MunicipalityTax) ?? 0.0m,
-                                        StateTax = (tax.TaxRateId != Guid.Empty ? tax.State : product.StateTax) ?? 0.0m,
-                                        CityTax = (tax.TaxRateId != Guid.Empty ? tax.City : product.CityTax) ?? 0.0m,
+                                        TaxId = (tax != null && tax.TaxRateId != Guid.Empty ? tax.TaxRateId : manageProduct.TaxId) ?? Guid.Empty,
+                                        TaxName = (tax.TaxRateId != Guid.Empty ? tax.TaxName : tax.TaxName) ?? "",
+                                        MunicipalityTax = (tax.TaxRateId != Guid.Empty ? tax.Municipality : tax.Municipality) ?? 0.0m,
+                                        StateTax = (tax.TaxRateId != Guid.Empty ? tax.State : tax.State) ?? 0.0m,
+                                        CityTax = (tax.TaxRateId != Guid.Empty ? tax.City : tax.City) ?? 0.0m,
                                         OptionPrice = optionValues.AdditionalCost,
                                         OptionId = options.OptionId.ToString(),
                                         OptionTypeId = optionValues.OptionTypeId.ToString(),

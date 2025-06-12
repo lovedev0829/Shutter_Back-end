@@ -257,32 +257,138 @@ namespace ShutterManagement.GHL.Services
         #endregion Start pipeLine and Stages Related Methods 
 
         #region Start Contact Related Methods
+        //public async Task<List<GhlContactVM>> GetContactsAsync()
+        //{
+        //    try
+        //    {
+        //        var requestUrl = $"{AppConstant.GHL_BaseAddress}/contacts/?locationId={AppConstant.GHL_Locationd}";
+        //        using var requestMessage = new HttpRequestMessage(HttpMethod.Get, requestUrl);
+        //        requestMessage.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        //        requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
+        //        requestMessage.Headers.Add("Version", AppConstant.GHL_Version);
+        //        HttpResponseMessage response = await _httpClient.SendAsync(requestMessage);
+        //        response.EnsureSuccessStatusCode();
+
+        //        var json = await response.Content.ReadAsStringAsync();
+        //        var result = System.Text.Json.JsonSerializer.Deserialize<GhlContactResponse>(json, new JsonSerializerOptions
+        //        {
+        //            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        //        });
+
+        //        return result?.Contacts ?? new List<GhlContactVM>();
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Console.WriteLine($"Error fetching contacts: {ex.Message}");
+        //        return new List<GhlContactVM>();
+        //    }
+        //}
+
         public async Task<List<GhlContactVM>> GetContactsAsync()
         {
+            var allContacts = new List<GhlContactVM>();
+
             try
             {
-                var requestUrl = $"{AppConstant.GHL_BaseAddress}/contacts/?locationId={AppConstant.GHL_Locationd}";
-                using var requestMessage = new HttpRequestMessage(HttpMethod.Get, requestUrl);
-                requestMessage.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
-                requestMessage.Headers.Add("Version", AppConstant.GHL_Version);
-                HttpResponseMessage response = await _httpClient.SendAsync(requestMessage);
-                response.EnsureSuccessStatusCode();
+                var baseUrl = $"{AppConstant.GHL_BaseAddress}/contacts/search";
+                var headers = new Dictionary<string, string>
+        {
+            { "Authorization", $"Bearer {AppConstant.GHL_AccessToken}" },
+            { "Version", AppConstant.GHL_Version }
+        };
 
-                var json = await response.Content.ReadAsStringAsync();
-                var result = System.Text.Json.JsonSerializer.Deserialize<GhlContactResponse>(json, new JsonSerializerOptions
+                var initialPayload = new
                 {
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-                });
+                    locationId = AppConstant.GHL_Locationd,
+                    pageLimit = 1,
+                    page = 1
+                };
 
-                return result?.Contacts ?? new List<GhlContactVM>();
+                var initialResponse = await SendGhlPostRequest<GhlContactResponse>(baseUrl, initialPayload, headers);
+
+                var total = initialResponse?.Total ?? 0;
+
+                if (total == 0)
+                    return allContacts;
+
+                const int maxLimit = 100;
+                int totalPages = (int)Math.Ceiling(total / (double)maxLimit);
+
+                for (int page = 1; page <= totalPages; page++)
+                {
+                    var pagedPayload = new
+                    {
+                        locationId = AppConstant.GHL_Locationd,
+                        pageLimit = maxLimit,
+                        page = page
+                    };
+
+                    var pageResponse = await SendGhlPostRequest<GhlContactResponse>(baseUrl, pagedPayload,headers);
+
+                    if (pageResponse?.Contacts != null)
+                        allContacts.AddRange(pageResponse.Contacts);
+                }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error fetching contacts: {ex.Message}");
-                return new List<GhlContactVM>();
             }
+
+            return allContacts;
         }
+
+
+
+
+
+        private async Task<T> SendGhlPostRequest<T>(string url, object payload, Dictionary<string, string> headers)
+        {
+            try
+            {
+                var content = new StringContent(
+               System.Text.Json.JsonSerializer.Serialize(payload),
+               Encoding.UTF8,
+               "application/json"
+           );
+
+                using var request = new HttpRequestMessage(HttpMethod.Post, url)
+                {
+                    Content = content
+                };
+
+                foreach (var header in headers)
+                {
+                    if (header.Key == "Authorization")
+                        request.Headers.Authorization = AuthenticationHeaderValue.Parse(header.Value);
+                    else
+                        request.Headers.Add(header.Key, header.Value);
+                }
+
+                request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                using var response = await _httpClient.SendAsync(request);
+                response.EnsureSuccessStatusCode();
+
+                var responseBody = await response.Content.ReadAsStringAsync();
+
+                return System.Text.Json.JsonSerializer.Deserialize<T>(responseBody, new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                    PropertyNameCaseInsensitive = true
+                });
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine($"Error in SendGhlPostRequest: {ex.Message}");
+            }
+            return default(T);
+           
+        }
+
+
+
+
+
 
         public async Task<IResponseVm<GhlContactSingleResponse>> CreateContactAsync(GhlContactAdd contact)
         {
