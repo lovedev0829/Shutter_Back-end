@@ -941,9 +941,9 @@ namespace ShutterManagement.Business.Services
             var filteredRecords = orderlist
                 .Where(x =>
                     (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
-                    (string.IsNullOrEmpty(filter.JobStatus.ToLower()) ? true : x.jobDetails.JobStatusId.ToLower() == filter.JobStatus.ToLower()) &&
+                    (string.IsNullOrEmpty(filter.JobStatus.ToLower()) ? true : x.jobDetails?.JobStatusId.ToLower() == filter.JobStatus.ToLower()) &&
                     (string.IsNullOrEmpty(filter.EstimationId.ToLower()) ? true : x.EstimateId.ToString().ToLower() == filter.EstimationId.ToLower()) &&
-                    (string.IsNullOrEmpty(filter.CustomerId.ToLower()) ? true : x.jobDetails.ContactId.ToString().ToLower() == filter.CustomerId.ToLower()) &&
+                    (string.IsNullOrEmpty(filter.CustomerId.ToLower()) ? true : x.jobDetails?.ContactId.ToString().ToLower() == filter.CustomerId.ToLower()) &&
                     (string.IsNullOrWhiteSpace(filter.SearchValue) ||
                      ((x.Notes ?? "").Contains(filter.SearchValue)
                       || (x.JobId.ToString() ?? "").Contains(filter.SearchValue)
@@ -968,34 +968,38 @@ namespace ShutterManagement.Business.Services
         private void AddJobDetails(OrderList e)
         {
             var jobdetails1 = (from j1 in dbContext.TblJobs
-                               join j2 in dbContext.TblOrders on j1.JobId equals j2.JobId
-                               join j3 in dbContext.TblAddresses on j1.AddressId equals j3.AddressId
+                               join j2 in dbContext.TblOrders on j1.JobId equals j2.JobId into order
+                               from j2 in order.DefaultIfEmpty()
+                               join j3 in dbContext.TblAddresses on j1.AddressId equals j3.AddressId into address
+                               from j3 in address.DefaultIfEmpty()
                                join j4 in dbContext.MstJobTypes on j1.JobType equals j4.Id into JobType
                                from j4 in JobType.DefaultIfEmpty()
                                join j5 in dbContext.TblUsers on j1.AssignedPersonnel equals j5.Id into Users
                                from j5 in Users.DefaultIfEmpty()
-                               join c in dbContext.TblContacts on j1.ContactId equals c.ContactId
+                               join c in dbContext.TblContacts on j1.ContactId equals c.ContactId into contact
+                               from c in contact.DefaultIfEmpty()
                                join j6 in dbContext.MstJobStatuses on j1.JobStatus equals j6.JobStatusId into JobStatus
                                from j6 in JobStatus.DefaultIfEmpty()
                                where j1.IsDelete == false && c.IsDelete == false && j1.TenantId == AppConstant.LoggedInTenantId &&
-                               j1.JobId == e.JobId
+                               j1.JobId == e.JobId && j1.IsActive == true && j1.IsDelete == false
                                select new JobDetail
                                {
-                                   JobName = j1.JobName,
-                                   JobNotes = j1.Notes,
-                                   JobType = j4.JobTypeName,
-                                   AssignedPersonnel = j5.FirstName + " " + j5.LastName,
-                                   Address = j3.StreetAddress + " " + j3.City + " " + j3.State + " " + j3.ZipCode,
-                                   AddressLabel = j3.Label,
-                                   ScheduleTime = j1.ScheduledDate,
-                                   JobStatusId = j1.JobStatus.ToString().ToLower(),
-                                   JobStatus = j6.JobStatusName,
-                                   ContactId = j1.ContactId.ToString(),
-                                   ContactFirstName = c.FirstName,
-                                   ContactLastName = c.LastName,
-                                   CreatedAt = j1.CreatedAt,
-                                   UpdatedAt = j1.UpdatedAt,
-                                   JobIsActive = j1.IsActive
+                                   JobName = string.IsNullOrWhiteSpace(j1.JobName) ? j1.JobName : "",
+                                   JobNotes = string.IsNullOrWhiteSpace(j1.Notes) ? j1.Notes : "",
+                                   JobType = j1.JobType != null ? j4.JobTypeName : null,
+                                   AssignedPersonnel = j5 != null ? (j5.FirstName + " " + j5.LastName) : "",
+                                   Address = j1.AddressId != null || j1.AddressId != Guid.Empty ? (j3.StreetAddress + " " + j3.City + " " + j3.State +
+                                   " " + j3.ZipCode) : "",
+                                   AddressLabel = j1.AddressId != null || j1.AddressId != Guid.Empty ? j3.Label : "",
+                                   ScheduleTime = j1.ScheduledDate != null ? j1.ScheduledDate : null,
+                                   JobStatusId = j1.JobStatus != null ? j1.JobStatus.ToString().ToLower() : "",
+                                   JobStatus = j1.JobStatus != null ? j6.JobStatusName : "",
+                                   ContactId = j1.ContactId != null ? j1.ContactId.ToString() : "",
+                                   ContactFirstName = string.IsNullOrWhiteSpace(c.FirstName) ? c.FirstName : "",
+                                   ContactLastName = string.IsNullOrWhiteSpace(c.LastName) ? c.LastName : "",
+                                   CreatedAt = j1.CreatedAt != null ? j1.CreatedAt : null,
+                                   UpdatedAt = j1.UpdatedAt != null ? j1.UpdatedAt : null,
+                                   JobIsActive = j1.IsActive != null ? j1.IsActive : false
                                }).FirstOrDefault();
 
             e.jobDetails = jobdetails1;
