@@ -439,6 +439,7 @@ namespace ShutterManagement.Business.Services
                 var opportunities = await gHLService_V2.GetOpportunitiesFromGhl();
                 var stages = await GetGHLStages();
                 var allContacts = await gHLService_V2.GetContactsAsync();
+                FileLogger.Log($"getting contacts from ghl process.{allContacts}");
 
                 foreach (var opportunity in opportunities.Data)
                 {
@@ -447,7 +448,7 @@ namespace ShutterManagement.Business.Services
                         FileLogger.Log($"Processing opportunity ID: {opportunity.OpportunityId}, Name: {opportunity.Name}");
 
                         var existingJob = GetAllQuerable()
-                            .FirstOrDefault(x => x.GhlOpportunityId == opportunity.OpportunityId && 
+                            .FirstOrDefault(x => x.GhlOpportunityId.ToLower() == opportunity.OpportunityId.ToLower() && 
                             x.TenantId==AppConstant.LoggedInTenantId && x.IsActive==true && x.IsDelete==false);
 
                         var stage = stages?.Data.FirstOrDefault(x => x.GhlStageId == opportunity.PipelineStageId);

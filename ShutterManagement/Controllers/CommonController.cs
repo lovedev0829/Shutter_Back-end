@@ -826,6 +826,7 @@ namespace ShutterManagement.Controllers
         [Route("ghlsync")]
         public async Task<IActionResult> SyncAllData()
         {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
             await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
             var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration();
             if (Checkghlresponse.IsSuccess)
@@ -837,14 +838,16 @@ namespace ShutterManagement.Controllers
                     return Ok(CheckStageMapping);
                 }
 
-
-                var contact = await contactService.ContactSync();
-                var opportunityResult = await jobService.SyncOpportunitiesFromGhl();
-                var appointment = await jobSchedule.AppointmentSync();
-                var users = await gHLService_V2.GetUsersByCalendarIdAsync();
-
-                string combinedMessage = string.Join(", ", new[]
+                Task.Run(async () =>
                 {
+
+                    var contact = await contactService.ContactSync();
+                    var opportunityResult = await jobService.SyncOpportunitiesFromGhl();
+                    var appointment = await jobSchedule.AppointmentSync();
+                    var users = await gHLService_V2.GetUsersByCalendarIdAsync();
+
+                    string combinedMessage = string.Join(", ", new[]
+                    {
                 pipelineResult.Message,
                 contact.Message,
                 opportunityResult.Message,
@@ -852,25 +855,35 @@ namespace ShutterManagement.Controllers
                 users.Message
                 });
 
-                var response = new
-                {
-                    IsSuccess = pipelineResult.IsSuccess &&
-                                contact.IsSuccess &&
-                                opportunityResult.IsSuccess &&
-                                appointment.IsSuccess &&
-                                users.IsSuccess,
-                    Message = combinedMessage
-                };
+                    var response = new
+                    {
+                        IsSuccess = pipelineResult.IsSuccess &&
+                                    contact.IsSuccess &&
+                                    opportunityResult.IsSuccess &&
+                                    appointment.IsSuccess &&
+                                    users.IsSuccess,
+                        Message = combinedMessage
+                    };
 
 
-                return Ok(response);
+                    return Ok(response);
+                });
+                responseVm.IsSuccess= true;
+                responseVm.Message = "Data synchronization started successfully. Please wait for syncing .";
+                return Ok(responseVm);
             }
             else
             {
-                return BadRequest(Checkghlresponse);
+                return Ok(Checkghlresponse);
             }
-            
+
         }
+
+
+
+
+
+
 
         [HttpGet]
         [Route("EstimateAmmount")]
