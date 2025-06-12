@@ -1411,6 +1411,7 @@ namespace ShutterManagement.Business.Services
                                 || (x.JobName ?? "").ToLower().Contains(filter.SearchValue)
                                 || (x.CompanyName ?? "").ToLower().Contains(filter.SearchValue)
                                 || (x.ContactFirstName ?? "").ToLower().Contains(filter.SearchValue)
+                               || ((x.ContactFirstName ?? "") + " " + (x.ContactLastName ?? "")).ToLower().Contains(filter.SearchValue.ToLower())
                                 || (x.ContactLastName ?? "").ToLower().Contains(filter.SearchValue)
                                 || (x.ContactPhone ?? "").Contains(filter.SearchValue)
                                 || (x.ContactEmail ?? "").ToLower().Contains(filter.SearchValue)

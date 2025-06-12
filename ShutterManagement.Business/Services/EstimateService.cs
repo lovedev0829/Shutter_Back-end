@@ -177,6 +177,19 @@ namespace ShutterManagement.Business.Services
                 // Log the start of the operation
                 FileLogger.Log($"Start: Deleting Estimate with ID: {EstimateId}");
 
+                var estimatewindowproductcomponent = estimateWindowProductComponentService.GetAllQuerable().
+                    Where(x => x.EstimateId == EstimateId && x.IsDelete == false && x.IsActive == true).ToList();
+                if (estimatewindowproductcomponent != null)
+                {
+                    foreach (var res in estimatewindowproductcomponent)
+                    {
+                        res.IsDelete = true;
+                        res.IsActive = false;
+                        res.UpdatedAt = DateTime.Now;
+                        res.ModifiedBy = AppConstant.LoggedInUserID;
+                        await estimateWindowProductComponentService.Update(res);
+                    }
+                }
                 var estimate = GetAllQuerable()
                     .Where(c => c.EstimateId == EstimateId
                     && c.TenantId == AppConstant.LoggedInTenantId && c.IsDelete == false)
@@ -189,6 +202,7 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = "Estimate " + AppConstant.NoDataFound;
                     return responseVm;
                 }
+
 
                 // Mark the estimate as deleted
                 estimate.IsActive = false;

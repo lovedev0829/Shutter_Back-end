@@ -250,7 +250,7 @@ namespace ShutterManagement.Business.Services
                           .FirstOrDefault();
 
                     bool isComponenteUsed =
-               dbContext.TblEstimateWindowProductComponents.Any(p => p.ComponentId == Id && p.IsDelete == false);
+                  dbContext.TblEstimateWindowProductComponents.Any(p => p.ComponentId == Id && p.IsDelete == false);
 
                     if (isComponenteUsed)
                     {
