@@ -11,16 +11,16 @@ namespace ShutterManagment.GHL.ViewModel.Response
     public class GhlContactVM
     {
 
-            
+       
         public string id { get; set; }
 
         public string locationId { get; set; }
 
         public string fullNameLowerCase { get; set; }
 
-        public string firstName { get; set; }
+        public string firstNameLowerCase { get; set; }
 
-        public string lastName { get; set; }
+        public string lastNameLowerCase { get; set; }
 
 
         public string email { get; set; }
@@ -39,6 +39,22 @@ namespace ShutterManagment.GHL.ViewModel.Response
     {
         [JsonPropertyName("contacts")]
         public List<GhlContactVM> Contacts { get; set; }
+        [JsonPropertyName("total")]
+        public long? Total { get; set; }
+
+
+    }
+
+    public class GhlContactMeta
+    {
+        [JsonPropertyName("total")]
+        public int Total { get; set; }
+
+        [JsonPropertyName("page")]
+        public int Page { get; set; }
+
+        [JsonPropertyName("totalPages")]
+        public int TotalPages { get; set; }
     }
 
     public class GhlContactSingleResponse
