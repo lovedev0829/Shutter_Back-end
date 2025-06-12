@@ -314,7 +314,7 @@ namespace ShutterManagement.Business.Services
                                  Markup = product.Markup,
                                  IsComponentAvailable = product.IsComponentAvailable,
                                  ProductTypeName = productType.ProductName,
-                                 ComponentId = productComponent.ComponentId,
+                                 ComponentId = component.ComponentId,
                                  ComponentQuantity = productComponent.Quantity,
                                  ComponentName = component.ComponentName,
                                  MarkupPercentage = component.MarkupPercentage,
