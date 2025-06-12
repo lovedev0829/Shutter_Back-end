@@ -187,7 +187,14 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
+                bool IsRoleExistInUser = dbContext.TblUserRoles.Any(x => x.RoleId.ToString() == RoleId && x.IsDelete == false && x.IsActive == true);
+                if (IsRoleExistInUser)
+                {
+                    responseVm.Message = "This role cannot be deactivated because it is currently assigned to one or more users.";
+                    return responseVm;
+                }
                 var RoleDetails = GetAllQuerable().Where(x => x.Id.ToString() == RoleId && x.IsShow == false && x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
+               
                 if (RoleDetails != null)
                 {
                     RoleDetails.IsActive = !RoleDetails.IsActive;
