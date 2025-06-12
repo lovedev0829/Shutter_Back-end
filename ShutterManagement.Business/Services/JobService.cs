@@ -439,6 +439,7 @@ namespace ShutterManagement.Business.Services
                 var opportunities = await gHLService_V2.GetOpportunitiesFromGhl();
                 var stages = await GetGHLStages();
                 var allContacts = await gHLService_V2.GetContactsAsync();
+                FileLogger.Log($"getting contacts from ghl process.{allContacts}");
 
                 foreach (var opportunity in opportunities.Data)
                 {
@@ -447,7 +448,7 @@ namespace ShutterManagement.Business.Services
                         FileLogger.Log($"Processing opportunity ID: {opportunity.OpportunityId}, Name: {opportunity.Name}");
 
                         var existingJob = GetAllQuerable()
-                            .FirstOrDefault(x => x.GhlOpportunityId == opportunity.OpportunityId && 
+                            .FirstOrDefault(x => x.GhlOpportunityId.ToLower() == opportunity.OpportunityId.ToLower() && 
                             x.TenantId==AppConstant.LoggedInTenantId && x.IsActive==true && x.IsDelete==false);
 
                         var stage = stages?.Data.FirstOrDefault(x => x.GhlStageId == opportunity.PipelineStageId);
@@ -470,11 +471,11 @@ namespace ShutterManagement.Business.Services
                         {
                             FileLogger.Log($"Updating existing job: {existingJob.JobId}");
 
-                            existingJob.JobName = opportunity.Name;
+                            existingJob.JobName = opportunity.Name??"";
                             existingJob.JobStatus = jobstatusId;
                             existingJob.GhlContactId = opportunity.Contact?.Id;
                             existingJob.ContactId = dbcontact.ContactId;
-                            existingJob.GhlStageName = stage?.GhlStageName;
+                            existingJob.GhlStageName = stage?.GhlStageName??"";
                             existingJob.GhlStageId = Guid.Parse(opportunity.PipelineStageId);
                             existingJob.UpdatedAt = DateTime.Now;
                             existingJob.LastAsync = DateTime.Now;
@@ -488,12 +489,12 @@ namespace ShutterManagement.Business.Services
                             var createJobModel = new CreateJob
                             {
                                 ContactId = dbcontact?.ContactId,
-                                GHL_ContactId = opportunity.Contact?.Id,
-                                GhlOpportunityId = opportunity.OpportunityId,
-                                AddressId = dbcontact?.PrimaryAddress,
-                                GHL_jobstatus = jobstatusId.ToString(),
-                                GHL_StageName = stage?.GhlStageName,
-                                JobName = opportunity.Name?.Trim(),
+                                GHL_ContactId = opportunity.Contact?.Id??"",
+                                GhlOpportunityId = opportunity.OpportunityId??"",
+                                AddressId = dbcontact?.PrimaryAddress ??Guid.Empty,
+                                GHL_jobstatus = jobstatusId.ToString()??"",
+                                GHL_StageName = stage?.GhlStageName??"",
+                                JobName = opportunity.Name?.Trim()??"",
                                 ScheduledDate = DateTime.Now,
                                 lastasync = DateTime.Now,
                                 Notes = "Synced from GHL",
@@ -1361,14 +1362,14 @@ namespace ShutterManagement.Business.Services
                                          {
                                              IsActive = t2.IsActive,
                                              JobId = t2.JobId,
-                                             JobName = t2.JobName,
-                                             JobCode = t2.JobUniqueId,
-                                             ContactId = t2.ContactId,
-                                             ContactFirstName = t6.FirstName,
-                                             ContactLastName = t6.LastName,
+                                             JobName = t2.JobName??"",
+                                             JobCode = t2.JobUniqueId??"",
+                                             ContactId = t2.ContactId??Guid.Empty,
+                                             ContactFirstName = t6.FirstName??"",
+                                             ContactLastName = t6.LastName??"",
                                              Suffix = t6.Suffix??"",
-                                             ContactEmail = t6.Email,
-                                             ContactPhone = t6.PhoneNumber,
+                                             ContactEmail = t6.Email??"",
+                                             ContactPhone = t6.PhoneNumber??"",
                                              AddressId = t2.AddressId != null ? t2.AddressId : Guid.Empty,
                                              JobType = (t2.JobType != null || t2.JobType != Guid.Empty) ? t3.Id : Guid.Empty,
                                              JobTypeName = (t2.JobType != null || t2.JobType != Guid.Empty) ? t3.JobTypeName : "",

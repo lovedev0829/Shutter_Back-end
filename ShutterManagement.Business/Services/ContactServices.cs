@@ -1015,13 +1015,13 @@ namespace ShutterManagement.Business.Services
                 {
                     var contact = new Sp_Contact
                     {
-                        ContactType = contactData.contact_type,
-                        FirstName = contactData.first_name,
-                        LastName = contactData.last_name,
-                        Email = contactData.email,
-                        PhoneNumber = contactData.phone,
-                        locationId = contactData.location.id,
-                        GHLContactId = contactData.contact_id,
+                        ContactType = contactData.contact_type??"",
+                        FirstName = contactData.first_name??"",
+                        LastName = contactData.last_name??"",
+                        Email = contactData.email??"",
+                        PhoneNumber = contactData.phone ?? "",
+                        locationId = contactData?.location?.id??"",
+                        GHLContactId = contactData?.contact_id??"",
                         lastAsync = DateTime.Now,
                     };
                     //if (contactData.location != null)

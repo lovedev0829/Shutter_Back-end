@@ -206,7 +206,7 @@ namespace ShutterManagement.Business.Services
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.InsertSuccessMsg;
 
-                await Task.Run(() => SendWelcomeEmailAsync(model));
+                Task.Run(async () => await SendWelcomeEmailAsync(model));
             }
             catch (Exception ex)
             {
