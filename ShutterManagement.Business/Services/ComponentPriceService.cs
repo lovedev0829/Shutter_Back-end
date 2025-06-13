@@ -438,7 +438,8 @@ namespace ShutterManagement.Business.Services
                                         OptionTypeId = optionValues.OptionTypeId.ToString(),
                                         OptionName = options.OptionName ?? "",
                                         OptionTypeName = optionValues.OptionType ?? "",
-                                        WindowOptionId = windowOptions.WindowoptionId
+                                        WindowOptionId = windowOptions.WindowoptionId,
+                                        OptionMarkup = options.Markup,
                                     }).ToList();
             }
 
