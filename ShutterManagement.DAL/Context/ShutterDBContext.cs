@@ -422,6 +422,8 @@ public partial class ShutterDBContext : DbContext
 
             entity.ToTable("TblComponent", "dbo");
 
+            entity.HasIndex(e => e.TenantId, "IX_TblComponent_TenantId");
+
             entity.Property(e => e.ComponentId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.ComponentName).HasMaxLength(255);
             entity.Property(e => e.CreatedAt)
@@ -446,6 +448,8 @@ public partial class ShutterDBContext : DbContext
             entity.HasKey(e => e.ComponentMaterialId).HasName("PK__TblCompo__82FB769C2564F192");
 
             entity.ToTable("TblComponentMaterial", "dbo");
+
+            entity.HasIndex(e => e.ComponentId, "IX_TblComponentMaterial_ComponentId");
 
             entity.Property(e => e.ComponentMaterialId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.CreatedAt)
@@ -682,6 +686,14 @@ public partial class ShutterDBContext : DbContext
 
             entity.ToTable("TblEstimateWindow", "dbo");
 
+            entity.HasIndex(e => e.AddressId, "IX_TblEstimateWindow_AddressId");
+
+            entity.HasIndex(e => e.EstimateId, "IX_TblEstimateWindow_EstimateId");
+
+            entity.HasIndex(e => e.TenantId, "IX_TblEstimateWindow_TenantId");
+
+            entity.HasIndex(e => e.WindowId, "IX_TblEstimateWindow_WindowId");
+
             entity.Property(e => e.EstWindowId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.ArchHeight).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.BuildHeight).HasColumnType("decimal(10, 2)");
@@ -723,6 +735,16 @@ public partial class ShutterDBContext : DbContext
             entity.HasKey(e => e.EstimateWindowProductId).HasName("PK__TblEstim__30AAFF258DFDC384");
 
             entity.ToTable("TblEstimateWindowProduct", "dbo");
+
+            entity.HasIndex(e => e.EstWindowId, "IX_TblEstimateWindowProduct_EstWindowId");
+
+            entity.HasIndex(e => e.EstimateId, "IX_TblEstimateWindowProduct_EstimateId");
+
+            entity.HasIndex(e => e.TaxId, "IX_TblEstimateWindowProduct_TaxId");
+
+            entity.HasIndex(e => e.TenantId, "IX_TblEstimateWindowProduct_TenantId");
+
+            entity.HasIndex(e => e.WindowProductId, "IX_TblEstimateWindowProduct_WindowProductId");
 
             entity.Property(e => e.EstimateWindowProductId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.AdditionalWidth).HasColumnType("decimal(10, 2)");
@@ -785,6 +807,12 @@ public partial class ShutterDBContext : DbContext
 
             entity.ToTable("TblEstimateWindowProductComponent", "dbo");
 
+            entity.HasIndex(e => e.EstimateId, "IX_TblEstimateWindowProductComponent_EstimateId");
+
+            entity.HasIndex(e => e.EstimateWindowProductId, "IX_TblEstimateWindowProductComponent_EstimateWindowProductId");
+
+            entity.HasIndex(e => e.TenantId, "IX_TblEstimateWindowProductComponent_TenantId");
+
             entity.Property(e => e.EstimateWindowProductComponentId).ValueGeneratedNever();
             entity.Property(e => e.ComponentId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.ComponentName).HasMaxLength(255);
@@ -821,6 +849,14 @@ public partial class ShutterDBContext : DbContext
             entity.HasKey(e => e.EstimateWindowProductComponentMaterialId).HasName("PK__TblEstim__13E8FE878C48B58A");
 
             entity.ToTable("TblEstimateWindowProductComponentMaterial", "dbo");
+
+            entity.HasIndex(e => e.EstimateId, "IX_TblEstimateWindowProductComponentMaterial_EstimateId");
+
+            entity.HasIndex(e => e.EstimateWindowProductComponentId, "IX_TblEstimateWindowProductComponentMaterial_EstimateWindowProductComponentId");
+
+            entity.HasIndex(e => e.ProductType, "IX_TblEstimateWindowProductComponentMaterial_ProductType");
+
+            entity.HasIndex(e => e.TenantId, "IX_TblEstimateWindowProductComponentMaterial_TenantId");
 
             entity.Property(e => e.EstimateWindowProductComponentMaterialId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.CreatedAt)
@@ -866,6 +902,14 @@ public partial class ShutterDBContext : DbContext
             entity.HasKey(e => e.Id).HasName("PK__TblEstim__3213E83F9C96ED79");
 
             entity.ToTable("TblEstimateWindowProductOption", "dbo");
+
+            entity.HasIndex(e => e.EstimateWindowProductId, "IX_TblEstimateWindowProductOption_EstimateWindowProductId");
+
+            entity.HasIndex(e => e.TaxId, "IX_TblEstimateWindowProductOption_TaxId");
+
+            entity.HasIndex(e => e.WindowOptionId, "IX_TblEstimateWindowProductOption_WindowOptionId");
+
+            entity.HasIndex(e => e.WindowProductId, "IX_TblEstimateWindowProductOption_WindowProductId");
 
             entity.Property(e => e.Id)
                 .HasDefaultValueSql("(newid())")
@@ -1010,6 +1054,8 @@ public partial class ShutterDBContext : DbContext
 
             entity.ToTable("TblInvoice", "dbo");
 
+            entity.HasIndex(e => e.EstimateId, "IX_TblInvoice_EstimateId");
+
             entity.Property(e => e.InvoiceId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.BalanceDue).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.CreatedAt)
@@ -1047,6 +1093,8 @@ public partial class ShutterDBContext : DbContext
 
             entity.ToTable("TblInvoicePayment", "dbo");
 
+            entity.HasIndex(e => e.InvoiceId, "IX_TblInvoicePayment_InvoiceId");
+
             entity.Property(e => e.InvoicePaymentId).ValueGeneratedNever();
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
@@ -1068,6 +1116,14 @@ public partial class ShutterDBContext : DbContext
             entity.HasKey(e => e.JobId).HasName("PK__TblJob__056690C26EFF9CAD");
 
             entity.ToTable("TblJob", "dbo");
+
+            entity.HasIndex(e => e.AddressId, "IX_TblJob_AddressId");
+
+            entity.HasIndex(e => e.ContactId, "IX_TblJob_ContactId");
+
+            entity.HasIndex(e => e.JobStatus, "IX_TblJob_JobStatus");
+
+            entity.HasIndex(e => e.TenantId, "IX_TblJob_TenantId");
 
             entity.Property(e => e.JobId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.CreatedAt)
@@ -1118,6 +1174,12 @@ public partial class ShutterDBContext : DbContext
 
             entity.ToTable("TblJobComponent", "dbo");
 
+            entity.HasIndex(e => e.AssemblyId, "IX_TblJobComponent_AssemblyId");
+
+            entity.HasIndex(e => e.ComponentId, "IX_TblJobComponent_ComponentId");
+
+            entity.HasIndex(e => e.JobId, "IX_TblJobComponent_JobId");
+
             entity.Property(e => e.JobComponentId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.ActualDeliveryDate).HasColumnType("datetime");
             entity.Property(e => e.ComponentType)
@@ -1158,6 +1220,12 @@ public partial class ShutterDBContext : DbContext
             entity.HasKey(e => e.JobContactId).HasName("PK__TblJobCo__BB491B5F0239F7CC");
 
             entity.ToTable("TblJobContact", "dbo");
+
+            entity.HasIndex(e => e.ContactId, "IX_TblJobContact_ContactId");
+
+            entity.HasIndex(e => e.ContactTypeId, "IX_TblJobContact_ContactTypeId");
+
+            entity.HasIndex(e => e.JobId, "IX_TblJobContact_JobId");
 
             entity.Property(e => e.JobContactId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
@@ -1345,6 +1413,14 @@ public partial class ShutterDBContext : DbContext
             entity.HasKey(e => e.OptionId).HasName("PK__TblOptio__92C7A1FFEA70BF74");
 
             entity.ToTable("TblOptions", "dbo");
+
+            entity.HasIndex(e => e.ProductId, "IX_TblOptions_ProductId");
+
+            entity.HasIndex(e => e.ProductTypeId, "IX_TblOptions_ProductTypeId");
+
+            entity.HasIndex(e => e.TaxId, "IX_TblOptions_TaxId");
+
+            entity.HasIndex(e => e.TenantId, "IX_TblOptions_TenantId");
 
             entity.Property(e => e.OptionId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.CreatedAt)
@@ -1586,6 +1662,10 @@ public partial class ShutterDBContext : DbContext
 
             entity.ToTable("TblProduct", "dbo");
 
+            entity.HasIndex(e => e.TaxId, "IX_TblProduct_TaxId");
+
+            entity.HasIndex(e => e.TenantId, "IX_TblProduct_TenantId");
+
             entity.Property(e => e.ProductId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.AdditionalWidth).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.ArchHeight).HasColumnType("decimal(10, 2)");
@@ -1623,6 +1703,12 @@ public partial class ShutterDBContext : DbContext
 
             entity.ToTable("TblProductComponent", "dbo");
 
+            entity.HasIndex(e => e.ComponentId, "IX_TblProductComponent_ComponentId");
+
+            entity.HasIndex(e => e.ProductId, "IX_TblProductComponent_ProductId");
+
+            entity.HasIndex(e => e.TenantId, "IX_TblProductComponent_TenantId");
+
             entity.Property(e => e.ProductComponentId).ValueGeneratedNever();
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
             entity.Property(e => e.PricingExpression).HasMaxLength(100);
@@ -1647,6 +1733,12 @@ public partial class ShutterDBContext : DbContext
             entity.HasKey(e => e.RawMaterialId).HasName("PK__TblRawMa__D99FAE11851EE539");
 
             entity.ToTable("TblRawMaterial", "dbo");
+
+            entity.HasIndex(e => e.ProductType, "IX_TblRawMaterial_ProductType");
+
+            entity.HasIndex(e => e.TenantId, "IX_TblRawMaterial_TenantId");
+
+            entity.HasIndex(e => e.VendorId, "IX_TblRawMaterial_VendorId");
 
             entity.Property(e => e.RawMaterialId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.CreatedAt)
@@ -1993,6 +2085,10 @@ public partial class ShutterDBContext : DbContext
 
             entity.ToTable("TblVendor", "dbo");
 
+            entity.HasIndex(e => e.State, "IX_TblVendor_State");
+
+            entity.HasIndex(e => e.TenantId, "IX_TblVendor_TenantId");
+
             entity.Property(e => e.VendorId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.City)
                 .HasMaxLength(200)
@@ -2040,6 +2136,12 @@ public partial class ShutterDBContext : DbContext
 
             entity.ToTable("TblVendorOrder", "dbo");
 
+            entity.HasIndex(e => e.JobId, "IX_TblVendorOrder_JobId");
+
+            entity.HasIndex(e => e.TenentId, "IX_TblVendorOrder_TenentId");
+
+            entity.HasIndex(e => e.VendorId, "IX_TblVendorOrder_VendorId");
+
             entity.HasIndex(e => e.OrderNumber, "UQ__TblVendo__CAC5E7437EC0F4A6").IsUnique();
 
             entity.Property(e => e.VendorOrderId).HasDefaultValueSql("(newid())");
@@ -2079,6 +2181,10 @@ public partial class ShutterDBContext : DbContext
 
             entity.ToTable("TblVendorOrderItem", "dbo");
 
+            entity.HasIndex(e => e.MaterialId, "IX_TblVendorOrderItem_MaterialId");
+
+            entity.HasIndex(e => e.VendorOrderId, "IX_TblVendorOrderItem_VendorOrderId");
+
             entity.Property(e => e.VendorOrderItemId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
@@ -2112,6 +2218,12 @@ public partial class ShutterDBContext : DbContext
             entity.HasKey(e => e.WindowId).HasName("PK__TblWindo__1EEC642937E205D0");
 
             entity.ToTable("TblWindow", "dbo");
+
+            entity.HasIndex(e => e.AddressId, "IX_TblWindow_AddressId");
+
+            entity.HasIndex(e => e.JobId, "IX_TblWindow_JobId");
+
+            entity.HasIndex(e => e.TenantId, "IX_TblWindow_TenantId");
 
             entity.Property(e => e.WindowId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.ArchHeight).HasColumnType("decimal(10, 2)");
@@ -2148,6 +2260,14 @@ public partial class ShutterDBContext : DbContext
 
             entity.ToTable("tblWindowProduct", "dbo");
 
+            entity.HasIndex(e => e.ProductId, "IX_TblWindowProduct_ProductId");
+
+            entity.HasIndex(e => e.ProductTypeId, "IX_TblWindowProduct_ProductTypeId");
+
+            entity.HasIndex(e => e.TenantId, "IX_TblWindowProduct_TenantId");
+
+            entity.HasIndex(e => e.WindowId, "IX_TblWindowProduct_WindowId");
+
             entity.Property(e => e.WindowProductId).ValueGeneratedNever();
             entity.Property(e => e.BuildHeight).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.BuildWidth).HasColumnType("decimal(10, 2)");
@@ -2176,6 +2296,14 @@ public partial class ShutterDBContext : DbContext
             entity.HasKey(e => e.WindowoptionId).HasName("PK__WindowOp__F9F31DB279AABAC9");
 
             entity.ToTable("WindowOption", "dbo");
+
+            entity.HasIndex(e => e.OptionTypeId, "IX_WindowOption_OptionTypeId");
+
+            entity.HasIndex(e => e.TenantId, "IX_WindowOption_TenantId");
+
+            entity.HasIndex(e => e.WindowId, "IX_WindowOption_WindowId");
+
+            entity.HasIndex(e => e.WindowProductId, "IX_WindowOption_WindowProductId");
 
             entity.Property(e => e.WindowoptionId).ValueGeneratedNever();
             entity.Property(e => e.AdditionalCost).HasColumnType("decimal(10, 2)");

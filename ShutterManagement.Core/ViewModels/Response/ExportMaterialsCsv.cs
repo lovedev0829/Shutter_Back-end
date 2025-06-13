@@ -11,6 +11,7 @@ namespace ShutterManagement.Core.ViewModels.Response
 
         public Guid MaterialId { get; set; }
         public string? MaterialName { get; set; }
+        public string? MaterialUniqueId { get; set; }
 
         public decimal? UnitCost { get; set; }
 

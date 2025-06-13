@@ -563,8 +563,6 @@ namespace ShutterManagement.Business.Services
             return (basePrice * totalTaxRate) / 100;
         }
 
-
-
         public async Task<bool> IsTaxApplied(Guid JobId)
         {
             try
@@ -635,9 +633,9 @@ namespace ShutterManagement.Business.Services
 
                     if (isTaxExempt && item.IsTaxAvailable == true)
                     {
-                        item.MunicipalityTaxAmount = ((item.Price + item.OptionMarkup) * item.MunicipalityTax / 100);
-                        item.StateTaxAmount = ((item.Price + item.OptionMarkup) * item.StateTax / 100);
-                        item.CityTaxAmount = ((item.Price + item.OptionMarkup) * item.CityTax / 100);
+                        item.MunicipalityTaxAmount = ((item.Price + (item.OptionMarkup ?? 0.0m)) * (item.MunicipalityTax ?? 0.0m) / 100);
+                        item.StateTaxAmount = ((item.Price + (item.OptionMarkup ?? 0.0m)) * (item.StateTax ?? 0.0m) / 100);
+                        item.CityTaxAmount = ((item.Price + (item.OptionMarkup ?? 0.0m)) * (item.CityTax ?? 0.0m) / 100);
                         item.TotalTaxAmount = item.MunicipalityTaxAmount + item.StateTaxAmount + item.CityTaxAmount;
                     }
 
@@ -708,7 +706,7 @@ namespace ShutterManagement.Business.Services
                             decimal? TenantOptionMarkupPriceWithOriginalPrice = 0.0m;
                             if (!isSubtenant)
                             {
-                                TenantOptionMarkupPriceWithOriginalPrice = (x.OptionPrice + x.OptionMarkup) ?? 0.0m;
+                                TenantOptionMarkupPriceWithOriginalPrice = (x.OptionPrice * (x.OptionMarkup ?? 0.0m) / 100) ?? 0.0m;
                             }
 
                             x.MunicipalityTaxAmount = ((x.OptionPrice + TenantOptionMarkupPriceWithOriginalPrice ?? 0.0m) * x.MunicipalityTax / 100);

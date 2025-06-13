@@ -826,6 +826,7 @@ namespace ShutterManagement.Controllers
         [Route("ghlsync")]
         public async Task<IActionResult> SyncAllData()
         {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
             await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
             var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration();
             if (Checkghlresponse.IsSuccess)
@@ -837,40 +838,94 @@ namespace ShutterManagement.Controllers
                     return Ok(CheckStageMapping);
                 }
 
+                //Task.Run(async () =>
+                //{
 
-                var contact = await contactService.ContactSync();
-                var opportunityResult = await jobService.SyncOpportunitiesFromGhl();
-                var appointment = await jobSchedule.AppointmentSync();
-                var users = await gHLService_V2.GetUsersByCalendarIdAsync();
+                //    var contact = await contactService.ContactSync();
+                //    var opportunityResult = await jobService.SyncOpportunitiesFromGhl();
+                //    var appointment = await jobSchedule.AppointmentSync();
+                //    var users = await gHLService_V2.GetUsersByCalendarIdAsync();
 
-                string combinedMessage = string.Join(", ", new[]
+                //    string combinedMessage = string.Join(", ", new[]
+                //    {
+                //pipelineResult.Message,
+                //contact.Message,
+                //opportunityResult.Message,
+                //appointment.Message,
+                //users.Message
+                //});
+
+                //    var response = new
+                //    {
+                //        IsSuccess = pipelineResult.IsSuccess &&
+                //                    contact.IsSuccess &&
+                //                    opportunityResult.IsSuccess &&
+                //                    appointment.IsSuccess &&
+                //                    users.IsSuccess,
+                //        Message = combinedMessage
+                //    };
+
+
+                //    return Ok(response);
+                //});
+
+                _ = Task.Run(async () =>
                 {
-                pipelineResult.Message,
-                contact.Message,
-                opportunityResult.Message,
-                appointment.Message,
-                users.Message
+                    var syncStart = DateTime.Now;
+                    FileLogger.Log("Sync Process Started", $"Start Time: {syncStart}");
+
+                    try
+                    {
+                        FileLogger.Log("ContactSync", "Started");
+                        var contact = await contactService.ContactSync();
+                        FileLogger.Log("ContactSync", $"Completed. Message: {contact.Message}");
+
+                        FileLogger.Log("SyncOpportunitiesFromGhl", "Started");
+                        var opportunity = await jobService.SyncOpportunitiesFromGhl();
+                        FileLogger.Log("SyncOpportunitiesFromGhl", $"Completed. Message: {opportunity.Message}");
+
+                        FileLogger.Log("AppointmentSync", "Started");
+                        var appointment = await jobSchedule.AppointmentSync();
+                        FileLogger.Log("AppointmentSync", $"Completed. Message: {appointment.Message}");
+
+                        FileLogger.Log("GetUsersByCalendarIdAsync", "Started");
+                        var users = await gHLService_V2.GetUsersByCalendarIdAsync();
+                        FileLogger.Log("GetUsersByCalendarIdAsync", $"Completed. Message: {users.Message}");
+
+                        var syncEnd = DateTime.Now;
+                        FileLogger.Log("Sync Process Completed", $"End Time: {syncEnd}, Duration: {(syncEnd - syncStart).TotalSeconds} seconds");
+                    }
+                    catch (Exception ex)
+                    {
+                        var errorTime = DateTime.Now;
+                        FileLogger.Log("Sync Process Error", $"Time: {errorTime}, Error: {ex.Message}");
+                        FileLogger.Log("StackTrace", ex.StackTrace ?? "No stack trace");
+
+                        // Optional: write more detailed error trace if inner exceptions exist
+                        if (ex.InnerException != null)
+                        {
+                            FileLogger.Log("Inner Exception", ex.InnerException.Message);
+                            FileLogger.Log("Inner StackTrace", ex.InnerException.StackTrace ?? "No inner stack trace");
+                        }
+                    }
                 });
 
-                var response = new
-                {
-                    IsSuccess = pipelineResult.IsSuccess &&
-                                contact.IsSuccess &&
-                                opportunityResult.IsSuccess &&
-                                appointment.IsSuccess &&
-                                users.IsSuccess,
-                    Message = combinedMessage
-                };
-
-
-                return Ok(response);
+                responseVm.IsSuccess= true;
+                responseVm.Message = "Data synchronization started successfully. Please wait for syncing .";
+                return Ok(responseVm);
             }
             else
             {
-                return BadRequest(Checkghlresponse);
+                return Ok(Checkghlresponse);
             }
-            
+
         }
+
+
+
+
+
+
 
         [HttpGet]
         [Route("EstimateAmmount")]
