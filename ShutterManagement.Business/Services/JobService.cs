@@ -38,11 +38,13 @@ namespace ShutterManagement.Business.Services
         private readonly IContactService contact;
         private readonly GHLService_v2 gHLService_V2;
         private readonly JobStatusAndStageMapping statusAndStageMapping;
+        private readonly HttpClient httpClient;
+        private readonly IJobStatusService jobStatusService;
         private string BaseUrl = AppConstant.GHL_BaseAddress;
 
         public JobService(ShutterDBContext context, ClaimsProperty claimsProperty, IAddress address,
             ITenantService tenantService,INotificationService notification, IGHLConfiguration gHLConfiguration,
-            IContactService contact,GHLService_v2 gHLService_V2,JobStatusAndStageMapping statusAndStageMapping)
+            IContactService contact,GHLService_v2 gHLService_V2,JobStatusAndStageMapping statusAndStageMapping, HttpClient httpClient,IJobStatusService jobStatusService)
         {
             _context = context;
             this.claimsProperty = claimsProperty;
@@ -54,6 +56,8 @@ namespace ShutterManagement.Business.Services
             this.contact = contact;
             this.gHLService_V2 = gHLService_V2;
             this.statusAndStageMapping = statusAndStageMapping;
+            this.httpClient = httpClient;
+            this.jobStatusService = jobStatusService;
         }
 
         private static string GetApiKey()
@@ -410,8 +414,8 @@ namespace ShutterManagement.Business.Services
                 }
 
                 FileLogger.Log("Starting SyncOpportunitiesFromGhl process.");
-                using var client = new HttpClient();
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
+
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
 
                 var pipelineResponse = await gHLService_V2.GetAllPipelinesWithStagesAsync();
                 if (pipelineResponse?.Pipelines == null || !pipelineResponse.Pipelines.Any())
@@ -452,7 +456,7 @@ namespace ShutterManagement.Business.Services
                             x.TenantId==AppConstant.LoggedInTenantId && x.IsActive==true && x.IsDelete==false);
 
                         var stage = stages?.Data.FirstOrDefault(x => x.GhlStageId == opportunity.PipelineStageId);
-                        var dbcontact = _context.TblContacts
+                        var dbcontact = contact.GetAllQuerable()
                             .FirstOrDefault(x => x.GhlcontactId == opportunity.Contact.Id && x.TenantId == AppConstant.LoggedInTenantId
                             && x.IsDelete == false && x.IsActive == true && x.IsArchive == false);
 
@@ -462,7 +466,7 @@ namespace ShutterManagement.Business.Services
                             continue; // Skip this record instead of exiting the entire sync
                         }
 
-                        var jobstatusId = _context.MstJobStatuses
+                        var jobstatusId = jobStatusService.GetAllQuerable()
                             .Where(x => x.JobStatusName == EnumValue.GetEnumValue(JobStatus.New))
                             .Select(x => x.JobStatusId)
                             .FirstOrDefault();
@@ -583,12 +587,12 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-                var jobStatusName = dbContext.MstJobStatuses
+                var jobStatusName = jobStatusService.GetAllQuerable()
                     .Where(x => x.JobStatusId == job.JobStatus)
                     .Select(x => x.JobStatusName)
                     .FirstOrDefault();
 
-                var contactData = dbContext.TblContacts
+                var contactData = contact.GetAllQuerable()
                     .Where(x => x.GhlcontactId == job.GhlContactId)
                     .FirstOrDefault();
 
@@ -620,14 +624,13 @@ namespace ShutterManagement.Business.Services
                   
                 };
 
-                using var client = new HttpClient();
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
-                client.DefaultRequestHeaders.Add("Version", AppConstant.GHL_Version);
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
+                httpClient.DefaultRequestHeaders.Add("Version", AppConstant.GHL_Version);
 
                 var url = $"{AppConstant.GHL_BaseAddress}/opportunities/{job.GhlOpportunityId}";
                 var content = new StringContent(JsonConvert.SerializeObject(ghlOpportunityModel), Encoding.UTF8, "application/json");
 
-                var response = await client.PutAsync(url, content);
+                var response = await httpClient.PutAsync(url, content);
                 var responseBody = await response.Content.ReadAsStringAsync();
 
                 if (!response.IsSuccessStatusCode)
@@ -839,10 +842,10 @@ namespace ShutterManagement.Business.Services
                         string arrayString = string.Join(", ", model.AttachmentsAny);
                     TblJob job = new TblJob
                     {
-                        AddressId = model.AddressId ?? null,
+                        AddressId = (model.AddressId!=null && model.AddressId!=Guid.Empty)? model.AddressId:  null,
                         ContactId = model.ContactId,
                         JobName = model.JobName?.Trim(),
-                        JobType = model.JobType,
+                        JobType = (model.JobType != null && model.JobType != Guid.Empty) ? model.JobType : null,
                         AssignedPersonnel = model.AssignedPersonnel ?? Guid.Empty, 
                         ScheduledDate = model.ScheduledDate,
                         JobStatus = jobStatus != Guid.Empty ? jobStatus : null,

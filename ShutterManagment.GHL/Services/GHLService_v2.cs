@@ -341,48 +341,57 @@ namespace ShutterManagement.GHL.Services
 
 
 
-        private async Task<T> SendGhlPostRequest<T>(string url, object payload, Dictionary<string, string> headers)
+        private async Task<T?> SendGhlPostRequest<T>(string url, object payload, Dictionary<string, string> headers)
         {
             try
             {
-                var content = new StringContent(
-               System.Text.Json.JsonSerializer.Serialize(payload),
-               Encoding.UTF8,
-               "application/json"
-           );
-
-                using var request = new HttpRequestMessage(HttpMethod.Post, url)
+                var request = new HttpRequestMessage(HttpMethod.Post, url)
                 {
-                    Content = content
+                    Content = new StringContent(
+                        System.Text.Json.JsonSerializer.Serialize(payload),
+                        Encoding.UTF8,
+                        "application/json")
                 };
 
                 foreach (var header in headers)
                 {
-                    if (header.Key == "Authorization")
+                    if (header.Key.Equals("Authorization", StringComparison.OrdinalIgnoreCase))
+                    {
                         request.Headers.Authorization = AuthenticationHeaderValue.Parse(header.Value);
+                    }
                     else
-                        request.Headers.Add(header.Key, header.Value);
+                    {
+                        request.Headers.TryAddWithoutValidation(header.Key, header.Value);
+                    }
                 }
 
                 request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-                using var response = await _httpClient.SendAsync(request);
+                using var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+
                 response.EnsureSuccessStatusCode();
 
                 var responseBody = await response.Content.ReadAsStringAsync();
 
                 return System.Text.Json.JsonSerializer.Deserialize<T>(responseBody, new JsonSerializerOptions
                 {
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                    PropertyNameCaseInsensitive = true
+                    PropertyNameCaseInsensitive = true,
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
                 });
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                Console.WriteLine($"Error in SendGhlPostRequest: {ex.Message}");
+                LogException(nameof(SendGhlPostRequest), ex);
+                return default;
             }
-            return default(T);
-           
+        }
+
+
+        private void LogException(string context, Exception ex)
+        {
+            FileLogger.Log($"[ERROR] Context    : {context}");
+            FileLogger.Log($"Message   : {ex.Message}");
+            FileLogger.Log($"StackTrace: {ex.StackTrace}");
         }
 
 
@@ -670,60 +679,136 @@ namespace ShutterManagement.GHL.Services
 
 
 
+        //public async Task<IResponseVm<List<Opportunity>>> GetOpportunitiesFromGhl()
+        //{
+        //    IResponseVm<List<Opportunity>> responseVm = new ResponseVm<List<Opportunity>>();
+
+        //    try
+        //    {
+
+
+
+        //        var pipelineResponse = await GetAllPipelinesWithStagesAsync();
+
+        //        if (pipelineResponse?.Pipelines == null || !pipelineResponse.Pipelines.Any())
+        //        {
+        //            responseVm.IsSuccess = false;
+        //            responseVm.Message = "No pipelines found.";
+        //            return responseVm;
+        //        }
+
+        //        string userProvidedPipelineNameOrId = AppConstant.GHL_PipelineId;
+
+        //        var targetPipeline = pipelineResponse.Pipelines
+        //            .FirstOrDefault(p => p.Id.Contains(userProvidedPipelineNameOrId) || p.Name.Contains(userProvidedPipelineNameOrId));
+        //        string url = $"{AppConstant.GHL_BaseAddress}/opportunities/search?location_id={AppConstant.GHL_Locationd}&"+$"pipeline_id={AppConstant.GHL_PipelineId}";
+        //        //string url = $"{AppConstant.GHL_BaseAddress}/opportunities/search?location_id={AppConstant.GHL_Locationd}";
+        //        _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        //        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
+        //        _httpClient.DefaultRequestHeaders.Add("Version", AppConstant.GHL_Version);
+
+        //        HttpResponseMessage response = await _httpClient.GetAsync(url);
+        //        string responseBody = await response.Content.ReadAsStringAsync();
+
+        //        if (!response.IsSuccessStatusCode)
+        //        {
+        //            responseVm.IsSuccess = false;
+        //            responseVm.Message = $"Error: {response.StatusCode}, Details: {responseBody}";
+        //            return responseVm;
+        //        }
+
+        //        var ghlResponse = JsonConvert.DeserializeObject<GhlOpportunitiesResponse>(responseBody);
+        //        responseVm.Data = ghlResponse?.Opportunities ?? new List<Opportunity>();
+        //        responseVm.IsSuccess = true;
+        //        responseVm.Message = AppConstant.FetchSuccessMsg;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        responseVm.IsSuccess = false;
+        //        responseVm.Message = $"Exception occurred: {ex.Message}";
+        //    }
+
+        //    return responseVm;
+        //}
+
+
         public async Task<IResponseVm<List<Opportunity>>> GetOpportunitiesFromGhl()
         {
             IResponseVm<List<Opportunity>> responseVm = new ResponseVm<List<Opportunity>>();
 
             try
             {
-                using var client = new HttpClient();
-
-
                 var pipelineResponse = await GetAllPipelinesWithStagesAsync();
 
                 if (pipelineResponse?.Pipelines == null || !pipelineResponse.Pipelines.Any())
                 {
-                    responseVm.IsSuccess = false;
-                    responseVm.Message = "No pipelines found.";
-                    return responseVm;
+                    return new ResponseVm<List<Opportunity>>
+                    {
+                        IsSuccess = false,
+                        Message = "No pipelines found.",
+                        Data = new List<Opportunity>()
+                    };
                 }
 
                 string userProvidedPipelineNameOrId = AppConstant.GHL_PipelineId;
 
                 var targetPipeline = pipelineResponse.Pipelines
-                    .FirstOrDefault(p => p.Id.Contains(userProvidedPipelineNameOrId) || p.Name.Contains(userProvidedPipelineNameOrId));
+                    .FirstOrDefault(p => p.Id.Contains(userProvidedPipelineNameOrId) ||
+                                         p.Name.Contains(userProvidedPipelineNameOrId));
 
-                string url = $"{AppConstant.GHL_BaseAddress}/opportunities/search?location_id={AppConstant.GHL_Locationd}";
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
-                client.DefaultRequestHeaders.Add("Version", AppConstant.GHL_Version);
+                if (targetPipeline == null)
+                {
+                    return new ResponseVm<List<Opportunity>>
+                    {
+                        IsSuccess = false,
+                        Message = "Target pipeline not found.",
+                        Data = new List<Opportunity>()
+                    };
+                }
 
-                HttpResponseMessage response = await client.GetAsync(url);
+                string url = $"{AppConstant.GHL_BaseAddress}/opportunities/search" +
+                             $"?location_id={AppConstant.GHL_Locationd}" +
+                             $"&pipeline_id={targetPipeline.Id}";
+
+                using var request = new HttpRequestMessage(HttpMethod.Get, url);
+                request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
+                request.Headers.Add("Version", AppConstant.GHL_Version);
+
+                HttpResponseMessage response = await _httpClient.SendAsync(request);
                 string responseBody = await response.Content.ReadAsStringAsync();
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    responseVm.IsSuccess = false;
-                    responseVm.Message = $"Error: {response.StatusCode}, Details: {responseBody}";
-                    return responseVm;
+                    return new ResponseVm<List<Opportunity>>
+                    {
+                        IsSuccess = false,
+                        Message = $"Error: {response.StatusCode}, Details: {responseBody}",
+                        Data = new List<Opportunity>()
+                    };
                 }
 
                 var ghlResponse = JsonConvert.DeserializeObject<GhlOpportunitiesResponse>(responseBody);
-                responseVm.Data = ghlResponse?.Opportunities ?? new List<Opportunity>();
-                responseVm.IsSuccess = true;
-                responseVm.Message = AppConstant.FetchSuccessMsg;
+                return new ResponseVm<List<Opportunity>>
+                {
+                    IsSuccess = true,
+                    Data = ghlResponse?.Opportunities ?? new List<Opportunity>(),
+                    Message = AppConstant.FetchSuccessMsg
+                };
             }
             catch (Exception ex)
             {
-                responseVm.IsSuccess = false;
-                responseVm.Message = $"Exception occurred: {ex.Message}";
+                return new ResponseVm<List<Opportunity>>
+                {
+                    IsSuccess = false,
+                    Message = $"Exception occurred: {ex.Message}",
+                    Data = new List<Opportunity>()
+                };
             }
-
-            return responseVm;
         }
 
 
-       
+
 
         #endregion End Opportunity Related Methods
 
@@ -759,7 +844,6 @@ namespace ShutterManagement.GHL.Services
                 var requestUrl = $"{AppConstant.GHL_BaseAddress}/calendars/events/appointments";
 
                 // Create the HTTP client
-                using var httpClient = new HttpClient();
 
                 // Prepare the request content (serialized JSON)
                 var contactJson = JsonConvert.SerializeObject(contactData);
@@ -776,7 +860,7 @@ namespace ShutterManagement.GHL.Services
                 requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
                 requestMessage.Headers.Add("Version", AppConstant.GHL_Version);
 
-                var response = await httpClient.SendAsync(requestMessage);
+                var response = await _httpClient.SendAsync(requestMessage);
                 var jsonResponse = await response.Content.ReadAsStringAsync();
                 if (!response.IsSuccessStatusCode)
                 {
