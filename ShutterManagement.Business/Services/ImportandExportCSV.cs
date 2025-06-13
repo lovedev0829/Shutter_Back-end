@@ -921,14 +921,15 @@ namespace ShutterManagement.Business.Services
                                         LastName = t1.LastName,
                                         VendorCode = t1.VendorCode,
                                         IsCutSheet = t2.IsCutSheet,
+                                        MaterialUniqueId = t2.MaterialUniqueId,
                                     }).ToList();
 
                 var csvBuilder = new StringBuilder();
-                csvBuilder.AppendLine("MaterialName*,UnitCost*,UnitOfMeasurement*,Lenght,Width,StockQuantity,ReorderLevel,Vendor*,Notes,ProductType*,SKU,IsCutSheet*");
+                csvBuilder.AppendLine("MaterialUniqueId*,MaterialName*,UnitCost*,UnitOfMeasurement*,Lenght,Width,StockQuantity,ReorderLevel,Vendor*,Notes,ProductType*,SKU,IsCutSheet*");
 
                 foreach (var material in materialList)
                 {
-                    var line = $"{material.MaterialName},{material.UnitCost},{material.UnitOfMeasurement},{material.Lenght},{material.Width},{material.StockQuantity}," +
+                    var line = $"{material.MaterialUniqueId},{material.MaterialName},{material.UnitCost},{material.UnitOfMeasurement},{material.Lenght},{material.Width},{material.StockQuantity}," +
                                $"{material.ReorderLevel},{material.VendorCode},{material.Notes},{material.ProductTypeName},{material.SKU},{material.IsCutSheet}";
 
                     csvBuilder.AppendLine(line);

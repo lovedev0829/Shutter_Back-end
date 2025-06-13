@@ -446,10 +446,6 @@ namespace ShutterManagement.Business.Services
             return optionTaxDetails;
         }
 
-
-
-
-
         private OptionTaxVM CalculateOptionTax(dynamic option, WindowProdcutDetailsForEstimate item)
         {
             var taxId = (option.IsTaxApplied == true && option.TaxRateId != null) ? option.TaxRateId : item.TaxRateId;

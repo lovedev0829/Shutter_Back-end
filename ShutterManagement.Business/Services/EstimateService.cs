@@ -563,8 +563,6 @@ namespace ShutterManagement.Business.Services
             return (basePrice * totalTaxRate) / 100;
         }
 
-
-
         public async Task<bool> IsTaxApplied(Guid JobId)
         {
             try

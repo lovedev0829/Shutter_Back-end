@@ -1646,6 +1646,5 @@ namespace ShutterManagement.Business.Services
             }
         }
 
-
     }
 }

@@ -102,7 +102,9 @@ namespace ShutterManagement.Core.Common
         [EnumMember(Value = "INV")]
         Invoice,
         [EnumMember(Value = "VEN")]
-        Vendor
+        Vendor,
+        [EnumMember(Value = "MAT")]
+        Material
     }
 
     // JobStatus Enum Value

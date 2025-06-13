@@ -144,6 +144,10 @@ namespace ShutterManagement.Business.Services
                 }
                 if (IsTenant)
                 {
+                    int Version = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt)
+                         .Select(p => (p.MaterialUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries).Length == 3 ? Convert.ToInt32(p.MaterialUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries)[2]) : 0)).FirstOrDefault();
+                    Version += 1;
+                    var generateUnique = GenerateUniqueId.GenerateUniqueIds(ModuleName.Material, AppConstant.LoggedInCompanyCode, Version);
                     if (IsVendorExist)
                     {
                         TblRawMaterial material = new TblRawMaterial
@@ -165,7 +169,8 @@ namespace ShutterManagement.Business.Services
                             CreatedBy = AppConstant.LoggedInUserID,
                             IsActive = true,
                             IsDelete = false,
-                            TenantId = AppConstant.LoggedInTenantId
+                            TenantId = AppConstant.LoggedInTenantId,
+                            MaterialUniqueId = generateUnique,
                         };
                         if (material != null)
                         {
@@ -294,6 +299,7 @@ namespace ShutterManagement.Business.Services
                                             LastName = t1.LastName,
                                             CompanyName=t1.CompanyName,
                                             IsCutSheet = t2.IsCutSheet,
+                                            MaterialUniqueId = t2.MaterialUniqueId,
                                         }).ToList();
 
                     FileLogger.Log($"This is Material List {MaterialList}");
@@ -338,6 +344,7 @@ namespace ShutterManagement.Business.Services
                         StockQuantity = x.StockQuantity,
                         ReorderLevel = x.ReorderLevel,
                         SKU=x.SKU?? "", 
+                        MaterialUniqueId = x.MaterialUniqueId ?? "",
                     }).ToList();
 
                     var queryable = FilterRecords.AsQueryable();
@@ -393,7 +400,7 @@ namespace ShutterManagement.Business.Services
                     {
                         
                         var IsMaterialExists = GetAllQuerable()
-                                 .Where(c => c.RawMaterialId == Guid.Parse(model.MaterialId)
+                                 .Where(c => (c.RawMaterialId == Guid.Parse(model.MaterialId) || c.MaterialUniqueId == model.MaterialUniqueId)
                                                && c.TenantId == AppConstant.LoggedInTenantId
                                                && c.IsDelete == false)
                                    .FirstOrDefault();
