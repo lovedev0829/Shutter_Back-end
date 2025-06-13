@@ -201,7 +201,7 @@ namespace ShutterManagement.Business.Services
                     //var records = csv.GetRecords<ImportMaterial>().ToList();
                     var expectedHeaders = new[]
                     {
-                   "MaterialName", "UnitCost", "UnitOfMeasurement","Lenght","Width", "StockQuantity", "ReorderLevel",
+                   "MaterialUniqueId","MaterialName", "UnitCost", "UnitOfMeasurement","Lenght","Width", "StockQuantity", "ReorderLevel",
                    "Vendor", "Notes", "ProductType", "SKU", "IsCutSheet"
                     };
 
@@ -285,7 +285,6 @@ namespace ShutterManagement.Business.Services
                             continue;
 
                         }
-
                         var materialModel = new CreateMaterial
                         {
                             SKU = record.SKU?.Trim(),
@@ -302,6 +301,7 @@ namespace ShutterManagement.Business.Services
                             VendorId = vendor.VendorId,
                             Notes = record.Notes,
                             ProductType = productType.ProductId.ToString(),
+                            MaterialUniqueId = record.MaterialUniqueId ?? ""
                         };
 
                         var existingMaterialdata = await material.Validate_MaterialExcell(record);
