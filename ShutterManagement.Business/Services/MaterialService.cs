@@ -221,7 +221,7 @@ namespace ShutterManagement.Business.Services
                                     IsActive = true,
                                     IsDelete = false,
                                     TenantId = AppConstant.LoggedInTenantId,
-                                    MaterialUniqueId = !string.IsNullOrEmpty(model.MaterialUniqueId) ? model.MaterialUniqueId: MaterialUniqueId1,
+                                    MaterialUniqueId = MaterialUniqueId1,
                                 };
                                 if (material != null)
                                 {
