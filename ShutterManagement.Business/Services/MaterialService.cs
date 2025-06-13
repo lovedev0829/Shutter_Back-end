@@ -91,7 +91,7 @@ namespace ShutterManagement.Business.Services
                 {
                     var VendorExit = vendorService.GetAllQuerable().Where(v => (v.VendorCode == model.Vendor || v.CompanyName == model.Vendor) && v.IsDelete == false && v.TenantId == AppConstant.LoggedInTenantId)
                                    .FirstOrDefault();
-                    var IsSKUExist = _context.TblRawMaterials.Any(x => x.VendorId == VendorExit.VendorId && x.MaterialName.ToLower().Trim() == model.MaterialName.ToLower().Trim() && x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false);
+                    var IsSKUExist = _context.TblRawMaterials.Any(x => x.MaterialName.ToLower().Trim() == model.MaterialName.ToLower().Trim() && x.MaterialUniqueId != model.MaterialUniqueId && x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false);
                     var GetAllVendorList = vendorService.GetAllQuerable()
                     .Where(x => x.IsActive == true && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId).ToList();
                     var GetAllUnitOfMeasureList = unitofMeasurementService.GetAllQuerable()
@@ -130,20 +130,138 @@ namespace ShutterManagement.Business.Services
             {
                 var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsActive == true && x.IsDelete == false);
                 var IsVendorExist = await vendorService.AnyAsync(x => x.VendorId == model.VendorId && x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
-                var IsSKUExist = _context.TblRawMaterials.Any(x => x.VendorId == model.VendorId && x.Sku == model.SKU && x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false && model.SKU!=null);
-                var IsMaterialExist = _context.TblRawMaterials.Any(x => x.MaterialName.ToLower().Trim() == model.MaterialName.ToLower().Trim() && x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false);
-                if(IsMaterialExist)
-                {
-                    responseVm.Message = $"Material Name" + AppConstant.AlreadyExists;
-                    return responseVm;
-                }
-                if (IsSKUExist)
-                {
-                    responseVm.Message = $"SKU {model.SKU}" + AppConstant.AlreadyExists;
-                    return responseVm;
-                }
+                
                 if (IsTenant)
                 {
+                    if(model.MaterialUniqueId != null)
+                    {
+                        var IsMaterialUniqueId = GetAllQuerable().Where(x => x.MaterialUniqueId.ToLower() == model.MaterialUniqueId.ToLower() && x.IsActive == true
+                        && x.IsDelete == false).FirstOrDefault();
+                        if (IsMaterialUniqueId != null)
+                        {
+                            decimal? length = null;
+                            decimal? width = null;
+
+                            switch (model.UnitOfMeasurement)
+                            {
+                                case "Each (Ea)":
+                                    length = null;
+                                    width = null;
+                                    break;
+                                case "Lbs":
+                                    length = null;
+                                    width = null;
+                                    break;
+
+                                case "Sq Feet":
+                                case "Sq Inches":
+                                    length = model.Lenght;
+                                    width = model.Width;
+                                    break;
+
+                                case "Linear Inches":
+                                case "Linear Feet":
+                                    length = model.Lenght;
+                                    width = null;
+                                    break;
+                            }
+                            var res = new UpdateMaterial
+                            {
+                                MaterialName = model.MaterialName,
+                                UnitCost = model.UnitCost,
+                                Lenght = length,
+                                Width = width,
+                                SKU = model.SKU,
+                                ProductType = model.ProductType,
+                                UnitOfMeasurement = model.UnitOfMeasurement,
+                                StockQuantity = model.StockQuantity,
+                                ReorderLevel = model.ReorderLevel,
+                                VendorId = model.VendorId,
+                                Notes = model.Notes,
+                                IsCutSheet = model.IsCutSheet,
+                                MaterialUniqueId = model.MaterialUniqueId
+                            };
+                            var res1 = await Update_Material(res);
+                            if(res1 != null)
+                            {
+                                responseVm.IsSuccess = true;
+                                responseVm.Message = res1.Message;
+                                return responseVm;
+                            }
+                        }
+                        else
+                        {
+                            if (IsVendorExist)
+                            {
+                                int Version1 = 0;
+                                var MaterialUniqueId1 = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt).
+                                    Select(x => x.MaterialUniqueId).FirstOrDefault();
+                                if (MaterialUniqueId1 != null)
+                                {
+                                    Version1 = MaterialUniqueId1.Split("-", StringSplitOptions.RemoveEmptyEntries).Length == 3 ? Convert.ToInt32(MaterialUniqueId1.Split("-", StringSplitOptions.RemoveEmptyEntries)[2]) : 0;
+                                }
+                                Version1 += 1;
+                                TblRawMaterial material = new TblRawMaterial
+                                {
+                                    MaterialName = model.MaterialName.Trim(),
+                                    UnitCost = model.UnitCost,
+                                    Length = model.Lenght ?? null,
+                                    Width = model.Width ?? null,
+                                    NonRatedUnitCost = model.UnitCost,
+                                    UnitOfMeasurement = model.UnitOfMeasurement,
+                                    StockQuantity = model.StockQuantity,
+                                    ReorderLevel = model.ReorderLevel,
+                                    ProductType = Guid.Parse(model.ProductType),
+                                    Sku = model.SKU ?? "",
+                                    IsCutSheet = model.IsCutSheet,
+                                    VendorId = model.VendorId,
+                                    Notes = model.Notes,
+                                    CreatedAt = DateTime.Now,
+                                    CreatedBy = AppConstant.LoggedInUserID,
+                                    IsActive = true,
+                                    IsDelete = false,
+                                    TenantId = AppConstant.LoggedInTenantId,
+                                    MaterialUniqueId = !string.IsNullOrEmpty(model.MaterialUniqueId) ? model.MaterialUniqueId: MaterialUniqueId1,
+                                };
+                                if (material != null)
+                                {
+                                    try
+                                    {
+                                        await Add(material);
+                                        responseVm.IsSuccess = true;
+                                        responseVm.Message = $"{AppConstant.InsertSuccessMsg}";
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        responseVm.Message = AppConstant.ExceptionError + ex.Message;
+                                    }
+                                    return responseVm;
+                                }
+                            }
+
+                        }
+                    }
+                    var IsSKUExist = Any(x => x.VendorId == model.VendorId && x.Sku == model.SKU && x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false && model.SKU != null);
+                    var IsMaterialExist = Any(x => x.MaterialName.ToLower().Trim() == model.MaterialName.ToLower().Trim() && x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false);
+                    if (IsMaterialExist)
+                    {
+                        responseVm.Message = $"Material Name" + AppConstant.AlreadyExists;
+                        return responseVm;
+                    }
+                    if (IsSKUExist)
+                    {
+                        responseVm.Message = $"SKU {model.SKU}" + AppConstant.AlreadyExists;
+                        return responseVm;
+                    }
+                    int Version = 0;
+                    var MaterialUniqueId = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt).
+                        Select(x => x.MaterialUniqueId).FirstOrDefault();
+                    if (MaterialUniqueId != null)
+                    {
+                        Version = MaterialUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries).Length == 3 ? Convert.ToInt32(MaterialUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries)[2]) : 0;
+                    }
+                    Version += 1;
+                    var generateUnique = GenerateUniqueId.GenerateUniqueIds(ModuleName.Material, AppConstant.LoggedInCompanyCode, Version);
                     if (IsVendorExist)
                     {
                         TblRawMaterial material = new TblRawMaterial
@@ -165,7 +283,8 @@ namespace ShutterManagement.Business.Services
                             CreatedBy = AppConstant.LoggedInUserID,
                             IsActive = true,
                             IsDelete = false,
-                            TenantId = AppConstant.LoggedInTenantId
+                            TenantId = AppConstant.LoggedInTenantId,
+                            MaterialUniqueId = generateUnique,
                         };
                         if (material != null)
                         {
@@ -294,6 +413,7 @@ namespace ShutterManagement.Business.Services
                                             LastName = t1.LastName,
                                             CompanyName=t1.CompanyName,
                                             IsCutSheet = t2.IsCutSheet,
+                                            MaterialUniqueId = t2.MaterialUniqueId,
                                         }).ToList();
 
                     FileLogger.Log($"This is Material List {MaterialList}");
@@ -338,6 +458,7 @@ namespace ShutterManagement.Business.Services
                         StockQuantity = x.StockQuantity,
                         ReorderLevel = x.ReorderLevel,
                         SKU=x.SKU?? "", 
+                        MaterialUniqueId = x.MaterialUniqueId ?? "",
                     }).ToList();
 
                     var queryable = FilterRecords.AsQueryable();
@@ -374,8 +495,10 @@ namespace ShutterManagement.Business.Services
             {
                 var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsActive == true && x.IsDelete == false);
                 var IsVendorExist = _context.TblVendors.Where(x => x.VendorId == model.VendorId && x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
-                var IsSKUExist = await AnyAsync(x => x.VendorId == model.VendorId && x.Sku == model.SKU && x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false && x.RawMaterialId != Guid.Parse(model.MaterialId) && model.SKU!=null);
-                var IsMaterialExist = _context.TblRawMaterials.Any(x => x.MaterialName.ToLower().Trim() == model.MaterialName.ToLower().Trim() && x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false && x.RawMaterialId.ToString()!=model.MaterialId);
+                var IsSKUExist = !string.IsNullOrEmpty(model.SKU) ? (await AnyAsync(x => x.VendorId == model.VendorId && x.Sku == model.SKU && x.TenantId == AppConstant.LoggedInTenantId 
+                && x.IsDelete == false && (model.MaterialId != null ? x.RawMaterialId != Guid.Parse(model.MaterialId) : x.MaterialUniqueId != model.MaterialUniqueId))) : false;
+                var IsMaterialExist = _context.TblRawMaterials.Any(x => x.MaterialName.ToLower().Trim() == model.MaterialName.ToLower().Trim() && x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false &&
+                x.RawMaterialId.ToString()!=model.MaterialId);
                 if (IsMaterialExist)
                 {
                     responseVm.Message = $"Material Name" + AppConstant.AlreadyExists;
@@ -393,7 +516,7 @@ namespace ShutterManagement.Business.Services
                     {
                         
                         var IsMaterialExists = GetAllQuerable()
-                                 .Where(c => c.RawMaterialId == Guid.Parse(model.MaterialId)
+                                 .Where(c => (!string.IsNullOrEmpty(model.MaterialId) ? c.RawMaterialId == Guid.Parse(model.MaterialId) : c.MaterialUniqueId == model.MaterialUniqueId)
                                                && c.TenantId == AppConstant.LoggedInTenantId
                                                && c.IsDelete == false)
                                    .FirstOrDefault();
@@ -471,6 +594,32 @@ namespace ShutterManagement.Business.Services
             return (responseVm);
         }
 
-       
+        public int GetNextMaterialVersion()
+        {
+            int version = 0;
+
+            var materialUniqueId = GetAllQuerable()
+                .Where(x => x.TenantId == AppConstant.LoggedInTenantId
+                            && x.CreatedAt.HasValue
+                            && x.CreatedAt.Value.Date == DateTime.Today)
+                .OrderByDescending(p => p.CreatedAt)
+                .FirstOrDefault();
+
+            if (!string.IsNullOrEmpty(materialUniqueId.MaterialUniqueId))
+            {
+                var parts = materialUniqueId.MaterialUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length == 3 && int.TryParse(parts[2], out int parsed))
+                {
+                    version = parsed;
+                }
+            }
+
+            
+            return version + 1;
+
+
+        }
+
+
     }
 }

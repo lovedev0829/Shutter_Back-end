@@ -201,7 +201,7 @@ namespace ShutterManagement.Business.Services
                     //var records = csv.GetRecords<ImportMaterial>().ToList();
                     var expectedHeaders = new[]
                     {
-                   "MaterialName", "UnitCost", "UnitOfMeasurement","Lenght","Width", "StockQuantity", "ReorderLevel",
+                   "MaterialUniqueId","MaterialName", "UnitCost", "UnitOfMeasurement","Lenght","Width", "StockQuantity", "ReorderLevel",
                    "Vendor", "Notes", "ProductType", "SKU", "IsCutSheet"
                     };
 
@@ -285,7 +285,6 @@ namespace ShutterManagement.Business.Services
                             continue;
 
                         }
-
                         var materialModel = new CreateMaterial
                         {
                             SKU = record.SKU?.Trim(),
@@ -302,6 +301,7 @@ namespace ShutterManagement.Business.Services
                             VendorId = vendor.VendorId,
                             Notes = record.Notes,
                             ProductType = productType.ProductId.ToString(),
+                            MaterialUniqueId = record.MaterialUniqueId ?? ""
                         };
 
                         var existingMaterialdata = await material.Validate_MaterialExcell(record);
@@ -895,6 +895,7 @@ namespace ShutterManagement.Business.Services
                         (x.ReorderLevel.ToString() ?? "").ToLower().Contains(searchValue) ||
                         (x.StockQuantity.ToString() ?? "").ToLower().Contains(searchValue) ||
                         (x.Notes ?? "").ToLower().Contains(searchValue) ||
+                        (x.MaterialUniqueId ?? "").ToLower().Contains(searchValue) ||
                         (x.UnitOfMeasurement ?? "").ToLower().Contains(searchValue));
                 }
 
@@ -921,14 +922,15 @@ namespace ShutterManagement.Business.Services
                                         LastName = t1.LastName,
                                         VendorCode = t1.VendorCode,
                                         IsCutSheet = t2.IsCutSheet,
+                                        MaterialUniqueId = t2.MaterialUniqueId,
                                     }).ToList();
 
                 var csvBuilder = new StringBuilder();
-                csvBuilder.AppendLine("MaterialName*,UnitCost*,UnitOfMeasurement*,Lenght,Width,StockQuantity,ReorderLevel,Vendor*,Notes,ProductType*,SKU,IsCutSheet*");
+                csvBuilder.AppendLine("MaterialUniqueId*,MaterialName*,UnitCost*,UnitOfMeasurement*,Lenght,Width,StockQuantity,ReorderLevel,Vendor*,Notes,ProductType*,SKU,IsCutSheet*");
 
                 foreach (var material in materialList)
                 {
-                    var line = $"{material.MaterialName},{material.UnitCost},{material.UnitOfMeasurement},{material.Lenght},{material.Width},{material.StockQuantity}," +
+                    var line = $"{material.MaterialUniqueId},{material.MaterialName},{material.UnitCost},{material.UnitOfMeasurement},{material.Lenght},{material.Width},{material.StockQuantity}," +
                                $"{material.ReorderLevel},{material.VendorCode},{material.Notes},{material.ProductTypeName},{material.SKU},{material.IsCutSheet}";
 
                     csvBuilder.AppendLine(line);

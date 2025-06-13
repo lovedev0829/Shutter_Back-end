@@ -18,6 +18,9 @@ namespace ShutterManagement.Core.ViewModels.Request
         [Name("MaterialName*")]
         public string? MaterialName { get; set; }
 
+        [Name("MaterialUniqueId*")]
+        public string? MaterialUniqueId { get; set; }
+
         [DefaultValue("")]
         [Required]
         //[OnError(AppConstant.NumericError)]

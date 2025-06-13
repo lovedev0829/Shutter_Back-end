@@ -41,6 +41,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         [Required]
         [DefaultValue("")]
         public string? ProductType { get; set; }
+        public string? MaterialUniqueId { get; set; }
         [DefaultValue("")]
         [Required]
       

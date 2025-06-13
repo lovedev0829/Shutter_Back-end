@@ -1,9 +1,8 @@
-﻿2025-06-12 16:19:33 : details GHl: 
-Data: [
-  {
-    "Id": "9a620131-7de2-4e92-aa86-aef72786715f",
-    "PipelineId": "1 - 💰 Sales Pipeline",
-    "TenantId": "553fd1f7-dbbe-4de2-9973-2cc768194529",
+﻿2025-06-13 13:04:10 : Base Address from Constr Base: 
+
+ata System.Collections.Generic.List`1[ShutterManagement.Core.ViewModels.Response.GetAllMaterialVm]
+
+Id": "553fd1f7-dbbe-4de2-9973-2cc768194529",
     "LocationId": "ziCLGh0rHchULukIrb4b",
     "LastSync": "2025-06-12T16:14:01.56",
     "GeneratedToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0ZW5hbnRfaWQiOiI1NTNmZDFmNy1kYmJlLTRkZTItOTk3My0yY2M3NjgxOTQ1MjkiLCJqdGkiOiI2MTdkNmE3OS1mYTkzLTRlMjEtYjAzMC03ZmI1ODRjOGEzNWYiLCJpYXQiOjE3NDk3MDQ2MTEsIm5iZiI6MTc0OTcwNDYxMSwiZXhwIjoxNzQ5NzA4MjExLCJpc3MiOiJTaHV0dGVyTWFuYWdlbWVudCIsImF1ZCI6IlNodXR0ZXJNYW5hZ2VtZW50In0.pTH3yT21EbBPRW4nomfpsigvMU1JjT1yFlFMINzavn8",
