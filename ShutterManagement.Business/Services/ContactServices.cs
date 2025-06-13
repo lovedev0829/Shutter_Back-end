@@ -1100,11 +1100,20 @@ namespace ShutterManagement.Business.Services
             }
         }
 
+        private string ToTitleCaseSafe(string input)
+        {
+            return string.IsNullOrWhiteSpace(input)
+                ? string.Empty
+                : CultureInfo.CurrentCulture.TextInfo.ToTitleCase(input);
+        }
+
+
         public async Task<IResponseVm<string>> ContactSync()
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
+                TextInfo textInfo;
                 var Checkghlresponse = await gHLConfigurationService.CheckGHLConfiguration();
                 if (Checkghlresponse.IsSuccess)
                 {
@@ -1124,7 +1133,7 @@ namespace ShutterManagement.Business.Services
                     List<GhlContactAdd> contactsUpdateToGHL = new List<GhlContactAdd>();
                     foreach (var ghlcontact in getGHLContacts)
                     {
-                        var existingContact = getAppContacts.FirstOrDefault(x => x.GhlcontactId == ghlcontact.id &&
+                        var existingContact = getAppContacts.FirstOrDefault(x => x.GhlcontactId == ghlcontact?.id &&
                         x.TenantId == AppConstant.LoggedInTenantId && x.IsArchive == false && x.IsActive == true
                         && x.IsDelete == false
                       );
@@ -1139,14 +1148,19 @@ namespace ShutterManagement.Business.Services
                         {
                             if (ghlcontact.dateUpdated.ToLocalTime() > existingContact.UpdatedAt)
                             {
-                                existingContact.FirstName = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(ghlcontact.firstNameLowerCase ?? string.Empty);
-                                existingContact.Email = ghlcontact.email;
-                                existingContact.PhoneNumber = ghlcontact.phone;
+                                
+
+                                existingContact.FirstName = ToTitleCaseSafe(ghlcontact.firstNameLowerCase);
+
+                                existingContact.LastName = ToTitleCaseSafe(ghlcontact.firstNameLowerCase);
+
+                                existingContact.Email = ghlcontact.email??"";
+                                existingContact.PhoneNumber = ghlcontact.phone??"";
                                 existingContact.UpdatedAt = DateTime.Now;
                                 existingContact.ModifiedBy = AppConstant.LoggedInUserID;
                                 existingContact.LastSync = DateTime.Now;
-                                existingContact.ContactType = ghlcontact.type;
-                                existingContact.GhlcontactId = ghlcontact.id;
+                                existingContact.ContactType = ghlcontact.type ?? "";
+                                existingContact.GhlcontactId = ghlcontact.id??"";
                                 FileLogger.Log("Updating Contact in application(Application ContactId).", existingContact.ContactId);
                                 FileLogger.Log("Updating Contact in application(GhlContactId).", existingContact.GhlcontactId);
                                 var res = await Update(existingContact);
@@ -1188,13 +1202,13 @@ namespace ShutterManagement.Business.Services
 
                             var newContact = new Sp_Contact
                             {
-                                ContactType = ghlcontact.type,
-                                FirstName = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(ghlcontact.firstNameLowerCase ?? string.Empty),
-                                LastName = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(ghlcontact.lastNameLowerCase ?? string.Empty),
-                                Email = ghlcontact.email,
-                                PhoneNumber = ghlcontact.phone,
+                                ContactType = ghlcontact?.type??"",
+                                FirstName = ToTitleCaseSafe(ghlcontact?.firstNameLowerCase??"")??"",
+                                LastName = ToTitleCaseSafe(ghlcontact?.lastNameLowerCase ?? "")??"",
+                                Email = ghlcontact?.email??"",
+                                PhoneNumber = ghlcontact?.phone??"",
                                 //locationId = ghlcontact.locationId,
-                                GHLContactId = ghlcontact.id,
+                                GHLContactId = ghlcontact?.id??"",
                                 lastAsync = DateTime.Now,
                             };
 
@@ -1255,8 +1269,8 @@ namespace ShutterManagement.Business.Services
                                 {
                                     var newContactToAddToGHL = new GhlContactAdd
                                     {
-                                        FirstName = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(existingGHLContact.firstNameLowerCase ?? string.Empty),
-                                        LastName = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(existingGHLContact.lastNameLowerCase ?? string.Empty),
+                                        FirstName = ToTitleCaseSafe(existingGHLContact.firstNameLowerCase),
+                                        LastName = ToTitleCaseSafe(existingGHLContact.lastNameLowerCase),
                                         Email = existingGHLContact.email,
                                         Phone = existingGHLContact.phone,
                                         ContactType = existingGHLContact.type,
@@ -1268,8 +1282,8 @@ namespace ShutterManagement.Business.Services
                                 {
                                     var updatecontact = new UpdateContact
                                     {
-                                        FirstName = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(existingGHLContact.firstNameLowerCase ?? string.Empty),
-                                        LastName = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(existingGHLContact.lastNameLowerCase ?? string.Empty),
+                                        FirstName = ToTitleCaseSafe(existingGHLContact.firstNameLowerCase),
+                                        LastName = ToTitleCaseSafe(existingGHLContact.lastNameLowerCase),
                                         Email = existingGHLContact.email,
                                         PhoneNumber = existingGHLContact.phone,
                                         ContactType = existingGHLContact.type,
