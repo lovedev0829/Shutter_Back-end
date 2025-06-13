@@ -144,8 +144,13 @@ namespace ShutterManagement.Business.Services
                 }
                 if (IsTenant)
                 {
-                    int Version = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt)
-                         .Select(p => (p.MaterialUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries).Length == 3 ? Convert.ToInt32(p.MaterialUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries)[2]) : 0)).FirstOrDefault();
+                    int Version = 0;
+                    var MaterialUniqueId = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt).
+                        Select(x => x.MaterialUniqueId).FirstOrDefault();
+                    if (MaterialUniqueId != null)
+                    {
+                        Version = MaterialUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries).Length == 3 ? Convert.ToInt32(MaterialUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries)[2]) : 0;
+                    }
                     Version += 1;
                     var generateUnique = GenerateUniqueId.GenerateUniqueIds(ModuleName.Material, AppConstant.LoggedInCompanyCode, Version);
                     if (IsVendorExist)

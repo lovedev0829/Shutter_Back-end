@@ -895,6 +895,7 @@ namespace ShutterManagement.Business.Services
                         (x.ReorderLevel.ToString() ?? "").ToLower().Contains(searchValue) ||
                         (x.StockQuantity.ToString() ?? "").ToLower().Contains(searchValue) ||
                         (x.Notes ?? "").ToLower().Contains(searchValue) ||
+                        (x.MaterialUniqueId ?? "").ToLower().Contains(searchValue) ||
                         (x.UnitOfMeasurement ?? "").ToLower().Contains(searchValue));
                 }
 
