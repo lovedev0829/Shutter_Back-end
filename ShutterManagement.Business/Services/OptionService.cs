@@ -53,7 +53,7 @@ namespace ShutterManagement.Business.Services
                                    && c.IsDelete == false)
                        .FirstOrDefault();
                     var isManageproductoption = managePartnersProductsOptions.GetAllQuerable().Where
-                        (x => x.OptionId == Id && x.IsDelete == false && x.IsActive == true && x.TenantId == AppConstant.LoggedInTenantId).
+                        (x => x.OptionId == Id && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId).
                         FirstOrDefault();
                     if (isManageproductoption != null)
                     {

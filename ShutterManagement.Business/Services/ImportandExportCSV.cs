@@ -105,7 +105,7 @@ namespace ShutterManagement.Business.Services
                 {
                     using (var writer = new StreamWriter(filePathWithName))
                     {
-                        await writer.WriteLineAsync("MaterialName*,UnitCost*,UnitOfMeasurement*,Lenght,Width,StockQuantity,ReorderLevel,Vendor*,Notes,ProductType*,SKU,IsCutSheet*");
+                        await writer.WriteLineAsync("MaterialUniqueId,MaterialName*,UnitCost*,UnitOfMeasurement*,Lenght,Width,StockQuantity,ReorderLevel,Vendor*,Notes,ProductType*,SKU,IsCutSheet*");
                     }
                 }
 
@@ -926,7 +926,7 @@ namespace ShutterManagement.Business.Services
                                     }).ToList();
 
                 var csvBuilder = new StringBuilder();
-                csvBuilder.AppendLine("MaterialUniqueId*,MaterialName*,UnitCost*,UnitOfMeasurement*,Lenght,Width,StockQuantity,ReorderLevel,Vendor*,Notes,ProductType*,SKU,IsCutSheet*");
+                csvBuilder.AppendLine("MaterialUniqueId,MaterialName*,UnitCost*,UnitOfMeasurement*,Lenght,Width,StockQuantity,ReorderLevel,Vendor*,Notes,ProductType*,SKU,IsCutSheet*");
 
                 foreach (var material in materialList)
                 {
