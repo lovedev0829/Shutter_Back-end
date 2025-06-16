@@ -201,6 +201,7 @@ namespace ShutterManagement.Business.Services
                                     Version1 = MaterialUniqueId1.Split("-", StringSplitOptions.RemoveEmptyEntries).Length == 3 ? Convert.ToInt32(MaterialUniqueId1.Split("-", StringSplitOptions.RemoveEmptyEntries)[2]) : 0;
                                 }
                                 Version1 += 1;
+                                var generateUniqueId = GenerateUniqueId.GenerateUniqueIds(ModuleName.Material, AppConstant.LoggedInCompanyCode, Version1);
                                 TblRawMaterial material = new TblRawMaterial
                                 {
                                     MaterialName = model.MaterialName.Trim(),
@@ -221,7 +222,7 @@ namespace ShutterManagement.Business.Services
                                     IsActive = true,
                                     IsDelete = false,
                                     TenantId = AppConstant.LoggedInTenantId,
-                                    MaterialUniqueId = MaterialUniqueId1,
+                                    MaterialUniqueId = generateUniqueId,
                                 };
                                 if (material != null)
                                 {
@@ -493,12 +494,17 @@ namespace ShutterManagement.Business.Services
 
             try
             {
+                Guid MaterialId = Guid.Empty;
+                Guid.TryParse(model.MaterialId, out MaterialId);
                 var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsActive == true && x.IsDelete == false);
                 var IsVendorExist = _context.TblVendors.Where(x => x.VendorId == model.VendorId && x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
                 var IsSKUExist = !string.IsNullOrEmpty(model.SKU) ? (await AnyAsync(x => x.VendorId == model.VendorId && x.Sku == model.SKU && x.TenantId == AppConstant.LoggedInTenantId 
-                && x.IsDelete == false && (model.MaterialId != null ? x.RawMaterialId != Guid.Parse(model.MaterialId) : x.MaterialUniqueId != model.MaterialUniqueId))) : false;
-                var IsMaterialExist = _context.TblRawMaterials.Any(x => x.MaterialName.ToLower().Trim() == model.MaterialName.ToLower().Trim() && x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false &&
-                x.RawMaterialId.ToString()!=model.MaterialId);
+                && x.IsDelete == false && (!string.IsNullOrEmpty(model.MaterialId) ||
+                MaterialId != Guid.Empty ? x.RawMaterialId != MaterialId : x.MaterialUniqueId != model.MaterialUniqueId))) : false;
+                var IsMaterialExist = _context.TblRawMaterials.Any(x => x.MaterialName.ToLower().Trim() == model.MaterialName.ToLower().Trim() &&
+                x.TenantId == AppConstant.LoggedInTenantId && 
+                x.IsDelete == false && (!string.IsNullOrEmpty(model.MaterialId) ||
+                MaterialId != Guid.Empty ? x.RawMaterialId != MaterialId : x.MaterialUniqueId != model.MaterialUniqueId));
                 if (IsMaterialExist)
                 {
                     responseVm.Message = $"Material Name" + AppConstant.AlreadyExists;
