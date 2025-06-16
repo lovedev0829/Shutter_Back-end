@@ -827,7 +827,7 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> SyncAllData()
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
-            await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
+             await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
             var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration();
             if (Checkghlresponse.IsSuccess)
             {
@@ -891,6 +891,10 @@ namespace ShutterManagement.Controllers
                         FileLogger.Log("GetUsersByCalendarIdAsync", "Started");
                         var users = await gHLService_V2.GetUsersByCalendarIdAsync();
                         FileLogger.Log("GetUsersByCalendarIdAsync", $"Completed. Message: {users.Message}");
+
+                        FileLogger.Log("GetAndSaveGhlCustomeFields", "Started");
+                        var Customfields = await gHLService_V2.SyncGhlCustomFields();
+                        FileLogger.Log("GetAndSaveGhlCustomeFields", $"Completed. Message: {users.Message}");
 
                         var syncEnd = DateTime.Now;
                         FileLogger.Log("Sync Process Completed", $"End Time: {syncEnd}, Duration: {(syncEnd - syncStart).TotalSeconds} seconds");
@@ -1059,12 +1063,19 @@ namespace ShutterManagement.Controllers
         }
 
 
-        //[HttpPost("SendMailWithAttachment")]
-        //public async Task<IActionResult> SendMailWithAttachment([FromForm] EmailMessageModel model)
-        //{
-        //    var result = await mS365Configuration.SendEmail(model);
-        //    return Ok(result);
-        //}
+        [HttpGet]
+        [Route("GetCustomeFields")]
+        public async Task<IActionResult> GetCustomeFields()
+        {
+            await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
+            var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration();
+            if (Checkghlresponse.IsSuccess)
+            {
+                var result = await gHLService_V2.SyncGhlCustomFields();
+                return Ok(result);
+            }
+            return Ok(Checkghlresponse);
+        }
 
     }
 }

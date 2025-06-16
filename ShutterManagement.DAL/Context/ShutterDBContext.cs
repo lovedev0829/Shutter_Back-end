@@ -75,6 +75,8 @@ public partial class ShutterDBContext : DbContext
 
     public virtual DbSet<TblExpression> TblExpressions { get; set; }
 
+    public virtual DbSet<TblGhlCustomField> TblGhlCustomFields { get; set; }
+
     public virtual DbSet<TblGhlStage> TblGhlStages { get; set; }
 
     public virtual DbSet<TblGhlStagesmapping> TblGhlStagesmappings { get; set; }
@@ -961,6 +963,29 @@ public partial class ShutterDBContext : DbContext
             entity.HasOne(d => d.ProductTypeNavigation).WithMany(p => p.TblExpressions)
                 .HasForeignKey(d => d.ProductType)
                 .HasConstraintName("FK__TblExpres__Produ__353DDB1D");
+        });
+
+        modelBuilder.Entity<TblGhlCustomField>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__TblGhlCu__3214EC07E7938FF4");
+
+            entity.ToTable("TblGhlCustomFields", "dbo");
+
+            entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.DataType).HasMaxLength(50);
+            entity.Property(e => e.DateAdded).HasColumnType("datetime");
+            entity.Property(e => e.DocumentType).HasMaxLength(50);
+            entity.Property(e => e.FieldKey).HasMaxLength(255);
+            entity.Property(e => e.FieldName).HasMaxLength(255);
+            entity.Property(e => e.GhlFieldId).HasMaxLength(100);
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
+            entity.Property(e => e.IsDelete).HasDefaultValue(false);
+            entity.Property(e => e.LocationId).HasMaxLength(100);
+            entity.Property(e => e.Model).HasMaxLength(100);
+            entity.Property(e => e.ModifiedAt).HasColumnType("datetime");
+            entity.Property(e => e.ParentId).HasMaxLength(100);
+            entity.Property(e => e.Placeholder).HasMaxLength(255);
         });
 
         modelBuilder.Entity<TblGhlStage>(entity =>

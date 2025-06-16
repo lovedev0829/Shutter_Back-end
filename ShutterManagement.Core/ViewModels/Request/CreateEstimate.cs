@@ -34,6 +34,8 @@ namespace ShutterManagement.Core.ViewModels.Request
         public string? Notes { get; set; }
 
         public bool? IsTaxApplicable { get; set; } =false;
+        [Default(false)]
+        public bool? IsLinkSent { get; set; } = false;
 
         [Default("")]
         public Guid? DiscountId { get; set; }

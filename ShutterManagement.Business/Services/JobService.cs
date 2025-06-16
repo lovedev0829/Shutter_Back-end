@@ -40,11 +40,13 @@ namespace ShutterManagement.Business.Services
         private readonly JobStatusAndStageMapping statusAndStageMapping;
         private readonly HttpClient httpClient;
         private readonly IJobStatusService jobStatusService;
+        private readonly IGhlCustomFieldsService ghlCustomFieldsService;
         private string BaseUrl = AppConstant.GHL_BaseAddress;
 
         public JobService(ShutterDBContext context, ClaimsProperty claimsProperty, IAddress address,
             ITenantService tenantService,INotificationService notification, IGHLConfiguration gHLConfiguration,
-            IContactService contact,GHLService_v2 gHLService_V2,JobStatusAndStageMapping statusAndStageMapping, HttpClient httpClient,IJobStatusService jobStatusService)
+            IContactService contact,GHLService_v2 gHLService_V2,JobStatusAndStageMapping statusAndStageMapping,
+            HttpClient httpClient,IJobStatusService jobStatusService,IGhlCustomFieldsService ghlCustomFieldsService)
         {
             _context = context;
             this.claimsProperty = claimsProperty;
@@ -58,6 +60,7 @@ namespace ShutterManagement.Business.Services
             this.statusAndStageMapping = statusAndStageMapping;
             this.httpClient = httpClient;
             this.jobStatusService = jobStatusService;
+            this.ghlCustomFieldsService = ghlCustomFieldsService;
         }
 
         private static string GetApiKey()
@@ -1681,22 +1684,22 @@ namespace ShutterManagement.Business.Services
                 if (string.IsNullOrEmpty(job.EstimateUrl1))
                 {
                     job.EstimateUrl1 = newEstimateUrl;
-                    fieldKey = "estimate_url_1";
+                    fieldKey = "opportunity.estimate_url_1";
                 }
                 else if (string.IsNullOrEmpty(job.EstimateUrl2))
                 {
                     job.EstimateUrl2 = newEstimateUrl;
-                    fieldKey = "estimate_url_2";
+                    fieldKey = "opportunity.estimate_url_2";
                 }
                 else if (string.IsNullOrEmpty(job.EstimateUrl3))
                 {
                     job.EstimateUrl3 = newEstimateUrl;
-                    fieldKey = "estimate_url_3";
+                    fieldKey = "opportunity.estimate_url_3";
                 }
                 else if (string.IsNullOrEmpty(job.EstimateUrl4))
                 {
                     job.EstimateUrl4 = newEstimateUrl;
-                    fieldKey = "estimate_url_4";
+                    fieldKey = "opportunity.estimate_url_4";
                 }
                 else
                 {
@@ -1706,35 +1709,27 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-                // GHL custom field ID mapping
-                var ghlCustomFieldIdMapping = new Dictionary<string, string>
-        {
-            { "estimate_url_1", "PUT_FIELD_ID_1_HERE" },
-            { "estimate_url_2", "PUT_FIELD_ID_2_HERE" },
-            { "estimate_url_3", "PUT_FIELD_ID_3_HERE" },
-            { "estimate_url_4", "PUT_FIELD_ID_4_HERE" }
-        };
+                var fieldRecord = ghlCustomFieldsService.GetAllQuerable()
+                    .Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.FieldKey == fieldKey  && x.IsDelete == false)
+                    .FirstOrDefault();
 
-                // Validate the custom field ID
-                if (!ghlCustomFieldIdMapping.TryGetValue(fieldKey, out var fieldId) || string.IsNullOrEmpty(fieldId))
+                if (fieldRecord == null || string.IsNullOrEmpty(fieldRecord.GhlFieldId))
                 {
                     responseVm.IsSuccess = false;
-                    responseVm.Message = "Custom field ID not configured.";
-                    FileLogger.Log("UpdateEstimateUrlInGhlOnly: Missing custom field ID for " + fieldKey);
+                    responseVm.Message = $"Custom field '{fieldKey}' not configured.";
+                    FileLogger.Log("UpdateEstimateUrlInGhlOnly: Missing custom field ID in DB for " + fieldKey);
                     return responseVm;
                 }
 
-                // Save job update locally
                 await Update(job);
 
-                // GHL API payload
                 var payload = new
                 {
                     customFields = new[]
                     {
                 new
                 {
-                    id = fieldId,
+                    id = fieldRecord.GhlFieldId,
                     key = fieldKey,
                     field_value = newEstimateUrl
                 }
@@ -1742,6 +1737,7 @@ namespace ShutterManagement.Business.Services
                 };
 
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
+                httpClient.DefaultRequestHeaders.Remove("Version");
                 httpClient.DefaultRequestHeaders.Add("Version", AppConstant.GHL_Version);
 
                 var url = $"{AppConstant.GHL_BaseAddress}/opportunities/{job.GhlOpportunityId}";
@@ -1771,6 +1767,7 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
+
 
 
 
