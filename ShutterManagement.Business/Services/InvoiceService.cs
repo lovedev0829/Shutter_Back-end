@@ -706,6 +706,8 @@ namespace ShutterManagement.Business.Services
 
                     string approvalEmailLink = $"{AppConstant.UIBaseURL}contacts/estimate/preview/{IsEstimateExists?.EstimateId}";
 
+
+
                     var emailBody = $@"
 <div style='font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px; margin: auto; background: #f9f9f9; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);'>
     <div style='background: white; padding: 20px; border-radius: 10px;'>
@@ -747,6 +749,19 @@ namespace ShutterManagement.Business.Services
 
 
                     var emailResponse = await SendEmailWithOAuth(estimationDetails.EstimateCode, pdfBytes.Data, emailBody, customerDetails?.Email ?? "", "Estimate Approval Link and PDF");
+
+                    var jobDetails = await jobService.GetById(IsEstimateExists.JobId ?? Guid.Empty);
+
+                    if (jobDetails != null)
+                    {
+                        var ghlUrlResponse = await jobService.UpdateEstimateUrlInGhlOnly(jobDetails, approvalEmailLink);
+
+                        if (!ghlUrlResponse.IsSuccess)
+                        {
+                            // Optional: log or return a warning, depending on your use case
+                            FileLogger.Log($"GHL URL Update failed: {ghlUrlResponse.Message}");
+                        }
+                    }
 
                     responseVm.IsSuccess = true;
                     responseVm.Message = emailResponse.Message;

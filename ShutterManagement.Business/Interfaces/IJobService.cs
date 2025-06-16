@@ -30,5 +30,7 @@ namespace ShutterManagement.Business.Interfaces
         Task<IResponseVm<string>> OpportunityFromGHL(GHLOpportunityTrigger opportunitydata);
 
         //Task<IResponseVm<string>> GetAndSaveContactsAsync();
+
+        Task<IResponseVm<string>> UpdateEstimateUrlInGhlOnly(TblJob job, string newEstimateUrl);
     }
 }
