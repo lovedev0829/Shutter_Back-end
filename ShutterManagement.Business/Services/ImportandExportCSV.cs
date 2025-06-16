@@ -181,7 +181,7 @@ namespace ShutterManagement.Business.Services
             List<string> validationErrors = new List<string>();
             List<CreateMaterial> validMaterials = new List<CreateMaterial>();
             int successfulImports = 0;
-            int totalRecords = 0; 
+            int totalRecords = 0;
 
             var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
             if (!isTenantExists)
@@ -195,7 +195,7 @@ namespace ShutterManagement.Business.Services
                 using (var reader = new StreamReader(csvStream))
                 using (var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture)
                 {
-                    MissingFieldFound = null 
+                    MissingFieldFound = null
                 }))
                 {
                     //var records = csv.GetRecords<ImportMaterial>().ToList();
@@ -205,14 +205,14 @@ namespace ShutterManagement.Business.Services
                    "Vendor", "Notes", "ProductType", "SKU", "IsCutSheet"
                     };
 
-                    
+
 
                     csv.Read();
                     csv.ReadHeader();
-                    var actualHeaders = csv.HeaderRecord.Select(h => h.Trim().TrimEnd('*').ToLower()) .ToArray();
+                    var actualHeaders = csv.HeaderRecord.Select(h => h.Trim().TrimEnd('*').ToLower()).ToArray();
 
                     var normalizedExpectedHeaders = expectedHeaders
-                        .Select(h => h.Trim().ToLower()) 
+                        .Select(h => h.Trim().ToLower())
                         .ToArray();
 
                     if (!normalizedExpectedHeaders.SequenceEqual(actualHeaders))
@@ -242,7 +242,7 @@ namespace ShutterManagement.Business.Services
                         }
 
                         var vendor = vendorService.GetAllQuerable()
-                            .Where(v => (v.VendorCode == record.Vendor|| v.CompanyName==record.Vendor) && v.IsDelete == false && v.TenantId==AppConstant.LoggedInTenantId)
+                            .Where(v => (v.VendorCode == record.Vendor || v.CompanyName == record.Vendor) && v.IsDelete == false && v.TenantId == AppConstant.LoggedInTenantId)
                             .FirstOrDefault();
 
                         if (vendor == null)
@@ -253,7 +253,7 @@ namespace ShutterManagement.Business.Services
                         }
 
                         var productType = dbContext.MstProductTypes
-                            .Where(p => p.ProductName == record.ProductType && p.IsDelete == false && p.TenantId==AppConstant.LoggedInTenantId)
+                            .Where(p => p.ProductName == record.ProductType && p.IsDelete == false && p.TenantId == AppConstant.LoggedInTenantId)
                             .FirstOrDefault();
 
                         if (productType == null)
@@ -289,11 +289,11 @@ namespace ShutterManagement.Business.Services
                         {
                             SKU = record.SKU?.Trim(),
                             MaterialName = record.MaterialName?.Trim(),
-                            Lenght = record.Lenght??null,
-                            Width = record.Width??null,
+                            Lenght = record.Lenght ?? null,
+                            Width = record.Width ?? null,
                             UnitCost = record.UnitCost,
                             //NonRatedUnitCost=record.NonRatedUnitCost,
-                           // NonRatedUnitCost=record.UnitCost,
+                            // NonRatedUnitCost=record.UnitCost,
                             UnitOfMeasurement = record.UnitOfMeasurement,
                             StockQuantity = record.StockQuantity,
                             ReorderLevel = record.ReorderLevel,
@@ -328,19 +328,22 @@ namespace ShutterManagement.Business.Services
                     else
                     {
                         int successfulInserts = 0;
-
-                        foreach (var validMaterial in validMaterials)
+                        _ = Task.Run(async () =>
                         {
-                            var createMaterialResponse = await material.Create_Material(validMaterial);
-                            if (createMaterialResponse.IsSuccess)
+                            foreach (var validMaterial in validMaterials)
                             {
-                                successfulInserts++;
+
+                                var createMaterialResponse = await material.Create_Material(validMaterial);
+                                if (createMaterialResponse.IsSuccess)
+                                {
+                                    successfulInserts++;
+                                }
+                                else
+                                {
+                                    validationErrors.Add($"Error inserting material: {createMaterialResponse.Message}");
+                                }
                             }
-                            else
-                            {
-                                validationErrors.Add($"Error inserting material: {createMaterialResponse.Message}");
-                            }
-                        }
+                        });
 
                         if (validationErrors.Any())
                         {
