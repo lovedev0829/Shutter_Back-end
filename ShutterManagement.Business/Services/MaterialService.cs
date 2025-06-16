@@ -89,15 +89,25 @@ namespace ShutterManagement.Business.Services
                
                 if(IsTenant)
                 {
+                    var IsSkuExist = false;
                     var VendorExit = vendorService.GetAllQuerable().Where(v => (v.VendorCode == model.Vendor || v.CompanyName == model.Vendor) && v.IsDelete == false && v.TenantId == AppConstant.LoggedInTenantId)
                                    .FirstOrDefault();
-                    var IsSKUExist = Any(x => x.MaterialName.ToLower().Trim() == model.MaterialName.ToLower().Trim() && x.MaterialUniqueId != model.MaterialUniqueId && x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false);
+                    var IsMaterialNameExist = Any(x => x.MaterialName.ToLower().Trim() == model.MaterialName.ToLower().Trim() && x.MaterialUniqueId != model.MaterialUniqueId && x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false);
                     var GetAllVendorList = vendorService.GetAllQuerable()
                     .Where(x => x.IsActive == true && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId).ToList();
                     var GetAllUnitOfMeasureList = unitofMeasurementService.GetAllQuerable()
                     .Where(x => x.IsActive == true && x.IsDelete == false).ToList();
                     var CheckExistingVendorbyCode = GetAllVendorList.Any(x => x.VendorCode == model.Vendor || x.CompanyName==model.Vendor);
-                    if (IsSKUExist)
+                    if(model.SKU != null)
+                    {
+                       IsSkuExist = Any(x => x.Sku.ToLower().Trim() == model.SKU.ToLower().Trim() && x.MaterialUniqueId != model.MaterialUniqueId && x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false);
+                    }
+                    if(IsSkuExist)
+                    {
+                        responseVm.Message = $"SKU {model.SKU} " + AppConstant.AlreadyExists;
+                        return responseVm;
+                    }
+                    if (IsMaterialNameExist)
                     {
                         responseVm.Message = $"Material Name {model.MaterialName} " + AppConstant.AlreadyExists;
                         return responseVm;
