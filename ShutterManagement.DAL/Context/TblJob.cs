@@ -53,6 +53,14 @@ public partial class TblJob
 
     public string? GhluserId { get; set; }
 
+    public string? EstimateUrl1 { get; set; }
+
+    public string? EstimateUrl2 { get; set; }
+
+    public string? EstimateUrl3 { get; set; }
+
+    public string? EstimateUrl4 { get; set; }
+
     public virtual TblAddress? Address { get; set; }
 
     public virtual TblContact? Contact { get; set; }
