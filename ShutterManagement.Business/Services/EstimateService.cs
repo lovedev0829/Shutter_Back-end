@@ -647,8 +647,8 @@ namespace ShutterManagement.Business.Services
                         var partnerMarkup = dbContext.TblManagePartnersProducts.FirstOrDefault(x => x.ProductId == item.ProductId && x.TenantId == AppConstant.LoggedInTenantId);
                         productOwnMarkup += partnerMarkup?.MarkupType switch
                         {
-                            "Percentage" => (basePrice + componentOwnMarkup) * (partnerMarkup.PartnerSellingPrice ?? 0) / 100,
-                            "Fixed" => (basePrice + componentOwnMarkup + (partnerMarkup.PartnerSellingPrice ?? 0)),
+                            "Percentage" => (basePrice + componentOwnMarkup + productOwnMarkup) * (partnerMarkup.PartnerSellingPrice ?? 0) / 100,
+                            "Fixed" => (basePrice + componentOwnMarkup + productOwnMarkup + (partnerMarkup.PartnerSellingPrice ?? 0)),
                             _ => 0.0m
                         };
                     }
