@@ -91,7 +91,7 @@ namespace ShutterManagement.Business.Services
                 {
                     var VendorExit = vendorService.GetAllQuerable().Where(v => (v.VendorCode == model.Vendor || v.CompanyName == model.Vendor) && v.IsDelete == false && v.TenantId == AppConstant.LoggedInTenantId)
                                    .FirstOrDefault();
-                    var IsSKUExist = _context.TblRawMaterials.Any(x => x.MaterialName.ToLower().Trim() == model.MaterialName.ToLower().Trim() && x.MaterialUniqueId != model.MaterialUniqueId && x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false);
+                    var IsSKUExist = Any(x => x.MaterialName.ToLower().Trim() == model.MaterialName.ToLower().Trim() && x.MaterialUniqueId != model.MaterialUniqueId && x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false);
                     var GetAllVendorList = vendorService.GetAllQuerable()
                     .Where(x => x.IsActive == true && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId).ToList();
                     var GetAllUnitOfMeasureList = unitofMeasurementService.GetAllQuerable()
