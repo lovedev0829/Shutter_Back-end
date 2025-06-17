@@ -458,11 +458,11 @@ namespace ShutterManagement.Business.Services
 
                         var existingJob = GetAllQuerable()
                             .FirstOrDefault(x => x.GhlOpportunityId.ToLower() == opportunity.OpportunityId.ToLower() && 
-                            x.TenantId==AppConstant.LoggedInTenantId && x.IsActive==true && x.IsDelete==false);
+                            x.TenantId== LoggedInTenantId && x.IsActive==true && x.IsDelete==false);
 
                         var stage = stages?.Data.FirstOrDefault(x => x.GhlStageId == opportunity.PipelineStageId);
                         var dbcontact = contact.GetAllQuerable()
-                            .FirstOrDefault(x => x.GhlcontactId == opportunity.Contact.Id && x.TenantId == AppConstant.LoggedInTenantId
+                            .FirstOrDefault(x => x.GhlcontactId == opportunity.Contact.Id && x.TenantId == LoggedInTenantId
                             && x.IsDelete == false && x.IsActive == true && x.IsArchive == false);
 
                         if (dbcontact == null)
@@ -510,7 +510,7 @@ namespace ShutterManagement.Business.Services
                                 GHL_StageId = Guid.Parse(opportunity.PipelineStageId)
                             };
 
-                            await Create(createJobModel);
+                            await Create(createJobModel, LoggedInTenantId);
                         }
                     }
                     catch (Exception innerEx)
@@ -771,11 +771,12 @@ namespace ShutterManagement.Business.Services
         //}
         //#endregion Contact Sync Related Method
 
-        public async Task<IResponseVm<string>> Create(CreateJob model)
+        public async Task<IResponseVm<string>> Create(CreateJob model, Guid? LoggedInTenantId = null)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
+                LoggedInTenantId = (LoggedInTenantId != Guid.Empty || LoggedInTenantId != null ? LoggedInTenantId : AppConstant.LoggedInTenantId);
                 bool IsAddressExist = false;
                 var TenantId = Guid.Empty;
                 var IsTenantValid = false;
@@ -784,7 +785,7 @@ namespace ShutterManagement.Business.Services
                 if (model.locationId != null)
                 {
                     //await gHLConfiguration.GetGHLConfiguration(model.locationId);
-                    TenantId = (Guid)AppConstant.LoggedInTenantId;
+                    TenantId = (Guid)LoggedInTenantId;
 
                     if (TenantId != null)
                     {
@@ -802,10 +803,10 @@ namespace ShutterManagement.Business.Services
                 }
                 else
                 {
-                     IsTenantValid = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
-                    TenantId = (Guid)AppConstant.LoggedInTenantId;
+                     IsTenantValid = await tenantService.AnyAsync(x => x.TenantId == LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+                    TenantId = (Guid)LoggedInTenantId;
                     IsAddressExist = await address.AnyAsync(x => x.AddressId.ToString().ToLower() == model.AddressId.ToString().ToLower() && x.ContactId.ToString().ToLower() == model.ContactId.ToString().ToLower()
-                    && x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false);
+                    && x.TenantId == LoggedInTenantId && x.IsDelete == false);
                     //stage = _context.TblGhlStages.Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.GhlStageId == model.GHL_StageId.ToString()).FirstOrDefault();
                     //jobStatus = _context.MstJobStatuses.Where(s => s.JobStatusName.ToLower() == EnumValue.GetEnumValue(JobStatus.New).ToLower() && s.IsActive == true).Select(x=> x.JobStatusId).FirstOrDefault();
 
@@ -820,13 +821,13 @@ namespace ShutterManagement.Business.Services
                         responseVm.Message = AppConstant.TenantNotFound;
                         return responseVm;
                     }
-                    int Version = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt)
+                    int Version = GetAllQuerable().Where(x => x.TenantId == LoggedInTenantId && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt)
                           .Select(p => (p.JobUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries).Length == 3 ? Convert.ToInt32(p.JobUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries)[2]) : 0)).FirstOrDefault();
                     Version += 1;
                     var generateUnique = GenerateUniqueId.GenerateUniqueIds(ModuleName.Job, AppConstant.LoggedInCompanyCode, Version);
-                    bool IsjobNameExists = await AnyAsync(x => x.JobName == model.JobName.Trim() && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId && x.ContactId == model.ContactId);
+                    bool IsjobNameExists = await AnyAsync(x => x.JobName == model.JobName.Trim() && x.IsDelete == false && x.TenantId == LoggedInTenantId&& x.ContactId == model.ContactId);
                     var StageResponse = await statusAndStageMapping.GetGHLStagesMappingsById(jobStatus);
-                    bool IsContactArchiveorInactive = await contact.AnyAsync(x => x.ContactId == model.ContactId && x.TenantId==AppConstant.LoggedInTenantId &&  (x.IsActive == false || x.IsArchive == true) );
+                    bool IsContactArchiveorInactive = await contact.AnyAsync(x => x.ContactId == model.ContactId && x.TenantId==LoggedInTenantId &&  (x.IsActive == false || x.IsArchive == true) );
                 if(IsContactArchiveorInactive)
                 {
                     responseVm.Message = "Contact is Archived or Inactive,You can not create Job.";
@@ -864,7 +865,7 @@ namespace ShutterManagement.Business.Services
                         IsActive = true,
                         IsDelete = false,
                         CreatedAt = DateTime.Now,
-                        CreatedBy = AppConstant.LoggedInUserID ?? Guid.Empty,
+                        CreatedBy = LoggedInTenantId ?? Guid.Empty,
                         GhluserId = model.GHLUserId ?? string.Empty
                     };
 
@@ -875,7 +876,7 @@ namespace ShutterManagement.Business.Services
                         {
                         if (model.GhlOpportunityId == null)
                         {
-                            await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
+                            await gHLConfiguration.GetGHLConfiguration(LoggedInTenantId.ToString());
                             var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration();
                             if (Checkghlresponse.IsSuccess)
                             {
@@ -895,7 +896,7 @@ namespace ShutterManagement.Business.Services
                         }
                             CreateNotification notification1 = new CreateNotification()
                             {
-                                UserId = AppConstant.LoggedInUserID,
+                                UserId = LoggedInTenantId,
                                 Subject = Enum.GetName(typeof(NotificationModule), NotificationModule.Job),
                                 Body = $"{job.JobName} {AppConstant.Create_Notification}",
                                 CreatedDate = DateTime.Now,
@@ -1657,7 +1658,7 @@ namespace ShutterManagement.Business.Services
 
         // update Estimate URLs links
         public async Task<IResponseVm<string>> UpdateEstimateUrlInGhlOnly(TblJob job, string newEstimateUrl)
-        {
+         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
 
             try

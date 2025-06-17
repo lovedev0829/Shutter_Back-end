@@ -436,10 +436,10 @@ namespace ShutterManagement.Business.Services
                 LoggedInTenantId = (LoggedInTenantId != Guid.Empty || LoggedInTenantId != null ? LoggedInTenantId : AppConstant.LoggedInTenantId);
 
                 var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration();
-                await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
+                await gHLConfiguration.GetGHLConfiguration(LoggedInTenantId.ToString());
                 if (Checkghlresponse.IsSuccess)
                 {
-                    var jobschedule = GetAllQuerable().Where(x => x.TenantId.ToString().ToLower() == AppConstant.LoggedInTenantId.ToString().ToLower()
+                    var jobschedule = GetAllQuerable().Where(x => x.TenantId.ToString().ToLower() == LoggedInTenantId.ToString().ToLower()
                     && x.IsDelete == false).ToList();
                     if(jobschedule.Count==0)
                     {
