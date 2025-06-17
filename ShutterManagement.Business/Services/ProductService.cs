@@ -153,7 +153,7 @@ namespace ShutterManagement.Business.Services
                             && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
                             var isPricingExpression = await expressionService.AnyAsync(x => x.Id.ToString() == item.PricingExpression && x.IsActive == true && x.IsDelete == false
                              && x.TenantId == AppConstant.LoggedInTenantId);
-                            if ((!isComponentExists && item.PricingExpression == null )||  (item.PricingExpression != null && isPricingExpression))
+                            if ((!isComponentExists && string.IsNullOrEmpty(item.PricingExpression))||  (!string.IsNullOrEmpty(item.PricingExpression) && isPricingExpression))
                             {
                                 TblProductComponent productcomponent = new TblProductComponent
                                 {

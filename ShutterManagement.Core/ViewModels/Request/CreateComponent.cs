@@ -48,6 +48,6 @@ namespace ShutterManagement.Core.ViewModels.Request
         public decimal? Qty { get; set; }
         public decimal? WasteFactor { get; set; }
 
-        public Guid? MaterialPricingExpression { get; set; }
+        public Guid? MaterialPricingExpression { get; set; } = Guid.Empty;
     }
 }
