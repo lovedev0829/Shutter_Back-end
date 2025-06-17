@@ -410,10 +410,10 @@ namespace ShutterManagement.Business.Services
             {
                 //var component = GetComponent();
                 var productTypeDetail = GetProductTypeDetail(item.ProductType ?? "");
-                var expression = GetExpression(item.PricingExpression ?? "");
-                item.ExpressionName = expression?.ExpressionName;
-                item.ExpressionFormulae = expression?.DisplayArray;
-                //item.displayArray = expression?.DisplayArray;
+                //var expression = GetExpression(item.PricingExpression ?? "");
+                //item.ExpressionName = expression?.ExpressionName;
+                //item.ExpressionFormulae = expression?.DisplayArray;
+                ////item.displayArray = expression?.DisplayArray;
                 item.ProductType = productTypeDetail?.ProductId.ToString().ToLower();
                 item.ProductTypeName = productTypeDetail?.ProductName;
 
@@ -457,7 +457,7 @@ namespace ShutterManagement.Business.Services
                     IsActive = item.IsActive,
                     IsDelete = item.IsDelete,
                     MaterialPricingExpression = item.MaterialPricingExpression ?? Guid.Empty,
-                    displayArray = exp?.DisplayArray ?? "",
+                    displayArray = !string.IsNullOrEmpty(exp.DisplayArray) ? exp.DisplayArray.Split(new[] { ", " }, StringSplitOptions.TrimEntries) : new string[0],
                     ExpressionFormulae = exp?.ExpressionFormulae ?? "",
                     ExpressionName = exp?.ExpressionName ?? "",
                 };

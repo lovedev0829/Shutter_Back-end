@@ -12,7 +12,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         [DefaultValue("")]
         public Guid ComponentId { get; set; }
 
-        public Guid MaterialPricingExpression { get; set; }
+       // public Guid MaterialPricingExpression { get; set; }
 
         public List<ComponentMaterialModel>? Materials { get; set; }
     }

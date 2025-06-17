@@ -63,7 +63,7 @@ namespace ShutterManagement.Business.Services
                                     IsActive = true,
                                     IsDelete = false,
                                     TenantId = AppConstant.LoggedInTenantId,
-                                    MaterialPricingExpression = model.MaterialPricingExpression
+                                    MaterialPricingExpression = material.MaterialPricingExpression
                                 };
                                 await Add(newComponentMaterial);
 
