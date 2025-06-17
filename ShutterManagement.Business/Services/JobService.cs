@@ -400,12 +400,14 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        public async Task<IResponseVm<List<Opportunity>>> SyncOpportunitiesFromGhl()
+        public async Task<IResponseVm<List<Opportunity>>> SyncOpportunitiesFromGhl(Guid? LoggedInTenantId = null)
         {
             var responseVm = new ResponseVm<List<Opportunity>>();
 
             try
             {
+                LoggedInTenantId = (LoggedInTenantId != Guid.Empty || LoggedInTenantId != null ? LoggedInTenantId : AppConstant.LoggedInTenantId);
+
                 await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
                 var configCheck = await gHLConfiguration.CheckGHLConfiguration();
 

@@ -82,12 +82,12 @@ namespace ShutterManagement.GHL.Services
 
 
 
-        public async Task<IResponseVm<string>> GetAndSaveDefaultPipelineAndStage()
+        public async Task<IResponseVm<string>> GetAndSaveDefaultPipelineAndStage(Guid? LoggedInTenantId = null)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-
+                LoggedInTenantId = (LoggedInTenantId != Guid.Empty || LoggedInTenantId != null ? LoggedInTenantId : AppConstant.LoggedInTenantId);
                 var pipelineResponse = await GetAllPipelinesWithStagesAsync();
 
                 if (pipelineResponse?.Pipelines == null || !pipelineResponse.Pipelines.Any())
@@ -117,7 +117,7 @@ namespace ShutterManagement.GHL.Services
                 }
 
                 var existingStages = dBContext.TblGhlStages
-                    .Where(x => x.GhlPipelineId == targetPipeline.Id && x.TenantId==AppConstant.LoggedInTenantId)
+                    .Where(x => x.GhlPipelineId == targetPipeline.Id && x.TenantId== LoggedInTenantId)
                     .ToList();
 
                 var existingStagesDict = existingStages.ToDictionary(x => x.GhlStageId, x => x);
@@ -140,7 +140,7 @@ namespace ShutterManagement.GHL.Services
                         existingStage.StageOrder = i + 1; // Assigning order for sequential storage
                         existingStage.GhlLastSync = DateTime.Now;
                         existingStage.UpdatedAt = DateTime.Now;
-                        existingStage.ModifiedBy = AppConstant.LoggedInTenantId;
+                        existingStage.ModifiedBy = LoggedInTenantId;
                         stagesToUpdate.Add(existingStage);
                     }
                     else
@@ -155,7 +155,7 @@ namespace ShutterManagement.GHL.Services
                             StageOrder = i + 1, // Assigning order for new records
                             GhlLastSync = DateTime.Now,
                             CreatedAt = DateTime.Now,
-                            TenantId = AppConstant.LoggedInTenantId,
+                            TenantId = LoggedInTenantId,
                             CreatedBy = AppConstant.LoggedInUserID,
                             IsActive = true,
                         });
@@ -174,7 +174,7 @@ namespace ShutterManagement.GHL.Services
 
                 await dBContext.SaveChangesAsync();
 
-                var isUpdated = await UpdateLastSyncConfigurationAsync();
+                var isUpdated = await UpdateLastSyncConfigurationAsync(LoggedInTenantId);
 
                 if (!isUpdated)
                 {
@@ -196,12 +196,14 @@ namespace ShutterManagement.GHL.Services
             return responseVm;
         }
 
-        public async Task<bool> UpdateLastSyncConfigurationAsync()
+        public async Task<bool> UpdateLastSyncConfigurationAsync(Guid? LoggedInTenantId = null)
         {
             try
             {
+                LoggedInTenantId = (LoggedInTenantId != Guid.Empty || LoggedInTenantId != null ? LoggedInTenantId : AppConstant.LoggedInTenantId);
+
                 var config = await dBContext.TblGhlconfigurations
-                                             .FirstOrDefaultAsync(c => c.TenantId == AppConstant.LoggedInTenantId);
+                                             .FirstOrDefaultAsync(c => c.TenantId == LoggedInTenantId);
 
                 if (config == null)
                 {
@@ -1070,7 +1072,7 @@ namespace ShutterManagement.GHL.Services
             return users;
         }
 
-        public async Task<IResponseVm<List<User>>> GetUsersByCalendarIdAsync()
+        public async Task<IResponseVm<List<User>>> GetUsersByCalendarIdAsync(Guid? LoggedInTenantId = null)
         {
             var responseVm = new ResponseVm<List<User>>
             {
@@ -1079,6 +1081,8 @@ namespace ShutterManagement.GHL.Services
 
             try
             {
+                LoggedInTenantId = (LoggedInTenantId != Guid.Empty || LoggedInTenantId != null ? LoggedInTenantId : AppConstant.LoggedInTenantId);
+
                 var calendarRequestUrl = $"{AppConstant.GHL_BaseAddress}/calendars/?locationId={AppConstant.GHL_Locationd}";
                 using var calendarRequest = new HttpRequestMessage(HttpMethod.Get, calendarRequestUrl);
                 calendarRequest.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
@@ -1423,12 +1427,14 @@ namespace ShutterManagement.GHL.Services
 
 
 
-        public async Task<IResponseVm<string>> SyncGhlCustomFields()
+        public async Task<IResponseVm<string>> SyncGhlCustomFields(Guid? LoggedInTenantId = null)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
 
             try
             {
+                LoggedInTenantId = (LoggedInTenantId != Guid.Empty || LoggedInTenantId != null ? LoggedInTenantId : AppConstant.LoggedInTenantId);
+
                 string url = $"{AppConstant.GHL_BaseAddress}/locations/{AppConstant.GHL_Locationd}/customFields?model=all";
 
                 var request = new HttpRequestMessage(HttpMethod.Get, url);

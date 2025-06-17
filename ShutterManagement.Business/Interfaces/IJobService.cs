@@ -25,7 +25,7 @@ namespace ShutterManagement.Business.Interfaces
 
         Task<IResponseVm<List<GetAllJobsSubtenant_tenant>>> GetAllJobsTenant_SubTenant(Pagination filter);
 
-        Task<IResponseVm<List<Opportunity>>> SyncOpportunitiesFromGhl();
+        Task<IResponseVm<List<Opportunity>>> SyncOpportunitiesFromGhl(Guid? LoggedInTenantId = null);
         Task<IResponseVm<string>> UpdateOpportunityFromGHL(GHLOpportunityTrigger opportunitydata);
         Task<IResponseVm<string>> OpportunityFromGHL(GHLOpportunityTrigger opportunitydata);
 

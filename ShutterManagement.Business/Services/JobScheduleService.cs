@@ -428,11 +428,12 @@ namespace ShutterManagement.Business.Services
             return formattedStartDate ?? "";
         }
 
-        public async Task<IResponseVm<string>> AppointmentSync()
+        public async Task<IResponseVm<string>> AppointmentSync(Guid? LoggedInTenantId = null)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
+                LoggedInTenantId = (LoggedInTenantId != Guid.Empty || LoggedInTenantId != null ? LoggedInTenantId : AppConstant.LoggedInTenantId);
 
                 var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration();
                 await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
