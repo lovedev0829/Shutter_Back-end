@@ -463,6 +463,9 @@ namespace ShutterManagement.Business.Services
             return response;
         }
 
+
+
+
         //public async Task<IResponseVm<string>> SyncContactandJobforPartner(string TenantId)
         //{
         //    IResponseVm<string> responseVm = new ResponseVm<string>();

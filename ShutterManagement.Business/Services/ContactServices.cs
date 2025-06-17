@@ -1126,7 +1126,7 @@ namespace ShutterManagement.Business.Services
                     {
                         FileLogger.Log("Exception occurred GHLContact is null.");
                     }
-                    var getAppContacts = (await GetAll()).Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false && x.IsArchive ==false).ToList();
+                    var getAppContacts = (await GetAll()).Where(x => x.TenantId == TenantId && x.IsDelete == false && x.IsArchive ==false).ToList();
 
                     List<Sp_Contact> contactsToInsert = new List<Sp_Contact>();
                     List<GhlContactAdd> contactsToAddToGHL = new List<GhlContactAdd>();

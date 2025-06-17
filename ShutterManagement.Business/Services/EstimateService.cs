@@ -382,6 +382,7 @@ namespace ShutterManagement.Business.Services
                     var result = await notification.CreateNotification(notification1);
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.InsertSuccessMsg;
+                    responseVm.Data = createEstimate?.EstimateId?.ToString() ?? "";
                     FileLogger.Log("Estimate created and all related data added successfully.");
                 }
                 else

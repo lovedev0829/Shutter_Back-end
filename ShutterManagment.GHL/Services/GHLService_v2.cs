@@ -25,6 +25,7 @@ using System.Numerics;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using static Microsoft.AspNetCore.Hosting.Internal.HostingApplication;
 
 namespace ShutterManagement.GHL.Services
 {
@@ -37,7 +38,7 @@ namespace ShutterManagement.GHL.Services
       //  private string accesstoken = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoQ2xhc3MiOiJMb2NhdGlvbiIsImF1dGhDbGFzc0lkIjoiUFRuSUNNTjBtS3IwM2t6SlFxUFEiLCJzb3VyY2UiOiJJTlRFR1JBVElPTiIsInNvdXJjZUlkIjoiNjdlMTFjNzJjOTBhMmY4MTIwMGNjMTJhLW04bXRzcXJuIiwiY2hhbm5lbCI6Ik9BVVRIIiwicHJpbWFyeUF1dGhDbGFzc0lkIjoiUFRuSUNNTjBtS3IwM2t6SlFxUFEiLCJvYXV0aE1ldGEiOnsic2NvcGVzIjpbImNvbnZlcnNhdGlvbnMvbWVzc2FnZS5yZWFkb25seSIsImNvbnZlcnNhdGlvbnMvbWVzc2FnZS53cml0ZSJdLCJjbGllbnQiOiI2N2UxMWM3MmM5MGEyZjgxMjAwY2MxMmEiLCJjbGllbnRLZXkiOiI2N2UxMWM3MmM5MGEyZjgxMjAwY2MxMmEtbThtdHNxcm4ifSwiaWF0IjoxNzQyOTg3NTQyLjIwMywiZXhwIjoxNzQzMDczOTQyLjIwM30.fMjXamfhw4jgfLo2tzDKJS1kA_S89MX02jPxTCheOv4UwJrIjd1DJD3RtW8FIpmOhEvrCaZGw5MKVzqczzzDrhGx3Q_dfJ3ZdMKzH_q8D4pgYKo0V7TlKXH6wp2mu63__iV7ZfWO2XxVFBS9zyg5O2fDYhx209owntBKEYK5DjDfnyxeuryzGBDTaAP7fCor_BFmlcgtpmHpKsy3XNV-faFY-Ha3-XTGN4VQwFv2JAkEKNshJmnBbuF2UdoKcWjCs2C4O62eicNGhj0KC-JelG81aTQr1rqHNC3jdEGT7FPSajkdpJuqzAfrWBitm4FE0QGVe7QVLonfVTzX_om0B8h3QsTtrHKWGyZXaddrtsV-1ssjeE9ojMM2qiyGnDE0VFTWcDicbySyB24bWK5x5VO1f79XpkSKZHgBYeU9vKtYaZcRVE3gcnKNKYT9wl82ARYVKmzHSYv5IEJfdq4epmL9TmuERuowW31aznFFgzuluFqED2dockpRUrDqZjtAklT-66RGex3Xfiu6SW3ImsKscZm5gmjUtAEEY0whoP4FIJf4VWFuId8DEmJhBKRSp2gJDqhro5yuNv_OxLdwOJK07N2AjhjW6TP7L856NJzJBUUR-KonLSuJ9C1tU0C8Y2BDioDEn-P0Qonp38aoCzSnmHQiaYnpv0iNnWoa6Ws";
 
         public GHLService_v2(HttpClient httpClient, ShutterDBContext dBContext,
-            IHttpContextAccessor _httpContextAccessor)
+            IHttpContextAccessor _httpContextAccessor )
         {
             _httpClient = httpClient;
             this.dBContext = dBContext;
@@ -75,6 +76,11 @@ namespace ShutterManagement.GHL.Services
                 return new PipelineResponse { Pipelines = new List<Pipeline>() };
             }
         }
+
+
+
+
+
 
         public async Task<IResponseVm<string>> GetAndSaveDefaultPipelineAndStage()
         {
@@ -1414,6 +1420,107 @@ namespace ShutterManagement.GHL.Services
 
             return responseVm;
         }
+
+
+
+        public async Task<IResponseVm<string>> SyncGhlCustomFields()
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+
+            try
+            {
+                string url = $"{AppConstant.GHL_BaseAddress}/locations/{AppConstant.GHL_Locationd}/customFields?model=all";
+
+                var request = new HttpRequestMessage(HttpMethod.Get, url);
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
+                request.Headers.Add("Version", "2021-07-28");
+                request.Headers.Add("Accept", "application/json");
+
+                var response = await _httpClient.SendAsync(request);
+                var jsonString = await response.Content.ReadAsStringAsync();
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    responseVm.Message = $"Failed to fetch custom fields: {response.StatusCode}, Body: {jsonString}";
+                    return responseVm;
+                }
+
+                var fieldResponse = JsonConvert.DeserializeObject<GhlCustomFieldResponse>(jsonString);
+
+                if (fieldResponse?.customFields == null || !fieldResponse.customFields.Any())
+                {
+                    responseVm.Message = "No custom fields found.";
+                    return responseVm;
+                }
+
+                foreach (var field in fieldResponse.customFields)
+                {
+                    var existingField = await dBContext.TblGhlCustomFields
+                        .FirstOrDefaultAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.FieldName == field.name);
+
+                    if (existingField != null)
+                    {
+                        existingField.GhlFieldId = field.id;
+                        existingField.Model = field.model;
+                        existingField.FieldKey = field.fieldKey;
+                        existingField.Placeholder = field.placeholder;
+                        existingField.DataType = field.dataType;
+                        existingField.Position = field.position;
+                        existingField.DocumentType = field.documentType;
+                        existingField.ParentId = field.parentId;
+                        existingField.LocationId = field.locationId;
+                        existingField.DateAdded = field.dateAdded;
+                        existingField.IsStandard = field.standard;
+                        existingField.ModifiedAt = DateTime.Now;
+                        existingField.IsDelete = false;
+                        existingField.IsActive = true;
+                    }
+                    else
+                    {
+                        var newField = new TblGhlCustomField
+                        {
+                            Id = Guid.NewGuid(),
+                            GhlFieldId = field.id,
+                            FieldName = field.name,
+                            Model = field.model,
+                            FieldKey = field.fieldKey,
+                            Placeholder = field.placeholder,
+                            DataType = field.dataType,
+                            Position = field.position,
+                            DocumentType = field.documentType,
+                            ParentId = field.parentId,
+                            LocationId = field.locationId,
+                            DateAdded = field.dateAdded,
+                            IsStandard = field.standard,
+                            TenantId = AppConstant.LoggedInTenantId,
+                            CreatedAt = DateTime.Now,
+                            IsActive = true,
+                            IsDelete = false
+                        };
+
+                        dBContext.TblGhlCustomFields.Add(newField);
+                    }
+                }
+
+                await dBContext.SaveChangesAsync();
+
+                responseVm.IsSuccess = true;
+                responseVm.Message = "Custom fields synced and saved successfully.";
+            }
+            catch (Exception ex)
+            {
+                responseVm.Message = $"Exception: {ex.Message}";
+            }
+
+            return responseVm;
+        }
+
+
+
+
+
+
+
 
 
 

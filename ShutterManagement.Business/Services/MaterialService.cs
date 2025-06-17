@@ -89,15 +89,25 @@ namespace ShutterManagement.Business.Services
                
                 if(IsTenant)
                 {
+                    var IsSkuExist = false;
                     var VendorExit = vendorService.GetAllQuerable().Where(v => (v.VendorCode == model.Vendor || v.CompanyName == model.Vendor) && v.IsDelete == false && v.TenantId == AppConstant.LoggedInTenantId)
                                    .FirstOrDefault();
-                    var IsSKUExist = _context.TblRawMaterials.Any(x => x.MaterialName.ToLower().Trim() == model.MaterialName.ToLower().Trim() && x.MaterialUniqueId != model.MaterialUniqueId && x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false);
+                    var IsMaterialNameExist = Any(x => x.MaterialName.ToLower().Trim() == model.MaterialName.ToLower().Trim() && x.MaterialUniqueId != model.MaterialUniqueId && x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false);
                     var GetAllVendorList = vendorService.GetAllQuerable()
                     .Where(x => x.IsActive == true && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId).ToList();
                     var GetAllUnitOfMeasureList = unitofMeasurementService.GetAllQuerable()
                     .Where(x => x.IsActive == true && x.IsDelete == false).ToList();
                     var CheckExistingVendorbyCode = GetAllVendorList.Any(x => x.VendorCode == model.Vendor || x.CompanyName==model.Vendor);
-                    if (IsSKUExist)
+                    if(model.SKU != null)
+                    {
+                       IsSkuExist = Any(x => x.Sku.ToLower().Trim() == model.SKU.ToLower().Trim() && x.MaterialUniqueId != model.MaterialUniqueId && x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false);
+                    }
+                    if(IsSkuExist)
+                    {
+                        responseVm.Message = $"SKU {model.SKU} " + AppConstant.AlreadyExists;
+                        return responseVm;
+                    }
+                    if (IsMaterialNameExist)
                     {
                         responseVm.Message = $"Material Name {model.MaterialName} " + AppConstant.AlreadyExists;
                         return responseVm;
@@ -201,6 +211,7 @@ namespace ShutterManagement.Business.Services
                                     Version1 = MaterialUniqueId1.Split("-", StringSplitOptions.RemoveEmptyEntries).Length == 3 ? Convert.ToInt32(MaterialUniqueId1.Split("-", StringSplitOptions.RemoveEmptyEntries)[2]) : 0;
                                 }
                                 Version1 += 1;
+                                var generateUniqueId = GenerateUniqueId.GenerateUniqueIds(ModuleName.Material, AppConstant.LoggedInCompanyCode, Version1);
                                 TblRawMaterial material = new TblRawMaterial
                                 {
                                     MaterialName = model.MaterialName.Trim(),
@@ -221,7 +232,7 @@ namespace ShutterManagement.Business.Services
                                     IsActive = true,
                                     IsDelete = false,
                                     TenantId = AppConstant.LoggedInTenantId,
-                                    MaterialUniqueId = MaterialUniqueId1,
+                                    MaterialUniqueId = generateUniqueId,
                                 };
                                 if (material != null)
                                 {
@@ -496,12 +507,13 @@ namespace ShutterManagement.Business.Services
                 Guid MaterialId = Guid.Empty;
                 Guid.TryParse(model.MaterialId, out MaterialId);
                 var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsActive == true && x.IsDelete == false);
-                var IsVendorExist = _context.TblVendors.Where(x => x.VendorId == model.VendorId && x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
-                var IsSKUExist = !string.IsNullOrEmpty(model.SKU) ? (await AnyAsync(x => x.VendorId == model.VendorId && x.Sku == model.SKU && x.TenantId == AppConstant.LoggedInTenantId 
-                && x.IsDelete == false && (model.MaterialId != null ? x.RawMaterialId != Guid.Parse(model.MaterialId) : x.MaterialUniqueId != model.MaterialUniqueId))) : false;
-                var IsMaterialExist = _context.TblRawMaterials.Any(x => x.MaterialName.ToLower().Trim() == model.MaterialName.ToLower().Trim() &&
-                x.TenantId == AppConstant.LoggedInTenantId && 
-                x.IsDelete == false && (string.IsNullOrEmpty(model.MaterialId) ||
+                var IsVendorExist = vendorService.GetAllQuerable().Where(x => x.VendorId == model.VendorId && x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+                var IsSKUExist = !string.IsNullOrEmpty(model.SKU) ? (await AnyAsync(x => x.VendorId == model.VendorId && x.Sku == model.SKU && x.TenantId == AppConstant.LoggedInTenantId
+                && x.IsDelete == false && (!string.IsNullOrEmpty(model.MaterialId) ||
+                MaterialId != Guid.Empty ? x.RawMaterialId != MaterialId : x.MaterialUniqueId != model.MaterialUniqueId))) : false;
+                var IsMaterialExist = Any(x => x.MaterialName.ToLower().Trim() == model.MaterialName.ToLower().Trim() &&
+                x.TenantId == AppConstant.LoggedInTenantId &&
+                x.IsDelete == false && (!string.IsNullOrEmpty(model.MaterialId) ||
                 MaterialId != Guid.Empty ? x.RawMaterialId != MaterialId : x.MaterialUniqueId != model.MaterialUniqueId));
                 if (IsMaterialExist)
                 {
@@ -510,15 +522,15 @@ namespace ShutterManagement.Business.Services
                 }
                 if (IsSKUExist)
                 {
-                    responseVm.Message = "SKU" + " " +AppConstant.AlreadyExists;
+                    responseVm.Message = "SKU" + " " + AppConstant.AlreadyExists;
                     return responseVm;
                 }
-               
+
                 if (IsTenant)
                 {
                     if (IsVendorExist != null)
                     {
-                        
+
                         var IsMaterialExists = GetAllQuerable()
                                  .Where(c => (!string.IsNullOrEmpty(model.MaterialId) ? c.RawMaterialId == Guid.Parse(model.MaterialId) : c.MaterialUniqueId == model.MaterialUniqueId)
                                                && c.TenantId == AppConstant.LoggedInTenantId
@@ -558,7 +570,7 @@ namespace ShutterManagement.Business.Services
                             IsMaterialExists.UnitCost = model.UnitCost;
                             IsMaterialExists.Length = length;
                             IsMaterialExists.Width = width;
-                           // IsMaterialExists.NonRatedUnitCost = model.NonRatedUnitCost;
+                            // IsMaterialExists.NonRatedUnitCost = model.NonRatedUnitCost;
                             IsMaterialExists.Sku = model.SKU;
                             IsMaterialExists.ProductType = Guid.Parse(model.ProductType);
                             IsMaterialExists.UnitOfMeasurement = model.UnitOfMeasurement;
