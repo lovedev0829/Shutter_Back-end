@@ -15,7 +15,7 @@ namespace ShutterManagement.Business.Interfaces
 {
     public interface IJobService : IGenericRepository<TblJob>
     {
-        Task<IResponseVm<string>> Create(CreateJob model);
+        Task<IResponseVm<string>> Create(CreateJob model, Guid? LoggedInTenantId = null);
         Task<IResponseVm<string>> UpdateJob(UpdateJob model);
         Task<IResponseVm<string>> DeleteJob(string Id);
         Task<IResponseVm<string>> ActiveInactive(string Id);

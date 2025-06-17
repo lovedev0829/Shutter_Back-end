@@ -120,6 +120,8 @@ namespace ShutterManagement.GHL.Services
                     .Where(x => x.GhlPipelineId == targetPipeline.Id && x.TenantId== LoggedInTenantId)
                     .ToList();
 
+                FileLogger.Log($"Exception occurred GHLContact is null.{existingStages}");
+
                 var existingStagesDict = existingStages.ToDictionary(x => x.GhlStageId, x => x);
 
                 List<TblGhlStage> stagesToUpdate = new();
@@ -156,7 +158,7 @@ namespace ShutterManagement.GHL.Services
                             GhlLastSync = DateTime.Now,
                             CreatedAt = DateTime.Now,
                             TenantId = LoggedInTenantId,
-                            CreatedBy = AppConstant.LoggedInUserID,
+                            CreatedBy = LoggedInTenantId,
                             IsActive = true,
                         });
                     }

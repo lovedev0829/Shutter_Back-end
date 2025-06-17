@@ -1127,7 +1127,7 @@ namespace ShutterManagement.Business.Services
                     var getGHLContacts = await gHLService_V2.GetContactsAsync();
                     if (getGHLContacts != null)
                     {
-                        FileLogger.Log("GHL", getGHLContacts);
+                        FileLogger.Log("GHL", getGHLContacts.Count());
                     }
                     else
                     {

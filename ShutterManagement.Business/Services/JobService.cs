@@ -408,6 +408,8 @@ namespace ShutterManagement.Business.Services
             {
                 LoggedInTenantId = (LoggedInTenantId != Guid.Empty || LoggedInTenantId != null ? LoggedInTenantId : AppConstant.LoggedInTenantId);
 
+                FileLogger.Log($"Exception occurred GHLContact is null.{LoggedInTenantId}");
+
                 await gHLConfiguration.GetGHLConfiguration(LoggedInTenantId.ToString());
                 var configCheck = await gHLConfiguration.CheckGHLConfiguration(LoggedInTenantId);
 
@@ -446,7 +448,7 @@ namespace ShutterManagement.Business.Services
                 FileLogger.Log($"Fetching opportunities from pipeline ID: {targetPipeline.Id}");
 
                 var opportunities = await gHLService_V2.GetOpportunitiesFromGhl();
-                var stages = await GetGHLStages();
+                var stages = await GetGHLStages(LoggedInTenantId);
                 var allContacts = await gHLService_V2.GetContactsAsync();
                 FileLogger.Log($"getting contacts from ghl process.{allContacts}");
 
@@ -538,16 +540,17 @@ namespace ShutterManagement.Business.Services
         }
 
 
-        public async Task<IResponseVm<List<PipelineAndStage>>> GetGHLStages()
+        public async Task<IResponseVm<List<PipelineAndStage>>> GetGHLStages(Guid? LoggedInTenantId = null)
         {
             IResponseVm<List<PipelineAndStage>> responseVm = new ResponseVm<List<PipelineAndStage>>();
             try
             {
+                LoggedInTenantId = (LoggedInTenantId != Guid.Empty || LoggedInTenantId != null ? LoggedInTenantId : AppConstant.LoggedInTenantId);
                 var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration();
                 if (Checkghlresponse.IsSuccess)
                 {
                     var gHLStages = dbContext.TblGhlStages
-                    .Where(x => x.TenantId == AppConstant.LoggedInTenantId).OrderByDescending(x => x.CreatedAt)
+                    .Where(x => x.TenantId == LoggedInTenantId).OrderByDescending(x => x.CreatedAt)
                     .ToList();
 
                     var stageList = new List<PipelineAndStage>();
