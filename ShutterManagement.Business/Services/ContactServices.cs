@@ -215,7 +215,7 @@ namespace ShutterManagement.Business.Services
                         ContactUniqueId = contactUniqueId ??"",
                         IsTaxExemption = model.IsTaxExemption,
                         IsBillingAddressSameAsAddress = model.IsBillingAddressSameAsAddress,
-                        CreatedBy = AppConstant.LoggedInUserID,
+                        CreatedBy = LoggedInTenantId,
                         CreatedAt = DateTime.Now,
                         TenantId = TenantId,
                         IsActive = true,
