@@ -1047,6 +1047,7 @@ namespace ShutterManagement.Business.Services
 
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.UpdateSuccessMsg;
+                responseVm.Data = estimate?.EstimateId.ToString() ?? "";
                 FileLogger.Log("Estimate update process completed successfully.");
             }
             catch (Exception ex)
