@@ -46,7 +46,7 @@ namespace ShutterManagement.Business.Services
         public async Task GetGHLConfiguration(string Id)
         {
             FileLogger.Log("details GHl ID: ", Id);
-            var Checkghlresponse = await CheckGHLConfiguration();
+            var Checkghlresponse = await CheckGHLConfiguration(Guid.Parse(Id));
             var details = GetAllQuerable()
                    .Where(x => x.LocationId == Id || x.TenantId.ToString().ToLower() == Id.ToLower() && x.IsDelete == false)
                    .FirstOrDefault();
@@ -216,12 +216,13 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        public async Task<IResponseVm<string>> CheckGHLConfiguration()
+        public async Task<IResponseVm<string>> CheckGHLConfiguration(Guid? LoggedInTenantId = null)
         {
             IResponseVm<string> response = new ResponseVm<string>();
             try
             {
-                var isExist = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete==false).FirstOrDefault();
+                LoggedInTenantId = (LoggedInTenantId != Guid.Empty || LoggedInTenantId != null ? LoggedInTenantId : AppConstant.LoggedInTenantId);
+                var isExist = GetAllQuerable().Where(x => x.TenantId == LoggedInTenantId && x.IsDelete==false).FirstOrDefault();
                 if (isExist != null)
                 {
                     if(isExist.AccessToken !=null && isExist.RefreshToken!=null)
@@ -312,14 +313,16 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        public async Task<IResponseVm<List<StageMapping>>> GetGHLStagesMappings()
+        public async Task<IResponseVm<List<StageMapping>>> GetGHLStagesMappings(Guid? LoggedInTenantId = null)
         {
             IResponseVm<List<StageMapping>> responseVm = new ResponseVm<List<StageMapping>>();
 
             try
             {
+                LoggedInTenantId = (LoggedInTenantId != Guid.Empty || LoggedInTenantId != null ? LoggedInTenantId : AppConstant.LoggedInTenantId);
+
                 var mappings =  dbContext.TblGhlStagesmappings
-                    .Where(x => x.TenantId == AppConstant.LoggedInTenantId)
+                    .Where(x => x.TenantId == LoggedInTenantId)
                     .Select(x => new StageMapping
                     {
                         StageId = x.StageId??Guid.Empty,
@@ -406,13 +409,15 @@ namespace ShutterManagement.Business.Services
             return result;
         }
 
-        public Task<IResponseVm<string>> CheckStageMapping()
+        public Task<IResponseVm<string>> CheckStageMapping(Guid? LoggedInTenantId = null)
         {
            // get record check tblghlstagemapping not null
            IResponseVm<string> response = new ResponseVm<string>();
             try
             {
-                var isExist = dbContext.TblGhlStagesmappings.Where(x => x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
+                LoggedInTenantId = (LoggedInTenantId != Guid.Empty || LoggedInTenantId != null ? LoggedInTenantId : AppConstant.LoggedInTenantId);
+
+                var isExist = dbContext.TblGhlStagesmappings.Where(x => x.TenantId == LoggedInTenantId).FirstOrDefault();
                 if (isExist != null)
                 {
                     response.IsSuccess = true;
@@ -462,6 +467,9 @@ namespace ShutterManagement.Business.Services
             }
             return response;
         }
+
+
+
 
         //public async Task<IResponseVm<string>> SyncContactandJobforPartner(string TenantId)
         //{

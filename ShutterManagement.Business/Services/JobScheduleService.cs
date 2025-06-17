@@ -428,17 +428,18 @@ namespace ShutterManagement.Business.Services
             return formattedStartDate ?? "";
         }
 
-        public async Task<IResponseVm<string>> AppointmentSync()
+        public async Task<IResponseVm<string>> AppointmentSync(Guid? LoggedInTenantId = null)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
+                LoggedInTenantId = (LoggedInTenantId != Guid.Empty || LoggedInTenantId != null ? LoggedInTenantId : AppConstant.LoggedInTenantId);
 
-                var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration();
-                await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
+                var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration(LoggedInTenantId);
+                await gHLConfiguration.GetGHLConfiguration(LoggedInTenantId.ToString());
                 if (Checkghlresponse.IsSuccess)
                 {
-                    var jobschedule = GetAllQuerable().Where(x => x.TenantId.ToString().ToLower() == AppConstant.LoggedInTenantId.ToString().ToLower()
+                    var jobschedule = GetAllQuerable().Where(x => x.TenantId.ToString().ToLower() == LoggedInTenantId.ToString().ToLower()
                     && x.IsDelete == false).ToList();
                     if(jobschedule.Count==0)
                     {

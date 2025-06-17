@@ -153,7 +153,7 @@ namespace ShutterManagement.Business.Services
                             && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
                             var isPricingExpression = await expressionService.AnyAsync(x => x.Id.ToString() == item.PricingExpression && x.IsActive == true && x.IsDelete == false
                              && x.TenantId == AppConstant.LoggedInTenantId);
-                            if (!isComponentExists && isPricingExpression)
+                            if ((!isComponentExists && string.IsNullOrEmpty(item.PricingExpression))||  (!string.IsNullOrEmpty(item.PricingExpression) && isPricingExpression))
                             {
                                 TblProductComponent productcomponent = new TblProductComponent
                                 {
@@ -332,16 +332,18 @@ namespace ShutterManagement.Business.Services
                     foreach (var item in productList)
                     {
                         var productComponent = (from pm in dbContext.TblProductComponents.OrderByDescending(x => x.CreatedAt)
-                                                join c in dbContext.TblComponents on pm.ComponentId equals c.ComponentId
-                                                join pe in dbContext.TblExpressions on pm.PricingExpression equals pe.Id.ToString()
+                                                join c in dbContext.TblComponents on pm.ComponentId equals c.ComponentId into Comp
+                                                from comp in Comp.DefaultIfEmpty()
+                                                join pe in dbContext.TblExpressions on pm.PricingExpression equals pe.Id.ToString() into Exp
+                                                from exp in Exp.DefaultIfEmpty()
                                                 where pm.ProductId == item.ProductId && pm.IsDelete == false
                                                 select new ProductComponentVmm
                                                 {
                                                     ComponentId = pm.ComponentId,
                                                     PricingExpression = pm.PricingExpression,
-                                                    PricingExpressionName = pe.ExpressionName,
-                                                    PricingExpressionFormula = !string.IsNullOrEmpty(pe.DisplayArray) ? pe.DisplayArray.Split(new[] { ", " }, StringSplitOptions.TrimEntries) : new string[0],
-                                                    ComponentName = c.ComponentName,
+                                                    PricingExpressionName = exp.ExpressionName,
+                                                    PricingExpressionFormula = !string.IsNullOrEmpty(exp.DisplayArray) ? exp.DisplayArray.Split(new[] { ", " }, StringSplitOptions.TrimEntries) : new string[0],
+                                                    ComponentName = comp.ComponentName,
                                                     Quantity = pm.Quantity,
                                                     ProductComponentId = pm.ProductComponentId,
                                                     IsActive = pm.IsActive,
