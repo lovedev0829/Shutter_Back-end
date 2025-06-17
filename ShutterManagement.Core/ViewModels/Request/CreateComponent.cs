@@ -49,6 +49,6 @@ namespace ShutterManagement.Core.ViewModels.Request
         public decimal? WasteFactor { get; set; }
 
         [DefaultValue(null)]
-        public Guid? MaterialPricingExpression { get; set; }
+        public string? MaterialPricingExpression { get; set; }
     }
 }

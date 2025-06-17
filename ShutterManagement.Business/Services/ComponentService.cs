@@ -85,6 +85,8 @@ namespace ShutterManagement.Business.Services
                         && x.IsDelete == false);
                         if (!isMaterialExists)
                         {
+                            Guid MaterialPricingExp = Guid.Empty;
+                            Guid.TryParse(material.MaterialPricingExpression, out MaterialPricingExp);
                             TblComponentMaterial componentmaterial = new TblComponentMaterial
                             {
                                 ComponentId = component.ComponentId,
@@ -96,7 +98,7 @@ namespace ShutterManagement.Business.Services
                                 IsActive = true,
                                 IsDelete = false,
                                 TenantId = AppConstant.LoggedInTenantId,
-                                MaterialPricingExpression = material.MaterialPricingExpression ?? Guid.Empty
+                                MaterialPricingExpression = MaterialPricingExp
                             };
 
                             await _componentMaterial.Add(componentmaterial);
