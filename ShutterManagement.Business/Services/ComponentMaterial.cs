@@ -63,7 +63,7 @@ namespace ShutterManagement.Business.Services
                                     IsActive = true,
                                     IsDelete = false,
                                     TenantId = AppConstant.LoggedInTenantId,
-                                    MaterialPricingExpression = material.MaterialPricingExpression
+                                    MaterialPricingExpression = material.MaterialPricingExpression != Guid.Empty ? material.MaterialPricingExpression : null
                                 };
                                 await Add(newComponentMaterial);
 
@@ -181,7 +181,7 @@ namespace ShutterManagement.Business.Services
 
                         IsComponentMaterialExists.RawMaterialId = model.RawMaterialId;
                         IsComponentMaterialExists.Quantity = model.Quantity;
-                        IsComponentMaterialExists.MaterialPricingExpression = model.MaterialPricingExpression;
+                        IsComponentMaterialExists.MaterialPricingExpression = model.MaterialPricingExpression != Guid.Empty ?  model.MaterialPricingExpression : null;
                         IsComponentMaterialExists.WasteFactor = model.WasteFactor;
                         IsComponentMaterialExists.UpdatedAt = DateTime.Now;
                         IsComponentMaterialExists.ModifiedBy = AppConstant.LoggedInUserID;
