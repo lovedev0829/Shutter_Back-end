@@ -1142,7 +1142,7 @@ namespace ShutterManagement.GHL.Services
 
                     if (responseVm.IsSuccess)
                     {
-                        var usersyncResponse=await SaveOrUpdateGHLUsersAsync(responseVm.Data);
+                        var usersyncResponse=await SaveOrUpdateGHLUsersAsync(responseVm.Data, LoggedInTenantId);
                         if(usersyncResponse.IsSuccess)
                         {
 
@@ -1176,16 +1176,17 @@ namespace ShutterManagement.GHL.Services
             return responseVm;
         }
 
-        public async Task<IResponseVm<string>> SaveOrUpdateGHLUsersAsync(List<User> users)
+        public async Task<IResponseVm<string>> SaveOrUpdateGHLUsersAsync(List<User> users ,Guid? LoggedInTenantId=null)
         {
             var responseVm = new ResponseVm<string>();
             var now = DateTime.Now;
 
             try
             {
+                LoggedInTenantId = (LoggedInTenantId != Guid.Empty || LoggedInTenantId != null ? LoggedInTenantId : AppConstant.LoggedInTenantId);
                 // 1. Get existing users for the tenant
                 var existingUsers = await dBContext.TblGhlUsers
-                    .Where(u => u.TenantId == AppConstant.LoggedInTenantId && u.IsActive==true && u.IsDelete==false)
+                    .Where(u => u.TenantId == LoggedInTenantId && u.IsActive==true && u.IsDelete==false)
                     .ToListAsync();
 
                 var incomingEmails = users
@@ -1220,7 +1221,7 @@ namespace ShutterManagement.GHL.Services
                         existingUser.GhlCalendarName = user.CalendarName;
                         existingUser.GhlLastSync = now;
                         existingUser.UpdatedAt = now;
-                        existingUser.ModifiedBy = AppConstant.LoggedInUserID;
+                        existingUser.ModifiedBy = LoggedInTenantId;
                     }
                     else
                     {
@@ -1236,7 +1237,7 @@ namespace ShutterManagement.GHL.Services
                             GhlCalendarId = user.CalendarId,
                             GhlCalendarName = user.CalendarName,
                             GhlLastSync = now,
-                            TenantId = AppConstant.LoggedInTenantId,
+                            TenantId = LoggedInTenantId,
                             CreatedBy = AppConstant.LoggedInUserID,
                             UpdatedAt = now,
                             ModifiedBy = AppConstant.LoggedInUserID,
@@ -1253,7 +1254,7 @@ namespace ShutterManagement.GHL.Services
                         var systemUser = await dBContext.TblUsers
                             .FirstOrDefaultAsync(u =>
                                 u.Email == user.email &&
-                                u.TenantId == AppConstant.LoggedInTenantId &&
+                                u.TenantId == LoggedInTenantId &&
                                 u.IsActive==true && u.IsDelete==false);
 
                         if (systemUser != null)
@@ -1282,15 +1283,16 @@ namespace ShutterManagement.GHL.Services
         }
 
 
-        public async Task<IResponseVm<List<TblGhlUser>>> GetGHLUsersByCalendarId()
+        public async Task<IResponseVm<List<TblGhlUser>>> GetGHLUsersByCalendarId(Guid? LoggedInTenantId=null)
         {
             IResponseVm<List<TblGhlUser>> responseVm = new ResponseVm<List<TblGhlUser>>();
 
             try
             {
+                LoggedInTenantId = (LoggedInTenantId != Guid.Empty || LoggedInTenantId != null ? LoggedInTenantId : AppConstant.LoggedInTenantId);
 
                 var users = await dBContext.TblGhlUsers
-                    .Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete==false && (x.GhlCalendarId == AppConstant.GHL_CalendarName ||  x.GhlCalendarName == AppConstant.GHL_CalendarName))
+                    .Where(x => x.TenantId == LoggedInTenantId && x.IsDelete==false && (x.GhlCalendarId == AppConstant.GHL_CalendarName ||  x.GhlCalendarName == AppConstant.GHL_CalendarName))
                     .ToListAsync();
 
                 if (users != null && users.Count > 0)

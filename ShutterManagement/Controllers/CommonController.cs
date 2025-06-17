@@ -1018,11 +1018,12 @@ namespace ShutterManagement.Controllers
         [Route("GetAllGHL_Users")]
         public async Task<IActionResult> GetAllGHL_Users()
         {
-            await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
-            var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration();
+            var LoggedInTenantId = AppConstant.LoggedInTenantId;
+            await gHLConfiguration.GetGHLConfiguration(LoggedInTenantId.ToString());
+            var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration(LoggedInTenantId);
             if (Checkghlresponse.IsSuccess)
             {
-                var result = await gHLService_V2.GetGHLUsersByCalendarId();
+                var result = await gHLService_V2.GetGHLUsersByCalendarId(LoggedInTenantId);
                 return Ok(result);
             }
             else
