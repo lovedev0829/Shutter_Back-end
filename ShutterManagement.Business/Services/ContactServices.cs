@@ -171,7 +171,7 @@ namespace ShutterManagement.Business.Services
                                 GHLContactId = model.GHLContactId ?? string.Empty,
                                 locationId = model.locationId ?? string.Empty,
                             };
-                            var result = await Update_Contact(ghlContactAdd);
+                            var result = await Update_Contact(ghlContactAdd, LoggedInTenantId);
                         }
                         else
                         {
