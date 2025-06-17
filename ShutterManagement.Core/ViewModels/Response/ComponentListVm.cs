@@ -38,6 +38,7 @@ namespace ShutterManagement.Core.ViewModels.Response
 
         public bool?  IsActive { get; set; }
         public bool?  IsDelete { get; set; }
+        public Guid MaterialPricingExpression { get; set; }
     }
 
   

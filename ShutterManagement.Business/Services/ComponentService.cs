@@ -435,7 +435,8 @@ namespace ShutterManagement.Business.Services
                         Quantity = cm.Quantity,
                         MaterialName = m.MaterialName,
                         IsDelete = cm.IsDelete,
-                        IsActive = cm.IsActive
+                        IsActive = cm.IsActive,
+                        MaterialPricingExpression = cm.MaterialPricingExpression ?? Guid.Empty
                     }).ToList();
         }
 
