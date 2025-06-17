@@ -28,10 +28,10 @@ namespace ShutterManagement.Core.ViewModels.Request
         //[Required]
         //public Guid? ExpressionId { get; set; }
 
-        [DefaultValue("")]
-       // [Required]
-        [MaxLength(500)]
-        public string? PricingExpression { get; set; }
+       // [DefaultValue("")]
+       //// [Required]
+       // [MaxLength(500)]
+       // public string? PricingExpression { get; set; }
 
         [MaxLength(1000)]
         public string? Notes { get; set; }
@@ -47,5 +47,7 @@ namespace ShutterManagement.Core.ViewModels.Request
 
         public decimal? Qty { get; set; }
         public decimal? WasteFactor { get; set; }
+
+        public Guid? MaterialPricingExpression { get; set; }
     }
 }

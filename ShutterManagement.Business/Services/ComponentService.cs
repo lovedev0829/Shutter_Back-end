@@ -67,7 +67,7 @@ namespace ShutterManagement.Business.Services
                         ComponentId = Guid.NewGuid(),
                         ComponentName = model.ComponentName.Trim(),
                         ProductType = model.ProductType,
-                        PricingExpression = model.PricingExpression,
+                        //PricingExpression = model.PricingExpression,
                         MarkupPercentage = model.MarkupPercentage,
                         Notes = model.Notes,
                         CreatedAt = DateTime.Now,
@@ -95,7 +95,8 @@ namespace ShutterManagement.Business.Services
                                 CreatedBy = AppConstant.LoggedInUserID,
                                 IsActive = true,
                                 IsDelete = false,
-                                TenantId = AppConstant.LoggedInTenantId
+                                TenantId = AppConstant.LoggedInTenantId,
+                                MaterialPricingExpression = material.MaterialPricingExpression ?? Guid.Empty
                             };
 
                             await _componentMaterial.Add(componentmaterial);
@@ -401,7 +402,7 @@ namespace ShutterManagement.Business.Services
                     MarkupPercentage = c.MarkupPercentage,
                     Notes = c.Notes,
                     ProductType = c.ProductType,
-                    PricingExpression = c.PricingExpression,
+                    //PricingExpression = c.PricingExpression,
                     TenantId = c.TenantId,
                 }).ToList();
 
@@ -424,21 +425,49 @@ namespace ShutterManagement.Business.Services
 
         private List<ComponentMaterialVm> GetComponentMaterials(Guid componentId)
         {
-            return (from cm in dbContext.TblComponentMaterials.OrderByDescending(x => x.CreatedAt)
-                    join m in dbContext.TblRawMaterials on cm.RawMaterialId equals m.RawMaterialId
-                    where cm.ComponentId == componentId && cm.IsDelete == false && cm.TenantId == AppConstant.LoggedInTenantId
-                    select new ComponentMaterialVm
-                    {
-                        ComponentMaterialId = cm.ComponentMaterialId,
-                        RawMaterialId = cm.RawMaterialId,
-                        WasteFactor = cm.WasteFactor,
-                        Quantity = cm.Quantity,
-                        MaterialName = m.MaterialName,
-                        IsDelete = cm.IsDelete,
-                        IsActive = cm.IsActive,
-                        MaterialPricingExpression = cm.MaterialPricingExpression ?? Guid.Empty
-                    }).ToList();
+            var materialCompoenent = (from cm in dbContext.TblComponentMaterials.OrderByDescending(x => x.CreatedAt)
+                                      join m in dbContext.TblRawMaterials on cm.RawMaterialId equals m.RawMaterialId
+                                      where cm.ComponentId == componentId && cm.IsDelete == false && cm.TenantId == AppConstant.LoggedInTenantId
+                                      select new
+                                      {
+                                          cm.ComponentMaterialId,
+                                          cm.RawMaterialId,
+                                          cm.WasteFactor,
+                                          cm.Quantity,
+                                          m.MaterialName,
+                                          cm.IsDelete,
+                                          cm.IsActive,
+                                          cm.MaterialPricingExpression,
+                                      }).ToList();
+
+            var result = new List<ComponentMaterialVm>();
+
+
+            foreach (var item in materialCompoenent)
+            {
+                var exp = GetExpression(item.MaterialPricingExpression?.ToString());
+
+                var matcomp = new ComponentMaterialVm
+                {
+                    ComponentMaterialId = item.ComponentMaterialId,
+                    RawMaterialId = item.RawMaterialId ?? Guid.Empty,
+                    WasteFactor = item.WasteFactor ?? 0.0m,
+                    Quantity = item.Quantity ?? 0.0m,
+                    MaterialName = item.MaterialName ?? "",
+                    IsActive = item.IsActive,
+                    IsDelete = item.IsDelete,
+                    MaterialPricingExpression = item.MaterialPricingExpression ?? Guid.Empty,
+                    displayArray = exp?.DisplayArray ?? "",
+                    ExpressionFormulae = exp?.ExpressionFormulae ?? "",
+                    ExpressionName = exp?.ExpressionName ?? "",
+                };
+
+                result.Add(matcomp);
+            }
+
+            return result;
         }
+
 
         private IEnumerable<ComponentListVm> ApplyFilters(IEnumerable<ComponentListVm> componentList, Pagination filter)
         {
