@@ -15,9 +15,9 @@ namespace ShutterManagement.Business.Interfaces
 {
     public interface IContactService : IGenericRepository<TblContact>
     {
-        Task<IResponseVm<string>> Create_Contact(Sp_Contact model);
+        Task<IResponseVm<string>> Create_Contact(Sp_Contact model, Guid? LoggedInTenantId = null);
         Task<IResponseVm<string>> GetContactByEmailOrPhone(string Email, string Phone);
-        Task<IResponseVm<string>> Update_Contact(UpdateContact model);
+        Task<IResponseVm<string>> Update_Contact(UpdateContact model, Guid? LoggedInTenantId = null);
         Task<IResponseVm<List<ContactsList>>> GetAll_Contact(Pagination filter, bool Role);
         Task<IResponseVm<string>> ActiveInActiveContact(Guid ContactId);
         Task<IResponseVm<string>> DeleteContact(Guid ContactId);

@@ -408,8 +408,8 @@ namespace ShutterManagement.Business.Services
             {
                 LoggedInTenantId = (LoggedInTenantId != Guid.Empty || LoggedInTenantId != null ? LoggedInTenantId : AppConstant.LoggedInTenantId);
 
-                await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
-                var configCheck = await gHLConfiguration.CheckGHLConfiguration();
+                await gHLConfiguration.GetGHLConfiguration(LoggedInTenantId.ToString());
+                var configCheck = await gHLConfiguration.CheckGHLConfiguration(LoggedInTenantId);
 
                 if (!configCheck.IsSuccess)
                 {
