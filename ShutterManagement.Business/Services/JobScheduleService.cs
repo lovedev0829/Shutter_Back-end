@@ -435,7 +435,7 @@ namespace ShutterManagement.Business.Services
             {
                 LoggedInTenantId = (LoggedInTenantId != Guid.Empty || LoggedInTenantId != null ? LoggedInTenantId : AppConstant.LoggedInTenantId);
 
-                var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration();
+                var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration(LoggedInTenantId);
                 await gHLConfiguration.GetGHLConfiguration(LoggedInTenantId.ToString());
                 if (Checkghlresponse.IsSuccess)
                 {
