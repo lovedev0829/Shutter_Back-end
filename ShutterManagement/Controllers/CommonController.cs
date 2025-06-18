@@ -184,8 +184,9 @@ namespace ShutterManagement.Controllers
         [Route("GetAllAssignedPerson")]
         public async Task<IActionResult> GetAllAssignedPerson()
         {
+            var tenantid = AppConstant.LoggedInTenantId;
             await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
-            var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration();
+            var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration(tenantid);
             if (Checkghlresponse.IsSuccess)
             {
                 var UserGHLs = await userService.GetAll(filter);
@@ -803,7 +804,8 @@ namespace ShutterManagement.Controllers
         [Route("GetAllStages")]
         public async Task<IActionResult> GetStages()
         {
-            var res = await gHLConfiguration.CheckGHLConfiguration();
+            var Tenantid = AppConstant.LoggedInTenantId;
+            var res = await gHLConfiguration.CheckGHLConfiguration(Tenantid);
             if(res.IsSuccess)
             { 
                 var result = await ghlService.GetGHLStages();
@@ -929,12 +931,16 @@ namespace ShutterManagement.Controllers
         [Route("UserSync")]
         public async Task<IActionResult> GetUserAsync()
         {
-            await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
+
+            var TenantId = AppConstant.LoggedInTenantId;
+            await gHLConfiguration.GetGHLConfiguration(TenantId.ToString());
             // var authorizationUrl = await gHLService_V2.GetUsersAsync();
-            var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration();
+
+
+            var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration(TenantId);
             if (Checkghlresponse.IsSuccess)
             {
-                var users = await gHLService_V2.GetUsersByCalendarIdAsync();
+                var users = await gHLService_V2.GetUsersByCalendarIdAsync(TenantId);
                 users.Data = users.Data = null;
                 return Ok(users);
             }
@@ -998,8 +1004,9 @@ namespace ShutterManagement.Controllers
         [HttpGet("GetallStagesMapping")]
         public async Task<IActionResult> GetallStagesMapping()
         {
-            var pipelineResult = await gHLService_V2.GetAndSaveDefaultPipelineAndStage();
-            var result = await gHLConfiguration.GetGHLStagesMappings();
+            var tenantId = AppConstant.LoggedInTenantId;
+            var pipelineResult = await gHLService_V2.GetAndSaveDefaultPipelineAndStage(tenantId);
+            var result = await gHLConfiguration.GetGHLStagesMappings(tenantId);
 
             return Ok(result);
         }
@@ -1030,7 +1037,6 @@ namespace ShutterManagement.Controllers
             {
                 return Ok(Checkghlresponse);
             }
-              
         }
 
 
@@ -1038,11 +1044,12 @@ namespace ShutterManagement.Controllers
         [Route("GetCustomeFields")]
         public async Task<IActionResult> GetCustomeFields()
         {
-            await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
-            var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration();
+            var tenantid = AppConstant.LoggedInTenantId;
+            await gHLConfiguration.GetGHLConfiguration(tenantid.ToString());
+            var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration(tenantid);
             if (Checkghlresponse.IsSuccess)
             {
-                var result = await gHLService_V2.SyncGhlCustomFields();
+                var result = await gHLService_V2.SyncGhlCustomFields(tenantid);
                 return Ok(result);
             }
             return Ok(Checkghlresponse);

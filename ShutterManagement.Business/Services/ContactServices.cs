@@ -295,7 +295,7 @@ namespace ShutterManagement.Business.Services
                         }
                         if (model.GHLContactId == null)
                         {
-                            var Checkghlresponse = await gHLConfigurationService.CheckGHLConfiguration();
+                            var Checkghlresponse = await gHLConfigurationService.CheckGHLConfiguration(LoggedInTenantId);
                             if (Checkghlresponse.IsSuccess)
                             {
                                 var ghlResponse = await SyncWithGHL(res, model);

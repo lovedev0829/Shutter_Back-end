@@ -67,7 +67,7 @@ namespace ShutterManagement.Business.Services
                     if (responseVm.IsSuccess)
                     {
                         await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
-                        var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration();
+                        var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration(AppConstant.LoggedInTenantId);
                         if (Checkghlresponse.IsSuccess)
                         {
           
@@ -113,7 +113,7 @@ namespace ShutterManagement.Business.Services
                     if (responseVm.IsSuccess)
                     {
                         await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
-                        var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration();
+                        var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration(AppConstant.LoggedInTenantId);
                        if(Checkghlresponse.IsSuccess)
                         {
                             var jobStatusName = EnumValue.GetEnumValue(JobStatus.Appointment_Scheduled);
