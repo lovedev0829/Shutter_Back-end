@@ -221,7 +221,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> response = new ResponseVm<string>();
             try
             {
-                LoggedInTenantId = (LoggedInTenantId != Guid.Empty || LoggedInTenantId != null ? LoggedInTenantId : AppConstant.LoggedInTenantId);
+                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : AppConstant.LoggedInTenantId);
                 var isExist = GetAllQuerable().Where(x => x.TenantId == LoggedInTenantId && x.IsDelete==false).FirstOrDefault();
                 if (isExist != null)
                 {
@@ -319,7 +319,7 @@ namespace ShutterManagement.Business.Services
 
             try
             {
-                LoggedInTenantId = (LoggedInTenantId != Guid.Empty || LoggedInTenantId != null ? LoggedInTenantId : AppConstant.LoggedInTenantId);
+                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : AppConstant.LoggedInTenantId);
 
                 var mappings =  dbContext.TblGhlStagesmappings
                     .Where(x => x.TenantId == LoggedInTenantId)
@@ -415,7 +415,7 @@ namespace ShutterManagement.Business.Services
            IResponseVm<string> response = new ResponseVm<string>();
             try
             {
-                LoggedInTenantId = (LoggedInTenantId != Guid.Empty || LoggedInTenantId != null ? LoggedInTenantId : AppConstant.LoggedInTenantId);
+                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : AppConstant.LoggedInTenantId);
 
                 var isExist = dbContext.TblGhlStagesmappings.Where(x => x.TenantId == LoggedInTenantId).FirstOrDefault();
                 if (isExist != null)

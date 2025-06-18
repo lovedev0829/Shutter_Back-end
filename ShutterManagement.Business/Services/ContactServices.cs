@@ -106,7 +106,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                LoggedInTenantId = (LoggedInTenantId != Guid.Empty || LoggedInTenantId != null ? LoggedInTenantId : AppConstant.LoggedInTenantId);
+                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : AppConstant.LoggedInTenantId);
 
                 var TenantId = Guid.Empty;
                 var IsTenantExists = false;
@@ -295,7 +295,7 @@ namespace ShutterManagement.Business.Services
                         }
                         if (model.GHLContactId == null)
                         {
-                            var Checkghlresponse = await gHLConfigurationService.CheckGHLConfiguration();
+                            var Checkghlresponse = await gHLConfigurationService.CheckGHLConfiguration(LoggedInTenantId);
                             if (Checkghlresponse.IsSuccess)
                             {
                                 var ghlResponse = await SyncWithGHL(res, model);
@@ -344,7 +344,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                LoggedInTenantId = (LoggedInTenantId != Guid.Empty || LoggedInTenantId != null ? LoggedInTenantId : AppConstant.LoggedInTenantId);
+                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : AppConstant.LoggedInTenantId);
 
                 var TenantId = Guid.Empty;
                 var IsTenantExists = false;
@@ -953,7 +953,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                LoggedInTenantId = (LoggedInTenantId != Guid.Empty || LoggedInTenantId != null ? LoggedInTenantId : AppConstant.LoggedInTenantId);
+                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : AppConstant.LoggedInTenantId);
 
                 IResponseVm<GhlContactSingleResponse> ghlResponse = new ResponseVm<GhlContactSingleResponse>();
                 var ghlContactAdd = new GhlContactAdd
@@ -1118,7 +1118,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                LoggedInTenantId = (LoggedInTenantId != Guid.Empty || LoggedInTenantId != null ? LoggedInTenantId : AppConstant.LoggedInTenantId);
+                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : AppConstant.LoggedInTenantId);
 
                 TextInfo textInfo;
                 var Checkghlresponse = await gHLConfigurationService.CheckGHLConfiguration(LoggedInTenantId);

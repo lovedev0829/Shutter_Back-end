@@ -606,6 +606,7 @@ namespace ShutterManagement.Business.Services
                 decimal componentOwnMarkup = 0.0m;
                 decimal productOwnMarkup = 0.0m;
 
+
                 if (!string.IsNullOrEmpty(formula))
                 {
                     var expression = CalculateExpression(formula, item);
@@ -706,7 +707,24 @@ namespace ShutterManagement.Business.Services
                         };
                     }
                     productMarkup += productOwnMarkup;
-
+                    if(isSubtenant)
+                    {
+                        var TaxId = dbContext.TblManagePartnersProducts.FirstOrDefault(x => x.TaxId == item.TaxRateId && x.TenantId == AppConstant.LoggedInTenantId)?.TaxId;
+                        var taxDetails= dbContext.TblTaxRates.FirstOrDefault(x => x.TaxRateId == TaxId && x.TenantId == AppConstant.LoggedInTenantId);
+                        if (taxDetails != null)
+                        {
+                            item.MunicipalityTax = taxDetails.Municipality ?? 0;
+                            item.StateTax = taxDetails.State ?? 0;
+                            item.CityTax = taxDetails.City ?? 0;
+                        }
+                        else
+                        {
+                            item.MunicipalityTaxAmount = 0;
+                            item.StateTaxAmount = 0;
+                            item.CityTaxAmount = 0;
+                            item.TotalTaxAmount = 0;
+                        }
+                    }
                     var isTaxExempt = GetIsTaxExemptByWindowId(item.WindowId);
                     item.Price = Math.Round(basePrice, 2);
 

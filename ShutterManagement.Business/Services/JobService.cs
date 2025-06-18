@@ -406,7 +406,7 @@ namespace ShutterManagement.Business.Services
 
             try
             {
-                LoggedInTenantId = (LoggedInTenantId != Guid.Empty || LoggedInTenantId != null ? LoggedInTenantId : AppConstant.LoggedInTenantId);
+                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : AppConstant.LoggedInTenantId);
 
                 FileLogger.Log($"Exception occurred GHLContact is null.{LoggedInTenantId}");
 
@@ -545,7 +545,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<List<PipelineAndStage>> responseVm = new ResponseVm<List<PipelineAndStage>>();
             try
             {
-                LoggedInTenantId = (LoggedInTenantId != Guid.Empty || LoggedInTenantId != null ? LoggedInTenantId : AppConstant.LoggedInTenantId);
+                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : AppConstant.LoggedInTenantId);
                 var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration(LoggedInTenantId);
                 if (Checkghlresponse.IsSuccess)
                 {
@@ -779,7 +779,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                LoggedInTenantId = (LoggedInTenantId != Guid.Empty || LoggedInTenantId != null ? LoggedInTenantId : AppConstant.LoggedInTenantId);
+                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : AppConstant.LoggedInTenantId);
                 bool IsAddressExist = false;
                 var TenantId = Guid.Empty;
                 var IsTenantValid = false;
@@ -813,7 +813,13 @@ namespace ShutterManagement.Business.Services
                     //stage = _context.TblGhlStages.Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.GhlStageId == model.GHL_StageId.ToString()).FirstOrDefault();
                     //jobStatus = _context.MstJobStatuses.Where(s => s.JobStatusName.ToLower() == EnumValue.GetEnumValue(JobStatus.New).ToLower() && s.IsActive == true).Select(x=> x.JobStatusId).FirstOrDefault();
 
+                    if(model.GHL_StageId !=null &&  model.GHL_StageId!=Guid.Empty)
+                    {
+                        var JobStatusResponseWithStage = await statusAndStageMapping.GetJobStatusByName(EnumValue.GetEnumValue(JobStatus.New),model.GHL_StageId);
+                    }
                     var JobStatusResponse = await statusAndStageMapping.GetJobStatusByName(EnumValue.GetEnumValue(JobStatus.New));
+
+
                     if(JobStatusResponse.IsSuccess)
                     {
                         jobStatus = JobStatusResponse.Data.JobStatusId ?? Guid.Empty;
@@ -861,8 +867,8 @@ namespace ShutterManagement.Business.Services
                         Notes = model.Notes ?? string.Empty,
                         AttachmentAny = arrayString,
                         JobUniqueId = generateUnique,
-                        GhlStageId = StageResponse?.Data?.StageId, 
-                        GhlStageName = stage?.GhlStageName?.Trim() ?? string.Empty,
+                        GhlStageId = ((model.GHL_StageId !=null && model.GHL_StageId != Guid.Empty)? model.GHL_StageId: StageResponse?.Data?.StageId)??null, 
+                        GhlStageName = ((model.GHL_StageName != null && model.GHL_StageName != string.Empty) ? model.GHL_StageName :  stage?.GhlStageName?.Trim() ?? string.Empty) ?? string.Empty,
                         GhlContactId = model.GHL_ContactId ?? string.Empty,
                         TenantId = TenantId,
                         IsActive = true,
@@ -880,7 +886,7 @@ namespace ShutterManagement.Business.Services
                         if (model.GhlOpportunityId == null)
                         {
                             await gHLConfiguration.GetGHLConfiguration(LoggedInTenantId.ToString());
-                            var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration();
+                            var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration(LoggedInTenantId);
                             if (Checkghlresponse.IsSuccess)
                             {
                                 
