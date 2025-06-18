@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using ShutterManagement.Business;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Business.Services;
 using ShutterManagement.Core.Common;
@@ -13,10 +14,12 @@ namespace ShutterManagement.Controllers
     public class OrderController : ControllerBase
     {
         private readonly IOrderService orderService;
+        private readonly ClaimsProperty claimsProperty;
 
-        public OrderController(IOrderService orderService)
+        public OrderController(IOrderService orderService,ClaimsProperty claimsProperty)
         {
             this.orderService = orderService;
+            this.claimsProperty = claimsProperty;
         }
 
       

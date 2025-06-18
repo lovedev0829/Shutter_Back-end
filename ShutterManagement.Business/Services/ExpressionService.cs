@@ -22,14 +22,16 @@ namespace ShutterManagement.Business.Services
     {
         private readonly ShutterDBContext dbContext;
         private readonly IComponentPriceService componentPriceService;
+        private readonly ClaimsProperty claimsProperty;
         private readonly IMaterial materialService;
         private readonly ITenantService tenantService;
 
-        public ExpressionService(ShutterDBContext dbContext, IComponentPriceService componentPriceService,
+        public ExpressionService(ShutterDBContext dbContext, IComponentPriceService componentPriceService, ClaimsProperty claimsProperty,
             IMaterial materialService, ITenantService tenantService)
         {
             this.dbContext = dbContext;
             this.componentPriceService = componentPriceService;
+            this.claimsProperty = claimsProperty;
             this.materialService = materialService;
             this.tenantService = tenantService;
         }
@@ -39,13 +41,13 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                bool IsTenantValid = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+                bool IsTenantValid = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
                 if (!IsTenantValid)
                 {
                     responseVm.Message = AppConstant.TenantNotFound;
                     return responseVm;
                 }
-                var IsExpressionExist = GetAllQuerable().Where(e => e.Id == ExpressionId && e.TenantId == AppConstant.LoggedInTenantId && e.IsDelete == false).FirstOrDefault();
+                var IsExpressionExist = GetAllQuerable().Where(e => e.Id == ExpressionId && e.TenantId == claimsProperty.GetTenantId() && e.IsDelete == false).FirstOrDefault();
                 if (IsExpressionExist != null)
                 {
                     IsExpressionExist.IsActive = !IsExpressionExist.IsActive;
@@ -67,13 +69,13 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                bool IsTenantValid = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+                bool IsTenantValid = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
                 if (!IsTenantValid)
                 {
                     responseVm.Message = AppConstant.TenantNotFound;
                     return responseVm;
                 }
-                bool IsExpressionNameExists = await AnyAsync(e => e.ExpressionName == model.ExpressionName && e.IsDelete == false && e.TenantId == AppConstant.LoggedInTenantId);
+                bool IsExpressionNameExists = await AnyAsync(e => e.ExpressionName == model.ExpressionName && e.IsDelete == false && e.TenantId == claimsProperty.GetTenantId());
                 if (IsExpressionNameExists)
                 {
                     responseVm.Message = "Expression Name" + AppConstant.AlreadyExists;
@@ -90,7 +92,7 @@ namespace ShutterManagement.Business.Services
                     IsDelete = false,
                     CreatedAt = DateTime.Now,
                     CreatedBy = AppConstant.LoggedInUserID,
-                    TenantId = AppConstant.LoggedInTenantId,
+                    TenantId = claimsProperty.GetTenantId(),
                     IsOptionExpression = model.IsOptionExpression,
                 };
                 var res = await Add(expression);
@@ -108,20 +110,20 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                bool IsTenantValid = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+                bool IsTenantValid = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
                 if (!IsTenantValid)
                 {
                     responseVm.Message = AppConstant.TenantNotFound;
                     return responseVm;
                 }
                 var IsExpressionNameExist = await AnyAsync(e => e.ExpressionName == model.ExpressionName && e.Id != model.ExpressionId
-                && e.TenantId == AppConstant.LoggedInTenantId && e.IsDelete == false);
+                && e.TenantId == claimsProperty.GetTenantId() && e.IsDelete == false);
                 if (IsExpressionNameExist)
                 {
                     responseVm.Message = "Expression Name" + AppConstant.AlreadyExists;
                     return responseVm;
                 }
-                var IsExpressionExist = GetAllQuerable().Where(e => e.Id == model.ExpressionId && e.TenantId == AppConstant.LoggedInTenantId && e.IsDelete == false).FirstOrDefault();
+                var IsExpressionExist = GetAllQuerable().Where(e => e.Id == model.ExpressionId && e.TenantId == claimsProperty.GetTenantId() && e.IsDelete == false).FirstOrDefault();
                 if (IsExpressionNameExist != null)
                 {
                     IsExpressionExist.ExpressionName = model.ExpressionName;
@@ -149,13 +151,13 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                bool IsTenantValid = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+                bool IsTenantValid = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
                 if (!IsTenantValid)
                 {
                     responseVm.Message = AppConstant.TenantNotFound;
                     return responseVm;
                 }
-                var IsExpressionExist = GetAllQuerable().Where(e => e.Id == ExpressionId && e.TenantId == AppConstant.LoggedInTenantId && e.IsDelete == false).FirstOrDefault();
+                var IsExpressionExist = GetAllQuerable().Where(e => e.Id == ExpressionId && e.TenantId == claimsProperty.GetTenantId() && e.IsDelete == false).FirstOrDefault();
                 bool IsProductExpressionExist = dbContext.TblProductComponents.Any(x => x.PricingExpression == ExpressionId.ToString() && x.IsActive ==
                 true && x.IsDelete == false);
                 var IsOptionExpressionExist = dbContext.TblOptions.Any(x => x.OptionExpression.ToString() == ExpressionId.ToString() && x.IsActive ==
@@ -187,7 +189,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<List<GetExpression>> responseVm = new ResponseVm<List<GetExpression>>();
             try
             {
-                bool IsTenantValid = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+                bool IsTenantValid = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
                 if (!IsTenantValid)
                 {
                     responseVm.Message = AppConstant.TenantNotFound;
@@ -197,7 +199,7 @@ namespace ShutterManagement.Business.Services
 
                 var Expressionlist = (from t1 in dbContext.TblExpressions.OrderByDescending(x => x.CreatedAt)
                                       join t2 in dbContext.MstProductTypes on t1.ProductType equals t2.ProductId
-                                      where t1.TenantId == AppConstant.LoggedInTenantId && t1.IsDelete == false
+                                      where t1.TenantId == claimsProperty.GetTenantId() && t1.IsDelete == false
                                       select new GetExpression
                                       {
                                           ExpressionId = t1.Id,

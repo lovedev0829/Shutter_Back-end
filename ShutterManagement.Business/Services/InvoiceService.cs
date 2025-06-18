@@ -46,6 +46,7 @@ namespace ShutterManagement.Business.Services
         private readonly StripeService _stripeService;
         private readonly IStripeConfiguration stripeConfiguration;
         private readonly JobStatusAndStageMapping statusAndStageMapping;
+        private readonly ClaimsProperty claimsProperty;
         private readonly ITemplatesService templatesService;
         private readonly GoogleAuthService googleAuthService;
         private readonly IEmailConfigurationService emailConfigurationService;
@@ -54,7 +55,7 @@ namespace ShutterManagement.Business.Services
             IHostEnvironment environment, IConverter converter ,IContactService contactService 
             ,IEstimateService estimateService, ITenantBrandingService tenantBrandingService,IUserService userService 
             ,IJobService jobService,IOrderService orderService,StripeService stripeService ,
-            IStripeConfiguration stripeConfiguration,JobStatusAndStageMapping statusAndStageMapping ,
+            IStripeConfiguration stripeConfiguration,JobStatusAndStageMapping statusAndStageMapping ,ClaimsProperty claimsProperty,
             ITemplatesService templatesService,GoogleAuthService googleAuthService,IEmailConfigurationService emailConfigurationService)
         {
             this.tenantService = tenantService;
@@ -70,6 +71,7 @@ namespace ShutterManagement.Business.Services
             _stripeService = stripeService;
             this.stripeConfiguration = stripeConfiguration;
             this.statusAndStageMapping = statusAndStageMapping;
+            this.claimsProperty = claimsProperty;
             this.templatesService = templatesService;
             this.googleAuthService = googleAuthService;
             this.emailConfigurationService = emailConfigurationService;
@@ -83,13 +85,13 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var isTenantValid = await tenantService.AnyAsync(x =>
-                    x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+                    x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
 
                 if (isTenantValid)
                 {
                     var invoice = GetAllQuerable()
                         .Where(c => c.InvoiceId == InvoiceId
-                                   && c.TenantId == AppConstant.LoggedInTenantId
+                                   && c.TenantId == claimsProperty.GetTenantId()
                                    && c.IsDelete == false)
                         .FirstOrDefault();
 
@@ -152,7 +154,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var isTenantValid = await tenantService.AnyAsync(x =>
-                    x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+                    x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
 
                 if (!isTenantValid)
                 {
@@ -161,10 +163,10 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-                int Version = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt)
+                int Version = GetAllQuerable().Where(x => x.TenantId == claimsProperty.GetTenantId() && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt)
                .Select(p => (p.InvoiceNumber.Split("-", StringSplitOptions.RemoveEmptyEntries).Length == 3 ? Convert.ToInt32(p.InvoiceNumber.Split("-", StringSplitOptions.RemoveEmptyEntries)[2]) : 0)).FirstOrDefault();
                 Version += 1;
-                var InvoiceNumberUniquNumber = GenerateUniqueId.GenerateUniqueIds(ModuleName.Invoice, AppConstant.LoggedInCompanyCode, Version);     //   var InvoiceNumberUniquNumber = GenerateUniqueId.GenerateUniqueIds(ModuleName.Invoice, AppConstant.LoggedInCompanyCode);
+                var InvoiceNumberUniquNumber = GenerateUniqueId.GenerateUniqueIds(ModuleName.Invoice, claimsProperty.GetCompanyCode(), Version);     //   var InvoiceNumberUniquNumber = GenerateUniqueId.GenerateUniqueIds(ModuleName.Invoice, claimsProperty.GetCompanyCode());
                 TblInvoice tblInvoice = new TblInvoice
                 {
                     InvoiceId = Guid.NewGuid(),
@@ -177,7 +179,7 @@ namespace ShutterManagement.Business.Services
                     BalanceDue = model.TotalAmount,
                     PaidAmount = 0,
                     CreatedAt = DateTime.Now,
-                    TenantId = AppConstant.LoggedInTenantId,
+                    TenantId = claimsProperty.GetTenantId(),
                     CreatedBy = AppConstant.LoggedInUserID,
                     Status=EnumValue.GetEnumValue(PaymentStatus.Unpaid),
                     IsActive = true,
@@ -218,7 +220,7 @@ namespace ShutterManagement.Business.Services
                         Status = EnumValue.GetEnumValue(PaymentStatus.Unpaid),
                         PaymentTypeStatus = EnumValue.GetEnumValue(PaymentStatus.Draft),
                         CreatedAt = DateTime.Now,
-                        TenantId = AppConstant.LoggedInTenantId,
+                        TenantId = claimsProperty.GetTenantId(),
                         CreatedBy = AppConstant.LoggedInUserID,
                         IsActive = true,
                         IsDelete = false
@@ -270,19 +272,19 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var isTenantValid = await tenantService.AnyAsync(x =>
-                    x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+                    x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
 
                 if (isTenantValid)
                 {
                     var invoice = GetAllQuerable()
                         .Where(c => c.InvoiceId == InvoiceId
-                                   && c.TenantId == AppConstant.LoggedInTenantId
+                                   && c.TenantId == claimsProperty.GetTenantId()
                                    && c.IsDelete == false)
                         .FirstOrDefault();
 
                     //var CheckPaymentExist = paymentsService.GetAllQuerable()
                     //   .Where(c => c.InvoiceId == InvoiceId
-                    //              && c.TenantId == AppConstant.LoggedInTenantId
+                    //              && c.TenantId == claimsProperty.GetTenantId()
                     //              && c.IsDelete == false)
                     //   .FirstOrDefault();
 
@@ -352,7 +354,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var isTenantValid = await tenantService.AnyAsync(x =>
-                    x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+                    x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
 
                 if (!isTenantValid)
                 {
@@ -443,7 +445,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var isTenantValid = await tenantService.AnyAsync(x =>
-                    x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+                    x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
 
                 if (!isTenantValid)
                 {
@@ -454,7 +456,7 @@ namespace ShutterManagement.Business.Services
 
                 var invoice = GetAllQuerable()
                     .Where(c => c.InvoiceId == updateInvoice.InvoiceId
-                                && c.TenantId == AppConstant.LoggedInTenantId
+                                && c.TenantId == claimsProperty.GetTenantId()
                                 && c.IsDelete == false)
                     .FirstOrDefault();
 
@@ -533,9 +535,9 @@ namespace ShutterManagement.Business.Services
             try
             {
 
-                FileLogger.Log($"Stripe Configuration{AppConstant.LoggedInTenantId.ToString()}");
+                FileLogger.Log($"Stripe Configuration{claimsProperty.GetTenantId().ToString()}");
                 var isTenantValid = await tenantService.AnyAsync(x =>
-                    x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+                    x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
                 if (!isTenantValid)
                 {
                     responseVm.IsSuccess = false;
@@ -543,7 +545,7 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-                await stripeConfiguration.GetStripeConfiguration(AppConstant.LoggedInTenantId.ToString());
+                await stripeConfiguration.GetStripeConfiguration(claimsProperty.GetTenantId().ToString());
 
                 var invoiceTemplate = templatesService.GetAllQuerable().Where(c =>
                 c.TemplateCategory.Equals(EnumValue.GetEnumValue(EmailTemplateType.EstimatePDF)) &&
@@ -562,7 +564,7 @@ namespace ShutterManagement.Business.Services
                     .Data.FirstOrDefault(x => x.ContactId == model.ContactId && x.IsActive == true);
 
 
-                var tenantDetails = tenantService.GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true).FirstOrDefault();
+                var tenantDetails = tenantService.GetAllQuerable().Where(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true).FirstOrDefault();
                 if (tenantDetails == null)
                 {
                     responseVm.IsSuccess = false;
@@ -575,7 +577,7 @@ namespace ShutterManagement.Business.Services
 
                 var estimationDetails = dbContext.TblEstimates.FirstOrDefault(c =>
                     c.EstimateId == model.EstimationId &&
-                    c.TenantId == AppConstant.LoggedInTenantId &&
+                    c.TenantId == claimsProperty.GetTenantId() &&
                     c.IsDelete == false);
                 if (estimationDetails == null)
                 {
@@ -586,12 +588,12 @@ namespace ShutterManagement.Business.Services
 
                 var userDetails = dbContext.TblUsers.FirstOrDefault(c =>
                    c.Id == estimationDetails.CreatedBy &&
-                   c.TenantId == AppConstant.LoggedInTenantId &&
+                   c.TenantId == claimsProperty.GetTenantId() &&
                    c.IsDelete == false);
 
                 var orderDetails = dbContext.TblOrders.FirstOrDefault(c =>
                    c.OrderId == model.OrderId &&
-                   c.TenantId == AppConstant.LoggedInTenantId &&
+                   c.TenantId == claimsProperty.GetTenantId() &&
                    c.IsDelete == false);
 
                 var estimationRecord = await estimateService.ViewEachEstimation(model.EstimationId);
@@ -649,7 +651,7 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-                var rootPath = Path.Combine(AppConstant.FileUploadPath, AppConstant.LoggedInTenantId.ToString());
+                var rootPath = Path.Combine(AppConstant.FileUploadPath, claimsProperty.GetTenantId().ToString());
                 FileLogger.Log($"Invoice File Path for payment {rootPath}");
 
                 if (!Directory.Exists(rootPath))
@@ -675,7 +677,7 @@ namespace ShutterManagement.Business.Services
                 if (model.DocumentType == EstimateDocumentType.ForEmail)
                 {
                     var IsEstimateExists = dbContext.TblEstimates
-                        .Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId && x.EstimateId == model.EstimationId)
+                        .Where(x => x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId() && x.EstimateId == model.EstimationId)
                         .OrderByDescending(x => x.CreatedAt)
                         .FirstOrDefault();
 
@@ -770,7 +772,7 @@ namespace ShutterManagement.Business.Services
                 }
                 else if(model.DocumentType==EstimateDocumentType.OrderForEmail)
                 {
-                    var IsOrderExists =  (await orderService.GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId &&
+                    var IsOrderExists =  (await orderService.GetAll()).Where(x => x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId() &&
                     x.OrderId== model.OrderId && x.Status != EnumValue.GetEnumValue(Estimation.Approved)).
                     OrderByDescending(x => x.CreatedAt).FirstOrDefault();
                     if (IsOrderExists == null)
@@ -853,7 +855,7 @@ namespace ShutterManagement.Business.Services
                     }
 
                     var invoiceDetails = dbContext.TblInvoices
-                        .FirstOrDefault(x => x.InvoiceId == model.InvoiceId && x.TenantId == AppConstant.LoggedInTenantId &&x.IsDelete == false);
+                        .FirstOrDefault(x => x.InvoiceId == model.InvoiceId && x.TenantId == claimsProperty.GetTenantId() &&x.IsDelete == false);
 
                     if (invoiceDetails == null)
                     {
@@ -871,7 +873,7 @@ namespace ShutterManagement.Business.Services
                         })
                         .ToList();
 
-                    var estimationDetail = dbContext.TblEstimates.FirstOrDefault(c =>c.EstimateId == model.EstimationId && c.TenantId == AppConstant.LoggedInTenantId && c.IsDelete == false);
+                    var estimationDetail = dbContext.TblEstimates.FirstOrDefault(c =>c.EstimateId == model.EstimationId && c.TenantId == claimsProperty.GetTenantId() && c.IsDelete == false);
                     if (estimationDetail == null)
                     {
                         responseVm.IsSuccess = false;
@@ -919,7 +921,7 @@ namespace ShutterManagement.Business.Services
                     var pdfBytesInvoice = GenerateInvoicePdf(htmlContentforInvoice);
 
                     // Save the invoice PDF
-                    var tenantIdInvoice = AppConstant.LoggedInTenantId.ToString();
+                    var tenantIdInvoice = claimsProperty.GetTenantId().ToString();
                     var rootPathInvoice = Path.Combine(AppConstant.FileUploadPath, tenantIdInvoice);
                     if (!Directory.Exists(rootPathInvoice))
                     {
@@ -1206,7 +1208,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var isTenantValid = await tenantService.AnyAsync(x =>
-                    x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+                    x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
                 if (!isTenantValid)
                 {
                     responseVm.IsSuccess = false;
@@ -1301,7 +1303,7 @@ namespace ShutterManagement.Business.Services
             var invoicesQuery = (from i in GetAllQuerable()
                                  join j in dbContext.TblJobs on i.JobId equals j.JobId
                                  join c in dbContext.TblContacts on j.ContactId equals c.ContactId
-                                 where i.IsDelete == false && i.TenantId == AppConstant.LoggedInTenantId
+                                 where i.IsDelete == false && i.TenantId == claimsProperty.GetTenantId()
                                  orderby i.CreatedAt descending
                                  select new InvoiceVM
                                  {

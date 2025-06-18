@@ -26,12 +26,14 @@ namespace ShutterManagement.Business.Services
     {
         private readonly DataServices dataServices;
         private readonly ITenantService tenantService;
+        private readonly ClaimsProperty claimsProperty;
         private readonly ITenantBrandingService tenantBrandingService;
 
-        public MasterCreate(DataServices dataServices, ITenantService tenantService, ITenantBrandingService tenantBrandingService)
+        public MasterCreate(DataServices dataServices, ITenantService tenantService,ClaimsProperty claimsProperty, ITenantBrandingService tenantBrandingService)
         {
             this.dataServices = dataServices;
             this.tenantService = tenantService;
+            this.claimsProperty = claimsProperty;
             this.tenantBrandingService = tenantBrandingService;
         }
 
@@ -193,12 +195,12 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var tenantinfo = (await tenantService.GetAll())
-                    .Where(t => t.TenantId == AppConstant.LoggedInTenantId && t.IsActive == true && t.IsDelete == false )
+                    .Where(t => t.TenantId == claimsProperty.GetTenantId() && t.IsActive == true && t.IsDelete == false )
                     .Select(t => t.BrandingInfo).FirstOrDefault();
 
                 bool IsSubtenant = false;
                 var IsSubtenants = (await tenantService.GetAll()).Where
-                    (t => t.TenantId == AppConstant.LoggedInTenantId && ( t.ParentTenantId != null || !string.IsNullOrEmpty(t.ParentTenantId.ToString())) && t.IsActive == true && t.IsDelete == false).FirstOrDefault();
+                    (t => t.TenantId == claimsProperty.GetTenantId() && ( t.ParentTenantId != null || !string.IsNullOrEmpty(t.ParentTenantId.ToString())) && t.IsActive == true && t.IsDelete == false).FirstOrDefault();
                 if(IsSubtenants != null)
                 {
                     IsSubtenant = true;
@@ -246,7 +248,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var tenantinfo = (await tenantService.GetAll())
-                    .Where(t => t.TenantId.ToString().ToLower() == AppConstant.LoggedInTenantId.ToString().ToLower() && t.IsActive == true && t.IsDelete == false && t.ParentTenantId.ToString().ToLower() == AppConstant.LoggedInParentTenantId.ToLower())
+                    .Where(t => t.TenantId.ToString().ToLower() == claimsProperty.GetTenantId().ToString().ToLower() && t.IsActive == true && t.IsDelete == false && t.ParentTenantId.ToString().ToLower() == claimsProperty.GetParentTenantId().ToLower())
                     .Select(t => t.BrandingInfo).FirstOrDefault();
 
                 var brandinginfo = tenantBrandingService.GetAllQuerable()

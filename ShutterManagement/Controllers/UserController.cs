@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ShutterManagement.Business;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Business.Services;
 using ShutterManagement.Core;
@@ -16,10 +17,12 @@ namespace ShutterManagement.API.Controllers
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
+        private readonly ClaimsProperty claimsProperty;
 
-        public UserController(IUserService userService)
+        public UserController(IUserService userService,ClaimsProperty claimsProperty)
         {
             _userService = userService;
+            this.claimsProperty = claimsProperty;
         }
 
         [HttpPost("Create")]
@@ -62,7 +65,7 @@ namespace ShutterManagement.API.Controllers
         {
             if (filter.TenantId == "")
             {
-                filter.SearchValue = AppConstant.LoggedInTenantId.ToString();
+                filter.SearchValue = claimsProperty.GetTenantId().ToString();
             }
 
             var res = await _userService.GetAll(filter);

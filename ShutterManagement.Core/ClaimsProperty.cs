@@ -45,6 +45,18 @@ namespace ShutterManagement.Business
             return value;
         }
 
+        public string GetParentTenantId()
+        {
+            var claim = httpContext.HttpContext.User.Claims.First(c => c.Type == "ParentTenantId");
+            var value = claim?.Value ?? "";
+            AppConstant.LoggedInParentTenantId = value.ToString();
+            return value.ToString();
+        }
+        public bool GetIsAdminRolesShow()
+        {
+            var value = Convert.ToBoolean(configuration["IsAdminRolesShow"] ?? "false");
+            return value;
+        }
         public string GetUsername()
         {
             var claim = httpContext.HttpContext.User.Claims.First(c => c.Type == "Username");
@@ -83,6 +95,10 @@ namespace ShutterManagement.Business
 
         //public bool IsTenant()
         //{
+        //    var claim = httpContext.HttpContext.User.Claims.First(c => c.Type == "CompanyCode");
+        //    var value = claim?.Value ?? "";
+        //    //claimsProperty.GetCompanyCode() = value;
+        //    return value;
         //    var claim = httpContext.HttpContext.User.Claims.FirstOrDefault(c => c.Type == "IsTenant");
 
         //    if (claim != null && bool.TryParse(claim.Value, out bool claimValue))

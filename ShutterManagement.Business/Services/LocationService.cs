@@ -18,10 +18,12 @@ namespace ShutterManagement.Business.Services
     public class LocationService : BaseRepository<ShutterDBContext, TblLocation>, ILocationService
     {
         private readonly ITenantService tenantService;
+        private readonly ClaimsProperty claimsProperty;
 
-        public LocationService(ITenantService tenantService)
+        public LocationService(ITenantService tenantService, ClaimsProperty claimsProperty)
         {
             this.tenantService = tenantService;
+            this.claimsProperty = claimsProperty;
         }
         public async Task<IResponseVm<string>> Create_Location(CreateLocation model)
         {
@@ -29,7 +31,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 //bool isTenant = await tenantService.AnyAsync(x =>
-                //    x.TenantId == AppConstant.LoggedInTenantId &&
+                //    x.TenantId == claimsProperty.GetTenantId() &&
                 //    x.IsDelete == false &&
                 //    x.IsActive == true);
                 //if (!isTenant)
@@ -52,7 +54,7 @@ namespace ShutterManagement.Business.Services
                 {
                     LocationId = Guid.NewGuid(),
                     LocationName = model.LocationName?.Trim(),
-                    TenantId = AppConstant.LoggedInTenantId,
+                    TenantId = claimsProperty.GetTenantId(),
                     CreatedAt = DateTime.Now,
                     IsDelete = false,
                     IsActive = true

@@ -65,7 +65,7 @@ namespace ShutterManagement.Business.Services
             {
                 var existingEmailConfiguration = emailConfigurationService
                     .GetAllQuerable()
-                    .FirstOrDefault(x => x.TenantId == AppConstant.LoggedInTenantId);
+                    .FirstOrDefault(x => x.TenantId == claimsProperty.GetTenantId());
                 if (string.IsNullOrEmpty(existingEmailConfiguration.Username))
                 {
                     responseVm.IsSuccess = false;
@@ -149,7 +149,7 @@ namespace ShutterManagement.Business.Services
 
                 var config = emailConfigurationService
                     .GetAllQuerable()
-                    .FirstOrDefault(x => x.TenantId == AppConstant.LoggedInTenantId);
+                    .FirstOrDefault(x => x.TenantId == claimsProperty.GetTenantId());
 
                 if (config != null)
                 {
@@ -230,7 +230,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var emailConfig = emailConfigurationService.GetAllQuerable()
-                    .FirstOrDefault(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive==true && x.IsDelete==false);
+                    .FirstOrDefault(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive==true && x.IsDelete==false);
 
                 if (emailConfig == null)
                 {
@@ -361,7 +361,7 @@ namespace ShutterManagement.Business.Services
         //    try
         //    {
         //        var emailConfig =  emailConfigurationService.GetAllQuerable()
-        //            .Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false).FirstOrDefault();
+        //            .Where(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false).FirstOrDefault();
 
 
         //        if (emailConfig == null)
@@ -476,7 +476,7 @@ namespace ShutterManagement.Business.Services
         //{
 
         //    var emailConfig = emailConfigurationService.GetAllQuerable()
-        //        .FirstOrDefault(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive==true && x.IsDelete==false);
+        //        .FirstOrDefault(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive==true && x.IsDelete==false);
 
         //    if (emailConfig == null)
         //        return null;

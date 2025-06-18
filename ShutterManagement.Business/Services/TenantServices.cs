@@ -306,7 +306,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var TenantDetails = GetAllQuerable().Where(x => x.TenantId.ToString() == TenantId && x.TenantId != AppConstant.LoggedInTenantId && x.ParentTenantId == null).FirstOrDefault();
+                var TenantDetails = GetAllQuerable().Where(x => x.TenantId.ToString() == TenantId && x.TenantId != claimsProperty.GetTenantId() && x.ParentTenantId == null).FirstOrDefault();
                 if (TenantDetails != null)
                 {
                     TenantDetails.IsDelete = true;
@@ -353,7 +353,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var TenantDetails = GetAllQuerable().Where(x => x.TenantId.ToString() == TenantId && x.TenantId != AppConstant.LoggedInTenantId && x.ParentTenantId == null).FirstOrDefault();
+                var TenantDetails = GetAllQuerable().Where(x => x.TenantId.ToString() == TenantId && x.TenantId != claimsProperty.GetTenantId() && x.ParentTenantId == null).FirstOrDefault();
                 if (TenantDetails != null)
                 {
                     TenantDetails.IsActive = !TenantDetails.IsActive;
@@ -402,7 +402,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<List<GetAllTenant>> responseVm = new ResponseVm<List<GetAllTenant>>();
             try
             {
-                var TenantList = (await GetAll()).Where(x => x.IsDelete == false && x.ParentTenantId == null && x.TenantId != AppConstant.LoggedInTenantId).ToList().OrderByDescending(x => x.CreatedAt);
+                var TenantList = (await GetAll()).Where(x => x.IsDelete == false && x.ParentTenantId == null && x.TenantId != claimsProperty.GetTenantId()).ToList().OrderByDescending(x => x.CreatedAt);
                 foreach (var item in TenantList)
                 {
                     item.BrandingInfoNavigation = tenantBrandingService.GetAllQuerable().Where(x => x.Id == item.BrandingInfo).FirstOrDefault();

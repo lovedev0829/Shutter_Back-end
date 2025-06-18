@@ -34,7 +34,7 @@ namespace ShutterManagement.Business.Services
 
         private string GenerateCouponCode()
         {
-            var tenantCode = AppConstant.LoggedInCompanyCode;
+            var tenantCode = claimsProperty.GetCompanyCode();
 
             var tenantCodePrefix = tenantCode?.Substring(0, Math.Min(4, tenantCode.Length)) ?? "XXXX"; 
 
@@ -50,7 +50,7 @@ namespace ShutterManagement.Business.Services
         public async Task<IResponseVm<string>> CreateDiscountCoupon(CreateDiscount createDiscount)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
-            FileLogger.Log($"Start: Creating Discount Coupon for TenantID: {AppConstant.LoggedInTenantId}");
+            FileLogger.Log($"Start: Creating Discount Coupon for TenantID: {claimsProperty.GetTenantId()}");
 
             try
             {
@@ -175,7 +175,7 @@ namespace ShutterManagement.Business.Services
                 if (!await ValidateTenantAsync())
                     return SetFailureResponse(responseVm, AppConstant.AccessDenied);
 
-                var DiscountList = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId).OrderByDescending(x => x.CreatedAt).Select(
+                var DiscountList = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId()).OrderByDescending(x => x.CreatedAt).Select(
                 x => new DiscoountVm
                 {
                     DiscountId = x.DiscountId,
@@ -247,14 +247,14 @@ namespace ShutterManagement.Business.Services
 
         private async Task<bool> ValidateTenantAsync()
         {
-            return await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
+            return await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true);
         }
 
         private async Task<TblDiscount> GetActiveDiscountAsync(Guid discountId)
         {
             return await Task.FromResult(FirstOrDefault(x =>
                 x.DiscountId == discountId &&
-                x.TenantId == AppConstant.LoggedInTenantId &&
+                x.TenantId == claimsProperty.GetTenantId() &&
                 x.IsDelete == false));
         }
 
@@ -382,7 +382,7 @@ namespace ShutterManagement.Business.Services
                 StartDate = createDiscount.StartDate,
                 CreatedAt = DateTime.Now,
                 Createdby = AppConstant.LoggedInUserID,
-                TenantId = AppConstant.LoggedInTenantId,
+                TenantId = claimsProperty.GetTenantId(),
                 IsActive = true,
                 IsDelete = false
             };
@@ -391,7 +391,7 @@ namespace ShutterManagement.Business.Services
         private async Task<TblDiscount> FindExistingDiscountAsync(Guid discountId)
         {
             return (await GetAll()).Where(x => x.DiscountId == discountId &&
-                                                                              x.TenantId == AppConstant.LoggedInTenantId &&
+                                                                              x.TenantId == claimsProperty.GetTenantId() &&
                                                                               !(bool)x.IsDelete).FirstOrDefault();
         }
          

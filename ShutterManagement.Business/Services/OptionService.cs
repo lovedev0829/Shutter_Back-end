@@ -44,22 +44,22 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
                 if (IsTenant)
                 {
                     var IsOptionExists = GetAllQuerable()
                        .Where(c => c.OptionId == Id
-                                   && c.TenantId == AppConstant.LoggedInTenantId
+                                   && c.TenantId == claimsProperty.GetTenantId()
                                    && c.IsDelete == false)
                        .FirstOrDefault();
                     var isManageproductoption = managePartnersProductsOptions.GetAllQuerable().Where
-                        (x => x.OptionId == Id && x.IsDelete == false && x.IsAvailable == true && x.TenantId == AppConstant.LoggedInTenantId).
+                        (x => x.OptionId == Id && x.IsDelete == false && x.IsAvailable == true && x.TenantId == claimsProperty.GetTenantId()).
                         FirstOrDefault();
                     if (isManageproductoption != null)
                     {
                         isManageproductoption.IsActive = !isManageproductoption.IsActive;
                         isManageproductoption.UpdatedAt = DateTime.Now;
-                        isManageproductoption.ModifiedBy = AppConstant.LoggedInTenantId;
+                        isManageproductoption.ModifiedBy = claimsProperty.GetTenantId();
                         dbContext.TblManagePartnersProductsOptions.Update(isManageproductoption);
                         await dbContext.SaveChangesAsync();
                     }
@@ -94,13 +94,13 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId);
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId());
                 if (IsTenant)
                 {
                     var message = "";
                     bool alloptiontypeadded = true;
                     var IsOptionNameExists = await AnyAsync(x => x.OptionName == model.OptionName.Trim()
-                    && x.IsActive == true && x.IsDelete == false && (x.TenantId == AppConstant.LoggedInTenantId || x.TenantId.ToString() == AppConstant.LoggedInParentTenantId)
+                    && x.IsActive == true && x.IsDelete == false && (x.TenantId == claimsProperty.GetTenantId() || x.TenantId.ToString() == claimsProperty.GetParentTenantId())
                     && x.ProductId == model.ProductId && x.ProductTypeId == model.ProductTypeId);
                     if(IsOptionNameExists)
                     {
@@ -125,7 +125,7 @@ namespace ShutterManagement.Business.Services
                             Unit = model.Unit.Trim(),
                             CreatedAt = DateTime.Now,
                             CreatedBy = AppConstant.LoggedInUserID,
-                            TenantId = AppConstant.LoggedInTenantId,
+                            TenantId = claimsProperty.GetTenantId(),
                             IsTaxApplied = model.IsTaxAvailable,
                             TaxId = model.TaxId,
                             IsActive = true,
@@ -133,7 +133,7 @@ namespace ShutterManagement.Business.Services
                         };
                         await Add(options);
                         var manageproduct = dbContext.TblManagePartnersProducts.Where(x => x.ProductId == options.ProductId
-                        && x.TenantId == AppConstant.LoggedInTenantId && x.IsAvailable == true && x.IsActive == true && x.IsDelete == false)
+                        && x.TenantId == claimsProperty.GetTenantId() && x.IsAvailable == true && x.IsActive == true && x.IsDelete == false)
                             .FirstOrDefault();
                         if (options.OptionId != Guid.Empty)
                         {
@@ -169,7 +169,7 @@ namespace ShutterManagement.Business.Services
                                                 OptionTypeId = optionsType.OptionTypeId,
                                                 TaxId = options.TaxId,
                                                 IsPartnerOption = true,
-                                                TenantId = AppConstant.LoggedInTenantId,
+                                                TenantId = claimsProperty.GetTenantId(),
                                                 IsActive = true,
                                                 IsDelete = false,
                                                 IsAvailable = true,
@@ -226,23 +226,23 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
                 if (IsTenant)
                 {
                     var IsOptionExists = GetAllQuerable()
                        .Where(c => c.OptionId == Id
-                                   && c.TenantId == AppConstant.LoggedInTenantId
+                                   && c.TenantId == claimsProperty.GetTenantId()
                                    && c.IsDelete == false)
                        .FirstOrDefault();
                     var isManageproductoption = managePartnersProductsOptions.GetAllQuerable().Where
-                     (x => x.OptionId == Id && x.IsDelete == false && x.IsActive == true && x.TenantId == AppConstant.LoggedInTenantId).
+                     (x => x.OptionId == Id && x.IsDelete == false && x.IsActive == true && x.TenantId == claimsProperty.GetTenantId()).
                      FirstOrDefault();
                     if (isManageproductoption != null)
                     {
                         isManageproductoption.IsActive = false;
                         isManageproductoption.IsDelete = true;
                         isManageproductoption.UpdatedAt = DateTime.Now;
-                        isManageproductoption.ModifiedBy = AppConstant.LoggedInTenantId;
+                        isManageproductoption.ModifiedBy = claimsProperty.GetTenantId();
                         dbContext.TblManagePartnersProductsOptions.Update(isManageproductoption);
                         await dbContext.SaveChangesAsync();
                     }
@@ -279,7 +279,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var tenant = await tenantService.FirstOrDefaultAsync(x =>
-                    x.TenantId == AppConstant.LoggedInTenantId &&
+                    x.TenantId == claimsProperty.GetTenantId() &&
                     x.IsActive == true &&
                     x.IsDelete == false);
                 List<OptionsList> IsOptionExists = new List<OptionsList>();
@@ -289,15 +289,15 @@ namespace ShutterManagement.Business.Services
 
                     var allOptions = (await GetAll())
                         .Where(x => x.IsDelete == false &&
-                                    (x.TenantId == AppConstant.LoggedInTenantId))
+                                    (x.TenantId == claimsProperty.GetTenantId()))
                         //||
-                        // x.TenantId.ToString().ToLower() == AppConstant.LoggedInParentTenantId.ToLower())
+                        // x.TenantId.ToString().ToLower() == claimsProperty.GetParentTenantId().ToLower())
                         .OrderByDescending(x => x.CreatedAt)
                         .ToList();
                     var finalOptions = allOptions;
 
                     var assignedProductIds = dbContext.TblManagePartnersProducts
-                    .Where(m => m.TenantId == AppConstant.LoggedInTenantId
+                    .Where(m => m.TenantId == claimsProperty.GetTenantId()
                          && m.IsAvailable == true
                          && m.IsDelete == false
                          && m.IsActive == true)
@@ -309,7 +309,7 @@ namespace ShutterManagement.Business.Services
                           //.Include(x => x.ManageProduct)
                           //.Include(x => x.OptionType)
                           //.Include(x => x.Option)
-                             .Where(m => m.TenantId == AppConstant.LoggedInTenantId
+                             .Where(m => m.TenantId == claimsProperty.GetTenantId()
                               && m.IsAvailable == true
                               && m.IsDelete == false
                               && m.IsActive == true
@@ -426,7 +426,7 @@ namespace ShutterManagement.Business.Services
                     if (isSubTenant)
                     {
                         //var assignedProductIds = dbContext.TblManagePartnersProducts
-                        //    .Where(m => m.TenantId == AppConstant.LoggedInTenantId
+                        //    .Where(m => m.TenantId == claimsProperty.GetTenantId()
                         //                && m.IsAvailable == true
                         //                && m.IsDelete == false
                         //                && m.IsActive == true)
@@ -436,7 +436,7 @@ namespace ShutterManagement.Business.Services
 
                         allOptions = (await GetAll())
                         .Where(x => x.IsDelete == false && assignedProductIds.Contains(x.ProductId) &&
-                                    (x.TenantId == AppConstant.LoggedInTenantId))
+                                    (x.TenantId == claimsProperty.GetTenantId()))
                         .OrderByDescending(x => x.CreatedAt)
                         .ToList();
                         //var managedOptions = allOptions
@@ -534,16 +534,16 @@ public async Task<IResponseVm<string>> Update_Option(UpdateOption model)
     IResponseVm<string> responseVm = new ResponseVm<string>();
     try
     {
-        var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+        var IsTenant = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
         if (IsTenant)
         {
             var IsOptionExists = GetAllQuerable()
                 .Where(c => c.OptionId == model.OptionId
-                            && c.TenantId == AppConstant.LoggedInTenantId
+                            && c.TenantId == claimsProperty.GetTenantId()
                             && c.IsDelete == false)
                 .FirstOrDefault();
             var IsOptionNameExists = await AnyAsync(x => x.OptionName == model.OptionName.Trim()
-          && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId
+          && x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId()
           && x.ProductId == model.ProductId && x.ProductTypeId == model.ProductTypeId && x.OptionId != model.OptionId);
             if (IsOptionExists == null)
             {
@@ -565,7 +565,7 @@ public async Task<IResponseVm<string>> Update_Option(UpdateOption model)
             //    ProductTypeId = model.ProductTypeId,
             //    CreatedAt = DateTime.Now,
             //    CreatedBy = AppConstant.LoggedInUserID,
-            //    TenantId = AppConstant.LoggedInTenantId,
+            //    TenantId = claimsProperty.GetTenantId(),
             //    IsTaxApplied = model.IsTaxAvailable,
             //    TaxId = model.TaxId,
             //    IsActive = true,
@@ -598,11 +598,11 @@ public async Task<IResponseVm<string>> Update_Option(UpdateOption model)
                     // Unit = x.Unit
                 }).ToArray();
                 //var Ismanageproductexist = await dbContext.TblManagePartnersProductsOptions.Where
-                //    (x => x.OptionId == IsOptionExists.OptionId && x.TenantId == AppConstant.LoggedInTenantId
+                //    (x => x.OptionId == IsOptionExists.OptionId && x.TenantId == claimsProperty.GetTenantId()
                 //    && x.IsActive == true && x.IsAvailable == true && x.IsDelete == false).FirstOrDefaultAsync();
                 //if(Ismanageproductexist != null)
                 //{ 
-                //    Ismanageproductexist.TaxId = AppConstant.LoggedInTenantId;
+                //    Ismanageproductexist.TaxId = claimsProperty.GetTenantId();
                 //}
 
 
@@ -615,7 +615,7 @@ public async Task<IResponseVm<string>> Update_Option(UpdateOption model)
                     foreach (var item in DeleteRecords)
                     {
                         var Ismanageproductexist = managePartnersProductsOptions.GetAllQuerable().Where
-                       (x => x.TenantId == AppConstant.LoggedInTenantId
+                       (x => x.TenantId == claimsProperty.GetTenantId()
                        && x.IsActive == true && x.IsAvailable == true && x.IsDelete == false && x.OptionTypeId == item.OptionTypeId).FirstOrDefault();
                         if (Ismanageproductexist != null)
                         {
@@ -665,7 +665,7 @@ public async Task<IResponseVm<string>> Update_Option(UpdateOption model)
                         if (!AppConstant.IsTenant)
                         {
                             var manageproduct = dbContext.TblManagePartnersProducts.Where(x => x.ProductId == IsOptionExists.ProductId
-                           && x.TenantId == AppConstant.LoggedInTenantId && x.IsAvailable == true && x.IsActive == true && x.IsDelete == false)
+                           && x.TenantId == claimsProperty.GetTenantId() && x.IsAvailable == true && x.IsActive == true && x.IsDelete == false)
                     .FirstOrDefault();
                             if (manageproduct != null)
                             {
@@ -676,7 +676,7 @@ public async Task<IResponseVm<string>> Update_Option(UpdateOption model)
                                     OptionTypeId = optionsType.OptionTypeId,
                                     TaxId = IsOptionExists.TaxId,
                                     IsPartnerOption = true,
-                                    TenantId = AppConstant.LoggedInTenantId,
+                                    TenantId = claimsProperty.GetTenantId(),
                                     IsActive = true,
                                     IsDelete = false,
                                     IsAvailable = true,

@@ -45,13 +45,13 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var isTenantValid = await tenantService.AnyAsync(x =>
-                    x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+                    x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
 
                 if (isTenantValid)
                 {
                     var jobschedule = GetAllQuerable()
                         .Where(c => c.JobScheduleId == JobScheduleId
-                                   && c.TenantId == AppConstant.LoggedInTenantId
+                                   && c.TenantId == claimsProperty.GetTenantId()
                                    && c.IsDelete == false)
                         .FirstOrDefault();
 
@@ -93,7 +93,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var isTenantValid = await tenantService.AnyAsync(x =>
-                    x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+                    x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
 
                 if (!isTenantValid)
                 {
@@ -118,7 +118,7 @@ namespace ShutterManagement.Business.Services
                     DayStartTime = TimeOnly.Parse(model.DayStartTime),
                     DayEndDateTime = TimeOnly.Parse(model.DayEndDateTime),
                     CreatedAt = DateTime.Now,
-                    TenantId = AppConstant.LoggedInTenantId,
+                    TenantId = claimsProperty.GetTenantId(),
                     CreatedBy = AppConstant.LoggedInUserID,
                     IsActive = true,
                     IsDelete = false
@@ -126,7 +126,7 @@ namespace ShutterManagement.Business.Services
                 var res = await Add(tblJobSchedule);
 
                 var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration();
-                await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
+                await gHLConfiguration.GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
                 if (Checkghlresponse.IsSuccess)
                 {
                     var contactId = dbContext.TblJobs.Where(x => x.JobId.ToString().ToLower() == res.JobId.ToString().ToLower() && x.IsDelete == false).Select(x => x.GhlContactId).FirstOrDefault();
@@ -191,13 +191,13 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var isTenantValid = await tenantService.AnyAsync(x =>
-                    x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+                    x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
 
                 if (isTenantValid)
                 {
                     var JobSchedule = GetAllQuerable()
                         .Where(c => c.JobScheduleId == JobScheduleId
-                                   && c.TenantId == AppConstant.LoggedInTenantId
+                                   && c.TenantId == claimsProperty.GetTenantId()
                                    && c.IsDelete == false)
                         .FirstOrDefault();
 
@@ -238,7 +238,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var isTenantValid = await tenantService.AnyAsync(x =>
-                    x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+                    x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
 
                 if (!isTenantValid)
                 {
@@ -318,7 +318,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var isTenantValid = await tenantService.AnyAsync(x =>
-                    x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+                    x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
 
                 if (!isTenantValid)
                 {
@@ -329,7 +329,7 @@ namespace ShutterManagement.Business.Services
 
                 var JobSchedule = GetAllQuerable()
                     .Where(c => c.JobScheduleId == model.ScheduleJobId
-                                && c.TenantId == AppConstant.LoggedInTenantId
+                                && c.TenantId == claimsProperty.GetTenantId()
                                 && c.IsDelete == false)
                     .FirstOrDefault();
 
@@ -354,7 +354,7 @@ namespace ShutterManagement.Business.Services
 
                 await Update(JobSchedule);
                 var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration();
-                await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
+                await gHLConfiguration.GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
                 if (Checkghlresponse.IsSuccess)
                 {
                     if (JobSchedule.GhlEventId != null)
@@ -433,7 +433,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : AppConstant.LoggedInTenantId);
+                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : claimsProperty.GetTenantId());
 
                 var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration(LoggedInTenantId);
                 await gHLConfiguration.GetGHLConfiguration(LoggedInTenantId.ToString());

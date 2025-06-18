@@ -35,7 +35,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var emailConfig = GetAllQuerable()
-                    .FirstOrDefault(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false && x.IsActive == true);
+                    .FirstOrDefault(x => x.TenantId == claimsProperty.GetTenantId() && x.IsDelete == false && x.IsActive == true);
 
                 string emailTypeName = string.Empty;
                
@@ -93,7 +93,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var existingConfig = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false && x.IsActive==true).FirstOrDefault();
+                var existingConfig = GetAllQuerable().Where(x => x.TenantId == claimsProperty.GetTenantId() && x.IsDelete == false && x.IsActive==true).FirstOrDefault();
                 if (existingConfig != null)
                 {
 
@@ -128,7 +128,7 @@ namespace ShutterManagement.Business.Services
                         UseSsl = emailConfigurationVm.UseSsl,
                         ReplyTo = emailConfigurationVm.ReplyTo,
                         EmailType = emailConfigurationVm.EmailType,
-                        TenantId = AppConstant.LoggedInTenantId,
+                        TenantId = claimsProperty.GetTenantId(),
                         CreatedBy = AppConstant.LoggedInUserID,
                         CreatedAt = DateTime.Now,
                         IsActive= true,

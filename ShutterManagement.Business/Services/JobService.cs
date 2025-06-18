@@ -73,14 +73,14 @@ namespace ShutterManagement.Business.Services
             try
             {
                 bool IsTenantvalid = await tenantService.AnyAsync(x => x.IsActive == true && x.IsDelete == false
-                && x.TenantId == AppConstant.LoggedInTenantId);
+                && x.TenantId == claimsProperty.GetTenantId());
                 if (!IsTenantvalid)
                 {
                     responseVm.Message = AppConstant.TenantNotFound;
                     return responseVm;
                 }
                 var IsJobExist = GetAllQuerable().Where(x => x.JobId.ToString() == JobId &&
-                  x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
+                  x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId()).FirstOrDefault();
                 if (IsJobExist != null)
                 {
                     IsJobExist.IsActive = !IsJobExist.IsActive;
@@ -337,7 +337,7 @@ namespace ShutterManagement.Business.Services
                     FileLogger.Log("Starting UpdateOpportunityInGHLfromApp process.");
 
                     var getAppOpportunities = GetAllQuerable()
-                        .Where(x => x.TenantId == AppConstant.LoggedInTenantId)
+                        .Where(x => x.TenantId == claimsProperty.GetTenantId())
                         .ToList();
 
                     var ghlOpportunitiesResponse = await gHLService_V2.GetOpportunitiesFromGhl();
@@ -406,7 +406,7 @@ namespace ShutterManagement.Business.Services
 
             try
             {
-                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : AppConstant.LoggedInTenantId);
+                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : claimsProperty.GetTenantId());
 
                 FileLogger.Log($"Exception occurred GHLContact is null.{LoggedInTenantId}");
 
@@ -545,7 +545,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<List<PipelineAndStage>> responseVm = new ResponseVm<List<PipelineAndStage>>();
             try
             {
-                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : AppConstant.LoggedInTenantId);
+                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : claimsProperty.GetTenantId());
                 var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration(LoggedInTenantId);
                 if (Checkghlresponse.IsSuccess)
                 {
@@ -585,7 +585,7 @@ namespace ShutterManagement.Business.Services
 
             try
             {
-                await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
+                await gHLConfiguration.GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
 
                 if (string.IsNullOrEmpty(job.GhlOpportunityId))
                 {
@@ -699,7 +699,7 @@ namespace ShutterManagement.Business.Services
 
         //        // 2. Get existing contacts from the database
         //        var existingContacts = dbContext.TblContacts
-        //            .Where(x => x.TenantId == AppConstant.LoggedInTenantId)
+        //            .Where(x => x.TenantId == claimsProperty.GetTenantId())
         //            .ToList();
 
         //        var existingContactsDict = existingContacts.ToDictionary(x => x.GhlcontactId, x => x);
@@ -731,7 +731,7 @@ namespace ShutterManagement.Business.Services
         //                    PhoneNumber = ghlContact.phone,
         //                    CreatedAt = DateTime.Now,
         //                    UpdatedAt = DateTime.Now,
-        //                    TenantId = AppConstant.LoggedInTenantId,
+        //                    TenantId = claimsProperty.GetTenantId(),
         //                    CreatedBy = AppConstant.LoggedInUserID,
         //                    IsActive = true
         //                });
@@ -779,7 +779,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : AppConstant.LoggedInTenantId);
+                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : claimsProperty.GetTenantId());
                 bool IsAddressExist = false;
                 var TenantId = Guid.Empty;
                 var IsTenantValid = false;
@@ -810,7 +810,7 @@ namespace ShutterManagement.Business.Services
                     TenantId = (Guid)LoggedInTenantId;
                     IsAddressExist = await address.AnyAsync(x => x.AddressId.ToString().ToLower() == model.AddressId.ToString().ToLower() && x.ContactId.ToString().ToLower() == model.ContactId.ToString().ToLower()
                     && x.TenantId == LoggedInTenantId && x.IsDelete == false);
-                    //stage = _context.TblGhlStages.Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.GhlStageId == model.GHL_StageId.ToString()).FirstOrDefault();
+                    //stage = _context.TblGhlStages.Where(x => x.TenantId == claimsProperty.GetTenantId() && x.GhlStageId == model.GHL_StageId.ToString()).FirstOrDefault();
                     //jobStatus = _context.MstJobStatuses.Where(s => s.JobStatusName.ToLower() == EnumValue.GetEnumValue(JobStatus.New).ToLower() && s.IsActive == true).Select(x=> x.JobStatusId).FirstOrDefault();
 
                     if(model.GHL_StageId !=null &&  model.GHL_StageId!=Guid.Empty)
@@ -833,7 +833,7 @@ namespace ShutterManagement.Business.Services
                     int Version = GetAllQuerable().Where(x => x.TenantId == LoggedInTenantId && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt)
                           .Select(p => (p.JobUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries).Length == 3 ? Convert.ToInt32(p.JobUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries)[2]) : 0)).FirstOrDefault();
                     Version += 1;
-                    var generateUnique = GenerateUniqueId.GenerateUniqueIds(ModuleName.Job, AppConstant.LoggedInCompanyCode, Version);
+                    var generateUnique = GenerateUniqueId.GenerateUniqueIds(ModuleName.Job, claimsProperty.GetCompanyCode(), Version);
                     bool IsjobNameExists = await AnyAsync(x => x.JobName == model.JobName.Trim() && x.IsDelete == false && x.TenantId == LoggedInTenantId&& x.ContactId == model.ContactId);
                     var StageResponse = await statusAndStageMapping.GetGHLStagesMappingsById(jobStatus);
                     bool IsContactArchiveorInactive = await contact.AnyAsync(x => x.ContactId == model.ContactId && x.TenantId==LoggedInTenantId &&  (x.IsActive == false || x.IsArchive == true) );
@@ -934,14 +934,14 @@ namespace ShutterManagement.Business.Services
             try
             {
                 bool IsTenantvalid = await tenantService.AnyAsync(x => x.IsActive == true && x.IsDelete == false
-                && x.TenantId == AppConstant.LoggedInTenantId);
+                && x.TenantId == claimsProperty.GetTenantId());
                 if (!IsTenantvalid)
                 {
                     responseVm.Message = AppConstant.TenantNotFound;
                     return responseVm;
                 }
                 var IsJobExist = GetAllQuerable().Where(x => x.JobId.ToString() == JobId &&
-                   x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
+                   x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId()).FirstOrDefault();
                 if (IsJobExist != null)
                 {
                     IsJobExist.IsActive = false;
@@ -1059,7 +1059,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<List<GetAllJobsdetails>> responseVm = new ResponseVm<List<GetAllJobsdetails>>();
             try
             {
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false && x.IsActive == true);
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.IsDelete == false && x.IsActive == true);
 
                 if (IsTenant)
                 {
@@ -1079,7 +1079,7 @@ namespace ShutterManagement.Business.Services
                                    join t6 in _context.TblContacts.Where(x => x.IsActive == true && x.IsDelete == false) on
                                    t2.ContactId equals t6.ContactId into contact
                                    from t6 in contact.DefaultIfEmpty()
-                                   where t2.TenantId == AppConstant.LoggedInTenantId && t2.IsDelete == false
+                                   where t2.TenantId == claimsProperty.GetTenantId() && t2.IsDelete == false
                                    select new GetAllJobsdetails
                                    {
                                        IsActive = t2.IsActive,
@@ -1176,7 +1176,7 @@ namespace ShutterManagement.Business.Services
                 if (model.locationId != null)
                 {
                     //await gHLConfiguration.GetGHLConfiguration(model.locationId);
-                    TenantId = (Guid)AppConstant.LoggedInTenantId;
+                    TenantId = (Guid)claimsProperty.GetTenantId();
 
                     if (TenantId != null)
                     {
@@ -1197,11 +1197,11 @@ namespace ShutterManagement.Business.Services
                 }
                 else
                 {
-                    IsTenantValid = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
-                    TenantId = (Guid)AppConstant.LoggedInTenantId;
+                    IsTenantValid = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
+                    TenantId = (Guid)claimsProperty.GetTenantId();
                     IsAddressExist = await address.AnyAsync(x => x.AddressId == model.AddressId && x.ContactId == model.ContactId
-                    && x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false);
-                    stage = _context.TblGhlStages.Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.GhlStageId == model.GHL_StageId.ToString()).FirstOrDefault();
+                    && x.TenantId == claimsProperty.GetTenantId() && x.IsDelete == false);
+                    stage = _context.TblGhlStages.Where(x => x.TenantId == claimsProperty.GetTenantId() && x.GhlStageId == model.GHL_StageId.ToString()).FirstOrDefault();
                     jobStatus = _context.MstJobStatuses.Where(s => s.JobStatusName == "open" && s.IsActive == true).Select(x => x.JobStatusId).FirstOrDefault();
                 }
                 if (!IsTenantValid)
@@ -1213,9 +1213,9 @@ namespace ShutterManagement.Business.Services
                 {
                     var IsJobExist = (await GetAll()).Where(x => x.JobId == model.JobId &&
                     x.ContactId == model.ContactId && x.JobUniqueId == model.JobUniqueCode.Trim()
-                    && x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false).FirstOrDefault();
+                    && x.TenantId == claimsProperty.GetTenantId() && x.IsDelete == false).FirstOrDefault();
                     bool IsjobNameExists = await AnyAsync(x => x.JobId != model.JobId && x.JobName.Trim() == model.JobName.Trim() &&
-                    x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId && x.ContactId == model.ContactId);
+                    x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId() && x.ContactId == model.ContactId);
                     if (IsjobNameExists)
                     {
                         responseVm.Message = "Job Name " + AppConstant.AlreadyExists;
@@ -1264,9 +1264,9 @@ namespace ShutterManagement.Business.Services
                 else
                 {
                     var IsJobExist = (await GetAll()).Where(x => x.GhlOpportunityId == model.GhlOpportunityId
-                    && x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false).FirstOrDefault();
+                    && x.TenantId == claimsProperty.GetTenantId() && x.IsDelete == false).FirstOrDefault();
                     bool IsjobNameExists = await AnyAsync(x => x.GhlOpportunityId != model.GhlOpportunityId && x.JobName.Trim() == model.JobName.Trim() &&
-                    x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId && x.GhlContactId == model.GHL_ContactId);
+                    x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId() && x.GhlContactId == model.GHL_ContactId);
                     if (IsjobNameExists)
                     {
                         responseVm.Message = "Job Name " + AppConstant.AlreadyExists;
@@ -1346,10 +1346,10 @@ namespace ShutterManagement.Business.Services
             try
             {
                
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false && x.IsActive == true);
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.IsDelete == false && x.IsActive == true);
 
                 var subTenantlist = (await tenantService.GetAll())
-                  .Where(x => x.ParentTenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false)
+                  .Where(x => x.ParentTenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false)
                   .Select(pt => pt.TenantId)
                   .ToList(); 
 
@@ -1375,7 +1375,7 @@ namespace ShutterManagement.Business.Services
                                   join s in  _context.MstStates on t1.State equals s.Id into state
                                   from s in state.DefaultIfEmpty()
                                   where t6.IsDelete == false && t6.IsActive == true && t2.IsActive == true && t2.IsDelete == false &&
-                                  (t2.TenantId == AppConstant.LoggedInTenantId || subTenantlist.Contains((Guid)t2.TenantId))
+                                  (t2.TenantId == claimsProperty.GetTenantId() || subTenantlist.Contains((Guid)t2.TenantId))
                                          select new GetAllJobsSubtenant_tenant
                                          {
                                              IsActive = t2.IsActive,
@@ -1485,14 +1485,14 @@ namespace ShutterManagement.Business.Services
             {
 
                 bool IsTenantvalid = await tenantService.AnyAsync(x => x.IsActive == true && x.IsDelete == false
-                && x.TenantId == AppConstant.LoggedInTenantId);
+                && x.TenantId == claimsProperty.GetTenantId());
                 if (!IsTenantvalid)
                 {
                     responseVm.Message = AppConstant.TenantNotFound;
                     return responseVm;
                 }
                 var IsJobExist = GetAllQuerable().Where(x => x.JobId == model.JobId &&
-                  x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
+                  x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId()).FirstOrDefault();
                 if (IsJobExist != null)
                 {
                     IsJobExist.JobStatus = model.JobStatus;
@@ -1506,7 +1506,7 @@ namespace ShutterManagement.Business.Services
                 {
                     if (IsJobExist?.GhlOpportunityId != null)
                     {
-                        await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
+                        await gHLConfiguration.GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
                         var ghlUpdateResponse = await UpdateOpportunityInGhl(IsJobExist);
                         FileLogger.Log($"GHL Sync: Job updated in GHL - {ghlUpdateResponse.Message}");
                     }
@@ -1554,7 +1554,7 @@ namespace ShutterManagement.Business.Services
                 if(opportunitydata.Users != null)
                 {
                  GHLUserId = (dbContext.TblGhlUsers.Where(x => x.GhlEmail == opportunitydata.Users.email && x.TenantId
-                     == AppConstant.LoggedInTenantId && x.IsDelete == false && x.IsActive == true).Select(x=> x.GhlUserId).FirstOrDefault()) ?? string.Empty;
+                     == claimsProperty.GetTenantId() && x.IsDelete == false && x.IsActive == true).Select(x=> x.GhlUserId).FirstOrDefault()) ?? string.Empty;
                 }
                 Guid jobtype = Guid.Parse("34623376-9CE3-4C9B-A538-2D3129B1A6B2");
                     // Get Stage ID
@@ -1617,7 +1617,7 @@ namespace ShutterManagement.Business.Services
                     if (opportunitydata.Users != null)
                     {
                         GHLUserId = dbContext.TblGhlUsers.Where(x => x.GhlEmail == opportunitydata.Users.email && x.TenantId
-                            == AppConstant.LoggedInTenantId && x.IsDelete == false && x.IsActive == true).Select(x => x.GhlUserId).FirstOrDefault();
+                            == claimsProperty.GetTenantId() && x.IsDelete == false && x.IsActive == true).Select(x => x.GhlUserId).FirstOrDefault();
                     }
                     Guid jobtype = Guid.Parse("34623376-9CE3-4C9B-A538-2D3129B1A6B2");
                     // Get Stage ID
@@ -1672,7 +1672,7 @@ namespace ShutterManagement.Business.Services
 
             try
             {
-                await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
+                await gHLConfiguration.GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
 
                 if (string.IsNullOrEmpty(job.GhlOpportunityId))
                 {
@@ -1722,7 +1722,7 @@ namespace ShutterManagement.Business.Services
                 }
 
                 var fieldRecord = ghlCustomFieldsService.GetAllQuerable()
-                    .Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.FieldKey == fieldKey  && x.IsDelete == false)
+                    .Where(x => x.TenantId == claimsProperty.GetTenantId() && x.FieldKey == fieldKey  && x.IsDelete == false)
                     .FirstOrDefault();
 
                 if (fieldRecord == null || string.IsNullOrEmpty(fieldRecord.GhlFieldId))
