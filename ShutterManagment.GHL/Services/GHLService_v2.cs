@@ -1431,14 +1431,108 @@ namespace ShutterManagement.GHL.Services
 
 
 
-        public async Task<IResponseVm<string>> SyncGhlCustomFields(Guid? LoggedInTenantId = null)
+        //public async Task<IResponseVm<string>> SyncGhlCustomFields(Guid? LoggedInTenantId = null)
+        //{
+        //    IResponseVm<string> responseVm = new ResponseVm<string>();
+
+        //    try
+        //    {
+        //        LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : AppConstant.LoggedInTenantId);
+
+        //        string url = $"{AppConstant.GHL_BaseAddress}/locations/{AppConstant.GHL_Locationd}/customFields?model=all";
+
+        //        var request = new HttpRequestMessage(HttpMethod.Get, url);
+        //        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
+        //        request.Headers.Add("Version", "2021-07-28");
+        //        request.Headers.Add("Accept", "application/json");
+
+        //        var response = await _httpClient.SendAsync(request);
+        //        var jsonString = await response.Content.ReadAsStringAsync();
+
+        //        if (!response.IsSuccessStatusCode)
+        //        {
+        //            responseVm.Message = $"Failed to fetch custom fields: {response.StatusCode}, Body: {jsonString}";
+        //            return responseVm;
+        //        }
+
+        //        var fieldResponse = JsonConvert.DeserializeObject<GhlCustomFieldResponse>(jsonString);
+
+        //        if (fieldResponse?.customFields == null || !fieldResponse.customFields.Any())
+        //        {
+        //            responseVm.Message = "No custom fields found.";
+        //            return responseVm;
+        //        }
+
+        //        foreach (var field in fieldResponse.customFields)
+        //        {
+        //            var existingField = await dBContext.TblGhlCustomFields
+        //                .FirstOrDefaultAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.FieldName == field.name);
+
+        //            if (existingField != null)
+        //            {
+        //                existingField.GhlFieldId = field.id;
+        //                existingField.Model = field.model;
+        //                existingField.FieldKey = field.fieldKey;
+        //                existingField.Placeholder = field.placeholder;
+        //                existingField.DataType = field.dataType;
+        //                existingField.Position = field.position;
+        //                existingField.DocumentType = field.documentType;
+        //                existingField.ParentId = field.parentId;
+        //                existingField.LocationId = field.locationId;
+        //                existingField.DateAdded = field.dateAdded;
+        //                existingField.IsStandard = field.standard;
+        //                existingField.ModifiedAt = DateTime.Now;
+        //                existingField.IsDelete = false;
+        //                existingField.IsActive = true;
+        //            }
+        //            else
+        //            {
+        //                var newField = new TblGhlCustomField
+        //                {
+        //                    Id = Guid.NewGuid(),
+        //                    GhlFieldId = field.id,
+        //                    FieldName = field.name,
+        //                    Model = field.model,
+        //                    FieldKey = field.fieldKey,
+        //                    Placeholder = field.placeholder,
+        //                    DataType = field.dataType,
+        //                    Position = field.position,
+        //                    DocumentType = field.documentType,
+        //                    ParentId = field.parentId,
+        //                    LocationId = field.locationId,
+        //                    DateAdded = field.dateAdded,
+        //                    IsStandard = field.standard,
+        //                    TenantId = AppConstant.LoggedInTenantId,
+        //                    CreatedAt = DateTime.Now,
+        //                    IsActive = true,
+        //                    IsDelete = false
+        //                };
+
+        //                dBContext.TblGhlCustomFields.Add(newField);
+        //            }
+        //        }
+
+        //        await dBContext.SaveChangesAsync();
+
+        //        responseVm.IsSuccess = true;
+        //        responseVm.Message = "Custom fields synced and saved successfully.";
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        responseVm.Message = $"Exception: {ex.Message}";
+        //    }
+
+        //    return responseVm;
+        //}
+
+
+        public async Task<IResponseVm<List<GhlCustomField>>> GetGhlCustomFieldsAsync()
         {
-            IResponseVm<string> responseVm = new ResponseVm<string>();
+            IResponseVm<List<GhlCustomField>> responseVm = new ResponseVm<List<GhlCustomField>>();
 
             try
             {
-                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : AppConstant.LoggedInTenantId);
-
+                FileLogger.Log("Fetching GHL Custom Fields...");
                 string url = $"{AppConstant.GHL_BaseAddress}/locations/{AppConstant.GHL_Locationd}/customFields?model=all";
 
                 var request = new HttpRequestMessage(HttpMethod.Get, url);
@@ -1451,80 +1545,25 @@ namespace ShutterManagement.GHL.Services
 
                 if (!response.IsSuccessStatusCode)
                 {
+                    responseVm.IsSuccess = false;
                     responseVm.Message = $"Failed to fetch custom fields: {response.StatusCode}, Body: {jsonString}";
                     return responseVm;
                 }
 
                 var fieldResponse = JsonConvert.DeserializeObject<GhlCustomFieldResponse>(jsonString);
-
-                if (fieldResponse?.customFields == null || !fieldResponse.customFields.Any())
-                {
-                    responseVm.Message = "No custom fields found.";
-                    return responseVm;
-                }
-
-                foreach (var field in fieldResponse.customFields)
-                {
-                    var existingField = await dBContext.TblGhlCustomFields
-                        .FirstOrDefaultAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.FieldName == field.name);
-
-                    if (existingField != null)
-                    {
-                        existingField.GhlFieldId = field.id;
-                        existingField.Model = field.model;
-                        existingField.FieldKey = field.fieldKey;
-                        existingField.Placeholder = field.placeholder;
-                        existingField.DataType = field.dataType;
-                        existingField.Position = field.position;
-                        existingField.DocumentType = field.documentType;
-                        existingField.ParentId = field.parentId;
-                        existingField.LocationId = field.locationId;
-                        existingField.DateAdded = field.dateAdded;
-                        existingField.IsStandard = field.standard;
-                        existingField.ModifiedAt = DateTime.Now;
-                        existingField.IsDelete = false;
-                        existingField.IsActive = true;
-                    }
-                    else
-                    {
-                        var newField = new TblGhlCustomField
-                        {
-                            Id = Guid.NewGuid(),
-                            GhlFieldId = field.id,
-                            FieldName = field.name,
-                            Model = field.model,
-                            FieldKey = field.fieldKey,
-                            Placeholder = field.placeholder,
-                            DataType = field.dataType,
-                            Position = field.position,
-                            DocumentType = field.documentType,
-                            ParentId = field.parentId,
-                            LocationId = field.locationId,
-                            DateAdded = field.dateAdded,
-                            IsStandard = field.standard,
-                            TenantId = AppConstant.LoggedInTenantId,
-                            CreatedAt = DateTime.Now,
-                            IsActive = true,
-                            IsDelete = false
-                        };
-
-                        dBContext.TblGhlCustomFields.Add(newField);
-                    }
-                }
-
-                await dBContext.SaveChangesAsync();
-
                 responseVm.IsSuccess = true;
-                responseVm.Message = "Custom fields synced and saved successfully.";
+                responseVm.Data = fieldResponse?.customFields ?? new List<GhlCustomField>();
+                responseVm.Message = "Custom fields fetched successfully.";
             }
             catch (Exception ex)
             {
+                FileLogger.Log($"Exception while fetching custom fields: {ex.Message}");
+                responseVm.IsSuccess = false;
                 responseVm.Message = $"Exception: {ex.Message}";
             }
 
             return responseVm;
         }
-
 
 
 

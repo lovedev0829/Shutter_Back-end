@@ -71,6 +71,7 @@ namespace ShutterManagement.Controllers
         private readonly IJobSchedule jobSchedule;
         private readonly IStateService stateService;
         private readonly MS365Configuration mS365Configuration;
+        private readonly IGhlCustomFieldsService ghlCustomFieldsService;
         private readonly IAuthService authService;
 
         public CommonController(IMasterCreate masterCreate, 
@@ -87,7 +88,7 @@ namespace ShutterManagement.Controllers
             IEstimationBreakdownService estimationBreakdownService, ILocationService locationService,
            IDashboard dashboard, INotificationService notification, IGHLConfiguration gHLConfiguration,IStripeConfiguration stripeConfiguration,
            GhlService ghlService ,IPaymentsService paymentsService ,GHLService_v2 gHLService_V2,IJobSchedule jobSchedule,
-           IStateService stateService,MS365Configuration mS365Configuration)
+           IStateService stateService,MS365Configuration mS365Configuration,IGhlCustomFieldsService ghlCustomFieldsService)
         {
             this.masterCreate = masterCreate;
             this.fileUpload = fileUpload;
@@ -138,6 +139,7 @@ namespace ShutterManagement.Controllers
             this.jobSchedule = jobSchedule;
             this.stateService = stateService;
             this.mS365Configuration = mS365Configuration;
+            this.ghlCustomFieldsService = ghlCustomFieldsService;
         }
 
 
@@ -865,7 +867,7 @@ namespace ShutterManagement.Controllers
                         FileLogger.Log("GetUsersByCalendarIdAsync", $"Completed. Message: {users.Message}");
 
                         FileLogger.Log("GetAndSaveGhlCustomeFields", "Started");
-                        var Customfields = await gHLService_V2.SyncGhlCustomFields(LoggedInTenantId);
+                        var Customfields = await ghlCustomFieldsService.SaveGhlCustomFieldsAsync(LoggedInTenantId);
                         FileLogger.Log("GetAndSaveGhlCustomeFields", $"Completed. Message: {users.Message}");
 
                         var syncEnd = DateTime.Now;
@@ -1040,20 +1042,20 @@ namespace ShutterManagement.Controllers
         }
 
 
-        [HttpGet]
-        [Route("GetCustomeFields")]
-        public async Task<IActionResult> GetCustomeFields()
-        {
-            var tenantid = AppConstant.LoggedInTenantId;
-            await gHLConfiguration.GetGHLConfiguration(tenantid.ToString());
-            var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration(tenantid);
-            if (Checkghlresponse.IsSuccess)
-            {
-                var result = await gHLService_V2.SyncGhlCustomFields(tenantid);
-                return Ok(result);
-            }
-            return Ok(Checkghlresponse);
-        }
+        //[HttpGet]
+        //[Route("GetCustomeFields")]
+        //public async Task<IActionResult> GetCustomeFields()
+        //{
+        //    var tenantid = AppConstant.LoggedInTenantId;
+        //    await gHLConfiguration.GetGHLConfiguration(tenantid.ToString());
+        //    var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration(tenantid);
+        //    if (Checkghlresponse.IsSuccess)
+        //    {
+        //        var result = await gHLService_V2.SyncGhlCustomFields(tenantid);
+        //        return Ok(result);
+        //    }
+        //    return Ok(Checkghlresponse);
+        //}
 
     }
 }
