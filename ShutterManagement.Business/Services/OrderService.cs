@@ -287,14 +287,14 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        public async Task<IResponseVm<List<OrderList>>> GetAll_Order(Pagination filter)
+        public async Task<IResponseVm<List<OrderList>>> GetAll_Order(Pagination filter, Guid? TenantId = null)
         {
             IResponseVm<List<OrderList>> responseVm = new ResponseVm<List<OrderList>>();
             try
             {
                 FileLogger.Log($"Start: Fetching estimates with filter parameters: TenantId = {filter.TenantId}, PageNo = {filter.PageNo}, RecordsPerPage = {filter.RecordPerPage}");
 
-                var orders = await FetchOrders(filter);
+                var orders = await FetchOrders(filter,TenantId);
                 if (orders == null)
                 {
                     responseVm.Message = AppConstant.TenantNotFound;
@@ -336,7 +336,8 @@ namespace ShutterManagement.Business.Services
             {
                 FileLogger.Log($"Start: Fetching latest version of orders with filter parameters: TenantId = {filter.TenantId}, PageNo = {filter.PageNo}, RecordsPerPage = {filter.RecordPerPage}");
 
-                var orders = await FetchOrders(filter);
+                var TenantId = claimsProperty.GetTenantId();
+                var orders = await FetchOrders(filter, TenantId);
                 if (orders == null)
                 {
                     responseVm.Message = AppConstant.TenantNotFound;
@@ -757,12 +758,11 @@ namespace ShutterManagement.Business.Services
                                     .Where(e => e.OrderId == OrderId && e.IsDelete == false)
                                     .FirstOrDefault();
 
-                claimsProperty.GetTenantId() = order.TenantId;
                 Pagination pagination = new Pagination
                 {
                     SearchValue = OrderId.ToString()
                 };
-                var allVersionsOrder = await GetAll_Order(pagination);
+                var allVersionsOrder = await GetAll_Order(pagination, order.TenantId);
 
                 if (allVersionsOrder != null)
                 {
@@ -830,8 +830,16 @@ namespace ShutterManagement.Business.Services
                     .Where(es => es.OrderId == OrderId && es.IsDelete == false && es.IsActive == true)
                     .FirstOrDefault();
         }
-        public async Task<List<TblOrder>> FetchOrders(Pagination filter)
+        public async Task<List<TblOrder>> FetchOrders(Pagination filter, Guid? TenantId = null)
         {
+            if (!string.IsNullOrEmpty(TenantId.ToString()) && TenantId != Guid.Empty)
+            {
+                // Log and fetch estimates for the logged-in tenant
+                FileLogger.Log("No TenantId provided, fetching for the logged-in tenant.");
+                return (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == TenantId)
+                                       .OrderByDescending(x => x.CreatedAt)
+                                       .ToList();
+            }
             if (string.IsNullOrEmpty(filter.TenantId))
             {
                 // Log and fetch estimates for the logged-in tenant

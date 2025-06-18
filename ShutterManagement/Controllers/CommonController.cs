@@ -68,6 +68,7 @@ namespace ShutterManagement.Controllers
         private readonly IPaymentsService paymentsService;
         private readonly GHLService_v2 gHLService_V2;
         private readonly IJobSchedule jobSchedule;
+        private readonly GhlService ghlService;
         private readonly IStateService stateService;
         private readonly MS365Configuration mS365Configuration;
         private readonly IAuthService authService;
@@ -85,7 +86,7 @@ namespace ShutterManagement.Controllers
             ITaxRate taxService,IEstimateService estimateService, IAuthService authService,
             IEstimationBreakdownService estimationBreakdownService, ILocationService locationService,
            IDashboard dashboard, INotificationService notification, IGHLConfiguration gHLConfiguration,IStripeConfiguration stripeConfiguration,
-          IPaymentsService paymentsService ,GHLService_v2 gHLService_V2,IJobSchedule jobSchedule,
+           IPaymentsService paymentsService ,GHLService_v2 gHLService_V2,IJobSchedule jobSchedule,GhlService ghlService,
            IStateService stateService,MS365Configuration mS365Configuration)
         {
             this.masterCreate = masterCreate;
@@ -134,6 +135,7 @@ namespace ShutterManagement.Controllers
             this.paymentsService = paymentsService;
             this.gHLService_V2 = gHLService_V2;
             this.jobSchedule = jobSchedule;
+            this.ghlService = ghlService;
             this.stateService = stateService;
             this.mS365Configuration = mS365Configuration;
         }
@@ -703,8 +705,9 @@ namespace ShutterManagement.Controllers
         {
             filter.Status = 1;
             filter.JobId=JobId?.ToLower();
-           // filter.SearchValue = EnumValue.GetEnumValue(Estimation.GenerateOrder);
-            var res = await estimateService.GetAll_Estimate(filter);
+            // filter.SearchValue = EnumValue.GetEnumValue(Estimation.GenerateOrder);
+            var TenantId = claimsProperty.GetTenantId();
+            var res = await estimateService.GetAll_Estimate(filter,TenantId);
             res.Data = res?.Data?.Where(x => x.Status == EnumValue.GetEnumValue(Estimation.GenerateOrder)).ToList();
             return Ok(res);
         }
@@ -766,13 +769,13 @@ namespace ShutterManagement.Controllers
         }
 
 
-        //[HttpGet]
-        //[Route("GetAllGHLContact")]
-        //public async Task<IActionResult> GetAllGHLContact()
-        //{
-        //    var result = await ghlService.GetContactsAsync();
-        //    return Ok(result);
-        //}
+        [HttpGet]
+        [Route("GetAllGHLContact")]
+        public async Task<IActionResult> GetAllGHLContact()
+        {
+            var result = await ghlService.GetContactsAsync();
+            return Ok(result);
+        }
 
         [HttpGet]
         [Route("SaveStageGHLToDB")]
@@ -798,28 +801,28 @@ namespace ShutterManagement.Controllers
             return Ok(json);
         }
 
-        //[HttpGet]
-        //[Route("GetAllStages")]
-        //public async Task<IActionResult> GetStages()
-        //{
-        //    var Tenantid = claimsProperty.GetTenantId();
-        //    var res = await gHLConfiguration.CheckGHLConfiguration(Tenantid);
-        //    if(res.IsSuccess)
-        //    { 
-        //        var result = await ghlService.GetGHLStages();
-        //        return Ok(result);
-        //    }
-        //    return Ok(res);
-        //}
+        [HttpGet]
+        [Route("GetAllStages")]
+        public async Task<IActionResult> GetStages()
+        {
+            var Tenantid = claimsProperty.GetTenantId();
+            var res = await gHLConfiguration.CheckGHLConfiguration(Tenantid);
+            if (res.IsSuccess)
+            {
+                var result = await ghlService.GetGHLStages();
+                return Ok(result);
+            }
+            return Ok(res);
+        }
 
 
-        //[HttpGet]
-        //[Route("GetOpportunity")]
-        //public async Task<IActionResult> GetOpportunity()
-        //{
-        //    var result = await ghlService.GetOpportunitiesFromGhl();
-        //    return Ok(result);
-        //}
+        [HttpGet]
+        [Route("GetOpportunity")]
+        public async Task<IActionResult> GetOpportunity()
+        {
+            var result = await ghlService.GetOpportunitiesFromGhl();
+            return Ok(result);
+        }
 
 
         [HttpGet]

@@ -35,8 +35,9 @@ namespace ShutterManagement.Business.Services
                 x.IsActive == true);
                 if (isTenantValid)
                 {
-
-                    var JobTypeList = (await GetAll()).Where(p => p.IsDelete == false && (p.TenantId.ToString().ToUpper() == claimsProperty.GetTenantId().ToString().ToUpper() || p.TenantId.ToString().ToUpper() == claimsProperty.GetParentTenantId().ToUpper())).OrderByDescending(x => x.CreatedAt).ToList();
+                    
+                    var JobTypeList = (await GetAll()).Where(p => p.IsDelete == false && (p.TenantId == claimsProperty.GetTenantId() ||
+                    p.TenantId.ToString().ToUpper() == claimsProperty.GetParentTenantId().ToUpper())).OrderByDescending(x => x.CreatedAt).ToList();
 
 
                     filter.SearchValue = filter.SearchValue?.Trim().ToLower();

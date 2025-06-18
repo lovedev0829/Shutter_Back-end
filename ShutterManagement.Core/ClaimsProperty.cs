@@ -48,7 +48,7 @@ namespace ShutterManagement.Business
         public string GetParentTenantId()
         {
             var claim = httpContext.HttpContext.User.Claims.First(c => c.Type == "ParentTenantId");
-            var value = Guid.Parse(claim?.Value ?? "");
+            var value = claim?.Value ?? "";
             AppConstant.LoggedInParentTenantId = value.ToString();
             return value.ToString();
         }

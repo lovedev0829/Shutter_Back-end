@@ -230,7 +230,7 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        public async Task<IResponseVm<List<EstimateList>>> GetAll_Estimate(Pagination filter)
+        public async Task<IResponseVm<List<EstimateList>>> GetAll_Estimate(Pagination filter, Guid? TenantId = null)
         {
             IResponseVm<List<EstimateList>> responseVm = new ResponseVm<List<EstimateList>>();
             try
@@ -238,7 +238,7 @@ namespace ShutterManagement.Business.Services
                 FileLogger.Log($"Start: Fetching estimates with filter parameters: TenantId = {filter.TenantId}, PageNo = {filter.PageNo}, RecordsPerPage = {filter.RecordPerPage}");
 
                 // Validate Tenant if provided, else use the logged-in tenant
-                var estimates = await FetchEstimates(filter);
+                var estimates = await FetchEstimates(filter,TenantId);
                 if (estimates == null)
                 {
                     responseVm.Message = AppConstant.TenantNotFound;
@@ -1098,13 +1098,13 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-                claimsProperty.GetTenantId() = estimate.TenantId;
+               
 
                 Pagination filterValue = new Pagination
                 {
                     EstimationId = EstimateId.ToString()
                 };
-                var estimateListFiltered = await GetAll_Estimate(filterValue);
+                var estimateListFiltered = await GetAll_Estimate(filterValue, estimate.TenantId);
 
                 if (estimateListFiltered != null && estimateListFiltered.TotalRecords > 0 && estimateListFiltered.Data.Any())
                 {
@@ -1221,20 +1221,25 @@ namespace ShutterManagement.Business.Services
         }
 
 
-        private async Task<List<TblEstimate>> FetchEstimates(Pagination filter)
+        private async Task<List<TblEstimate>> FetchEstimates(Pagination filter, Guid? TenantId = null)
         {
             var isFilteringByEstimationId = !string.IsNullOrEmpty(filter.EstimationId);
             var estimationId = filter.EstimationId;
 
             IQueryable<TblEstimate> query = GetAllQuerable().Where(x => !x.IsDelete == true);
-
             // Apply estimation ID filter if provided
             if (isFilteringByEstimationId)
             {
                 query = query.Where(x => x.EstimateId.ToString() == estimationId);
             }
 
-            if (string.IsNullOrEmpty(filter.TenantId))
+            if (!string.IsNullOrEmpty(TenantId.ToString()) && TenantId != Guid.Empty)
+            {
+                // Default to logged-in tenant
+                FileLogger.Log("No TenantId provided, fetching for the logged-in tenant.");
+                query = query.Where(x => x.TenantId == TenantId);
+            }
+            else if (string.IsNullOrEmpty(filter.TenantId))
             {
                 // Default to logged-in tenant
                 FileLogger.Log("No TenantId provided, fetching for the logged-in tenant.");
@@ -1365,7 +1370,8 @@ namespace ShutterManagement.Business.Services
 
         private async Task AddJobDetails(EstimateList e)
         {
-
+            var TenantId = GetAllQuerable().Where(x => x.EstimateId == e.EstimateId && x.IsDelete == false && x.IsActive == true).Select
+                (y => y.TenantId).FirstOrDefault();
             var jobdetails1 = (from j1 in dbContext.TblJobs
                                join j2 in dbContext.TblEstimates on j1.JobId equals j2.JobId
                                join con in dbContext.TblContacts on j1.ContactId equals con.ContactId
@@ -1375,7 +1381,7 @@ namespace ShutterManagement.Business.Services
                                join j5 in dbContext.TblUsers on j1.AssignedPersonnel equals j5.Id into Users
                                from j5 in Users.DefaultIfEmpty()
                                join j6 in dbContext.TblContacts on j1.ContactId equals j6.ContactId
-                               where j1.TenantId == claimsProperty.GetTenantId() && j1.IsDelete == false && j1.JobId == e.JobId
+                               where j1.TenantId == TenantId && j1.IsDelete == false && j1.JobId == e.JobId
                                select new JobDetails
                                {
                                    JobName = j1.JobName,
