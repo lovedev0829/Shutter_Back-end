@@ -26,12 +26,14 @@ namespace ShutterManagement.Business.Services
     {
         private readonly DataServices dataServices;
         private readonly ITenantService tenantService;
+        private readonly ClaimsProperty claimsProperty;
         private readonly ITenantBrandingService tenantBrandingService;
 
-        public MasterCreate(DataServices dataServices, ITenantService tenantService, ITenantBrandingService tenantBrandingService)
+        public MasterCreate(DataServices dataServices, ITenantService tenantService,ClaimsProperty claimsProperty, ITenantBrandingService tenantBrandingService)
         {
             this.dataServices = dataServices;
             this.tenantService = tenantService;
+            this.claimsProperty = claimsProperty;
             this.tenantBrandingService = tenantBrandingService;
         }
 

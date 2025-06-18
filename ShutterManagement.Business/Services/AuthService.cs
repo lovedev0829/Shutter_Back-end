@@ -20,6 +20,7 @@ using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core.Common;
 using System.Security.AccessControl;
+using ShutterManagement.Business;
 
 namespace ShutterManagement.Services
 {
@@ -31,11 +32,12 @@ namespace ShutterManagement.Services
         private readonly ITenantService tenantService;
         private readonly ITenantBrandingService tenantBrandingService;
         private readonly INotificationService notification;
+        private readonly ClaimsProperty claimsProperty;
         private readonly IGHLConfiguration gHLConfiguration;
         private readonly IStripeConfiguration stripeConfiguration;
 
         public AuthService(DataServices dataServices, IMapper mapper, IConfiguration config,
-            ITenantService tenantService, ITenantBrandingService tenantBrandingService,INotificationService notification,
+            ITenantService tenantService, ITenantBrandingService tenantBrandingService,INotificationService notification,ClaimsProperty claimsProperty,
             IGHLConfiguration gHLConfiguration,IStripeConfiguration stripeConfiguration)
         {
             this.dataServices = dataServices;
@@ -44,6 +46,7 @@ namespace ShutterManagement.Services
             this.tenantService = tenantService;
             this.tenantBrandingService = tenantBrandingService;
             this.notification = notification;
+            this.claimsProperty = claimsProperty;
             this.gHLConfiguration = gHLConfiguration;
             this.stripeConfiguration = stripeConfiguration;
         }
@@ -232,12 +235,12 @@ namespace ShutterManagement.Services
             try
             {
                 var IsUserExists = (await GetAll()).Where(x => x.IsDelete == false 
-                && x.IsActive == true && x.Id == AppConstant.LoggedInUserID && x.Pwd == AesEncryptionHelper.Encrypt(vm.OldPassWord ?? "") && x.TenantId == claimsProperty.GetTenantId()).FirstOrDefault();
+                && x.IsActive == true && x.Id == claimsProperty.GetUserId() && x.Pwd == AesEncryptionHelper.Encrypt(vm.OldPassWord ?? "") && x.TenantId == claimsProperty.GetTenantId()).FirstOrDefault();
                 if(IsUserExists != null)
                 {
                     IsUserExists.Pwd = AesEncryptionHelper.Encrypt(vm.PassWord ?? "");
                     IsUserExists.ModifiedAt = DateTime.Now;
-                    IsUserExists.ModifiedBy= AppConstant.LoggedInUserID;
+                    IsUserExists.ModifiedBy= claimsProperty.GetUserId();
                     IsUserExists.ExpireAt = null;
                     IsUserExists.Token = null;
                     await Update(IsUserExists);
@@ -263,14 +266,14 @@ namespace ShutterManagement.Services
             try
             {
                 var UserExistsDetails = GetAllQuerable().Where(x => x.IsDelete == false && x.IsActive == true &&
-                x.Id == (AppConstant.LoggedInUserID)
+                x.Id == (claimsProperty.GetUserId())
                 && x.TenantId == claimsProperty.GetTenantId()
                 ).FirstOrDefault();
                 if (UserExistsDetails != null)
                 {
 
                     bool IsPhoneExists = await AnyAsync(x => x.IsDelete == false &&
-                    (x.Phone == profileUpdate.Phone) && x.Id != AppConstant.LoggedInUserID && x.TenantId == claimsProperty.GetTenantId());
+                    (x.Phone == profileUpdate.Phone) && x.Id != claimsProperty.GetUserId() && x.TenantId == claimsProperty.GetTenantId());
                     if (IsPhoneExists)
                     {
                         result.Message = "Phone " + AppConstant.AlreadyExists;
@@ -278,7 +281,7 @@ namespace ShutterManagement.Services
                     }
 
                     //bool IsEmailExists = await AnyAsync(x => x.IsDelete == false &&
-                    //  (x.Email == profileUpdate.Email) && x.Id != AppConstant.LoggedInUserID && x.TenantId == claimsProperty.GetTenantId());
+                    //  (x.Email == profileUpdate.Email) && x.Id != claimsProperty.GetUserId() && x.TenantId == claimsProperty.GetTenantId());
                     //if (IsEmailExists)
                     //{
                     //    result.Message = "Email " + AppConstant.AlreadyExists;
@@ -295,14 +298,14 @@ namespace ShutterManagement.Services
                         //UpdateUserDetails.Email = profileUpdate.Email;
                         UpdateUserDetails.Phone = profileUpdate.Phone;
                         UpdateUserDetails.ModifiedAt = DateTime.Now;
-                        UpdateUserDetails.ModifiedBy = AppConstant.LoggedInUserID;
+                        UpdateUserDetails.ModifiedBy = claimsProperty.GetUserId();
                         var res = await Update(UpdateUserDetails);
                         result.IsSuccess = true;
                         result.Message = AppConstant.UpdateSuccessMsg;
 
                         CreateNotification notification2 = new CreateNotification()
                         {
-                            UserId = AppConstant.LoggedInUserID,
+                            UserId = claimsProperty.GetUserId(),
                             Subject = Enum.GetName(typeof(NotificationModule), NotificationModule.Tenant),
                             Body = $"Tenant profile {AppConstant.Update_Notification}",
                             CreatedDate = DateTime.Now,
@@ -333,7 +336,7 @@ namespace ShutterManagement.Services
             try
             {
                 var address = await GetAllQuerable()
-                    .Where(c => c.Id == AppConstant.LoggedInUserID && c.IsActive == true && c.IsDelete == false && c.TenantId == claimsProperty.GetTenantId())
+                    .Where(c => c.Id == claimsProperty.GetUserId() && c.IsActive == true && c.IsDelete == false && c.TenantId == claimsProperty.GetTenantId())
                     .Select(c => new UserResponse
                     {
                         FirstName = c.FirstName,
@@ -422,7 +425,7 @@ namespace ShutterManagement.Services
 
                 CreateNotification notification2 = new CreateNotification()
                 {
-                    UserId = AppConstant.LoggedInUserID,
+                    UserId = claimsProperty.GetUserId(),
                     Subject = Enum.GetName(typeof(NotificationModule), NotificationModule.Tenant),
                     Body = $"Tenant password {AppConstant.Update_Notification}",
                     CreatedDate = DateTime.Now,

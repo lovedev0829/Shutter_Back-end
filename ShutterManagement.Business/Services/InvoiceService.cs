@@ -46,6 +46,7 @@ namespace ShutterManagement.Business.Services
         private readonly StripeService _stripeService;
         private readonly IStripeConfiguration stripeConfiguration;
         private readonly JobStatusAndStageMapping statusAndStageMapping;
+        private readonly ClaimsProperty claimsProperty;
         private readonly ITemplatesService templatesService;
         private readonly GoogleAuthService googleAuthService;
         private readonly IEmailConfigurationService emailConfigurationService;
@@ -54,7 +55,7 @@ namespace ShutterManagement.Business.Services
             IHostEnvironment environment, IConverter converter ,IContactService contactService 
             ,IEstimateService estimateService, ITenantBrandingService tenantBrandingService,IUserService userService 
             ,IJobService jobService,IOrderService orderService,StripeService stripeService ,
-            IStripeConfiguration stripeConfiguration,JobStatusAndStageMapping statusAndStageMapping ,
+            IStripeConfiguration stripeConfiguration,JobStatusAndStageMapping statusAndStageMapping ,ClaimsProperty claimsProperty,
             ITemplatesService templatesService,GoogleAuthService googleAuthService,IEmailConfigurationService emailConfigurationService)
         {
             this.tenantService = tenantService;
@@ -70,6 +71,7 @@ namespace ShutterManagement.Business.Services
             _stripeService = stripeService;
             this.stripeConfiguration = stripeConfiguration;
             this.statusAndStageMapping = statusAndStageMapping;
+            this.claimsProperty = claimsProperty;
             this.templatesService = templatesService;
             this.googleAuthService = googleAuthService;
             this.emailConfigurationService = emailConfigurationService;

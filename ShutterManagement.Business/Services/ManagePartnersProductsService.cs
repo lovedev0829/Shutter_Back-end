@@ -26,6 +26,7 @@ namespace ShutterManagement.Business.Services
     {
         private readonly ShutterDBContext dBContext;
         private readonly ITenantService tenantService;
+        private readonly ClaimsProperty claimsProperty;
         private readonly IProductService productService;
         private readonly IManagePartnersProductsOptions managePartnersProductsOptions;
         private readonly IEstimateService estimateService;
@@ -33,7 +34,7 @@ namespace ShutterManagement.Business.Services
         private readonly ITenantBrandingService tenantBrandingService;
         private readonly IOptionsTypeService optionsTypeService;
 
-        public ManagePartnersProductsService(ShutterDBContext dBContext, ITenantService tenantService,
+        public ManagePartnersProductsService(ShutterDBContext dBContext, ITenantService tenantService,ClaimsProperty claimsProperty,
             IProductService productService, IManagePartnersProductsOptions
             managePartnersProductsOptions, IEstimateService estimateService,
             ISubtenantProductMarkup subtenantProductMarkup,
@@ -42,6 +43,7 @@ namespace ShutterManagement.Business.Services
         {
             this.dBContext = dBContext;
             this.tenantService = tenantService;
+            this.claimsProperty = claimsProperty;
             this.productService = productService;
             this.managePartnersProductsOptions = managePartnersProductsOptions;
             this.estimateService = estimateService;

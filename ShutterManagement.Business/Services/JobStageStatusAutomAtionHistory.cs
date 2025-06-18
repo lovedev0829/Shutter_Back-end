@@ -14,7 +14,12 @@ namespace ShutterManagement.Business.Services
 {
     public class JobStageStatusAutomationHistoryRepository : BaseRepository<ShutterDBContext, TblJobStageStatusAutomAtionHistory>, IjobStageStatusAutomAtionHistory
     {
-       
+        private readonly ClaimsProperty claimsProperty;
+
+        public JobStageStatusAutomationHistoryRepository(ClaimsProperty claimsProperty)
+        {
+            this.claimsProperty = claimsProperty;
+        }
         public async Task<IResponseVm<string>> SaveHistory(TblJob job)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();

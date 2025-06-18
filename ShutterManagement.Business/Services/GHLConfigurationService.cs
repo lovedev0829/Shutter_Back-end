@@ -56,7 +56,7 @@ namespace ShutterManagement.Business.Services
                 AppConstant.GHL_BaseAddress = configuration["GoHighLevelOAuthSettings:BaseUrl"] ?? "";
                 AppConstant.GHL_PipelineId = details.PipelineId ?? "";
                 AppConstant.GHL_Locationd = details.LocationId??"";
-                claimsProperty.GetTenantId() = details.TenantId;
+                AppConstant.LoggedInTenantId = details.TenantId;
                 AppConstant.GHL_AccessToken = details.AccessToken ?? "";
                 AppConstant.GHL_RefreshToken = details.RefreshToken ??"";
                 AppConstant.GHL_CalendarName = details.CalendarName ?? "";

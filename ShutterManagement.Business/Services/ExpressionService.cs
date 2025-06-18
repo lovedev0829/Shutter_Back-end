@@ -22,14 +22,16 @@ namespace ShutterManagement.Business.Services
     {
         private readonly ShutterDBContext dbContext;
         private readonly IComponentPriceService componentPriceService;
+        private readonly ClaimsProperty claimsProperty;
         private readonly IMaterial materialService;
         private readonly ITenantService tenantService;
 
-        public ExpressionService(ShutterDBContext dbContext, IComponentPriceService componentPriceService,
+        public ExpressionService(ShutterDBContext dbContext, IComponentPriceService componentPriceService, ClaimsProperty claimsProperty,
             IMaterial materialService, ITenantService tenantService)
         {
             this.dbContext = dbContext;
             this.componentPriceService = componentPriceService;
+            this.claimsProperty = claimsProperty;
             this.materialService = materialService;
             this.tenantService = tenantService;
         }

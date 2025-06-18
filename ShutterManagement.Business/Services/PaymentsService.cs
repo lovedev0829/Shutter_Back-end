@@ -26,15 +26,17 @@ namespace ShutterManagement.Business.Services
         #region Private Fields
         private readonly ITenantService tenantService;
         private readonly IInvoiceService invoiceService;
+        private readonly ClaimsProperty claimsProperty;
         private readonly StripeService stripeService;
         private readonly IOrderService orderService;
         public Pagination filter = new Pagination();
         #endregion Private Fields
-        public PaymentsService(ITenantService tenantService ,IInvoiceService invoiceService 
+        public PaymentsService(ITenantService tenantService ,IInvoiceService invoiceService ,ClaimsProperty claimsProperty
             ,StripeService stripeService ,IOrderService orderService)
         {
             this.tenantService = tenantService;
             this.invoiceService = invoiceService;
+            this.claimsProperty = claimsProperty;
             this.stripeService = stripeService;
             this.orderService = orderService;
         }

@@ -18,10 +18,12 @@ namespace ShutterManagement.Business.Services
     public class LocationService : BaseRepository<ShutterDBContext, TblLocation>, ILocationService
     {
         private readonly ITenantService tenantService;
+        private readonly ClaimsProperty claimsProperty;
 
-        public LocationService(ITenantService tenantService)
+        public LocationService(ITenantService tenantService, ClaimsProperty claimsProperty)
         {
             this.tenantService = tenantService;
+            this.claimsProperty = claimsProperty;
         }
         public async Task<IResponseVm<string>> Create_Location(CreateLocation model)
         {

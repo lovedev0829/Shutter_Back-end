@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using ShutterManagement.Business;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Business.Services;
 using ShutterManagement.Core;
@@ -21,12 +22,13 @@ namespace ShutterManagement.Controllers
     {
       
         private readonly ImportandExportCSV importandExportCSV;
+        private readonly ClaimsProperty claimsProperty;
 
-        public ImportandExportController(ShutterDBContext context,ImportandExportCSV importandExportCSV)
+        public ImportandExportController(ShutterDBContext context,ImportandExportCSV importandExportCSV, ClaimsProperty claimsProperty)
         {
            
             this.importandExportCSV = importandExportCSV;
-
+            this.claimsProperty = claimsProperty;
         }
 
         [Authorize]

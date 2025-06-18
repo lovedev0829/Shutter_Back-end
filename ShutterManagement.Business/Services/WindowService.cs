@@ -22,16 +22,18 @@ namespace ShutterManagement.Business.Services
         private readonly ITenantService tenantService;
         private readonly IWindowProductService windowProductService;
         private readonly IWindowOptionService windowOptionService;
+        private readonly ClaimsProperty claimsProperty;
         private readonly IEstimateWindowService estimateWindowService;
   
 
         public WindowService(ITenantService tenantService, 
-            IWindowProductService windowProductService, IWindowOptionService windowOptionService,
+            IWindowProductService windowProductService, IWindowOptionService windowOptionService, ClaimsProperty claimsProperty,
             IEstimateWindowService estimateWindowService)
         {
             this.tenantService = tenantService;
             this.windowProductService = windowProductService;
             this.windowOptionService = windowOptionService;
+            this.claimsProperty = claimsProperty;
             this.estimateWindowService = estimateWindowService;
         
         }

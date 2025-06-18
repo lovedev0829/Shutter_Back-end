@@ -23,11 +23,13 @@ namespace ShutterManagement.Business.Services
     {
         private readonly IOption optionService;
         private readonly IMaterial materialService;
+        private readonly ClaimsProperty claimsProperty;
 
-        public ComponentPriceService(IOption optionService, IMaterial materialService)
+        public ComponentPriceService(IOption optionService, IMaterial materialService,ClaimsProperty claimsProperty)
         {
             this.optionService = optionService;
             this.materialService = materialService;
+            this.claimsProperty = claimsProperty;
         }
         public async Task<IResponseVm<dynamic>> GetAllComponentsChip(string? Product, string? ProductType, string? Option)
         {

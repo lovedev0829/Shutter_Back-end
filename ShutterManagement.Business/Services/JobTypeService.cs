@@ -16,10 +16,12 @@ namespace ShutterManagement.Business.Services
     public class JobTypeService : BaseRepository<ShutterDBContext, MstJobType>, IJobTypeService
     {
         private readonly ITenantService tenantService;
+        private readonly ClaimsProperty claimsProperty;
 
-        public JobTypeService(ITenantService tenantService)
+        public JobTypeService(ITenantService tenantService, ClaimsProperty claimsProperty)
         {
             this.tenantService = tenantService;
+            this.claimsProperty = claimsProperty;
         }
         public async Task<IResponseVm<List<JobTypeList>>> GetAllJobType(Pagination filter)
         {

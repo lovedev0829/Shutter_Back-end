@@ -23,17 +23,17 @@ namespace ShutterManagement.Business.Services
         private readonly ITenantService tenantService;
         private readonly IExpressionService expressionService;
         private readonly IProductComponentService productComponentService;
-        private readonly ClaimsProperty claimProperty;
+        private readonly ClaimsProperty claimsProperty;
         private readonly IOption option;
         private readonly IOptionsTypeService optionsType;
         private readonly IComponentService componentService;
         public ProductService(ITenantService tenantService, IExpressionService expressionService, 
-            IProductComponentService productComponentService, ClaimsProperty claimsProperty,IComponentService componentService,
+            IProductComponentService productComponentService, ClaimsProperty claimsProperty, IComponentService componentService,
             IOption option,IOptionsTypeService optionsType )
         {
             this.tenantService = tenantService;
             this.expressionService = expressionService;
-            this.claimProperty = claimsProperty;
+            this.claimsProperty = claimsProperty;
             this.option = option;
             this.optionsType = optionsType;
             this.productComponentService = productComponentService;

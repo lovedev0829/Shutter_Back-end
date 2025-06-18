@@ -20,12 +20,14 @@ namespace ShutterManagement.Business.Services
     public class JobStatusAndStageMapping
     {
         private readonly ShutterDBContext dBContext;
+        private readonly ClaimsProperty claimsProperty;
         private readonly IGHLConfiguration gHLConfiguration;
         private readonly IjobStageStatusAutomAtionHistory automAtionHistory;
 
-        public JobStatusAndStageMapping(ShutterDBContext dBContext,IGHLConfiguration gHLConfiguration,IjobStageStatusAutomAtionHistory automAtionHistory)
+        public JobStatusAndStageMapping(ShutterDBContext dBContext, ClaimsProperty claimsProperty, IGHLConfiguration gHLConfiguration,IjobStageStatusAutomAtionHistory automAtionHistory)
         {
             this.dBContext = dBContext;
+            this.claimsProperty = claimsProperty;
             this.gHLConfiguration = gHLConfiguration;
             this.automAtionHistory = automAtionHistory;
         }

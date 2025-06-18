@@ -18,11 +18,13 @@ namespace ShutterManagement.Business.Services
     {
         private readonly ITenantService tenantService;
         private readonly IMstContactType mstContactType;
+        private readonly ClaimsProperty claimsProperty;
 
-        public JobContactService(ITenantService tenantService,IMstContactType mstContactType )
+        public JobContactService(ITenantService tenantService,IMstContactType mstContactType ,ClaimsProperty claimsProperty)
         {
             this.tenantService = tenantService;
             this.mstContactType = mstContactType;
+            this.claimsProperty = claimsProperty;
         }
 
         public async Task<IResponseVm<string>> ActiveInActiveJobContact(Guid JobContactId)

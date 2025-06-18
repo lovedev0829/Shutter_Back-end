@@ -18,11 +18,13 @@ namespace ShutterManagement.Business.Services
     {
         private readonly ShutterDBContext dbContext;
         private readonly ITenantService tenantService;
+        private readonly ClaimsProperty claimsProperty;
 
-        public ComponentMaterial(ShutterDBContext dbContext, ITenantService tenantService)
+        public ComponentMaterial(ShutterDBContext dbContext, ITenantService tenantService,ClaimsProperty claimsProperty)
         {
             this.dbContext = dbContext;
             this.tenantService = tenantService;
+            this.claimsProperty = claimsProperty;
         }
 
         public async Task<IResponseVm<string>> AddComponentMaterial(CreateComponentMaterialVm model)

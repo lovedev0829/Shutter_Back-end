@@ -22,13 +22,13 @@ namespace ShutterManagement.Business.Services
     {
         private readonly ITenantService _tenantService;
         private readonly IMaterial materialService;
+        private readonly ClaimsProperty claimsProperty;
         private readonly IVendorItemService vendorItemService;
         private readonly IVendorService vendorService;
         private readonly ITenantBrandingService tenantBrandingService;
         private readonly IJobService jobService;
         private readonly IConverter converter;
 
-        public ClaimsProperty ClaimsProperty { get; }
 
         public VendorOrderService(ITenantService tenantService, IMaterial materialService, ClaimsProperty claimsProperty,
             IVendorItemService vendorItemService ,IVendorService vendorService,
@@ -36,7 +36,7 @@ namespace ShutterManagement.Business.Services
         {
             _tenantService = tenantService;
             this.materialService = materialService;
-            ClaimsProperty = claimsProperty;
+            this.claimsProperty = claimsProperty;
             this.vendorItemService = vendorItemService;
             this.vendorService = vendorService;
             this.tenantBrandingService = tenantBrandingService;

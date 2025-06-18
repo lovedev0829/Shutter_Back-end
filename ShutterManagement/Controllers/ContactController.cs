@@ -1,6 +1,8 @@
 ﻿using Azure;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using ShutterManagement.Business;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Business.Services;
 using ShutterManagement.Core;
@@ -29,12 +31,14 @@ namespace ShutterManagement.Controllers
         private readonly IContactService _contactService;
         private readonly IGHLConfiguration gHLConfiguration;
         private readonly IAuthService authService;
+        private readonly ClaimsProperty claimsProperty;
 
-        public ContactController(IContactService contactService,IGHLConfiguration gHLConfiguration,IAuthService authService)
+        public ContactController(IContactService contactService,IGHLConfiguration gHLConfiguration,IAuthService authService, ClaimsProperty claimsProperty)
         {
             _contactService = contactService;
             this.gHLConfiguration = gHLConfiguration;
             this.authService = authService;
+            this.claimsProperty = claimsProperty;
         }
 
         [HttpPost("GetAll")]
@@ -136,7 +140,8 @@ namespace ShutterManagement.Controllers
                 if (!isTenantExist)
                 {
                     FileLogger.Log($"Tenant ID {tenantId.Data} does not exist.");
-                    claimsProperty.GetTenantId() = Guid.Parse(tenantId.Data);
+                    //httpContext.HttpContext.User.Claims.First(c => c.Type == "TenantId").Value = Guid.Parse(tenantId.Data);
+                    //claimsProperty.GetTenantId() = Guid.Parse(tenantId.Data);
                 }
                     contactData.WebhookTenantId = tenantId.Data;
                     var res = await _contactService.ContactFromGHL(contactData);

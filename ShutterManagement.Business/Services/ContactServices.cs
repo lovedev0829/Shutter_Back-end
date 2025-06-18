@@ -1046,7 +1046,7 @@ namespace ShutterManagement.Business.Services
                     //    };
                     
                     await gHLConfigurationService.GetGHLConfiguration(contactData.WebhookTenantId);
-                    var res = await Create_Contact(contact);
+                    var res = await Create_Contact(contact,Guid.Parse(contactData.WebhookTenantId));
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.InsertSuccessMsg;
                 }

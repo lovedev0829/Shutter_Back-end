@@ -28,6 +28,7 @@ namespace ShutterManagement.Business.Services
     {
         private readonly ITenantService tenantService;
         private readonly IWindowProductService windowProductService;
+        private readonly ClaimsProperty claimsProperty;
         private readonly IWindowService windowService;
         private readonly IComponentMaterial componentMaterialService;
         private readonly IOrderWindowService orderWindowService;
@@ -52,7 +53,7 @@ namespace ShutterManagement.Business.Services
         private readonly IConverter converter;
         public Pagination filter = new Pagination();
         private string Message = "";
-        public OrderService(ITenantService tenantService, IWindowProductService windowProductService,
+        public OrderService(ITenantService tenantService, IWindowProductService windowProductService, ClaimsProperty claimsProperty,
              IWindowService windowService, IComponentMaterial componentMaterialService,
              IOrderWindowService orderWindowService, IMaterial materialService,
              IProductService productService, IOrderWindowProductService orderWindowProductService,
@@ -66,6 +67,7 @@ namespace ShutterManagement.Business.Services
         {
             this.tenantService = tenantService;
             this.windowProductService = windowProductService;
+            this.claimsProperty = claimsProperty;
             this.windowService = windowService;
             this.componentMaterialService = componentMaterialService;
             this.orderWindowService = orderWindowService;

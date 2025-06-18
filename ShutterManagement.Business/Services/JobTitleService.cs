@@ -16,10 +16,12 @@ namespace ShutterManagement.Business.Services
     public class JobTitleService : BaseRepository<ShutterDBContext, MstJobTitle>, IJobTitleService
     {
         private readonly ITenantService tenantService;
+        private readonly ClaimsProperty claimsProperty;
 
-        public JobTitleService(ITenantService tenantService)
+        public JobTitleService(ITenantService tenantService, ClaimsProperty claimsProperty)
         {
             this.tenantService = tenantService;
+            this.claimsProperty = claimsProperty;
         }
         public async Task<IResponseVm<List<JobTitlesList>>> GetAll(Pagination filter)
         {

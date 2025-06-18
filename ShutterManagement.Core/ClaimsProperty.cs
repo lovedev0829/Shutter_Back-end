@@ -18,7 +18,7 @@ namespace ShutterManagement.Business
             {
                 AppConstant.LoggedInUserID = Guid.Parse(httpContext.HttpContext.User.Claims.First(c => c.Type == "UserId").Value ?? "");
                 AppConstant.LoggedInTenantId = Guid.Parse(httpContext.HttpContext.User.Claims.First(c => c.Type == "TenantId").Value ?? "");
-                claimsProperty.GetUsername() = httpContext.HttpContext.User.Claims.First(c => c.Type == "Username").Value;
+                AppConstant.LoggedInUserName = httpContext.HttpContext.User.Claims.First(c => c.Type == "Username").Value;
                 AppConstant.LoggedInCompanyCode = httpContext.HttpContext.User.Claims.First(c => c.Type == "CompanyCode").Value;
                 AppConstant.LoggedInName = httpContext.HttpContext.User.Claims.First(c => c.Type == ClaimTypes.Name).Value;
                 AppConstant.LoggedInPhone = httpContext.HttpContext.User.Claims.First(c => c.Type == "Phone").Value;
@@ -45,12 +45,12 @@ namespace ShutterManagement.Business
             return value;
         }
 
-        public Guid GetParentTenantId()
+        public string GetParentTenantId()
         {
             var claim = httpContext.HttpContext.User.Claims.First(c => c.Type == "ParentTenantId");
             var value = Guid.Parse(claim?.Value ?? "");
             AppConstant.LoggedInParentTenantId = value.ToString();
-            return value;
+            return value.ToString();
         }
         public bool GetIsAdminRolesShow()
         {
@@ -61,7 +61,7 @@ namespace ShutterManagement.Business
         {
             var claim = httpContext.HttpContext.User.Claims.First(c => c.Type == "Username");
             var value = claim?.Value ?? "";
-            claimsProperty.GetUsername() = value;
+            AppConstant.LoggedInUserName = value;
             return value;
         }
         public string GetEmail()

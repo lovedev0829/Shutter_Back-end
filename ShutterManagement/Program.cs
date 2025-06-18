@@ -196,8 +196,6 @@ builder.Services.AddScoped<IGhlCustomFieldsService, GhlCustomFieldsService>();
 builder.Services.AddScoped<MS365Configuration>();
 // Add services to the DI container
 builder.Services.AddHttpClient<GHLService_v2>(); // Register HttpClient for GhlService
-builder.Services.AddHttpClient<GhlService>(); // Register HttpClient for GhlService
-builder.Services.AddScoped<GhlService>(); // Register GhlService as a scoped dependency
 //builder.Services.AddScoped<GHLService_v2>(); // Register GhlService as a scoped dependency
 builder.Services.AddSingleton(typeof(IConverter), new SynchronizedConverter(new PdfTools()));
 

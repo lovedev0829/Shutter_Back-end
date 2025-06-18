@@ -18,11 +18,13 @@ namespace ShutterManagement.Business.Services
     {
         private readonly ITenantService tenantService;
         private readonly IExpressionService expressionService;
+        private readonly ClaimsProperty claimsProperty;
 
-        public ProductComponentService(ITenantService tenantService, IExpressionService expressionService)
+        public ProductComponentService(ITenantService tenantService, IExpressionService expressionService, ClaimsProperty claimsProperty)
         {
             this.tenantService = tenantService;
             this.expressionService = expressionService;
+            this.claimsProperty = claimsProperty;
         }
         public async Task<IResponseVm<string>> AddProductComponent(CreateProductComponentVm model)
         {

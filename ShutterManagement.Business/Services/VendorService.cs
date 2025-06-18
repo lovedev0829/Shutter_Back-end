@@ -18,9 +18,12 @@ namespace ShutterManagement.Business.Services
     public class VendorService : BaseRepository<ShutterDBContext, TblVendor>, IVendorService
     {
         private readonly ITenantService tenantService;
-        public VendorService(ITenantService tenantService)
+        private readonly ClaimsProperty claimsProperty;
+
+        public VendorService(ITenantService tenantService,ClaimsProperty claimsProperty)
         {
             this.tenantService= tenantService;
+            this.claimsProperty = claimsProperty;
         }
         public Task<IResponseVm<string>> ActiveInActive(Guid Id)
         {

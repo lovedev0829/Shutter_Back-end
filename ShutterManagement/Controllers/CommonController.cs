@@ -65,7 +65,6 @@ namespace ShutterManagement.Controllers
         private readonly INotificationService notification;
         private readonly IGHLConfiguration gHLConfiguration;
         private readonly IStripeConfiguration stripeConfiguration;
-        private readonly GhlService ghlService;
         private readonly IPaymentsService paymentsService;
         private readonly GHLService_v2 gHLService_V2;
         private readonly IJobSchedule jobSchedule;
@@ -86,7 +85,7 @@ namespace ShutterManagement.Controllers
             ITaxRate taxService,IEstimateService estimateService, IAuthService authService,
             IEstimationBreakdownService estimationBreakdownService, ILocationService locationService,
            IDashboard dashboard, INotificationService notification, IGHLConfiguration gHLConfiguration,IStripeConfiguration stripeConfiguration,
-           GhlService ghlService ,IPaymentsService paymentsService ,GHLService_v2 gHLService_V2,IJobSchedule jobSchedule,
+          IPaymentsService paymentsService ,GHLService_v2 gHLService_V2,IJobSchedule jobSchedule,
            IStateService stateService,MS365Configuration mS365Configuration)
         {
             this.masterCreate = masterCreate;
@@ -132,7 +131,6 @@ namespace ShutterManagement.Controllers
             this.notification = notification;
             this.gHLConfiguration = gHLConfiguration;
             this.stripeConfiguration = stripeConfiguration;
-            this.ghlService = ghlService;
             this.paymentsService = paymentsService;
             this.gHLService_V2 = gHLService_V2;
             this.jobSchedule = jobSchedule;
@@ -768,13 +766,13 @@ namespace ShutterManagement.Controllers
         }
 
 
-        [HttpGet]
-        [Route("GetAllGHLContact")]
-        public async Task<IActionResult> GetAllGHLContact()
-        {
-            var result = await ghlService.GetContactsAsync();
-            return Ok(result);
-        }
+        //[HttpGet]
+        //[Route("GetAllGHLContact")]
+        //public async Task<IActionResult> GetAllGHLContact()
+        //{
+        //    var result = await ghlService.GetContactsAsync();
+        //    return Ok(result);
+        //}
 
         [HttpGet]
         [Route("SaveStageGHLToDB")]
@@ -800,28 +798,28 @@ namespace ShutterManagement.Controllers
             return Ok(json);
         }
 
-        [HttpGet]
-        [Route("GetAllStages")]
-        public async Task<IActionResult> GetStages()
-        {
-            var Tenantid = claimsProperty.GetTenantId();
-            var res = await gHLConfiguration.CheckGHLConfiguration(Tenantid);
-            if(res.IsSuccess)
-            { 
-                var result = await ghlService.GetGHLStages();
-                return Ok(result);
-            }
-            return Ok(res);
-        }
+        //[HttpGet]
+        //[Route("GetAllStages")]
+        //public async Task<IActionResult> GetStages()
+        //{
+        //    var Tenantid = claimsProperty.GetTenantId();
+        //    var res = await gHLConfiguration.CheckGHLConfiguration(Tenantid);
+        //    if(res.IsSuccess)
+        //    { 
+        //        var result = await ghlService.GetGHLStages();
+        //        return Ok(result);
+        //    }
+        //    return Ok(res);
+        //}
 
 
-        [HttpGet]
-        [Route("GetOpportunity")]
-        public async Task<IActionResult> GetOpportunity()
-        {
-            var result = await ghlService.GetOpportunitiesFromGhl();
-            return Ok(result);
-        }
+        //[HttpGet]
+        //[Route("GetOpportunity")]
+        //public async Task<IActionResult> GetOpportunity()
+        //{
+        //    var result = await ghlService.GetOpportunitiesFromGhl();
+        //    return Ok(result);
+        //}
 
 
         [HttpGet]

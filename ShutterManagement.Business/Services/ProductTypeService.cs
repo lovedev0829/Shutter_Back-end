@@ -18,12 +18,14 @@ namespace ShutterManagement.Business.Services
         private readonly ShutterDBContext _context;
         private readonly ITenantService tenantService;
         private readonly IMaterial material;
+        private readonly ClaimsProperty claimsProperty;
 
-        public ProductTypeService(ShutterDBContext context, ITenantService tenantService ,IMaterial material )
+        public ProductTypeService(ShutterDBContext context, ITenantService tenantService ,IMaterial material, ClaimsProperty claimsProperty )
         {
             _context = context;
             this.tenantService = tenantService;
             this.material = material;
+            this.claimsProperty = claimsProperty;
         }
 
         public async Task<IResponseVm<string>> ActiveInActive(Guid? ProductId)
