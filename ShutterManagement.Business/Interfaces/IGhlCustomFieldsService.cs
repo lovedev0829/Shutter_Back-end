@@ -1,4 +1,6 @@
-﻿using ShutterManagement.DAL.Context;
+﻿using ShutterManagement.Core.ViewModels.Response;
+using ShutterManagement.Core.ViewModels;
+using ShutterManagement.DAL.Context;
 using ShutterManagement.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -10,5 +12,6 @@ namespace ShutterManagement.Business.Interfaces
 {
     public interface IGhlCustomFieldsService : IGenericRepository<TblGhlCustomField>
     {
+        Task<IResponseVm<string>> SaveGhlCustomFieldsAsync(Guid? tenantId = null);
     }
 }
