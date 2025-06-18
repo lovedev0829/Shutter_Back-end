@@ -65,10 +65,10 @@ namespace ShutterManagement.Controllers
         private readonly INotificationService notification;
         private readonly IGHLConfiguration gHLConfiguration;
         private readonly IStripeConfiguration stripeConfiguration;
-        private readonly GhlService ghlService;
         private readonly IPaymentsService paymentsService;
         private readonly GHLService_v2 gHLService_V2;
         private readonly IJobSchedule jobSchedule;
+        private readonly GhlService ghlService;
         private readonly IStateService stateService;
         private readonly MS365Configuration mS365Configuration;
         private readonly IGhlCustomFieldsService ghlCustomFieldsService;
@@ -133,10 +133,10 @@ namespace ShutterManagement.Controllers
             this.notification = notification;
             this.gHLConfiguration = gHLConfiguration;
             this.stripeConfiguration = stripeConfiguration;
-            this.ghlService = ghlService;
             this.paymentsService = paymentsService;
             this.gHLService_V2 = gHLService_V2;
             this.jobSchedule = jobSchedule;
+            this.ghlService = ghlService;
             this.stateService = stateService;
             this.mS365Configuration = mS365Configuration;
             this.ghlCustomFieldsService = ghlCustomFieldsService;
@@ -151,7 +151,7 @@ namespace ShutterManagement.Controllers
             List<string> uploads = new List<string>();
             foreach (var file in files)
             {
-                var res = await fileUpload.UploadFile(file, AppConstant.LoggedInTenantId.ToString() ?? "");
+                var res = await fileUpload.UploadFile(file, claimsProperty.GetTenantId().ToString() ?? "");
                 if (res.IsSuccess)
                 {
                     result.IsSuccess = res.IsSuccess;
@@ -186,8 +186,8 @@ namespace ShutterManagement.Controllers
         [Route("GetAllAssignedPerson")]
         public async Task<IActionResult> GetAllAssignedPerson()
         {
-            var tenantid = AppConstant.LoggedInTenantId;
-            await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
+            var tenantid = claimsProperty.GetTenantId();
+            await gHLConfiguration.GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
             var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration(tenantid);
             if (Checkghlresponse.IsSuccess)
             {
@@ -306,7 +306,7 @@ namespace ShutterManagement.Controllers
         {
             if (filter1.TenantId == "")
             {
-                filter1.TenantId = AppConstant.LoggedInTenantId.ToString().ToLower();
+                filter1.TenantId = claimsProperty.GetTenantId().ToString().ToLower();
             }
 
             var result = await jobService.GetAllJobsTenant_SubTenant(filter1);
@@ -674,7 +674,7 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> GetAllJobs()
         {
             var res = await jobService.GetAllJobsTenant_SubTenant(filter);
-            res.Data = res.Data?.Where(x => x.IsActive == true && x.TenantId==AppConstant.LoggedInTenantId).ToList();
+            res.Data = res.Data?.Where(x => x.IsActive == true && x.TenantId==claimsProperty.GetTenantId()).ToList();
             return Ok(res);
         }
 
@@ -707,8 +707,9 @@ namespace ShutterManagement.Controllers
         {
             filter.Status = 1;
             filter.JobId=JobId?.ToLower();
-           // filter.SearchValue = EnumValue.GetEnumValue(Estimation.GenerateOrder);
-            var res = await estimateService.GetAll_Estimate(filter);
+            // filter.SearchValue = EnumValue.GetEnumValue(Estimation.GenerateOrder);
+            var TenantId = claimsProperty.GetTenantId();
+            var res = await estimateService.GetAll_Estimate(filter,TenantId);
             res.Data = res?.Data?.Where(x => x.Status == EnumValue.GetEnumValue(Estimation.GenerateOrder)).ToList();
             return Ok(res);
         }
@@ -748,7 +749,7 @@ namespace ShutterManagement.Controllers
         {
             filter.Status = 1;
             filter.RecordPerPage = 10;
-            filter.TenantId = AppConstant.LoggedInTenantId.ToString();
+            filter.TenantId = claimsProperty.GetTenantId().ToString();
             var res = await jobService.GetAllJobsTenant_SubTenant(filter);
             return Ok(res);
         }
@@ -806,10 +807,10 @@ namespace ShutterManagement.Controllers
         [Route("GetAllStages")]
         public async Task<IActionResult> GetStages()
         {
-            var Tenantid = AppConstant.LoggedInTenantId;
+            var Tenantid = claimsProperty.GetTenantId();
             var res = await gHLConfiguration.CheckGHLConfiguration(Tenantid);
-            if(res.IsSuccess)
-            { 
+            if (res.IsSuccess)
+            {
                 var result = await ghlService.GetGHLStages();
                 return Ok(result);
             }
@@ -831,7 +832,7 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> SyncAllData()
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
-            var LoggedInTenantId = AppConstant.LoggedInTenantId;
+            var LoggedInTenantId = claimsProperty.GetTenantId();
              await gHLConfiguration.GetGHLConfiguration(LoggedInTenantId.ToString());
             var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration(LoggedInTenantId);
             if (Checkghlresponse.IsSuccess)
@@ -934,7 +935,7 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> GetUserAsync()
         {
 
-            var TenantId = AppConstant.LoggedInTenantId;
+            var TenantId = claimsProperty.GetTenantId();
             await gHLConfiguration.GetGHLConfiguration(TenantId.ToString());
             // var authorizationUrl = await gHLService_V2.GetUsersAsync();
 
@@ -954,7 +955,7 @@ namespace ShutterManagement.Controllers
         [Route("GHLAppointment")]
         public async Task<IActionResult> GHLAppointment(GHLAppointmentAdd appointment)
         {
-            await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
+            await gHLConfiguration.GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
             var accessToken = await gHLService_V2.CreateAppointmentAsync(appointment);
             return Ok(accessToken);
 
@@ -1006,7 +1007,7 @@ namespace ShutterManagement.Controllers
         [HttpGet("GetallStagesMapping")]
         public async Task<IActionResult> GetallStagesMapping()
         {
-            var tenantId = AppConstant.LoggedInTenantId;
+            var tenantId = claimsProperty.GetTenantId();
             var pipelineResult = await gHLService_V2.GetAndSaveDefaultPipelineAndStage(tenantId);
             var result = await gHLConfiguration.GetGHLStagesMappings(tenantId);
 
@@ -1027,7 +1028,7 @@ namespace ShutterManagement.Controllers
         [Route("GetAllGHL_Users")]
         public async Task<IActionResult> GetAllGHL_Users()
         {
-            var LoggedInTenantId = AppConstant.LoggedInTenantId;
+            var LoggedInTenantId = claimsProperty.GetTenantId();
             await gHLConfiguration.GetGHLConfiguration(LoggedInTenantId.ToString());
             var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration(LoggedInTenantId);
             if (Checkghlresponse.IsSuccess)

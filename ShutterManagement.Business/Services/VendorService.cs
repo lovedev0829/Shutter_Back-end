@@ -18,19 +18,22 @@ namespace ShutterManagement.Business.Services
     public class VendorService : BaseRepository<ShutterDBContext, TblVendor>, IVendorService
     {
         private readonly ITenantService tenantService;
-        public VendorService(ITenantService tenantService)
+        private readonly ClaimsProperty claimsProperty;
+
+        public VendorService(ITenantService tenantService,ClaimsProperty claimsProperty)
         {
             this.tenantService= tenantService;
+            this.claimsProperty = claimsProperty;
         }
         public Task<IResponseVm<string>> ActiveInActive(Guid Id)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenant = tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null);
+                var IsTenant = tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.ParentTenantId == null);
                 var IsVendorExist = GetAllQuerable()
                       .Where(c => c.VendorId == Id
-                                  && c.TenantId == AppConstant.LoggedInTenantId
+                                  && c.TenantId == claimsProperty.GetTenantId()
                                 
                                   && c.IsDelete == false)
                       .FirstOrDefault();
@@ -65,7 +68,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 //bool IsVendorNameExist = await AnyAsync(x => x.IsDelete == false &&
-                //                        x.VendorName == model.VendorName.Trim() && x.TenantId == AppConstant.LoggedInTenantId);
+                //                        x.VendorName == model.VendorName.Trim() && x.TenantId == claimsProperty.GetTenantId());
 
                 //if (IsVendorNameExist)
                 //{
@@ -74,7 +77,7 @@ namespace ShutterManagement.Business.Services
                 //}
                 bool IsVendorEmailExists = await AnyAsync(x => x.IsDelete == false &&
                      (x.Email == model.Email.Trim())
-                     && x.TenantId == AppConstant.LoggedInTenantId);
+                     && x.TenantId == claimsProperty.GetTenantId());
                 if (IsVendorEmailExists)
                 {
                     responseVm.Message = "Vendor Email " + AppConstant.AlreadyExists;
@@ -82,7 +85,7 @@ namespace ShutterManagement.Business.Services
                 }
                 bool IsVendorPhoneExists = await AnyAsync(x => x.IsDelete == false &&
                                         (x.PhoneNumber == model.PhoneNumber.Trim())
-                                        && x.TenantId == AppConstant.LoggedInTenantId);
+                                        && x.TenantId == claimsProperty.GetTenantId());
 
                 if (IsVendorPhoneExists)
                 {
@@ -90,10 +93,10 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-                int Version1 = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt)
+                int Version1 = GetAllQuerable().Where(x => x.TenantId == claimsProperty.GetTenantId() && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt)
                 .Select(p => (p.VendorCode.Split("-", StringSplitOptions.RemoveEmptyEntries).Length == 3 ? Convert.ToInt32(p.VendorCode.Split("-", StringSplitOptions.RemoveEmptyEntries)[2]) : 0)).FirstOrDefault();
                 Version1 += 1;
-                var generateUnique = GenerateUniqueId.GenerateUniqueIds(ModuleName.Vendor, AppConstant.LoggedInCompanyCode, Version1);
+                var generateUnique = GenerateUniqueId.GenerateUniqueIds(ModuleName.Vendor, claimsProperty.GetCompanyCode(), Version1);
 
                 TblVendor vendor = new TblVendor
                 {
@@ -111,7 +114,7 @@ namespace ShutterManagement.Business.Services
                     IsDelete = false,
                     CreatedAt = DateTime.Now,
                     CreatedBy = AppConstant.LoggedInUserID,
-                    TenantId = AppConstant.LoggedInTenantId
+                    TenantId = claimsProperty.GetTenantId()
                 };
 
                     var res = await Add(vendor);
@@ -141,7 +144,7 @@ namespace ShutterManagement.Business.Services
             {
                 var IsVendorExist = GetAllQuerable()
                       .Where(c => c.VendorId == Id
-                                  && c.TenantId == AppConstant.LoggedInTenantId
+                                  && c.TenantId == claimsProperty.GetTenantId()
                                   && c.IsDelete == false)
                       .FirstOrDefault();
                 if (IsVendorExist != null)
@@ -175,11 +178,11 @@ namespace ShutterManagement.Business.Services
             IResponseVm<List<VendorListVm>> responseVm = new ResponseVm<List<VendorListVm>>();
             try
             {
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null);
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.ParentTenantId == null);
                 if (IsTenant)
                 {
                     var IsComponentExists = (await GetAll())
-                    .Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId)
+                    .Where(x => x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId())
                     .OrderByDescending(x => x.CreatedAt)
                     .ToList();
 
@@ -248,15 +251,15 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenantExists =   tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
+                var IsTenantExists =   tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true);
 
                 if (IsTenantExists!=null)
                 {
                     var vendor =  GetAllQuerable()
-                        .Where(c => c.VendorId == model.VendorId && c.TenantId == AppConstant.LoggedInTenantId
+                        .Where(c => c.VendorId == model.VendorId && c.TenantId == claimsProperty.GetTenantId()
                         && c.IsDelete == false).FirstOrDefault();
                     bool IsVendorEmail =  Any(x => x.IsDelete == false &&(x.Email == model.Email.Trim())
-                                           && x.TenantId == AppConstant.LoggedInTenantId && x.VendorId!=model.VendorId );
+                                           && x.TenantId == claimsProperty.GetTenantId() && x.VendorId!=model.VendorId );
 
                     
                     if (IsVendorEmail)
@@ -266,7 +269,7 @@ namespace ShutterManagement.Business.Services
                     }
                     bool IsVendorPhoneExists =  Any(x => x.IsDelete == false &&
                                         (x.PhoneNumber == model.PhoneNumber.Trim())
-                                        && x.TenantId == AppConstant.LoggedInTenantId && x.VendorId != model.VendorId);
+                                        && x.TenantId == claimsProperty.GetTenantId() && x.VendorId != model.VendorId);
 
                     if (IsVendorPhoneExists)
                     {
@@ -275,7 +278,7 @@ namespace ShutterManagement.Business.Services
                     }
                    //bool IsVendorNameEXists = Any(x => x.IsDelete == false &&
                    //                     (x.VendorName == model.VendorName.Trim())
-                   //                     && x.TenantId == AppConstant.LoggedInTenantId && x.VendorId != model.VendorId);
+                   //                     && x.TenantId == claimsProperty.GetTenantId() && x.VendorId != model.VendorId);
                    // if (IsVendorNameEXists)
                     
                    //     {
@@ -284,7 +287,7 @@ namespace ShutterManagement.Business.Services
                    //     }
                     //bool IsVendorCodeExists = Any(x => x.IsDelete == false &&
                     //                   (x.VendorCode == model.VendorCode.Trim())
-                    //                   && x.TenantId == AppConstant.LoggedInTenantId && x.VendorId != model.VendorId);
+                    //                   && x.TenantId == claimsProperty.GetTenantId() && x.VendorId != model.VendorId);
                     //if (IsVendorCodeExists)
 
                     //{

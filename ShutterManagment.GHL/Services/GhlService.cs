@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using Org.BouncyCastle.Asn1.X509.Qualified;
+using ShutterManagement.Business;
 using ShutterManagement.Core;
 using ShutterManagement.Core.Common;
 using ShutterManagement.Core.SPModel;
@@ -25,14 +26,17 @@ namespace ShutterManagement.GHL.Services
         private readonly HttpClient _httpClient;
         private readonly ShutterDBContext dBContext;
         private readonly IHttpContextAccessor httpContextAccessor;
+        private readonly ClaimsProperty claimsProperty;
         private string BaseUrl = string.Empty;
         private string accesstoken = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoQ2xhc3MiOiJMb2NhdGlvbiIsImF1dGhDbGFzc0lkIjoiUFRuSUNNTjBtS3IwM2t6SlFxUFEiLCJzb3VyY2UiOiJJTlRFR1JBVElPTiIsInNvdXJjZUlkIjoiNjdlMTFjNzJjOTBhMmY4MTIwMGNjMTJhLW04bXRzcXJuIiwiY2hhbm5lbCI6Ik9BVVRIIiwicHJpbWFyeUF1dGhDbGFzc0lkIjoiUFRuSUNNTjBtS3IwM2t6SlFxUFEiLCJvYXV0aE1ldGEiOnsic2NvcGVzIjpbImNvbnZlcnNhdGlvbnMvbWVzc2FnZS5yZWFkb25seSIsImNvbnZlcnNhdGlvbnMvbWVzc2FnZS53cml0ZSJdLCJjbGllbnQiOiI2N2UxMWM3MmM5MGEyZjgxMjAwY2MxMmEiLCJjbGllbnRLZXkiOiI2N2UxMWM3MmM5MGEyZjgxMjAwY2MxMmEtbThtdHNxcm4ifSwiaWF0IjoxNzQyOTg3NTQyLjIwMywiZXhwIjoxNzQzMDczOTQyLjIwM30.fMjXamfhw4jgfLo2tzDKJS1kA_S89MX02jPxTCheOv4UwJrIjd1DJD3RtW8FIpmOhEvrCaZGw5MKVzqczzzDrhGx3Q_dfJ3ZdMKzH_q8D4pgYKo0V7TlKXH6wp2mu63__iV7ZfWO2XxVFBS9zyg5O2fDYhx209owntBKEYK5DjDfnyxeuryzGBDTaAP7fCor_BFmlcgtpmHpKsy3XNV-faFY-Ha3-XTGN4VQwFv2JAkEKNshJmnBbuF2UdoKcWjCs2C4O62eicNGhj0KC-JelG81aTQr1rqHNC3jdEGT7FPSajkdpJuqzAfrWBitm4FE0QGVe7QVLonfVTzX_om0B8h3QsTtrHKWGyZXaddrtsV-1ssjeE9ojMM2qiyGnDE0VFTWcDicbySyB24bWK5x5VO1f79XpkSKZHgBYeU9vKtYaZcRVE3gcnKNKYT9wl82ARYVKmzHSYv5IEJfdq4epmL9TmuERuowW31aznFFgzuluFqED2dockpRUrDqZjtAklT-66RGex3Xfiu6SW3ImsKscZm5gmjUtAEEY0whoP4FIJf4VWFuId8DEmJhBKRSp2gJDqhro5yuNv_OxLdwOJK07N2AjhjW6TP7L856NJzJBUUR-KonLSuJ9C1tU0C8Y2BDioDEn-P0Qonp38aoCzSnmHQiaYnpv0iNnWoa6Ws";
 
-        public GhlService(HttpClient httpClient, ShutterDBContext dBContext, IHttpContextAccessor _httpContextAccessor)
+        public GhlService(HttpClient httpClient, ShutterDBContext dBContext, IHttpContextAccessor _httpContextAccessor,
+            ClaimsProperty claimsProperty)
         {
             _httpClient = httpClient;
             this.dBContext = dBContext;
             httpContextAccessor = _httpContextAccessor;
+            this.claimsProperty = claimsProperty;
             BaseUrl = AppConstant.GHL_BaseAddress;
             FileLogger.Log($"Base Address from Constr: {AppConstant.GHL_BaseAddress}");
             FileLogger.Log($"Base Address from Constr Base: {BaseUrl}");
@@ -120,7 +124,7 @@ namespace ShutterManagement.GHL.Services
                         existingStage.StageOrder = i + 1; // Assigning order for sequential storage
                         existingStage.GhlLastSync = DateTime.Now;
                         existingStage.UpdatedAt = DateTime.Now;
-                        existingStage.ModifiedBy = AppConstant.LoggedInTenantId;
+                        existingStage.ModifiedBy = claimsProperty.GetTenantId();
                         stagesToUpdate.Add(existingStage);
                     }
                     else
@@ -135,7 +139,7 @@ namespace ShutterManagement.GHL.Services
                             StageOrder = i + 1, // Assigning order for new records
                             GhlLastSync = DateTime.Now,
                             CreatedAt = DateTime.Now,
-                            TenantId = AppConstant.LoggedInTenantId,
+                            TenantId = claimsProperty.GetTenantId(),
                             CreatedBy = AppConstant.LoggedInUserID,
                             IsActive = true,
                         });
@@ -181,7 +185,7 @@ namespace ShutterManagement.GHL.Services
             try
             {
                 var config = await dBContext.TblGhlconfigurations
-                                             .FirstOrDefaultAsync(c => c.TenantId == AppConstant.LoggedInTenantId);
+                                             .FirstOrDefaultAsync(c => c.TenantId == claimsProperty.GetTenantId());
 
                 if (config == null)
                 {
@@ -208,7 +212,7 @@ namespace ShutterManagement.GHL.Services
             {
                 
                 var gHLStages = dBContext.TblGhlStages
-                    .Where(x => x.TenantId == AppConstant.LoggedInTenantId && (x.GhlPipelineName.ToLower() == AppConstant.GHL_PipelineId.ToLower() || x.GhlPipelineId.ToLower()
+                    .Where(x => x.TenantId == claimsProperty.GetTenantId() && (x.GhlPipelineName.ToLower() == AppConstant.GHL_PipelineId.ToLower() || x.GhlPipelineId.ToLower()
                     == AppConstant.GHL_PipelineId.ToLower())).OrderBy(x => x.StageOrder)
                     .ToList();
 

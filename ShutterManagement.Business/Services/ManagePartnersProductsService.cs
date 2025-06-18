@@ -26,6 +26,7 @@ namespace ShutterManagement.Business.Services
     {
         private readonly ShutterDBContext dBContext;
         private readonly ITenantService tenantService;
+        private readonly ClaimsProperty claimsProperty;
         private readonly IProductService productService;
         private readonly IManagePartnersProductsOptions managePartnersProductsOptions;
         private readonly IEstimateService estimateService;
@@ -33,7 +34,7 @@ namespace ShutterManagement.Business.Services
         private readonly ITenantBrandingService tenantBrandingService;
         private readonly IOptionsTypeService optionsTypeService;
 
-        public ManagePartnersProductsService(ShutterDBContext dBContext, ITenantService tenantService,
+        public ManagePartnersProductsService(ShutterDBContext dBContext, ITenantService tenantService,ClaimsProperty claimsProperty,
             IProductService productService, IManagePartnersProductsOptions
             managePartnersProductsOptions, IEstimateService estimateService,
             ISubtenantProductMarkup subtenantProductMarkup,
@@ -42,6 +43,7 @@ namespace ShutterManagement.Business.Services
         {
             this.dBContext = dBContext;
             this.tenantService = tenantService;
+            this.claimsProperty = claimsProperty;
             this.productService = productService;
             this.managePartnersProductsOptions = managePartnersProductsOptions;
             this.estimateService = estimateService;
@@ -58,7 +60,7 @@ namespace ShutterManagement.Business.Services
                 bool IsSuccess = false;
                 var message = "";
                 bool IsSubtenant = await tenantService.AnyAsync(x =>
-                    x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId != null &&
+                    x.TenantId == claimsProperty.GetTenantId() && x.ParentTenantId != null &&
                     x.IsDelete == false &&
                     x.IsActive == true);
 
@@ -70,7 +72,7 @@ namespace ShutterManagement.Business.Services
                         return responseVm;
                     }
                     var IsProductExist = await productService.AnyAsync(x => x.ProductId == model.ProductId && x.IsActive == true
-                       && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
+                       && x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId());
                     if (IsProductExist)
                     {
                         if (model.WholeSalePrice >= 0 && model.MaxPartnerPrice >= 0) { 
@@ -95,11 +97,11 @@ namespace ShutterManagement.Business.Services
                 else
                 {
                     bool IsProductExist = await productService.AnyAsync(x => x.ProductId == model.ProductId && x.IsActive == true
-                        && x.IsDelete == false && x.TenantId.ToString() == AppConstant.LoggedInParentTenantId);
+                        && x.IsDelete == false && x.TenantId.ToString() == claimsProperty.GetParentTenantId());
                     if (IsProductExist)
                     {
                         var IsManagePartnerProductExist = GetAllQuerable().Where(x => x.ProductId == model.ProductId &&
-                        x.IsActive == true && x.IsDelete == false && x.IsAvailable == true && x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
+                        x.IsActive == true && x.IsDelete == false && x.IsAvailable == true && x.TenantId == claimsProperty.GetTenantId()).FirstOrDefault();
                         if (IsManagePartnerProductExist != null)
                         {
                             decimal PartnerSellingPricewithPer = 0.0m;
@@ -152,7 +154,7 @@ namespace ShutterManagement.Business.Services
                                             {
                                                 var IsOptionvalueExist = await dbContext.TblOptions.Where(x => x.OptionId
                                                 == IsManagepartneroptiontype.OptionId && x.IsActive == true && x.IsDelete == false
-                                                && x.TenantId == AppConstant.LoggedInTenantId).
+                                                && x.TenantId == claimsProperty.GetTenantId()).
                                                 FirstOrDefaultAsync();
                                                 if (IsOptionvalueExist != null)
                                                 {
@@ -346,7 +348,7 @@ namespace ShutterManagement.Business.Services
                 decimal minsellingPrice = 0.0m;
                 List<ProductOptionsVm> productlist = new List<ProductOptionsVm>();
                 bool IsTenantorSubtenant = await tenantService.AnyAsync(x =>
-                    x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId != null &&
+                    x.TenantId == claimsProperty.GetTenantId() && x.ParentTenantId != null &&
                     x.IsDelete == false &&
                     x.IsActive == true);
 
@@ -392,7 +394,7 @@ namespace ShutterManagement.Business.Services
                     var products = (from p1 in dbContext.TblManagePartnersProducts.OrderByDescending(x => x.CreatedAt)
                                     join p2 in dbContext.TblProducts on p1.ProductId equals p2.ProductId
                                     where p1.IsActive == true && p1.IsDelete == false &&
-                                          p1.TenantId == AppConstant.LoggedInTenantId &&
+                                          p1.TenantId == claimsProperty.GetTenantId() &&
                                           p1.IsAvailable == true &&
                                           p2.ProductType == filter.ProductType &&
                                           p2.IsDelete == false && p2.IsActive == true 
@@ -421,7 +423,7 @@ namespace ShutterManagement.Business.Services
                                       o2.IsActive == true && o2.IsDelete == false &&
                                       o1.IsAvailable == true &&
                                             productIds.Contains((Guid)o3.ProductId) &&
-                                            o1.TenantId == AppConstant.LoggedInTenantId
+                                            o1.TenantId == claimsProperty.GetTenantId()
                                       select new ProductOptionsList
                                       {
                                           OptionId = o1.OptionId,
@@ -439,7 +441,7 @@ namespace ShutterManagement.Business.Services
                                           join o3 in dbContext.TblManagePartnersProducts on o1.ManageProductId equals o3.ManageProductId
                                           where o1.IsDelete == false && o1.IsActive == true && o1.IsAvailable == true &&
                                                 optionIds.Contains(o1.OptionId) && o2.IsActive == true && o2.IsDelete == false &&
-                                                o1.TenantId == AppConstant.LoggedInTenantId
+                                                o1.TenantId == claimsProperty.GetTenantId()
                                           select new ProductOptionTypeList
                                           {
                                               OptionTypeId = o1.OptionTypeId,
@@ -568,7 +570,7 @@ namespace ShutterManagement.Business.Services
                             from p2 in joined.Where(x => string.IsNullOrEmpty(filter.TenantId) || x.TenantId.ToString() == filter.TenantId).DefaultIfEmpty()
                             where p1.IsActive == true &&
                                   p1.IsDelete == false &&
-                                  p1.TenantId == AppConstant.LoggedInTenantId &&
+                                  p1.TenantId == claimsProperty.GetTenantId() &&
                                   p1.ProductType.ToString() == filter.ProductType
                             select new ProductOptionsVm
                             {
@@ -587,7 +589,7 @@ namespace ShutterManagement.Business.Services
             var productIds = products.Select(p => p.ProductId).ToList();
 
             var options = dbContext.TblOptions
-                .Where(o => o.IsActive == true && o.IsDelete == false && o.TenantId == AppConstant.LoggedInTenantId && productIds.Contains((Guid)o.ProductId))
+                .Where(o => o.IsActive == true && o.IsDelete == false && o.TenantId == claimsProperty.GetTenantId() && productIds.Contains((Guid)o.ProductId))
                 .Select(o => new ProductOptionsList
                 {
                     OptionId = o.OptionId,
@@ -638,7 +640,7 @@ namespace ShutterManagement.Business.Services
         private List<ProductOptionsVm> GetDefaultProductData(Pagination filter)
         {
             var products = dbContext.TblProducts
-                .Where(p => p.IsActive == true && p.IsDelete == false && p.TenantId == AppConstant.LoggedInTenantId &&
+                .Where(p => p.IsActive == true && p.IsDelete == false && p.TenantId == claimsProperty.GetTenantId() &&
                             p.ProductType.ToString() == filter.ProductType)
                 .Select(p => new ProductOptionsVm
                 {
@@ -889,7 +891,7 @@ namespace ShutterManagement.Business.Services
         //            //var componentPriceWithProductMarkup = (componentPriceWithMarkup * (100 + item.Markup)) / 100;
 
         //            //var isSubtenant = (await tenantService.GetAll())
-        //            //    .FirstOrDefault(t => t.TenantId == AppConstant.LoggedInTenantId && t.ParentTenantId != null && t.IsActive == true && t.IsDelete == false);
+        //            //    .FirstOrDefault(t => t.TenantId == claimsProperty.GetTenantId() && t.ParentTenantId != null && t.IsActive == true && t.IsDelete == false);
 
         //            //if (isSubtenant != null)
         //            //{

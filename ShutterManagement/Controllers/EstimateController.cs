@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using ShutterManagement.Business;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core.Common;
 using ShutterManagement.Core.SPModel;
@@ -13,17 +14,20 @@ namespace ShutterManagement.Controllers
     public class EstimateController : ControllerBase
     {
         private readonly IEstimateService _EstimateService;
+        private readonly ClaimsProperty claimsProperty;
 
-        public EstimateController(IEstimateService EstimateService)
+        public EstimateController(IEstimateService EstimateService,ClaimsProperty claimsProperty)
         {
             _EstimateService = EstimateService;
+            this.claimsProperty = claimsProperty;
         }
 
         [HttpPost("GetAll")]
         [Authorize(Roles = "EstimateView")]
         public async Task<IActionResult> GetAllEstimates(Pagination filter)
         {
-            var res = await _EstimateService.GetAll_Estimate(filter);
+            var TenantId = claimsProperty.GetTenantId();
+            var res = await _EstimateService.GetAll_Estimate(filter,TenantId);
             return Ok(res);
 
         }

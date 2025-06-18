@@ -48,13 +48,13 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
                 if (IsTenant)
                 {
 
                     bool IsComponentExists = await AnyAsync(x => x.IsDelete == false &&
                       (x.ComponentName == model.ComponentName.Trim())
-                      && x.TenantId==AppConstant.LoggedInTenantId);
+                      && x.TenantId==claimsProperty.GetTenantId());
                       
                     if (IsComponentExists)
                     {
@@ -74,7 +74,7 @@ namespace ShutterManagement.Business.Services
                         CreatedBy = AppConstant.LoggedInUserID,
                         IsActive = true,
                         IsDelete = false,
-                        TenantId = AppConstant.LoggedInTenantId
+                        TenantId = claimsProperty.GetTenantId()
                     };
 
                     await Add(component);
@@ -97,7 +97,7 @@ namespace ShutterManagement.Business.Services
                                 CreatedBy = AppConstant.LoggedInUserID,
                                 IsActive = true,
                                 IsDelete = false,
-                                TenantId = AppConstant.LoggedInTenantId,
+                                TenantId = claimsProperty.GetTenantId(),
                                 MaterialPricingExpression = MaterialPricingExp
                             };
 
@@ -125,18 +125,18 @@ namespace ShutterManagement.Business.Services
             IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
             try
             {
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
 
                 if (IsTenant)
                 {
                     var IsComponentExists = GetAllQuerable()
                         .Where(c => c.ComponentId == Guid.Parse(model.ComponentId)
-                                    && c.TenantId == AppConstant.LoggedInTenantId
+                                    && c.TenantId == claimsProperty.GetTenantId()
                                     && c.IsDelete == false)
                         .FirstOrDefault();
                     bool IsComponentNameExists = await AnyAsync(x => x.IsDelete == false &&
                     (x.ComponentName == model.ComponentName.Trim())
-                    && x.TenantId == AppConstant.LoggedInTenantId && x.ComponentId.ToString()!=model.ComponentId);
+                    && x.TenantId == claimsProperty.GetTenantId() && x.ComponentId.ToString()!=model.ComponentId);
 
                     if (IsComponentNameExists)
                     {
@@ -178,10 +178,10 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
                 var IsComponentExists = GetAllQuerable()
                       .Where(c => c.ComponentId == Id
-                                  && c.TenantId == AppConstant.LoggedInTenantId
+                                  && c.TenantId == claimsProperty.GetTenantId()
                                   && c.IsDelete == false)
                       .FirstOrDefault();
                 bool isComponenteUsed =
@@ -193,7 +193,7 @@ namespace ShutterManagement.Business.Services
                     responseVm.IsSuccess = false;
                     return responseVm;
                 }
-                var IsComponentInProduct = await productService.AnyAsync(x => x.ComponentId == Id && x.IsActive == true && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
+                var IsComponentInProduct = await productService.AnyAsync(x => x.ComponentId == Id && x.IsActive == true && x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId());
                 if (IsComponentInProduct)
                 {
                     responseVm.Message = "Component exists in Product";
@@ -203,7 +203,7 @@ namespace ShutterManagement.Business.Services
                 {
                     var IsMaterialInComponent = _componentMaterial.GetAllQuerable().Where
                       (x => x.ComponentId == Id && x.IsDelete == false
-                      && x.TenantId == AppConstant.LoggedInTenantId).ToList();
+                      && x.TenantId == claimsProperty.GetTenantId()).ToList();
                     if (IsMaterialInComponent != null && IsMaterialInComponent.Count > 0)
                     {
                         foreach (var item in IsMaterialInComponent)
@@ -243,12 +243,12 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsActive == true && x.IsDelete == false);
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.ParentTenantId == null && x.IsActive == true && x.IsDelete == false);
                 if (IsTenant)
                 {
                     var IsComponentExists = GetAllQuerable()
                           .Where(c => c.ComponentId == Id
-                                      && c.TenantId == AppConstant.LoggedInTenantId
+                                      && c.TenantId == claimsProperty.GetTenantId()
                                       && c.IsDelete == false)
                           .FirstOrDefault();
 
@@ -261,7 +261,7 @@ namespace ShutterManagement.Business.Services
                         responseVm.IsSuccess = false;
                         return responseVm;
                     }
-                    var IsComponentInProduct = await productService.AnyAsync(x => x.ComponentId == Id && x.IsActive == true && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
+                    var IsComponentInProduct = await productService.AnyAsync(x => x.ComponentId == Id && x.IsActive == true && x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId());
                     if (IsComponentInProduct)
                     {
                         responseVm.Message = "Component exists in Product";
@@ -271,7 +271,7 @@ namespace ShutterManagement.Business.Services
                         {
                             var IsMaterialInComponent = _componentMaterial.GetAllQuerable().Where
                             (x => x.ComponentId == Id && x.IsDelete == false
-                            && x.TenantId == AppConstant.LoggedInTenantId).ToList();
+                            && x.TenantId == claimsProperty.GetTenantId()).ToList();
 
                             if (IsMaterialInComponent != null && IsMaterialInComponent.Count > 0)
                             {
@@ -365,7 +365,7 @@ namespace ShutterManagement.Business.Services
         private async Task<bool> IsTenantValid()
         {
             return await tenantService.AnyAsync(x =>
-                x.TenantId == AppConstant.LoggedInTenantId &&
+                x.TenantId == claimsProperty.GetTenantId() &&
                 x.ParentTenantId == null &&
                 x.IsDelete == false &&
                 x.IsActive == true);
@@ -374,7 +374,7 @@ namespace ShutterManagement.Business.Services
         private TblComponent GetComponent()
         {
             return GetAllQuerable()
-                .Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false)
+                .Where(x => x.TenantId == claimsProperty.GetTenantId() && x.IsDelete == false)
                 .FirstOrDefault();
         }
 
@@ -395,7 +395,7 @@ namespace ShutterManagement.Business.Services
         private List<ComponentListVm> GetComponentList()
         {
             var componentList = GetAllQuerable()
-                .Where(c => c.TenantId == AppConstant.LoggedInTenantId && c.IsDelete == false).OrderByDescending(x=> x.CreatedAt)
+                .Where(c => c.TenantId == claimsProperty.GetTenantId() && c.IsDelete == false).OrderByDescending(x=> x.CreatedAt)
                 .Select(c => new ComponentListVm
                 {
                     ComponentId = c.ComponentId,
@@ -429,7 +429,7 @@ namespace ShutterManagement.Business.Services
         {
             var materialCompoenent = (from cm in dbContext.TblComponentMaterials.OrderByDescending(x => x.CreatedAt)
                                       join m in dbContext.TblRawMaterials on cm.RawMaterialId equals m.RawMaterialId
-                                      where cm.ComponentId == componentId && cm.IsDelete == false && cm.TenantId == AppConstant.LoggedInTenantId
+                                      where cm.ComponentId == componentId && cm.IsDelete == false && cm.TenantId == claimsProperty.GetTenantId()
                                       select new
                                       {
                                           cm.ComponentMaterialId,

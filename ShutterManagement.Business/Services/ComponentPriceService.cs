@@ -23,11 +23,13 @@ namespace ShutterManagement.Business.Services
     {
         private readonly IOption optionService;
         private readonly IMaterial materialService;
+        private readonly ClaimsProperty claimsProperty;
 
-        public ComponentPriceService(IOption optionService, IMaterial materialService)
+        public ComponentPriceService(IOption optionService, IMaterial materialService,ClaimsProperty claimsProperty)
         {
             this.optionService = optionService;
             this.materialService = materialService;
+            this.claimsProperty = claimsProperty;
         }
         public async Task<IResponseVm<dynamic>> GetAllComponentsChip(string? Product, string? ProductType, string? Option)
         {
@@ -382,10 +384,10 @@ namespace ShutterManagement.Business.Services
         {
             List<OptionTaxVM> optionTaxDetails;
 
-            if (!string.IsNullOrEmpty(AppConstant.LoggedInParentTenantId))
+            if (!string.IsNullOrEmpty(claimsProperty.GetParentTenantId()))
             {
                 var manageProduct = dbContext.TblManagePartnersProducts
-                    .FirstOrDefault(x => x.ProductId == product.ProductId && x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+                    .FirstOrDefault(x => x.ProductId == product.ProductId && x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
 
                 if (manageProduct == null)
                     return new List<OptionTaxVM>();
@@ -394,11 +396,11 @@ namespace ShutterManagement.Business.Services
                                     join partnerOptions in dbContext.TblManagePartnersProductsOptions on windowOptions.OptionTypeId equals partnerOptions.OptionTypeId
                                     join optionValues in dbContext.TblOptionsTypes on partnerOptions.OptionTypeId equals optionValues.OptionTypeId
                                     join options in dbContext.TblOptions on optionValues.OptionId equals options.OptionId
-                                    join taxDetails in dbContext.TblTaxRates.Where(x => x.TenantId == AppConstant.LoggedInTenantId) on
+                                    join taxDetails in dbContext.TblTaxRates.Where(x => x.TenantId == claimsProperty.GetTenantId()) on
                                     (partnerOptions.TaxId == null || partnerOptions.TaxId == Guid.Empty ? manageProduct.TaxId : partnerOptions.TaxId)
                                     equals taxDetails.TaxRateId into taxJoin
                                     from tax in taxJoin.DefaultIfEmpty()
-                                    where partnerOptions.IsActive == true && partnerOptions.TenantId == AppConstant.LoggedInTenantId
+                                    where partnerOptions.IsActive == true && partnerOptions.TenantId == claimsProperty.GetTenantId()
                                           && partnerOptions.ManageProductId == manageProduct.ManageProductId
                                           && windowOptions.WindowId == product.WindowId
                                           && windowOptions.IsActive == true
@@ -423,10 +425,10 @@ namespace ShutterManagement.Business.Services
                 optionTaxDetails = (from windowOptions in dbContext.WindowOptions
                                     join optionValues in dbContext.TblOptionsTypes on windowOptions.OptionTypeId equals optionValues.OptionTypeId
                                     join options in dbContext.TblOptions on optionValues.OptionId equals options.OptionId
-                                    join taxDetails in dbContext.TblTaxRates.Where(x => x.TenantId == AppConstant.LoggedInTenantId) on options.TaxId equals taxDetails.TaxRateId into taxJoin
+                                    join taxDetails in dbContext.TblTaxRates.Where(x => x.TenantId == claimsProperty.GetTenantId()) on options.TaxId equals taxDetails.TaxRateId into taxJoin
                                     from tax in taxJoin.DefaultIfEmpty()
                                     where options.IsActive == true
-                                          && windowOptions.TenantId == AppConstant.LoggedInTenantId
+                                          && windowOptions.TenantId == claimsProperty.GetTenantId()
                                           && windowOptions.WindowId == product.WindowId
                                           && options.ProductId == product.ProductId
                                           && windowOptions.IsActive == true

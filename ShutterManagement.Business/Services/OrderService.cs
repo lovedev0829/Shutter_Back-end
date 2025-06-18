@@ -28,6 +28,7 @@ namespace ShutterManagement.Business.Services
     {
         private readonly ITenantService tenantService;
         private readonly IWindowProductService windowProductService;
+        private readonly ClaimsProperty claimsProperty;
         private readonly IWindowService windowService;
         private readonly IComponentMaterial componentMaterialService;
         private readonly IOrderWindowService orderWindowService;
@@ -52,7 +53,7 @@ namespace ShutterManagement.Business.Services
         private readonly IConverter converter;
         public Pagination filter = new Pagination();
         private string Message = "";
-        public OrderService(ITenantService tenantService, IWindowProductService windowProductService,
+        public OrderService(ITenantService tenantService, IWindowProductService windowProductService, ClaimsProperty claimsProperty,
              IWindowService windowService, IComponentMaterial componentMaterialService,
              IOrderWindowService orderWindowService, IMaterial materialService,
              IProductService productService, IOrderWindowProductService orderWindowProductService,
@@ -66,6 +67,7 @@ namespace ShutterManagement.Business.Services
         {
             this.tenantService = tenantService;
             this.windowProductService = windowProductService;
+            this.claimsProperty = claimsProperty;
             this.windowService = windowService;
             this.componentMaterialService = componentMaterialService;
             this.orderWindowService = orderWindowService;
@@ -109,10 +111,10 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-                int Version = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt)
+                int Version = GetAllQuerable().Where(x => x.TenantId == claimsProperty.GetTenantId() && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt)
                      .Select(p => (p.OrderName.Split("-", StringSplitOptions.RemoveEmptyEntries).Length == 3 ? Convert.ToInt32(p.OrderName.Split("-", StringSplitOptions.RemoveEmptyEntries)[2]) : 0)).FirstOrDefault();
                 Version += 1;
-                var OrderNumber = GenerateUniqueId.GenerateUniqueIds(ModuleName.Order, AppConstant.LoggedInCompanyCode, Version);
+                var OrderNumber = GenerateUniqueId.GenerateUniqueIds(ModuleName.Order, claimsProperty.GetCompanyCode(), Version);
                 var version = GetAllQuerable()
                 .Where(x => x.EstimateId == EstimateId && x.IsDelete == false)
                 .OrderByDescending(x => x.Version)
@@ -285,14 +287,14 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        public async Task<IResponseVm<List<OrderList>>> GetAll_Order(Pagination filter)
+        public async Task<IResponseVm<List<OrderList>>> GetAll_Order(Pagination filter, Guid? TenantId = null)
         {
             IResponseVm<List<OrderList>> responseVm = new ResponseVm<List<OrderList>>();
             try
             {
                 FileLogger.Log($"Start: Fetching estimates with filter parameters: TenantId = {filter.TenantId}, PageNo = {filter.PageNo}, RecordsPerPage = {filter.RecordPerPage}");
 
-                var orders = await FetchOrders(filter);
+                var orders = await FetchOrders(filter,TenantId);
                 if (orders == null)
                 {
                     responseVm.Message = AppConstant.TenantNotFound;
@@ -334,7 +336,8 @@ namespace ShutterManagement.Business.Services
             {
                 FileLogger.Log($"Start: Fetching latest version of orders with filter parameters: TenantId = {filter.TenantId}, PageNo = {filter.PageNo}, RecordsPerPage = {filter.RecordPerPage}");
 
-                var orders = await FetchOrders(filter);
+                var TenantId = claimsProperty.GetTenantId();
+                var orders = await FetchOrders(filter, TenantId);
                 if (orders == null)
                 {
                     responseVm.Message = AppConstant.TenantNotFound;
@@ -399,7 +402,7 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.TenantNotFound;
                     return responseVm;
                 }
-                var isEstimationOrder = (await GetAll()).Where(c => c.OrderId == model.OrderId && c.TenantId == AppConstant.LoggedInTenantId
+                var isEstimationOrder = (await GetAll()).Where(c => c.OrderId == model.OrderId && c.TenantId == claimsProperty.GetTenantId()
                 && c.IsDelete == false).ToList();
                 if (isEstimationOrder != null)
                 {
@@ -410,7 +413,7 @@ namespace ShutterManagement.Business.Services
                     var latestId = latestRecord?.OrderId;
                     if (latestId == model.OrderId)
                     {
-                        var orderExist = GetAllQuerable().Where(x => x.OrderId.ToString().ToLower() == model.OrderId.ToString().ToLower() && x.TenantId.ToString().ToLower() == AppConstant.LoggedInTenantId.ToString().ToLower() &&
+                        var orderExist = GetAllQuerable().Where(x => x.OrderId.ToString().ToLower() == model.OrderId.ToString().ToLower() && x.TenantId.ToString().ToLower() == claimsProperty.GetTenantId().ToString().ToLower() &&
                         x.IsDelete == false && x.Status != EnumValue.GetEnumValue(Estimation.Approved)).FirstOrDefault();
                         if (orderExist != null)
                         {
@@ -577,7 +580,7 @@ namespace ShutterManagement.Business.Services
 
                 var order = GetAllQuerable()
                     .Where(c => c.OrderId == OrderId
-                    && c.TenantId == AppConstant.LoggedInTenantId && c.IsDelete == false)
+                    && c.TenantId == claimsProperty.GetTenantId() && c.IsDelete == false)
                     .FirstOrDefault();
 
                 if (order == null)
@@ -623,7 +626,7 @@ namespace ShutterManagement.Business.Services
 
                 var order = GetAllQuerable()
                     .Where(c => c.OrderId == OrderId
-                    && c.TenantId == AppConstant.LoggedInTenantId && c.IsDelete == false)
+                    && c.TenantId == claimsProperty.GetTenantId() && c.IsDelete == false)
                     .FirstOrDefault();
 
                 if (order == null)
@@ -667,7 +670,7 @@ namespace ShutterManagement.Business.Services
             {
 
 
-                var IsOrderExists = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId &&
+                var IsOrderExists = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId() &&
                 x.OrderId == OrderId && x.Status != EnumValue.GetEnumValue(Estimation.Approved)).
                     OrderByDescending(x => x.CreatedAt).FirstOrDefault();
                 if (IsOrderExists == null)
@@ -755,12 +758,11 @@ namespace ShutterManagement.Business.Services
                                     .Where(e => e.OrderId == OrderId && e.IsDelete == false)
                                     .FirstOrDefault();
 
-                AppConstant.LoggedInTenantId = order.TenantId;
                 Pagination pagination = new Pagination
                 {
                     SearchValue = OrderId.ToString()
                 };
-                var allVersionsOrder = await GetAll_Order(pagination);
+                var allVersionsOrder = await GetAll_Order(pagination, order.TenantId);
 
                 if (allVersionsOrder != null)
                 {
@@ -813,8 +815,8 @@ namespace ShutterManagement.Business.Services
         }
         private async Task<bool> ValidateTenantExists()
         {
-            FileLogger.Log($"Checking if tenant with ID {AppConstant.LoggedInTenantId} exists...");
-            var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+            FileLogger.Log($"Checking if tenant with ID {claimsProperty.GetTenantId()} exists...");
+            var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
             if (!isTenantExists)
             {
                 FileLogger.Log("Tenant not found.");
@@ -828,20 +830,28 @@ namespace ShutterManagement.Business.Services
                     .Where(es => es.OrderId == OrderId && es.IsDelete == false && es.IsActive == true)
                     .FirstOrDefault();
         }
-        public async Task<List<TblOrder>> FetchOrders(Pagination filter)
+        public async Task<List<TblOrder>> FetchOrders(Pagination filter, Guid? TenantId = null)
         {
+            if (!string.IsNullOrEmpty(TenantId.ToString()) && TenantId != Guid.Empty)
+            {
+                // Log and fetch estimates for the logged-in tenant
+                FileLogger.Log("No TenantId provided, fetching for the logged-in tenant.");
+                return (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == TenantId)
+                                       .OrderByDescending(x => x.CreatedAt)
+                                       .ToList();
+            }
             if (string.IsNullOrEmpty(filter.TenantId))
             {
                 // Log and fetch estimates for the logged-in tenant
                 FileLogger.Log("No TenantId provided, fetching for the logged-in tenant.");
-                return (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId)
+                return (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId())
                                        .OrderByDescending(x => x.CreatedAt)
                                        .ToList();
             }
 
             // Validate TenantId if provided
             var isRelatedTenant = tenantService.GetAllQuerable()
-                .Where(x => x.TenantId.ToString() == filter.TenantId && x.ParentTenantId == AppConstant.LoggedInTenantId && x.IsDelete == false)
+                .Where(x => x.TenantId.ToString() == filter.TenantId && x.ParentTenantId == claimsProperty.GetTenantId() && x.IsDelete == false)
                 .FirstOrDefault();
 
             if (isRelatedTenant == null)
@@ -980,7 +990,7 @@ namespace ShutterManagement.Business.Services
                                from c in contact.DefaultIfEmpty()
                                join j6 in dbContext.MstJobStatuses on j1.JobStatus equals j6.JobStatusId into JobStatus
                                from j6 in JobStatus.DefaultIfEmpty()
-                               where j1.IsDelete == false && c.IsDelete == false && j1.TenantId == AppConstant.LoggedInTenantId &&
+                               where j1.IsDelete == false && c.IsDelete == false && j1.TenantId == claimsProperty.GetTenantId() &&
                                j1.JobId == e.JobId && j1.IsActive == true && j1.IsDelete == false
                                select new JobDetail
                                {
@@ -1152,7 +1162,7 @@ namespace ShutterManagement.Business.Services
                 IsDelete = false,
                 CreatedAt = DateTime.Now,
                 CreatedBy = AppConstant.LoggedInUserID,
-                TenantId = AppConstant.LoggedInTenantId,
+                TenantId = claimsProperty.GetTenantId(),
                 Label = windowData.Label,
                 AddressId = windowData.AddressId,
                 ArchHeight = windowData.ArchHeight,
@@ -1200,7 +1210,7 @@ namespace ShutterManagement.Business.Services
                 Length = productData.Length,
                 Markup = productData.Markup,
                 ProductType = productData.ProductType,
-                TenantId = AppConstant.LoggedInTenantId,
+                TenantId = claimsProperty.GetTenantId(),
                 ProductId = productData.ProductId,
                 Price = estimatePrice,
                 WindowProductId = windowProductData.WindowProductId,
@@ -1253,7 +1263,7 @@ namespace ShutterManagement.Business.Services
                     MunicipilityTax = option.MunicipilityTax,
                     CreatedAt = DateTime.Now,
                     UpdatedAt = DateTime.Now,
-                    TenantId = AppConstant.LoggedInTenantId,
+                    TenantId = claimsProperty.GetTenantId(),
                     CreatedBy = AppConstant.LoggedInUserID,
                     ModifiedBy = AppConstant.LoggedInUserID,
                     IsActive = true,
@@ -1350,7 +1360,7 @@ namespace ShutterManagement.Business.Services
                 IsActive = true,
                 CreatedAt = DateTime.Now,
                 CreatedBy = AppConstant.LoggedInUserID,
-                TenantId = AppConstant.LoggedInTenantId,
+                TenantId = claimsProperty.GetTenantId(),
                 EstimateId = estimateId,
                 IsCutSheet = materialData.IsCutSheet,
                 MaterialName = materialData.MaterialName,
@@ -1387,7 +1397,7 @@ namespace ShutterManagement.Business.Services
                 Notes = componentData.Notes,
                 ProductType = componentData.ProductType,
                 PricingExpression = componentData.PricingExpression,
-                TenantId = AppConstant.LoggedInTenantId,
+                TenantId = claimsProperty.GetTenantId(),
             };
 
             await orderWindowProductComponentService.Add(tblOrderWindowProductComponent);
@@ -1416,7 +1426,7 @@ namespace ShutterManagement.Business.Services
 
 
                 var orderDetails = dbContext.TblOrders
-                    .FirstOrDefault(o => o.OrderId == orderId && o.TenantId == AppConstant.LoggedInTenantId && o.IsDelete==false);
+                    .FirstOrDefault(o => o.OrderId == orderId && o.TenantId == claimsProperty.GetTenantId() && o.IsDelete==false);
 
                 if (orderDetails == null)
                 {
@@ -1432,7 +1442,7 @@ namespace ShutterManagement.Business.Services
 
 
                 var tenantDetails = tenantService.GetAllQuerable()
-                    .FirstOrDefault(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive==true && x.IsDelete == false);
+                    .FirstOrDefault(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive==true && x.IsDelete == false);
 
                 if (tenantDetails == null)
                 {

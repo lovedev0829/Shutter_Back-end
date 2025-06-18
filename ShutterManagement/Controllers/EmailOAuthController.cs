@@ -77,7 +77,7 @@ public class EmailOAuthController : ControllerBase
     //[HttpPost("send")]
     //public async Task<IActionResult> Send([FromBody] EmailRequest request)
     //{
-    //    var getAccessTokenFromDb = emailConfigurationService.GetAllQuerable().Where(x=>x.From==request.FromEmail && x.TenantId==AppConstant.LoggedInTenantId).FirstOrDefault();
+    //    var getAccessTokenFromDb = emailConfigurationService.GetAllQuerable().Where(x=>x.From==request.FromEmail && x.TenantId==claimsProperty.GetTenantId()).FirstOrDefault();
     //    if (getAccessTokenFromDb != null)
     //    {
 

@@ -44,12 +44,12 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
                 if (IsTenant)
                 {
                     var IsMaterialExists = GetAllQuerable()
                           .Where(c => c.RawMaterialId == Id
-                                      && c.TenantId == AppConstant.LoggedInTenantId
+                                      && c.TenantId == claimsProperty.GetTenantId()
                                       && c.IsDelete == false)
                           .FirstOrDefault();
                     if (IsMaterialExists != null)
@@ -85,22 +85,22 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsActive == true && x.IsDelete == false);
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.ParentTenantId == null && x.IsActive == true && x.IsDelete == false);
                
                 if(IsTenant)
                 {
                     var IsSkuExist = false;
-                    var VendorExit = vendorService.GetAllQuerable().Where(v => (v.VendorCode == model.Vendor || v.CompanyName == model.Vendor) && v.IsDelete == false && v.TenantId == AppConstant.LoggedInTenantId)
+                    var VendorExit = vendorService.GetAllQuerable().Where(v => (v.VendorCode == model.Vendor || v.CompanyName == model.Vendor) && v.IsDelete == false && v.TenantId == claimsProperty.GetTenantId())
                                    .FirstOrDefault();
-                    var IsMaterialNameExist = Any(x => x.MaterialName.ToLower().Trim() == model.MaterialName.ToLower().Trim() && x.MaterialUniqueId != model.MaterialUniqueId && x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false);
+                    var IsMaterialNameExist = Any(x => x.MaterialName.ToLower().Trim() == model.MaterialName.ToLower().Trim() && x.MaterialUniqueId != model.MaterialUniqueId && x.TenantId == claimsProperty.GetTenantId() && x.IsDelete == false);
                     var GetAllVendorList = vendorService.GetAllQuerable()
-                    .Where(x => x.IsActive == true && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId).ToList();
+                    .Where(x => x.IsActive == true && x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId()).ToList();
                     var GetAllUnitOfMeasureList = unitofMeasurementService.GetAllQuerable()
                     .Where(x => x.IsActive == true && x.IsDelete == false).ToList();
                     var CheckExistingVendorbyCode = GetAllVendorList.Any(x => x.VendorCode == model.Vendor || x.CompanyName==model.Vendor);
                     if(model.SKU != null)
                     {
-                       IsSkuExist = Any(x => x.Sku.ToLower().Trim() == model.SKU.ToLower().Trim() && x.MaterialUniqueId != model.MaterialUniqueId && x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false);
+                       IsSkuExist = Any(x => x.Sku.ToLower().Trim() == model.SKU.ToLower().Trim() && x.MaterialUniqueId != model.MaterialUniqueId && x.TenantId == claimsProperty.GetTenantId() && x.IsDelete == false);
                     }
                     if(IsSkuExist)
                     {
@@ -138,8 +138,8 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsActive == true && x.IsDelete == false);
-                var IsVendorExist = await vendorService.AnyAsync(x => x.VendorId == model.VendorId && x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.ParentTenantId == null && x.IsActive == true && x.IsDelete == false);
+                var IsVendorExist = await vendorService.AnyAsync(x => x.VendorId == model.VendorId && x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
                 
                 if (IsTenant)
                 {
@@ -204,14 +204,14 @@ namespace ShutterManagement.Business.Services
                             if (IsVendorExist)
                             {
                                 int Version1 = 0;
-                                var MaterialUniqueId1 = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt).
+                                var MaterialUniqueId1 = GetAllQuerable().Where(x => x.TenantId == claimsProperty.GetTenantId() && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt).
                                     Select(x => x.MaterialUniqueId).FirstOrDefault();
                                 if (MaterialUniqueId1 != null)
                                 {
                                     Version1 = MaterialUniqueId1.Split("-", StringSplitOptions.RemoveEmptyEntries).Length == 3 ? Convert.ToInt32(MaterialUniqueId1.Split("-", StringSplitOptions.RemoveEmptyEntries)[2]) : 0;
                                 }
                                 Version1 += 1;
-                                var generateUniqueId = GenerateUniqueId.GenerateUniqueIds(ModuleName.Material, AppConstant.LoggedInCompanyCode, Version1);
+                                var generateUniqueId = GenerateUniqueId.GenerateUniqueIds(ModuleName.Material, claimsProperty.GetCompanyCode(), Version1);
                                 TblRawMaterial material = new TblRawMaterial
                                 {
                                     MaterialName = model.MaterialName.Trim(),
@@ -231,7 +231,7 @@ namespace ShutterManagement.Business.Services
                                     CreatedBy = AppConstant.LoggedInUserID,
                                     IsActive = true,
                                     IsDelete = false,
-                                    TenantId = AppConstant.LoggedInTenantId,
+                                    TenantId = claimsProperty.GetTenantId(),
                                     MaterialUniqueId = generateUniqueId,
                                 };
                                 if (material != null)
@@ -252,8 +252,8 @@ namespace ShutterManagement.Business.Services
 
                         }
                     }
-                    var IsSKUExist = Any(x => x.VendorId == model.VendorId && x.Sku == model.SKU && x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false && model.SKU != null);
-                    var IsMaterialExist = Any(x => x.MaterialName.ToLower().Trim() == model.MaterialName.ToLower().Trim() && x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false);
+                    var IsSKUExist = Any(x => x.VendorId == model.VendorId && x.Sku == model.SKU && x.TenantId == claimsProperty.GetTenantId() && x.IsDelete == false && model.SKU != null);
+                    var IsMaterialExist = Any(x => x.MaterialName.ToLower().Trim() == model.MaterialName.ToLower().Trim() && x.TenantId == claimsProperty.GetTenantId() && x.IsDelete == false);
                     if (IsMaterialExist)
                     {
                         responseVm.Message = $"Material Name" + AppConstant.AlreadyExists;
@@ -265,14 +265,14 @@ namespace ShutterManagement.Business.Services
                         return responseVm;
                     }
                     int Version = 0;
-                    var MaterialUniqueId = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt).
+                    var MaterialUniqueId = GetAllQuerable().Where(x => x.TenantId == claimsProperty.GetTenantId() && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt).
                         Select(x => x.MaterialUniqueId).FirstOrDefault();
                     if (MaterialUniqueId != null)
                     {
                         Version = MaterialUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries).Length == 3 ? Convert.ToInt32(MaterialUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries)[2]) : 0;
                     }
                     Version += 1;
-                    var generateUnique = GenerateUniqueId.GenerateUniqueIds(ModuleName.Material, AppConstant.LoggedInCompanyCode, Version);
+                    var generateUnique = GenerateUniqueId.GenerateUniqueIds(ModuleName.Material, claimsProperty.GetCompanyCode(), Version);
                     if (IsVendorExist)
                     {
                         TblRawMaterial material = new TblRawMaterial
@@ -294,7 +294,7 @@ namespace ShutterManagement.Business.Services
                             CreatedBy = AppConstant.LoggedInUserID,
                             IsActive = true,
                             IsDelete = false,
-                            TenantId = AppConstant.LoggedInTenantId,
+                            TenantId = claimsProperty.GetTenantId(),
                             MaterialUniqueId = generateUnique,
                         };
                         if (material != null)
@@ -334,12 +334,12 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
                 if (IsTenant)
                 {
                     var IsMaterialExists =  GetAllQuerable()
                           .Where(c => c.RawMaterialId == Id
-                                      && c.TenantId == AppConstant.LoggedInTenantId
+                                      && c.TenantId == claimsProperty.GetTenantId()
                                       && c.IsDelete == false 
                                       )
                           .FirstOrDefault();
@@ -353,7 +353,7 @@ namespace ShutterManagement.Business.Services
                         return responseVm;
                     }
 
-                    var IsMaterialExistInComponent = componentMaterial.AnyAsync(x => x.RawMaterialId == Id && x.IsActive == true && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
+                    var IsMaterialExistInComponent = componentMaterial.AnyAsync(x => x.RawMaterialId == Id && x.IsActive == true && x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId());
                     if (IsMaterialExistInComponent != null)
                     {
                         if (IsMaterialExists != null)
@@ -396,14 +396,14 @@ namespace ShutterManagement.Business.Services
             IResponseVm<List<GetAllMaterialVm>> responseVm = new ResponseVm<List<GetAllMaterialVm>>();
             try
             {
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false && x.IsActive == true);
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.IsDelete == false && x.IsActive == true);
 
                 if (IsTenant)
                 {
 
                     var MaterialList = (from t2 in _context.TblRawMaterials.OrderByDescending(x => x.CreatedAt)
                                         join t1 in _context.TblVendors on t2.VendorId equals t1.VendorId
-                                        where t2.TenantId == AppConstant.LoggedInTenantId && t2.IsDelete == false
+                                        where t2.TenantId == claimsProperty.GetTenantId() && t2.IsDelete == false
                                         select new GetAllMaterialVm
                                         {
                                             IsActive = t2.IsActive,
@@ -506,13 +506,13 @@ namespace ShutterManagement.Business.Services
             {
                 Guid MaterialId = Guid.Empty;
                 Guid.TryParse(model.MaterialId, out MaterialId);
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsActive == true && x.IsDelete == false);
-                var IsVendorExist = vendorService.GetAllQuerable().Where(x => x.VendorId == model.VendorId && x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
-                var IsSKUExist = !string.IsNullOrEmpty(model.SKU) ? (await AnyAsync(x => x.VendorId == model.VendorId && x.Sku == model.SKU && x.TenantId == AppConstant.LoggedInTenantId
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.ParentTenantId == null && x.IsActive == true && x.IsDelete == false);
+                var IsVendorExist = vendorService.GetAllQuerable().Where(x => x.VendorId == model.VendorId && x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
+                var IsSKUExist = !string.IsNullOrEmpty(model.SKU) ? (await AnyAsync(x => x.VendorId == model.VendorId && x.Sku == model.SKU && x.TenantId == claimsProperty.GetTenantId()
                 && x.IsDelete == false && (!string.IsNullOrEmpty(model.MaterialId) ||
                 MaterialId != Guid.Empty ? x.RawMaterialId != MaterialId : x.MaterialUniqueId != model.MaterialUniqueId))) : false;
                 var IsMaterialExist = Any(x => x.MaterialName.ToLower().Trim() == model.MaterialName.ToLower().Trim() &&
-                x.TenantId == AppConstant.LoggedInTenantId &&
+                x.TenantId == claimsProperty.GetTenantId() &&
                 x.IsDelete == false && (!string.IsNullOrEmpty(model.MaterialId) ||
                 MaterialId != Guid.Empty ? x.RawMaterialId != MaterialId : x.MaterialUniqueId != model.MaterialUniqueId));
                 if (IsMaterialExist)
@@ -533,7 +533,7 @@ namespace ShutterManagement.Business.Services
 
                         var IsMaterialExists = GetAllQuerable()
                                  .Where(c => (!string.IsNullOrEmpty(model.MaterialId) ? c.RawMaterialId == Guid.Parse(model.MaterialId) : c.MaterialUniqueId == model.MaterialUniqueId)
-                                               && c.TenantId == AppConstant.LoggedInTenantId
+                                               && c.TenantId == claimsProperty.GetTenantId()
                                                && c.IsDelete == false)
                                    .FirstOrDefault();
                         decimal? length = null;
@@ -615,7 +615,7 @@ namespace ShutterManagement.Business.Services
             int version = 0;
 
             var materialUniqueId = GetAllQuerable()
-                .Where(x => x.TenantId == AppConstant.LoggedInTenantId
+                .Where(x => x.TenantId == claimsProperty.GetTenantId()
                             && x.CreatedAt.HasValue
                             && x.CreatedAt.Value.Date == DateTime.Today)
                 .OrderByDescending(p => p.CreatedAt)
