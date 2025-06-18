@@ -43,14 +43,14 @@ namespace ShutterManagement.Business.Services
 
             try
             {
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && !(bool)x.IsDelete  && (bool)x.IsActive);
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && !(bool)x.IsDelete  && (bool)x.IsActive);
 
                 if (IsTenant)
                 {
-                    FileLogger.Log($"Tenant validation passed for TenantId: {AppConstant.LoggedInTenantId}");
+                    FileLogger.Log($"Tenant validation passed for TenantId: {claimsProperty.GetTenantId()}");
 
                     var IsWindowExists = GetAllQuerable()
-                        .FirstOrDefault(c => c.WindowId == WindowId && c.TenantId == AppConstant.LoggedInTenantId && !(bool)c.IsDelete);
+                        .FirstOrDefault(c => c.WindowId == WindowId && c.TenantId == claimsProperty.GetTenantId() && !(bool)c.IsDelete);
 
                     if (IsWindowExists != null)
                     {
@@ -58,14 +58,14 @@ namespace ShutterManagement.Business.Services
 
                         var IsWindowInProduct = windowProductService
                             .GetAllQuerable()
-                            .Where(x => x.WindowId == WindowId && !(bool)x.IsDelete  && x.TenantId == AppConstant.LoggedInTenantId)
+                            .Where(x => x.WindowId == WindowId && !(bool)x.IsDelete  && x.TenantId == claimsProperty.GetTenantId())
                             .ToList();
 
                         if (IsWindowInProduct?.Count > 0)
                         {
                             var IsWindowOption = windowOptionService
                                 .GetAllQuerable()
-                                .Where(x => x.WindowId == WindowId && !(bool)x.IsDelete  && x.TenantId == AppConstant.LoggedInTenantId)
+                                .Where(x => x.WindowId == WindowId && !(bool)x.IsDelete  && x.TenantId == claimsProperty.GetTenantId())
                                 .ToList();
 
                             // Update window options status
@@ -111,7 +111,7 @@ namespace ShutterManagement.Business.Services
                 else
                 {
                     responseVm.Message = AppConstant.TenantNotFound;
-                    FileLogger.Log($"Tenant validation failed for TenantId: {AppConstant.LoggedInTenantId}");
+                    FileLogger.Log($"Tenant validation failed for TenantId: {claimsProperty.GetTenantId()}");
                 }
             }
             catch (Exception ex)
@@ -133,7 +133,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var isTenant = await tenantService.AnyAsync(x =>
-                    x.TenantId == AppConstant.LoggedInTenantId && !(bool)x.IsDelete  && (bool)x.IsActive);
+                    x.TenantId == claimsProperty.GetTenantId() && !(bool)x.IsDelete  && (bool)x.IsActive);
 
                 if (!isTenant)
                 {
@@ -148,7 +148,7 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-                var IsLabelExists = await AnyAsync(x => x.Label == model.Label.Trim() && x.JobId == model.JobId  && !(bool)x.IsDelete  && x.TenantId == AppConstant.LoggedInTenantId);
+                var IsLabelExists = await AnyAsync(x => x.Label == model.Label.Trim() && x.JobId == model.JobId  && !(bool)x.IsDelete  && x.TenantId == claimsProperty.GetTenantId());
 
                 if (IsLabelExists)
                 {
@@ -174,7 +174,7 @@ namespace ShutterManagement.Business.Services
                     IsDelete = false,
                     JobId = model.JobId,
                     IsRated = true,
-                    TenantId = AppConstant.LoggedInTenantId
+                    TenantId = claimsProperty.GetTenantId()
                 };
 
                 await Add(window);
@@ -187,7 +187,7 @@ namespace ShutterManagement.Business.Services
                         x.ProductTypeId == items.ProductTypeId &&
                         x.WindowId == window.WindowId &&
                         !(bool)x.IsDelete  &&
-                        x.TenantId == AppConstant.LoggedInTenantId);
+                        x.TenantId == claimsProperty.GetTenantId());
 
                     if (!isWindowProductExists)
                     {
@@ -204,7 +204,7 @@ namespace ShutterManagement.Business.Services
                             SortOrder=items.SortOrder,
                             IsActive = true,
                             IsDelete = false,
-                            TenantId = AppConstant.LoggedInTenantId
+                            TenantId = claimsProperty.GetTenantId()
                         };
 
                         await windowProductService.Add(windowProduct);
@@ -226,7 +226,7 @@ namespace ShutterManagement.Business.Services
                                         IsActive = true,
                                         IsDelete = false,
                                         CreatedBy = AppConstant.LoggedInUserID,
-                                        TenantId = AppConstant.LoggedInTenantId,
+                                        TenantId = claimsProperty.GetTenantId(),
                                         AdditionalCost = items.AdditionalCost
                                     };
 
@@ -306,7 +306,7 @@ namespace ShutterManagement.Business.Services
             {
                 FileLogger.Log($"Delete window process started for WindowId: {WindowId}.");
 
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false && (bool)x.IsActive == true);
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.IsDelete == false && (bool)x.IsActive == true);
                 List<TblEstimate> Estimatestatus = new List<TblEstimate>();
                 var WindowUsedInEstimation = estimateWindowService.GetAllQuerable().Where(x => x.WindowId == WindowId && x.IsDelete == false).FirstOrDefault();
                 if (WindowUsedInEstimation != null)
@@ -327,7 +327,7 @@ namespace ShutterManagement.Business.Services
                                 item.IsActive = false;
                                 item.IsDelete = true;
                                 item.UpdatedAt = DateTime.Now;
-                                item.ModifiedBy = AppConstant.LoggedInTenantId;
+                                item.ModifiedBy = claimsProperty.GetTenantId();
                                 dbContext.TblEstimates.Update(item);
                         }
                     }
@@ -336,7 +336,7 @@ namespace ShutterManagement.Business.Services
                 {
                     var IsWindowExists = GetAllQuerable()
                         .Where(c => c.WindowId == WindowId
-                                    && c.TenantId == AppConstant.LoggedInTenantId
+                                    && c.TenantId == claimsProperty.GetTenantId()
                                     && c.IsDelete == false)
                         .FirstOrDefault();
                     if (IsWindowExists != null)
@@ -346,7 +346,7 @@ namespace ShutterManagement.Business.Services
                         var IsWindowInProduct = windowProductService
                             .GetAllQuerable().Where(x => x.WindowId == WindowId &&
                                             x.IsDelete == false &&
-                                            x.TenantId == AppConstant.LoggedInTenantId)
+                                            x.TenantId == claimsProperty.GetTenantId())
                             .ToList();
 
                         if (IsWindowInProduct != null && IsWindowInProduct.Count > 0)
@@ -356,7 +356,7 @@ namespace ShutterManagement.Business.Services
                             var IsWindowOption = windowOptionService
                                 .GetAllQuerable().Where(x => x.WindowId == WindowId &&
                                              x.IsDelete == false &&
-                                             x.TenantId == AppConstant.LoggedInTenantId)
+                                             x.TenantId == claimsProperty.GetTenantId())
                                 .ToList();
 
                             if (IsWindowOption != null && IsWindowOption.Count > 0)
@@ -488,7 +488,7 @@ namespace ShutterManagement.Business.Services
         private List<WindowsList> FetchWindowsData()
         {
             return dbContext.TblWindows
-                .Where(w => w.IsDelete == false && w.TenantId == AppConstant.LoggedInTenantId)
+                .Where(w => w.IsDelete == false && w.TenantId == claimsProperty.GetTenantId())
                 .GroupJoin(dbContext.TblWindowProducts,
                     w => w.WindowId,
                     wp => wp.WindowId,
@@ -571,7 +571,7 @@ namespace ShutterManagement.Business.Services
         {
             FileLogger.Log("Validating Tenant...");
             return await tenantService.AnyAsync(x =>
-                x.TenantId == AppConstant.LoggedInTenantId &&
+                x.TenantId == claimsProperty.GetTenantId() &&
                 !(bool)x.IsDelete &&
                 (bool)x.IsActive);
         }
@@ -584,7 +584,7 @@ namespace ShutterManagement.Business.Services
                 x.JobId == model.JobId &&
                 x.WindowId != model.WindowId &&
                 !(bool)x.IsDelete &&
-                x.TenantId == AppConstant.LoggedInTenantId);
+                x.TenantId == claimsProperty.GetTenantId());
         }
 
         private async Task<TblWindow> GetExistingWindow(Guid windowId)
@@ -593,7 +593,7 @@ namespace ShutterManagement.Business.Services
             return (await GetAll())
                 .FirstOrDefault(c =>
                     c.WindowId == windowId &&
-                    c.TenantId == AppConstant.LoggedInTenantId &&
+                    c.TenantId == claimsProperty.GetTenantId() &&
                     !(bool)c.IsDelete);
         }
 
@@ -687,7 +687,7 @@ namespace ShutterManagement.Business.Services
                 CreatedBy = AppConstant.LoggedInUserID,
                 IsActive = true,
                 IsDelete = false,
-                TenantId = AppConstant.LoggedInTenantId
+                TenantId = claimsProperty.GetTenantId()
             };
 
             await windowProductService.Add(newProduct);
@@ -705,7 +705,7 @@ namespace ShutterManagement.Business.Services
                             WindowProductId = newProduct.WindowProductId,
                             WindowId = windowId,
                             CreatedBy = AppConstant.LoggedInUserID,
-                            TenantId = AppConstant.LoggedInTenantId,
+                            TenantId = claimsProperty.GetTenantId(),
                             IsActive = true,
                             IsDelete = false,
                             AdditionalCost = product.AdditionalCost

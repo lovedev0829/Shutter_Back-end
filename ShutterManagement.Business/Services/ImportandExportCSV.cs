@@ -88,7 +88,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var rootPath = Directory.GetCurrentDirectory();
-                var tenantId = AppConstant.LoggedInTenantId;
+                var tenantId = claimsProperty.GetTenantId();
                 var relativePath = Path.Combine("Files", tenantId.ToString(), "Samples");
                 var fullDirectoryPath = Path.Combine(rootPath, relativePath);
 
@@ -135,8 +135,8 @@ namespace ShutterManagement.Business.Services
             {
                 var rootPath = Directory.GetCurrentDirectory();
 
-                var tenantId = AppConstant.LoggedInTenantId;
-                var relativePath = Path.Combine("Files", AppConstant.LoggedInTenantId.ToString(), "Samples");
+                var tenantId = claimsProperty.GetTenantId();
+                var relativePath = Path.Combine("Files", claimsProperty.GetTenantId().ToString(), "Samples");
                 var fullDirectoryPath = Path.Combine(rootPath, relativePath);
 
                 if (!Directory.Exists(fullDirectoryPath))
@@ -183,7 +183,7 @@ namespace ShutterManagement.Business.Services
             int successfulImports = 0;
             int totalRecords = 0;
 
-            var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
+            var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true);
             if (!isTenantExists)
             {
                 responseVm.Message = AppConstant.TenantNotFound;
@@ -242,7 +242,7 @@ namespace ShutterManagement.Business.Services
                         }
 
                         var vendor = vendorService.GetAllQuerable()
-                            .Where(v => (v.VendorCode == record.Vendor || v.CompanyName == record.Vendor) && v.IsDelete == false && v.TenantId == AppConstant.LoggedInTenantId)
+                            .Where(v => (v.VendorCode == record.Vendor || v.CompanyName == record.Vendor) && v.IsDelete == false && v.TenantId == claimsProperty.GetTenantId())
                             .FirstOrDefault();
 
                         if (vendor == null)
@@ -253,7 +253,7 @@ namespace ShutterManagement.Business.Services
                         }
 
                         var productType = dbContext.MstProductTypes
-                            .Where(p => p.ProductName == record.ProductType && p.IsDelete == false && p.TenantId == AppConstant.LoggedInTenantId)
+                            .Where(p => p.ProductName == record.ProductType && p.IsDelete == false && p.TenantId == claimsProperty.GetTenantId())
                             .FirstOrDefault();
 
                         if (productType == null)
@@ -381,7 +381,7 @@ namespace ShutterManagement.Business.Services
 
             try
             {
-                var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive==true);
+                var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive==true);
                 if (!isTenantExists)
                 {
                     responseVm.Message = AppConstant.TenantNotFound;
@@ -708,7 +708,7 @@ namespace ShutterManagement.Business.Services
 
                 if (filter.TenantId != "")
                 {
-                    var IsRealtedTenant = tenantService.GetAllQuerable().Where(x => x.TenantId.ToString() == filter.TenantId && x.ParentTenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
+                    var IsRealtedTenant = tenantService.GetAllQuerable().Where(x => x.TenantId.ToString() == filter.TenantId && x.ParentTenantId == claimsProperty.GetTenantId()).FirstOrDefault();
                     if (IsRealtedTenant == null)
                     {
                         responseVm.Message = AppConstant.NoDataFound;
@@ -721,7 +721,7 @@ namespace ShutterManagement.Business.Services
                 }
                 else
                 {
-                    Contacts = (await contactService.GetAll()).Where(x => x.IsDelete == false && x.IsArchive == false && x.TenantId == AppConstant.LoggedInTenantId).OrderByDescending(x => x.CreatedAt).ToList();
+                    Contacts = (await contactService.GetAll()).Where(x => x.IsDelete == false && x.IsArchive == false && x.TenantId == claimsProperty.GetTenantId()).OrderByDescending(x => x.CreatedAt).ToList();
                 }
 
                 if (filter.Status == 0)
@@ -857,7 +857,7 @@ namespace ShutterManagement.Business.Services
 
             try
             {
-                var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
+                var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true);
                 if (!isTenantExists)
                 {
                     responseVm.IsSuccess = false;
@@ -866,7 +866,7 @@ namespace ShutterManagement.Business.Services
                 }
 
                 var materialQuery = dbContext.TblRawMaterials
-                    .Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
+                    .Where(x => x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId());
 
                 if (filter.Status == 0)
                 {
@@ -965,7 +965,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 filter.RecordPerPage = 1000;
-                var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
+                var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true);
                 if (!isTenantExists)
                 {
                     responseVm.IsSuccess = false;
@@ -974,12 +974,12 @@ namespace ShutterManagement.Business.Services
                 }
 
                 var subTenantlist = (await tenantService.GetAll())
-                    .Where(x => x.ParentTenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false)
+                    .Where(x => x.ParentTenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false)
                     .Select(pt => pt.TenantId)
                     .ToList();
 
                 var jobsQuery = dbContext.TblJobs
-                    .Where(x => x.TenantId == AppConstant.LoggedInTenantId || subTenantlist.Contains((Guid)x.TenantId));
+                    .Where(x => x.TenantId == claimsProperty.GetTenantId() || subTenantlist.Contains((Guid)x.TenantId));
 
                 if (filter.Status == 0)
                 {
@@ -1083,7 +1083,7 @@ namespace ShutterManagement.Business.Services
 
             try
             {
-                var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive==true);
+                var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive==true);
                 if (!isTenantExists)
                 {
                     return CreateErrorResponse(AppConstant.TenantNotFound);
@@ -1316,7 +1316,7 @@ namespace ShutterManagement.Business.Services
 
             try
             {
-                var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
+                var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true);
                 if (!isTenantExists)
                 {
                     responseVm.IsSuccess = false;
@@ -1456,7 +1456,7 @@ namespace ShutterManagement.Business.Services
 
             try
             {
-                var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
+                var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true);
                 if (!isTenantExists)
                 {
                     responseVm.IsSuccess = false;
@@ -1504,7 +1504,7 @@ namespace ShutterManagement.Business.Services
 
             try
             {
-                var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
+                var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true);
                 if (!isTenantExists)
                 {
                     responseVm.IsSuccess = false;

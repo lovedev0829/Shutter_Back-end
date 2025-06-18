@@ -32,7 +32,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenantExist = tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+                var IsTenantExist = tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
                 if (IsTenantExist == null)
                 {
                     responseVm.Message = AppConstant.TenantNotFound;
@@ -69,7 +69,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenantExist = tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+                var IsTenantExist = tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
                 if (IsTenantExist != null)
                 {
                     var tax = new TblTaxRate
@@ -82,7 +82,7 @@ namespace ShutterManagement.Business.Services
                         IsDelete = false,
                         CreatedAt = DateTime.Now,
                         CreatedBy = AppConstant.LoggedInUserID,
-                        TenantId = AppConstant.LoggedInTenantId
+                        TenantId = claimsProperty.GetTenantId()
                     };
 
                     var res =  Add(tax);
@@ -110,7 +110,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenantExist = tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+                var IsTenantExist = tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
                 if (IsTenantExist == null)
                 {
                     responseVm.Message = AppConstant.TenantNotFound;
@@ -148,7 +148,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var taxlist = (from t2 in dbContext.TblTaxRates.OrderByDescending(x => x.CreatedAt)
-                              where t2.TenantId == AppConstant.LoggedInTenantId && t2.IsDelete == false
+                              where t2.TenantId == claimsProperty.GetTenantId() && t2.IsDelete == false
                               select new GetAllTax
                               {
                                   TaxRateId = t2.TaxRateId,
@@ -210,7 +210,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenantExist = tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+                var IsTenantExist = tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
                 if (IsTenantExist == null)
                 {
                     responseVm.Message = AppConstant.TenantNotFound;

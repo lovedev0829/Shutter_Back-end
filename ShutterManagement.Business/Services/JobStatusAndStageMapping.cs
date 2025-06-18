@@ -85,7 +85,7 @@ namespace ShutterManagement.Business.Services
                 if (mapping == null && Stageid != null && Stageid != Guid.Empty)
                 {
                     var stageMapping = dBContext.TblGhlStagesmappings
-                        .Where(x => x.StageId == Stageid && x.TenantId == AppConstant.LoggedInTenantId)
+                        .Where(x => x.StageId == Stageid && x.TenantId == claimsProperty.GetTenantId())
                         .FirstOrDefault();
 
                     if (stageMapping?.StatusId != null)
@@ -129,7 +129,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var mapping = dBContext.TblGhlStagesmappings
-                    .Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.StatusId == JobstatusId)
+                    .Where(x => x.TenantId == claimsProperty.GetTenantId() && x.StatusId == JobstatusId)
                     .Select(x => new StageMapping
                     {
                         StageId = x.StageId ?? Guid.Empty,
@@ -164,7 +164,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
+                await gHLConfiguration.GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
                 
                 if (stageId == Guid.Empty || stageId == null)
                 {

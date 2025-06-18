@@ -87,7 +87,7 @@ namespace ShutterManagement.GHL.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : AppConstant.LoggedInTenantId);
+                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : claimsProperty.GetTenantId());
                 var pipelineResponse = await GetAllPipelinesWithStagesAsync();
 
                 if (pipelineResponse?.Pipelines == null || !pipelineResponse.Pipelines.Any())
@@ -202,7 +202,7 @@ namespace ShutterManagement.GHL.Services
         {
             try
             {
-                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : AppConstant.LoggedInTenantId);
+                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : claimsProperty.GetTenantId());
 
                 var config = await dBContext.TblGhlconfigurations
                                              .FirstOrDefaultAsync(c => c.TenantId == LoggedInTenantId);
@@ -231,7 +231,7 @@ namespace ShutterManagement.GHL.Services
             try
             {
                 var gHLStages = dBContext.TblGhlStages
-                    .Where(x => x.TenantId == AppConstant.LoggedInTenantId).OrderBy(x => x.StageOrder)
+                    .Where(x => x.TenantId == claimsProperty.GetTenantId()).OrderBy(x => x.StageOrder)
                     .ToList();
 
                 var stageList = new List<PipelineAndStage>();
@@ -1083,7 +1083,7 @@ namespace ShutterManagement.GHL.Services
 
             try
             {
-                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : AppConstant.LoggedInTenantId);
+                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : claimsProperty.GetTenantId());
 
                 var calendarRequestUrl = $"{AppConstant.GHL_BaseAddress}/calendars/?locationId={AppConstant.GHL_Locationd}";
                 using var calendarRequest = new HttpRequestMessage(HttpMethod.Get, calendarRequestUrl);
@@ -1183,7 +1183,7 @@ namespace ShutterManagement.GHL.Services
 
             try
             {
-                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : AppConstant.LoggedInTenantId);
+                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : claimsProperty.GetTenantId());
                 // 1. Get existing users for the tenant
                 var existingUsers = await dBContext.TblGhlUsers
                     .Where(u => u.TenantId == LoggedInTenantId && u.IsActive==true && u.IsDelete==false)
@@ -1289,7 +1289,7 @@ namespace ShutterManagement.GHL.Services
 
             try
             {
-                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : AppConstant.LoggedInTenantId);
+                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : claimsProperty.GetTenantId());
 
                 var users = await dBContext.TblGhlUsers
                     .Where(x => x.TenantId == LoggedInTenantId && x.IsDelete==false && (x.GhlCalendarId == AppConstant.GHL_CalendarName ||  x.GhlCalendarName == AppConstant.GHL_CalendarName))
@@ -1323,7 +1323,7 @@ namespace ShutterManagement.GHL.Services
             try
             {
                 var mapping = dBContext.TblGhlStagesmappings
-                    .Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.StatusId == JobstatusId)
+                    .Where(x => x.TenantId == claimsProperty.GetTenantId() && x.StatusId == JobstatusId)
                     .Select(x => new StageMapping
                     {
                         StageId = x.StageId ?? Guid.Empty,
@@ -1437,7 +1437,7 @@ namespace ShutterManagement.GHL.Services
 
             try
             {
-                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : AppConstant.LoggedInTenantId);
+                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : claimsProperty.GetTenantId());
 
                 string url = $"{AppConstant.GHL_BaseAddress}/locations/{AppConstant.GHL_Locationd}/customFields?model=all";
 
@@ -1466,7 +1466,7 @@ namespace ShutterManagement.GHL.Services
                 foreach (var field in fieldResponse.customFields)
                 {
                     var existingField = await dBContext.TblGhlCustomFields
-                        .FirstOrDefaultAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.FieldName == field.name);
+                        .FirstOrDefaultAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.FieldName == field.name);
 
                     if (existingField != null)
                     {
@@ -1502,7 +1502,7 @@ namespace ShutterManagement.GHL.Services
                             LocationId = field.locationId,
                             DateAdded = field.dateAdded,
                             IsStandard = field.standard,
-                            TenantId = AppConstant.LoggedInTenantId,
+                            TenantId = claimsProperty.GetTenantId(),
                             CreatedAt = DateTime.Now,
                             IsActive = true,
                             IsDelete = false

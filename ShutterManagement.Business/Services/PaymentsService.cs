@@ -47,13 +47,13 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var isTenantValid = await tenantService.AnyAsync(x =>
-                    x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+                    x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
 
                 if (isTenantValid)
                 {
                     var Payment = GetAllQuerable()
                         .Where(c => c.PaymentId == PaymentId
-                                   && c.TenantId == AppConstant.LoggedInTenantId
+                                   && c.TenantId == claimsProperty.GetTenantId()
                                    && c.IsDelete == false)
                         .FirstOrDefault();
 
@@ -100,7 +100,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var isTenantValid = await tenantService.AnyAsync(x =>
-                    x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+                    x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
 
                 if (!isTenantValid)
                 {
@@ -110,7 +110,7 @@ namespace ShutterManagement.Business.Services
                 }
 
                 var isTransactionExists = await AnyAsync(x =>
-                    x.TransactionId == model.TransactionId && x.IsDelete == false && x.IsActive==true && x.TenantId == AppConstant.LoggedInTenantId);
+                    x.TransactionId == model.TransactionId && x.IsDelete == false && x.IsActive==true && x.TenantId == claimsProperty.GetTenantId());
 
                 if (isTransactionExists)
                 {
@@ -119,7 +119,7 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
                 var invoice = invoiceService.GetAllQuerable()
-                    .FirstOrDefault(i => i.InvoiceId == model.InvoiceId && i.IsActive == true && i.TenantId== AppConstant.LoggedInTenantId);
+                    .FirstOrDefault(i => i.InvoiceId == model.InvoiceId && i.IsActive == true && i.TenantId== claimsProperty.GetTenantId());
 
                 if (model.Amount > invoice.TotalAmount)
                 {
@@ -143,7 +143,7 @@ namespace ShutterManagement.Business.Services
                 }
 
                 // ✅ Check if Payment is Already Completed (Stripe Webhook Might Have Updated It)
-                var existingPayment =  GetAllQuerable().Where(x => x.TransactionId == model.TransactionId && x.IsActive == true && x.TenantId==AppConstant.LoggedInTenantId).FirstOrDefault();
+                var existingPayment =  GetAllQuerable().Where(x => x.TransactionId == model.TransactionId && x.IsActive == true && x.TenantId==claimsProperty.GetTenantId()).FirstOrDefault();
                 if (existingPayment != null && existingPayment.Status == "Paid")
                 {
                     responseVm.IsSuccess = true;
@@ -163,7 +163,7 @@ namespace ShutterManagement.Business.Services
                     Status = EnumValue.GetEnumValue(model.PaymentStatus),
                     PaymentTypeStatus = EnumValue.GetEnumValue(PaymentStatus.Manual),
                     CreatedAt = DateTime.Now,
-                    TenantId = AppConstant.LoggedInTenantId,
+                    TenantId = claimsProperty.GetTenantId(),
                     CreatedBy = AppConstant.LoggedInUserID,
                     IsActive = true,
                     IsDelete = false
@@ -293,13 +293,13 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var isTenantValid = await tenantService.AnyAsync(x =>
-                    x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+                    x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
 
                 if (isTenantValid)
                 {
                     var Payment = GetAllQuerable()
                         .Where(c => c.PaymentId == PaymentId
-                                   && c.TenantId == AppConstant.LoggedInTenantId
+                                   && c.TenantId == claimsProperty.GetTenantId()
                                    && c.IsDelete == false)
                         .FirstOrDefault();
 
@@ -352,7 +352,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var isTenantValid = await tenantService.AnyAsync(x =>
-                    x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+                    x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
 
                 if (!isTenantValid)
                 {
@@ -360,7 +360,7 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-                var PaymentsQuery = GetAllQuerable().Where(x=>x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId).OrderByDescending(x=>x.CreatedAt).
+                var PaymentsQuery = GetAllQuerable().Where(x=>x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId()).OrderByDescending(x=>x.CreatedAt).
                                     Select(i=>  new PaymentsVM
                                     {
                                         PaymentId = i.PaymentId,
@@ -472,7 +472,7 @@ namespace ShutterManagement.Business.Services
         private async Task<bool> IsTenantValid()
         {
             return await tenantService.AnyAsync(x =>
-                x.TenantId == AppConstant.LoggedInTenantId && x.IsActive==true && x.IsDelete==false);
+                x.TenantId == claimsProperty.GetTenantId() && x.IsActive==true && x.IsDelete==false);
         }
 
 
@@ -480,7 +480,7 @@ namespace ShutterManagement.Business.Services
         {
             return GetAllQuerable().FirstOrDefault(c =>
                 c.PaymentId == paymentId &&
-                c.TenantId == AppConstant.LoggedInTenantId &&
+                c.TenantId == claimsProperty.GetTenantId() &&
                 c.IsDelete==false);
         }
 
@@ -568,7 +568,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var payment =  dbContext.TblStripePayments
-                    .Where(x => x.TenantId == AppConstant.LoggedInTenantId)
+                    .Where(x => x.TenantId == claimsProperty.GetTenantId())
                     .Where(x => string.IsNullOrEmpty(Tranjectionid) || x.StripeTransactionId == Tranjectionid)
                     .Where(x => string.IsNullOrEmpty(PaymentId) || x.PaymentId.ToString() == PaymentId)
                     .OrderByDescending(x => x.CreatedDate)
@@ -752,7 +752,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var tenantDetails = tenantService.GetAllQuerable()
-                    .FirstOrDefault(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive==true);
+                    .FirstOrDefault(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive==true);
 
                 var tenantInfoDetails = dbContext.TblTenantBrandingInfos
                     .FirstOrDefault(x => x.Id == tenantDetails.BrandingInfo);

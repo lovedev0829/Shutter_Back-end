@@ -56,7 +56,7 @@ namespace ShutterManagement.Business.Services
                 AppConstant.GHL_BaseAddress = configuration["GoHighLevelOAuthSettings:BaseUrl"] ?? "";
                 AppConstant.GHL_PipelineId = details.PipelineId ?? "";
                 AppConstant.GHL_Locationd = details.LocationId??"";
-                AppConstant.LoggedInTenantId = details.TenantId;
+                claimsProperty.GetTenantId() = details.TenantId;
                 AppConstant.GHL_AccessToken = details.AccessToken ?? "";
                 AppConstant.GHL_RefreshToken = details.RefreshToken ??"";
                 AppConstant.GHL_CalendarName = details.CalendarName ?? "";
@@ -69,7 +69,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsGHLConfigurationTenantExist = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false).FirstOrDefault();
+                var IsGHLConfigurationTenantExist = GetAllQuerable().Where(x => x.TenantId == claimsProperty.GetTenantId() && x.IsDelete == false).FirstOrDefault();
                 if (IsGHLConfigurationTenantExist != null)
                 {
                    // IsGHLConfigurationTenantExist.Apikey = gHLConfiguration.APIkey??"";
@@ -78,7 +78,7 @@ namespace ShutterManagement.Business.Services
                     //IsGHLConfigurationTenantExist.BaseAddress = gHLConfiguration.BaseAddress ?? "";
                     IsGHLConfigurationTenantExist.GeneratedToken = gHLConfiguration.GeneratedToken??"";
                     IsGHLConfigurationTenantExist.CalendarName = gHLConfiguration.CalendarName ?? "";
-                    IsGHLConfigurationTenantExist.TenantId = AppConstant.LoggedInTenantId;
+                    IsGHLConfigurationTenantExist.TenantId = claimsProperty.GetTenantId();
 
                     var res = await Update(IsGHLConfigurationTenantExist);
                     responseVm.IsSuccess = true;
@@ -93,7 +93,7 @@ namespace ShutterManagement.Business.Services
                        // BaseAddress = gHLConfiguration.BaseAddress??"",
                         LocationId = gHLConfiguration.LocationId ?? "",
                        // Apikey = gHLConfiguration.APIkey??"",
-                        TenantId = AppConstant.LoggedInTenantId,
+                        TenantId = claimsProperty.GetTenantId(),
                         LastSync = DateTime.Now,
                         IsDelete = false,
                         IsActive = true,
@@ -118,7 +118,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<GetGHLConfiguration> responseVm = new ResponseVm<GetGHLConfiguration>();
             try
             {
-                var gHLConfiguration = GetAllQuerable().Where(x=>x.TenantId==AppConstant.LoggedInTenantId && x.IsDelete==false).FirstOrDefault();
+                var gHLConfiguration = GetAllQuerable().Where(x=>x.TenantId==claimsProperty.GetTenantId() && x.IsDelete==false).FirstOrDefault();
 
                 if (gHLConfiguration == null)
                 {
@@ -139,7 +139,7 @@ namespace ShutterManagement.Business.Services
                             gHLConfiguration.AccessToken = res.Data?.AccessToken ?? "";
                             gHLConfiguration.AccessExpirationtime = DateTime.Now.AddDays(1);
                             gHLConfiguration.RefreshExpirationtime = DateTime.Now.AddDays(365);
-                            gHLConfiguration.TenantId= AppConstant.LoggedInTenantId;
+                            gHLConfiguration.TenantId= claimsProperty.GetTenantId();
                             gHLConfiguration.LastSync = DateTime.Now;
 
                             // Save the updated configuration
@@ -200,7 +200,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                await GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
+                await GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
                 var res = goHighLevelOAuthService.GetAuthorizationUrl();
                 if (res != null)
                 {
@@ -221,7 +221,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> response = new ResponseVm<string>();
             try
             {
-                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : AppConstant.LoggedInTenantId);
+                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : claimsProperty.GetTenantId());
                 var isExist = GetAllQuerable().Where(x => x.TenantId == LoggedInTenantId && x.IsDelete==false).FirstOrDefault();
                 if (isExist != null)
                 {
@@ -280,7 +280,7 @@ namespace ShutterManagement.Business.Services
                 {
                     var existingMapping = dbContext.TblGhlStagesmappings
                         .FirstOrDefault(x =>
-                            x.TenantId == AppConstant.LoggedInTenantId &&
+                            x.TenantId == claimsProperty.GetTenantId() &&
                             x.StatusId == stagemapping.StatusId);
 
                     if (existingMapping != null)
@@ -294,7 +294,7 @@ namespace ShutterManagement.Business.Services
                         StageId = stagemapping.StageId ?? Guid.Empty,
                         StatusId = stagemapping.StatusId ?? Guid.Empty,
                         CreatedAt = DateTime.Now,
-                        TenantId = AppConstant.LoggedInTenantId
+                        TenantId = claimsProperty.GetTenantId()
                     };
 
                     await dbContext.TblGhlStagesmappings.AddAsync(newMapping);
@@ -319,7 +319,7 @@ namespace ShutterManagement.Business.Services
 
             try
             {
-                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : AppConstant.LoggedInTenantId);
+                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : claimsProperty.GetTenantId());
 
                 var mappings =  dbContext.TblGhlStagesmappings
                     .Where(x => x.TenantId == LoggedInTenantId)
@@ -351,7 +351,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var mapping = dbContext.TblGhlStagesmappings
-                    .Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.StatusId == statusId)
+                    .Where(x => x.TenantId == claimsProperty.GetTenantId() && x.StatusId == statusId)
                     .Select(x => new StageMapping
                     {
                         StageId = x.StageId ?? Guid.Empty,
@@ -386,7 +386,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var IsStripeConfiExists = GetAllQuerable().Where(x => x.IsDelete == false && x.Id == configurationid &&
-                x.TenantId == AppConstant.LoggedInTenantId
+                x.TenantId == claimsProperty.GetTenantId()
                 ).FirstOrDefault();
                 if (IsStripeConfiExists != null)
                 {
@@ -415,7 +415,7 @@ namespace ShutterManagement.Business.Services
            IResponseVm<string> response = new ResponseVm<string>();
             try
             {
-                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : AppConstant.LoggedInTenantId);
+                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : claimsProperty.GetTenantId());
 
                 var isExist = dbContext.TblGhlStagesmappings.Where(x => x.TenantId == LoggedInTenantId).FirstOrDefault();
                 if (isExist != null)
@@ -442,7 +442,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var IsSubtenant = dbContext.TblTenants.Where(x => x.TenantId.ToString() == model.PartnerId
-                && x.ParentTenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false).FirstOrDefault();
+                && x.ParentTenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false).FirstOrDefault();
                 if (IsSubtenant != null)
                 {
                     IsSubtenant.IsGhlconfigSameAsTenant = model.IsGHLConfigSameasTenant;
@@ -477,11 +477,11 @@ namespace ShutterManagement.Business.Services
         //    try
         //    {
         //        var subtenantdetails = dbContext.TblTenants.Where(x => x.TenantId.ToString() == TenantId
-        //        && x.ParentTenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false).FirstOrDefault();
+        //        && x.ParentTenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false).FirstOrDefault();
 
         //        if ((bool)subtenantdetails.IsGhlconfigSameAsTenant)
         //        {
-        //            await GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
+        //            await GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
         //            var ghlContact = await gHLService_V2.GetOpportunityforPartner(subtenantdetails.GhluserId);
         //            foreach (var item in ghlContact.Data.opportunities)
         //            {
@@ -521,10 +521,10 @@ namespace ShutterManagement.Business.Services
         //                    }
         //                    else
         //                    {
-        //                        int Version1 = dbContext.TblJobs.Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt)
+        //                        int Version1 = dbContext.TblJobs.Where(x => x.TenantId == claimsProperty.GetTenantId() && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt)
         //                                 .Select(p => (p.JobUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries).Length == 3 ? Convert.ToInt32(p.JobUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries)[2]) : 0)).FirstOrDefault();
         //                        Version1 += 1;
-        //                        var generateUnique = GenerateUniqueId.GenerateUniqueIds(ModuleName.Job, AppConstant.LoggedInCompanyCode, Version1);
+        //                        var generateUnique = GenerateUniqueId.GenerateUniqueIds(ModuleName.Job, claimsProperty.GetCompanyCode(), Version1);
         //                        Guid jobtype = Guid.Parse("34623376-9CE3-4C9B-A538-2D3129B1A6B2");
         //                        var stageId = dbContext.TblGhlStages.Where(x => x.GhlStageId.ToLower() == item.pipelineStageId.ToLower())
         //                            .FirstOrDefault();
@@ -562,10 +562,10 @@ namespace ShutterManagement.Business.Services
         //                else
         //                {
         //                    //generate unique version
-        //                    int Version = dbContext.TblContacts.Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt)
+        //                    int Version = dbContext.TblContacts.Where(x => x.TenantId == claimsProperty.GetTenantId() && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt)
         //                        .Select(p => (p.ContactUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries).Length == 3 ? Convert.ToInt32(p.ContactUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries)[2]) : 0)).FirstOrDefault();
         //                    Version += 1;
-        //                    var contactUniqueId = GenerateUniqueId.GenerateUniqueIds(ModuleName.Contact, AppConstant.LoggedInCompanyCode, Version);
+        //                    var contactUniqueId = GenerateUniqueId.GenerateUniqueIds(ModuleName.Contact, claimsProperty.GetCompanyCode(), Version);
         //                    string fullName1 = item.contact.Name?.Trim() ?? "";
         //                    string[] nameParts1 = fullName1.Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
@@ -617,10 +617,10 @@ namespace ShutterManagement.Business.Services
         //                    }
         //                    else
         //                    {
-        //                        int Version1 = dbContext.TblJobs.Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt)
+        //                        int Version1 = dbContext.TblJobs.Where(x => x.TenantId == claimsProperty.GetTenantId() && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt)
         //                                 .Select(p => (p.JobUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries).Length == 3 ? Convert.ToInt32(p.JobUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries)[2]) : 0)).FirstOrDefault();
         //                        Version1 += 1;
-        //                        var generateUnique = GenerateUniqueId.GenerateUniqueIds(ModuleName.Job, AppConstant.LoggedInCompanyCode, Version);
+        //                        var generateUnique = GenerateUniqueId.GenerateUniqueIds(ModuleName.Job, claimsProperty.GetCompanyCode(), Version);
         //                        Guid jobtype = Guid.Parse("34623376-9CE3-4C9B-A538-2D3129B1A6B2");
         //                        var stageId = dbContext.TblGhlStages.Where(x => x.GhlStageId.ToLower() == item.pipelineStageId.ToLower())
         //                            .FirstOrDefault();
@@ -679,7 +679,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var IsSubtenant = dbContext.TblTenants.Where(x => x.TenantId.ToString() == TenantId
-                && x.ParentTenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false)
+                && x.ParentTenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false)
                     .Select(x => new GetGhlConfigforPartner
                     {
                         IsGHLConfigSameasTenant = x.IsGhlconfigSameAsTenant,
@@ -702,12 +702,12 @@ namespace ShutterManagement.Business.Services
             {
                 var subtenant = dbContext.TblTenants.FirstOrDefault(x =>
                     x.TenantId.ToString() == TenantId &&
-                    x.ParentTenantId == AppConstant.LoggedInTenantId &&
+                    x.ParentTenantId == claimsProperty.GetTenantId() &&
                     x.IsActive == true && x.IsDelete == false);
 
                 if (subtenant?.IsGhlconfigSameAsTenant == true)
                 {
-                    await GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
+                    await GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
 
                     var ghlContact = await gHLService_V2.GetOpportunityforPartner(subtenant.GhluserId);
 
@@ -759,13 +759,13 @@ namespace ShutterManagement.Business.Services
             else
             {
                 int version = dbContext.TblContacts
-                    .Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.CreatedAt.Value.Date == DateTime.Today)
+                    .Where(x => x.TenantId == claimsProperty.GetTenantId() && x.CreatedAt.Value.Date == DateTime.Today)
                     .AsEnumerable()
                     .OrderByDescending(p => p.CreatedAt)
                     .Select(p => (p.ContactUniqueId.Split("-").Length == 3 ? Convert.ToInt32(p.ContactUniqueId.Split("-")[2]) : 0))
                     .FirstOrDefault() + 1;
 
-                string contactUniqueId = GenerateUniqueId.GenerateUniqueIds(ModuleName.Contact, AppConstant.LoggedInCompanyCode, version);
+                string contactUniqueId = GenerateUniqueId.GenerateUniqueIds(ModuleName.Contact, claimsProperty.GetCompanyCode(), version);
 
                 contact = new TblContact
                 {
@@ -827,14 +827,14 @@ namespace ShutterManagement.Business.Services
             else
             {
                 int version = dbContext.TblJobs
-                    .Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.CreatedAt.Value.Date == DateTime.Today)
+                    .Where(x => x.TenantId == claimsProperty.GetTenantId() && x.CreatedAt.Value.Date == DateTime.Today)
                     .AsEnumerable()
                     .OrderByDescending(p => p.CreatedAt)
                     .Select(p => (p.JobUniqueId.Split("-").Length == 3 ? Convert.ToInt32(p.JobUniqueId.Split("-")[2]) : 0))
                     .FirstOrDefault() + 1;
 
                 string StageId = item.pipelineStageId;
-                string jobUniqueId = GenerateUniqueId.GenerateUniqueIds(ModuleName.Job, AppConstant.LoggedInCompanyCode, version);
+                string jobUniqueId = GenerateUniqueId.GenerateUniqueIds(ModuleName.Job, claimsProperty.GetCompanyCode(), version);
                 Guid jobType = Guid.Parse("34623376-9CE3-4C9B-A538-2D3129B1A6B2");
                 var jobStatusId1 = dbContext.TblGhlStagesmappings
                .Where(x => x.StageId.ToString() == StageId.ToLower())

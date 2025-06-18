@@ -18,7 +18,7 @@ namespace ShutterManagement.Business
             {
                 AppConstant.LoggedInUserID = Guid.Parse(httpContext.HttpContext.User.Claims.First(c => c.Type == "UserId").Value ?? "");
                 AppConstant.LoggedInTenantId = Guid.Parse(httpContext.HttpContext.User.Claims.First(c => c.Type == "TenantId").Value ?? "");
-                AppConstant.LoggedInUserName = httpContext.HttpContext.User.Claims.First(c => c.Type == "Username").Value;
+                claimsProperty.GetUsername() = httpContext.HttpContext.User.Claims.First(c => c.Type == "Username").Value;
                 AppConstant.LoggedInCompanyCode = httpContext.HttpContext.User.Claims.First(c => c.Type == "CompanyCode").Value;
                 AppConstant.LoggedInName = httpContext.HttpContext.User.Claims.First(c => c.Type == ClaimTypes.Name).Value;
                 AppConstant.LoggedInPhone = httpContext.HttpContext.User.Claims.First(c => c.Type == "Phone").Value;
@@ -45,11 +45,23 @@ namespace ShutterManagement.Business
             return value;
         }
 
+        public Guid GetParentTenantId()
+        {
+            var claim = httpContext.HttpContext.User.Claims.First(c => c.Type == "ParentTenantId");
+            var value = Guid.Parse(claim?.Value ?? "");
+            AppConstant.LoggedInParentTenantId = value.ToString();
+            return value;
+        }
+        public bool GetIsAdminRolesShow()
+        {
+            var value = Convert.ToBoolean(configuration["IsAdminRolesShow"] ?? "false");
+            return value;
+        }
         public string GetUsername()
         {
             var claim = httpContext.HttpContext.User.Claims.First(c => c.Type == "Username");
             var value = claim?.Value ?? "";
-            AppConstant.LoggedInUserName = value;
+            claimsProperty.GetUsername() = value;
             return value;
         }
         public string GetEmail()
@@ -83,6 +95,10 @@ namespace ShutterManagement.Business
 
         //public bool IsTenant()
         //{
+        //    var claim = httpContext.HttpContext.User.Claims.First(c => c.Type == "CompanyCode");
+        //    var value = claim?.Value ?? "";
+        //    //claimsProperty.GetCompanyCode() = value;
+        //    return value;
         //    var claim = httpContext.HttpContext.User.Claims.FirstOrDefault(c => c.Type == "IsTenant");
 
         //    if (claim != null && bool.TryParse(claim.Value, out bool claimValue))

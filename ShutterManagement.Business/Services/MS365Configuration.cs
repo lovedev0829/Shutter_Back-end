@@ -110,7 +110,7 @@ namespace ShutterManagement.Business.Services
                 var tokenResult = JsonConvert.DeserializeObject<TokenResponse>(json);
                 FileLogger.Log($"TokenResposnse after authentication of MS365 {tokenResult}");
                 var config = (await emailConfigurationService.GetAll()).
-                    Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false)
+                    Where(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false)
                     .FirstOrDefault();
                 FileLogger.Log($"Configuration of Email {config}");
                 if (config != null)
@@ -151,7 +151,7 @@ namespace ShutterManagement.Business.Services
                 
                 multipart.Add(new TextPart("plain") { Text = message.Body });
                 var config = emailConfigurationService.GetAllQuerable()
-                    .FirstOrDefault(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+                    .FirstOrDefault(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
                 if (message.Attachments != null && message.Attachments.Any())
                 {
                     foreach (var file in message.Attachments)

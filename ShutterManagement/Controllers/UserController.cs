@@ -62,7 +62,7 @@ namespace ShutterManagement.API.Controllers
         {
             if (filter.TenantId == "")
             {
-                filter.SearchValue = AppConstant.LoggedInTenantId.ToString();
+                filter.SearchValue = claimsProperty.GetTenantId().ToString();
             }
 
             var res = await _userService.GetAll(filter);

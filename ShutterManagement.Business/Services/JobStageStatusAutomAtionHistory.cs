@@ -32,9 +32,9 @@ namespace ShutterManagement.Business.Services
                 {
                     HistoryId = Guid.NewGuid(),
                     JobJson = JsonConvert.SerializeObject(job)??"",
-                    ChangedBy = AppConstant.LoggedInTenantId,
+                    ChangedBy = claimsProperty.GetTenantId(),
                     ChangedAt = DateTime.Now,
-                    TenantId = AppConstant.LoggedInTenantId
+                    TenantId = claimsProperty.GetTenantId()
                 };
 
                 var res = Add(history);

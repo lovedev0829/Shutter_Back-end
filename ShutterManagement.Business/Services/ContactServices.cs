@@ -57,15 +57,15 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
+                var IsTenantExists = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true);
 
                 if (IsTenantExists)
                 {
                     var IsEmailExists = GetAllQuerable()
-                        .Any(c => c.Email == email && c.TenantId == AppConstant.LoggedInTenantId && c.IsDelete == false);
+                        .Any(c => c.Email == email && c.TenantId == claimsProperty.GetTenantId() && c.IsDelete == false);
 
                     var IsPhoneExists = GetAllQuerable()
-                        .Any(c => c.PhoneNumber == phone && c.TenantId == AppConstant.LoggedInTenantId && c.IsDelete == false);
+                        .Any(c => c.PhoneNumber == phone && c.TenantId == claimsProperty.GetTenantId() && c.IsDelete == false);
 
                     if (IsEmailExists && IsPhoneExists)
                     {
@@ -106,7 +106,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : AppConstant.LoggedInTenantId);
+                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : claimsProperty.GetTenantId());
 
                 var TenantId = Guid.Empty;
                 var IsTenantExists = false;
@@ -117,7 +117,7 @@ namespace ShutterManagement.Business.Services
                 FileLogger.Log($"Location id fetched {model.locationId}");
                 if (model.locationId != null)
                 {
-                   // await gHLConfigurationService.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
+                   // await gHLConfigurationService.GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
                     TenantId = (Guid)LoggedInTenantId;
                     FileLogger.Log($"Tenant id fetched {TenantId}");
                     if (TenantId != null)
@@ -145,7 +145,7 @@ namespace ShutterManagement.Business.Services
 
                 if (IsTenantExists)
                 {
-                    //await gHLConfigurationService.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
+                    //await gHLConfigurationService.GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
                     var IsContactExists = GetAllQuerable()
                         .Where(c => (c.Email == model.Email || c.PhoneNumber == model.PhoneNumber)
                         && c.TenantId == TenantId
@@ -196,7 +196,7 @@ namespace ShutterManagement.Business.Services
                     int Version = GetAllQuerable().Where(x => x.TenantId == LoggedInTenantId && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt)
                         .Select(p => (p.ContactUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries).Length == 3 ? Convert.ToInt32(p.ContactUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries)[2]) : 0)).FirstOrDefault();
                     Version += 1;
-                    var contactUniqueId = GenerateUniqueId.GenerateUniqueIds(ModuleName.Contact, AppConstant.LoggedInCompanyCode, Version);
+                    var contactUniqueId = GenerateUniqueId.GenerateUniqueIds(ModuleName.Contact, claimsProperty.GetCompanyCode(), Version);
 
 
                     TblContact CreateContact = new TblContact
@@ -344,7 +344,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : AppConstant.LoggedInTenantId);
+                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : claimsProperty.GetTenantId());
 
                 var TenantId = Guid.Empty;
                 var IsTenantExists = false;
@@ -354,7 +354,7 @@ namespace ShutterManagement.Business.Services
                 }
                 if (model.locationId != null)
                 {
-                   // await gHLConfigurationService.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
+                   // await gHLConfigurationService.GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
                     TenantId = (Guid)LoggedInTenantId;
 
                     if (TenantId != Guid.Empty)
@@ -634,7 +634,7 @@ namespace ShutterManagement.Business.Services
             {
                 var contact = GetAllQuerable()
                     .Where(c => c.ContactId == ContactId
-                    && c.TenantId == AppConstant.LoggedInTenantId && c.IsDelete == false).FirstOrDefault();
+                    && c.TenantId == claimsProperty.GetTenantId() && c.IsDelete == false).FirstOrDefault();
                 if (contact == null)
                 {
                     responseVm.Message = AppConstant.NoDataFound;
@@ -682,7 +682,7 @@ namespace ShutterManagement.Business.Services
             {
                 var contact = GetAllQuerable()
                     .Where(c => c.ContactId == ContactId
-                    && c.TenantId == AppConstant.LoggedInTenantId && c.IsDelete == false).FirstOrDefault();
+                    && c.TenantId == claimsProperty.GetTenantId() && c.IsDelete == false).FirstOrDefault();
                 if (contact == null)
                 {
                     responseVm.Message = AppConstant.NoDataFound;
@@ -749,9 +749,9 @@ namespace ShutterManagement.Business.Services
         //        ////    .Where(c =>
         //        ////    (archiveModel.Status  ? c.IsActive == true : c.IsActive == false) &&
         //        ////    //(archiveModel.LastOrderDate != null ? c)
-        //        ////     c.TenantId == AppConstant.LoggedInTenantId && c.IsDelete == false ).ToList();
+        //        ////     c.TenantId == claimsProperty.GetTenantId() && c.IsDelete == false ).ToList();
         //        //var contact = GetAllQuerable()
-        //        //    .Where(c =>c.TenantId == AppConstant.LoggedInTenantId && c.IsDelete == false).ToList();
+        //        //    .Where(c =>c.TenantId == claimsProperty.GetTenantId() && c.IsDelete == false).ToList();
 
 
         //        //if (contact == null)
@@ -782,7 +782,7 @@ namespace ShutterManagement.Business.Services
             try
             {
 
-                var query = GetAllQuerable().Where(c => c.IsActive == false && c.TenantId == AppConstant.LoggedInTenantId && c.IsDelete == false);
+                var query = GetAllQuerable().Where(c => c.IsActive == false && c.TenantId == claimsProperty.GetTenantId() && c.IsDelete == false);
                 if (query == null)
                 {
                     responseVm.IsSuccess = false;
@@ -831,7 +831,7 @@ namespace ShutterManagement.Business.Services
                 if (filter?.TenantId != "" && Role)
                 {
                     
-                    var IsRealtedTenant = tenantService.GetAllQuerable().Where(x => x.TenantId.ToString() == filter.TenantId && x.ParentTenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
+                    var IsRealtedTenant = tenantService.GetAllQuerable().Where(x => x.TenantId.ToString() == filter.TenantId && x.ParentTenantId == claimsProperty.GetTenantId()).FirstOrDefault();
                     if (IsRealtedTenant == null)
                     {
                         responseVm.Message = AppConstant.NoDataFound;
@@ -845,7 +845,7 @@ namespace ShutterManagement.Business.Services
                 }
                 else
                 {
-                    Contacts = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId).OrderByDescending(x => x.CreatedAt).ToList();
+                    Contacts = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId()).OrderByDescending(x => x.CreatedAt).ToList();
                 }
 
 
@@ -953,7 +953,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : AppConstant.LoggedInTenantId);
+                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : claimsProperty.GetTenantId());
 
                 IResponseVm<GhlContactSingleResponse> ghlResponse = new ResponseVm<GhlContactSingleResponse>();
                 var ghlContactAdd = new GhlContactAdd
@@ -1118,7 +1118,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : AppConstant.LoggedInTenantId);
+                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : claimsProperty.GetTenantId());
 
                 TextInfo textInfo;
                 var Checkghlresponse = await gHLConfigurationService.CheckGHLConfiguration(LoggedInTenantId);

@@ -32,14 +32,14 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var isTenantValid = await tenantService.AnyAsync(x =>
-                        x.TenantId == AppConstant.LoggedInTenantId &&
+                        x.TenantId == claimsProperty.GetTenantId() &&
                         x.ParentTenantId == null &&
                         x.IsDelete == false &&
                         x.IsActive == true);
                 if (isTenantValid)
                 {
                     var IsComponentExist = dbContext.TblComponents
-                            .Any(x => x.ComponentId == model.ComponentId && x.TenantId == AppConstant.LoggedInTenantId
+                            .Any(x => x.ComponentId == model.ComponentId && x.TenantId == claimsProperty.GetTenantId()
                                            && x.IsDelete == false);
 
                     if (IsComponentExist)
@@ -64,7 +64,7 @@ namespace ShutterManagement.Business.Services
                                     CreatedBy = AppConstant.LoggedInUserID,
                                     IsActive = true,
                                     IsDelete = false,
-                                    TenantId = AppConstant.LoggedInTenantId,
+                                    TenantId = claimsProperty.GetTenantId(),
                                     MaterialPricingExpression = !string.IsNullOrEmpty(material.MaterialPricingExpression) ? MaterialPricingExp : null
                                 };
                                 await Add(newComponentMaterial);
@@ -105,7 +105,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var isTenantValid = await tenantService.AnyAsync(x =>
-                    x.TenantId == AppConstant.LoggedInTenantId &&
+                    x.TenantId == claimsProperty.GetTenantId() &&
                     x.ParentTenantId == null &&
                     x.IsDelete == false &&
                     x.IsActive == true);
@@ -114,7 +114,7 @@ namespace ShutterManagement.Business.Services
                 {
                     var componentMaterial = GetAllQuerable()
                         .Where(x => x.ComponentMaterialId == Id &&
-                                    x.TenantId == AppConstant.LoggedInTenantId &&
+                                    x.TenantId == claimsProperty.GetTenantId() &&
                                     x.IsDelete == false)
                         .FirstOrDefault();
 
@@ -157,7 +157,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var isTenantValid = await tenantService.AnyAsync(x =>
-                    x.TenantId == AppConstant.LoggedInTenantId &&
+                    x.TenantId == claimsProperty.GetTenantId() &&
                     x.ParentTenantId == null &&
                     x.IsDelete == false &&
                     x.IsActive == true);
@@ -167,14 +167,14 @@ namespace ShutterManagement.Business.Services
                     
                     var IsComponentMaterialExists = GetAllQuerable()
                         .Where(x => x.ComponentMaterialId == model.ComponentMaterialId && x.ComponentId == model.ComponentId
-                         && x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true
+                         && x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true
                          && x.IsDelete == false).FirstOrDefault();
 
                     if (IsComponentMaterialExists != null)
                     {
                         var IsMaterialAlreadyExists = await AnyAsync(x => x.ComponentMaterialId != model.ComponentMaterialId &&
                         x.ComponentId == model.ComponentId &&
-                        x.RawMaterialId == model.RawMaterialId && x.IsActive == true && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
+                        x.RawMaterialId == model.RawMaterialId && x.IsActive == true && x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId());
                         if (IsMaterialAlreadyExists)
                         {
                             responseVm.Message = AppConstant.MaterialAlreadyExists;

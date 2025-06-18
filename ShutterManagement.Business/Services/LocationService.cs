@@ -29,7 +29,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 //bool isTenant = await tenantService.AnyAsync(x =>
-                //    x.TenantId == AppConstant.LoggedInTenantId &&
+                //    x.TenantId == claimsProperty.GetTenantId() &&
                 //    x.IsDelete == false &&
                 //    x.IsActive == true);
                 //if (!isTenant)
@@ -52,7 +52,7 @@ namespace ShutterManagement.Business.Services
                 {
                     LocationId = Guid.NewGuid(),
                     LocationName = model.LocationName?.Trim(),
-                    TenantId = AppConstant.LoggedInTenantId,
+                    TenantId = claimsProperty.GetTenantId(),
                     CreatedAt = DateTime.Now,
                     IsDelete = false,
                     IsActive = true

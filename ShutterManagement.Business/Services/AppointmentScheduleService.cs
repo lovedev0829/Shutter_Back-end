@@ -41,7 +41,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var isTenantValid = await tenantService.AnyAsync(x =>
-                    x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+                    x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
                 if (!isTenantValid)
                 {
                     responseVm.IsSuccess = false;
@@ -66,8 +66,8 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.UpdateSuccessMsg;
                     if (responseVm.IsSuccess)
                     {
-                        await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
-                        var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration(AppConstant.LoggedInTenantId);
+                        await gHLConfiguration.GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
+                        var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration(claimsProperty.GetTenantId());
                         if (Checkghlresponse.IsSuccess)
                         {
           
@@ -102,7 +102,7 @@ namespace ShutterManagement.Business.Services
                         GhlUserId = ghlUserIdAdd ?? "",
                         UserId=model?.UserId?? null,
                         CreatedAt = DateTime.Now,
-                        TenantId = AppConstant.LoggedInTenantId,
+                        TenantId = claimsProperty.GetTenantId(),
                         CreatedBy = AppConstant.LoggedInUserID,
                         IsActive = true,
                         IsDelete = false
@@ -112,8 +112,8 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.InsertSuccessMsg;
                     if (responseVm.IsSuccess)
                     {
-                        await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
-                        var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration(AppConstant.LoggedInTenantId);
+                        await gHLConfiguration.GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
+                        var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration(claimsProperty.GetTenantId());
                        if(Checkghlresponse.IsSuccess)
                         {
                             var jobStatusName = EnumValue.GetEnumValue(JobStatus.Appointment_Scheduled);
@@ -166,7 +166,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var mappings = GetAllQuerable()
-                    .Where(x => x.JobId==JobId &&  x.TenantId == AppConstant.LoggedInTenantId)
+                    .Where(x => x.JobId==JobId &&  x.TenantId == claimsProperty.GetTenantId())
                     .Select(x => new AppointmentScheduleVm
                     {
                         JobId = x.JobId ?? null,

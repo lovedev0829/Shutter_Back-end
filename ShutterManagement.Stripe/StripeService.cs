@@ -73,7 +73,7 @@ namespace ShutterManagement.Stripe
                     Metadata = new Dictionary<string, string>
             {
                 { "db_InvoiceId", request?.InvoiceId ?? "" },
-                { "db_TenantId", AppConstant.LoggedInTenantId.ToString() ?? "" },
+                { "db_TenantId", claimsProperty.GetTenantId().ToString() ?? "" },
                 { "db_PaymentId", request?.PaymentId ?? "" }
             }
                 };
@@ -174,7 +174,7 @@ namespace ShutterManagement.Stripe
         //        Metadata = new Dictionary<string, string>
         //    {
         //        { "db_InvoiceId", request?.InvoiceId??"" },
-        //         { "db_TenantId",AppConstant.LoggedInTenantId.ToString()??""},
+        //         { "db_TenantId",claimsProperty.GetTenantId().ToString()??""},
         //            { "db_PaymentId",request?.PaymentId??""}
 
         //    }

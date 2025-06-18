@@ -32,7 +32,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var isTenantValid = tenantService.GetAllQuerable()
-                    .Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive==true)
+                    .Where(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive==true)
                     .FirstOrDefault();
 
                 if (isTenantValid == null)
@@ -77,7 +77,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var isTenantValid = tenantService.GetAllQuerable()
-                    .Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive==true)
+                    .Where(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive==true)
                     .FirstOrDefault();
 
                 if (isTenantValid == null)
@@ -96,7 +96,7 @@ namespace ShutterManagement.Business.Services
                     IsActive = true,
                     IsDelete=false,
                     CreatedAt = DateTime.Now,
-                    TenantId = AppConstant.LoggedInTenantId,
+                    TenantId = claimsProperty.GetTenantId(),
                     CreatedBy=AppConstant.LoggedInUserID
                 };
 
@@ -121,7 +121,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var isTenantValid = tenantService.GetAllQuerable()
-                    .Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true)
+                    .Where(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true)
                     .FirstOrDefault();
 
                 if (isTenantValid == null)
@@ -163,7 +163,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var isTenantValid = await tenantService.AnyAsync(x =>
-                    x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+                    x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
 
                 if (!isTenantValid)
                 {
@@ -172,7 +172,7 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-                var jobContactsQuery = from x in dbContext.TblJobContacts.Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId)
+                var jobContactsQuery = from x in dbContext.TblJobContacts.Where(x => x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId())
                                        join c in dbContext.MstContactTypes
                                        on x.ContactTypeId equals c.MstContactId
                                        join d in dbContext.TblContacts on x.ContactId equals d.ContactId
@@ -234,7 +234,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var isTenantValid = await tenantService.AnyAsync(x =>
-                   x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+                   x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
 
                 if (!isTenantValid)
                 {

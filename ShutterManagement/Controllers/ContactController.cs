@@ -106,7 +106,7 @@ namespace ShutterManagement.Controllers
         //[Authorize]
         //public async Task<IActionResult> GHLContact()
         //{
-        //    await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInTenantId.ToString());
+        //    await gHLConfiguration.GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
         //    var res = await ghlser.GetContactsAsync();
         //    return Ok(res);
         //}
@@ -136,7 +136,7 @@ namespace ShutterManagement.Controllers
                 if (!isTenantExist)
                 {
                     FileLogger.Log($"Tenant ID {tenantId.Data} does not exist.");
-                    AppConstant.LoggedInTenantId = Guid.Parse(tenantId.Data);
+                    claimsProperty.GetTenantId() = Guid.Parse(tenantId.Data);
                 }
                     contactData.WebhookTenantId = tenantId.Data;
                     var res = await _contactService.ContactFromGHL(contactData);

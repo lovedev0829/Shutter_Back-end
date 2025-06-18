@@ -120,7 +120,7 @@ namespace ShutterManagement.GHL.Services
                         existingStage.StageOrder = i + 1; // Assigning order for sequential storage
                         existingStage.GhlLastSync = DateTime.Now;
                         existingStage.UpdatedAt = DateTime.Now;
-                        existingStage.ModifiedBy = AppConstant.LoggedInTenantId;
+                        existingStage.ModifiedBy = claimsProperty.GetTenantId();
                         stagesToUpdate.Add(existingStage);
                     }
                     else
@@ -135,7 +135,7 @@ namespace ShutterManagement.GHL.Services
                             StageOrder = i + 1, // Assigning order for new records
                             GhlLastSync = DateTime.Now,
                             CreatedAt = DateTime.Now,
-                            TenantId = AppConstant.LoggedInTenantId,
+                            TenantId = claimsProperty.GetTenantId(),
                             CreatedBy = AppConstant.LoggedInUserID,
                             IsActive = true,
                         });
@@ -181,7 +181,7 @@ namespace ShutterManagement.GHL.Services
             try
             {
                 var config = await dBContext.TblGhlconfigurations
-                                             .FirstOrDefaultAsync(c => c.TenantId == AppConstant.LoggedInTenantId);
+                                             .FirstOrDefaultAsync(c => c.TenantId == claimsProperty.GetTenantId());
 
                 if (config == null)
                 {
@@ -208,7 +208,7 @@ namespace ShutterManagement.GHL.Services
             {
                 
                 var gHLStages = dBContext.TblGhlStages
-                    .Where(x => x.TenantId == AppConstant.LoggedInTenantId && (x.GhlPipelineName.ToLower() == AppConstant.GHL_PipelineId.ToLower() || x.GhlPipelineId.ToLower()
+                    .Where(x => x.TenantId == claimsProperty.GetTenantId() && (x.GhlPipelineName.ToLower() == AppConstant.GHL_PipelineId.ToLower() || x.GhlPipelineId.ToLower()
                     == AppConstant.GHL_PipelineId.ToLower())).OrderBy(x => x.StageOrder)
                     .ToList();
 

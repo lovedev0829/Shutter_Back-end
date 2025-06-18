@@ -133,7 +133,7 @@ namespace ShutterManagement.Business.Services
 
                 var estimate = GetAllQuerable()
                     .Where(c => c.EstimateId == EstimateId
-                    && c.TenantId == AppConstant.LoggedInTenantId && c.IsDelete == false)
+                    && c.TenantId == claimsProperty.GetTenantId() && c.IsDelete == false)
                     .FirstOrDefault();
 
                 if (estimate == null)
@@ -192,7 +192,7 @@ namespace ShutterManagement.Business.Services
                 }
                 var estimate = GetAllQuerable()
                     .Where(c => c.EstimateId == EstimateId
-                    && c.TenantId == AppConstant.LoggedInTenantId && c.IsDelete == false)
+                    && c.TenantId == claimsProperty.GetTenantId() && c.IsDelete == false)
                     .FirstOrDefault();
 
                 if (estimate == null)
@@ -282,7 +282,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsEstimateExists = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId && x.EstimateId == EstimateId).
+                var IsEstimateExists = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId() && x.EstimateId == EstimateId).
                     OrderByDescending(x => x.CreatedAt).FirstOrDefault();
                 if (IsEstimateExists == null)
                 {
@@ -596,7 +596,7 @@ namespace ShutterManagement.Business.Services
             decimal wholesale = 0.0m;
 
             var isSubtenant = (await tenantService.GetAll())
-                .Any(t => t.TenantId == AppConstant.LoggedInTenantId && t.ParentTenantId != null && t.IsActive == true && !t.IsDelete == false);
+                .Any(t => t.TenantId == claimsProperty.GetTenantId() && t.ParentTenantId != null && t.IsActive == true && !t.IsDelete == false);
 
             var distinctComponents = data.DistinctBy(x => x.ComponentId).ToList();
             foreach (var item in distinctComponents)
@@ -616,7 +616,7 @@ namespace ShutterManagement.Business.Services
                     {
                         if (isSubtenant)
                         {
-                            var markup = dbContext.TblManagePartnersProducts.FirstOrDefault(x => x.ProductId == item.ProductId && x.TenantId == AppConstant.LoggedInTenantId);
+                            var markup = dbContext.TblManagePartnersProducts.FirstOrDefault(x => x.ProductId == item.ProductId && x.TenantId == claimsProperty.GetTenantId());
                             basePrice = markup?.MarkupType switch
                             {
                                 "Percentage" => basePrice * (1 + (markup.WholeSalePrice ?? 0) / 100),
@@ -634,7 +634,7 @@ namespace ShutterManagement.Business.Services
                     productOwnMarkup = (((basePrice + componentOwnMarkup) * item.Markup) / 100) ?? 0.0m;
                     if (isSubtenant)
                     {
-                        var partnerMarkup = dbContext.TblManagePartnersProducts.FirstOrDefault(x => x.ProductId == item.ProductId && x.TenantId == AppConstant.LoggedInTenantId);
+                        var partnerMarkup = dbContext.TblManagePartnersProducts.FirstOrDefault(x => x.ProductId == item.ProductId && x.TenantId == claimsProperty.GetTenantId());
                         productOwnMarkup += partnerMarkup?.MarkupType switch
                         {
                             "Percentage" => (basePrice + componentOwnMarkup + productOwnMarkup) * (partnerMarkup.PartnerSellingPrice ?? 0) / 100,
@@ -680,7 +680,7 @@ namespace ShutterManagement.Business.Services
                     {
                         if (isSubtenant)
                         {
-                            var markup = dbContext.TblManagePartnersProducts.FirstOrDefault(x => x.ProductId == item.ProductId && x.TenantId == AppConstant.LoggedInTenantId);
+                            var markup = dbContext.TblManagePartnersProducts.FirstOrDefault(x => x.ProductId == item.ProductId && x.TenantId == claimsProperty.GetTenantId());
                             basePrice = markup?.MarkupType switch
                             {
                                 "Percentage" => basePrice * (1 + (markup.WholeSalePrice ?? 0) / 100),
@@ -698,7 +698,7 @@ namespace ShutterManagement.Business.Services
                     productOwnMarkup = (((basePrice + componentOwnMarkup) * item.Markup) / 100) ?? 0.0m;
                     if (isSubtenant)
                     {
-                        var partnerMarkup = dbContext.TblManagePartnersProducts.FirstOrDefault(x => x.ProductId == item.ProductId && x.TenantId == AppConstant.LoggedInTenantId);
+                        var partnerMarkup = dbContext.TblManagePartnersProducts.FirstOrDefault(x => x.ProductId == item.ProductId && x.TenantId == claimsProperty.GetTenantId());
                         productOwnMarkup += partnerMarkup?.MarkupType switch
                         {
                             "Percentage" => (basePrice + componentOwnMarkup + productOwnMarkup) * (partnerMarkup.PartnerSellingPrice ?? 0) / 100,
@@ -709,8 +709,8 @@ namespace ShutterManagement.Business.Services
                     productMarkup += productOwnMarkup;
                     if(isSubtenant)
                     {
-                        var TaxId = dbContext.TblManagePartnersProducts.FirstOrDefault(x => x.TaxId == item.TaxRateId && x.TenantId == AppConstant.LoggedInTenantId)?.TaxId;
-                        var taxDetails= dbContext.TblTaxRates.FirstOrDefault(x => x.TaxRateId == TaxId && x.TenantId == AppConstant.LoggedInTenantId);
+                        var TaxId = dbContext.TblManagePartnersProducts.FirstOrDefault(x => x.TaxId == item.TaxRateId && x.TenantId == claimsProperty.GetTenantId())?.TaxId;
+                        var taxDetails= dbContext.TblTaxRates.FirstOrDefault(x => x.TaxRateId == TaxId && x.TenantId == claimsProperty.GetTenantId());
                         if (taxDetails != null)
                         {
                             item.MunicipalityTax = taxDetails.Municipality ?? 0;
@@ -745,7 +745,7 @@ namespace ShutterManagement.Business.Services
 
                     if (isSubtenant)
                     {
-                        var markup = dbContext.TblManagePartnersProducts.FirstOrDefault(x => x.ProductId == item.ProductId && x.TenantId == AppConstant.LoggedInTenantId);
+                        var markup = dbContext.TblManagePartnersProducts.FirstOrDefault(x => x.ProductId == item.ProductId && x.TenantId == claimsProperty.GetTenantId());
                         productOwnMarkup += markup?.MarkupType switch
                         {
                             "Percentage" => (productPrice + productOwnMarkup) * (markup.PartnerSellingPrice ?? 0) / 100,
@@ -856,8 +856,8 @@ namespace ShutterManagement.Business.Services
                                 .FirstOrDefault(x => x.ProductType.ToString() == info[1] &&
                                                      (x.MaterialName == info[2] || x.RawMaterialId.ToString() == info[2]) &&
                                                      x.IsActive == true &&
-                                                     (x.TenantId == AppConstant.LoggedInTenantId ||
-                                                      x.TenantId.ToString() == AppConstant.LoggedInParentTenantId));
+                                                     (x.TenantId == claimsProperty.GetTenantId() ||
+                                                      x.TenantId.ToString() == claimsProperty.GetParentTenantId()));
 
                             val = material?.UnitCost;
 
@@ -868,8 +868,8 @@ namespace ShutterManagement.Business.Services
                                     .Where(x => x.RawMaterialId == material.RawMaterialId &&
                                                 x.ComponentId.ToString() == componentId.ToString() &&
                                                 !x.IsDelete == true &&
-                                                (x.TenantId == AppConstant.LoggedInTenantId ||
-                                                 x.TenantId.ToString() == AppConstant.LoggedInParentTenantId))
+                                                (x.TenantId == claimsProperty.GetTenantId() ||
+                                                 x.TenantId.ToString() == claimsProperty.GetParentTenantId()))
                                     .Select(x => x.WasteFactor)
                                     .FirstOrDefault();
 
@@ -883,8 +883,8 @@ namespace ShutterManagement.Business.Services
                                 .Where(x => x.ProductType.ToString() == info[1] &&
                                             (x.MaterialName == info[2] || x.RawMaterialId.ToString() == info[2]) &&
                                             x.IsActive == true &&
-                                            (x.TenantId == AppConstant.LoggedInTenantId ||
-                                             x.TenantId.ToString() == AppConstant.LoggedInParentTenantId))
+                                            (x.TenantId == claimsProperty.GetTenantId() ||
+                                             x.TenantId.ToString() == claimsProperty.GetParentTenantId()))
                                 .Select(x => x.UnitOfMeasurement)
                                 .FirstOrDefault();
 
@@ -924,7 +924,7 @@ namespace ShutterManagement.Business.Services
 
                 // Fetch the estimate
                 var estimate = GetAllQuerable()
-                    .Where(c => c.EstimateId == model.EstimateId && c.TenantId == AppConstant.LoggedInTenantId && c.IsDelete == false)
+                    .Where(c => c.EstimateId == model.EstimateId && c.TenantId == claimsProperty.GetTenantId() && c.IsDelete == false)
                     .FirstOrDefault();
 
                 if (estimate == null)
@@ -1098,7 +1098,7 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-                AppConstant.LoggedInTenantId = estimate.TenantId;
+                claimsProperty.GetTenantId() = estimate.TenantId;
 
                 Pagination filterValue = new Pagination
                 {
@@ -1238,7 +1238,7 @@ namespace ShutterManagement.Business.Services
             {
                 // Default to logged-in tenant
                 FileLogger.Log("No TenantId provided, fetching for the logged-in tenant.");
-                query = query.Where(x => x.TenantId == AppConstant.LoggedInTenantId);
+                query = query.Where(x => x.TenantId == claimsProperty.GetTenantId());
             }
             else
             {
@@ -1246,7 +1246,7 @@ namespace ShutterManagement.Business.Services
                 var isRelatedTenant = await tenantService.GetAllQuerable()
                     .AnyAsync(x =>
                         x.TenantId.ToString() == filter.TenantId &&
-                        x.ParentTenantId == AppConstant.LoggedInTenantId &&
+                        x.ParentTenantId == claimsProperty.GetTenantId() &&
                         !x.IsDelete == true);
 
                 if (!isRelatedTenant)
@@ -1375,7 +1375,7 @@ namespace ShutterManagement.Business.Services
                                join j5 in dbContext.TblUsers on j1.AssignedPersonnel equals j5.Id into Users
                                from j5 in Users.DefaultIfEmpty()
                                join j6 in dbContext.TblContacts on j1.ContactId equals j6.ContactId
-                               where j1.TenantId == AppConstant.LoggedInTenantId && j1.IsDelete == false && j1.JobId == e.JobId
+                               where j1.TenantId == claimsProperty.GetTenantId() && j1.IsDelete == false && j1.JobId == e.JobId
                                select new JobDetails
                                {
                                    JobName = j1.JobName,
@@ -1505,8 +1505,8 @@ namespace ShutterManagement.Business.Services
 
         private async Task<bool> ValidateTenantExists()
         {
-            FileLogger.Log($"Checking if tenant with ID {AppConstant.LoggedInTenantId} exists...");
-            var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+            FileLogger.Log($"Checking if tenant with ID {claimsProperty.GetTenantId()} exists...");
+            var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
             if (!isTenantExists)
             {
                 FileLogger.Log("Tenant not found.");
@@ -1563,7 +1563,7 @@ namespace ShutterManagement.Business.Services
         {
             FileLogger.Log($"Checking if estimate with name {estimateName} already exists...");
             var isEstimateExists = (await GetAll())
-                .Where(c => (estimateId != Guid.Empty ? c.EstimateId != estimateId : true) && c.EstimateName == estimateName && c.TenantId == AppConstant.LoggedInTenantId && c.IsDelete == false && c.JobId == jobId)
+                .Where(c => (estimateId != Guid.Empty ? c.EstimateId != estimateId : true) && c.EstimateName == estimateName && c.TenantId == claimsProperty.GetTenantId() && c.IsDelete == false && c.JobId == jobId)
                 .ToList();
             if (isEstimateExists.Count > 0)
             {
@@ -1650,7 +1650,7 @@ namespace ShutterManagement.Business.Services
                 TermsCondition = model.TermsCondition,
                 CreatedBy = AppConstant.LoggedInUserID,
                 CreatedAt = DateTime.Now,
-                TenantId = AppConstant.LoggedInTenantId,
+                TenantId = claimsProperty.GetTenantId(),
                 IsActive = true,
                 IsDelete = false,
                 TotalPrice = SumofSubtotalandAdditionalCost,
@@ -1793,7 +1793,7 @@ namespace ShutterManagement.Business.Services
                 IsDelete = false,
                 CreatedAt = DateTime.Now,
                 CreatedBy = AppConstant.LoggedInUserID,
-                TenantId = AppConstant.LoggedInTenantId,
+                TenantId = claimsProperty.GetTenantId(),
                 Label = windowData.Label,
                 AddressId = windowData.AddressId,
                 ArchHeight = windowData.ArchHeight,
@@ -1857,7 +1857,7 @@ namespace ShutterManagement.Business.Services
                 Length = productData.Length,
                 Markup = productData.Markup,
                 ProductType = productData.ProductType,
-                TenantId = AppConstant.LoggedInTenantId,
+                TenantId = claimsProperty.GetTenantId(),
                 ProductId = productData.ProductId,
                 EstimateWindowProductId = Guid.NewGuid(),
                 WindowProductId = windowProductData.WindowProductId,
@@ -1911,7 +1911,7 @@ namespace ShutterManagement.Business.Services
                     MunicipilityTax = option.MunicipalityTaxAmount ?? 0.0m,
                     CreatedAt = DateTime.Now,
                     UpdatedAt = DateTime.Now,
-                    TenantId = AppConstant.LoggedInTenantId,
+                    TenantId = claimsProperty.GetTenantId(),
                     CreatedBy = AppConstant.LoggedInUserID,
                     ModifiedBy = AppConstant.LoggedInUserID,
                     IsActive = true,
@@ -1941,7 +1941,7 @@ namespace ShutterManagement.Business.Services
                                where w.WindowId == windowId
                                      && w.IsDelete == false
                                      && j.IsDelete == false
-                                     && c.IsDelete == false && c.TenantId == AppConstant.LoggedInTenantId
+                                     && c.IsDelete == false && c.TenantId == claimsProperty.GetTenantId()
                                select c.IsTaxExemption).FirstOrDefault();
 
             return isTaxExempt ?? false;
@@ -2031,7 +2031,7 @@ namespace ShutterManagement.Business.Services
                 Notes = componentData.Notes,
                 ProductType = componentData.ProductType,
                 PricingExpression = ExpressionFormulae,
-                TenantId = AppConstant.LoggedInTenantId,
+                TenantId = claimsProperty.GetTenantId(),
                 Wastefactor = Wastefactor,
                 ProductTypeName = ProductName,
                 ComponentPrice = Price,
@@ -2079,7 +2079,7 @@ namespace ShutterManagement.Business.Services
                 IsActive = true,
                 CreatedAt = DateTime.Now,
                 CreatedBy = AppConstant.LoggedInUserID,
-                TenantId = AppConstant.LoggedInTenantId,
+                TenantId = claimsProperty.GetTenantId(),
                 EstimateId = estimateId,
                 IsCutSheet = materialData.IsCutSheet,
                 MaterialName = materialData.MaterialName,
@@ -2172,11 +2172,11 @@ namespace ShutterManagement.Business.Services
             {
 
                 var EstimationCount = GetAllQuerable().OrderByDescending(p => p.CreatedAt)
-                   .Where(c => c.TenantId == AppConstant.LoggedInTenantId && c.CreatedAt.Value.Date == DateTime.Today.Date)
+                   .Where(c => c.TenantId == claimsProperty.GetTenantId() && c.CreatedAt.Value.Date == DateTime.Today.Date)
                    .ToList().Count();
                 EstimationCount += 1;
 
-                var EstimationCode = GenerateUniqueId.GenerateUniqueIds(ModuleName.Estimation, AppConstant.LoggedInCompanyCode, EstimationCount);
+                var EstimationCode = GenerateUniqueId.GenerateUniqueIds(ModuleName.Estimation, claimsProperty.GetCompanyCode(), EstimationCount);
                 res.IsSuccess = true;
                 res.Data = EstimationCode;
                 res.Message = "Estimation Code Created";
@@ -2198,7 +2198,7 @@ namespace ShutterManagement.Business.Services
             var result = new OptionPriceResult();
 
             bool isTenant = await tenantService.AnyAsync(t =>
-                t.TenantId == AppConstant.LoggedInTenantId &&
+                t.TenantId == claimsProperty.GetTenantId() &&
                 (t.ParentTenantId == null || string.IsNullOrEmpty(t.ParentTenantId.ToString())) &&
                 t.IsActive == true && t.IsDelete == false);
 
@@ -2266,7 +2266,7 @@ namespace ShutterManagement.Business.Services
         {
             var markup = dbContext.TblManagePartnersProductsOptions
                 .FirstOrDefault(x => x.OptionTypeId.ToString() == optionTypeId &&
-                                     x.TenantId == AppConstant.LoggedInTenantId &&
+                                     x.TenantId == claimsProperty.GetTenantId() &&
                                      x.IsDelete == false &&
                                      x.IsActive == true &&
                                      x.IsAvailable == true);
@@ -2295,7 +2295,7 @@ namespace ShutterManagement.Business.Services
             if (taxId != null)
             {
                 var subtenantTax = dbContext.TblTaxRates
-                    .Where(x => x.TaxRateId == taxId && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId)
+                    .Where(x => x.TaxRateId == taxId && x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId())
                     .FirstOrDefault();
 
                 if (subtenantTax != null)

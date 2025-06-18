@@ -35,7 +35,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsStripeConfigurationTenantExist = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete ==false).FirstOrDefault();
+                var IsStripeConfigurationTenantExist = GetAllQuerable().Where(x => x.TenantId == claimsProperty.GetTenantId() && x.IsDelete ==false).FirstOrDefault();
                 if (IsStripeConfigurationTenantExist != null)
                 {
                     IsStripeConfigurationTenantExist.SecretKey = StripeConfiguration.SecretKey;
@@ -60,7 +60,7 @@ namespace ShutterManagement.Business.Services
                         SuccessUrl = StripeConfiguration.successUrl,
                         CancelUrl = StripeConfiguration.cancelUrl,
                         WebhookSecret=StripeConfiguration.WebhookSecret,
-                        TenantId = AppConstant.LoggedInTenantId,
+                        TenantId = claimsProperty.GetTenantId(),
                         IsDelete= false,
                         IsActive=true,
                         CreatedAt = DateTime.Now,
@@ -83,7 +83,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<StripeConfigurationVm> responseVm = new ResponseVm<StripeConfigurationVm>();
             try
             {
-                var StripeConfigurationVm = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false).FirstOrDefault();
+                var StripeConfigurationVm = GetAllQuerable().Where(x => x.TenantId == claimsProperty.GetTenantId() && x.IsDelete == false).FirstOrDefault();
                 responseVm.Data = new StripeConfigurationVm
                 {
                     Id = StripeConfigurationVm?.Id,
@@ -139,7 +139,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var IsStripeConfiExists = GetAllQuerable().Where(x => x.IsDelete == false && x.Id == configurationid &&
-                x.TenantId == AppConstant.LoggedInTenantId
+                x.TenantId == claimsProperty.GetTenantId()
                 ).FirstOrDefault();
                 if(IsStripeConfiExists!=null)
                 {

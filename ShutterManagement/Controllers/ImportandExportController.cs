@@ -49,7 +49,7 @@ namespace ShutterManagement.Controllers
             }
             try
             {
-                var tenantId = AppConstant.LoggedInTenantId;
+                var tenantId = claimsProperty.GetTenantId();
                 var importFolder = Path.Combine("Files", tenantId.ToString(), "Import");
                 if (!Directory.Exists(importFolder))
                 {

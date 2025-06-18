@@ -232,7 +232,7 @@ namespace ShutterManagement.Services
             try
             {
                 var IsUserExists = (await GetAll()).Where(x => x.IsDelete == false 
-                && x.IsActive == true && x.Id == AppConstant.LoggedInUserID && x.Pwd == AesEncryptionHelper.Encrypt(vm.OldPassWord ?? "") && x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
+                && x.IsActive == true && x.Id == AppConstant.LoggedInUserID && x.Pwd == AesEncryptionHelper.Encrypt(vm.OldPassWord ?? "") && x.TenantId == claimsProperty.GetTenantId()).FirstOrDefault();
                 if(IsUserExists != null)
                 {
                     IsUserExists.Pwd = AesEncryptionHelper.Encrypt(vm.PassWord ?? "");
@@ -264,13 +264,13 @@ namespace ShutterManagement.Services
             {
                 var UserExistsDetails = GetAllQuerable().Where(x => x.IsDelete == false && x.IsActive == true &&
                 x.Id == (AppConstant.LoggedInUserID)
-                && x.TenantId == AppConstant.LoggedInTenantId
+                && x.TenantId == claimsProperty.GetTenantId()
                 ).FirstOrDefault();
                 if (UserExistsDetails != null)
                 {
 
                     bool IsPhoneExists = await AnyAsync(x => x.IsDelete == false &&
-                    (x.Phone == profileUpdate.Phone) && x.Id != AppConstant.LoggedInUserID && x.TenantId == AppConstant.LoggedInTenantId);
+                    (x.Phone == profileUpdate.Phone) && x.Id != AppConstant.LoggedInUserID && x.TenantId == claimsProperty.GetTenantId());
                     if (IsPhoneExists)
                     {
                         result.Message = "Phone " + AppConstant.AlreadyExists;
@@ -278,7 +278,7 @@ namespace ShutterManagement.Services
                     }
 
                     //bool IsEmailExists = await AnyAsync(x => x.IsDelete == false &&
-                    //  (x.Email == profileUpdate.Email) && x.Id != AppConstant.LoggedInUserID && x.TenantId == AppConstant.LoggedInTenantId);
+                    //  (x.Email == profileUpdate.Email) && x.Id != AppConstant.LoggedInUserID && x.TenantId == claimsProperty.GetTenantId());
                     //if (IsEmailExists)
                     //{
                     //    result.Message = "Email " + AppConstant.AlreadyExists;
@@ -333,7 +333,7 @@ namespace ShutterManagement.Services
             try
             {
                 var address = await GetAllQuerable()
-                    .Where(c => c.Id == AppConstant.LoggedInUserID && c.IsActive == true && c.IsDelete == false && c.TenantId == AppConstant.LoggedInTenantId)
+                    .Where(c => c.Id == AppConstant.LoggedInUserID && c.IsActive == true && c.IsDelete == false && c.TenantId == claimsProperty.GetTenantId())
                     .Select(c => new UserResponse
                     {
                         FirstName = c.FirstName,
@@ -530,7 +530,7 @@ namespace ShutterManagement.Services
             FileLogger.Log("Generate Token start");
             var claims = new List<Claim>
     {
-        new Claim("tenant_id", AppConstant.LoggedInTenantId.ToString()),
+        new Claim("tenant_id", claimsProperty.GetTenantId().ToString()),
         new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
         new Claim(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64)
     };
@@ -554,7 +554,7 @@ namespace ShutterManagement.Services
 
             string TokenValue = tokenHandler.WriteToken(token);
 
-            var GHLConfig = gHLConfiguration.GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true
+            var GHLConfig = gHLConfiguration.GetAllQuerable().Where(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true
             && x.IsDelete == false).FirstOrDefault();
             if(GHLConfig != null)
             {
