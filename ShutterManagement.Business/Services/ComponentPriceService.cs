@@ -276,12 +276,14 @@ namespace ShutterManagement.Business.Services
                              join productType in dbContext.MstProductTypes on product.ProductType equals productType.ProductId.ToString()
                              join productComponent in dbContext.TblProductComponents.Where(x => x.IsActive == true) on product.ProductId equals productComponent.ProductId into componentJoin
                              from productComponent in componentJoin.DefaultIfEmpty()
-                             join expression in dbContext.TblExpressions.Where(y => y.IsActive == true) on productComponent.PricingExpression equals expression.Id.ToString() into expressionJoin
-                             from expression in expressionJoin.DefaultIfEmpty()
+                             join componentExpression in dbContext.TblExpressions.Where(y => y.IsActive == true) on productComponent.PricingExpression equals componentExpression.Id.ToString() into expressionJoin
+                             from componentExpression in expressionJoin.DefaultIfEmpty()
                              join component in dbContext.TblComponents.Where(y => y.IsActive == true) on productComponent.ComponentId equals component.ComponentId into compJoin
                              from component in compJoin.DefaultIfEmpty()
                              join componentMaterial in dbContext.TblComponentMaterials.Where(y => y.IsActive == true) on component.ComponentId equals componentMaterial.ComponentId into compMatJoin
                              from componentMaterial in compMatJoin.DefaultIfEmpty()
+                             join materialExpression in dbContext.TblExpressions.Where(y => y.IsActive == true) on componentMaterial.MaterialPricingExpression equals materialExpression.Id into materialExpressionJoin
+                             from materialExpression in materialExpressionJoin.DefaultIfEmpty()
                              join material in dbContext.TblRawMaterials.Where(y => y.IsActive == true) on componentMaterial.RawMaterialId equals material.RawMaterialId into materialJoin
                              from material in materialJoin.DefaultIfEmpty()
                              where windowProduct.WindowProductId == windowProductId
@@ -319,8 +321,10 @@ namespace ShutterManagement.Business.Services
                                  ComponentName = component.ComponentName,
                                  MarkupPercentage = component.MarkupPercentage,
                                  PricingExpression = productComponent.PricingExpression,
+                                 MaterialPricingExpression = componentMaterial.MaterialPricingExpression.ToString(),
                                  Price = component.Price,
-                                 ExpressionFormulae = expression.ExpressionFormulae,
+                                 ExpressionFormulae = componentExpression.ExpressionFormulae,
+                                 MaterialExpressionFormulae = materialExpression.ExpressionFormulae,
                                  RawMaterialId = componentMaterial.RawMaterialId,
                                  MaterialQuantity = componentMaterial.Quantity,
                                  WasteFactor = componentMaterial.WasteFactor,

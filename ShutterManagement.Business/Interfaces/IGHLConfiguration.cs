@@ -19,15 +19,15 @@ namespace ShutterManagement.Business.Interfaces
 
         Task GetGHLConfiguration(string Id);
 
-        Task<IResponseVm<string>> CheckGHLConfiguration();
-        Task<IResponseVm<string>> CheckStageMapping();
+        Task<IResponseVm<string>> CheckGHLConfiguration(Guid? LoggedInTenantId = null);
+        Task<IResponseVm<string>> CheckStageMapping(Guid? LoggedInTenantId = null);
 
         Task<IResponseVm<string>> GetOauthGHL();
 
         Task<IResponseVm<string>> MapGHLStagesStages(StageMappingRequest request);
 
 
-        Task<IResponseVm<List<StageMapping>>> GetGHLStagesMappings();
+        Task<IResponseVm<List<StageMapping>>> GetGHLStagesMappings(Guid? LoggedInTenantId = null);
 
         Task<IResponseVm<string>> DeleteGHLConfiguration(Guid? configurationid);
         Task<IResponseVm<string>> UpdateGHlConfigforPartner(CreateGHLConfigforPartner model);

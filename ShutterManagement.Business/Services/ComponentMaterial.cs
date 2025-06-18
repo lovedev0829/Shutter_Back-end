@@ -52,6 +52,8 @@ namespace ShutterManagement.Business.Services
 
                             if (!existingMaterial)
                             {
+                                Guid MaterialPricingExp = Guid.Empty;
+                                Guid.TryParse(material.MaterialPricingExpression, out MaterialPricingExp);
                                 TblComponentMaterial newComponentMaterial = new TblComponentMaterial
                                 {
                                     ComponentId = model.ComponentId,
@@ -62,7 +64,8 @@ namespace ShutterManagement.Business.Services
                                     CreatedBy = AppConstant.LoggedInUserID,
                                     IsActive = true,
                                     IsDelete = false,
-                                    TenantId = AppConstant.LoggedInTenantId
+                                    TenantId = AppConstant.LoggedInTenantId,
+                                    MaterialPricingExpression = !string.IsNullOrEmpty(material.MaterialPricingExpression) ? MaterialPricingExp : null
                                 };
                                 await Add(newComponentMaterial);
 
@@ -180,6 +183,7 @@ namespace ShutterManagement.Business.Services
 
                         IsComponentMaterialExists.RawMaterialId = model.RawMaterialId;
                         IsComponentMaterialExists.Quantity = model.Quantity;
+                        IsComponentMaterialExists.MaterialPricingExpression = model.MaterialPricingExpression != Guid.Empty ?  model.MaterialPricingExpression : null;
                         IsComponentMaterialExists.WasteFactor = model.WasteFactor;
                         IsComponentMaterialExists.UpdatedAt = DateTime.Now;
                         IsComponentMaterialExists.ModifiedBy = AppConstant.LoggedInUserID;

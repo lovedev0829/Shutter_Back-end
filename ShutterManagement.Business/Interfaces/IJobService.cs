@@ -15,7 +15,7 @@ namespace ShutterManagement.Business.Interfaces
 {
     public interface IJobService : IGenericRepository<TblJob>
     {
-        Task<IResponseVm<string>> Create(CreateJob model);
+        Task<IResponseVm<string>> Create(CreateJob model, Guid? LoggedInTenantId = null);
         Task<IResponseVm<string>> UpdateJob(UpdateJob model);
         Task<IResponseVm<string>> DeleteJob(string Id);
         Task<IResponseVm<string>> ActiveInactive(string Id);
@@ -25,7 +25,7 @@ namespace ShutterManagement.Business.Interfaces
 
         Task<IResponseVm<List<GetAllJobsSubtenant_tenant>>> GetAllJobsTenant_SubTenant(Pagination filter);
 
-        Task<IResponseVm<List<Opportunity>>> SyncOpportunitiesFromGhl();
+        Task<IResponseVm<List<Opportunity>>> SyncOpportunitiesFromGhl(Guid? LoggedInTenantId = null);
         Task<IResponseVm<string>> UpdateOpportunityFromGHL(GHLOpportunityTrigger opportunitydata);
         Task<IResponseVm<string>> OpportunityFromGHL(GHLOpportunityTrigger opportunitydata);
 

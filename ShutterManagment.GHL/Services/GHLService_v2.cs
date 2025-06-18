@@ -25,6 +25,7 @@ using System.Numerics;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using static Microsoft.AspNetCore.Hosting.Internal.HostingApplication;
 
 namespace ShutterManagement.GHL.Services
 {
@@ -37,7 +38,7 @@ namespace ShutterManagement.GHL.Services
       //  private string accesstoken = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoQ2xhc3MiOiJMb2NhdGlvbiIsImF1dGhDbGFzc0lkIjoiUFRuSUNNTjBtS3IwM2t6SlFxUFEiLCJzb3VyY2UiOiJJTlRFR1JBVElPTiIsInNvdXJjZUlkIjoiNjdlMTFjNzJjOTBhMmY4MTIwMGNjMTJhLW04bXRzcXJuIiwiY2hhbm5lbCI6Ik9BVVRIIiwicHJpbWFyeUF1dGhDbGFzc0lkIjoiUFRuSUNNTjBtS3IwM2t6SlFxUFEiLCJvYXV0aE1ldGEiOnsic2NvcGVzIjpbImNvbnZlcnNhdGlvbnMvbWVzc2FnZS5yZWFkb25seSIsImNvbnZlcnNhdGlvbnMvbWVzc2FnZS53cml0ZSJdLCJjbGllbnQiOiI2N2UxMWM3MmM5MGEyZjgxMjAwY2MxMmEiLCJjbGllbnRLZXkiOiI2N2UxMWM3MmM5MGEyZjgxMjAwY2MxMmEtbThtdHNxcm4ifSwiaWF0IjoxNzQyOTg3NTQyLjIwMywiZXhwIjoxNzQzMDczOTQyLjIwM30.fMjXamfhw4jgfLo2tzDKJS1kA_S89MX02jPxTCheOv4UwJrIjd1DJD3RtW8FIpmOhEvrCaZGw5MKVzqczzzDrhGx3Q_dfJ3ZdMKzH_q8D4pgYKo0V7TlKXH6wp2mu63__iV7ZfWO2XxVFBS9zyg5O2fDYhx209owntBKEYK5DjDfnyxeuryzGBDTaAP7fCor_BFmlcgtpmHpKsy3XNV-faFY-Ha3-XTGN4VQwFv2JAkEKNshJmnBbuF2UdoKcWjCs2C4O62eicNGhj0KC-JelG81aTQr1rqHNC3jdEGT7FPSajkdpJuqzAfrWBitm4FE0QGVe7QVLonfVTzX_om0B8h3QsTtrHKWGyZXaddrtsV-1ssjeE9ojMM2qiyGnDE0VFTWcDicbySyB24bWK5x5VO1f79XpkSKZHgBYeU9vKtYaZcRVE3gcnKNKYT9wl82ARYVKmzHSYv5IEJfdq4epmL9TmuERuowW31aznFFgzuluFqED2dockpRUrDqZjtAklT-66RGex3Xfiu6SW3ImsKscZm5gmjUtAEEY0whoP4FIJf4VWFuId8DEmJhBKRSp2gJDqhro5yuNv_OxLdwOJK07N2AjhjW6TP7L856NJzJBUUR-KonLSuJ9C1tU0C8Y2BDioDEn-P0Qonp38aoCzSnmHQiaYnpv0iNnWoa6Ws";
 
         public GHLService_v2(HttpClient httpClient, ShutterDBContext dBContext,
-            IHttpContextAccessor _httpContextAccessor)
+            IHttpContextAccessor _httpContextAccessor )
         {
             _httpClient = httpClient;
             this.dBContext = dBContext;
@@ -76,12 +77,17 @@ namespace ShutterManagement.GHL.Services
             }
         }
 
-        public async Task<IResponseVm<string>> GetAndSaveDefaultPipelineAndStage()
+
+
+
+
+
+        public async Task<IResponseVm<string>> GetAndSaveDefaultPipelineAndStage(Guid? LoggedInTenantId = null)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-
+                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : AppConstant.LoggedInTenantId);
                 var pipelineResponse = await GetAllPipelinesWithStagesAsync();
 
                 if (pipelineResponse?.Pipelines == null || !pipelineResponse.Pipelines.Any())
@@ -111,8 +117,10 @@ namespace ShutterManagement.GHL.Services
                 }
 
                 var existingStages = dBContext.TblGhlStages
-                    .Where(x => x.GhlPipelineId == targetPipeline.Id && x.TenantId==AppConstant.LoggedInTenantId)
+                    .Where(x => x.GhlPipelineId == targetPipeline.Id && x.TenantId== LoggedInTenantId)
                     .ToList();
+
+                FileLogger.Log($"Exception occurred GHLContact is null.{existingStages}");
 
                 var existingStagesDict = existingStages.ToDictionary(x => x.GhlStageId, x => x);
 
@@ -134,7 +142,7 @@ namespace ShutterManagement.GHL.Services
                         existingStage.StageOrder = i + 1; // Assigning order for sequential storage
                         existingStage.GhlLastSync = DateTime.Now;
                         existingStage.UpdatedAt = DateTime.Now;
-                        existingStage.ModifiedBy = AppConstant.LoggedInTenantId;
+                        existingStage.ModifiedBy = LoggedInTenantId;
                         stagesToUpdate.Add(existingStage);
                     }
                     else
@@ -149,8 +157,8 @@ namespace ShutterManagement.GHL.Services
                             StageOrder = i + 1, // Assigning order for new records
                             GhlLastSync = DateTime.Now,
                             CreatedAt = DateTime.Now,
-                            TenantId = AppConstant.LoggedInTenantId,
-                            CreatedBy = AppConstant.LoggedInUserID,
+                            TenantId = LoggedInTenantId,
+                            CreatedBy = LoggedInTenantId,
                             IsActive = true,
                         });
                     }
@@ -168,7 +176,7 @@ namespace ShutterManagement.GHL.Services
 
                 await dBContext.SaveChangesAsync();
 
-                var isUpdated = await UpdateLastSyncConfigurationAsync();
+                var isUpdated = await UpdateLastSyncConfigurationAsync(LoggedInTenantId);
 
                 if (!isUpdated)
                 {
@@ -190,12 +198,14 @@ namespace ShutterManagement.GHL.Services
             return responseVm;
         }
 
-        public async Task<bool> UpdateLastSyncConfigurationAsync()
+        public async Task<bool> UpdateLastSyncConfigurationAsync(Guid? LoggedInTenantId = null)
         {
             try
             {
+                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : AppConstant.LoggedInTenantId);
+
                 var config = await dBContext.TblGhlconfigurations
-                                             .FirstOrDefaultAsync(c => c.TenantId == AppConstant.LoggedInTenantId);
+                                             .FirstOrDefaultAsync(c => c.TenantId == LoggedInTenantId);
 
                 if (config == null)
                 {
@@ -1064,7 +1074,7 @@ namespace ShutterManagement.GHL.Services
             return users;
         }
 
-        public async Task<IResponseVm<List<User>>> GetUsersByCalendarIdAsync()
+        public async Task<IResponseVm<List<User>>> GetUsersByCalendarIdAsync(Guid? LoggedInTenantId = null)
         {
             var responseVm = new ResponseVm<List<User>>
             {
@@ -1073,6 +1083,8 @@ namespace ShutterManagement.GHL.Services
 
             try
             {
+                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : AppConstant.LoggedInTenantId);
+
                 var calendarRequestUrl = $"{AppConstant.GHL_BaseAddress}/calendars/?locationId={AppConstant.GHL_Locationd}";
                 using var calendarRequest = new HttpRequestMessage(HttpMethod.Get, calendarRequestUrl);
                 calendarRequest.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
@@ -1130,7 +1142,7 @@ namespace ShutterManagement.GHL.Services
 
                     if (responseVm.IsSuccess)
                     {
-                        var usersyncResponse=await SaveOrUpdateGHLUsersAsync(responseVm.Data);
+                        var usersyncResponse=await SaveOrUpdateGHLUsersAsync(responseVm.Data, LoggedInTenantId);
                         if(usersyncResponse.IsSuccess)
                         {
 
@@ -1164,16 +1176,17 @@ namespace ShutterManagement.GHL.Services
             return responseVm;
         }
 
-        public async Task<IResponseVm<string>> SaveOrUpdateGHLUsersAsync(List<User> users)
+        public async Task<IResponseVm<string>> SaveOrUpdateGHLUsersAsync(List<User> users ,Guid? LoggedInTenantId=null)
         {
             var responseVm = new ResponseVm<string>();
             var now = DateTime.Now;
 
             try
             {
+                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : AppConstant.LoggedInTenantId);
                 // 1. Get existing users for the tenant
                 var existingUsers = await dBContext.TblGhlUsers
-                    .Where(u => u.TenantId == AppConstant.LoggedInTenantId && u.IsActive==true && u.IsDelete==false)
+                    .Where(u => u.TenantId == LoggedInTenantId && u.IsActive==true && u.IsDelete==false)
                     .ToListAsync();
 
                 var incomingEmails = users
@@ -1208,7 +1221,7 @@ namespace ShutterManagement.GHL.Services
                         existingUser.GhlCalendarName = user.CalendarName;
                         existingUser.GhlLastSync = now;
                         existingUser.UpdatedAt = now;
-                        existingUser.ModifiedBy = AppConstant.LoggedInUserID;
+                        existingUser.ModifiedBy = LoggedInTenantId;
                     }
                     else
                     {
@@ -1224,7 +1237,7 @@ namespace ShutterManagement.GHL.Services
                             GhlCalendarId = user.CalendarId,
                             GhlCalendarName = user.CalendarName,
                             GhlLastSync = now,
-                            TenantId = AppConstant.LoggedInTenantId,
+                            TenantId = LoggedInTenantId,
                             CreatedBy = AppConstant.LoggedInUserID,
                             UpdatedAt = now,
                             ModifiedBy = AppConstant.LoggedInUserID,
@@ -1241,7 +1254,7 @@ namespace ShutterManagement.GHL.Services
                         var systemUser = await dBContext.TblUsers
                             .FirstOrDefaultAsync(u =>
                                 u.Email == user.email &&
-                                u.TenantId == AppConstant.LoggedInTenantId &&
+                                u.TenantId == LoggedInTenantId &&
                                 u.IsActive==true && u.IsDelete==false);
 
                         if (systemUser != null)
@@ -1270,15 +1283,16 @@ namespace ShutterManagement.GHL.Services
         }
 
 
-        public async Task<IResponseVm<List<TblGhlUser>>> GetGHLUsersByCalendarId()
+        public async Task<IResponseVm<List<TblGhlUser>>> GetGHLUsersByCalendarId(Guid? LoggedInTenantId=null)
         {
             IResponseVm<List<TblGhlUser>> responseVm = new ResponseVm<List<TblGhlUser>>();
 
             try
             {
+                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : AppConstant.LoggedInTenantId);
 
                 var users = await dBContext.TblGhlUsers
-                    .Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete==false && (x.GhlCalendarId == AppConstant.GHL_CalendarName ||  x.GhlCalendarName == AppConstant.GHL_CalendarName))
+                    .Where(x => x.TenantId == LoggedInTenantId && x.IsDelete==false && (x.GhlCalendarId == AppConstant.GHL_CalendarName ||  x.GhlCalendarName == AppConstant.GHL_CalendarName))
                     .ToListAsync();
 
                 if (users != null && users.Count > 0)
@@ -1414,6 +1428,109 @@ namespace ShutterManagement.GHL.Services
 
             return responseVm;
         }
+
+
+
+        public async Task<IResponseVm<string>> SyncGhlCustomFields(Guid? LoggedInTenantId = null)
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+
+            try
+            {
+                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : AppConstant.LoggedInTenantId);
+
+                string url = $"{AppConstant.GHL_BaseAddress}/locations/{AppConstant.GHL_Locationd}/customFields?model=all";
+
+                var request = new HttpRequestMessage(HttpMethod.Get, url);
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
+                request.Headers.Add("Version", "2021-07-28");
+                request.Headers.Add("Accept", "application/json");
+
+                var response = await _httpClient.SendAsync(request);
+                var jsonString = await response.Content.ReadAsStringAsync();
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    responseVm.Message = $"Failed to fetch custom fields: {response.StatusCode}, Body: {jsonString}";
+                    return responseVm;
+                }
+
+                var fieldResponse = JsonConvert.DeserializeObject<GhlCustomFieldResponse>(jsonString);
+
+                if (fieldResponse?.customFields == null || !fieldResponse.customFields.Any())
+                {
+                    responseVm.Message = "No custom fields found.";
+                    return responseVm;
+                }
+
+                foreach (var field in fieldResponse.customFields)
+                {
+                    var existingField = await dBContext.TblGhlCustomFields
+                        .FirstOrDefaultAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.FieldName == field.name);
+
+                    if (existingField != null)
+                    {
+                        existingField.GhlFieldId = field.id;
+                        existingField.Model = field.model;
+                        existingField.FieldKey = field.fieldKey;
+                        existingField.Placeholder = field.placeholder;
+                        existingField.DataType = field.dataType;
+                        existingField.Position = field.position;
+                        existingField.DocumentType = field.documentType;
+                        existingField.ParentId = field.parentId;
+                        existingField.LocationId = field.locationId;
+                        existingField.DateAdded = field.dateAdded;
+                        existingField.IsStandard = field.standard;
+                        existingField.ModifiedAt = DateTime.Now;
+                        existingField.IsDelete = false;
+                        existingField.IsActive = true;
+                    }
+                    else
+                    {
+                        var newField = new TblGhlCustomField
+                        {
+                            Id = Guid.NewGuid(),
+                            GhlFieldId = field.id,
+                            FieldName = field.name,
+                            Model = field.model,
+                            FieldKey = field.fieldKey,
+                            Placeholder = field.placeholder,
+                            DataType = field.dataType,
+                            Position = field.position,
+                            DocumentType = field.documentType,
+                            ParentId = field.parentId,
+                            LocationId = field.locationId,
+                            DateAdded = field.dateAdded,
+                            IsStandard = field.standard,
+                            TenantId = AppConstant.LoggedInTenantId,
+                            CreatedAt = DateTime.Now,
+                            IsActive = true,
+                            IsDelete = false
+                        };
+
+                        dBContext.TblGhlCustomFields.Add(newField);
+                    }
+                }
+
+                await dBContext.SaveChangesAsync();
+
+                responseVm.IsSuccess = true;
+                responseVm.Message = "Custom fields synced and saved successfully.";
+            }
+            catch (Exception ex)
+            {
+                responseVm.Message = $"Exception: {ex.Message}";
+            }
+
+            return responseVm;
+        }
+
+
+
+
+
+
+
 
 
 

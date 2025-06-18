@@ -61,19 +61,45 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        public async Task<IResponseVm<JobStatusList>> GetJobStatusByName(string? JobstatusName)
+        public async Task<IResponseVm<JobStatusList>> GetJobStatusByName(string? JobstatusName ,Guid? Stageid =null)
         {
             IResponseVm<JobStatusList> responseVm = new ResponseVm<JobStatusList>();
 
             try
             {
-                var mapping = dBContext.MstJobStatuses
-                    .Where(x => x.JobStatusName == JobstatusName && x.IsActive == true)
-                    .Select(x => new JobStatusList
+
+                JobStatusList? mapping = null;
+
+                if (!string.IsNullOrEmpty(JobstatusName))
+                {
+                    mapping = dBContext.MstJobStatuses
+                        .Where(x => x.JobStatusName == JobstatusName && x.IsActive==true)
+                        .Select(x => new JobStatusList
+                        {
+                            JobStatusId = x.JobStatusId,
+                            JobStatusName = x.JobStatusName
+                        }).FirstOrDefault();
+                }
+
+                // Priority 2: Use stageId to get statusId if jobStatusName was not found or not provided
+                if (mapping == null && Stageid != null && Stageid != Guid.Empty)
+                {
+                    var stageMapping = dBContext.TblGhlStagesmappings
+                        .Where(x => x.StageId == Stageid && x.TenantId == AppConstant.LoggedInTenantId)
+                        .FirstOrDefault();
+
+                    if (stageMapping?.StatusId != null)
                     {
-                        JobStatusId = x.JobStatusId,
-                        JobStatusName = x.JobStatusName
-                    }).FirstOrDefault();
+                        mapping = dBContext.MstJobStatuses
+                            .Where(x => x.JobStatusId == stageMapping.StatusId && x.IsActive==true)
+                            .Select(x => new JobStatusList
+                            {
+                                JobStatusId = x.JobStatusId,
+                                JobStatusName = x.JobStatusName
+                            }).FirstOrDefault();
+                    }
+                }
+
 
                 if (mapping != null)
                 {
@@ -226,6 +252,8 @@ namespace ShutterManagement.Business.Services
                     return new ResponseVm<string> { IsSuccess = false, Message = "Job status not found." };
 
                 var jobStatus = statusResponse.Data;
+
+                // if ghlstageid is not null then fetch id using getstagemapping id and then continue the process 
 
                 var stageResponse = await GetGHLStagesMappingsById(jobStatus.JobStatusId);
                 var stageMapping = stageResponse?.Data;
