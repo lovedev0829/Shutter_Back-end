@@ -366,6 +366,11 @@ namespace ShutterManagement.Business.Services
 
                 var filteredRecords = await vendorOrdersQuery.ToListAsync();
 
+                 var queryable = filteredRecords.AsQueryable();
+
+                queryable = Paginate.ApplyColumnFilters(queryable, filter.ColumnFilters);
+                queryable = Paginate.ApplySorting(queryable, filter.SortColumn, filter.SortDirection);
+
                 foreach (var item in filteredRecords)
                 {
                     var vendorOrderItems = await vendorItemService.GetAllQuerable()
@@ -405,10 +410,7 @@ namespace ShutterManagement.Business.Services
                     .ToList();
 
 
-                var queryable = filteredRecords.AsQueryable();
-
-                queryable = Paginate.ApplyColumnFilters(queryable, filter.ColumnFilters);
-                queryable = Paginate.ApplySorting(queryable, filter.SortColumn, filter.SortDirection);
+               
 
                 var paginatedRecords = Paginate.Pagination(filteredRecords, filter);
 
