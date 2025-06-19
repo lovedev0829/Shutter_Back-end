@@ -2093,12 +2093,14 @@ namespace ShutterManagement.Business.Services
                     return; // Return early if material data not found
                 }
                 var materialPrice = buildEstimate.Data.Where(x => x.RawMaterialId == material.RawMaterialId && x.IsMaterialBreakdown == true).Select(y=> y.MaterialPrice ?? 0.0m).FirstOrDefault();
-                await AddMaterialToEstimate(materialData, (Guid)material.ComponentId, estimateId, WindowId, tblEstimateWindowProductComponent.EstimateWindowProductComponentId, materialPrice);
+                var MaterialExpressionFormulae = buildEstimate.Data.Where(x => x.RawMaterialId == material.RawMaterialId && x.IsMaterialBreakdown == true).Select(y=> y.MaterialExpressionFormulae ?? "").FirstOrDefault();
+                await AddMaterialToEstimate(materialData, (Guid)material.ComponentId, estimateId, WindowId, tblEstimateWindowProductComponent.EstimateWindowProductComponentId, materialPrice,MaterialExpressionFormulae ?? "");
 
             }
         }
 
-        private async Task AddMaterialToEstimate(TblRawMaterial materialData, Guid ComponentId, Guid estimateId, Guid WindowId, Guid EstimateWindowProductComponentId,decimal? materialPrice)
+        private async Task AddMaterialToEstimate(TblRawMaterial materialData, Guid ComponentId, Guid estimateId, Guid WindowId, Guid EstimateWindowProductComponentId,
+            decimal? materialPrice,string? MaterialExpressionFormulae)
         {
             FileLogger.Log($"Adding material {materialData.MaterialName} to estimate...");
             TblEstimateWindowProductComponentMaterial tblEstimateWindowProductComponentMaterial = new TblEstimateWindowProductComponentMaterial
@@ -2125,7 +2127,8 @@ namespace ShutterManagement.Business.Services
                 VendorId = materialData.VendorId,
                 RawMaterialId = materialData.RawMaterialId,
                 WindowId = WindowId,
-                MaterialPrice = materialPrice
+                MaterialPrice = materialPrice,
+                MaterialPricingExpression = MaterialExpressionFormulae,
             };
 
             await estimateWindowProductComponentMaterialService.Add(tblEstimateWindowProductComponentMaterial);
