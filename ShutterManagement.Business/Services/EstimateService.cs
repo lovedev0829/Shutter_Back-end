@@ -545,7 +545,7 @@ namespace ShutterManagement.Business.Services
                 else if (!IsBreakdown)
                 {
                     responseVm.Data = allProductData
-                        //.DistinctBy(x => x.WindowProdcutId)
+                        .DistinctBy(x => x.WindowProdcutId)
                         .OrderBy(x => x.ComponentName)
                         .ToList();
                     responseVm.TotalRecords = responseVm.Data.Count;
