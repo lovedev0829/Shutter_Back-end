@@ -472,7 +472,7 @@ namespace ShutterManagement.Business.Services
                 invoice.DueDate = updateInvoice.DueDate;
                 invoice.TotalAmount = updateInvoice.TotalAmount;
                 invoice.EstimateId = updateInvoice.EstimateId;
-                invoice.BalanceDue = updateInvoice.TotalAmount - invoice.PaidAmount;
+                invoice.BalanceDue = (updateInvoice.TotalAmount - invoice.PaidAmount) ?? 0.0m;
                 invoice.UpdatedAt = DateTime.Now;
                 invoice.ModifiedBy = AppConstant.LoggedInUserID;
 
@@ -560,6 +560,7 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
                 filter.RecordPerPage = 1000;
+                filter.CustomerId = model.ContactId.ToString();
                 var customerDetails = (await contactService.GetAll_Contact(filter,false))
                     .Data.FirstOrDefault(x => x.ContactId == model.ContactId && x.IsActive == true);
 

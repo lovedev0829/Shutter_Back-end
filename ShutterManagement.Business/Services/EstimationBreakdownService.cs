@@ -219,7 +219,7 @@ namespace ShutterManagement.Business.Services
                     .ToArray();
 
                 // Step 2: Build estimate from service
-                var estimateResponse = await estimateService.BuildEstimate(windowProductIds, true, EstimationId.ToString(), true);
+                var estimateResponse = await estimateService.BuildEstimate(windowProductIds, true, false,EstimationId.ToString(), true);
                 var estimateData = estimateResponse?.Data ?? new List<WindowProdcutDetailsForEstimate>();
 
                 // Step 3: Filter if WindowProductId(s) provided

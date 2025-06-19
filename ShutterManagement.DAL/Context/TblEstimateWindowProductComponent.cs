@@ -47,6 +47,8 @@ public partial class TblEstimateWindowProductComponent
 
     public Guid? EstimateWindowProductId { get; set; }
 
+    public bool? IsMaterialBreakdown { get; set; }
+
     public virtual TblEstimate Estimate { get; set; } = null!;
 
     public virtual TblEstimateWindowProduct? EstimateWindowProduct { get; set; }

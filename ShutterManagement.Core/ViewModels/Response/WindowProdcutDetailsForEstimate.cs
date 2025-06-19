@@ -72,6 +72,8 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? ExpressionFormulae { get; set; }
         public string? MaterialPricingExpression { get; set; }
         public string? MaterialExpressionFormulae { get; set; }
+        public bool? IsMaterialBreakdown { get; set; }
+        public decimal? MaterialPrice { get; set; }
 
         // ComponentMaterial Properties
         public Guid? RawMaterialId { get; set; }

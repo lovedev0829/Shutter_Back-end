@@ -848,6 +848,11 @@ namespace ShutterManagement.Business.Services
                     Contacts = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId()).OrderByDescending(x => x.CreatedAt).ToList();
                 }
 
+                if (filter?.CustomerId != null)
+                {
+                    Contacts = Contacts.Where(x => x.ContactId.ToString() == filter.CustomerId).ToList();
+                }
+
 
                 foreach (var contact in Contacts)
                 {

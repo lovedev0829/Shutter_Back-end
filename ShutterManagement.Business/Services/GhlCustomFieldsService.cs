@@ -42,8 +42,7 @@ namespace ShutterManagement.Business.Services
 
                 foreach (var field in customFields)
                 {
-                    var existingField = dbContext.TblGhlCustomFields
-                        .FirstOrDefault(x => x.TenantId == currentTenantId && x.FieldName == field.name);
+                    var existingField = GetAllQuerable().Where(x => x.TenantId == currentTenantId && x.FieldName == field.name).FirstOrDefault();
 
                     if (existingField != null)
                     {
@@ -61,6 +60,8 @@ namespace ShutterManagement.Business.Services
                         existingField.ModifiedAt = DateTime.Now;
                         existingField.IsDelete = false;
                         existingField.IsActive = true;
+
+                        await Update(existingField);
                     }
                     else
                     {
@@ -85,11 +86,9 @@ namespace ShutterManagement.Business.Services
                             IsDelete = false
                         };
 
-                        await dbContext.TblGhlCustomFields.AddAsync(newField);
+                        await Add(newField);
                     }
                 }
-
-                await dbContext.SaveChangesAsync();
                 responseVm.IsSuccess = true;
                 responseVm.Message = "Custom fields saved successfully.";
             }

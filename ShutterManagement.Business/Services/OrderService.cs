@@ -158,7 +158,7 @@ namespace ShutterManagement.Business.Services
                     Guid? taxRateId = null;
                     Guid? discountId = null;
                     decimal totalTaxAmount = 0.0m;
-                    var windowproductdetails = await estimateService.BuildEstimate(updateOrder.WindowProductId, false, updateOrder.EstimateId.ToString(), true);
+                    var windowproductdetails = await estimateService.BuildEstimate(updateOrder.WindowProductId, false,false, updateOrder.EstimateId.ToString(), true);
                     if (windowproductdetails.Data != null && windowproductdetails.Data.Any())
                     {
                         additionalCost = windowproductdetails.Data.ToList().DistinctBy(x => x.AdditionalCost).FirstOrDefault().AdditionalCost ?? 0.0m;
@@ -424,7 +424,7 @@ namespace ShutterManagement.Business.Services
                             Guid? taxRateId = null;
                             Guid? discountId = null;
                             decimal totalTaxAmount = 0.0m;
-                            var windowproductdetails = await estimateService.BuildEstimate(model.WindowProductId, false, model.EstimateId.ToString(), true);
+                            var windowproductdetails = await estimateService.BuildEstimate(model.WindowProductId, false,false, model.EstimateId.ToString(), true);
                             if (windowproductdetails.Data != null && windowproductdetails.Data.Any())
                             {
                                 additionalCost = windowproductdetails.Data.ToList().DistinctBy(x => x.AdditionalCost).FirstOrDefault().AdditionalCost??0.0m;

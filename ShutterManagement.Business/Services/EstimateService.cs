@@ -448,6 +448,7 @@ namespace ShutterManagement.Business.Services
         public async Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> BuildEstimate(
         Guid[] windowProductIds,
         bool IsBreakdown,
+        bool IsMaterialBreakdown = false,
         string EstimateId = "",
         bool IsView = false,
         List<ProductListing> products = null)
@@ -495,17 +496,22 @@ namespace ShutterManagement.Business.Services
 
                     var data = result.Data;
 
+                    var itemsWithoutComponentPricing = data.Where(x => x.PricingExpression == null).ToList();
+                    itemsWithoutComponentPricing.ForEach(x => x.IsMaterialBreakdown = true);
+
                     var itemsWithoutPricing = data.Where(x => x.ComponentId == null).ToList();
                     itemsWithoutPricing.ForEach(x => x.IsComponentAvailable = false);
 
                     var wholesale = await CalculateEstimate(data, true, products);
                     var componentPrice = await CalculateEstimate(data, false, products);
 
+                    
                     foreach (var item in data)
                     {
                         item.WholesalePrice = Math.Round(wholesale, 2);
                         item.TotalPrice = componentPrice > 0.0m ? Math.Round(componentPrice, 2) : null;
                         item.ProductPrice = item.TotalPrice;
+                        
                     }
 
                     allProductData.AddRange(data);
@@ -528,8 +534,20 @@ namespace ShutterManagement.Business.Services
                         ? CalculateTotalTaxAmount(priceWithMarkup, item.MunicipalityTax, item.CityTax, item.StateTax)
                         : 0.0m;
                 }
-
-                if (!IsBreakdown)
+                //if (allProductData.Any(x => x.IsMaterialBreakdown == true))
+                //{
+                //    allProductData.ForEach(x => x.IsMaterialBreakdown = true);
+                //}
+                if ((bool)IsMaterialBreakdown && IsBreakdown)
+                {
+                    responseVm.Data = allProductData
+                        //.DistinctBy(x => x.WindowProdcutId)
+                        .OrderBy(x => x.ComponentName)
+                        .ToList();
+                    
+                    responseVm.TotalRecords = responseVm.Data.Count;
+                }
+                else if (!IsBreakdown)
                 {
                     responseVm.Data = allProductData
                         .DistinctBy(x => x.WindowProdcutId)
@@ -681,17 +699,22 @@ namespace ShutterManagement.Business.Services
                     foreach (var materialItem in distinctComponentMaterials)
                     {
                         var materialFormula = materialItem.MaterialExpressionFormulae ?? string.Empty;
+                        var MaterialPrice = 0.0m;
                         if (string.IsNullOrEmpty(materialFormula))
                         {
-                            basePrice += Convert.ToDecimal(materialItem.UnitCost);
+                            MaterialPrice = Convert.ToDecimal(materialItem.UnitCost);
+                            basePrice += MaterialPrice;
                         }
                         else
                         {
                             var expression = CalculateExpression(materialFormula, materialItem);
-                            basePrice += Convert.ToDecimal(expression.Evaluate());
-                        }
-                    }
+                            MaterialPrice += Convert.ToDecimal(expression.Evaluate());
+                            basePrice += MaterialPrice;
 
+                        }
+                        materialItem.MaterialPrice = Math.Round(MaterialPrice, 2);
+                    }
+                    item.Price = Math.Round(basePrice, 2);
                     if (iswholesale == true)
                     {
                         if (isSubtenant)
@@ -739,7 +762,6 @@ namespace ShutterManagement.Business.Services
                         }
                     }
                     productMarkup += productOwnMarkup;
-
                     componentSubTotal += Math.Round(basePrice, 2);
                 }
                 if (item.ComponentId == null || item.ComponentId == Guid.Empty)
@@ -749,7 +771,8 @@ namespace ShutterManagement.Business.Services
 
                     if (isSubtenant)
                     {
-                        var markup = dbContext.TblManagePartnersProducts.FirstOrDefault(x => x.ProductId == item.ProductId && x.TenantId == claimsProperty.GetTenantId());
+                        var markup = dbContext.TblManagePartnersProducts.FirstOrDefault(x => x.ProductId == item.ProductId && x.TenantId == 
+                        claimsProperty.GetTenantId());
                         productOwnMarkup += markup?.MarkupType switch
                         {
                             "Percentage" => (productPrice + productOwnMarkup) * (markup.PartnerSellingPrice ?? 0) / 100,
@@ -774,7 +797,8 @@ namespace ShutterManagement.Business.Services
                 item.OptionMarkup = optionMSRP.OptionMarkup;
 
                 var partnerOptionPrice = 0.0m;
-                var optionTax = data.FirstOrDefault(x => x.OptionTaxDetails?.Any() == true && x.ProductId == item.ProductId && x.WindowProdcutId == item.WindowProdcutId);
+                var optionTax = data.FirstOrDefault(x => x.OptionTaxDetails?.Any() == true && x.ProductId == item.ProductId && x.WindowProdcutId == 
+                item.WindowProdcutId);
                 if (optionTax != null)
                 {
                     foreach (var x in optionTax.OptionTaxDetails)
@@ -962,7 +986,7 @@ namespace ShutterManagement.Business.Services
                 Guid? taxRateId = null;
                 Guid? discountId = null;
                 var PricedProductsList = model.ProductsList.Where(x => x.ProductPrice != null && x.ProductPrice > 0).ToList();
-                var windowproductdetails = await BuildEstimate(model.ProductsList.Select(x => x.WindowProductId).ToArray(), false, "", false, model.ProductsList);
+                var windowproductdetails = await BuildEstimate(model.ProductsList.Select(x => x.WindowProductId).ToArray(), false,false, "", false, model.ProductsList);
                 if (windowproductdetails.Data != null && windowproductdetails.Data.Any())
                 {
                     if (windowproductdetails.Data.Any(x => x.TotalPrice == null))
@@ -1593,7 +1617,7 @@ namespace ShutterManagement.Business.Services
             Guid? taxRateId = null;
             Guid? discountId = null;
             var PricedProductsList = model.ProductsList.Where(x => x.ProductPrice != null && x.ProductPrice > 0).ToList();
-            var windowproductdetails = await BuildEstimate(model.ProductsList.Select(x => x.WindowProductId).ToArray(), true, "", false, model.ProductsList);
+            var windowproductdetails = await BuildEstimate(model.ProductsList.Select(x => x.WindowProductId).ToArray(), true, false,"", false, model.ProductsList);
 
 
             if (windowproductdetails.Data != null && windowproductdetails.Data.Any())
@@ -2000,7 +2024,8 @@ namespace ShutterManagement.Business.Services
                 }
                 //expressionList.Add(Guid.Parse(componentData.PricingExpression ?? ""));
                 var componentPrice = windowProdcutDetailsForEstimates.Where(x => x.ComponentId == component.ComponentId && x.WindowId == WindowId).Select(x => x.Price).FirstOrDefault();
-                var EstimateWindowProductComponent = await AddComponentToEstimateWindow(componentData, WindowId, (Guid)component.ProductId, estimateId, componentPrice ?? 0.0m, tblEstimateWindowProduct.EstimateWindowProductId);
+                bool IsMaterialBreakdown = (bool)windowProdcutDetailsForEstimates.Where(x => x.ComponentId == component.ComponentId && x.WindowId == WindowId).Select(x => x.IsMaterialBreakdown ?? false).FirstOrDefault();
+                var EstimateWindowProductComponent = await AddComponentToEstimateWindow(componentData, WindowId, (Guid)component.ProductId, estimateId, componentPrice ?? 0.0m, tblEstimateWindowProduct.EstimateWindowProductId,(bool)IsMaterialBreakdown);
                 await AddComponentMaterialsToEstimate(componentData.ComponentId, estimateId, WindowId, EstimateWindowProductComponent);
                 if (!string.IsNullOrEmpty(Message))
                 {
@@ -2009,7 +2034,7 @@ namespace ShutterManagement.Business.Services
             }
         }
 
-        private async Task<TblEstimateWindowProductComponent> AddComponentToEstimateWindow(TblComponent componentData, Guid WindowId, Guid ProductId, Guid estimateId, decimal Price, Guid EstimateWindowProductId)
+        private async Task<TblEstimateWindowProductComponent> AddComponentToEstimateWindow(TblComponent componentData, Guid WindowId, Guid ProductId, Guid estimateId, decimal Price, Guid EstimateWindowProductId,bool? IsMaterialBreakdown)
         {
             FileLogger.Log($"Adding component {componentData.ComponentName} to estimate...");
             var PricingExpressionId = dbContext.TblProductComponents.Where(x => x.ComponentId ==
@@ -2041,6 +2066,7 @@ namespace ShutterManagement.Business.Services
                 ProductTypeName = ProductName,
                 ComponentPrice = Price,
                 WindowId = WindowId,
+                IsMaterialBreakdown = IsMaterialBreakdown,
             };
 
             await estimateWindowProductComponentService.Add(tblEstimateWindowProductComponent);
@@ -2056,7 +2082,8 @@ namespace ShutterManagement.Business.Services
                 Message = "No material " + AppConstant.NoDataFound;
                 return; // Return early if no materials found
             }
-
+            Guid[] arr = { tblEstimateWindowProductComponent.EstimateWindowProductId ?? Guid.Empty };
+            var buildEstimate = await BuildEstimate(arr, true,true);
             foreach (var material in componentMaterialData)
             {
                 var materialData = (await materialService.GetAll()).Where(x => x.RawMaterialId == material.RawMaterialId && x.IsDelete == false).FirstOrDefault();
@@ -2065,13 +2092,15 @@ namespace ShutterManagement.Business.Services
                     Message = "Material " + AppConstant.NoDataFound;
                     return; // Return early if material data not found
                 }
-
-                await AddMaterialToEstimate(materialData, (Guid)material.ComponentId, estimateId, WindowId, tblEstimateWindowProductComponent.EstimateWindowProductComponentId);
+                var materialPrice = buildEstimate.Data.Where(x => x.RawMaterialId == material.RawMaterialId && x.IsMaterialBreakdown == true).Select(y=> y.MaterialPrice ?? 0.0m).FirstOrDefault();
+                var MaterialExpressionFormulae = buildEstimate.Data.Where(x => x.RawMaterialId == material.RawMaterialId && x.IsMaterialBreakdown == true).Select(y=> y.MaterialExpressionFormulae ?? "").FirstOrDefault();
+                await AddMaterialToEstimate(materialData, (Guid)material.ComponentId, estimateId, WindowId, tblEstimateWindowProductComponent.EstimateWindowProductComponentId, materialPrice,MaterialExpressionFormulae ?? "");
 
             }
         }
 
-        private async Task AddMaterialToEstimate(TblRawMaterial materialData, Guid ComponentId, Guid estimateId, Guid WindowId, Guid EstimateWindowProductComponentId)
+        private async Task AddMaterialToEstimate(TblRawMaterial materialData, Guid ComponentId, Guid estimateId, Guid WindowId, Guid EstimateWindowProductComponentId,
+            decimal? materialPrice,string? MaterialExpressionFormulae)
         {
             FileLogger.Log($"Adding material {materialData.MaterialName} to estimate...");
             TblEstimateWindowProductComponentMaterial tblEstimateWindowProductComponentMaterial = new TblEstimateWindowProductComponentMaterial
@@ -2097,7 +2126,9 @@ namespace ShutterManagement.Business.Services
                 UnitOfMeasurement = materialData.UnitOfMeasurement,
                 VendorId = materialData.VendorId,
                 RawMaterialId = materialData.RawMaterialId,
-                WindowId = WindowId
+                WindowId = WindowId,
+                MaterialPrice = materialPrice,
+                MaterialPricingExpression = MaterialExpressionFormulae,
             };
 
             await estimateWindowProductComponentMaterialService.Add(tblEstimateWindowProductComponentMaterial);
