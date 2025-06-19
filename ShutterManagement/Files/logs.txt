@@ -1,6 +1,10 @@
-﻿2025-06-17 16:00:33 : Checking if tenant with ID 8989dfe7-4c11-4c28-8c99-eab55c95a613 exists...
+﻿2025-06-19 07:34:00 : Estimate created and all related data added successfully.
 
-terManagement.Core.ViewModels.Response.GetAllMaterialVm]
+13 exists...
+
+ate...
+
+ent.Core.ViewModels.Response.GetAllMaterialVm]
 
 Id": "553fd1f7-dbbe-4de2-9973-2cc768194529",
     "LocationId": "ziCLGh0rHchULukIrb4b",
