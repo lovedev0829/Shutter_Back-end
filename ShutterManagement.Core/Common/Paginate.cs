@@ -38,28 +38,51 @@ namespace ShutterManagement.Core.Common
                 Expression predicateBody = null;
 
                 // Special case for "FirstName" to combine FirstName + LastName
-                if (col.Field.Equals("FirstName", StringComparison.OrdinalIgnoreCase))
+
+                //if (col.Field.Equals("FirstName", StringComparison.OrdinalIgnoreCase))
+                //{
+                //    var firstNameProp = entityType.GetProperty("FirstName");
+                //    var lastNameProp = entityType.GetProperty("LastName");
+
+                //    if (firstNameProp != null && lastNameProp != null)
+                //    {
+                //        var firstNameExpr = Expression.Property(parameter, firstNameProp);
+                //        var lastNameExpr = Expression.Property(parameter, lastNameProp);
+
+                //        var concatExpr = Expression.Call(
+                //            typeof(string).GetMethod("Concat", new[] { typeof(string), typeof(string), typeof(string) }),
+                //            firstNameExpr,
+                //            Expression.Constant(" "),
+                //            lastNameExpr
+                //        );
+
+                //        var toLower = Expression.Call(concatExpr, "ToLower", null);
+                //        var containsMethod = typeof(string).GetMethod("Contains", new[] { typeof(string) });
+                //        predicateBody = Expression.Call(toLower, containsMethod, Expression.Constant(val));
+                //    }
+                //}
+
+                var firstNameProp = entityType.GetProperties().FirstOrDefault(p => p.Name.EndsWith("FirstName", StringComparison.OrdinalIgnoreCase));
+                var lastNameProp = entityType.GetProperties()
+                    .FirstOrDefault(p => p.Name.EndsWith("LastName", StringComparison.OrdinalIgnoreCase));
+
+                if (firstNameProp != null && lastNameProp != null)
                 {
-                    var firstNameProp = entityType.GetProperty("FirstName");
-                    var lastNameProp = entityType.GetProperty("LastName");
+                    var firstNameExpr = Expression.Property(parameter, firstNameProp);
+                    var lastNameExpr = Expression.Property(parameter, lastNameProp);
 
-                    if (firstNameProp != null && lastNameProp != null)
-                    {
-                        var firstNameExpr = Expression.Property(parameter, firstNameProp);
-                        var lastNameExpr = Expression.Property(parameter, lastNameProp);
+                    var concatExpr = Expression.Call(
+                        typeof(string).GetMethod("Concat", new[] { typeof(string), typeof(string), typeof(string) }),
+                        firstNameExpr,
+                        Expression.Constant(" "),
+                        lastNameExpr
+                    );
 
-                        var concatExpr = Expression.Call(
-                            typeof(string).GetMethod("Concat", new[] { typeof(string), typeof(string), typeof(string) }),
-                            firstNameExpr,
-                            Expression.Constant(" "),
-                            lastNameExpr
-                        );
-
-                        var toLower = Expression.Call(concatExpr, "ToLower", null);
-                        var containsMethod = typeof(string).GetMethod("Contains", new[] { typeof(string) });
-                        predicateBody = Expression.Call(toLower, containsMethod, Expression.Constant(val));
-                    }
+                    var toLower = Expression.Call(concatExpr, "ToLower", null);
+                    var containsMethod = typeof(string).GetMethod("Contains", new[] { typeof(string) });
+                    predicateBody = Expression.Call(toLower, containsMethod, Expression.Constant(val.ToLower()));
                 }
+
                 else
                 {
                     var property = entityType.GetProperties()
