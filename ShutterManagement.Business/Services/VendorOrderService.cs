@@ -410,9 +410,13 @@ namespace ShutterManagement.Business.Services
                     .ToList();
 
 
-               
+                var queryable2 = filteredRecords.AsQueryable();
 
-                var paginatedRecords = Paginate.Pagination(filteredRecords, filter);
+                queryable2 = Paginate.ApplyColumnFilters(queryable2, filter.ColumnFilters);
+                queryable2 = Paginate.ApplySorting(queryable2, filter.SortColumn, filter.SortDirection);
+
+
+                var paginatedRecords = Paginate.Pagination(queryable2.ToList(), filter);
 
                 responseVm.IsSuccess = true;
                 responseVm.Data = paginatedRecords;
