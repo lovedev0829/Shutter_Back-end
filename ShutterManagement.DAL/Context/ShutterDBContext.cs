@@ -867,6 +867,7 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
             entity.Property(e => e.MaterialName).HasMaxLength(255);
+            entity.Property(e => e.MaterialPrice).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.RawMaterialId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.ReorderLevel).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.Sku)
