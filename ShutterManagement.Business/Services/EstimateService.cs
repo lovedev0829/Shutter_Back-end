@@ -758,6 +758,15 @@ namespace ShutterManagement.Business.Services
                         };
                     }
                     productMarkup += productOwnMarkup;
+
+                    var isTaxExemptLoopwithoutcomponent = GetIsTaxExemptByWindowId(item.WindowId);
+                    if (isTaxExemptLoopwithoutcomponent && item.IsTaxAvailable == true)
+                    {
+                        item.MunicipalityTaxAmount = ((productPrice + componentOwnMarkup + productOwnMarkup) * (item.MunicipalityTax ?? 0.0m) / 100);
+                        item.StateTaxAmount = ((productPrice + componentOwnMarkup + productOwnMarkup) * (item.StateTax ?? 0.0m) / 100);
+                        item.CityTaxAmount = ((productPrice + componentOwnMarkup + productOwnMarkup) * (item.CityTax ?? 0.0m) / 100);
+                        item.TotalTaxAmount = item.MunicipalityTaxAmount + item.StateTaxAmount + item.CityTaxAmount;
+                    }
                 }
 
                 var isTaxExemptLoop = GetIsTaxExemptByWindowId(item.WindowId);
