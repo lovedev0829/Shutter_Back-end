@@ -64,7 +64,7 @@ namespace ShutterManagement.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> BuildEstimate(BuildEstimate buildEstimate)
         {
-            var res = await _EstimateService.BuildEstimate(buildEstimate.WindowProductIds, buildEstimate.IsBreakDown,buildEstimate.EstimateId, buildEstimate.IsView);
+            var res = await _EstimateService.BuildEstimate(buildEstimate.WindowProductIds, buildEstimate.IsBreakDown,buildEstimate.IsMaterialBreakdown, buildEstimate.EstimateId, buildEstimate.IsView);
             return Ok(res);
         }
 

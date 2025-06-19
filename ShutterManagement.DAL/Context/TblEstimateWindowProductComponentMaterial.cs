@@ -51,6 +51,8 @@ public partial class TblEstimateWindowProductComponentMaterial
 
     public Guid? EstimateWindowProductComponentId { get; set; }
 
+    public string? PricingExpression { get; set; }
+
     public virtual TblEstimate Estimate { get; set; } = null!;
 
     public virtual TblEstimateWindowProductComponent? EstimateWindowProductComponent { get; set; }

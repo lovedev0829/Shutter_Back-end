@@ -448,6 +448,7 @@ namespace ShutterManagement.Business.Services
         public async Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> BuildEstimate(
         Guid[] windowProductIds,
         bool IsBreakdown,
+        bool IsMaterialBreakdown = false,
         string EstimateId = "",
         bool IsView = false,
         List<ProductListing> products = null)
@@ -495,17 +496,22 @@ namespace ShutterManagement.Business.Services
 
                     var data = result.Data;
 
+                    var itemsWithoutComponentPricing = data.Where(x => x.MaterialExpressionFormulae != null).ToList();
+                    itemsWithoutComponentPricing.ForEach(x => x.IsMaterialBreakdown = true);
+
                     var itemsWithoutPricing = data.Where(x => x.ComponentId == null).ToList();
                     itemsWithoutPricing.ForEach(x => x.IsComponentAvailable = false);
 
                     var wholesale = await CalculateEstimate(data, true, products);
                     var componentPrice = await CalculateEstimate(data, false, products);
 
+                    
                     foreach (var item in data)
                     {
                         item.WholesalePrice = Math.Round(wholesale, 2);
                         item.TotalPrice = componentPrice > 0.0m ? Math.Round(componentPrice, 2) : null;
                         item.ProductPrice = item.TotalPrice;
+                        
                     }
 
                     allProductData.AddRange(data);
@@ -528,11 +534,18 @@ namespace ShutterManagement.Business.Services
                         ? CalculateTotalTaxAmount(priceWithMarkup, item.MunicipalityTax, item.CityTax, item.StateTax)
                         : 0.0m;
                 }
-
-                if (!IsBreakdown)
+                if((bool)IsMaterialBreakdown && IsBreakdown)
                 {
                     responseVm.Data = allProductData
-                        .DistinctBy(x => x.WindowProdcutId)
+                        //.DistinctBy(x => x.WindowProdcutId)
+                        .OrderBy(x => x.ComponentName)
+                        .ToList();
+                    responseVm.TotalRecords = responseVm.Data.Count;
+                }
+                else if (!IsBreakdown)
+                {
+                    responseVm.Data = allProductData
+                        //.DistinctBy(x => x.WindowProdcutId)
                         .OrderBy(x => x.ComponentName)
                         .ToList();
                     responseVm.TotalRecords = responseVm.Data.Count;
@@ -681,15 +694,20 @@ namespace ShutterManagement.Business.Services
                     foreach (var materialItem in distinctComponentMaterials)
                     {
                         var materialFormula = materialItem.MaterialExpressionFormulae ?? string.Empty;
+                        var MaterialPrice = 0.0m;
                         if (string.IsNullOrEmpty(materialFormula))
                         {
-                            basePrice += Convert.ToDecimal(materialItem.UnitCost);
+                            MaterialPrice = Convert.ToDecimal(materialItem.UnitCost);
+                            basePrice += MaterialPrice;
                         }
                         else
                         {
                             var expression = CalculateExpression(materialFormula, materialItem);
-                            basePrice += Convert.ToDecimal(expression.Evaluate());
+                            MaterialPrice += Convert.ToDecimal(expression.Evaluate());
+                            basePrice += MaterialPrice;
+
                         }
+                        materialItem.MaterialPrice = Math.Round(MaterialPrice, 2);
                     }
 
                     if (iswholesale == true)
@@ -739,7 +757,6 @@ namespace ShutterManagement.Business.Services
                         }
                     }
                     productMarkup += productOwnMarkup;
-
                     componentSubTotal += Math.Round(basePrice, 2);
                 }
                 if (item.ComponentId == null || item.ComponentId == Guid.Empty)
@@ -749,7 +766,8 @@ namespace ShutterManagement.Business.Services
 
                     if (isSubtenant)
                     {
-                        var markup = dbContext.TblManagePartnersProducts.FirstOrDefault(x => x.ProductId == item.ProductId && x.TenantId == claimsProperty.GetTenantId());
+                        var markup = dbContext.TblManagePartnersProducts.FirstOrDefault(x => x.ProductId == item.ProductId && x.TenantId == 
+                        claimsProperty.GetTenantId());
                         productOwnMarkup += markup?.MarkupType switch
                         {
                             "Percentage" => (productPrice + productOwnMarkup) * (markup.PartnerSellingPrice ?? 0) / 100,
@@ -774,7 +792,8 @@ namespace ShutterManagement.Business.Services
                 item.OptionMarkup = optionMSRP.OptionMarkup;
 
                 var partnerOptionPrice = 0.0m;
-                var optionTax = data.FirstOrDefault(x => x.OptionTaxDetails?.Any() == true && x.ProductId == item.ProductId && x.WindowProdcutId == item.WindowProdcutId);
+                var optionTax = data.FirstOrDefault(x => x.OptionTaxDetails?.Any() == true && x.ProductId == item.ProductId && x.WindowProdcutId == 
+                item.WindowProdcutId);
                 if (optionTax != null)
                 {
                     foreach (var x in optionTax.OptionTaxDetails)
@@ -962,7 +981,7 @@ namespace ShutterManagement.Business.Services
                 Guid? taxRateId = null;
                 Guid? discountId = null;
                 var PricedProductsList = model.ProductsList.Where(x => x.ProductPrice != null && x.ProductPrice > 0).ToList();
-                var windowproductdetails = await BuildEstimate(model.ProductsList.Select(x => x.WindowProductId).ToArray(), false, "", false, model.ProductsList);
+                var windowproductdetails = await BuildEstimate(model.ProductsList.Select(x => x.WindowProductId).ToArray(), false,false, "", false, model.ProductsList);
                 if (windowproductdetails.Data != null && windowproductdetails.Data.Any())
                 {
                     if (windowproductdetails.Data.Any(x => x.TotalPrice == null))
@@ -1593,7 +1612,7 @@ namespace ShutterManagement.Business.Services
             Guid? taxRateId = null;
             Guid? discountId = null;
             var PricedProductsList = model.ProductsList.Where(x => x.ProductPrice != null && x.ProductPrice > 0).ToList();
-            var windowproductdetails = await BuildEstimate(model.ProductsList.Select(x => x.WindowProductId).ToArray(), true, "", false, model.ProductsList);
+            var windowproductdetails = await BuildEstimate(model.ProductsList.Select(x => x.WindowProductId).ToArray(), true, false,"", false, model.ProductsList);
 
 
             if (windowproductdetails.Data != null && windowproductdetails.Data.Any())
