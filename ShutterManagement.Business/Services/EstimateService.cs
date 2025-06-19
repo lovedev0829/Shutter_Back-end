@@ -446,11 +446,11 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
         public async Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> BuildEstimate(
-    Guid[] windowProductIds,
-    bool IsBreakdown,
-    string EstimateId = "",
-    bool IsView = false,
-    List<ProductListing> products = null)
+        Guid[] windowProductIds,
+        bool IsBreakdown,
+        string EstimateId = "",
+        bool IsView = false,
+        List<ProductListing> products = null)
         {
             var responseVm = new ResponseVm<List<WindowProdcutDetailsForEstimate>>();
             FileLogger.Log("Start: Calculate Estimate price...");
@@ -587,7 +587,6 @@ namespace ShutterManagement.Business.Services
             }
         }
 
-
         private async Task<decimal> CalculateEstimate(List<WindowProdcutDetailsForEstimate> data, bool? iswholesale = false, List<ProductListing> products = null)
         {
             decimal componentSubTotal = 0.0m;
@@ -709,7 +708,8 @@ namespace ShutterManagement.Business.Services
                     productMarkup += productOwnMarkup;
                     if(isSubtenant)
                     {
-                        var TaxId = dbContext.TblManagePartnersProducts.FirstOrDefault(x => x.TaxId == item.TaxRateId && x.TenantId == claimsProperty.GetTenantId())?.TaxId;
+                        var TaxId = dbContext.TblManagePartnersProducts.FirstOrDefault(x => x.ProductId == item.ProductId && x.TenantId == claimsProperty.GetTenantId() && x.IsAvailable == true
+                        && x.IsActive == true && x.IsDelete == false)?.TaxId;
                         var taxDetails= dbContext.TblTaxRates.FirstOrDefault(x => x.TaxRateId == TaxId && x.TenantId == claimsProperty.GetTenantId());
                         if (taxDetails != null)
                         {
@@ -824,8 +824,6 @@ namespace ShutterManagement.Business.Services
 
             return iswholesale == true ? wholesale : componentSubTotal;
         }
-
-
 
         public NCalc.Expression CalculateExpression(string formula, dynamic values)
         {
@@ -1895,7 +1893,6 @@ namespace ShutterManagement.Business.Services
             return tblEstimateWindowProduct;
         }
 
-
         private async Task SaveOptionTaxDetailsToEstimate(Guid estimateWindowProductId, Guid windowProductId, List<OptionTaxVM> optionTaxDetails)
         {
             if (optionTaxDetails == null || !optionTaxDetails.Any())
@@ -1936,8 +1933,6 @@ namespace ShutterManagement.Business.Services
             dbContext.TblEstimateWindowProductOptions.AddRange(estimateWindowOptions);
             await dbContext.SaveChangesAsync();
         }
-
-
 
         private bool GetIsTaxExemptByWindowId(Guid? windowId)
         {
