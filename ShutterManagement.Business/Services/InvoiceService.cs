@@ -560,6 +560,7 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
                 filter.RecordPerPage = 1000;
+                filter.CustomerId = model.ContactId.ToString();
                 var customerDetails = (await contactService.GetAll_Contact(filter,false))
                     .Data.FirstOrDefault(x => x.ContactId == model.ContactId && x.IsActive == true);
 
