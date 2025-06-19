@@ -472,7 +472,7 @@ namespace ShutterManagement.Business.Services
                 invoice.DueDate = updateInvoice.DueDate;
                 invoice.TotalAmount = updateInvoice.TotalAmount;
                 invoice.EstimateId = updateInvoice.EstimateId;
-                invoice.BalanceDue = updateInvoice.TotalAmount - invoice.PaidAmount;
+                invoice.BalanceDue = (updateInvoice.TotalAmount - invoice.PaidAmount) ?? 0.0m;
                 invoice.UpdatedAt = DateTime.Now;
                 invoice.ModifiedBy = AppConstant.LoggedInUserID;
 
