@@ -169,6 +169,7 @@ namespace ShutterManagement.Business.Services
                       MarkupPercentage = estwinprocomp.MarkupPercentage,
                       PricingExpression = estwinprocomp.PricingExpression,
                       Price = estwinprocomp.ComponentPrice,
+                      IsMaterialBreakdown = estwinprocomp.IsMaterialBreakdown,
 
                       // Expression Properties
                       ExpressionFormulae = estwinprocomp.PricingExpression,
@@ -181,6 +182,7 @@ namespace ShutterManagement.Business.Services
                       // Material Properties
                       MaterialName = productComponentmat.MaterialName,
                       UnitCost = productComponentmat.UnitCost,
+                      MaterialPrice = productComponentmat.MaterialPrice,
                       // Non_Rated_UnitCost = material.NonRatedUnitCost,
                       UnitOfMeasurement = productComponentmat.UnitOfMeasurement,
                       StockQuantity = productComponentmat.StockQuantity,
