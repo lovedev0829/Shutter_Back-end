@@ -986,6 +986,8 @@ namespace ShutterManagement.Business.Services
 
         private void AddJobDetails(OrderList e)
         {
+            var TenantId = GetAllQuerable().Where(x => x.EstimateId == e.EstimateId && x.IsDelete == false && x.IsActive == true).Select
+                (y => y.TenantId).FirstOrDefault();
             var jobdetails1 = (from j1 in dbContext.TblJobs
                                join j2 in dbContext.TblOrders on j1.JobId equals j2.JobId into order
                                from j2 in order.DefaultIfEmpty()
@@ -999,7 +1001,7 @@ namespace ShutterManagement.Business.Services
                                from c in contact.DefaultIfEmpty()
                                join j6 in dbContext.MstJobStatuses on j1.JobStatus equals j6.JobStatusId into JobStatus
                                from j6 in JobStatus.DefaultIfEmpty()
-                               where j1.IsDelete == false && c.IsDelete == false && j1.TenantId == claimsProperty.GetTenantId() &&
+                               where j1.IsDelete == false && c.IsDelete == false && j1.TenantId == TenantId &&
                                j1.JobId == e.JobId && j1.IsActive == true && j1.IsDelete == false
                                select new JobDetail
                                {
