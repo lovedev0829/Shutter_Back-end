@@ -208,12 +208,44 @@ namespace ShutterManagement.Core.Common
                 responseVm.IsSuccess = true;
                 responseVm.Message = "Email sent successfully.";
             }
+            catch (AuthenticationException authEx)
+            {
+                responseVm.IsSuccess = false;
+                responseVm.Message = $"Authentication failed: {authEx.Message}";
+
+                if (authEx.InnerException != null)
+                {
+                    responseVm.Message += $" | Inner Exception: {authEx.InnerException.Message}";
+                }
+
+                FileLogger.Log($"[OAuthEmail] AuthException: {authEx}");
+            }
+            catch (SmtpCommandException smtpEx)
+            {
+                responseVm.IsSuccess = false;
+                responseVm.Message = $"SMTP Command Error: {smtpEx.Message} (StatusCode: {smtpEx.StatusCode})";
+
+                FileLogger.Log($"[OAuthEmail] SMTP Command Exception: {smtpEx}");
+            }
+            catch (SmtpProtocolException protoEx)
+            {
+                responseVm.IsSuccess = false;
+                responseVm.Message = $"SMTP Protocol Error: {protoEx.Message}";
+
+                FileLogger.Log($"[OAuthEmail] SMTP Protocol Exception: {protoEx}");
+            }
             catch (Exception ex)
             {
                 responseVm.IsSuccess = false;
-                responseVm.Message = $"Error sending email: {ex.Message}";
-            }
+                responseVm.Message = $"Unexpected error: {ex.Message}";
 
+                if (ex.InnerException != null)
+                {
+                    responseVm.Message += $" | Inner: {ex.InnerException.Message}";
+                }
+
+                FileLogger.Log($"[OAuthEmail] General Exception: {ex}");
+            }
             return responseVm;
         }
 
