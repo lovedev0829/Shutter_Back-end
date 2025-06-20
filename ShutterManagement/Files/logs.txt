@@ -1,10 +1,10 @@
-﻿2025-06-19 07:34:00 : Estimate created and all related data added successfully.
+﻿2025-06-20 10:39:46 : Fetched 1 estimates.
 
-13 exists...
+tching for the logged-in tenant.
 
-ate...
+ , PageNo = 1, RecordsPerPage = 10
 
-ent.Core.ViewModels.Response.GetAllMaterialVm]
+ewModels.Response.GetAllMaterialVm]
 
 Id": "553fd1f7-dbbe-4de2-9973-2cc768194529",
     "LocationId": "ziCLGh0rHchULukIrb4b",

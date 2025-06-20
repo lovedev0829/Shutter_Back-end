@@ -107,6 +107,7 @@ namespace ShutterManagement.Services
                         PermissionId = reader.GetGuid(reader.GetOrdinal("Id")),
                         PermissionName = reader.GetString(reader.GetOrdinal("Name")),
                         PermissionDisplayName = reader.GetString(reader.GetOrdinal("DisplayName")),
+                        ModuleDisplayName = reader.GetString(reader.GetOrdinal("ModuleDisplayName")),
                         Icon = reader.GetString(reader.GetOrdinal("Icon")),
                         Url = reader.GetString(reader.GetOrdinal("Url"))
                     };
@@ -159,6 +160,7 @@ namespace ShutterManagement.Services
                 responseVm.Data.Menu = UserRole
                     .Select(x => new LoginRoles
                     {
+                        RoleDisplayName =x.ModuleDisplayName,
                         RoleName = x.PermissionName.Replace("Edit", "").Replace("View", "").Replace("Delete", "")
                     .Replace("Address", "Adress").Replace("Add", "").Replace("Adress", "Address").Replace("SubTenant", "Partners"),
                         Icon = x.Icon,
