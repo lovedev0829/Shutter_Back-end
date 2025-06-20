@@ -452,14 +452,14 @@ namespace ShutterManagement.Business.Services
                             {
                                 discountId = model.DiscountId;
                             }
-                            grandtotal = await estimateService.CalculateGrandTotal(discountId, SumofSubtotalandAdditionalCost, taxRateId) ?? 0m;
+                            grandtotal = await estimateService.CalculateGrandTotal(discountId, SumofSubtotalandAdditionalCost, taxRateId ?? Guid.Empty) ?? 0m;
 
                             bool isTaxExemptionInContact = GetIsTaxExemptByWindowId(windowproductdetails.Data.Select(s => s.WindowId).FirstOrDefault());
                             if (model.IsTaxApplicable == true && isTaxExemptionInContact)
                             {
                                 grandtotal = grandtotal + totalTaxAmount;
 
-                                grandtotal = grandtotal + windowproductdetails.Data.SelectMany(x => x.OptionTaxDetails).Sum(x => (decimal)x.TotalTaxAmount);
+                                grandtotal = grandtotal + windowproductdetails.Data.SelectMany(x => x.OptionTaxDetails).Sum(x => x.TotalTaxAmount ?? 0.0m);
                             }
 
                             orderExist.Notes = model.Notes;
