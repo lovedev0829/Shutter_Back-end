@@ -757,12 +757,13 @@ namespace ShutterManagement.Business.Services
 
                         if (taxDetails != null)
                         {
+                            item.TaxName=taxDetails.TaxName??"";
                             item.MunicipalityTax = taxDetails.Municipality ?? 0;
                             item.StateTax = taxDetails.State ?? 0;
                             item.CityTax = taxDetails.City ?? 0;
                         }
                         else
-                        {
+                        {   item.TaxName = "";
                             item.MunicipalityTaxAmount = 0;
                             item.StateTaxAmount = 0;
                             item.CityTaxAmount = 0;
