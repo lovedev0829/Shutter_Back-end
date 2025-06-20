@@ -1607,6 +1607,7 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.OrderWindowProductComponentMaterialId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
             entity.Property(e => e.MaterialName).HasMaxLength(255);
+            entity.Property(e => e.MaterialPrice).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.OrderId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.ReorderLevel).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.Sku)
