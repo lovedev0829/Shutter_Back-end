@@ -45,7 +45,7 @@ namespace ShutterManagement.Business.Services
              { "response_type", "code" },
              { "redirect_uri", AppConstant.Micorsoft365_RedirectUri },
              { "response_mode", "query" },
-             { "scope", "https://outlook.office365.com/.default SMTP.Send offline_access User.Read " },
+             { "scope", "SMTP.Send offline_access User.Read " },
              { "state", Guid.NewGuid().ToString() }
                 };
 
