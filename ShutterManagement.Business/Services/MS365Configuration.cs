@@ -89,12 +89,17 @@ namespace ShutterManagement.Business.Services
 
                 var json = await response.Content.ReadAsStringAsync();
 
+                FileLogger.Log($"Response after authentication of MS365 {json}");
+                FileLogger.Log($"Response after authentication of MS365 {response}");
+
                 if (!response.IsSuccessStatusCode)
                 {
                    
                     try
                     {
                         var errorResponse = JsonConvert.DeserializeObject<dynamic>(json);
+                        FileLogger.Log($"Response after authentication of MS365 {errorResponse}");
+
                         string errorDescription = errorResponse?.error_description != null ? (string)errorResponse.error_description : "Unknown error occurred.";
 
                         responseVm.Message = $"Token exchange failed: {errorDescription}";
