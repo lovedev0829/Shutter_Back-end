@@ -1163,13 +1163,15 @@ namespace ShutterManagement.Business.Services
                     decimal productMarkup = GetDynamicValue(firstEntry, "productMarkup");
                     decimal optionMarkup = GetDynamicValue(firstEntry, "optionMarkup");
 
-                    decimal total = subTotal + additionalCost;
+                    decimal subtotalwithadditionalCost = subTotal + additionalCost;
 
                     decimal OverHead = componentMarkup+productMarkup+optionMarkup;
 
-                    rowValues.Add($"${subTotal.ToString("F2")}");
+                    decimal totalPrice = (OverHead+ subtotalwithadditionalCost);
+
+                    rowValues.Add($"${subtotalwithadditionalCost.ToString("F2")}");
                     rowValues.Add($"${OverHead.ToString("F2")}");
-                    rowValues.Add($"${OverHead+ subTotal.ToString("F2")}");
+                    rowValues.Add($"${totalPrice.ToString("F2")}");
                     
 
                     csvBuilder.AppendLine(string.Join(",", rowValues));
