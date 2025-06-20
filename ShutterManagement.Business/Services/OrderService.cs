@@ -51,6 +51,8 @@ namespace ShutterManagement.Business.Services
         private readonly IRegion region;
         private readonly ITenantBrandingService tenantBrandingService;
         private readonly IConverter converter;
+        private readonly IEstimateWindowProductComponentService estimateWindowProductComponentService;
+        private readonly IEstimateWindowProductComponentMaterialService estimateWindowProductComponentMaterialService;
         public Pagination filter = new Pagination();
         private string Message = "";
         public OrderService(ITenantService tenantService, IWindowProductService windowProductService, ClaimsProperty claimsProperty,
@@ -63,7 +65,9 @@ namespace ShutterManagement.Business.Services
              IEstimateService estimateService, ShutterDBContext context,
              IWindowOptionService windowOptionService, IOptionsTypeService optionsTypeService, IMstProductType productType,
              IJobService jobService, IContactService contactService, IEstimateWindowProductService estimateWindowProduct, ITaxRate taxRate,
-            IRegion region,ITenantBrandingService tenantBrandingService,IConverter converter)
+            IRegion region,ITenantBrandingService tenantBrandingService,IConverter converter,
+            IEstimateWindowProductComponentService estimateWindowProductComponentService
+            ,IEstimateWindowProductComponentMaterialService estimateWindowProductComponentMaterialService)
         {
             this.tenantService = tenantService;
             this.windowProductService = windowProductService;
@@ -90,6 +94,8 @@ namespace ShutterManagement.Business.Services
             this.region = region;
             this.tenantBrandingService = tenantBrandingService;
             this.converter = converter;
+            this.estimateWindowProductComponentService = estimateWindowProductComponentService;
+            this.estimateWindowProductComponentMaterialService = estimateWindowProductComponentMaterialService;
         }
 
 
@@ -413,7 +419,8 @@ namespace ShutterManagement.Business.Services
                     var latestId = latestRecord?.OrderId;
                     if (latestId == model.OrderId)
                     {
-                        var orderExist = GetAllQuerable().Where(x => x.OrderId.ToString().ToLower() == model.OrderId.ToString().ToLower() && x.TenantId.ToString().ToLower() == claimsProperty.GetTenantId().ToString().ToLower() &&
+                        var orderExist = GetAllQuerable().Where(x => x.OrderId.ToString().ToLower() == model.OrderId.ToString().ToLower() && x.TenantId.ToString().ToLower() == 
+                        claimsProperty.GetTenantId().ToString().ToLower() &&
                         x.IsDelete == false && x.Status != EnumValue.GetEnumValue(Estimation.Approved)).FirstOrDefault();
                         if (orderExist != null)
                         {
@@ -431,9 +438,11 @@ namespace ShutterManagement.Business.Services
                                 var ProductMarkup = windowproductdetails.Data.ToList().DistinctBy(x => x.ProductId).FirstOrDefault().ProductMarkup ?? 0.0m;
                                 var ComponentMarkup = windowproductdetails.Data.ToList().DistinctBy(x => x.ProductId).FirstOrDefault().ComponentMarkup ??0.0m;
                                 var OptionMarkup = windowproductdetails.Data.ToList().DistinctBy(x => x.ProductId).FirstOrDefault().OptionMarkup ??0.0m;
-                                subtotal = windowproductdetails.Data.Sum(x => x.Price)??0.0m;
-                                subtotal = (ProductMarkup + ComponentMarkup + OptionMarkup);
-                                SumofSubtotalandAdditionalCost = subtotal + additionalCost;
+
+                                subtotal = windowproductdetails.Data.ToList().DistinctBy(x => x.ProductId).FirstOrDefault().ProductPrice ?? 0.0m;
+                                subtotal += (ProductMarkup + ComponentMarkup + OptionMarkup);
+                                subtotal += additionalCost;
+                                SumofSubtotalandAdditionalCost = subtotal;
                                 totalTaxAmount += windowproductdetails.Data.DistinctBy(x => x.WindowProdcutId).Sum(x => x.TotalTaxAmount)??0.0m;
                             }
                             if (string.IsNullOrEmpty((model.taxRateId).ToString()))
@@ -1137,7 +1146,9 @@ namespace ShutterManagement.Business.Services
                 {
                     return;
                 }
-                if (product.ProductPrice == null)
+                bool IsComponentAvailable = productService.GetAllQuerable().Where(x => x.ProductId == windowProductData.ProductId
+                 && x.IsActive == true && x.IsDelete == false).Select(y => y.IsComponentAvailable ?? false).FirstOrDefault();
+                if (IsComponentAvailable)
                 {
                     await AddComponentsToOrder((Guid)windowProductData.ProductId, estimateId, OrderId, Version);
                 }
@@ -1296,7 +1307,8 @@ namespace ShutterManagement.Business.Services
 
             foreach (var component in productComponentData)
             {
-                var componentData = (await componentService.GetAll()).Where(x => x.ComponentId == component.ComponentId && x.IsDelete == false).FirstOrDefault();
+                var componentData = (await estimateWindowProductComponentService.GetAll()).Where(x => x.ComponentId == component.ComponentId && x.EstimateId == estimateId
+                && x.IsDelete == false).FirstOrDefault();
                 if (componentData == null)
                 {
                     Message = "Components " + AppConstant.NoDataFound;
@@ -1331,9 +1343,9 @@ namespace ShutterManagement.Business.Services
 
             foreach (var material in componentMaterialData)
             {
-                var materialData = (await materialService.GetAll())
+                var materialData = (await estimateWindowProductComponentMaterialService.GetAll())
                  .AsQueryable()
-                 .Where(x => x.RawMaterialId == material.RawMaterialId && x.IsDelete == false)
+                 .Where(x => x.RawMaterialId == material.RawMaterialId && x.ComponentId == componentId && x.EstimateId == estimateId && x.IsDelete == false)
                  .AsNoTracking()
                  .FirstOrDefault();
 
@@ -1348,7 +1360,7 @@ namespace ShutterManagement.Business.Services
             }
         }
 
-        private async Task AddMaterialToOrder(TblRawMaterial materialData, Guid estimateId, Guid OrderId, string Version)
+        private async Task AddMaterialToOrder(TblEstimateWindowProductComponentMaterial materialData, Guid estimateId, Guid OrderId, string Version)
         {
             FileLogger.Log($"Adding material {materialData.MaterialName} to order...");
             TblOrderWindowProductComponentMaterial tblEstimateWindowProductComponentMaterial = new TblOrderWindowProductComponentMaterial
@@ -1373,12 +1385,13 @@ namespace ShutterManagement.Business.Services
                 UnitOfMeasurement = materialData.UnitOfMeasurement,
                 VendorId = materialData.VendorId,
                 RawMaterialId = materialData.RawMaterialId,
+                MaterialPrice = materialData.MaterialPrice,
             };
 
             await orderWindowProductComponentMaterialService.Add(tblEstimateWindowProductComponentMaterial);
         }
 
-        private async Task AddComponentToOrderWindow(TblComponent componentData, Guid estimateId, Guid OrderId, string Version)
+        private async Task AddComponentToOrderWindow(TblEstimateWindowProductComponent componentData, Guid estimateId, Guid OrderId, string Version)
         {
             FileLogger.Log($"Adding component {componentData.ComponentName} to estimate...");
             TblOrderWindowProductComponent tblOrderWindowProductComponent = new TblOrderWindowProductComponent
@@ -1398,6 +1411,7 @@ namespace ShutterManagement.Business.Services
                 ProductType = componentData.ProductType,
                 PricingExpression = componentData.PricingExpression,
                 TenantId = claimsProperty.GetTenantId(),
+                IsMaterialBreakdown = componentData.IsMaterialBreakdown
             };
 
             await orderWindowProductComponentService.Add(tblOrderWindowProductComponent);
