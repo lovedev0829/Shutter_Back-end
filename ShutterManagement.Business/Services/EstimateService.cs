@@ -471,7 +471,14 @@ namespace ShutterManagement.Business.Services
                     foreach (var windowProductId in windowProductIds)
                     {
                         var result = await componentPriceService.GetProductDataForView(windowProductId, EstimateId);
-                        data.AddRange(result.Data.DistinctBy(x => x.ComponentId).OrderBy(x => x.ComponentName));
+                        if (IsBreakdown && IsMaterialBreakdown)
+                        {
+                            data.AddRange(result.Data.OrderBy(x => x.ComponentName));
+                        }
+                        else
+                        {
+                            data.AddRange(result.Data.DistinctBy(x => x.ComponentId).OrderBy(x => x.ComponentName));
+                        }
                     }
 
                     responseVm.IsSuccess = true;
@@ -2033,9 +2040,10 @@ namespace ShutterManagement.Business.Services
                 }
                 //expressionList.Add(Guid.Parse(componentData.PricingExpression ?? ""));
                 var componentPrice = windowProdcutDetailsForEstimates.Where(x => x.ComponentId == component.ComponentId && x.WindowId == WindowId).Select(x => x.Price).FirstOrDefault();
-                bool IsMaterialBreakdown = (bool)windowProdcutDetailsForEstimates.Where(x => x.ComponentId == component.ComponentId && x.WindowId == WindowId).Select(x => x.IsMaterialBreakdown ?? false).FirstOrDefault();
+                bool IsMaterialBreakdown = (bool)windowProdcutDetailsForEstimates.Where(x => x.ComponentId == component.ComponentId).Select(x => x.IsMaterialBreakdown ?? false).FirstOrDefault();
+                var windowproductId = windowProdcutDetailsForEstimates.Select(x => x.WindowProdcutId ?? Guid.Empty).FirstOrDefault();
                 var EstimateWindowProductComponent = await AddComponentToEstimateWindow(componentData, WindowId, (Guid)component.ProductId, estimateId, componentPrice ?? 0.0m, tblEstimateWindowProduct.EstimateWindowProductId,(bool)IsMaterialBreakdown);
-                await AddComponentMaterialsToEstimate(componentData.ComponentId, estimateId, WindowId, EstimateWindowProductComponent);
+                await AddComponentMaterialsToEstimate(componentData.ComponentId, estimateId, WindowId, EstimateWindowProductComponent, windowproductId);
                 if (!string.IsNullOrEmpty(Message))
                 {
                     return;
@@ -2082,7 +2090,7 @@ namespace ShutterManagement.Business.Services
             return tblEstimateWindowProductComponent;
         }
 
-        private async Task AddComponentMaterialsToEstimate(Guid componentId, Guid estimateId, Guid WindowId, TblEstimateWindowProductComponent tblEstimateWindowProductComponent)
+        private async Task AddComponentMaterialsToEstimate(Guid componentId, Guid estimateId, Guid WindowId, TblEstimateWindowProductComponent tblEstimateWindowProductComponent,Guid? WindowProductId)
         {
             FileLogger.Log($"Adding materials for component {componentId} to estimate...");
             var componentMaterialData = (await componentMaterialService.GetAll()).Where(x => x.ComponentId == componentId && x.IsDelete == false).ToList();
@@ -2091,7 +2099,7 @@ namespace ShutterManagement.Business.Services
                 Message = "No material " + AppConstant.NoDataFound;
                 return; // Return early if no materials found
             }
-            Guid[] arr = { tblEstimateWindowProductComponent.EstimateWindowProductId ?? Guid.Empty };
+            Guid[] arr = { WindowProductId ?? Guid.Empty };
             var buildEstimate = await BuildEstimate(arr, true,true);
             foreach (var material in componentMaterialData)
             {

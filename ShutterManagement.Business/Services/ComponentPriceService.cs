@@ -252,7 +252,8 @@ namespace ShutterManagement.Business.Services
                 }
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.FetchSuccessMsg;
-                responseVm.Data = query.DistinctBy(y => y.ComponentId).ToList();
+               // responseVm.Data = query.DistinctBy(y => y.ComponentId).ToList();
+                responseVm.Data = query.ToList();
                 return responseVm;
             }
             //    else
