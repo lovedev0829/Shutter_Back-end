@@ -189,7 +189,7 @@ namespace ShutterManagement.Core.Common
                         break;
 
                     case "microsoft365":
-                        await client.ConnectAsync(AppConstant.smtpHost_MSOffice365, 587, SecureSocketOptions.StartTls);
+                        await client.ConnectAsync("smtp.office365.com", 587, SecureSocketOptions.StartTls);
                         await client.AuthenticateAsync(new SaslMechanismOAuth2(request.UserEmail, request.AccessToken));
                         break;
 
