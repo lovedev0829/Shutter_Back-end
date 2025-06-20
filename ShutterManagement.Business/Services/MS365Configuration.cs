@@ -78,7 +78,7 @@ namespace ShutterManagement.Business.Services
                 { "grant_type", "authorization_code" },
                 { "code", code },
                 { "redirect_uri", AppConstant.Micorsoft365_RedirectUri },
-                { "scope", "https://outlook.office365.com/SMTP.Send/SMTP.Send offline_access User.Read" }
+                { "scope", "https://outlook.office365.com/SMTP.Send offline_access User.Read" }
                 };
 
                 using var client = new HttpClient();
