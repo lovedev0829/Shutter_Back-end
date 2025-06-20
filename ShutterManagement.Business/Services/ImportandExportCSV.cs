@@ -1135,7 +1135,25 @@ namespace ShutterManagement.Business.Services
 
                     rowValues.AddRange(dynamicHeaders.Select(header => componentPrices.GetValueOrDefault(header, "0")));
 
-                    var optionValues = GetOptionPriceValues(firstEntry);
+                    //var optionValues = GetOptionPriceValues(firstEntry);
+                    //rowValues.AddRange(optionHeaders.Select(header => optionValues.GetValueOrDefault(header, "0")));
+
+                    // ✅ Fetch the entry that contains non-empty optionTaxDetails
+                    var withOptionTaxDetails = breakdownGroup.FirstOrDefault(x =>
+                    {
+                        var prop = x.GetType().GetProperty("OptionTaxDetails");
+                        var value = prop?.GetValue(x);
+                        if (value == null) return false;
+
+                        if (value is IEnumerable<object> list)
+                            return list.Cast<object>().Any();
+
+                        return false;
+                    });
+
+
+                    // ✅ Use that entry to get the option values
+                    var optionValues = GetOptionPriceValues(withOptionTaxDetails ?? firstEntry);
                     rowValues.AddRange(optionHeaders.Select(header => optionValues.GetValueOrDefault(header, "0")));
 
                     // Add Sub Total and Total
