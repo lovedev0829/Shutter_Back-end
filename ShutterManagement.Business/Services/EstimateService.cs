@@ -1441,7 +1441,7 @@ namespace ShutterManagement.Business.Services
                                    Suffix = con.Suffix ?? "",
                                    JobStatus = j1.JobStatus.ToString().ToLower(),
                                    AssignedPersonnel = j5.FirstName + " " + j5.LastName,
-                                   Address = j3.StreetAddress + " " + j3.City + " " + j3.State + " " + j3.ZipCode,
+                                   Address = j3.StreetAddress + " " + j3.City + " " + (dbContext.MstStates.Where(s=>s.Id==j3.State).Select(state=>state.StateName).FirstOrDefault())??"" + " " + j3.ZipCode,
                                    AddressLabel = j3.Label,
                                    ScheduleTime = j1.ScheduledDate,
                                    ContactId = j6.ContactId,
