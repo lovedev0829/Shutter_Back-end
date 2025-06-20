@@ -473,7 +473,7 @@ namespace ShutterManagement.Business.Services
                         var result = await componentPriceService.GetProductDataForView(windowProductId, EstimateId);
                         if (IsBreakdown && IsMaterialBreakdown)
                         {
-                            data.AddRange(result.Data.OrderBy(x => x.ComponentName));
+                            data.AddRange(result.Data.OrderBy(x => x.MaterialName));
                         }
                         else
                         {
@@ -549,7 +549,7 @@ namespace ShutterManagement.Business.Services
                 {
                     responseVm.Data = allProductData
                         //.DistinctBy(x => x.WindowProdcutId)
-                        .OrderBy(x => x.ComponentName)
+                        .OrderBy(x => x.MaterialName)
                         .ToList();
                     
                     responseVm.TotalRecords = responseVm.Data.Count;
