@@ -1102,6 +1102,7 @@ namespace ShutterManagement.Business.Services
                 estimate.ModifiedBy = AppConstant.LoggedInUserID;
                 estimate.IsTaxApplied = model.IsTaxApplicable;
                 estimate.TotaltaxAmount = totalTaxAmount;
+                estimate.PreparedBy = model.PreparedBy ?? Guid.Empty;
                 estimate.UpdatedAt = DateTime.Now;
 
                 await Update(estimate);
@@ -1352,6 +1353,7 @@ namespace ShutterManagement.Business.Services
                 .Where(b => brandingInfoIds.Contains(b.Id))
                 .ToDictionary(b => b.Id);
 
+
             var estimateList = new List<EstimateList>();
 
             foreach (var estimate in estimates)
@@ -1374,6 +1376,9 @@ namespace ShutterManagement.Business.Services
                     Tax = estimate.TotaltaxAmount,
                     TermsCondition = estimate.TermsCondition,
                     IsTaxApplicable = estimate.IsTaxApplied,
+                    PreparedBy = estimate.PreparedBy,
+                    PreparedByName = dbContext.TblUsers.Where(s => s.Id == estimate.PreparedBy).Select(s=>s.FirstName +" "+ s.LastName +" "+ s.Suffix).FirstOrDefault(),
+                    PreparedByEmail = dbContext.TblUsers.Where(s => s.Id == estimate.PreparedBy).Select(s => s.Email).FirstOrDefault(),
                     jobDetails = new JobDetails()
                 };
 
@@ -1719,6 +1724,7 @@ namespace ShutterManagement.Business.Services
                 AdditionalCost = additionalCostAsOptionPrice,
                 IsTaxApplied = model.IsTaxApplicable,
                 TotaltaxAmount = totalTaxAmount,
+                PreparedBy = model.PreparedBy ?? Guid.Empty,
                 Status = EnumValue.GetEnumValue(Estimation.New),
             };
             var res = await Add(createEstimate);

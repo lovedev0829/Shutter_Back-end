@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Azure;
+using MailKit;
 using Microsoft.Data.SqlClient;
 using ShutterManagement.Business;
 using ShutterManagement.Business.Interfaces;
@@ -490,6 +491,49 @@ namespace ShutterManagement.Services
             }
             return responseVm;
         }
+
+
+
+        public async Task<IResponseVm<List<UsersList>>> GetAllUserList()
+        {
+            IResponseVm<List<UsersList>> responseVm = new ResponseVm<List<UsersList>>();
+            try
+            {
+              
+
+                var tenantDetails = dbContext.TblTenants.Where(u => (u.ParentTenantId == claimsProperty.GetTenantId() || u.TenantId== claimsProperty.GetTenantId()) && u.IsDelete == false && u.IsActive == true).Select(x=> x.TenantId).ToList();
+                var users = GetAllQuerable().Where(u =>tenantDetails.Contains((Guid)u.TenantId) && u.IsDelete == false && u.IsActive == true).ToList();
+                
+                var usersList = users.Select(user => new UsersList
+                {
+                    FirstName = user.FirstName,
+                    MiddleName = user.MiddleName,
+                    LastName = user.LastName,
+                    GhlUserId = user.GhlUserId,
+                    Suffix = user.Suffix ?? "",
+                    Email = user.Email,
+                    UserId = user.Id,
+                    UserName = user.Username,
+                    Phone = user.Phone,
+                    JobTitle = user.JobTitleId,
+                    TenantId = user.TenantId,
+                    IsActive = user.IsActive
+                }).ToList();
+
+                responseVm.Data = usersList;
+                responseVm.IsSuccess = true;
+                responseVm.Message = "User list fetched successfully.";
+            }
+            catch (Exception ex)
+            {
+                responseVm.IsSuccess = false;
+                responseVm.Message = "Error: " + ex.Message;
+            }
+
+            return responseVm;
+        }
+
+
 
         public async Task PasswordEnc()
         {

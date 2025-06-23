@@ -1042,6 +1042,17 @@ namespace ShutterManagement.Controllers
             }
         }
 
+        // get Tenant there related user details
+
+        [HttpGet]
+        [Route("GetAllTenantAnd_Users")]
+        public async Task<IActionResult> GetAllTenantAnd_Users()
+        {
+            var res = await userService.GetAllUserList();
+            return Ok(res);
+
+        }
+
 
         //[HttpGet]
         //[Route("GetCustomeFields")]
