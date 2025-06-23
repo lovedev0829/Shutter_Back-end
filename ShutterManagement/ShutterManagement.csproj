@@ -5,6 +5,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>e70d3eb3-4c17-45b3-8f25-bba9b32b4b3b</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
@@ -13,15 +14,24 @@
     <PackageReference Include="libwkhtmltox-64" Version="1.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.10" />
     <PackageReference Include="Microsoft.AspNetCore.Hosting" Version="2.2.7" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.10">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="9.0.2" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="Stripe.net" Version="47.4.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\ShutterManagement.Business\ShutterManagement.Business.csproj" />
     <ProjectReference Include="..\ShutterManagement.Core\ShutterManagement.Core.csproj" />
-    <ProjectReference Include="..\ShutterManagement.GHL\ShutterManagement.GHL.csproj" />
+    <ProjectReference Include="..\ShutterManagement.GHLv2\ShutterManagement.GHLv2.csproj" />
+    <ProjectReference Include="..\ShutterManagment.GHL\ShutterManagment.GHL.csproj" />
+    <ProjectReference Include="..\ShutterManagement.Stripe\ShutterManagement.Stripe.csproj" />
   </ItemGroup>
 
   <ItemGroup>

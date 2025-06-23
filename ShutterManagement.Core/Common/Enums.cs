@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore.Infrastructure;
+using Stripe;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
@@ -45,6 +47,15 @@ namespace ShutterManagement.Core.Common
         
     }
 
+    public enum PriceType
+    {
+        [EnumMember(Value = "Percentage")]
+        Percentage,
+        [EnumMember(Value = "Fixed")]
+        Fixed
+
+    }
+
     public enum DiscountType
     {
         [EnumMember(Value = "Percentage")]
@@ -62,7 +73,19 @@ namespace ShutterManagement.Core.Common
         [EnumMember(Value = "OrderForEmail")]
         OrderForEmail,
         [EnumMember(Value = "InvoicePaymentForEmail")]
-        InvoicePaymentForEmail
+        InvoicePaymentForEmail,
+        [EnumMember(Value = "OrderSheet")]
+        OrderSheet
+    }
+
+    public enum EmailSendType
+    {
+        [EnumMember(Value = "Google")]
+        Google,
+        [EnumMember(Value = "SMTP")]
+        SMTP,
+        [EnumMember(Value = "Microsoft365")]
+        Microsoft365
     }
 
 
@@ -79,8 +102,31 @@ namespace ShutterManagement.Core.Common
         [EnumMember(Value = "INV")]
         Invoice,
         [EnumMember(Value = "VEN")]
-        Vendor
+        Vendor,
+        [EnumMember(Value = "MAT")]
+        Material
     }
+
+    // JobStatus Enum Value
+    public enum JobStatus
+    {
+        [EnumMember(Value = "New")]
+        New,
+        [EnumMember(Value = "Appointment Scheduled")]
+        Appointment_Scheduled,
+        [EnumMember(Value = "Quote Sent")]
+        Quote_Sent,
+        [EnumMember(Value = "Won")]
+        Won,
+        [EnumMember(Value = "In-Production")]
+        In_Production,
+        [EnumMember(Value = "Installation Scheduled")]
+        Installation_Scheduled,
+        [EnumMember(Value = "Completed")]
+        Completed
+    }
+
+
 
     public enum Estimation
     {
@@ -101,8 +147,27 @@ namespace ShutterManagement.Core.Common
         [EnumMember(Value = "Unpaid")]
         Unpaid,
         [EnumMember(Value = "Paid")]
-        Paid
+        Paid,
+        [EnumMember(Value = "Draft")]
+        Draft,
+        [EnumMember(Value = "Manual")]
+        Manual
     }
+
+
+    public enum EmailTemplateType
+    {
+        [EnumMember(Value = "WelcomeEmail")]
+        WelcomeEmail,
+        [EnumMember(Value = "EstimatePDF")]
+        EstimatePDF,
+        [EnumMember(Value = "InvoicePDF")]
+        InvoicePDF,
+        [EnumMember(Value = "PaymentConfirmation")]
+        PaymentConfirmation,
+       
+    }
+
 
 
 
@@ -129,6 +194,37 @@ namespace ShutterManagement.Core.Common
         [EnumMember(Value = "User")]
         User
     }
+
+
+    public enum DeleteType
+    {
+        [EnumMember(Value = "Stripe")]
+        Stripe,
+        [EnumMember(Value = "GHL")]
+        GHL
+    } 
+    public enum OptionUnit
+    {
+        [EnumMember(Value = "Per Unit")]
+        PerUnit,
+        [EnumMember(Value = "Each Job")]
+        EachJob,
+        [EnumMember(Value = "Inch")]
+        Inch,
+        [EnumMember(Value = "CM")]
+        CM,
+        [EnumMember(Value = "Sqft")]
+        Sqft,
+        [EnumMember(Value = "lbs")]
+        lbs
+    }
+
+    public enum DownloadSample
+    {
+        Material,
+        Contact,
+    }
+
     public static class EnumValue
     {
         public static string GetEnumValue<T>(T enumValue) where T : Enum

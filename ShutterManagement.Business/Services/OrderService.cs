@@ -3,10 +3,14 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Azure;
+using DinkToPdf;
+using DinkToPdf.Contracts;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core;
 using ShutterManagement.Core.Common;
@@ -24,6 +28,7 @@ namespace ShutterManagement.Business.Services
     {
         private readonly ITenantService tenantService;
         private readonly IWindowProductService windowProductService;
+        private readonly ClaimsProperty claimsProperty;
         private readonly IWindowService windowService;
         private readonly IComponentMaterial componentMaterialService;
         private readonly IOrderWindowService orderWindowService;
@@ -44,8 +49,13 @@ namespace ShutterManagement.Business.Services
         private readonly IEstimateWindowProductService estimateWindowProduct;
         private readonly ITaxRate taxRate;
         private readonly IRegion region;
+        private readonly ITenantBrandingService tenantBrandingService;
+        private readonly IConverter converter;
+        private readonly IEstimateWindowProductComponentService estimateWindowProductComponentService;
+        private readonly IEstimateWindowProductComponentMaterialService estimateWindowProductComponentMaterialService;
+        public Pagination filter = new Pagination();
         private string Message = "";
-        public OrderService(ITenantService tenantService, IWindowProductService windowProductService,
+        public OrderService(ITenantService tenantService, IWindowProductService windowProductService, ClaimsProperty claimsProperty,
              IWindowService windowService, IComponentMaterial componentMaterialService,
              IOrderWindowService orderWindowService, IMaterial materialService,
              IProductService productService, IOrderWindowProductService orderWindowProductService,
@@ -55,10 +65,13 @@ namespace ShutterManagement.Business.Services
              IEstimateService estimateService, ShutterDBContext context,
              IWindowOptionService windowOptionService, IOptionsTypeService optionsTypeService, IMstProductType productType,
              IJobService jobService, IContactService contactService, IEstimateWindowProductService estimateWindowProduct, ITaxRate taxRate,
-            IRegion region)
+            IRegion region,ITenantBrandingService tenantBrandingService,IConverter converter,
+            IEstimateWindowProductComponentService estimateWindowProductComponentService
+            ,IEstimateWindowProductComponentMaterialService estimateWindowProductComponentMaterialService)
         {
             this.tenantService = tenantService;
             this.windowProductService = windowProductService;
+            this.claimsProperty = claimsProperty;
             this.windowService = windowService;
             this.componentMaterialService = componentMaterialService;
             this.orderWindowService = orderWindowService;
@@ -79,6 +92,10 @@ namespace ShutterManagement.Business.Services
             this.estimateWindowProduct = estimateWindowProduct;
             this.taxRate = taxRate;
             this.region = region;
+            this.tenantBrandingService = tenantBrandingService;
+            this.converter = converter;
+            this.estimateWindowProductComponentService = estimateWindowProductComponentService;
+            this.estimateWindowProductComponentMaterialService = estimateWindowProductComponentMaterialService;
         }
 
 
@@ -100,10 +117,10 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-                int Version = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt)
+                int Version = GetAllQuerable().Where(x => x.TenantId == claimsProperty.GetTenantId() && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt)
                      .Select(p => (p.OrderName.Split("-", StringSplitOptions.RemoveEmptyEntries).Length == 3 ? Convert.ToInt32(p.OrderName.Split("-", StringSplitOptions.RemoveEmptyEntries)[2]) : 0)).FirstOrDefault();
                 Version += 1;
-                var OrderNumber = GenerateUniqueId.GenerateUniqueIds(ModuleName.Order, AppConstant.LoggedInCompanyCode, Version);
+                var OrderNumber = GenerateUniqueId.GenerateUniqueIds(ModuleName.Order, claimsProperty.GetCompanyCode(), Version);
                 var version = GetAllQuerable()
                 .Where(x => x.EstimateId == EstimateId && x.IsDelete == false)
                 .OrderByDescending(x => x.Version)
@@ -142,41 +159,46 @@ namespace ShutterManagement.Business.Services
                 {
                     decimal subtotal = 0m;
                     decimal additionalCost = 0m;
-                    decimal SumofSubtotalandAdditionalCost = 0.0M;
+                    decimal SumofSubtotalandAdditionalCost = 0.0m;
                     decimal grandtotal = 0m;
                     Guid? taxRateId = null;
                     Guid? discountId = null;
-                    var windowproductdetails = await estimateService.BuildEstimate(updateOrder.WindowProductId, false,updateOrder.EstimateId.ToString(),true);
+                    decimal totalTaxAmount = 0.0m;
+                    var windowproductdetails = await estimateService.BuildEstimate(updateOrder.WindowProductId, false,false, updateOrder.EstimateId.ToString(), true);
                     if (windowproductdetails.Data != null && windowproductdetails.Data.Any())
                     {
-                        additionalCost = (decimal)windowproductdetails.Data.Sum(x => x.AdditionalCost);
-                        subtotal = (decimal)windowproductdetails.Data.Sum(x => x.TotalPrice);
-                        SumofSubtotalandAdditionalCost = subtotal + additionalCost;
+                        additionalCost = windowproductdetails.Data.ToList().DistinctBy(x => x.AdditionalCost).FirstOrDefault().AdditionalCost ?? 0.0m;
+                        subtotal = windowproductdetails.Data.ToList().FirstOrDefault().TotalPrice ?? 0.0m;
+                        totalTaxAmount = windowproductdetails.Data.ToList().FirstOrDefault().TotalTaxAmount ?? 0.0m;
+                        //SumofSubtotalandAdditionalCost = subtotal + additionalCost;
                     }
-                    if (string.IsNullOrEmpty((updateOrder.taxRateId).ToString()) && string.IsNullOrEmpty(updateOrder.DiscountCoupon))
+                    if (string.IsNullOrEmpty((updateOrder.taxRateId).ToString()))
                     {
-                        grandtotal = SumofSubtotalandAdditionalCost;
+                        taxRateId = Guid.Empty;
                     }
                     else
                     {
-                        if (string.IsNullOrEmpty((updateOrder.taxRateId).ToString()))
-                        {
-                            taxRateId = Guid.Empty;
-                        }
-                        else
-                        {
-                            taxRateId = updateOrder.taxRateId;
-                        }
-                        if (string.IsNullOrEmpty(updateOrder.DiscountId.ToString()))
-                        {
-                            discountId = Guid.Empty;
-                        }
-                        else
-                        {
-                            discountId = updateOrder.DiscountId;
-                        }
-                        grandtotal = await estimateService.CalculateGrandTotal(discountId, SumofSubtotalandAdditionalCost, taxRateId) ?? 0m;
+                        taxRateId = updateOrder.taxRateId;
                     }
+                    if (string.IsNullOrEmpty(updateOrder.DiscountId.ToString()) && string.IsNullOrEmpty(updateOrder.DiscountCoupon))
+                    {
+                        discountId = Guid.Empty;
+                    }
+                    else
+                    {
+                        discountId = updateOrder.DiscountId;
+                    }
+                    grandtotal = await estimateService.CalculateGrandTotal(discountId, subtotal, taxRateId) ?? 0m;
+
+                    bool isTaxExemptionInContact = GetIsTaxExemptByWindowId(windowproductdetails.Data.Select(s => s.WindowId).FirstOrDefault());
+                    if (updateOrder.IsTaxApplicable == true && isTaxExemptionInContact)
+                    {
+                        grandtotal = grandtotal + totalTaxAmount;
+
+                        //grandtotal = grandtotal + windowproductdetails.Data.SelectMany(x => x.OptionTaxDetails).Sum(x => x.TotalTaxAmount) ?? 0.0m;
+                    }
+
+
                     newOrder.OrderId = Guid.NewGuid();
                     newOrder.EstimateId = (Guid)updateOrder.EstimateId;
                     newOrder.TenantId = estimate.TenantId;
@@ -199,6 +221,8 @@ namespace ShutterManagement.Business.Services
                     newOrder.OrderName = OrderNumber;
                     newOrder.IsActive = true;
                     newOrder.IsDelete = false;
+                    newOrder.IsTaxApplied = updateOrder.IsTaxApplicable;
+                    newOrder.TotaltaxAmount = totalTaxAmount;
                     newOrder.CreatedBy = AppConstant.LoggedInUserID;
                     newOrder.ModifiedBy = AppConstant.LoggedInUserID;
                 }
@@ -217,7 +241,7 @@ namespace ShutterManagement.Business.Services
                     newOrder.TaxId = estimate.TaxId;
                     newOrder.TaxAmount = estimate.TaxAmount;
                     newOrder.TotalPrice = estimate.TotalPrice;
-                    newOrder.AdditionalCost= estimate.AdditionalCost;
+                    newOrder.AdditionalCost = estimate.AdditionalCost;
                     newOrder.TermsCondition = estimate.TermsCondition;
                     newOrder.Status = status1;
                     newOrder.CreatedAt = DateTime.Now;
@@ -226,6 +250,8 @@ namespace ShutterManagement.Business.Services
                     newOrder.OrderName = OrderNumber;
                     newOrder.IsActive = true;
                     newOrder.IsDelete = false;
+                    newOrder.IsTaxApplied = estimate.IsTaxApplied;
+                    newOrder.TotaltaxAmount = estimate.TotaltaxAmount;
                     newOrder.CreatedBy = AppConstant.LoggedInUserID;
                     newOrder.ModifiedBy = AppConstant.LoggedInUserID;
                 };
@@ -233,12 +259,18 @@ namespace ShutterManagement.Business.Services
                 await Add(newOrder);
                 var windowProductIds = dbContext.TblEstimateWindowProducts
                 .Where(e => e.EstimateId == EstimateId)
-                .Select(e => e.WindowProductId)
+                .Select(x => new ProductListing
+                {
+                    WindowProductId = (Guid)x.WindowProductId,
+                    ProductPrice =(decimal)x.ProductPrice,
+                })
                 .ToList();
 
-                var windowProductIdsNonNullable = windowProductIds.Where(x => x.HasValue).Select(x => x.Value).ToList();
 
-                await ProcessWindowProducts(windowProductIdsNonNullable, estimate.EstimateId, newOrder.OrderId, newOrder.Version);
+
+               // var windowProductIdsNonNullable = windowProductIds.Where(x => x.HasValue).Select(x => x.Value).ToList();
+
+                await ProcessWindowProducts(windowProductIds, estimate.EstimateId, newOrder.OrderId, newOrder.Version);
 
                 if (!string.IsNullOrEmpty(Message))
                 {
@@ -261,14 +293,14 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        public async Task<IResponseVm<List<OrderList>>> GetAll_Order(Pagination filter)
+        public async Task<IResponseVm<List<OrderList>>> GetAll_Order(Pagination filter, Guid? TenantId = null)
         {
             IResponseVm<List<OrderList>> responseVm = new ResponseVm<List<OrderList>>();
             try
             {
                 FileLogger.Log($"Start: Fetching estimates with filter parameters: TenantId = {filter.TenantId}, PageNo = {filter.PageNo}, RecordsPerPage = {filter.RecordPerPage}");
 
-                var orders = await FetchOrders(filter);
+                var orders = await FetchOrders(filter,TenantId);
                 if (orders == null)
                 {
                     responseVm.Message = AppConstant.TenantNotFound;
@@ -310,7 +342,8 @@ namespace ShutterManagement.Business.Services
             {
                 FileLogger.Log($"Start: Fetching latest version of orders with filter parameters: TenantId = {filter.TenantId}, PageNo = {filter.PageNo}, RecordsPerPage = {filter.RecordPerPage}");
 
-                var orders = await FetchOrders(filter);
+                var TenantId = claimsProperty.GetTenantId();
+                var orders = await FetchOrders(filter, TenantId);
                 if (orders == null)
                 {
                     responseVm.Message = AppConstant.TenantNotFound;
@@ -321,7 +354,7 @@ namespace ShutterManagement.Business.Services
 
                 // Group orders by EstimateId and get the latest version for each group
                 var latestVersionOrders = orders
-                    .GroupBy(o => o.EstimateId) 
+                    .GroupBy(o => o.EstimateId)
                     .Select(g => g.OrderByDescending(o => o.Version)  // Order by Version to get the latest
                                 .FirstOrDefault())  // Get the latest order in each group
                     .ToList();
@@ -331,6 +364,13 @@ namespace ShutterManagement.Business.Services
 
                 // Apply pagination
                 var paginatedOrders = Paginate.Pagination(filteredOrders, filter);
+
+                var queryable = paginatedOrders.AsQueryable();
+
+                queryable = Paginate.ApplyColumnFilters(queryable, filter.ColumnFilters);
+                queryable = Paginate.ApplySorting(queryable, filter.SortColumn, filter.SortDirection);
+
+                var TakenRecords = Paginate.Pagination(queryable.ToList(), filter);
 
                 responseVm.IsSuccess = true;
                 if (paginatedOrders.Any())
@@ -368,8 +408,8 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.TenantNotFound;
                     return responseVm;
                 }
-                var isEstimationOrder = (await GetAll()).Where(c => c.OrderId == model.OrderId && c.TenantId == AppConstant.LoggedInTenantId
-              && c.IsDelete == false).ToList();
+                var isEstimationOrder = (await GetAll()).Where(c => c.OrderId == model.OrderId && c.TenantId == claimsProperty.GetTenantId()
+                && c.IsDelete == false).ToList();
                 if (isEstimationOrder != null)
                 {
                     var latestRecord = isEstimationOrder
@@ -379,7 +419,8 @@ namespace ShutterManagement.Business.Services
                     var latestId = latestRecord?.OrderId;
                     if (latestId == model.OrderId)
                     {
-                        var orderExist = GetAllQuerable().Where(x => x.OrderId == model.OrderId && x.TenantId == AppConstant.LoggedInTenantId &&
+                        var orderExist = GetAllQuerable().Where(x => x.OrderId.ToString().ToLower() == model.OrderId.ToString().ToLower() && x.TenantId.ToString().ToLower() == 
+                        claimsProperty.GetTenantId().ToString().ToLower() &&
                         x.IsDelete == false && x.Status != EnumValue.GetEnumValue(Estimation.Approved)).FirstOrDefault();
                         if (orderExist != null)
                         {
@@ -389,36 +430,45 @@ namespace ShutterManagement.Business.Services
                             decimal grandtotal = 0.0M;
                             Guid? taxRateId = null;
                             Guid? discountId = null;
-                            var windowproductdetails = await estimateService.BuildEstimate(model.WindowProductId, false,model.EstimateId.ToString(),true);
+                            decimal totalTaxAmount = 0.0m;
+                            var windowproductdetails = await estimateService.BuildEstimate(model.WindowProductId, false,false, model.EstimateId.ToString(), true);
                             if (windowproductdetails.Data != null && windowproductdetails.Data.Any())
                             {
-                                additionalCost = (decimal)windowproductdetails.Data.Sum(x => x.AdditionalCost);
-                                subtotal = (decimal)windowproductdetails.Data.Sum(x => x.TotalPrice);
-                                SumofSubtotalandAdditionalCost = subtotal + additionalCost;
+                                additionalCost = windowproductdetails.Data.ToList().DistinctBy(x => x.AdditionalCost).FirstOrDefault().AdditionalCost??0.0m;
+                                var ProductMarkup = windowproductdetails.Data.ToList().DistinctBy(x => x.ProductId).FirstOrDefault().ProductMarkup ?? 0.0m;
+                                var ComponentMarkup = windowproductdetails.Data.ToList().DistinctBy(x => x.ProductId).FirstOrDefault().ComponentMarkup ??0.0m;
+                                var OptionMarkup = windowproductdetails.Data.ToList().DistinctBy(x => x.ProductId).FirstOrDefault().OptionMarkup ??0.0m;
+
+                                subtotal = windowproductdetails.Data.ToList().DistinctBy(x => x.ProductId).FirstOrDefault().ProductPrice ?? 0.0m;
+                                subtotal += (ProductMarkup + ComponentMarkup + OptionMarkup);
+                                subtotal += additionalCost;
+                                SumofSubtotalandAdditionalCost = subtotal;
+                                totalTaxAmount += windowproductdetails.Data.DistinctBy(x => x.WindowProdcutId).Sum(x => x.TotalTaxAmount)??0.0m;
                             }
-                            if (string.IsNullOrEmpty((model.taxRateId).ToString()) && string.IsNullOrEmpty(model.DiscountCoupon))
+                            if (string.IsNullOrEmpty((model.taxRateId).ToString()))
                             {
-                                grandtotal = SumofSubtotalandAdditionalCost;
+                                taxRateId = Guid.Empty;
                             }
                             else
                             {
-                                if (string.IsNullOrEmpty((model.taxRateId).ToString()))
-                                {
-                                    taxRateId = Guid.Empty;
-                                }
-                                else
-                                {
-                                    taxRateId = model.taxRateId;
-                                }
-                                if (string.IsNullOrEmpty(model.DiscountId.ToString()))
-                                {
-                                    discountId = Guid.Empty;
-                                }
-                                else
-                                {
-                                    discountId = model.DiscountId;
-                                }
-                                grandtotal = await estimateService.CalculateGrandTotal(discountId, SumofSubtotalandAdditionalCost, taxRateId) ?? 0m;
+                                taxRateId = model.taxRateId;
+                            }
+                            if (string.IsNullOrEmpty(model.DiscountId.ToString()) && string.IsNullOrEmpty(model.DiscountCoupon))
+                            {
+                                discountId = Guid.Empty;
+                            }
+                            else
+                            {
+                                discountId = model.DiscountId;
+                            }
+                            grandtotal = await estimateService.CalculateGrandTotal(discountId, SumofSubtotalandAdditionalCost, taxRateId ?? Guid.Empty) ?? 0m;
+
+                            bool isTaxExemptionInContact = GetIsTaxExemptByWindowId(windowproductdetails.Data.Select(s => s.WindowId).FirstOrDefault());
+                            if (model.IsTaxApplicable == true && isTaxExemptionInContact)
+                            {
+                                grandtotal = grandtotal + totalTaxAmount;
+
+                                grandtotal = grandtotal + windowproductdetails.Data.SelectMany(x => x.OptionTaxDetails).Sum(x => x.TotalTaxAmount ?? 0.0m);
                             }
 
                             orderExist.Notes = model.Notes;
@@ -426,12 +476,14 @@ namespace ShutterManagement.Business.Services
                             orderExist.DiscountCoupon = model.DiscountCoupon;
                             orderExist.GrandTotal = grandtotal;
                             orderExist.JobId = model.JobId;
-                            orderExist.TaxId = model.taxRateId;
+                            orderExist.TaxId = model.taxRateId!=Guid.Empty? model.taxRateId:null;
                             orderExist.TaxAmount = model.Tax;
                             orderExist.TotalPrice = subtotal;
                             orderExist.AdditionalCost = additionalCost;
                             orderExist.TermsCondition = model.TermsCondition;
                             orderExist.ModifiedBy = AppConstant.LoggedInUserID;
+                            orderExist.IsTaxApplied = model.IsTaxApplicable;
+                            orderExist.TotaltaxAmount = totalTaxAmount;
                             orderExist.UpdatedAt = DateTime.Now;
                             await Update(orderExist);
                             responseVm.Message = AppConstant.UpdateSuccessMsg;
@@ -461,6 +513,20 @@ namespace ShutterManagement.Business.Services
             }
 
             return responseVm;
+        }
+
+        private bool GetIsTaxExemptByWindowId(Guid? windowId)
+        {
+            var isTaxExempt = (from w in dbContext.TblWindows
+                               join j in dbContext.TblJobs on w.JobId equals j.JobId
+                               join c in dbContext.TblContacts on j.ContactId equals c.ContactId
+                               where w.WindowId == windowId
+                                     && w.IsDelete == false
+                                     && j.IsDelete == false
+                                     && c.IsDelete == false
+                               select c.IsTaxExemption).FirstOrDefault();
+
+            return isTaxExempt ?? false;
         }
 
         public async Task<IResponseVm<string>> ChangeStatus(Guid OrderId, Estimation NewOrderStatus)
@@ -523,7 +589,7 @@ namespace ShutterManagement.Business.Services
 
                 var order = GetAllQuerable()
                     .Where(c => c.OrderId == OrderId
-                    && c.TenantId == AppConstant.LoggedInTenantId && c.IsDelete == false)
+                    && c.TenantId == claimsProperty.GetTenantId() && c.IsDelete == false)
                     .FirstOrDefault();
 
                 if (order == null)
@@ -569,7 +635,7 @@ namespace ShutterManagement.Business.Services
 
                 var order = GetAllQuerable()
                     .Where(c => c.OrderId == OrderId
-                    && c.TenantId == AppConstant.LoggedInTenantId && c.IsDelete == false)
+                    && c.TenantId == claimsProperty.GetTenantId() && c.IsDelete == false)
                     .FirstOrDefault();
 
                 if (order == null)
@@ -613,7 +679,7 @@ namespace ShutterManagement.Business.Services
             {
 
 
-                var IsOrderExists = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId &&
+                var IsOrderExists = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId() &&
                 x.OrderId == OrderId && x.Status != EnumValue.GetEnumValue(Estimation.Approved)).
                     OrderByDescending(x => x.CreatedAt).FirstOrDefault();
                 if (IsOrderExists == null)
@@ -701,12 +767,11 @@ namespace ShutterManagement.Business.Services
                                     .Where(e => e.OrderId == OrderId && e.IsDelete == false)
                                     .FirstOrDefault();
 
-                AppConstant.LoggedInTenantId = order.TenantId;
                 Pagination pagination = new Pagination
                 {
                     SearchValue = OrderId.ToString()
                 };
-                var allVersionsOrder = await GetAll_Order(pagination);
+                var allVersionsOrder = await GetAll_Order(pagination, order.TenantId);
 
                 if (allVersionsOrder != null)
                 {
@@ -759,8 +824,8 @@ namespace ShutterManagement.Business.Services
         }
         private async Task<bool> ValidateTenantExists()
         {
-            FileLogger.Log($"Checking if tenant with ID {AppConstant.LoggedInTenantId} exists...");
-            var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+            FileLogger.Log($"Checking if tenant with ID {claimsProperty.GetTenantId()} exists...");
+            var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
             if (!isTenantExists)
             {
                 FileLogger.Log("Tenant not found.");
@@ -774,20 +839,28 @@ namespace ShutterManagement.Business.Services
                     .Where(es => es.OrderId == OrderId && es.IsDelete == false && es.IsActive == true)
                     .FirstOrDefault();
         }
-        public async Task<List<TblOrder>> FetchOrders(Pagination filter)
+        public async Task<List<TblOrder>> FetchOrders(Pagination filter, Guid? TenantId = null)
         {
+            if (!string.IsNullOrEmpty(TenantId.ToString()) && TenantId != Guid.Empty)
+            {
+                // Log and fetch estimates for the logged-in tenant
+                FileLogger.Log("No TenantId provided, fetching for the logged-in tenant.");
+                return (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == TenantId)
+                                       .OrderByDescending(x => x.CreatedAt)
+                                       .ToList();
+            }
             if (string.IsNullOrEmpty(filter.TenantId))
             {
                 // Log and fetch estimates for the logged-in tenant
                 FileLogger.Log("No TenantId provided, fetching for the logged-in tenant.");
-                return (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId)
+                return (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId())
                                        .OrderByDescending(x => x.CreatedAt)
                                        .ToList();
             }
 
             // Validate TenantId if provided
             var isRelatedTenant = tenantService.GetAllQuerable()
-                .Where(x => x.TenantId.ToString() == filter.TenantId && x.ParentTenantId == AppConstant.LoggedInTenantId && x.IsDelete == false)
+                .Where(x => x.TenantId.ToString() == filter.TenantId && x.ParentTenantId == claimsProperty.GetTenantId() && x.IsDelete == false)
                 .FirstOrDefault();
 
             if (isRelatedTenant == null)
@@ -795,7 +868,7 @@ namespace ShutterManagement.Business.Services
                 FileLogger.Log($"Tenant with ID {filter.TenantId} is not related or not found.");
                 return null; // Return null to indicate tenant validation failure
             }
-
+            
             // Fetch estimates for the provided tenant
             FileLogger.Log($"Tenant with ID {filter.TenantId} validated successfully.");
             return (await GetAll()).Where(x => x.IsDelete == false && x.TenantId.ToString() == filter.TenantId)
@@ -829,13 +902,16 @@ namespace ShutterManagement.Business.Services
                     GrandTotal = order.GrandTotal,
                     Notes = order.Notes,
                     Tax = order.TaxAmount,
+                    TotaltaxAmount = order.TotaltaxAmount,
+                    IsTaxApplicable = order.IsTaxApplied,
                     TermsCondition = order.TermsCondition,
                 };
                 var jobDetails = jobService.GetAllQuerable().Where(x => x.JobId == order.JobId).Select(x => x.ContactId).FirstOrDefault();
 
                 var contactDetails = contactService.GetAllQuerable().Where(x => x.ContactId == jobDetails).FirstOrDefault();
-                e.FirstContactName = (contactDetails?.FirstName ??"");
-                e.LastContactName = (contactDetails?.LastName ??"");
+                e.FirstContactName = (contactDetails?.FirstName ?? "");
+                e.LastContactName = (contactDetails?.LastName ?? "");
+                e.Suffix = (contactDetails?.Suffix ?? "");
                 e.ContactId = (contactDetails?.ContactId);
 
                 var userdetails = dbContext.TblUsers
@@ -859,8 +935,8 @@ namespace ShutterManagement.Business.Services
                 e.primarycolor = tenantdetails.PrimaryColor;
                 e.CompanyName = tenantdetails.CompanyName;
                 var taxdetails = taxRate.GetAllQuerable()
-    .Where(x => x.TaxRateId == order.TaxId && x.IsDelete == false)
-    .FirstOrDefault();
+                   .Where(x => x.TaxRateId == order.TaxId && x.IsDelete == false)
+                   .FirstOrDefault();
 
                 if (taxdetails != null)
                 {
@@ -884,15 +960,15 @@ namespace ShutterManagement.Business.Services
             var filteredRecords = orderlist
                 .Where(x =>
                     (filter.Status == 0 ? x.IsActive == false : (filter.Status == 1 ? x.IsActive == true : true)) &&
-                    (string.IsNullOrEmpty(filter.JobStatus.ToLower()) ? true : x.jobDetails.JobStatusId.ToLower() == filter.JobStatus.ToLower()) &&
+                    (string.IsNullOrEmpty(filter.JobStatus.ToLower()) ? true : x.jobDetails?.JobStatusId.ToLower() == filter.JobStatus.ToLower()) &&
                     (string.IsNullOrEmpty(filter.EstimationId.ToLower()) ? true : x.EstimateId.ToString().ToLower() == filter.EstimationId.ToLower()) &&
-                    (string.IsNullOrEmpty(filter.CustomerId.ToLower()) ? true : x.jobDetails.ContactId.ToString().ToLower() == filter.CustomerId.ToLower()) &&
+                    (string.IsNullOrEmpty(filter.CustomerId.ToLower()) ? true : x.jobDetails?.ContactId.ToString().ToLower() == filter.CustomerId.ToLower()) &&
                     (string.IsNullOrWhiteSpace(filter.SearchValue) ||
                      ((x.Notes ?? "").Contains(filter.SearchValue)
                       || (x.JobId.ToString() ?? "").Contains(filter.SearchValue)
-                      || (x.FirstContactName?.ToLower() ?? "").Contains(filter.SearchValue.Trim().ToLower()) 
-                      || ((x.FirstContactName?.ToLower() ?? "") + " " + (x.LastContactName?.ToLower() ?? "")).Contains(filter.SearchValue.Trim().ToLower()) 
-                      || (x.LastContactName?.ToLower() ?? "").Contains(filter.SearchValue.Trim().ToLower()) 
+                      || (x.FirstContactName?.ToLower() ?? "").Contains(filter.SearchValue.Trim().ToLower())
+                      || ((x.FirstContactName?.ToLower() ?? "") + " " + (x.LastContactName?.ToLower() ?? "")).Contains(filter.SearchValue.Trim().ToLower())
+                      || (x.LastContactName?.ToLower() ?? "").Contains(filter.SearchValue.Trim().ToLower())
                       || (x.OrderNumber ?? "").Contains(filter.SearchValue)
                       || (x.OrderId.ToString() ?? "").Contains(filter.SearchValue)
                       || (x.Status ?? "").Contains(filter.SearchValue)
@@ -910,31 +986,41 @@ namespace ShutterManagement.Business.Services
 
         private void AddJobDetails(OrderList e)
         {
-
+            var TenantId = GetAllQuerable().Where(x => x.EstimateId == e.EstimateId && x.IsDelete == false && x.IsActive == true).Select
+                (y => y.TenantId).FirstOrDefault();
             var jobdetails1 = (from j1 in dbContext.TblJobs
-                               join j2 in dbContext.TblOrders on j1.JobId equals j2.JobId
-                               join j3 in dbContext.TblAddresses on j1.AddressId equals j3.AddressId
-                               join j4 in dbContext.MstJobTypes on j1.JobType equals j4.Id
-                               join j5 in dbContext.TblUsers on j1.AssignedPersonnel equals j5.Id
-                               join c in dbContext.TblContacts on j1.ContactId equals c.ContactId
-                               join j6 in dbContext.MstJobStatuses on j1.JobStatus equals j6.JobStatusId 
-                               where j1.IsDelete == false && c.IsDelete == false && j1.TenantId == AppConstant.LoggedInTenantId && j1.IsDelete == false && j1.JobId == e.JobId
+                               join j2 in dbContext.TblOrders on j1.JobId equals j2.JobId into order
+                               from j2 in order.DefaultIfEmpty()
+                               join j3 in dbContext.TblAddresses on j1.AddressId equals j3.AddressId into address
+                               from j3 in address.DefaultIfEmpty()
+                               join j4 in dbContext.MstJobTypes on j1.JobType equals j4.Id into JobType
+                               from j4 in JobType.DefaultIfEmpty()
+                               join j5 in dbContext.TblUsers on j1.AssignedPersonnel equals j5.Id into Users
+                               from j5 in Users.DefaultIfEmpty()
+                               join c in dbContext.TblContacts on j1.ContactId equals c.ContactId into contact
+                               from c in contact.DefaultIfEmpty()
+                               join j6 in dbContext.MstJobStatuses on j1.JobStatus equals j6.JobStatusId into JobStatus
+                               from j6 in JobStatus.DefaultIfEmpty()
+                               where j1.IsDelete == false && c.IsDelete == false && j1.TenantId == TenantId &&
+                               j1.JobId == e.JobId && j1.IsActive == true && j1.IsDelete == false
                                select new JobDetail
                                {
-                                   JobName = j1.JobName,
-                                   JobNotes = j1.Notes,
-                                   JobType = j4.JobTypeName,
-                                   AssignedPersonnel = j5.FirstName + " " + j5.LastName,
-                                   Address = j3.StreetAddress + " " + j3.City + " " + j3.State + " " + j3.ZipCode,
-                                   AddressLabel = j3.Label,
-                                   ScheduleTime = j1.ScheduledDate,
-                                   JobStatusId = j1.JobStatus.ToString().ToLower(),
-                                   JobStatus = j6.JobStatusName,
-                                   ContactId = j1.ContactId.ToString(),
-                                   ContactFirstName = c.FirstName,
-                                   ContactLastName = c.LastName,
-                                   CreatedAt = j1.CreatedAt,
-                                   UpdatedAt = j1.UpdatedAt
+                                   JobName = string.IsNullOrWhiteSpace(j1.JobName) ? j1.JobName : "",
+                                   JobNotes = string.IsNullOrWhiteSpace(j1.Notes) ? j1.Notes : "",
+                                   JobType = j1.JobType != null ? j4.JobTypeName : null,
+                                   AssignedPersonnel = j5 != null ? (j5.FirstName + " " + j5.LastName) : "",
+                                   Address = j1.AddressId != null || j1.AddressId != Guid.Empty ? (j3.StreetAddress + " " + j3.City + " " + j3.State +
+                                   " " + j3.ZipCode) : "",
+                                   AddressLabel = j1.AddressId != null || j1.AddressId != Guid.Empty ? j3.Label : "",
+                                   ScheduleTime = j1.ScheduledDate != null ? j1.ScheduledDate : null,
+                                   JobStatusId = j1.JobStatus != null ? j1.JobStatus.ToString().ToLower() : "",
+                                   JobStatus = j1.JobStatus != null ? j6.JobStatusName : "",
+                                   ContactId = j1.ContactId != null ? j1.ContactId.ToString() : "",
+                                   ContactFirstName = string.IsNullOrWhiteSpace(c.FirstName) ? c.FirstName : "",
+                                   ContactLastName = string.IsNullOrWhiteSpace(c.LastName) ? c.LastName : "",
+                                   CreatedAt = j1.CreatedAt != null ? j1.CreatedAt : null,
+                                   UpdatedAt = j1.UpdatedAt != null ? j1.UpdatedAt : null,
+                                   JobIsActive = j1.IsActive != null ? j1.IsActive : false
                                }).FirstOrDefault();
 
             e.jobDetails = jobdetails1;
@@ -958,19 +1044,43 @@ namespace ShutterManagement.Business.Services
                     x.WindowProductId,
                     x.Price,
                     x.ProductTypeName,
+                    x.ProductPrice,
+                    x.WholeSalePrice,
+                    x.ProductMarkup,
+                    x.ComponentMarkup,
+                    x.OptionMarkup
                 }).ToList();
 
-            e.WindowProductId = productList.Select(p => (Guid)p.WindowProductId).ToArray();
-            foreach (var p in productList)
+            e.WindowProductId = productList.DistinctBy(x=>x.WindowProductId).Select(p => (Guid)p.WindowProductId).ToArray();
+            foreach (var p in productList.DistinctBy(x => x.WindowProductId))
             {
-                var Options = (from windowOption in dbContext.WindowOptions
-                               join optionType in dbContext.TblOptionsTypes on windowOption.OptionTypeId equals optionType.OptionTypeId
-                               join options in dbContext.TblOptions on optionType.OptionId equals options.OptionId
-                               where windowOption.WindowProductId == p.WindowProductId
-                               select new
+                if (p == null)
+                    continue;
+                var Options = (from orderOption in dbContext.TblOrderWindowProductOptions
+                               //join optionType in dbContext.TblOptionsTypes on orderOption.OptionTypeid equals optionType.OptionTypeId
+                               //join option in dbContext.TblOptions on optionType.OptionId equals option.OptionId
+                               where orderOption.OrderWindowProductId == p.OrderWindowProductId 
+                               select new OptionTaxVM
                                {
-                                   OptionName = Convert.ToString(options.OptionName + " - " + optionType.OptionType)
+                                   TaxId = orderOption.TaxId,
+                                   TaxName = orderOption.TaxName ?? "",
+                                   MunicipalityTax = orderOption.MunicipilityTax,
+                                   StateTax = orderOption.StateTax,
+                                   CityTax = orderOption.CityTax,
+                                   OptionPrice = orderOption.OptionPrice,
+                                   OptionName = orderOption.OptionName ?? "",
+                                   OptionId = orderOption.Optionid.ToString(),
+                                   OptionTypeId = orderOption.OptionTypeid.ToString(),
+                                   OptionTypeName = Convert.ToString(orderOption.OptionName + " - " + orderOption.OptionTypeName),
                                }).ToList();
+                //var Options = (from windowOption in dbContext.WindowOptions
+                //               join optionType in dbContext.TblOptionsTypes on windowOption.OptionTypeId equals optionType.OptionTypeId
+                //               join options in dbContext.TblOptions on optionType.OptionId equals options.OptionId
+                //               where windowOption.WindowProductId == p.WindowProductId
+                //               select new
+                //               {
+                //                   OptionName = Convert.ToString(options.OptionName + " - " + optionType.OptionType)
+                //               }).ToList();
                 var WindowDetails = orderWindowService.GetAllQuerable()
                     .Where(x => x.OrderId == order.OrderId && x.IsDelete == false)
                     .ToList();
@@ -978,22 +1088,28 @@ namespace ShutterManagement.Business.Services
                 var WindowQty_Label = windowService.GetAllQuerable()
                        .Where(w => w.WindowId == p.WindowId && w.IsDelete == false)
                        .FirstOrDefault();
-               
-                   
-                    EstimateProductLists estimateProduct = new EstimateProductLists
-                    {
+
+
+                EstimateProductLists estimateProduct = new EstimateProductLists
+                {
                     EstimateWindowProductId = p.OrderWindowProductId,
-                    Label = WindowQty_Label.Label,
-                    WindowQty = WindowQty_Label.Quantity,
+                    Label = WindowQty_Label?.Label?? "",
+                    WindowQty = WindowQty_Label?.Quantity ??0.0m,
                     ProductType = p.ProductType,
                     ProductTypeName = p.ProductTypeName,
                     Width = p.Width,
                     Height = p.Height,
                     ArchHeight = p.ArchHeight,
                     ProductName = p.ProductName,
+                    additionalCost = Options.Select(x => x.OptionPrice).Sum(),
                     WindowProductId = p.WindowProductId,
                     Price = p.Price,
+                    ProductPrice = p.ProductPrice,
+                    ProductMarkup = p.ProductMarkup,
+                    ComponentMarkup = p.ComponentMarkup,
+                    OptionMarkup = p.OptionMarkup,
                     Options = Options.Select(x => x.OptionName).ToArray(),
+                    WholesalePrice = p.WholeSalePrice,
                     EstimateWindowDetails = WindowDetails.Where(x => x.WindowId == p.WindowId).Select(x => new EstimateWindowLists
                     {
                         ArchHeight = x.ArchHeight,
@@ -1007,12 +1123,12 @@ namespace ShutterManagement.Business.Services
             AddJobDetails(e);
             e.IsTaxApplied = await estimateService.IsTaxApplied((Guid)e.JobId);
         }
-        private async Task ProcessWindowProducts(List<Guid> windowProductIds, Guid estimateId, Guid OrderId, string Version)
+        private async Task ProcessWindowProducts(List<ProductListing> windowProductIds, Guid estimateId, Guid OrderId, string Version)
         {
             FileLogger.Log("Processing window products...");
             foreach (var product in windowProductIds)
             {
-                var windowProductData = (await windowProductService.GetAll()).Where(x => x.WindowProductId == product && x.IsDelete == false).FirstOrDefault();
+                var windowProductData = (await windowProductService.GetAll()).Where(x => x.WindowProductId == product.WindowProductId && x.IsDelete == false).FirstOrDefault();
                 if (windowProductData == null)
                 {
                     Message = "Window Product " + AppConstant.NoDataFound;
@@ -1027,12 +1143,17 @@ namespace ShutterManagement.Business.Services
                 }
 
                 await AddWindowToOrder(windowData, windowProductData, OrderId, estimateId, Version);
-                await AddProductToOrder(windowProductData, estimateId, OrderId, Version);
+                await AddProductToOrder(windowProductData, estimateId, OrderId, Version,product.ProductPrice);
                 if (!string.IsNullOrEmpty(Message))
                 {
                     return;
                 }
-                await AddComponentsToOrder((Guid)windowProductData.ProductId, estimateId, OrderId, Version);
+                bool IsComponentAvailable = productService.GetAllQuerable().Where(x => x.ProductId == windowProductData.ProductId
+                 && x.IsActive == true && x.IsDelete == false).Select(y => y.IsComponentAvailable ?? false).FirstOrDefault();
+                if (IsComponentAvailable)
+                {
+                    await AddComponentsToOrder((Guid)windowProductData.ProductId, estimateId, OrderId, Version);
+                }
                 if (!string.IsNullOrEmpty(Message))
                 {
                     return;
@@ -1054,7 +1175,7 @@ namespace ShutterManagement.Business.Services
                 IsDelete = false,
                 CreatedAt = DateTime.Now,
                 CreatedBy = AppConstant.LoggedInUserID,
-                TenantId = AppConstant.LoggedInTenantId,
+                TenantId = claimsProperty.GetTenantId(),
                 Label = windowData.Label,
                 AddressId = windowData.AddressId,
                 ArchHeight = windowData.ArchHeight,
@@ -1067,18 +1188,19 @@ namespace ShutterManagement.Business.Services
             await orderWindowService.Add(tblOrderWindow);
         }
 
-        private async Task AddProductToOrder(TblWindowProduct windowProductData, Guid estimateId, Guid OrderId, string Version)
+        private async Task AddProductToOrder(TblWindowProduct windowProductData, Guid estimateId, Guid OrderId, string Version,
+            decimal? ProductPrice)
         {
             FileLogger.Log($"Adding product data for product {windowProductData.ProductId} to order...");
             var productData = (await productService.GetAll()).Where(x => x.ProductId == windowProductData.ProductId && x.IsDelete == false).FirstOrDefault();
-            var estimatePrice = estimateWindowProduct.GetAllQuerable().Where(x => x.EstimateId == estimateId && x.IsDelete == false).Select(x => x.Price).FirstOrDefault();
+            var estimatePrice = estimateWindowProduct.GetAllQuerable().Where(x => x.EstimateId.ToString() == estimateId.ToString() && x.WindowId.ToString() == windowProductData.WindowId.ToString() && x.ProductId.ToString() == windowProductData.ProductId.ToString() && x.IsDelete == false).Select(x => x.Price).FirstOrDefault();
             if (productData == null)
             {
                 Message = "Product " + AppConstant.NoDataFound;
                 return;
             }
-
-            var productTypeName = estimateWindowProduct.GetAllQuerable().Where(x => x.EstimateId == estimateId).Select(x => x.ProductTypeName).FirstOrDefault();
+            var estimateWindowProductDetails = estimateWindowProduct.GetAllQuerable().Where(x => x.EstimateId == estimateId && x.ProductId.ToString() == windowProductData.ProductId.ToString()).FirstOrDefault();
+            var estimateWindowProductOptionDetails = dbContext.TblEstimateWindowProductOptions.Where(s => s.EstimateWindowProductId == estimateWindowProductDetails.EstimateWindowProductId).ToList();
             TblOrderWindowProduct tblOrderWindowProduct = new TblOrderWindowProduct
             {
                 OrderWindowProductId = Guid.NewGuid(),
@@ -1101,15 +1223,79 @@ namespace ShutterManagement.Business.Services
                 Length = productData.Length,
                 Markup = productData.Markup,
                 ProductType = productData.ProductType,
-                TenantId = AppConstant.LoggedInTenantId,
+                TenantId = claimsProperty.GetTenantId(),
                 ProductId = productData.ProductId,
                 Price = estimatePrice,
                 WindowProductId = windowProductData.WindowProductId,
-                ProductTypeName = productTypeName
+                ProductTypeName = estimateWindowProductDetails?.ProductTypeName??"",
+                ProductPrice = ProductPrice,
+                TaxId = productData.TaxId,
+                TaxName = estimateWindowProductDetails?.TaxName?? "",
+                Municipality = estimateWindowProductDetails.Municipality,
+                City = estimateWindowProductDetails.City,
+                State = estimateWindowProductDetails.State,
+                WholeSalePrice = estimateWindowProductDetails.WholeSalePrice,
+                ProductMarkup = estimateWindowProductDetails.ProductMarkup,
+                ComponentMarkup = estimateWindowProductDetails.ComponentMarkup,
+                OptionMarkup = estimateWindowProductDetails.OptionMarkup,
             };
 
             await orderWindowProductService.Add(tblOrderWindowProduct);
+
+            // Save OptionTaxDetails 
+            var optionTaxDetails = estimateWindowProductOptionDetails.ToList();
+            if (optionTaxDetails != null && optionTaxDetails.Any())
+            {
+                await SaveOptionTaxDetailsToOrder(
+                    tblOrderWindowProduct.OrderWindowProductId,
+                    windowProductData.WindowProductId,
+                    optionTaxDetails
+                );
+            }
         }
+
+
+        private async Task SaveOptionTaxDetailsToOrder(Guid OrderWindowProductId, Guid windowProductId, List<TblEstimateWindowProductOption> optionTaxDetails)
+        {
+            if (optionTaxDetails == null || !optionTaxDetails.Any())
+                return;
+
+            List<TblOrderWindowProductOption> estimateWindowOptions = new List<TblOrderWindowProductOption>();
+
+            foreach (var option in optionTaxDetails)
+            {
+                var optionEntity = new TblOrderWindowProductOption
+                {
+                    Id = Guid.NewGuid(),
+                    WindowProductId = windowProductId,
+                    WindowOptionId = option.WindowOptionId,
+                    OrderWindowProductId = OrderWindowProductId,
+                    TaxId = option.TaxId!=Guid.Empty? option.TaxId:null,
+                    CityTax = option.CityTax,
+                    StateTax = option.StateTax,
+                    MunicipilityTax = option.MunicipilityTax,
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now,
+                    TenantId = claimsProperty.GetTenantId(),
+                    CreatedBy = AppConstant.LoggedInUserID,
+                    ModifiedBy = AppConstant.LoggedInUserID,
+                    IsActive = true,
+                    IsDelete = false,
+                    OptionTypeid = option.OptionTypeid,
+                    Optionid = option.Optionid,
+                    OptionName = option.OptionName,
+                    OptionTypeName = option.OptionTypeName,
+                    OptionPrice = option.OptionPrice,
+                    TaxName = option.TaxName,
+                };
+
+                estimateWindowOptions.Add(optionEntity);
+            }
+            await dbContext.TblOrderWindowProductOptions.AddRangeAsync(estimateWindowOptions);
+          //  await dbContext.TblOrderWindowProductOption.AddRangeAsync(estimateWindowOptions);
+            await dbContext.SaveChangesAsync();
+        }
+
 
         private async Task AddComponentsToOrder(Guid productId, Guid estimateId, Guid OrderId, string Version)
         {
@@ -1123,7 +1309,8 @@ namespace ShutterManagement.Business.Services
 
             foreach (var component in productComponentData)
             {
-                var componentData = (await componentService.GetAll()).Where(x => x.ComponentId == component.ComponentId && x.IsDelete == false).FirstOrDefault();
+                var componentData = (await estimateWindowProductComponentService.GetAll()).Where(x => x.ComponentId == component.ComponentId && x.EstimateId == estimateId
+                && x.IsDelete == false).FirstOrDefault();
                 if (componentData == null)
                 {
                     Message = "Components " + AppConstant.NoDataFound;
@@ -1158,9 +1345,9 @@ namespace ShutterManagement.Business.Services
 
             foreach (var material in componentMaterialData)
             {
-                var materialData = (await materialService.GetAll())
+                var materialData = (await estimateWindowProductComponentMaterialService.GetAll())
                  .AsQueryable()
-                 .Where(x => x.RawMaterialId == material.RawMaterialId && x.IsDelete == false)
+                 .Where(x => x.RawMaterialId == material.RawMaterialId && x.ComponentId == componentId && x.EstimateId == estimateId && x.IsDelete == false)
                  .AsNoTracking()
                  .FirstOrDefault();
 
@@ -1175,7 +1362,7 @@ namespace ShutterManagement.Business.Services
             }
         }
 
-        private async Task AddMaterialToOrder(TblRawMaterial materialData, Guid estimateId, Guid OrderId, string Version)
+        private async Task AddMaterialToOrder(TblEstimateWindowProductComponentMaterial materialData, Guid estimateId, Guid OrderId, string Version)
         {
             FileLogger.Log($"Adding material {materialData.MaterialName} to order...");
             TblOrderWindowProductComponentMaterial tblEstimateWindowProductComponentMaterial = new TblOrderWindowProductComponentMaterial
@@ -1187,7 +1374,7 @@ namespace ShutterManagement.Business.Services
                 IsActive = true,
                 CreatedAt = DateTime.Now,
                 CreatedBy = AppConstant.LoggedInUserID,
-                TenantId = AppConstant.LoggedInTenantId,
+                TenantId = claimsProperty.GetTenantId(),
                 EstimateId = estimateId,
                 IsCutSheet = materialData.IsCutSheet,
                 MaterialName = materialData.MaterialName,
@@ -1200,12 +1387,13 @@ namespace ShutterManagement.Business.Services
                 UnitOfMeasurement = materialData.UnitOfMeasurement,
                 VendorId = materialData.VendorId,
                 RawMaterialId = materialData.RawMaterialId,
+                MaterialPrice = materialData.MaterialPrice,
             };
 
             await orderWindowProductComponentMaterialService.Add(tblEstimateWindowProductComponentMaterial);
         }
 
-        private async Task AddComponentToOrderWindow(TblComponent componentData, Guid estimateId, Guid OrderId, string Version)
+        private async Task AddComponentToOrderWindow(TblEstimateWindowProductComponent componentData, Guid estimateId, Guid OrderId, string Version)
         {
             FileLogger.Log($"Adding component {componentData.ComponentName} to estimate...");
             TblOrderWindowProductComponent tblOrderWindowProductComponent = new TblOrderWindowProductComponent
@@ -1224,7 +1412,8 @@ namespace ShutterManagement.Business.Services
                 Notes = componentData.Notes,
                 ProductType = componentData.ProductType,
                 PricingExpression = componentData.PricingExpression,
-                TenantId = AppConstant.LoggedInTenantId,
+                TenantId = claimsProperty.GetTenantId(),
+                IsMaterialBreakdown = componentData.IsMaterialBreakdown
             };
 
             await orderWindowProductComponentService.Add(tblOrderWindowProductComponent);
@@ -1233,6 +1422,158 @@ namespace ShutterManagement.Business.Services
 
         #endregion
 
+
+        public async Task<IResponseVm<string>> GenerateOrderSheet(Guid? orderId)
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+
+            try
+            {
+
+                 var template = dbContext.TblTemplates
+                    .FirstOrDefault(c => c.TemplateName == EnumValue.GetEnumValue(EstimateDocumentType.OrderSheet) && c.IsDelete==false);
+
+                if (template == null)
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = "Order Sheet Template " + AppConstant.NoDataFound;
+                    return responseVm;
+                }
+
+
+                var orderDetails = dbContext.TblOrders
+                    .FirstOrDefault(o => o.OrderId == orderId && o.TenantId == claimsProperty.GetTenantId() && o.IsDelete==false);
+
+                if (orderDetails == null)
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = "Order Details " + AppConstant.NoDataFound;
+                    return responseVm;
+                }
+
+
+                var jobDetails = dbContext.TblJobs.FirstOrDefault(j => j.JobId == orderDetails.JobId && j.IsDelete == false);
+                var customerDetails = dbContext.TblContacts
+                    .FirstOrDefault(x => x.ContactId == jobDetails.ContactId && x.IsActive==true && x.IsDelete ==false);
+
+
+                var tenantDetails = tenantService.GetAllQuerable()
+                    .FirstOrDefault(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive==true && x.IsDelete == false);
+
+                if (tenantDetails == null)
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = "Tenant " + AppConstant.NoDataFound;
+                    return responseVm;
+                }
+
+                var brandingInfo = tenantBrandingService.GetAllQuerable()
+                    .FirstOrDefault(x => x.Id == tenantDetails.BrandingInfo && x.IsActive == true && x.IsDelete == false);
+
+                var newestimate = estimateService.GetAll_Estimate(filter);
+                var EstimateRes = newestimate?.Result?.Data?.FirstOrDefault(x => x.EstimateId == orderDetails.EstimateId);
+
+                if (newestimate?.Result?.Data == null)
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = "Estimate " + AppConstant.NoDataFound;
+                    return responseVm;
+                }
+
+                var firstProduct = EstimateRes?.EstimateProductList?.FirstOrDefault();
+                var optionName = firstProduct?.Options?.FirstOrDefault() ?? "";
+
+                var model = new OrderSheetModel
+                {
+                    CustomerName = $"{customerDetails?.FirstName} {customerDetails?.LastName}",
+                    JobName = orderDetails?.OrderName,
+                    Notes = EstimateRes?.Notes ?? "",
+                    CurrentDate = DateTime.Now.ToString("MM/dd/yyyy"),
+                    CompanyName = brandingInfo?.CompanyName ?? "",
+                    PhoneNo = brandingInfo?.PhoneNumber ?? "",
+                    Position = tenantDetails?.Suffix ?? "",
+                    CompanyLogo = brandingInfo?.Logo ?? "",
+                    OptionName = optionName??"NA",
+                };
+
+
+                var finalHtml = ReplaceOrderSheetPlaceholders(template?.TemplateValue, model);
+
+  
+
+                var pdfBytes = GenerateInvoicePdf(finalHtml);
+
+                var rootPath = Path.Combine(AppConstant.FileUploadPath, orderDetails.OrderName);
+                FileLogger.Log($"Order Sheet File Path For Generation : {rootPath}");
+                if (!Directory.Exists(rootPath))
+                {
+                    Directory.CreateDirectory(rootPath);
+                }
+                var savePath = Path.Combine(rootPath, orderDetails.OrderName);
+
+                await using (var stream = new FileStream(savePath, FileMode.Create))
+                {
+                    await stream.WriteAsync(pdfBytes, 0, pdfBytes.Length);
+                }
+                var pdfBase64 = Convert.ToBase64String(pdfBytes);
+
+                responseVm.IsSuccess = true;
+                responseVm.Data = pdfBase64;
+                responseVm.Message = "Order sheet generated successfully.";
+                File.Delete(savePath);
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Log($"Error occurred while generating order sheet: {ex.Message}");
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+            }
+
+            return responseVm;
+        }
+
+        public string ReplaceOrderSheetPlaceholders(string template, OrderSheetModel model)
+        {
+            if (string.IsNullOrWhiteSpace(template)) return string.Empty;
+
+            return template
+                .Replace("{{CustomerName}}", model.CustomerName ?? "")
+                .Replace("{{JobName}}", model.JobName ?? "")
+                .Replace("{{Notes}}", model.Notes ?? "")
+                .Replace("{{CurrentDate}}", model.CurrentDate ?? "")
+                .Replace("{{CompanyName}}", model.CompanyName ?? "")
+                .Replace("{{PhoneNo}}", model.PhoneNo ?? "")
+                .Replace("{{Position}}", model.Position ?? "")
+                .Replace("{{logo}}", model.CompanyLogo ?? "")
+                .Replace("{{OptionName}}", model.OptionName ?? "");
+        }
+
+        public byte[] GenerateInvoicePdf(string htmlContent)
+        {
+            var pdfDocument = new HtmlToPdfDocument
+            {
+                GlobalSettings = new GlobalSettings
+                {
+                    ColorMode = ColorMode.Color,
+                    Orientation = Orientation.Landscape,
+                    PaperSize = PaperKind.A4,
+                    Margins = new MarginSettings { Top = 10, Bottom = 10 } 
+                },
+                Objects = {
+            new ObjectSettings
+            {
+                HtmlContent = htmlContent,
+                WebSettings = { DefaultEncoding = "utf-8", LoadImages = true }
+            }
+        }
+            };
+
+            return converter.Convert(pdfDocument);
+        }
+
+
+
+
     }
 }
+
 

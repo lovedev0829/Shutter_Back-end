@@ -1,5 +1,6 @@
 ﻿using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core;
+using ShutterManagement.Core.Common;
 using ShutterManagement.Core.ViewModels;
 using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.Core.ViewModels.Response;
@@ -35,7 +36,7 @@ namespace ShutterManagement.Business.Services
             try
             {
 
-                bool IsRoleExists = await AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId
+                bool IsRoleExists = await AnyAsync(x => x.TenantId == claimsProperty.GetTenantId()
                 && x.IsDelete == false && x.RoleName.Trim() == model.RoleName.Trim());
                 if (IsRoleExists)
                 {
@@ -50,7 +51,7 @@ namespace ShutterManagement.Business.Services
                     IsActive = true,
                     IsDelete = false,
                     IsShow = AppConstant.IsAdminRolesShow,
-                    TenantId = AppConstant.LoggedInTenantId
+                    TenantId = claimsProperty.GetTenantId()
 
                 };
                 var res = await Add(role);
@@ -85,14 +86,14 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                bool IsRoleExists = await AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId
+                bool IsRoleExists = await AnyAsync(x => x.TenantId == claimsProperty.GetTenantId()
                 && x.IsDelete == false && x.Id == model.RoleId);
                 if (!IsRoleExists)
                 {
                     responseVm.Message = AppConstant.NoDataFound;
                     return responseVm;
                 }
-                bool IsRoleNameExists = await AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId
+                bool IsRoleNameExists = await AnyAsync(x => x.TenantId == claimsProperty.GetTenantId()
                 && x.IsDelete == false && x.Id != model.RoleId && x.RoleName.Trim() == model.RoleName.Trim());
                 if (IsRoleNameExists)
                 {
@@ -100,7 +101,7 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
                 var RoleDetails = GetAllQuerable().Where(x => x.Id == model.RoleId && x.IsShow == AppConstant.IsAdminRolesShow && x.IsDelete == false
-                && x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
+                && x.TenantId == claimsProperty.GetTenantId()).FirstOrDefault();
 
                 if (RoleDetails != null)
                 {
@@ -146,7 +147,14 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var RoleDetails = GetAllQuerable().Where(x => x.Id.ToString() == RoleId && x.IsShow == false && x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
+                var RoleDetails = GetAllQuerable().Where(x => x.Id.ToString() == RoleId && x.IsShow == false && x.TenantId == claimsProperty.GetTenantId()).FirstOrDefault();
+
+                bool IsRoleExistInUser = dbContext.TblUserRoles.Any(x => x.RoleId.ToString() == RoleId && x.IsDelete == false && x.IsActive == true);
+                if(IsRoleExistInUser)
+                {
+                    responseVm.Message = "This role cannot be deleted because it is currently assigned to user.";
+                    return responseVm;
+                }
                 if (RoleDetails != null)
                 {
                     RoleDetails.IsActive = false;
@@ -179,7 +187,14 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var RoleDetails = GetAllQuerable().Where(x => x.Id.ToString() == RoleId && x.IsShow == false && x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
+                bool IsRoleExistInUser = dbContext.TblUserRoles.Any(x => x.RoleId.ToString() == RoleId && x.IsDelete == false && x.IsActive == true);
+                if (IsRoleExistInUser)
+                {
+                    responseVm.Message = "This role cannot be deactivated because it is currently assigned to one or more users.";
+                    return responseVm;
+                }
+                var RoleDetails = GetAllQuerable().Where(x => x.Id.ToString() == RoleId && x.IsShow == false && x.TenantId == claimsProperty.GetTenantId()).FirstOrDefault();
+               
                 if (RoleDetails != null)
                 {
                     RoleDetails.IsActive = !RoleDetails.IsActive;
@@ -215,7 +230,7 @@ namespace ShutterManagement.Business.Services
                 var RoleList = (await GetAll())
                     .Where(x => x.IsDelete == false 
                     && x.IsShow == AppConstant.IsAdminRolesShow 
-                    && x.TenantId == AppConstant.LoggedInTenantId)
+                    && x.TenantId == claimsProperty.GetTenantId())
                     .ToList().OrderByDescending(x => x.CreatedAt);
 
                 roleLists.AddRange(RoleList.Select(x => new RoleList
@@ -239,8 +254,16 @@ namespace ShutterManagement.Business.Services
                                     (x.RoleId.ToString() == filter.SearchValue) ||
                                     ((x.RoleName ?? "").ToLower().Contains(filter.SearchValue.Trim())
                                     ) : true)).ToList();
-                var TakenRecords = FilterRecords
-                                    .Skip((filter.PageNo - 1) * filter.RecordPerPage).Take(filter.RecordPerPage).ToList(); 
+
+
+                var queryable = FilterRecords.AsQueryable();
+
+                queryable = Paginate.ApplyColumnFilters(queryable, filter.ColumnFilters);
+                queryable = Paginate.ApplySorting(queryable, filter.SortColumn, filter.SortDirection);
+
+                var TakenRecords = Paginate.Pagination(queryable.ToList(), filter);
+
+
                 if (TakenRecords != null && TakenRecords.Count > 0)
                 {
                     responseVm.Data = TakenRecords;

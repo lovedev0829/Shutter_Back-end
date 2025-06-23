@@ -11,6 +11,7 @@ using ShutterManagement.Core.SPModel;
 using ShutterManagement.Core;
 using static ShutterManagement.Business.Services.ReportServices;
 using System.ComponentModel;
+using Microsoft.IdentityModel.Tokens;
 
 namespace ShutterManagement.Business.Services
 {
@@ -37,7 +38,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<List<ContactsList>> responseVm = new ResponseVm<List<ContactsList>>();
             try
             {
-                var res = await contactService.GetAll_Contact(filter);
+                var res = await contactService.GetAll_Contact(filter, false);
                 if (res?.Data != null)
                 {
                     var activeContacts = res.Data.Where(x => x.IsActive == true).ToList();
@@ -66,7 +67,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<List<ContactBreakdown>> responseVm = new ResponseVm<List<ContactBreakdown>>();
             try
             {
-                var res = await contactService.GetAll_Contact(filter);
+                var res = await contactService.GetAll_Contact(filter, false);
                 if (res?.Data != null)
                 {
                     var activeContacts = res.Data.Where(x => x.IsActive == true).ToList();
@@ -168,37 +169,151 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
+        //public async Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> GetProductBreakdown(Guid EstimationId, string WindowProductId = "")
+        //{
+        //    IResponseVm<List<WindowProdcutDetailsForEstimate>> responseVm = new ResponseVm<List<WindowProdcutDetailsForEstimate>>();
+        //    try
+        //    {
+        //       // var res = await estimateService.GetAll_Estimate(new Pagination { SearchValue = EstimationId.ToString()});
+        //        Guid[] windowProductIds = estimateWindowProductService.GetAllQuerable()
+        //            .Where(x => x.EstimateId == EstimationId)
+        //            .Select(x => x.WindowProductId)
+        //            .Where(id => id.HasValue)  
+        //            .Select(id => id.Value)   
+        //            .ToArray();
+
+        //        var estimateResponse = await estimateService.BuildEstimate(windowProductIds, true, EstimationId.ToString(), true);
+        //        List<Guid> guidList = WindowProductId.Split(',')
+        //                   .Select(id => Guid.Parse(id.Trim()))
+        //                   .ToList();
+        //        if (guidList != null)
+        //        {
+        //            foreach (var item in guidList)
+        //            {
+        //                var estimatebreakdown = estimateResponse.Data.Where(item => item.WindowProdcutId.ToString() == item.WindowProdcutId.ToString());
+        //            }
+        //            }
+        //        responseVm.IsSuccess = true;
+        //        responseVm.Data = estimateResponse.Data;
+        //        responseVm.Message = AppConstant.FetchSuccessMsg;
+        //        responseVm.TotalRecords = estimateResponse.TotalRecords;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        responseVm.Message = ex.Message;
+        //    }
+        //    return responseVm;
+        //}
+
         public async Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> GetProductBreakdown(Guid EstimationId, string WindowProductId = "")
         {
-            IResponseVm<List<WindowProdcutDetailsForEstimate>> responseVm = new ResponseVm<List<WindowProdcutDetailsForEstimate>>();
+            var responseVm = new ResponseVm<List<WindowProdcutDetailsForEstimate>>();
+
             try
             {
-               // var res = await estimateService.GetAll_Estimate(new Pagination { SearchValue = EstimationId.ToString()});
+                // Step 1: Get relevant window product IDs for the estimate
                 Guid[] windowProductIds = estimateWindowProductService.GetAllQuerable()
                     .Where(x => x.EstimateId == EstimationId)
-                    .Select(x => x.WindowProductId)
-                    .Where(id => id.HasValue)  
-                    .Select(id => id.Value)   
+                    .Select(x => x.WindowProductId ?? Guid.Empty)
+                    .Where(id => id != Guid.Empty)
                     .ToArray();
 
-                var estimateResponse = await estimateService.BuildEstimate(windowProductIds, true, EstimationId.ToString(), true);
+                // Step 2: Build estimate from service
+                var estimateResponse = await estimateService.BuildEstimate(windowProductIds, true, false,EstimationId.ToString(), true);
+                var estimateData = estimateResponse?.Data ?? new List<WindowProdcutDetailsForEstimate>();
 
-                if (!string.IsNullOrEmpty(WindowProductId))
+                // Step 3: Filter if WindowProductId(s) provided
+                var filteredList = new List<WindowProdcutDetailsForEstimate>();
+
+                List<Guid> filterIds = new();
+
+                if (!string.IsNullOrWhiteSpace(WindowProductId))
                 {
-                    estimateResponse.Data = estimateResponse.Data.Where(item => item.WindowProdcutId.ToString() == WindowProductId).ToList();
+                    filterIds = WindowProductId
+                        .Split(',')
+                        .Select(id => Guid.TryParse(id.Trim(), out var guid) ? guid : Guid.Empty)
+                        .Where(guid => guid != Guid.Empty)
+                        .ToList();
                 }
 
+                var itemsToBind = string.IsNullOrWhiteSpace(WindowProductId)
+                    ? estimateData
+                    : estimateData.Where(x => x.WindowProdcutId.HasValue && filterIds.Contains(x.WindowProdcutId.Value)).ToList();
+
+                foreach (var item in itemsToBind)
+                {
+                    filteredList.Add(new WindowProdcutDetailsForEstimate
+                    {
+                        IsView = item.IsView,
+                        WindowId = item.WindowId,
+                        AddressId = item.AddressId,
+                        Label = item.Label,
+                        Width = item.Width,
+                        Height = item.Height,
+                        ArchHeight = item.ArchHeight,
+                        Quantity = item.Quantity,
+                        JobId = item.JobId,
+                        IsRated = item.IsRated,
+                        WindowProdcutId = item.WindowProdcutId,
+                        ProductId = item.ProductId,
+                        BuildWidth = item.BuildWidth,
+                        BuildHeight = item.BuildHeight,
+                        ProductName = item.ProductName,
+                        ProductWidth = item.ProductWidth,
+                        ProductHeight = item.ProductHeight,
+                        ProductArchHeight = item.ProductArchHeight,
+                        Area = item.Area,
+                        Length = item.Length,
+                        AdditionalWidth = item.AdditionalWidth,
+                        Markup = item.Markup,
+                        Options = item.Options,
+                        OptionsPrice = item.OptionsPrice,
+                        AdditionalCost = item.AdditionalCost,
+                        ProductTypeName = item.ProductTypeName,
+                        ComponentId = item.ComponentId,
+                        ComponentQuantity = item.ComponentQuantity,
+                        ComponentName = item.ComponentName,
+                        MarkupPercentage = item.MarkupPercentage,
+                        Price = item.Price,
+                        PricingExpression = item.PricingExpression,
+                        ExpressionFormulae = item.ExpressionFormulae,
+                        RawMaterialId = item.RawMaterialId,
+                        MaterialQuantity = item.MaterialQuantity,
+                        WasteFactor = item.WasteFactor,
+                        MaterialName = item.MaterialName,
+                        UnitCost = item.UnitCost,
+                        Non_Rated_UnitCost = item.Non_Rated_UnitCost,
+                        UnitOfMeasurement = item.UnitOfMeasurement,
+                        ProductMarkup = item.ProductMarkup,
+                        ComponentMarkup = item.ComponentMarkup,
+                        OptionMarkup = item.OptionMarkup,
+                        StockQuantity = item.StockQuantity,
+                        ReorderLevel = item.ReorderLevel,
+                        ProductPrice = item.ProductPrice,
+                        IsCutSheet = item.IsCutSheet,
+                        TotalPrice = item.ProductPrice,
+                        IsTaxApplied = item.IsTaxApplied,
+                        OptionTaxDetails = item.OptionTaxDetails,
+                    });
+                }
+
+                // Step 4: Return final response
                 responseVm.IsSuccess = true;
-                responseVm.Data = estimateResponse.Data;
+                responseVm.Data = filteredList;
                 responseVm.Message = AppConstant.FetchSuccessMsg;
-                responseVm.TotalRecords = estimateResponse.TotalRecords;
+                responseVm.TotalRecords = filteredList.Count;
             }
             catch (Exception ex)
             {
-                responseVm.Message = ex.Message;
+                responseVm.Message = $"Error: {ex.Message}";
+                responseVm.IsSuccess = false;
+                responseVm.Data = new List<WindowProdcutDetailsForEstimate>();
+                responseVm.TotalRecords = 0;
             }
+
             return responseVm;
         }
+
 
         public async Task<IResponseVm<List<object>>> GetProductListForEstimation(Guid EstimationId)
         {

@@ -13,24 +13,25 @@ namespace ShutterManagement.Core.ViewModels.Request
     {
         [Required]
         [MaxLength(100)]
-        [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabaticalError)]
+        [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabeticalError)]
         [DefaultValue("")]
         public string? FirstName { get; set; }
 
         [MaxLength(100)]
-        [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabaticalError)]
+        [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabeticalError)]
         [DefaultValue("")]
         public string? MiddleName { get; set; }
 
         [Required]
         [MaxLength(100)]
-        [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabaticalError)]
+        [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabeticalError)]
         [DefaultValue("")]
         public string? LastName { get; set; }
         [Required]
         [StringLength(10, MinimumLength = 3)]
         [DefaultValue("")]
         public string? Code { get; set; }
+        public string? Suffix { get; set; }
         [Required]
         [MaxLength(100)]
         public string? URL { get; set; }
@@ -62,18 +63,18 @@ namespace ShutterManagement.Core.ViewModels.Request
 
         [Required]
         [MaxLength(100)]
-        [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabaticalError)]
+        [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabeticalError)]
         [DefaultValue("")]
         public string? UserFirstName { get; set; }
 
         [MaxLength(100)]
-        [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabaticalError)]
+        [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabeticalError)]
         [DefaultValue("")]
         public string? UserMiddleName { get; set; }
 
         [Required]
         [MaxLength(100)]
-        [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabaticalError)]
+        [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabeticalError)]
         [DefaultValue("")]
         public string? UserLastName { get; set; }
         [Required, MaxLength(100)]
@@ -91,7 +92,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         [Required]
         [DefaultValue("")]
         [MaxLength(50)]
-        [RegularExpression("^[\\p{L} .'-]+$", ErrorMessage = AppConstant.AlphabaticalError)]
+        [RegularExpression("^[\\p{L} .'-]+$", ErrorMessage = AppConstant.AlphabeticalError)]
         public string? CompanyName { get; set; }
 
 
@@ -104,14 +105,14 @@ namespace ShutterManagement.Core.ViewModels.Request
 
         [Required]
         [MaxLength(50)]
-        [RegularExpression("^[\\p{L} .'-]+$", ErrorMessage = AppConstant.AlphabaticalError)]
+        [RegularExpression("^[\\p{L} .'-]+$", ErrorMessage = AppConstant.AlphabeticalError)]
         [DefaultValue("")]
 
         public string? City { get; set; }
 
         [Required]
         [MaxLength(50)]
-        [RegularExpression("^[\\p{L} .'-]+$", ErrorMessage = AppConstant.AlphabaticalError)]
+        [RegularExpression("^[\\p{L} .'-]+$", ErrorMessage = AppConstant.AlphabeticalError)]
         [DefaultValue("")]
 
         public string? Country { get; set; }
@@ -124,7 +125,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         public string? ZipCode { get; set; }
 
         [DefaultValue("")]
-       // [MinLength(4),MaxLength(4)]
+        //[MinLength(3),MaxLength(3)]
         public string? InvoicePrefix { get; set; }
 
         //[DefaultValue(0)]

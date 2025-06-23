@@ -48,12 +48,30 @@ namespace ShutterManagement.Business.Services
                 }
 
                 var filteredOrders = orders.Data
-                    .Where(o => o.Status == EnumValue.GetEnumValue(Estimation.Approved))
+                    .Where(o => o.Status == EnumValue.GetEnumValue(Estimation.Approved) && o.jobDetails.JobIsActive == true)
                     .GroupBy(x => x.EstimateId)
                     .Select(group => group
                     .OrderByDescending(o => o.CreatedDate)
                     .FirstOrDefault())
                    .ToList();
+
+
+                // Apply search
+                if (!string.IsNullOrWhiteSpace(filter.SearchValue))
+                {
+                    var SearchValue = filter.SearchValue.Trim().ToLower();
+                    filteredOrders = filteredOrders
+                        .Where(o =>
+                            (!string.IsNullOrEmpty(o.OrderNumber) && o.OrderNumber.ToLower().Contains(SearchValue)) ||
+                            (o.EstimateId != Guid.Empty && o.EstimateId.ToString().ToLower().Contains(SearchValue)) ||
+                            (!string.IsNullOrEmpty(o.jobDetails.ContactFirstName) || !string.IsNullOrEmpty(o.jobDetails.ContactLastName)) &&
+                            ($"{o.jobDetails.ContactFirstName} {o.jobDetails.ContactLastName}".ToLower().Contains(SearchValue)) ||
+                            (o.CreatedDate.HasValue && o.CreatedDate.Value.ToString("yyyy-MM-dd").Contains(SearchValue)) ||
+                            (o.CreatedDate.HasValue && o.CreatedDate.Value.ToString("yyyy-MM-dd").Contains(SearchValue)) ||
+                            (o.GrandTotal.HasValue && o.GrandTotal.Value.ToString().Contains(SearchValue))
+                        )
+                        .ToList();
+                }
 
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.FetchSuccessMsg;
@@ -72,16 +90,42 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var estimatelist = await estimateService.GetAll_Estimate(filter);
-                if(estimatelist == null)
+                if(estimatelist?.Data == null)
                 {
                     responseVm.Message = AppConstant.NoDataFound;
+                    return responseVm;
                 }
                 var filteredOrders = estimatelist?.Data
-                       .Where(o => o.IsTaxApplied==true && o.Tax>0 && (o.Status == EnumValue.GetEnumValue(Estimation.Approved) || o.Status == EnumValue.GetEnumValue(Estimation.GenerateOrder)))
+                       .Where(o => o.IsTaxApplied==false && o.Tax >0 && (o.Status == EnumValue.GetEnumValue(Estimation.Approved) || o.Status == EnumValue.GetEnumValue(Estimation.GenerateOrder)))
                       .ToList();
 
+                if (!string.IsNullOrWhiteSpace(filter.SearchValue))
+                {
+                    var searchTerm = filter.SearchValue.Trim().ToLower();
+                    filteredOrders = filteredOrders
+                        .Where(o =>
+                            (!string.IsNullOrEmpty(o.EstimateCode) &&
+                                o.EstimateCode.ToLower().Contains(searchTerm)) ||
+                            (!string.IsNullOrEmpty(o.jobDetails.JobUniqueId) &&
+                                o.jobDetails.JobUniqueId.ToLower().Contains(searchTerm)) ||
+                            (
+                                (!string.IsNullOrEmpty(o.jobDetails.FirstName) || !string.IsNullOrEmpty(o.jobDetails.LastName)) &&
+                                $"{o.jobDetails.FirstName} {o.jobDetails.LastName}".ToLower().Contains(searchTerm)
+                            ) ||
+                            (o.Tax.HasValue && o.Tax.Value.ToString().ToLower().Contains(searchTerm))
+                        )
+                        .ToList();
+                }
+
+                var queryable = filteredOrders.AsQueryable();
+
+                queryable = Paginate.ApplyColumnFilters(queryable, filter.ColumnFilters);
+                queryable = Paginate.ApplySorting(queryable, filter.SortColumn, filter.SortDirection);
+
+                var TakenRecords = Paginate.Pagination(queryable.ToList(), filter);
+
                 responseVm.IsSuccess = true;
-                responseVm.Data = filteredOrders;
+                responseVm.Data = TakenRecords;
                 responseVm.TotalRecords = filteredOrders.Count;
             }
             catch(Exception ex)

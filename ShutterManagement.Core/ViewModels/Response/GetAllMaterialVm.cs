@@ -12,7 +12,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? MaterialName { get; set; }
 
         public decimal? UnitCost { get; set; }
-        public decimal? Non_Rated_UnitCost { get; set; }
+        public decimal? NonRatedUnitCost { get; set; }
 
         public string? UnitOfMeasurement { get; set; }
 
@@ -24,11 +24,14 @@ namespace ShutterManagement.Core.ViewModels.Response
 
         public string? FirstName { get; set; }
         public string? LastName { get; set; }
+        public string? CompanyName { get; set; }
 
         public string? Notes { get; set; }
         public Guid? ProductType { get; set; }
         public string? ProductTypeName { get; set; }
-
+        public string? MaterialUniqueId { get; set; }
+        public decimal? Lenght { get; set; }
+        public decimal? Width { get; set; }
         public bool? IsActive { get; set; }
 
         public Guid? TenantId { get; set; }

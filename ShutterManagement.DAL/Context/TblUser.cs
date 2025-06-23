@@ -43,7 +43,15 @@ public partial class TblUser
 
     public string? ForgetPassword { get; set; }
 
+    public string? GhlUserId { get; set; }
+
+    public string? Suffix { get; set; }
+
+    public bool? IsTenantAdmin { get; set; }
+
     public virtual MstJobTitle? JobTitle { get; set; }
+
+    public virtual ICollection<TblAppointmentSchedule> TblAppointmentSchedules { get; set; } = new List<TblAppointmentSchedule>();
 
     public virtual ICollection<TblJobSchedule> TblJobSchedules { get; set; } = new List<TblJobSchedule>();
 

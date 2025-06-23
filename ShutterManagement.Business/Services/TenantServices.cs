@@ -28,9 +28,10 @@ namespace ShutterManagement.Business.Services
         private readonly ClaimsProperty claimsProperty;
         private readonly IUserService userService;
         private readonly INotificationService notification;
+       // private readonly GoogleAuthService googleAuthService;
 
         public TenantServices(DataServices dataServices, IMapper mapper, ITenantBrandingService tenantBrandingService
-            , ClaimsProperty claimsProperty, IUserService userService,INotificationService notification
+            , ClaimsProperty claimsProperty, IUserService userService,INotificationService notification/*,GoogleAuthService googleAuthService*/
             )
         {
             this.dataServices = dataServices;
@@ -39,6 +40,7 @@ namespace ShutterManagement.Business.Services
             this.claimsProperty = claimsProperty;
             this.userService = userService;
             this.notification = notification;
+            //this.googleAuthService = googleAuthService;
         }
 
         public async Task<IResponseVm<string>> TenantCreate(CreateTenant model)
@@ -54,20 +56,20 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-                var TenantDetails = (await GetAll()).Where(x => x.IsDelete == false).Select(x => x.BrandingInfo).ToList();
-                bool IsTenantEmailExists = await tenantBrandingService.AnyAsync(x => x.Email == model.Email && x.IsDelete == false && TenantDetails.Contains(x.Id));
-                if (IsTenantEmailExists)
-                {
-                    responseVm.Message = "Email " + AppConstant.AlreadyExists;
-                    return responseVm;
-                }
+                //var TenantDetails = (await GetAll()).Where(x => x.IsDelete == false).Select(x => x.BrandingInfo).ToList();
+                //bool IsTenantEmailExists = await tenantBrandingService.AnyAsync(x => x.Email == model.Email && x.IsDelete == false && TenantDetails.Contains(x.Id));
+                //if (IsTenantEmailExists)
+                //{
+                //    responseVm.Message = "Email " + AppConstant.AlreadyExists;
+                //    return responseVm;
+                //}
                 bool IsTenantCompanynameExists = await tenantBrandingService.AnyAsync(x => x.CompanyName == model.CompanyName.Trim() && x.IsDelete == false);
                 if (IsTenantCompanynameExists)
                 {
                     responseVm.Message = "CompanyName " + AppConstant.AlreadyExists;
                     return responseVm;
                 }
-                bool IsUserEmailExists = await userService.AnyAsync(x => x.Email == model.UserEmail && x.IsDelete == false);
+                bool IsUserEmailExists = await userService.AnyAsync(x => x.Email == model.UserEmail && x.IsDelete == false && x.IsTenantAdmin == true );
                 if (IsUserEmailExists)
                 {
                     responseVm.Message = "User Email " + AppConstant.AlreadyExists;
@@ -89,6 +91,8 @@ namespace ShutterManagement.Business.Services
                     new SqlParameter("@SecondaryColor", SqlDbType.NVarChar) { SqlValue = model.SecondaryColor },
                     new SqlParameter("@StreetAddress", SqlDbType.NVarChar) { SqlValue = model.StreetAddress },
                //     new SqlParameter("@Markup", SqlDbType.NVarChar) { SqlValue = model.Markup },
+                    new SqlParameter("@InvoicePrefix", SqlDbType.NVarChar) { SqlValue = model.InvoicePrefix },
+                    new SqlParameter("@Suffix", SqlDbType.NVarChar) { SqlValue = model.Suffix??"" },
                     new SqlParameter("@City", SqlDbType.NVarChar) { SqlValue = model.City },
                     new SqlParameter("@Country", SqlDbType.NVarChar) { SqlValue = model.Country },
                     new SqlParameter("@ZipCode", SqlDbType.NVarChar) { SqlValue = model.ZipCode },
@@ -167,33 +171,47 @@ namespace ShutterManagement.Business.Services
                     }
                 }
 
-                var Templateid = Guid.Parse("1916A280-109F-4829-8A70-0AFA94146A5F").ToString().ToLower();
-
-                
-                WelcomeEmailModel welcomemodel = new WelcomeEmailModel
-                {
-                    Name = model.FirstName + " " + model.LastName ?? "",
-                    UserName = model.Email ?? "",
-                    Password = model.Password ?? "",
-                    CompanyName = model?.CompanyName ?? "",
-                    Logo = model?.Logo ?? "",
-                    loginUrl = $"{AppConstant.UIBaseURL}{model?.Code}",
-                    color=model?.PrimaryColor??""
-
-                };
-
-                var WelcomeTemplate = dbContext.TblTemplates.Where(x =>  x.IsDelete == false && x.TemplateId.ToString().ToLower() == Templateid).FirstOrDefault();
-                var emailContent = EmailHelper.ReplacePlaceholdersForlWelcomeEmail(WelcomeTemplate?.TemplateValue, welcomemodel);
-                EmailHelper.WelcomeEmail(model.Email, emailContent);
-
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.InsertSuccessMsg;
+                //  background email task
+               await Task.Run(() => SendWelcomeEmailAsync(model));
             }
             catch (Exception ex)
             {
                 responseVm.Message = AppConstant.ExceptionError + ex.Message;
             }
             return responseVm;
+        }
+
+        public async Task SendWelcomeEmailAsync(CreateTenant model)
+        {
+            try
+            {
+                WelcomeEmailModel welcomemodel = new WelcomeEmailModel
+                {
+                    Name = $"{model.FirstName} {model.LastName}" ?? "",
+                    UserName = model.Email ?? "",
+                    Password = model.Password ?? "",
+                    CompanyName = model.CompanyName ?? "",
+                    Logo = model.Logo ?? "",
+                    loginUrl = $"{AppConstant.UIBaseURL}{model.Code}",
+                    color = model.PrimaryColor ?? ""
+                };
+
+                var WelcomeTemplate =  dbContext.TblTemplates
+                    .FirstOrDefault(x => x.IsDelete==false &&
+                        x.TemplateName.ToLower() == EnumValue.GetEnumValue(EmailTemplateType.WelcomeEmail).ToLower());
+
+                if (WelcomeTemplate != null)
+                {
+                    var emailContent = EmailHelper.ReplacePlaceholdersForlWelcomeEmail(WelcomeTemplate.TemplateValue, welcomemodel);
+                   //await  googleAuthService.WelcomeEmailWithOauth(model.Email, emailContent);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Welcome email failed: " + ex.Message);
+            }
         }
 
         public async Task<IResponseVm<string>> TenantUpdate(UpdateTenant model)
@@ -213,6 +231,12 @@ namespace ShutterManagement.Business.Services
                 if (IsTenantEmailExists)
                 {
                     responseVm.Message = "Email " + AppConstant.AlreadyExists;
+                    return responseVm;
+                }
+                bool IsUserEmailExists = await userService.AnyAsync(x => x.Email == model.UserEmail && x.TenantId.ToString() != model.TenantId && x.IsDelete == false && x.IsTenantAdmin == false);
+                if (IsUserEmailExists)
+                {
+                    responseVm.Message = "User Email " + AppConstant.AlreadyExists;
                     return responseVm;
                 }
                 bool IsTenantCompanynameExists = await tenantBrandingService.AnyAsync(x => x.CompanyName == model.CompanyName.Trim() && x.IsDelete == false &&
@@ -235,15 +259,17 @@ namespace ShutterManagement.Business.Services
                     new SqlParameter("@FirstName", SqlDbType.NVarChar) { SqlValue = model.FirstName },
                     new SqlParameter("@MiddleName", SqlDbType.NVarChar) { SqlValue = model.MiddleName },
                     new SqlParameter("@LastName", SqlDbType.NVarChar) { SqlValue = model.LastName },
+                    new SqlParameter("@Suffix", SqlDbType.NVarChar) { SqlValue = model.Suffix },
                     new SqlParameter("@Code", SqlDbType.NVarChar) { SqlValue = model.Code?.Trim() },
                     new SqlParameter("@URL", SqlDbType.NVarChar) { SqlValue = model.URL },
                     new SqlParameter("@Email", SqlDbType.NVarChar) { SqlValue = model.Email?.Trim() },
                     new SqlParameter("@PhoneNumber", SqlDbType.NVarChar) { SqlValue = model.PhoneNumber },
                     new SqlParameter("@Logo", SqlDbType.NVarChar) { SqlValue = model.Logo },
-                    new SqlParameter("@CompanyName", SqlDbType.NVarChar) { SqlValue = model.CompanyName.Trim() },
-                    new SqlParameter("@PrimaryColor", SqlDbType.NVarChar) { SqlValue = model.PrimaryColor },
-                    new SqlParameter("@SecondaryColor", SqlDbType.NVarChar) { SqlValue = model.SecondaryColor },
-                    new SqlParameter("@StreetAddress", SqlDbType.NVarChar) { SqlValue = model.StreetAddress },
+                    new SqlParameter("@CompanyName", SqlDbType.NVarChar) { SqlValue = model?.CompanyName?.Trim() },
+                    new SqlParameter("@InvoicePrefix", SqlDbType.NVarChar) { SqlValue = model?.InvoicePrefix?.Trim() },
+                    new SqlParameter("@PrimaryColor", SqlDbType.NVarChar) { SqlValue = model?.PrimaryColor },
+                    new SqlParameter("@SecondaryColor", SqlDbType.NVarChar) { SqlValue = model?.SecondaryColor },
+                    new SqlParameter("@StreetAddress", SqlDbType.NVarChar) { SqlValue = model?.StreetAddress },
                     new SqlParameter("@City", SqlDbType.NVarChar) { SqlValue = model.City },
                     new SqlParameter("@Country", SqlDbType.NVarChar) { SqlValue = model.Country },
                     new SqlParameter("@ZipCode", SqlDbType.NVarChar) { SqlValue = model.ZipCode },
@@ -280,7 +306,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var TenantDetails = GetAllQuerable().Where(x => x.TenantId.ToString() == TenantId && x.TenantId != AppConstant.LoggedInTenantId && x.ParentTenantId == null).FirstOrDefault();
+                var TenantDetails = GetAllQuerable().Where(x => x.TenantId.ToString() == TenantId && x.TenantId != claimsProperty.GetTenantId() && x.ParentTenantId == null).FirstOrDefault();
                 if (TenantDetails != null)
                 {
                     TenantDetails.IsDelete = true;
@@ -327,7 +353,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var TenantDetails = GetAllQuerable().Where(x => x.TenantId.ToString() == TenantId && x.TenantId != AppConstant.LoggedInTenantId && x.ParentTenantId == null).FirstOrDefault();
+                var TenantDetails = GetAllQuerable().Where(x => x.TenantId.ToString() == TenantId && x.TenantId != claimsProperty.GetTenantId() && x.ParentTenantId == null).FirstOrDefault();
                 if (TenantDetails != null)
                 {
                     TenantDetails.IsActive = !TenantDetails.IsActive;
@@ -376,7 +402,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<List<GetAllTenant>> responseVm = new ResponseVm<List<GetAllTenant>>();
             try
             {
-                var TenantList = (await GetAll()).Where(x => x.IsDelete == false && x.ParentTenantId == null && x.TenantId != AppConstant.LoggedInTenantId).ToList().OrderByDescending(x => x.CreatedAt);
+                var TenantList = (await GetAll()).Where(x => x.IsDelete == false && x.ParentTenantId == null && x.TenantId != claimsProperty.GetTenantId()).ToList().OrderByDescending(x => x.CreatedAt);
                 foreach (var item in TenantList)
                 {
                     item.BrandingInfoNavigation = tenantBrandingService.GetAllQuerable().Where(x => x.Id == item.BrandingInfo).FirstOrDefault();
@@ -397,22 +423,21 @@ namespace ShutterManagement.Business.Services
                                     || (x.MiddleName ?? "").ToLower().Contains(filter.SearchValue)
                                     || (x.Code ?? "").ToLower().Contains(filter.SearchValue)
                                     ) : true)).ToList();
-                var TakenRecords = FilterRecords
-                                    .Skip((filter.PageNo - 1) * filter.RecordPerPage).Take(filter.RecordPerPage).ToList();
-                if (TakenRecords != null && TakenRecords.Count > 0)
-                {
-                    var data = TakenRecords.Select(x => new GetAllTenant
+                
+                    var data = FilterRecords.Select(x => new GetAllTenant
                     {
                         TenantId = x.TenantId,
                         FirstName = x.FirstName,
                         MiddleName = x.MiddleName,
                         LastName = x.LastName,
+                        Suffix = x.Suffix??"",
+                        InvoicePrefix=x.BrandingInfoNavigation?.InvoicePrefix ??"",
                         Code = x.Code,
                         URL = x.Url,
-                        Email = x.BrandingInfoNavigation.Email,
-                        PhoneNumber = x.BrandingInfoNavigation.PhoneNumber,
-                        Logo = x.BrandingInfoNavigation.Logo,
-                        CompanyName = x.BrandingInfoNavigation.CompanyName,
+                        Email = x.BrandingInfoNavigation?.Email,
+                        PhoneNumber = x.BrandingInfoNavigation?.PhoneNumber,
+                        Logo = x.BrandingInfoNavigation?.Logo,
+                        CompanyName = x.BrandingInfoNavigation?.CompanyName,
                         PrimaryColor = x.BrandingInfoNavigation.PrimaryColor,
                         SecondaryColor = x.BrandingInfoNavigation.SecondaryColor,
                         StreetAddress = x.BrandingInfoNavigation.StreetAddress,
@@ -434,15 +459,19 @@ namespace ShutterManagement.Business.Services
                             data[i].UserEmail = UserDetails.Email;
                         }
                     }
-                    responseVm.Data = data;
+
+                var queryable = data.AsQueryable();
+
+                queryable = Paginate.ApplyColumnFilters(queryable, filter.ColumnFilters);
+                queryable = Paginate.ApplySorting(queryable, filter.SortColumn, filter.SortDirection);
+
+                var TakenRecords = Paginate.Pagination(queryable.ToList(), filter);
+
+                responseVm.Data = TakenRecords;
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.UpdateSuccessMsg;
                     responseVm.TotalRecords = FilterRecords.Count;
-                }
-                else
-                {
-                    responseVm.Message = AppConstant.NoDataFound;
-                }
+                
 
 
             }
@@ -453,10 +482,6 @@ namespace ShutterManagement.Business.Services
             return responseVm;
 
         }
-
-
-       
-
 
     }
 }

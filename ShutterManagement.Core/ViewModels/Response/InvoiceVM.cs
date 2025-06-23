@@ -15,6 +15,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public decimal? PaidAmount { get; set; }
         public decimal? BalanceDue { get; set; }
         public string? Status { get; set; }
+        public string? Suffix { get; set; }
         public string? ContactFirstName { get; set; }
         public string? ContactLastName { get; set; }
         public string? EstimateName { get; set; }

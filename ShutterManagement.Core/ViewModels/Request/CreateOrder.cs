@@ -41,8 +41,12 @@ namespace ShutterManagement.Core.ViewModels.Request
         [Default("")]
         public string? DiscountCoupon { get; set; }
         [Default(0.00)]
-        [Required]
+       // [Required]
         public decimal? SubTotal { get; set; }
+
+        [Default(0.00)]
+       // [Required]
+        public decimal? ProductPrice { get; set; }
         [Default(0.00)]
         public decimal? Tax { get; set; }
         [Default(0.00)]
@@ -54,5 +58,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         [Default("")]
         [Required]
         public string? Status { get; set; }
+
+        public bool? IsTaxApplicable { get; set; } = false;
     }
 }

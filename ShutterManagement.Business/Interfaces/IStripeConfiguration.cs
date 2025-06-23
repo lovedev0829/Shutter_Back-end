@@ -16,8 +16,12 @@ namespace ShutterManagement.Business.Interfaces
         Task<IResponseVm<StripeConfigurationVm>> GetAll_StripeConfiguration();
 
         Task<IResponseVm<string>> Create_OrUpdate_StripeConfiguration(CreateStripeConfiguration StripeConfiguration);
-       // Task<IResponseVm<string>> Update_StripeConfiguration(UpdateStripeConfiguration model);
+        // Task<IResponseVm<string>> Update_StripeConfiguration(UpdateStripeConfiguration model);
         //Task<IResponseVm<string>> ActiveInActive(Guid? ProductId);
         //Task<IResponseVm<string>> DeleteStripeConfiguration(Guid? id);
+
+        Task GetStripeConfiguration(string Id);
+
+        Task<IResponseVm<string>> DeleteStripeConfiguration(Guid? configurationid);
     }
 }

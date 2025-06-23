@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using ShutterManagement.Business;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Business.Services;
 using ShutterManagement.Core;
@@ -21,11 +22,13 @@ namespace ShutterManagement.Controllers
     {
       
         private readonly ImportandExportCSV importandExportCSV;
+        private readonly ClaimsProperty claimsProperty;
 
-        public ImportandExportController(ShutterDBContext context,ImportandExportCSV importandExportCSV)
+        public ImportandExportController(ShutterDBContext context,ImportandExportCSV importandExportCSV, ClaimsProperty claimsProperty)
         {
            
             this.importandExportCSV = importandExportCSV;
+            this.claimsProperty = claimsProperty;
         }
 
         [Authorize]
@@ -48,13 +51,24 @@ namespace ShutterManagement.Controllers
             }
             try
             {
+                var tenantId = claimsProperty.GetTenantId();
+                var importFolder = Path.Combine("Files", tenantId.ToString(), "Import");
+                if (!Directory.Exists(importFolder))
+                {
+                    Directory.CreateDirectory(importFolder);
+                }
+                var filePath = Path.Combine(importFolder, file.FileName);
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
                 using (var stream = file.OpenReadStream())
                 {
                   
                     switch (model.ToLower())
                     {
                         case "material":
-                            var materialresponse = await importandExportCSV.ImportCsvToDatabase(stream);
+                            var materialresponse = await importandExportCSV.ImportMaterialDatabase(stream);
                             responseVm = materialresponse;
                             break;        
 
@@ -158,6 +172,27 @@ namespace ShutterManagement.Controllers
                 return responseVm;
             }
             return responseVm;
+        }
+
+
+        [HttpGet("DownloadSample")]
+        [Authorize(Roles = "ContactAdd,MaterialAdd")]
+        public async Task<IActionResult> DownloadSample(string? downloadSample)
+        {
+            if (downloadSample == "material")
+            {
+                var Material = await importandExportCSV.DownloadCsvSampleMaterial();
+                return Ok(Material);
+            }
+            else if (downloadSample == "contact")
+            {
+                var contact = await importandExportCSV.DownloadCsvSampleContact();
+                return Ok(contact);
+            }
+            else
+            {
+                return BadRequest("Please input a valid type.");
+            }
         }
 
     }

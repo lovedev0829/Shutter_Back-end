@@ -11,7 +11,6 @@ namespace ShutterManagement.Core.ViewModels.Request
      public class CreateExpression
      {
         [Default("")]
-        [Required]
         public string? ExpressionName { get; set; }
 
         [Default("")]
@@ -22,8 +21,9 @@ namespace ShutterManagement.Core.ViewModels.Request
         [Default("")]
         [Required]
         public Guid? ProductTypeId { get; set; }
+        
         [Default("")]
-        public string? OptionId { get; set; } = "";
+        public bool? IsOptionExpression { get; set; }
 
         [Default("")]
         [Required]

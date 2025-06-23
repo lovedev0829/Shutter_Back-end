@@ -9,13 +9,19 @@ namespace ShutterManagement.Core.ViewModels.Request
 {
     public class GHLConfiguration
     {
-        [Required]
+      //  [Required]
         public string? APIkey { get; set; }
-        [Required]
+      //  [Required]
         public string? PipelineId { get; set; }
-        [Required]
-        public string? StageId { get; set; }
-        [Required]
+      //  [Required]
+        public string? LocationId { get; set; }
+      //  [Required]
         public string? BaseAddress { get; set; }
+       // [Required]
+        public string? GeneratedToken { get; set; }
+        public string? CalendarName { get; set; }
+        public string? ClientId { get; set; }
+        public string? ClientSecret { get; set; }
+        public string? RedirectURI { get; set; }
     }
 }

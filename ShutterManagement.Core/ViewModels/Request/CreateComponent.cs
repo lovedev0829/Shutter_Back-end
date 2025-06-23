@@ -13,12 +13,12 @@ namespace ShutterManagement.Core.ViewModels.Request
         [DefaultValue("")]
         [Required]
         [MaxLength(100)]
-        [RegularExpression(@"^[a-zA-Z0-9!@#$%^&*()_+={}\[\]:;""'<>,.?/\|`~ \s-]*$", ErrorMessage = AppConstant.AlphabaticalError)]
+        [RegularExpression(@"^[a-zA-Z0-9!@#$%^&*()_+={}\[\]:;""'<>,.?/\|`~ \s-]*$", ErrorMessage = AppConstant.AlphabeticalError)]
         public string? ComponentName { get; set; }
 
         [DefaultValue("")]
         [Required]
-        //[RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabaticalError)]
+        //[RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabeticalError)]
         public string? ProductType { get; set; }
 
         [DefaultValue("")]
@@ -28,10 +28,10 @@ namespace ShutterManagement.Core.ViewModels.Request
         //[Required]
         //public Guid? ExpressionId { get; set; }
 
-        [DefaultValue("")]
-       // [Required]
-        [MaxLength(500)]
-        public string? PricingExpression { get; set; }
+       // [DefaultValue("")]
+       //// [Required]
+       // [MaxLength(500)]
+       // public string? PricingExpression { get; set; }
 
         [MaxLength(1000)]
         public string? Notes { get; set; }
@@ -44,7 +44,11 @@ namespace ShutterManagement.Core.ViewModels.Request
     {
         [DefaultValue("")]
         public Guid MaterialId { get; set; }
+
         public decimal? Qty { get; set; }
         public decimal? WasteFactor { get; set; }
+
+        [DefaultValue(null)]
+        public string? MaterialPricingExpression { get; set; }
     }
 }

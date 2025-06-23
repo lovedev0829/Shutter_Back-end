@@ -17,6 +17,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string[]? Photo { get; set; } = new string[] {};
         public string? Notes { get; set; }
         public bool? IsActive { get; set; }
+        public DateTime? CreatedAt { get; set; }
         public Guid? TenantId { get; set; }
         public List<ProductList>? ProductDetails { get; set; }
     }
@@ -30,6 +31,8 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? ProductTypeName { get; set; }
         public decimal? BuildWidth { get; set; }
         public decimal? BuildHeight { get; set; }
+
+        public int? SortOrder { get; set; }
 
         public List<WindowOptions>? WindowOptions { get; set; }
     }

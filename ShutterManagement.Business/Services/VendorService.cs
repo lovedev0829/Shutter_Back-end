@@ -18,19 +18,22 @@ namespace ShutterManagement.Business.Services
     public class VendorService : BaseRepository<ShutterDBContext, TblVendor>, IVendorService
     {
         private readonly ITenantService tenantService;
-        public VendorService(ITenantService tenantService)
+        private readonly ClaimsProperty claimsProperty;
+
+        public VendorService(ITenantService tenantService,ClaimsProperty claimsProperty)
         {
             this.tenantService= tenantService;
+            this.claimsProperty = claimsProperty;
         }
         public Task<IResponseVm<string>> ActiveInActive(Guid Id)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenant = tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null);
+                var IsTenant = tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.ParentTenantId == null);
                 var IsVendorExist = GetAllQuerable()
                       .Where(c => c.VendorId == Id
-                                  && c.TenantId == AppConstant.LoggedInTenantId
+                                  && c.TenantId == claimsProperty.GetTenantId()
                                 
                                   && c.IsDelete == false)
                       .FirstOrDefault();
@@ -65,7 +68,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 //bool IsVendorNameExist = await AnyAsync(x => x.IsDelete == false &&
-                //                        x.VendorName == model.VendorName.Trim() && x.TenantId == AppConstant.LoggedInTenantId);
+                //                        x.VendorName == model.VendorName.Trim() && x.TenantId == claimsProperty.GetTenantId());
 
                 //if (IsVendorNameExist)
                 //{
@@ -74,7 +77,7 @@ namespace ShutterManagement.Business.Services
                 //}
                 bool IsVendorEmailExists = await AnyAsync(x => x.IsDelete == false &&
                      (x.Email == model.Email.Trim())
-                     && x.TenantId == AppConstant.LoggedInTenantId);
+                     && x.TenantId == claimsProperty.GetTenantId());
                 if (IsVendorEmailExists)
                 {
                     responseVm.Message = "Vendor Email " + AppConstant.AlreadyExists;
@@ -82,7 +85,7 @@ namespace ShutterManagement.Business.Services
                 }
                 bool IsVendorPhoneExists = await AnyAsync(x => x.IsDelete == false &&
                                         (x.PhoneNumber == model.PhoneNumber.Trim())
-                                        && x.TenantId == AppConstant.LoggedInTenantId);
+                                        && x.TenantId == claimsProperty.GetTenantId());
 
                 if (IsVendorPhoneExists)
                 {
@@ -90,27 +93,28 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-                int Version1 = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt)
+                int Version1 = GetAllQuerable().Where(x => x.TenantId == claimsProperty.GetTenantId() && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt)
                 .Select(p => (p.VendorCode.Split("-", StringSplitOptions.RemoveEmptyEntries).Length == 3 ? Convert.ToInt32(p.VendorCode.Split("-", StringSplitOptions.RemoveEmptyEntries)[2]) : 0)).FirstOrDefault();
                 Version1 += 1;
-                var generateUnique = GenerateUniqueId.GenerateUniqueIds(ModuleName.Vendor, AppConstant.LoggedInCompanyCode, Version1);
+                var generateUnique = GenerateUniqueId.GenerateUniqueIds(ModuleName.Vendor, claimsProperty.GetCompanyCode(), Version1);
 
                 TblVendor vendor = new TblVendor
                 {
-                    FirstName = model?.FirstName?.Trim(),
-                    LastName = model?.LastName?.Trim(),
-                    Email = model.Email.Trim(),
-                    PhoneNumber = model.PhoneNumber.Trim(),
-                    State = model.State.Trim(),
-                    City = model.City.Trim(),
-                    ZipCode = model.ZipCode.Trim(),
-                    StreetAddress = model.StreetAddress.Trim(),
-                    VendorCode = generateUnique,
+                    FirstName = model?.FirstName?.Trim()??"",
+                    LastName = model?.LastName?.Trim() ?? "",
+                    Email = model.Email.Trim()??"",
+                    PhoneNumber = model.PhoneNumber.Trim() ?? "",
+                    State = model.StateId != null ? model.StateId : null,
+                    City = model.City.Trim() ?? "",
+                    ZipCode = model.ZipCode.Trim()??"",
+                    StreetAddress = model.StreetAddress.Trim() ?? "",
+                    VendorCode = generateUnique??"",
+                    CompanyName= model.CompanyName.Trim()??"",
                     IsActive = true,
                     IsDelete = false,
                     CreatedAt = DateTime.Now,
                     CreatedBy = AppConstant.LoggedInUserID,
-                    TenantId = AppConstant.LoggedInTenantId
+                    TenantId = claimsProperty.GetTenantId()
                 };
 
                     var res = await Add(vendor);
@@ -140,7 +144,7 @@ namespace ShutterManagement.Business.Services
             {
                 var IsVendorExist = GetAllQuerable()
                       .Where(c => c.VendorId == Id
-                                  && c.TenantId == AppConstant.LoggedInTenantId
+                                  && c.TenantId == claimsProperty.GetTenantId()
                                   && c.IsDelete == false)
                       .FirstOrDefault();
                 if (IsVendorExist != null)
@@ -174,11 +178,11 @@ namespace ShutterManagement.Business.Services
             IResponseVm<List<VendorListVm>> responseVm = new ResponseVm<List<VendorListVm>>();
             try
             {
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null);
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.ParentTenantId == null);
                 if (IsTenant)
                 {
                     var IsComponentExists = (await GetAll())
-                    .Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId)
+                    .Where(x => x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId())
                     .OrderByDescending(x => x.CreatedAt)
                     .ToList();
 
@@ -189,36 +193,41 @@ namespace ShutterManagement.Business.Services
                                     (x.VendorId.ToString() == filter.SearchValue) ||
                                     ((x.FirstName.ToLower() + " " + x.LastName.ToLower()) ?? "").Contains(filter.SearchValue) ||
                                     (x.FirstName.ToLower() ?? "").Contains(filter.SearchValue) ||
+                                    (x.CompanyName.ToLower() ?? "").Contains(filter.SearchValue) ||
                                     (x.LastName.ToLower() ?? "").Contains(filter.SearchValue) ||
                                     (x.Email ?? "").Contains(filter.SearchValue.Trim()) ||
                                     (x.PhoneNumber ?? "").Contains(filter.SearchValue.Trim()) ||
                                     (x.City ?? "").Contains(filter.SearchValue.Trim()) ||
-                                    (x.State ?? "").Contains(filter.SearchValue.Trim()) ||
+                                    //(x.sta ?? "").Contains(filter.SearchValue.Trim()) ||
                                     (x.StreetAddress ?? "").Contains(filter.SearchValue.Trim()) ||
                                     (x.VendorCode ?? "").Contains(filter.SearchValue.Trim()) ||
                                     (x.ZipCode ?? "").Contains(filter.SearchValue.Trim())
                                     ))
                         .ToList();
-                    var TakenRecords = FilterRecords
-                        .Skip((filter.PageNo - 1) * filter.RecordPerPage)
-                        .Take(filter.RecordPerPage)
-                        .ToList();
+                    var queryable = FilterRecords.AsQueryable();
+
+                    queryable = Paginate.ApplyColumnFilters(queryable, filter.ColumnFilters);
+                    queryable = Paginate.ApplySorting(queryable, filter.SortColumn, filter.SortDirection);
+
+                    var TakenRecords = Paginate.Pagination(queryable.ToList(), filter);
 
                     responseVm.IsSuccess = true;
                     responseVm.Data = TakenRecords.Select(x => new VendorListVm
                     {
                         VendorId = x.VendorId,
-                        FirstName = x.FirstName,
-                        LastName = x.LastName,
-                        City = x.City,
-                        State = x.State,
-                        ZipCode = x.ZipCode,
-                        Email = x.Email,
-                        StreetAddress = x.StreetAddress,
-                        PhoneNumber = x.PhoneNumber,
+                        FirstName = x.FirstName??"",
+                        LastName = x.LastName ?? "",
+                        City = x.City??"",
+                        StateName= dbContext.MstStates.Where(s => s.Id == x.State).Select(y => y.StateName ?? "").FirstOrDefault()??"",
+                        StateId=x.State,
+                        ZipCode = x.ZipCode ?? "",  
+                        Email = x.Email ?? "",
+                        StreetAddress = x.StreetAddress ??"",
+                        PhoneNumber = x.PhoneNumber ?? "",
                         TenantId = x.TenantId,
                         IsActive = x.IsActive,
                         VendorCode = x.VendorCode,
+                        CompanyName=x.CompanyName
                     }).ToList();
                     responseVm.TotalRecords = FilterRecords.Count;
                     responseVm.Message = $"{AppConstant.FetchSuccessMsg}";
@@ -242,15 +251,15 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenantExists =   tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
+                var IsTenantExists =   tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true);
 
                 if (IsTenantExists!=null)
                 {
                     var vendor =  GetAllQuerable()
-                        .Where(c => c.VendorId == model.VendorId && c.TenantId == AppConstant.LoggedInTenantId
+                        .Where(c => c.VendorId == model.VendorId && c.TenantId == claimsProperty.GetTenantId()
                         && c.IsDelete == false).FirstOrDefault();
                     bool IsVendorEmail =  Any(x => x.IsDelete == false &&(x.Email == model.Email.Trim())
-                                           && x.TenantId == AppConstant.LoggedInTenantId && x.VendorId!=model.VendorId );
+                                           && x.TenantId == claimsProperty.GetTenantId() && x.VendorId!=model.VendorId );
 
                     
                     if (IsVendorEmail)
@@ -260,7 +269,7 @@ namespace ShutterManagement.Business.Services
                     }
                     bool IsVendorPhoneExists =  Any(x => x.IsDelete == false &&
                                         (x.PhoneNumber == model.PhoneNumber.Trim())
-                                        && x.TenantId == AppConstant.LoggedInTenantId && x.VendorId != model.VendorId);
+                                        && x.TenantId == claimsProperty.GetTenantId() && x.VendorId != model.VendorId);
 
                     if (IsVendorPhoneExists)
                     {
@@ -269,7 +278,7 @@ namespace ShutterManagement.Business.Services
                     }
                    //bool IsVendorNameEXists = Any(x => x.IsDelete == false &&
                    //                     (x.VendorName == model.VendorName.Trim())
-                   //                     && x.TenantId == AppConstant.LoggedInTenantId && x.VendorId != model.VendorId);
+                   //                     && x.TenantId == claimsProperty.GetTenantId() && x.VendorId != model.VendorId);
                    // if (IsVendorNameEXists)
                     
                    //     {
@@ -278,7 +287,7 @@ namespace ShutterManagement.Business.Services
                    //     }
                     //bool IsVendorCodeExists = Any(x => x.IsDelete == false &&
                     //                   (x.VendorCode == model.VendorCode.Trim())
-                    //                   && x.TenantId == AppConstant.LoggedInTenantId && x.VendorId != model.VendorId);
+                    //                   && x.TenantId == claimsProperty.GetTenantId() && x.VendorId != model.VendorId);
                     //if (IsVendorCodeExists)
 
                     //{
@@ -287,17 +296,18 @@ namespace ShutterManagement.Business.Services
                     //}
                     if (vendor != null)
                     {
-                        vendor.FirstName = model.FirstName;
-                        vendor.LastName = model.LastName;
-                        vendor.Email = model.Email;
-                        vendor.PhoneNumber = model.PhoneNumber;
-                        vendor.StreetAddress = model.StreetAddress;
-                        vendor.City = model.City;
-                        vendor.State = model.State;
-                        vendor.ZipCode = model.ZipCode;
+                        vendor.FirstName = model.FirstName??"";
+                        vendor.LastName = model.LastName??"";
+                        vendor.Email = model.Email ?? "";
+                        vendor.PhoneNumber = model.PhoneNumber??"";
+                        vendor.StreetAddress = model.StreetAddress ?? "";
+                        vendor.City = model.City??"";
+                        vendor.State = model.StateId != null ? model.StateId : null;
+                        vendor.ZipCode = model.ZipCode ?? "";
+                        vendor.CompanyName = model.CompanyName ?? "";
                         vendor.ModifiedBy = AppConstant.LoggedInUserID;
                         vendor.UpdatedAt = DateTime.Now;
-                         Update(vendor);
+                        await Update(vendor);
                         responseVm.IsSuccess = true;
                         responseVm.Message = AppConstant.UpdateSuccessMsg;
                     }

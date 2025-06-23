@@ -20,6 +20,7 @@ using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core.Common;
 using System.Security.AccessControl;
+using ShutterManagement.Business;
 
 namespace ShutterManagement.Services
 {
@@ -31,9 +32,13 @@ namespace ShutterManagement.Services
         private readonly ITenantService tenantService;
         private readonly ITenantBrandingService tenantBrandingService;
         private readonly INotificationService notification;
+        private readonly ClaimsProperty claimsProperty;
+        private readonly IGHLConfiguration gHLConfiguration;
+        private readonly IStripeConfiguration stripeConfiguration;
 
         public AuthService(DataServices dataServices, IMapper mapper, IConfiguration config,
-            ITenantService tenantService, ITenantBrandingService tenantBrandingService,INotificationService notification)
+            ITenantService tenantService, ITenantBrandingService tenantBrandingService,INotificationService notification,ClaimsProperty claimsProperty,
+            IGHLConfiguration gHLConfiguration,IStripeConfiguration stripeConfiguration)
         {
             this.dataServices = dataServices;
             this.mapper = mapper;
@@ -41,6 +46,9 @@ namespace ShutterManagement.Services
             this.tenantService = tenantService;
             this.tenantBrandingService = tenantBrandingService;
             this.notification = notification;
+            this.claimsProperty = claimsProperty;
+            this.gHLConfiguration = gHLConfiguration;
+            this.stripeConfiguration = stripeConfiguration;
         }
         public async Task<IResponseVm<UserLoginDetails>> LoginAsync(LoginDetailVM user)
         {
@@ -71,6 +79,7 @@ namespace ShutterManagement.Services
                     FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
                     MiddleName = reader.GetString(reader.GetOrdinal("MiddleName")),
                     LastName = reader.GetString(reader.GetOrdinal("LastName")),
+                    suffix = reader.GetString(reader.GetOrdinal("suffix")),
                     Email = reader.GetString(reader.GetOrdinal("Email")),
                     TenantId = reader.GetGuid(reader.GetOrdinal("TenantId")),
                     ParentTenantId = reader.GetString(reader.GetOrdinal("ParentTenantId")),
@@ -80,6 +89,7 @@ namespace ShutterManagement.Services
                     PrimaryColor = reader.GetString(reader.GetOrdinal("PrimaryColor")),
                     SecondaryColor = reader.GetString(reader.GetOrdinal("SecondaryColor")),
                     CompanyName = reader.GetString(reader.GetOrdinal("CompanyName")),
+                    IsGHLConfigSameAsTenant = reader.GetBoolean(reader.GetOrdinal("IsGHLConfigSameAsTenant"))
                 };
             },
              new SqlParameter("@Username", SqlDbType.NVarChar, 100) { SqlValue = user.Username },
@@ -97,6 +107,7 @@ namespace ShutterManagement.Services
                         PermissionId = reader.GetGuid(reader.GetOrdinal("Id")),
                         PermissionName = reader.GetString(reader.GetOrdinal("Name")),
                         PermissionDisplayName = reader.GetString(reader.GetOrdinal("DisplayName")),
+                        ModuleDisplayName = reader.GetString(reader.GetOrdinal("ModuleDisplayName")),
                         Icon = reader.GetString(reader.GetOrdinal("Icon")),
                         Url = reader.GetString(reader.GetOrdinal("Url"))
                     };
@@ -108,7 +119,7 @@ namespace ShutterManagement.Services
                 {
                     claims.AddClaim(new Claim(ClaimTypes.Role, item.PermissionName));
                 }
-
+                bool IsTenant = string.IsNullOrEmpty(UserDetails[0].ParentTenantId) ? true : false;
                 claims.AddClaim(new Claim("UserId", UserDetails[0].UserId.ToString().ToUpper()));
                 claims.AddClaim(new Claim("Username", UserDetails[0].Username ?? ""));
                 claims.AddClaim(new Claim(ClaimTypes.Name, UserDetails[0].FirstName + " " + UserDetails[0].MiddleName + " " + UserDetails[0].LastName));
@@ -116,9 +127,18 @@ namespace ShutterManagement.Services
                 claims.AddClaim(new Claim("Phone", UserDetails[0].Phone ?? ""));
                 claims.AddClaim(new Claim("TenantId", UserDetails[0].TenantId.ToString().ToUpper() ?? ""));
                 claims.AddClaim(new Claim("ParentTenantId", UserDetails[0].ParentTenantId.ToString().ToUpper() ?? ""));
-                claims.AddClaim(new Claim("CompanyCode", user.CompanyCode));
+               // claims.AddClaim(new Claim("CompanyCode", user.CompanyCode));
+                claims.AddClaim(new Claim("CompanyCode", UserDetails[0].Code));
                 claims.AddClaim(new Claim("CompanyName", UserDetails[0].CompanyName));
-
+                claims.AddClaim(new Claim("IsTenant", IsTenant.ToString()));
+              //  AppConstant.IsTenant = IsTenant;
+                //// Store GHL Credentials in Claims
+                //claims.AddClaim(new Claim("GHL_APIKey", GHLres.APIkey ?? ""));
+                //claims.AddClaim(new Claim("GHL_BaseAddress", GHLres.BaseAddress ?? ""));
+                //claims.AddClaim(new Claim("GHL_PipelineId", GHLres.PipelineId ?? ""));
+                //claims.AddClaim(new Claim("GHL_LocationId", GHLres.StageId ?? ""));
+                // Fetch GHL Configuration (Ensure to await the method)
+               
                 var tokenHandler = new JwtSecurityTokenHandler();
                 var key = Encoding.UTF8.GetBytes(AppConstant.JWTSecretKey);
                 var tokenDescriptor = new SecurityTokenDescriptor
@@ -140,16 +160,25 @@ namespace ShutterManagement.Services
                 responseVm.Data.Menu = UserRole
                     .Select(x => new LoginRoles
                     {
-                        RoleName = x.PermissionName.Replace("Edit", "").Replace("View", "").Replace("Delete", "")
-                    .Replace("Address", "Adress").Replace("Add", "").Replace("Adress", "Address").Replace("SubTenant", "Partners"),
+                        RoleName = RoleNameHelper.CleanRoleName(x.PermissionName),
                         Icon = x.Icon,
                         Url = x.Url
                     })
-                    .DistinctBy(x=>x.RoleName).ToArray();
+                    .DistinctBy(x => x.RoleName)
+                    .Where(x => !string.IsNullOrWhiteSpace(x.RoleName))
+                    .ToArray();
+             
+                   bool IsGHLConfigSameAsTenant = (bool)UserDetails[0].IsGHLConfigSameAsTenant;
+                
+                responseVm.Data.IsGHLConfigSameAsTenant = IsGHLConfigSameAsTenant;
                 responseVm.Data.Token = TokenValue;
+                responseVm.Data.IsTenant = IsTenant;
                 responseVm.IsSuccess = true;
-                responseVm.Message = AppConstant.LoginSuccessMessgae;
+                responseVm.Message = AppConstant.LoginSuccessMessage;
                 responseVm.TotalRecords = 1;
+
+                await gHLConfiguration.GetGHLConfiguration(UserDetails[0].TenantId.ToString());
+               // await stripeConfiguration.GetStripeConfiguration(UserDetails[0].TenantId.ToString());
             }
             else
             {
@@ -167,11 +196,11 @@ namespace ShutterManagement.Services
                 return responseVm;
             }
 
-            var TenantHomePageData = tenantService.GetAllQuerable().Where(x => x.Code == CompanyCode
-            && x.IsDelete == false && x.IsActive == true && x.ParentTenantId == null).FirstOrDefault();
+            var TenantHomePageData = await tenantService.GetAllQuerable().Where(x => x.Code == CompanyCode
+            && x.IsDelete == false && x.IsActive == true).FirstOrDefaultAsync();
             if (TenantHomePageData != null)
             {
-                var brandInfo = tenantBrandingService.GetAllQuerable().Where(x => x.Id == TenantHomePageData.BrandingInfo).FirstOrDefault();
+                var brandInfo = await tenantBrandingService.GetAllQuerable().Where(x => x.Id == TenantHomePageData.BrandingInfo).FirstOrDefaultAsync();
                 if (brandInfo != null)
                 {
                     HomePageContent homePageContent = new HomePageContent
@@ -180,6 +209,7 @@ namespace ShutterManagement.Services
                         URL = TenantHomePageData.Url,
                         FirstName = TenantHomePageData.FirstName,
                         LastName = TenantHomePageData.LastName,
+                        suffix=TenantHomePageData.Suffix,
                         MiddleName = TenantHomePageData.MiddleName,
                         Email = brandInfo.Email,
                         PhoneNumber = brandInfo.PhoneNumber,
@@ -207,12 +237,12 @@ namespace ShutterManagement.Services
             try
             {
                 var IsUserExists = (await GetAll()).Where(x => x.IsDelete == false 
-                && x.IsActive == true && x.Id == AppConstant.LoggedInUserID && x.Pwd == AesEncryptionHelper.Encrypt(vm.OldPassWord ?? "") && x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
+                && x.IsActive == true && x.Id == claimsProperty.GetUserId() && x.Pwd == AesEncryptionHelper.Encrypt(vm.OldPassWord ?? "") && x.TenantId == claimsProperty.GetTenantId()).FirstOrDefault();
                 if(IsUserExists != null)
                 {
                     IsUserExists.Pwd = AesEncryptionHelper.Encrypt(vm.PassWord ?? "");
                     IsUserExists.ModifiedAt = DateTime.Now;
-                    IsUserExists.ModifiedBy= AppConstant.LoggedInUserID;
+                    IsUserExists.ModifiedBy= claimsProperty.GetUserId();
                     IsUserExists.ExpireAt = null;
                     IsUserExists.Token = null;
                     await Update(IsUserExists);
@@ -238,14 +268,14 @@ namespace ShutterManagement.Services
             try
             {
                 var UserExistsDetails = GetAllQuerable().Where(x => x.IsDelete == false && x.IsActive == true &&
-                x.Id == (AppConstant.LoggedInUserID)
-                && x.TenantId == AppConstant.LoggedInTenantId
+                x.Id == (claimsProperty.GetUserId())
+                && x.TenantId == claimsProperty.GetTenantId()
                 ).FirstOrDefault();
                 if (UserExistsDetails != null)
                 {
 
                     bool IsPhoneExists = await AnyAsync(x => x.IsDelete == false &&
-                    (x.Phone == profileUpdate.Phone) && x.Id != AppConstant.LoggedInUserID && x.TenantId == AppConstant.LoggedInTenantId);
+                    (x.Phone == profileUpdate.Phone) && x.Id != claimsProperty.GetUserId() && x.TenantId == claimsProperty.GetTenantId());
                     if (IsPhoneExists)
                     {
                         result.Message = "Phone " + AppConstant.AlreadyExists;
@@ -253,7 +283,7 @@ namespace ShutterManagement.Services
                     }
 
                     //bool IsEmailExists = await AnyAsync(x => x.IsDelete == false &&
-                    //  (x.Email == profileUpdate.Email) && x.Id != AppConstant.LoggedInUserID && x.TenantId == AppConstant.LoggedInTenantId);
+                    //  (x.Email == profileUpdate.Email) && x.Id != claimsProperty.GetUserId() && x.TenantId == claimsProperty.GetTenantId());
                     //if (IsEmailExists)
                     //{
                     //    result.Message = "Email " + AppConstant.AlreadyExists;
@@ -265,18 +295,19 @@ namespace ShutterManagement.Services
                     {
                         UpdateUserDetails.FirstName = profileUpdate.FirstName;
                         UpdateUserDetails.LastName = profileUpdate.LastName;
+                        UpdateUserDetails.Suffix = profileUpdate.suffix;
                         //UpdateUserDetails.Username = profileUpdate.Email;
                         //UpdateUserDetails.Email = profileUpdate.Email;
                         UpdateUserDetails.Phone = profileUpdate.Phone;
                         UpdateUserDetails.ModifiedAt = DateTime.Now;
-                        UpdateUserDetails.ModifiedBy = AppConstant.LoggedInUserID;
+                        UpdateUserDetails.ModifiedBy = claimsProperty.GetUserId();
                         var res = await Update(UpdateUserDetails);
                         result.IsSuccess = true;
                         result.Message = AppConstant.UpdateSuccessMsg;
 
                         CreateNotification notification2 = new CreateNotification()
                         {
-                            UserId = AppConstant.LoggedInUserID,
+                            UserId = claimsProperty.GetUserId(),
                             Subject = Enum.GetName(typeof(NotificationModule), NotificationModule.Tenant),
                             Body = $"Tenant profile {AppConstant.Update_Notification}",
                             CreatedDate = DateTime.Now,
@@ -307,11 +338,12 @@ namespace ShutterManagement.Services
             try
             {
                 var address = await GetAllQuerable()
-                    .Where(c => c.Id == AppConstant.LoggedInUserID && c.IsActive == true && c.IsDelete == false && c.TenantId == AppConstant.LoggedInTenantId)
+                    .Where(c => c.Id == claimsProperty.GetUserId() && c.IsActive == true && c.IsDelete == false && c.TenantId == claimsProperty.GetTenantId())
                     .Select(c => new UserResponse
                     {
                         FirstName = c.FirstName,
                         LastName = c.LastName,
+                        suffix=c.Suffix??"",
                         Email = c.Email,
                         UserName = c.Username,
                         Phone = c.Phone
@@ -395,7 +427,7 @@ namespace ShutterManagement.Services
 
                 CreateNotification notification2 = new CreateNotification()
                 {
-                    UserId = AppConstant.LoggedInUserID,
+                    UserId = claimsProperty.GetUserId(),
                     Subject = Enum.GetName(typeof(NotificationModule), NotificationModule.Tenant),
                     Body = $"Tenant password {AppConstant.Update_Notification}",
                     CreatedDate = DateTime.Now,
@@ -410,7 +442,6 @@ namespace ShutterManagement.Services
 
             return result;
         }
-
 
         private string GenerateTokenForgotPassword(string Email, Guid UserId)
         {
@@ -497,7 +528,188 @@ namespace ShutterManagement.Services
             }
             return result;
         }
+
+        public async Task<IResponseVm<string>> GenerateToken()
+        {
+            IResponseVm<string> result = new ResponseVm<string>();
+            FileLogger.Log("Generate Token start");
+            var claims = new List<Claim>
+    {
+        new Claim("tenant_id", claimsProperty.GetTenantId().ToString()),
+        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+        new Claim(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64)
+    };
+            FileLogger.Log("Generate Token claims",claims);
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = Encoding.UTF8.GetBytes(AppConstant.JWTSecretKey);
+            FileLogger.Log("AppConstant.JWTSecretKey", AppConstant.JWTSecretKey);
+
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(claims),
+                Issuer = AppConstant.JwtIssuer,
+                Audience = AppConstant.JwtAudience,
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+                // Expires is removed to make token never expire
+            };
+
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            FileLogger.Log("token", token);
+
+            string TokenValue = tokenHandler.WriteToken(token);
+
+            var GHLConfig = gHLConfiguration.GetAllQuerable().Where(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true
+            && x.IsDelete == false).FirstOrDefault();
+            if(GHLConfig != null)
+            {
+                GHLConfig.GeneratedToken = TokenValue;
+                await gHLConfiguration.Update(GHLConfig);
+            }
+            result.IsSuccess = true;
+            result.Data = TokenValue;
+            FileLogger.Log("IsSuccess", true);
+
+            return result;
+        }
+
+        public IResponseVm<string> ReadTokenDetails(string token)
+        {
+            IResponseVm<string> result = new ResponseVm<string>();
+            var handler = new JwtSecurityTokenHandler();
+            var jwtToken = handler.ReadJwtToken(token);
+
+            if (jwtToken == null)
+            {
+                Console.WriteLine("Invalid token.");
+                return result;
+            }
+
+            var tenantId = jwtToken.Claims.FirstOrDefault(c => c.Type == "tenant_id")?.Value;
+
+           result.IsSuccess = true;
+            result.Data = tenantId;
+            return result;
+        }
+
+        public async Task<IResponseVm<Dictionary<string, string>>> GenerateLetterOnlyUniqueCodeAsync(string inputName)
+        {
+            IResponseVm<Dictionary<string, string>> response = new ResponseVm<Dictionary<string, string>>();
+
+            if (string.IsNullOrWhiteSpace(inputName))
+            {
+                response.IsSuccess = false;
+                response.Message = "Input cannot be empty.";
+                return response;
+            }
+
+            // Clean input: Only letters
+            string cleaned = new string(inputName.Where(char.IsLetter).ToArray());
+            if (string.IsNullOrEmpty(cleaned) || cleaned.Length < 3)
+            {
+                response.IsSuccess = false;
+                response.Message = "Input must contain at least 3 valid letters.";
+                return response;
+            }
+
+            string code = "";
+            string invoicePrefix = "";
+            int attempt = 0;
+            const int maxAttempts = 50;
+
+            try
+            {
+                Random rng = new Random();
+
+                // Try generating unique lowercase code
+                while (attempt < maxAttempts)
+                {
+                    string shuffled = new string(cleaned.OrderBy(_ => rng.Next()).ToArray());
+                    string candidateCode = shuffled.Substring(0, Math.Min(10, shuffled.Length)).ToLowerInvariant();
+
+                    if (candidateCode.Length < 3)
+                    {
+                        attempt++;
+                        continue;
+                    }
+
+                    bool isCodeExists = await tenantService.AnyAsync(x =>
+                        x.IsActive == true && x.IsDelete == false && x.Code == candidateCode);
+
+                    if (!isCodeExists)
+                    {
+                        code = candidateCode;
+                        break;
+                    }
+
+                    attempt++;
+                }
+
+                if (string.IsNullOrEmpty(code))
+                {
+                    response.IsSuccess = false;
+                    response.Message = "Failed to generate a unique code.";
+                    return response;
+                }
+
+                // Reset attempt for prefix
+                attempt = 0;
+
+                while (attempt < maxAttempts)
+                {
+                    string shuffled = new string(cleaned.OrderBy(_ => rng.Next()).ToArray());
+                    string candidatePrefix = shuffled.Substring(0, Math.Min(10, shuffled.Length)).ToUpperInvariant();
+
+                    if (candidatePrefix.Length < 3)
+                    {
+                        attempt++;
+                        continue;
+                    }
+
+                    bool isPrefixExists = await dbContext.TblTenantBrandingInfos.AnyAsync(x =>
+                        x.IsActive == true && x.IsDelete == false && x.InvoicePrefix == candidatePrefix);
+
+                    string lowerPrefix = candidatePrefix.ToLowerInvariant();
+
+                    bool conflicts = lowerPrefix == code ||
+                                     code.StartsWith(lowerPrefix.Substring(0, 3)) ||
+                                     code.EndsWith(lowerPrefix.Substring(lowerPrefix.Length - 3, 3));
+
+                    if (!isPrefixExists && !conflicts)
+                    {
+                        invoicePrefix = candidatePrefix;
+                        break;
+                    }
+
+                    attempt++;
+                }
+
+                if (string.IsNullOrEmpty(invoicePrefix))
+                {
+                    response.IsSuccess = false;
+                    response.Message = "Failed to generate a valid unique invoice prefix.";
+                    return response;
+                }
+
+                response.IsSuccess = true;
+                response.Message = "Unique codes generated successfully.";
+                response.Data = new Dictionary<string, string>
+        {
+            { "Code", code },
+            { "InvoicePrefix", invoicePrefix }
+        };
+            }
+            catch (Exception ex)
+            {
+                response.IsSuccess = false;
+                response.Message = $"Error occurred while generating codes: {ex.Message}";
+            }
+
+            return response;
+        }
+
     }
 }
+
 
 

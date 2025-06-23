@@ -14,46 +14,51 @@ namespace ShutterManagement.Core.ViewModels.Request
         [DefaultValue("")]
         [Required]
         [MaxLength(100)]
-        [RegularExpression(@"^[a-zA-Z0-9!@#$%^&*()_+={}\[\]:;""'<>,.?/\|`~ \s-]*$", ErrorMessage = AppConstant.AlphabaticalError)]
+        [RegularExpression(@"^[a-zA-Z0-9!@#$%^&*()_+={}\[\]:;""'<>,.?/\|`~ \s-]*$", ErrorMessage = AppConstant.AlphabeticalError)]
         public string? MaterialName { get; set; }
 
         [DefaultValue("")]
         [Required]
         //[OnError(AppConstant.NumericError)]
         public decimal? UnitCost { get; set; }
-        [DefaultValue("")]
-        [Required]
-        //[OnError(AppConstant.NumericError)]
-        public decimal? Non_Rated_UnitCost { get; set; }
+        //[DefaultValue("")]
+        //[Required]
+        ////[OnError(AppConstant.NumericError)]
+        //public decimal? NonRatedUnitCost { get; set; }
 
         [DefaultValue("")]
         [Required]
         public string? UnitOfMeasurement { get; set; }
 
-        [DefaultValue("")]
-        [Required]
+        //[DefaultValue("")]
+        //[Required]
         public decimal? StockQuantity { get; set; }
+        public decimal? Lenght { get; set; }
+        public decimal? Width { get; set; }
 
         //  [Required]
-        public decimal? ReorderLevel { get; set; } = 0;
+        public decimal? ReorderLevel { get; set; }
         [Required]
         [DefaultValue("")]
         public string? ProductType { get; set; }
+        public string? MaterialUniqueId { get; set; }
         [DefaultValue("")]
         [Required]
       
 
         public Guid? VendorId { get; set; }
 
-        [DefaultValue("")]
+        //[DefaultValue("")]
+        [MaxLength(50)]
         [RegularExpression(@"^[A-Za-z0-9_-]+", ErrorMessage = AppConstant.SKUError)]
-        [Required]
-        public string SKU { get; set; }
+        public string? SKU { get; set; }
 
         public bool IsCutSheet { get; set; } = false;
 
         [DefaultValue("")]
         [MaxLength(1000)]
         public string? Notes { get; set; }
+
+       
     }
 }

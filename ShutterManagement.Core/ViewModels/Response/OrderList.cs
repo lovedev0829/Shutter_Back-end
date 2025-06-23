@@ -20,6 +20,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public Guid? taxRateId { get; set; }
         public string? Region { get; set; }
         public decimal? TaxRate { get; set; }
+        public string? Suffix { get; set; }
 
         public decimal? additionalCost { get; set; }
         public string? EstimateName { get; set; }
@@ -43,6 +44,10 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? TenantId { get; set; }
         public Guid? ContactId { get; set; }
         public bool? IsTaxApplied { get; set; } = false;
+
+        public decimal? TotaltaxAmount { get; set; }
+
+        public bool? IsTaxApplicable { get; set; } = false;
         public JobDetail jobDetails { get; set; } = new JobDetail();
         public List<EstimateProductLists> EstimateProductList { get; set; } = new List<EstimateProductLists>();
     }
@@ -64,6 +69,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public DateTime? ScheduleTime { get; set; }
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
+        public bool? JobIsActive { get; set; }
 
     }
 
@@ -85,8 +91,13 @@ namespace ShutterManagement.Core.ViewModels.Response
         public decimal? ArchHeight { get; set; }
         public string? ProductName { get; set; }
         public Guid? WindowProductId { get; set; }
-
+        public decimal? ProductPrice { get; set; }
+        public decimal? additionalCost { get; set; }
         public decimal? Price { get; set; }
+        public decimal? WholesalePrice { get; set; }
+        public decimal? ProductMarkup { get; set; }
+        public decimal? ComponentMarkup { get; set; }
+        public decimal? OptionMarkup { get; set; }
         public EstimateWindowLists EstimateWindowDetails { get; set; } = new EstimateWindowLists();
 
         public string[] Options { get; set; } = [];

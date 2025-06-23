@@ -36,6 +36,8 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? primarycolor { get; set; }
         public string? CompanyName { get; set; }
 
+        public bool? IsTaxApplicable { get; set; } = false;
+
         public bool? IsTaxApplied { get; set; } = false;
         public JobDetails jobDetails { get; set; } = new JobDetails();
         public List<EstimateProductList> EstimateProductList { get; set; } = new List<EstimateProductList>();
@@ -54,12 +56,14 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? JobStatusId { get; set; }
         public string? FirstName { get; set; }
         public string? LastName { get; set; }
+        public string? Suffix { get; set; }
         public string? JobUniqueId { get; set; }
         public DateTime? ScheduleTime { get; set; }
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
 
         public Guid? ContactId { get; set; }
+        public bool? JobIsActive { get; set; }
 
     }
 
@@ -84,7 +88,14 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? ProductName { get; set; }
         public Guid? WindowProductId { get; set; }
 
+        public bool? IsComponentAvailable { get; set; }
         public decimal? TotalPrice { get; set; }
+        public decimal? additionalCost { get; set; }
+        public decimal? ProductPrice { get; set; }
+        public decimal? WholesalePrice { get; set; }
+        public decimal? ComponentMarkup { get; set; }
+        public decimal? ProductMarkup { get; set; }
+        public decimal? OptionMarkup { get; set; }
         public EstimateWindowList EstimateWindowDetails { get; set; } = new EstimateWindowList();
 
         public string[]? Options { get; set; } = [];

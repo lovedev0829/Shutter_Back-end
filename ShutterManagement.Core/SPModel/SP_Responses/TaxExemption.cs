@@ -12,7 +12,7 @@ namespace ShutterManagement.Core.SPModel.SP_Responses
         [DefaultValue("")]
         public string[]? ExemptionCertificate { get; set; } = new string[] { };
 
-        public DateTime? EffectiveDate { get; set; }
+        public DateTime? EffectiveDate { get; set; } 
 
         public DateTime? ExpiryDate { get; set; }
     }

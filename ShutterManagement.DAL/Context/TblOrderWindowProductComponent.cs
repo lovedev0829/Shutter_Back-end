@@ -38,4 +38,6 @@ public partial class TblOrderWindowProductComponent
     public bool? IsDelete { get; set; }
 
     public Guid OrderWindowProductComponentId { get; set; }
+
+    public bool? IsMaterialBreakdown { get; set; }
 }

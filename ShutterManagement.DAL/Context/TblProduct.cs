@@ -43,7 +43,19 @@ public partial class TblProduct
 
     public Guid? TenantId { get; set; }
 
+    public bool? IsComponentAvailable { get; set; }
+
+    public bool? IsTaxApplied { get; set; }
+
+    public Guid? TaxId { get; set; }
+
+    public virtual TblTaxRate? Tax { get; set; }
+
     public virtual ICollection<TblJobComponent> TblJobComponents { get; set; } = new List<TblJobComponent>();
+
+    public virtual ICollection<TblManagePartnersProduct> TblManagePartnersProducts { get; set; } = new List<TblManagePartnersProduct>();
+
+    public virtual ICollection<TblOption> TblOptions { get; set; } = new List<TblOption>();
 
     public virtual ICollection<TblProductComponent> TblProductComponents { get; set; } = new List<TblProductComponent>();
 

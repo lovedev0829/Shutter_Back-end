@@ -12,7 +12,10 @@ namespace ShutterManagement.Core.ViewModels.Request
         public string? ProductType { get; set; }
         public string? Notes { get; set; }
         public decimal? Markup { get; set; }
-        public List<ProductComponentVm> ProductComponents { get; set; }
+        public bool? IsComponentAvailable { get; set; } = true;
+        public bool? IsTaxAvailable { get; set; }
+        public Guid? TaxId { get; set; }
+        public List<ProductComponentVm>? ProductComponents { get; set; }
     }
     public class ProductComponentVm
     {

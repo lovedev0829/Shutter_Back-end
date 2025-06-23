@@ -25,13 +25,13 @@ namespace ShutterManagement.Core.ViewModels.Request
 
         [Required]
         [MaxLength(50)]
-        [RegularExpression("^[\\p{L} .'-]+$", ErrorMessage = AppConstant.AlphabaticalError)]
+        [RegularExpression("^[\\p{L} .'-]+$", ErrorMessage = AppConstant.AlphabeticalError)]
         [DefaultValue("")]
         public string? City { get; set; }
 
         [Required]
         [MaxLength(50)]
-        [RegularExpression("^[\\p{L} .'-]+$", ErrorMessage = AppConstant.AlphabaticalError)]
+        [RegularExpression("^[\\p{L} .'-]+$", ErrorMessage = AppConstant.AlphabeticalError)]
         [DefaultValue("")]
         public string? Country { get; set; }
 

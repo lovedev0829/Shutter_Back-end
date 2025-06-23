@@ -25,5 +25,7 @@ public partial class TblTemplate
 
     public Guid? TenantId { get; set; }
 
+    public string? TemplateCategory { get; set; }
+
     public virtual TblTenant? Tenant { get; set; }
 }

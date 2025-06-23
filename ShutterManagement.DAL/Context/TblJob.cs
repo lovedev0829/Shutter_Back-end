@@ -45,11 +45,29 @@ public partial class TblJob
 
     public string? GhlStageName { get; set; }
 
+    public string? GhlContactId { get; set; }
+
+    public string? GhlOpportunityId { get; set; }
+
+    public DateTime? LastAsync { get; set; }
+
+    public string? GhluserId { get; set; }
+
+    public string? EstimateUrl1 { get; set; }
+
+    public string? EstimateUrl2 { get; set; }
+
+    public string? EstimateUrl3 { get; set; }
+
+    public string? EstimateUrl4 { get; set; }
+
     public virtual TblAddress? Address { get; set; }
 
     public virtual TblContact? Contact { get; set; }
 
     public virtual MstJobStatus? JobStatusNavigation { get; set; }
+
+    public virtual ICollection<TblAppointmentSchedule> TblAppointmentSchedules { get; set; } = new List<TblAppointmentSchedule>();
 
     public virtual ICollection<TblEstimate> TblEstimates { get; set; } = new List<TblEstimate>();
 

@@ -17,6 +17,8 @@ using Microsoft.AspNetCore.Http;
 using ShutterManagement.Core.Common;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using ShutterManagement.Core.ViewModels.Response;
+using System.Data.Entity.Core.Metadata.Edm;
+using Microsoft.Extensions.Logging;
 
 namespace ShutterManagement.Business.Services
 {
@@ -27,9 +29,11 @@ namespace ShutterManagement.Business.Services
         private readonly ClaimsProperty claimsProperty;
         private readonly ITenantBrandingService tenantBrandingService;
         private readonly INotificationService notification;
+        private readonly IGHLConfiguration gHLConfiguration;
+        private readonly GoogleAuthService googleAuthService;
 
         public SubtenantServices(DataServices dataServices, IUserService userService
-            , ClaimsProperty claimsProperty, ITenantBrandingService tenantBrandingService,INotificationService notification
+            , ClaimsProperty claimsProperty, ITenantBrandingService tenantBrandingService,INotificationService notification,GoogleAuthService googleAuthService
             )
         {
             this.dataServices = dataServices;
@@ -37,6 +41,8 @@ namespace ShutterManagement.Business.Services
             this.claimsProperty = claimsProperty;
             this.tenantBrandingService = tenantBrandingService;
             this.notification = notification;
+            this.gHLConfiguration = gHLConfiguration;
+            this.googleAuthService = googleAuthService;
         }
 
         public async Task<IResponseVm<string>> SubTenantCreate(CreateTenant model)
@@ -44,8 +50,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsCodeExists = await AnyAsync(x => x.IsActive == true
-                    && x.IsDelete == false && x.Code == model.Code);
+                var IsCodeExists = await AnyAsync(x => x.IsActive == true && x.IsDelete == false && x.Code == model.Code);
                 //var IsCodeExists = await AnyAsync(x => x.IsActive == true
                 //   && x.IsDelete == false && x.Code == model.Code);
                 if (IsCodeExists)
@@ -54,7 +59,7 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-                bool IsParentExists = await AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId
+                bool IsParentExists = await AnyAsync(x => x.TenantId == claimsProperty.GetTenantId()
                 && x.IsDelete == false && x.IsActive == true);
                 if (!IsParentExists)
                 {
@@ -62,20 +67,23 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-                var TenantDetails = (await GetAll()).Where(x => x.IsDelete == false).Select(x => x.BrandingInfo).ToList();
-                bool IsTenantEmailExists = await tenantBrandingService.AnyAsync(x => x.Email == model.Email && x.IsDelete == false && TenantDetails.Contains(x.Id));
-                if (IsTenantEmailExists)
-                {
-                    responseVm.Message = "Email " + AppConstant.AlreadyExists;
-                    return responseVm;
-                }
+                //var TenantDetails = (await GetAll()).Where(x => x.IsDelete == false).Select(x => x.BrandingInfo).ToList();
+                //bool IsTenantEmailExists = await tenantBrandingService.AnyAsync(x => x.Email == model.Email && x.IsDelete == false && TenantDetails.Contains(x.Id));
+                //if (IsTenantEmailExists)
+                //{
+                //    responseVm.Message = "Email " + AppConstant.AlreadyExists;
+                //    return responseVm;
+                //}
                 bool IsTenantCompanynameExists = await tenantBrandingService.AnyAsync(x => x.CompanyName == model.CompanyName.Trim() && x.IsDelete == false);
                 if (IsTenantCompanynameExists)
                 {
                     responseVm.Message = "CompanyName " + AppConstant.AlreadyExists;
                     return responseVm;
                 }
-                bool IsUserEmailExists = await userService.AnyAsync(x => x.Email == model.UserEmail && x.IsDelete == false);
+                var AlltenantId = GetAllQuerable().Where(x => x.ParentTenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false)
+                    .Select(x => x.TenantId).ToList();
+                bool IsUserEmailExists = await userService.AnyAsync(x => x.Email.ToLower() == model.UserEmail.ToLower() && x.IsDelete == false
+                && x.IsTenantAdmin == true && AlltenantId.Contains((Guid)x.TenantId));
                 if (IsUserEmailExists)
                 {
                     responseVm.Message = "User Email " + AppConstant.AlreadyExists;
@@ -83,13 +91,13 @@ namespace ShutterManagement.Business.Services
                 }
                 if (model.InvoicePrefix != "")
                 {
-                    if (model.InvoicePrefix.Length != 4)
+                    if (model.InvoicePrefix.Length < 3)
                     {
-                        responseVm.Message = "4 characters is Mandatory.";
+                        responseVm.Message = "3 characters is Mandatory.";
                         return responseVm;
                     }
                 }
-                //bool IsSubTenantEmailExists = await userService.AnyAsync(x => x.Email == model.Email && x.TenantId == AppConstant.LoggedInTenantId);
+                //bool IsSubTenantEmailExists = await userService.AnyAsync(x => x.Email == model.Email && x.TenantId == claimsProperty.GetTenantId());
                 //    if (IsSubTenantEmailExists)
                 //    {
                 //        responseVm.Message = "Email " + AppConstant.AlreadyExists;
@@ -98,10 +106,11 @@ namespace ShutterManagement.Business.Services
                 var HashPassword = AesEncryptionHelper.Encrypt(model.Password ?? "");
                 SqlParameter[] sqlParameters =
                 {
-                        new SqlParameter("@ParentTenantId", SqlDbType.UniqueIdentifier) { SqlValue = AppConstant.LoggedInTenantId },
+                        new SqlParameter("@ParentTenantId", SqlDbType.UniqueIdentifier) { SqlValue = claimsProperty.GetTenantId() },
                         new SqlParameter("@FirstName", SqlDbType.NVarChar) { SqlValue = model.FirstName },
                         new SqlParameter("@MiddleName", SqlDbType.NVarChar) { SqlValue = model.MiddleName },
                         new SqlParameter("@LastName", SqlDbType.NVarChar) { SqlValue = model.LastName },
+                        new SqlParameter("@Suffix", SqlDbType.NVarChar) { SqlValue = model.Suffix??"" },
                         new SqlParameter("@Code", SqlDbType.NVarChar) { SqlValue = model.Code },
                         new SqlParameter("@URL", SqlDbType.NVarChar) { SqlValue = model.URL },
                         new SqlParameter("@Email", SqlDbType.NVarChar) { SqlValue = model.Email },
@@ -123,12 +132,11 @@ namespace ShutterManagement.Business.Services
                         new SqlParameter("@UserPhoneNumber", SqlDbType.NVarChar) { SqlValue = model.UserPhoneNumber },
                         new SqlParameter("@Password", SqlDbType.NVarChar) { SqlValue = HashPassword },
                         new SqlParameter("@LoggedInUser", SqlDbType.UniqueIdentifier) { SqlValue = AppConstant.LoggedInUserID },
-
                         new SqlParameter("@Action", SqlDbType.NVarChar) { SqlValue = "Create" },
                     };
 
                 await dataServices.CallSP("sp_TenantCRUD", null, sqlParameters);
-             
+            
                 var AddedTenant = GetAllQuerable().Where(x => x.FirstName == model.FirstName && x.Code == model.Code).FirstOrDefault();
              
                 if (AddedTenant != null)
@@ -193,29 +201,12 @@ namespace ShutterManagement.Business.Services
                     }
                 }
 
-                var Templateid = Guid.Parse("1916A280-109F-4829-8A70-0AFA94146A5F").ToString().ToLower();
-                var Tenantcode =  dbContext.TblTenants.Where(x => x.IsDelete == false && x.TenantId==AppConstant.LoggedInTenantId).FirstOrDefault();
-                var tenantInfoDetails = tenantBrandingService.GetAllQuerable().Where(x => x.Id == Tenantcode.BrandingInfo && x.IsActive == true).FirstOrDefault();
-
-                WelcomeEmailModel welcomemodel = new WelcomeEmailModel
-                {
-                    Name = model.FirstName + " " + model.LastName ?? "",
-                    UserName = model.Email ?? "",
-                    Password = model.Password ?? "",
-                    CompanyName = tenantInfoDetails?.CompanyName ?? "",
-                    Logo = tenantInfoDetails?.Logo ?? "",
-                    loginUrl = $"{AppConstant.UIBaseURL}{Tenantcode?.Code}"??"",
-                    color = tenantInfoDetails?.PrimaryColor ?? ""
-
-                };
-
-                var WelcomeTemplate = dbContext.TblTemplates.Where(x => x.IsDelete == false && x.TemplateId.ToString().ToLower() == Templateid).FirstOrDefault();
-                var emailContent = EmailHelper.ReplacePlaceholdersForlWelcomeEmail(WelcomeTemplate?.TemplateValue, welcomemodel);
-                EmailHelper.WelcomeEmail(model.Email, emailContent);
+                
 
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.InsertSuccessMsg;
 
+                Task.Run(async () => await SendWelcomeEmailAsync(model));
             }
             catch (Exception ex)
             {
@@ -223,6 +214,43 @@ namespace ShutterManagement.Business.Services
             }
             return responseVm;
         }
+
+
+        public async Task SendWelcomeEmailAsync(CreateTenant model)
+        {
+            try
+            {
+                var tenant =  dbContext.TblTenants
+                    .FirstOrDefault(x => x.IsDelete==false && x.TenantId == claimsProperty.GetTenantId());
+
+                var tenantInfo = tenantBrandingService.GetAllQuerable()
+                    .FirstOrDefault(x => x.Id == tenant.BrandingInfo && x.IsActive==true);
+
+                var welcomeModel = new WelcomeEmailModel
+                {
+                    Name = $"{model.FirstName} {model.LastName ?? ""}{model.Suffix ?? ""}".Trim(),
+                    UserName = model.Email ?? "",
+                    Password = model.Password ?? "",
+                    CompanyName = model?.CompanyName ?? "",
+                    Logo = model?.Logo ?? "",
+                    loginUrl = $"{AppConstant.UIBaseURL}{model?.Code}" ?? "",
+                    color = model?.PrimaryColor ?? ""
+                };
+
+                var template =  dbContext.TblTemplates
+                    .FirstOrDefault(x => x.IsDelete==false && x.TemplateCategory == EnumValue.GetEnumValue(EmailTemplateType.WelcomeEmail));
+
+                var emailContent = EmailHelper.ReplacePlaceholdersForlWelcomeEmail(template?.TemplateValue, welcomeModel);
+                await googleAuthService.WelcomeEmailWithOauth(model.Email, emailContent);
+
+
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Log($"Error sending welcome email.{ex}");
+            }
+        }
+
 
         public async Task<IResponseVm<string>> SubTenantUpdate(UpdateSubTenant model)
         {
@@ -238,21 +266,28 @@ namespace ShutterManagement.Business.Services
                         responseVm.Message = AppConstant.TenantIdNull;
                         return responseVm;
                     }
-                    bool IsParentExists = await AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId
+                    bool IsParentExists = await AnyAsync(x => x.TenantId == claimsProperty.GetTenantId()
                     && x.IsDelete == false && x.IsActive == true);
                     if (!IsParentExists)
                     {
                         responseVm.Message = AppConstant.TenantNotFound;
                         return responseVm;
                     }
-                    //bool IsTenantExists = await AnyAsync(x => x.TenantId.ToString() == model.TenantId && x.ParentTenantId == AppConstant.LoggedInTenantId
+                    //bool IsTenantExists = await AnyAsync(x => x.TenantId.ToString() == model.TenantId && x.ParentTenantId == claimsProperty.GetTenantId()
                     //&& x.IsDelete == false);
                     //if (!IsTenantExists)
                     //{
                     //    responseVm.Message = AppConstant.TenantNotFound;
                     //    return responseVm;
                     //}
-                    var TenantDetails = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId.ToString() != model.TenantId).Select(x => x.BrandingInfo).ToList();
+
+                    bool IsUserEmailExists = await userService.AnyAsync(x => x.Email == model.UserEmail && x.TenantId.ToString() != model.TenantId && x.IsDelete == false && x.IsTenantAdmin == false);
+                    if (IsUserEmailExists)
+                    {
+                        responseVm.Message = "User Email " + AppConstant.AlreadyExists;
+                        return responseVm;
+                    }
+                    var TenantDetails = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId.ToString() != model.TenantId && x.ParentTenantId == claimsProperty.GetTenantId()).Select(x => x.BrandingInfo).ToList();
                     bool IsTenantEmailExists = await tenantBrandingService.AnyAsync(x => x.Email == model.Email && x.IsDelete == false && TenantDetails.Contains(x.Id));
                     if (IsTenantEmailExists)
                     {
@@ -269,14 +304,14 @@ namespace ShutterManagement.Business.Services
 
                     if (model.InvoicePrefix != "")
                     {
-                        if (model.InvoicePrefix.Length != 4)
+                        if (model.InvoicePrefix.Length < 3)
                         {
-                            responseVm.Message = "4 characters is Mandatory.";
+                            responseVm.Message = "3 characters is Mandatory.";
                             return responseVm;
                         }
                     }
                     var tenantid = Guid.Parse(model.TenantId);
-                    var Parenttenantid = AppConstant.LoggedInTenantId;
+                    var Parenttenantid = claimsProperty.GetTenantId();
                     var HashPassword = string.IsNullOrEmpty(model.Password) ? "" : AesEncryptionHelper.Encrypt(model.Password ?? "");
 
                     SqlParameter[] sqlParameters =
@@ -286,6 +321,7 @@ namespace ShutterManagement.Business.Services
                     new SqlParameter("@FirstName", SqlDbType.NVarChar) { SqlValue = model.FirstName },
                     new SqlParameter("@MiddleName", SqlDbType.NVarChar) { SqlValue = model.MiddleName },
                     new SqlParameter("@LastName", SqlDbType.NVarChar) { SqlValue = model.LastName },
+                    new SqlParameter("@Suffix", SqlDbType.NVarChar) { SqlValue = model.Suffix??"" },
                     new SqlParameter("@Code", SqlDbType.NVarChar) { SqlValue = model.Code },
                     new SqlParameter("@URL", SqlDbType.NVarChar) { SqlValue = model.URL },
                     new SqlParameter("@Email", SqlDbType.NVarChar) { SqlValue = model.Email },
@@ -331,7 +367,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var TenantDetails = GetAllQuerable().Where(x => x.TenantId.ToString() == TenantId && x.ParentTenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
+                var TenantDetails = GetAllQuerable().Where(x => x.TenantId.ToString() == TenantId && x.ParentTenantId == claimsProperty.GetTenantId()).FirstOrDefault();
                 if (TenantDetails != null)
                 {
                     TenantDetails.IsDelete = true;
@@ -379,7 +415,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var TenantDetails = GetAllQuerable().Where(x => x.TenantId.ToString() == TenantId && x.ParentTenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
+                var TenantDetails = GetAllQuerable().Where(x => x.TenantId.ToString() == TenantId && x.ParentTenantId == claimsProperty.GetTenantId()).FirstOrDefault();
                 if (TenantDetails != null)
                 {
                     TenantDetails.IsActive = !TenantDetails.IsActive;
@@ -422,12 +458,12 @@ namespace ShutterManagement.Business.Services
 
         }
 
-        public async Task<IResponseVm<dynamic>> SubTenantGetAll(Pagination filter)
+        public async Task<IResponseVm<List<GetAllTenant>>> SubTenantGetAll(Pagination filter)
         {
-            IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
+            IResponseVm<List<GetAllTenant>> responseVm = new ResponseVm<List<GetAllTenant>>();
             try
             {
-                var TenantList = (await GetAll()).Where(x => x.IsDelete == false && x.ParentTenantId == AppConstant.LoggedInTenantId).OrderByDescending(x => x.CreatedAt).ToList();
+                var TenantList = (await GetAll()).Where(x => x.IsDelete == false && x.ParentTenantId == claimsProperty.GetTenantId()).OrderByDescending(x => x.CreatedAt).ToList();
                 foreach (var item in TenantList)
                 {
                     item.BrandingInfoNavigation = tenantBrandingService.GetAllQuerable().Where(x => x.Id == item.BrandingInfo).FirstOrDefault();
@@ -444,20 +480,20 @@ namespace ShutterManagement.Business.Services
                                     ((x.BrandingInfoNavigation?.Email ?? "").ToLower().Contains(filter.SearchValue)
                                     || (x.BrandingInfoNavigation?.PhoneNumber ?? "").ToLower().Contains(filter.SearchValue)
                                     || (x.FirstName ?? "").ToLower().Contains(filter.SearchValue)
+                                    || (x.BrandingInfoNavigation?.CompanyName ?? "").ToLower().Contains(filter.SearchValue)
+                                    || ((x.FirstName.ToLower() + " " + x.LastName.ToLower()) ?? "").Contains(filter?.SearchValue)
                                     || (x.LastName ?? "").ToLower().Contains(filter.SearchValue)
                                     || (x.MiddleName ?? "").ToLower().Contains(filter.SearchValue)
                                     || (x.Code ?? "").ToLower().Contains(filter.SearchValue)
                                     ) : true)).ToList();
-                var TakenRecords = FilterRecords
-                                    .Skip((filter.PageNo - 1) * filter.RecordPerPage).Take(filter.RecordPerPage).ToList();
-                if (TakenRecords != null && TakenRecords.Count > 0)
-                {
-                    var data = TakenRecords.Select(x => new GetAllTenant
+
+                    var data = FilterRecords.Select(x => new GetAllTenant
                     {
                         TenantId = x.TenantId,
                         FirstName = x.FirstName,
                         MiddleName = x.MiddleName,
                         LastName = x.LastName,
+                        Suffix=x.Suffix??"",
                         Code = x.Code,
                         URL = x.Url,
                         Email = x.BrandingInfoNavigation.Email,
@@ -484,21 +520,24 @@ namespace ShutterManagement.Business.Services
                             data[i].UserFirstName = UserDetails.FirstName;
                             data[i].UserMiddleName = UserDetails.MiddleName;
                             data[i].UserLastName = UserDetails.LastName;
+                            data[i].Suffix = UserDetails.Suffix;
                             data[i].UserPhoneNumber = UserDetails.Phone;
                             data[i].UserEmail = UserDetails.Email;
                         }
                     }
-                    responseVm.Data = data;
-                    responseVm.IsSuccess = true;
-                    responseVm.Message = AppConstant.UpdateSuccessMsg;
-                    responseVm.TotalRecords = FilterRecords.Count;
-                }
-                else
-                {
-                    responseVm.Message = AppConstant.NoDataFound;
-                }
 
 
+                var queryable = data.AsQueryable();
+
+                queryable = Paginate.ApplyColumnFilters(queryable, filter.ColumnFilters);
+                queryable = Paginate.ApplySorting(queryable, filter.SortColumn, filter.SortDirection);
+
+                var TakenRecords = Paginate.Pagination(queryable.ToList(), filter);
+
+                responseVm.Data = TakenRecords;
+                responseVm.IsSuccess = true;
+                responseVm.Message = AppConstant.UpdateSuccessMsg;
+                responseVm.TotalRecords = FilterRecords.Count();
             }
             catch (Exception ex)
             {
@@ -507,6 +546,7 @@ namespace ShutterManagement.Business.Services
             return responseVm;
 
         }
+
 
     }
 }

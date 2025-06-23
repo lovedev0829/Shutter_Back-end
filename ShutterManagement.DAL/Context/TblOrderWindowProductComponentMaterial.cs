@@ -48,4 +48,8 @@ public partial class TblOrderWindowProductComponentMaterial
     public Guid? ProductType { get; set; }
 
     public Guid OrderWindowProductComponentMaterialId { get; set; }
+
+    public string? MaterialPricingExpression { get; set; }
+
+    public decimal? MaterialPrice { get; set; }
 }

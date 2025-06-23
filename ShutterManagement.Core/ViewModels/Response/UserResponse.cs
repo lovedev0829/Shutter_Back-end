@@ -12,6 +12,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? MiddleName { get; set; }
         public string? LastName { get; set; }
         public string? Email { get; set; }
+        public string? suffix { get; set; }
         public string? Phone { get; set; }
         public string? UserName { get; set; }
         //public bool? IsSubtenant { get; set; } = false;

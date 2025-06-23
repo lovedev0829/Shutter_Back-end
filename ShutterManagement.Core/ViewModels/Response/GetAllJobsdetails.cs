@@ -29,6 +29,7 @@ namespace ShutterManagement.Core.ViewModels.Response
    
         public Guid? JobStatus { get; set; }
         public string? JobStatusName { get; set; }
+        public string? Suffix { get; set; }
 
         public string? Notes { get; set; }
         public string[]? AttachmentsAny { get; set; } = new string[] {};
@@ -39,7 +40,9 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? State { get; set; }
         public string? ZipCode { get; set; }
         public string? JobUniqueCode { get; set; }
-        
-      
+        public Guid? GHL_StageId { get; set; }
+        public string? GHL_StageName { get; set; }
+
+
     }
 }

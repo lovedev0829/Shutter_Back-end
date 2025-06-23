@@ -23,6 +23,10 @@ using System.Text;
 using ShutterManagement.Core.Common;
 using Microsoft.Extensions.Primitives;
 using MailKit.Search;
+using Microsoft.Extensions.Options;
+using ShutterManagement.Stripe;
+using Microsoft.Extensions.Logging;
+using Stripe;
 
 namespace ShutterManagement.Business.Services
 {
@@ -39,10 +43,20 @@ namespace ShutterManagement.Business.Services
         private readonly IJobService jobService;
         private readonly IOrderService orderService;
         public Pagination filter = new Pagination();
+        private readonly StripeService _stripeService;
+        private readonly IStripeConfiguration stripeConfiguration;
+        private readonly JobStatusAndStageMapping statusAndStageMapping;
+        private readonly ClaimsProperty claimsProperty;
+        private readonly ITemplatesService templatesService;
+        private readonly GoogleAuthService googleAuthService;
+        private readonly IEmailConfigurationService emailConfigurationService;
 
         public InvoiceService(ITenantService tenantService, IInvoicePaymentService invoicePaymentService,
             IHostEnvironment environment, IConverter converter ,IContactService contactService 
-            ,IEstimateService estimateService, ITenantBrandingService tenantBrandingService,IUserService userService ,IJobService jobService,IOrderService orderService)
+            ,IEstimateService estimateService, ITenantBrandingService tenantBrandingService,IUserService userService 
+            ,IJobService jobService,IOrderService orderService,StripeService stripeService ,
+            IStripeConfiguration stripeConfiguration,JobStatusAndStageMapping statusAndStageMapping ,ClaimsProperty claimsProperty,
+            ITemplatesService templatesService,GoogleAuthService googleAuthService,IEmailConfigurationService emailConfigurationService)
         {
             this.tenantService = tenantService;
             this.invoicePaymentService = invoicePaymentService;
@@ -54,6 +68,13 @@ namespace ShutterManagement.Business.Services
             this.userService = userService;
             this.jobService = jobService;
             this.orderService = orderService;
+            _stripeService = stripeService;
+            this.stripeConfiguration = stripeConfiguration;
+            this.statusAndStageMapping = statusAndStageMapping;
+            this.claimsProperty = claimsProperty;
+            this.templatesService = templatesService;
+            this.googleAuthService = googleAuthService;
+            this.emailConfigurationService = emailConfigurationService;
         }
 
         #region Create  update ActiveInActive Delete Getall
@@ -64,13 +85,13 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var isTenantValid = await tenantService.AnyAsync(x =>
-                    x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+                    x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
 
                 if (isTenantValid)
                 {
                     var invoice = GetAllQuerable()
                         .Where(c => c.InvoiceId == InvoiceId
-                                   && c.TenantId == AppConstant.LoggedInTenantId
+                                   && c.TenantId == claimsProperty.GetTenantId()
                                    && c.IsDelete == false)
                         .FirstOrDefault();
 
@@ -133,7 +154,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var isTenantValid = await tenantService.AnyAsync(x =>
-                    x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+                    x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
 
                 if (!isTenantValid)
                 {
@@ -141,20 +162,11 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.TenantNotFound;
                     return responseVm;
                 }
-                //var isInvoiceNumberExists = await AnyAsync(x =>
-                //  x.InvoiceNumber == model.InvoiceNumber && x.IsDelete == false && x.IsActive==true && x.TenantId == AppConstant.LoggedInTenantId);
 
-                //if (isInvoiceNumberExists)
-                //{
-                //    responseVm.IsSuccess = false;
-                //    responseVm.Message = "Invoice Number Already Exists.";
-                //    return responseVm;
-                //}
-
-                int Version = GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt)
+                int Version = GetAllQuerable().Where(x => x.TenantId == claimsProperty.GetTenantId() && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt)
                .Select(p => (p.InvoiceNumber.Split("-", StringSplitOptions.RemoveEmptyEntries).Length == 3 ? Convert.ToInt32(p.InvoiceNumber.Split("-", StringSplitOptions.RemoveEmptyEntries)[2]) : 0)).FirstOrDefault();
                 Version += 1;
-                var InvoiceNumberUniquNumber = GenerateUniqueId.GenerateUniqueIds(ModuleName.Invoice, AppConstant.LoggedInCompanyCode, Version);     //   var InvoiceNumberUniquNumber = GenerateUniqueId.GenerateUniqueIds(ModuleName.Invoice, AppConstant.LoggedInCompanyCode);
+                var InvoiceNumberUniquNumber = GenerateUniqueId.GenerateUniqueIds(ModuleName.Invoice, claimsProperty.GetCompanyCode(), Version);     //   var InvoiceNumberUniquNumber = GenerateUniqueId.GenerateUniqueIds(ModuleName.Invoice, claimsProperty.GetCompanyCode());
                 TblInvoice tblInvoice = new TblInvoice
                 {
                     InvoiceId = Guid.NewGuid(),
@@ -167,8 +179,9 @@ namespace ShutterManagement.Business.Services
                     BalanceDue = model.TotalAmount,
                     PaidAmount = 0,
                     CreatedAt = DateTime.Now,
-                    TenantId = AppConstant.LoggedInTenantId,
+                    TenantId = claimsProperty.GetTenantId(),
                     CreatedBy = AppConstant.LoggedInUserID,
+                    Status=EnumValue.GetEnumValue(PaymentStatus.Unpaid),
                     IsActive = true,
                     IsDelete = false
                 };
@@ -195,6 +208,28 @@ namespace ShutterManagement.Business.Services
                         IsDelete = false
                     };
 
+                    TblPayment tblPayments = new TblPayment
+                    {
+                        PaymentId = Guid.NewGuid(),
+                        InvoiceId = tblInvoice.InvoiceId,
+                        PaymentDate = DateTime.Now,
+                        Amount = tblInvoice.BalanceDue,
+                        PaymentMethod = "",
+                        TransactionId = "",
+                        Notes = "",
+                        Status = EnumValue.GetEnumValue(PaymentStatus.Unpaid),
+                        PaymentTypeStatus = EnumValue.GetEnumValue(PaymentStatus.Draft),
+                        CreatedAt = DateTime.Now,
+                        TenantId = claimsProperty.GetTenantId(),
+                        CreatedBy = AppConstant.LoggedInUserID,
+                        IsActive = true,
+                        IsDelete = false
+                    };
+
+                    await dbContext.TblPayments.AddAsync(tblPayments);
+                    await dbContext.SaveChangesAsync();
+                    FileLogger.Log($"Payment Record Created: {tblPayments.PaymentId}");
+
                     var paymentResult = await invoicePaymentService.Add(tblInvoicePayment);
                     if (paymentResult == null || paymentResult.InvoicePaymentId == Guid.Empty)
                     {
@@ -207,6 +242,19 @@ namespace ShutterManagement.Business.Services
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.InsertSuccessMsg;
 
+                if (responseVm.IsSuccess)
+                {
+                    var jobStatusName = EnumValue.GetEnumValue(JobStatus.In_Production);
+                    var updateResponse = await statusAndStageMapping.UpdateOpportunityAndJobStatus(tblInvoice?.JobId ?? Guid.Empty, jobStatusName);
+
+                    if (!updateResponse.IsSuccess)
+                    {
+                        FileLogger.Log(updateResponse.Message);
+                        //responseVm.IsSuccess = false;
+                        //responseVm.Message = updateResponse.Message;
+                        //return responseVm;
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -224,19 +272,19 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var isTenantValid = await tenantService.AnyAsync(x =>
-                    x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+                    x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
 
                 if (isTenantValid)
                 {
                     var invoice = GetAllQuerable()
                         .Where(c => c.InvoiceId == InvoiceId
-                                   && c.TenantId == AppConstant.LoggedInTenantId
+                                   && c.TenantId == claimsProperty.GetTenantId()
                                    && c.IsDelete == false)
                         .FirstOrDefault();
 
                     //var CheckPaymentExist = paymentsService.GetAllQuerable()
                     //   .Where(c => c.InvoiceId == InvoiceId
-                    //              && c.TenantId == AppConstant.LoggedInTenantId
+                    //              && c.TenantId == claimsProperty.GetTenantId()
                     //              && c.IsDelete == false)
                     //   .FirstOrDefault();
 
@@ -306,7 +354,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var isTenantValid = await tenantService.AnyAsync(x =>
-                    x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+                    x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
 
                 if (!isTenantValid)
                 {
@@ -314,11 +362,12 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-                var invoicesQuery = (from i in GetAllQuerable()
+                var invoicesQuery = (from i in GetAllQuerable().OrderByDescending(x => x.CreatedAt)
                                      join j in dbContext.TblJobs on i.JobId equals j.JobId
                                      join c in dbContext.TblContacts on j.ContactId equals c.ContactId
                                      join d in dbContext.TblEstimates on i.EstimateId equals d.EstimateId
-                                     where i.IsDelete == false
+                                     let hasActiveOrder = dbContext.TblOrders.Any(o => o.EstimateId == i.EstimateId && o.IsActive == true)
+                                     where i.IsDelete == false && hasActiveOrder && j.IsActive == true
                                      orderby i.CreatedAt descending
                                      select new InvoiceVM
                                      {
@@ -389,7 +438,6 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        
         public async Task<IResponseVm<string>> UpdateInvoice(UpdateInvoice updateInvoice)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
@@ -397,7 +445,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var isTenantValid = await tenantService.AnyAsync(x =>
-                    x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+                    x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
 
                 if (!isTenantValid)
                 {
@@ -408,7 +456,7 @@ namespace ShutterManagement.Business.Services
 
                 var invoice = GetAllQuerable()
                     .Where(c => c.InvoiceId == updateInvoice.InvoiceId
-                                && c.TenantId == AppConstant.LoggedInTenantId
+                                && c.TenantId == claimsProperty.GetTenantId()
                                 && c.IsDelete == false)
                     .FirstOrDefault();
 
@@ -424,7 +472,7 @@ namespace ShutterManagement.Business.Services
                 invoice.DueDate = updateInvoice.DueDate;
                 invoice.TotalAmount = updateInvoice.TotalAmount;
                 invoice.EstimateId = updateInvoice.EstimateId;
-                invoice.BalanceDue = updateInvoice.TotalAmount - invoice.PaidAmount;
+                invoice.BalanceDue = (updateInvoice.TotalAmount - invoice.PaidAmount) ?? 0.0m;
                 invoice.UpdatedAt = DateTime.Now;
                 invoice.ModifiedBy = AppConstant.LoggedInUserID;
 
@@ -486,19 +534,24 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
+
+                FileLogger.Log($"Stripe Configuration{claimsProperty.GetTenantId().ToString()}");
                 var isTenantValid = await tenantService.AnyAsync(x =>
-                    x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+                    x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
                 if (!isTenantValid)
                 {
                     responseVm.IsSuccess = false;
                     responseVm.Message = AppConstant.AccessDenied;
                     return responseVm;
                 }
-                Guid? templateId = Guid.Parse("3A49D48B-CA1D-4E0E-9E1F-A22E7529EF47");
 
-                var invoiceTemplate = dbContext.TblTemplates.FirstOrDefault(c =>
-                    c.TemplateId == templateId  &&
-                    c.IsDelete == false);
+                await stripeConfiguration.GetStripeConfiguration(claimsProperty.GetTenantId().ToString());
+
+                var invoiceTemplate = templatesService.GetAllQuerable().Where(c =>
+                c.TemplateCategory.Equals(EnumValue.GetEnumValue(EmailTemplateType.EstimatePDF)) &&
+                c.IsDelete==false)
+                .Select(x => x.TemplateValue)
+                .FirstOrDefault();
 
                 if (invoiceTemplate == null)
                 {
@@ -506,12 +559,13 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.NoDataFound;
                     return responseVm;
                 }
-               
-
-                var customerDetails = (await contactService.GetAll_Contact(filter))
+                filter.RecordPerPage = 1000;
+                filter.CustomerId = model.ContactId.ToString();
+                var customerDetails = (await contactService.GetAll_Contact(filter,false))
                     .Data.FirstOrDefault(x => x.ContactId == model.ContactId && x.IsActive == true);
 
-                var tenantDetails = tenantService.GetAllQuerable().Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true).FirstOrDefault();
+
+                var tenantDetails = tenantService.GetAllQuerable().Where(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true).FirstOrDefault();
                 if (tenantDetails == null)
                 {
                     responseVm.IsSuccess = false;
@@ -524,7 +578,7 @@ namespace ShutterManagement.Business.Services
 
                 var estimationDetails = dbContext.TblEstimates.FirstOrDefault(c =>
                     c.EstimateId == model.EstimationId &&
-                    c.TenantId == AppConstant.LoggedInTenantId &&
+                    c.TenantId == claimsProperty.GetTenantId() &&
                     c.IsDelete == false);
                 if (estimationDetails == null)
                 {
@@ -533,16 +587,14 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-
-
                 var userDetails = dbContext.TblUsers.FirstOrDefault(c =>
                    c.Id == estimationDetails.CreatedBy &&
-                   c.TenantId == AppConstant.LoggedInTenantId &&
+                   c.TenantId == claimsProperty.GetTenantId() &&
                    c.IsDelete == false);
 
                 var orderDetails = dbContext.TblOrders.FirstOrDefault(c =>
                    c.OrderId == model.OrderId &&
-                   c.TenantId == AppConstant.LoggedInTenantId &&
+                   c.TenantId == claimsProperty.GetTenantId() &&
                    c.IsDelete == false);
 
                 var estimationRecord = await estimateService.ViewEachEstimation(model.EstimationId);
@@ -551,13 +603,19 @@ namespace ShutterManagement.Business.Services
                     .FirstOrDefault(x => x.IsActive == true)
                     ?.EstimateProductList ?? new List<EstimateProductList>();
 
+                string customerState = "";
+                if (!string.IsNullOrEmpty(customerDetails?.billingAddressVm?.StateId.ToString()))
+                {
+                    customerState = dbContext.MstStates.Where(x => x.Id == customerDetails.billingAddressVm.StateId).Select(y => y.StateName??"").FirstOrDefault();
+                }
+
                 var invoiceData = new InvoiceDataModel
                 {
                     CustomerName = customerDetails?.FirstName ?? "" + customerDetails?.LastName ?? "",
                     PreparedBy = userDetails?.FirstName + " " + userDetails?.LastName,
                     CustomerId = customerDetails?.ContactUniqueId ?? "",
                     CustomerCity = customerDetails?.billingAddressVm?.City ?? "",
-                    CustomerState = customerDetails?.billingAddressVm?.State ?? "",
+                    CustomerState = customerState??"",
                     CustomerZipCode = customerDetails?.billingAddressVm?.ZipCode ?? "",
                     HomePhone = customerDetails?.billingAddressVm?.PhoneNumber ?? "",
                     CompanyStreetAddress = tenantInfoDetails?.StreetAddress ?? "",
@@ -577,18 +635,26 @@ namespace ShutterManagement.Business.Services
                     Terms = estimationDetails?.TermsCondition ?? "",
                     Note = estimationDetails?.Notes ?? "",
                     OrderId = orderDetails?.OrderName ?? "",
-                    Taxes = estimationDetails?.TaxAmount.ToString() ?? "",
-                    Discount = estimationDetails?.DiscountAmount.ToString() ?? "",
+                    Taxes = estimationDetails?.TotaltaxAmount??0.0m,
+                    Discount = estimationDetails?.DiscountAmount?? 0.0m,
                     Additionalcost = estimationDetails?.AdditionalCost.ToString() ?? "",
                     ProductListHtml = GenerateProductListHtml(productList)
                 };
 
-                var htmlContent = ReplaceTemplatePlaceholders(invoiceTemplate.TemplateValue, invoiceData);
+                var htmlContent = ReplaceTemplatePlaceholders(invoiceTemplate, invoiceData);
 
                 var pdfBytes = GenerateInvoicePdf(htmlContent);
 
-                var tenantId = AppConstant.LoggedInTenantId.ToString();
-                var rootPath = Path.Combine(AppConstant.FileUploadPath, tenantId);
+                if (pdfBytes == null || pdfBytes.Data == null || pdfBytes.Data.Length == 0)
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = pdfBytes.Message;
+                    return responseVm;
+                }
+
+                var rootPath = Path.Combine(AppConstant.FileUploadPath, claimsProperty.GetTenantId().ToString());
+                FileLogger.Log($"Invoice File Path for payment {rootPath}");
+
                 if (!Directory.Exists(rootPath))
                 {
                     Directory.CreateDirectory(rootPath);
@@ -597,17 +663,22 @@ namespace ShutterManagement.Business.Services
                 var fileName = $"Invoice_{Guid.NewGuid()}.pdf";
                 var savePath = Path.Combine(rootPath, fileName);
 
-                await using (var stream = new FileStream(savePath, FileMode.Create))
+                using (var stream = new FileStream(savePath, FileMode.Create, FileAccess.Write, FileShare.None))
                 {
-                    await stream.WriteAsync(pdfBytes, 0, pdfBytes.Length);
+                    await stream.WriteAsync(pdfBytes.Data, 0, pdfBytes.Data.Length);
                 }
-                var pdfBase64 = Convert.ToBase64String(pdfBytes);
+
+
+                var pdfBase64 = Convert.ToBase64String(pdfBytes.Data);
+
+
+
 
 
                 if (model.DocumentType == EstimateDocumentType.ForEmail)
                 {
                     var IsEstimateExists = dbContext.TblEstimates
-                        .Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId && x.EstimateId == model.EstimationId)
+                        .Where(x => x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId() && x.EstimateId == model.EstimationId)
                         .OrderByDescending(x => x.CreatedAt)
                         .FirstOrDefault();
 
@@ -622,59 +693,87 @@ namespace ShutterManagement.Business.Services
                     IsEstimateExists.ModifiedBy = AppConstant.LoggedInUserID;
                     await estimateService.Update(IsEstimateExists);
 
+                    
+                        var jobStatusName = EnumValue.GetEnumValue(JobStatus.Quote_Sent);
+                        var updateResponse = await statusAndStageMapping.UpdateOpportunityAndJobStatus(IsEstimateExists?.JobId ?? Guid.Empty, jobStatusName);
+
+                        if (!updateResponse.IsSuccess)
+                        {
+                            responseVm.IsSuccess = false;
+                            responseVm.Message = updateResponse.Message;
+                            return responseVm;
+                        }
+                    
+                        
+                    
+
                     string approvalEmailLink = $"{AppConstant.UIBaseURL}contacts/estimate/preview/{IsEstimateExists?.EstimateId}";
 
+
+
                     var emailBody = $@"
-     <div style='font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px;'>
-        <p><strong>Dear {customerDetails?.FirstName+" "+ customerDetails?.LastName},</strong></p>
+<div style='font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px; margin: auto; background: #f9f9f9; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);'>
+    <div style='background: white; padding: 20px; border-radius: 10px;'>
 
-        <p>Please find your invoice attached for your reference.</p>
+        <p style='font-size: 16px; margin-bottom: 10px;'>
+            <strong>Dear {customerDetails?.FirstName} {customerDetails?.LastName},</strong>
+        </p>
 
-        <p><strong>You can approve  your estimate - {estimationDetails?.EstimateCode}by clicking the link below:</strong></p>
+        <p style='font-size: 15px;'>
+            Please review the attached <strong>estimate</strong> prepared for your consideration.
+        </p>
 
-        <p>
-            <a href='{approvalEmailLink}'>
-                Approval Estimate
+        <p style='font-size: 15px;'>
+            You can approve your estimate - <strong>{estimationDetails?.EstimateCode}</strong> by clicking the link below:
+        </p>
+
+        <div style='text-align: center; margin: 25px 0;'>
+            <a href='{approvalEmailLink}' 
+               style='background-color: #0066cc; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold;'>
+                View Estimate
             </a>
+        </div>
+
+        <p style='font-size: 15px;'>
+            Once approved, an invoice will be automatically created for you to pay online or visit us to complete the payment.
         </p>
 
-        <p><strong>Thank you for your business!</strong></p>
-
-        
-        
-
-        <p>
-            <img src='{tenantInfoDetails?.Logo}' alt='Company Logo' height='50px' 
-                 style='margin-top: 10px; display: block;'>
+        <p style='font-size: 15px; margin-top: 30px;'>
+            Thank you for your business!
         </p>
-<p>Best regards,</p>
-<p><strong>{tenantInfoDetails?.CompanyName}</strong></p>
-<p>Shutter Management and Estimation System</p>
-    </div>";
+
+        <img src='{tenantInfoDetails?.Logo}' alt='Company Logo' height='50' style='margin-top: 20px; display: block;' />
+
+        <p style='font-size: 15px; margin-top: 20px;'>Best regards,</p>
+        <p style='font-size: 15px; font-weight: bold;'>{tenantInfoDetails?.CompanyName}</p>
+        <p style='font-size: 14px;'>Shutter Management and Estimation System</p>
+    </div>
+</div>";
 
 
-                    var emailAttachment = new EmailAttachment
+                    var emailResponse = await SendEmailWithOAuth(estimationDetails.EstimateCode, pdfBytes.Data, emailBody, customerDetails?.Email ?? "", "Estimate Approval Link and PDF");
+
+                    var jobDetails = await jobService.GetById(IsEstimateExists.JobId ?? Guid.Empty);
+
+                    if (jobDetails != null)
                     {
-                        FileName = $"{estimationDetails.EstimateCode}.pdf",
-                        Stream = new MemoryStream(pdfBytes),
-                        MediaType = "application/pdf"
-                    };
+                        var ghlUrlResponse = await jobService.UpdateEstimateUrlInGhlOnly(jobDetails, approvalEmailLink);
 
-                    var emailSent = EmailHelper.SendEmailWithAttachment(
-                        customerDetails.Email,
-                        "Estimate Approval Link and PDF",
-                        emailBody,
-                        new List<EmailAttachment> { emailAttachment }
-                    );
+                        if (!ghlUrlResponse.IsSuccess)
+                        {
+                            // Optional: log or return a warning, depending on your use case
+                            FileLogger.Log($"GHL URL Update failed: {ghlUrlResponse.Message}");
+                        }
+                    }
 
                     responseVm.IsSuccess = true;
-                    responseVm.Message = "Email Send SuccessFully.";
-                    File.Delete(savePath);
+                    responseVm.Message = emailResponse.Message;
+                    System.IO.File.Delete(savePath);
 
                 }
                 else if(model.DocumentType==EstimateDocumentType.OrderForEmail)
                 {
-                    var IsOrderExists =  (await orderService.GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId &&
+                    var IsOrderExists =  (await orderService.GetAll()).Where(x => x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId() &&
                     x.OrderId== model.OrderId && x.Status != EnumValue.GetEnumValue(Estimation.Approved)).
                     OrderByDescending(x => x.CreatedAt).FirstOrDefault();
                     if (IsOrderExists == null)
@@ -718,38 +817,28 @@ namespace ShutterManagement.Business.Services
         <p>Shutter Management and Estimation System</p>
     </div>";
 
+                    var emailResponse = await SendEmailWithOAuth(estimationDetails.EstimateCode,pdfBytes.Data,emailBody,customerDetails?.Email ?? "","Estimate For Approval");
 
-                    var emailAttachment = new EmailAttachment
+                    if (!emailResponse.IsSuccess)
                     {
-                        FileName = $"{IsOrderExists?.OrderName}.pdf",
-                        Stream = new MemoryStream(pdfBytes),
-                        MediaType = "application/pdf"
-                    };
+                        responseVm.IsSuccess = false;
+                        responseVm.Message = emailResponse.Message;
+                        return responseVm;
+                    }
 
-                    var emailSent = EmailHelper.SendEmailWithAttachment(
-                        customerDetails.Email,
-                        "Order Approval Link and PDF",
-                        emailBody,
-                        new List<EmailAttachment> { emailAttachment }
-                    );
+                    System.IO.File.Delete(savePath);
 
                     responseVm.IsSuccess = true;
-                    responseVm.Message = "Email Send SuccessFully.";
-                    File.Delete(savePath);
-
-
+                    responseVm.Message = emailResponse.Message;
+                    return responseVm;
 
                 }
 
                 else if (model.DocumentType == EstimateDocumentType.InvoicePaymentForEmail)
                 {
-                    Guid? invoiceTemplateId = Guid.Parse("E9E279C4-1F54-476B-BCDF-778BD1634894");
-
                     var invoiceForEmailTemplate = dbContext.TblTemplates.FirstOrDefault(c =>
-                        c.TemplateId == invoiceTemplateId &&
+                        c.TemplateCategory == EnumValue.GetEnumValue(EmailTemplateType.InvoicePDF) &&
                         c.IsDelete == false);
-
-                   
 
                     if (invoiceForEmailTemplate == null)
                     {
@@ -758,9 +847,7 @@ namespace ShutterManagement.Business.Services
                         return responseVm;
                     }
 
-                    var paymentDetails = dbContext.TblInvoicePayments
-                        .FirstOrDefault(x => x.InvoiceId == model.InvoiceId &&
-                                             x.IsDelete == false);
+                    var paymentDetails = dbContext.TblInvoicePayments.FirstOrDefault(x => x.InvoiceId == model.InvoiceId &&x.IsDelete == false);
 
                     if (paymentDetails == null)
                     {
@@ -769,11 +856,7 @@ namespace ShutterManagement.Business.Services
                     }
 
                     var invoiceDetails = dbContext.TblInvoices
-                        .FirstOrDefault(x => x.InvoiceId == model.InvoiceId &&
-                                             x.TenantId == AppConstant.LoggedInTenantId &&
-                                             x.IsDelete == false);
-
-                   
+                        .FirstOrDefault(x => x.InvoiceId == model.InvoiceId && x.TenantId == claimsProperty.GetTenantId() &&x.IsDelete == false);
 
                     if (invoiceDetails == null)
                     {
@@ -791,10 +874,7 @@ namespace ShutterManagement.Business.Services
                         })
                         .ToList();
 
-                    var estimationDetail = dbContext.TblEstimates.FirstOrDefault(c =>
-                   c.EstimateId == model.EstimationId &&
-                   c.TenantId == AppConstant.LoggedInTenantId &&
-                   c.IsDelete == false);
+                    var estimationDetail = dbContext.TblEstimates.FirstOrDefault(c =>c.EstimateId == model.EstimationId && c.TenantId == claimsProperty.GetTenantId() && c.IsDelete == false);
                     if (estimationDetail == null)
                     {
                         responseVm.IsSuccess = false;
@@ -808,13 +888,13 @@ namespace ShutterManagement.Business.Services
                         PreparedBy = userDetails?.FirstName + " " + userDetails?.LastName,
                         CustomerId = customerDetails?.ContactUniqueId ?? "",
                         CustomerCity = customerDetails?.billingAddressVm?.City ?? "",
-                        CustomerState = customerDetails?.billingAddressVm?.State ?? "",
+                        CustomerState = customerState ?? "",
                         CustomerZipCode = customerDetails?.billingAddressVm?.ZipCode ?? "",
                         HomePhone = customerDetails?.billingAddressVm?.PhoneNumber ?? "",
                         CompanyStreetAddress = tenantInfoDetails?.StreetAddress ?? "",
                         CompanyCity = tenantInfoDetails?.City ?? "",
                         CompanyCountry = tenantInfoDetails?.Country ?? "",
-                        CompanyZipCode = tenantInfoDetails?.ZipCode ?? "",
+                        CompanyZipCode = tenantInfoDetails?.ZipCode ?? "", 
                         CustomerStreetAddress = customerDetails?.billingAddressVm?.StreetAddress ?? "",
                         MobilePhone = customerDetails?.PhoneNumber ?? "",
                         TenantCompanyName = tenantInfoDetails?.CompanyName ?? "",
@@ -842,7 +922,7 @@ namespace ShutterManagement.Business.Services
                     var pdfBytesInvoice = GenerateInvoicePdf(htmlContentforInvoice);
 
                     // Save the invoice PDF
-                    var tenantIdInvoice = AppConstant.LoggedInTenantId.ToString();
+                    var tenantIdInvoice = claimsProperty.GetTenantId().ToString();
                     var rootPathInvoice = Path.Combine(AppConstant.FileUploadPath, tenantIdInvoice);
                     if (!Directory.Exists(rootPathInvoice))
                     {
@@ -852,48 +932,86 @@ namespace ShutterManagement.Business.Services
                     var InvoicefileName = $"Invoice_{Guid.NewGuid()}.pdf";
                     var InvicesavePath = Path.Combine(rootPathInvoice, InvoicefileName);
 
-                    await using (var stream = new FileStream(InvicesavePath, FileMode.Create))
+                    await using (var stream1 = new FileStream(InvicesavePath, FileMode.Create))
                     {
-                        await stream.WriteAsync(pdfBytesInvoice, 0, pdfBytesInvoice.Length);
+                        await stream1.WriteAsync(pdfBytesInvoice.Data, 0, pdfBytesInvoice.Data.Length);
                     }
 
-                    var InvoicepdfBase64 = Convert.ToBase64String(pdfBytesInvoice);
+                    var InvoicepdfBase64 = Convert.ToBase64String(pdfBytesInvoice.Data);
 
-                    // Generate Invoice Payment Link
-                    // string paymentLink = $"{AppConstant.UIBaseURL}contacts/invoice/payment/{invoiceDetails?.InvoiceId}";
+                    string paymentLink = string.Empty;
+                    bool isStripeConfigured = !string.IsNullOrEmpty(AppConstant.Stripe_SecretKey) && IsStripeApiKeyValid();
+                    bool isPaymentLinkGenerated = false;
 
-                    // Construct Invoice Email Body
+                    if (invoiceDetails.BalanceDue > 0 && IsStripeApiKeyValid())
+                    {
+                        
+                        var Payment = dbContext.TblPayments.Where(x => x.InvoiceId == model.InvoiceId && x.PaymentTypeStatus == EnumValue.GetEnumValue(PaymentStatus.Draft) && x.Status == EnumValue.GetEnumValue(PaymentStatus.Unpaid)).FirstOrDefault();
+
+                        if (Payment != null)
+                        {
+                            if (isStripeConfigured)
+                            {
+                                var paymentRequest = new PaymentRequest
+                                {
+                                    CustomerEmail = customerDetails.Email,
+                                    ProductName = $"Invoice Payment - {invoiceDetails?.InvoiceNumber}",
+                                    Amount = (long)(invoiceDetails?.BalanceDue * 100),
+                                    Quantity = 1,
+                                    InvoiceId = invoiceDetails?.InvoiceId.ToString(),
+                                    PaymentId = Payment?.PaymentId.ToString(),
+                                };
+
+                                paymentLink = _stripeService.CreateCheckoutSession(paymentRequest);
+                                isPaymentLinkGenerated = !string.IsNullOrEmpty(paymentLink);
+                                FileLogger.Log($"Payment Link Generated: {paymentLink}");
+                            }
+                            else
+                            {
+                                FileLogger.Log("Stripe credentials are missing. Payment link cannot be generated.");
+                            }
+                        }
+                        else
+                        {
+                            FileLogger.Log($"Payment Not Found Those payment created time on Invoice.{Payment}");
+                        }
 
 
+                    }
+
+                    var paymentMessage = isPaymentLinkGenerated
+                        ? $"You can make the payment for your invoice <strong>{invoiceDetails?.InvoiceNumber}</strong> by clicking the link below:"
+                        : $"<strong>Note:</strong> Online payment is currently unavailable . Please contact support {tenantInfoDetails?.Email??""}";
 
                     var emailBody = $@"
 <div style='max-width: 600px; margin: auto; background: #fff; border-radius: 8px; box-shadow: 0px 0px 10px rgba(0,0,0,0.1); padding: 20px; font-family: Arial, sans-serif; color: #333;'>
 
-    <!-- Header -->
     <div style='background: #007bff; color: #fff; text-align: center; padding: 15px; border-radius: 8px 8px 0 0;'>
         <h2 style='margin: 0; font-size: 20px;'>Invoice Details</h2>
     </div>
 
-    <!-- Content -->
     <div style='padding: 20px;'>
         <p style='font-size: 16px; margin: 10px 0;'><strong>Dear {customerDetails?.FirstName + " " + customerDetails?.LastName},</strong></p>
         <p style='font-size: 14px; margin: 10px 0;'>Please find your invoice attached for your reference.</p>
 
-        <!-- Invoice Details -->
         <div style='background: #e9ecef; padding: 15px; border-radius: 5px; margin: 15px 0;'>
             <p style='margin: 5px 0; font-size: 14px;'><strong>Total Amount:</strong> {invoiceDetails?.TotalAmount}</p>
             <p style='margin: 5px 0; font-size: 14px;'><strong>Due Amount:</strong> {invoiceDetails?.BalanceDue}</p>
         </div>
 
-        <!-- Payment Link -->
-        <p style='font-size: 14px; margin: 15px 0;'>You can make the payment for your invoice <strong>{invoiceDetails?.InvoiceNumber}</strong> by clicking the link below:</p>
-        <div style='text-align: center; margin: 20px 0;'>
-            <a  style='background: #28a745; color: #fff; padding: 12px 20px; text-decoration: none; font-size: 14px; border-radius: 5px; display: inline-block;'>Pay Now</a>
-        </div>
+        <p style='font-size: 14px; margin: 15px 0;'>{paymentMessage}</p>";
 
+                    if (isPaymentLinkGenerated)
+                    {
+                        emailBody += $@"
+        <div style='text-align: center; margin: 20px 0;'>
+            <a href='{paymentLink}' style='background: #28a745; color: #fff; padding: 12px 20px; text-decoration: none; font-size: 14px; border-radius: 5px; display: inline-block;'>Pay Now</a>
+        </div>";
+                    }
+
+                    emailBody += $@"
         <hr style='border: 0; height: 1px; background: #ddd; margin: 20px 0;'>
 
-        <!-- Footer -->
         <p style='font-size: 14px; text-align: center;'>Thank you for your business!</p>
 
         <div style='text-align: center; margin: 15px 0;'>
@@ -906,24 +1024,16 @@ namespace ShutterManagement.Business.Services
     </div>
 </div>";
 
-
-                    var emailAttachment = new EmailAttachment
-                    {
-                        FileName = $"{invoiceDetails?.InvoiceNumber}.pdf",
-                        Stream = new MemoryStream(pdfBytesInvoice),
-                        MediaType = "application/pdf"
-                    };
-
-                    var emailSent = EmailHelper.SendEmailWithAttachment(
-                        customerDetails.Email,
-                        "Invoice Payment Link and PDF",
-                        emailBody,
-                        new List<EmailAttachment> { emailAttachment }
-                    );
+                    var emailResponse = await SendEmailWithOAuth(invoiceDetails?.InvoiceNumber, pdfBytesInvoice.Data, emailBody, customerDetails?.Email ?? "", AppConstant.InvoicePaymentLinkandPDF);
 
                     responseVm.IsSuccess = true;
-                    responseVm.Message = "Invoice email sent successfully.";
-                    File.Delete(InvicesavePath);
+                    responseVm.Message = isStripeConfigured
+                        ? "Invoice email sent successfully with payment link."
+                        : "Invoice email sent successfully, but Stripe credentials are missing Or Invalid. Payment link not included.";
+
+                    FileLogger.Log($"Invoice Email Status: {responseVm.Message}");
+                    System.IO.File.Delete(InvicesavePath);
+
                 }
 
                 else if (model.DocumentType == EstimateDocumentType.DownloadPDF)
@@ -932,14 +1042,14 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.InvoiceDownloadSuccessMsg;
                     responseVm.Data = pdfBase64;
 
-                    File.Delete(savePath);
+                    System.IO.File.Delete(savePath);
                 }
 
                 }
             catch (Exception ex)
             {
                 responseVm.IsSuccess = false;
-                responseVm.Message = $"{AppConstant.ExceptionError}: {ex.Message}";
+                responseVm.Message = $"{AppConstant.ExceptionError}: {ex.Message} :{ex.StackTrace}";
             }
 
             return responseVm;
@@ -951,18 +1061,26 @@ namespace ShutterManagement.Business.Services
             int i = 0;
             foreach (var product in productList)
             {
-                decimal? unitprice = product.TotalPrice / product.WindowQty;
+                //decimal? unitprice = product.TotalPrice / product.WindowQty;
+
+                decimal? effectiveTotalPrice = product.ProductPrice > 0 ? product.ProductPrice.Value : product.ProductPrice;
+                decimal? unitprice = (product.ProductPrice + product.ComponentMarkup + product.ProductMarkup) / product.WindowQty;
+                decimal? optionprice = (product.additionalCost + product.OptionMarkup);
+                decimal? subtotal = (product.ProductPrice + product.ComponentMarkup + product.ProductMarkup + optionprice);
+
+
                 productListHtml.Append($@"
     <tr style='background-color: #efefef;'>
         <td style='text-align: center; padding: 5px 5px;'>{++i}</td>
-        <td style='text-align: center; padding: 5px 5px;'>{product.ProductTypeName}</td>
-        <td style='text-align: center; padding: 5px 5px;'>{product.ProductName}</td>
+        <td style='text-align: center; padding: 5px 5px;'>{product.ProductTypeName??""}</td>
+        <td style='text-align: center; padding: 5px 5px;'>{product.ProductName??""}</td>
         <td style='text-align: center; padding: 5px 5px;'>{string.Join(", ", product.Options)}</td>
-        <td style='text-align: center; padding: 5px 5px;'>{product.WindowQty}</td>
-        <td style='text-align: center; padding: 5px 5px;'>{product.Width}</td>
-        <td style='text-align: center; padding: 5px 5px;'>{product.Height}</td>
-        <td style='text-align: center; padding: 5px 5px;'>{unitprice}</td>
-        <td style='text-align: center; padding: 5px 5px;'>{product.TotalPrice}</td>
+        <td style='text-align: center; padding: 5px 5px;'>{product.WindowQty??0}</td>
+        <td style='text-align: center; padding: 5px 5px;'>{product.Width??0}</td>
+        <td style='text-align: center; padding: 5px 5px;'>{product.Height ?? 0}</td>
+        <td style='text-align: center; padding: 5px 5px;'>{unitprice ?? 0.0m:F2}</td>
+        <td style='text-align: center; padding: 5px 5px;'>{optionprice ?? 0.0m:F2}</td>
+        <td style='text-align: center; padding: 5px 5px;'>{subtotal ?? 0.0m:F2}</td>
     </tr>");
             }
 
@@ -988,7 +1106,7 @@ namespace ShutterManagement.Business.Services
             return $"<tbody>{paymentsListHtml}</tbody>";
         }
 
-
+         
 
         private string ReplaceTemplatePlaceholders(string template, InvoiceDataModel data) 
         {
@@ -1023,25 +1141,65 @@ namespace ShutterManagement.Business.Services
                 .Replace("{{balancedue}}", data.DueAmount ?? "")
                 .Replace("{{invoiceno}}", data.InvoiceNo ?? "")
                 .Replace("{{additionalcost}}", data.Additionalcost ?? "")
-                .Replace("{{discount}}", data.Discount ?? "")
-                .Replace("{{taxes}}", data.Taxes ?? "");
+                .Replace("{{discount}}", (data.Discount > 0
+    ? $@"<tr>
+<td style=""padding: 5px 5px; font-weight: 700; font-size: 14px;"">Discount :</td>
+<td style=""text-align: end; padding: 5px 20px; font-weight: 700; font-size: 14px;"">${data.Discount}</td>
+</tr>"
+    : ""))
+
+.Replace("{{taxes}}", (data.Taxes > 0
+    ? $@"<tr>
+<td style=""padding: 5px 5px; font-weight: 700; font-size: 14px;"">Taxes :</td>
+<td style=""text-align: end; padding: 5px 20px; font-weight: 700; font-size: 14px;"">${data.Taxes}</td>
+</tr>"
+    : ""));
+
+
         }
 
-        public byte[] GenerateInvoicePdf(string htmlContent)
+        public ResponseVm<byte[]> GenerateInvoicePdf(string htmlContent)
         {
-            var pdfDocument = new HtmlToPdfDocument
-            {
-                GlobalSettings = new GlobalSettings
-                {
-                    ColorMode = DinkToPdf.ColorMode.Color,
-                    Orientation = Orientation.Portrait,
-                    PaperSize = DinkToPdf.PaperKind.A4
-                },
-                Objects = { new ObjectSettings { HtmlContent = htmlContent } }
-            };
+            var response = new ResponseVm<byte[]>();
 
-            return converter.Convert(pdfDocument);
+            try
+            {
+                var pdfDocument = new HtmlToPdfDocument
+                {
+                    GlobalSettings = new GlobalSettings
+                    {
+                        ColorMode = ColorMode.Color,
+                        Orientation = Orientation.Portrait,
+                        PaperSize = PaperKind.A4
+                    },
+                    Objects = { new ObjectSettings { HtmlContent = htmlContent } }
+                };
+
+                byte[] pdfBytes = converter.Convert(pdfDocument);
+
+                response.IsSuccess = true;
+                response.Message = "PDF generated successfully.";
+                response.Data = pdfBytes;
+            }
+            catch (BadImageFormatException)
+            {
+                response.IsSuccess = false;
+                response.Message = "PDF generation failed: platform mismatch. Please ensure application and native libraries match (e.g., x64).";
+            }
+            catch (DllNotFoundException)
+            {
+                response.IsSuccess = false;
+                response.Message = "PDF generation failed: required native library not found. Please ensure wkhtmltox or DinkToPdf native DLL is present.";
+            }
+            catch (Exception ex)
+            {
+                response.IsSuccess = false;
+                response.Message = $"An unexpected error occurred while generating the PDF. {ex.StackTrace}";
+            }
+
+            return response;
         }
+
 
 
 
@@ -1051,7 +1209,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var isTenantValid = await tenantService.AnyAsync(x =>
-                    x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+                    x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
                 if (!isTenantValid)
                 {
                     responseVm.IsSuccess = false;
@@ -1103,6 +1261,24 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = "No invoices match the specified filter criteria.";
                     return responseVm;
                 }
+
+                if (!string.IsNullOrWhiteSpace(filter.SearchValue))
+                {
+                    string searchTerm = filter.SearchValue.Trim().ToLower();
+                    filteredInvoices = filteredInvoices.Where(invoice =>
+                        (!string.IsNullOrEmpty(invoice.InvoiceNumber) && invoice.InvoiceNumber.ToLower().Contains(searchTerm)) ||
+                        (!string.IsNullOrEmpty(invoice.Status) && invoice.Status.ToLower().Contains(searchTerm)) ||
+                        (!string.IsNullOrEmpty(invoice.ContactFirstName) && invoice.ContactFirstName.ToLower().Contains(searchTerm)) ||
+                        (!string.IsNullOrEmpty(invoice.ContactLastName) && invoice.ContactLastName.ToLower().Contains(searchTerm)) ||
+                        (!string.IsNullOrEmpty(invoice.EstimateName) && invoice.EstimateName.ToLower().Contains(searchTerm)) ||
+                        ((!string.IsNullOrEmpty(invoice.ContactFirstName) || !string.IsNullOrEmpty(invoice.ContactLastName)) &&
+                         ($"{invoice.ContactFirstName} {invoice.ContactLastName}".Trim().ToLower().Contains(searchTerm)))
+                    ).ToList();
+                }
+
+
+
+
                 var paginatedInvoices = filteredInvoices
                     .Skip((filter.PageNo - 1) * filter.RecordPerPage)
                     .Take(filter.RecordPerPage)
@@ -1128,7 +1304,7 @@ namespace ShutterManagement.Business.Services
             var invoicesQuery = (from i in GetAllQuerable()
                                  join j in dbContext.TblJobs on i.JobId equals j.JobId
                                  join c in dbContext.TblContacts on j.ContactId equals c.ContactId
-                                 where i.IsDelete == false && i.TenantId == AppConstant.LoggedInTenantId
+                                 where i.IsDelete == false && i.TenantId == claimsProperty.GetTenantId()
                                  orderby i.CreatedAt descending
                                  select new InvoiceVM
                                  {
@@ -1145,6 +1321,7 @@ namespace ShutterManagement.Business.Services
                                      IsActive = i.IsActive,
                                      ContactFirstName = c.FirstName,
                                      ContactLastName = c.LastName,
+                                     Suffix = c.Suffix??"",
                                      TenantId=i.TenantId
                                  }).ToList();
 
@@ -1184,9 +1361,91 @@ namespace ShutterManagement.Business.Services
             return filteredInvoices;
         }
 
+        #region Validate Stripe API Key 
+        public static bool IsStripeApiKeyValid()
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(AppConstant.Stripe_SecretKey))
+                {
+                    FileLogger.Log("Stripe API Key is missing.");
+                    return false;
+                }
 
+                StripeConfiguration.ApiKey = AppConstant.Stripe_SecretKey;
+
+                var service = new BalanceService();
+                var balance = service.Get(); 
+
+                FileLogger.Log("Stripe API Key validation successful.");
+                return true; 
+            }
+            catch (StripeException stripeEx)
+            {
+                if (stripeEx.StripeError != null)
+                {
+                    FileLogger.Log($"Stripe API Key Validation Failed: {stripeEx.StripeError.Message} (Code: {stripeEx.StripeError.Code})");
+                }
+                else
+                {
+                    FileLogger.Log($"Stripe API Key Validation Failed: {stripeEx.Message}");
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Log($"Unexpected Error During Stripe API Key Validation: {ex.Message}");
+                return false;
+            }
+        }
+
+        #endregion Validate Stripe API Key 
 
 
         #endregion Invoice_Generate_Methods
+
+
+        // this is a common method for sending emails
+
+        public async Task<IResponseVm<string>> SendEmailWithOAuth(string filename,byte[] pdfData,string emailBody,string customerEmail,string subject)
+        {
+            var responseVm = new ResponseVm<string>();
+
+            var emailSendAttach = new EmailAttachments
+            {
+                FileName = $"{filename}.pdf",
+                Stream = new MemoryStream(pdfData),
+                MediaType = "application/pdf"
+            };
+            var emailConfig = googleAuthService.ValidateAndRefreshEmailOauthAccessToken();
+            if (emailConfig == null || emailConfig.Result?.Data == null)
+            {
+                responseVm.IsSuccess = false;
+                responseVm.Message = "Email Configuration not found. Please add configurations.";
+                return responseVm;
+            }
+
+            var config = emailConfig.Result.Data;
+
+            var emailRequest = new OAuthEmailRequest
+            {
+                FromEmail = config.From ?? "",
+                ToEmail = customerEmail ?? "",
+                Subject = subject,
+                Body = emailBody,
+                UserEmail = config.Username ?? "",
+                Username = config.Username ?? "",
+                SmtpServer = config.SmtpServer ?? "",
+                Port = config.Port??0,
+                AccessToken = config.AccessToken ?? "",
+                Password = config.Password ?? "",
+                UseSsl = config.UseSsl ?? true,
+                EmailType = config.EmailTypeName ?? "",
+                Attachments = new List<EmailAttachments> { emailSendAttach }
+            };
+
+            return await EmailHelper.SendEmailWithOAuth(emailRequest);
+        }
+
     }
 }

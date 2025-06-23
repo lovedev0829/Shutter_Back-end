@@ -13,6 +13,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
+using System.Linq.Dynamic.Core;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+
 
 namespace ShutterManagement.Business.Services
 {
@@ -31,7 +34,7 @@ namespace ShutterManagement.Business.Services
 
         private string GenerateCouponCode()
         {
-            var tenantCode = AppConstant.LoggedInCompanyCode;
+            var tenantCode = claimsProperty.GetCompanyCode();
 
             var tenantCodePrefix = tenantCode?.Substring(0, Math.Min(4, tenantCode.Length)) ?? "XXXX"; 
 
@@ -47,7 +50,7 @@ namespace ShutterManagement.Business.Services
         public async Task<IResponseVm<string>> CreateDiscountCoupon(CreateDiscount createDiscount)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
-            FileLogger.Log($"Start: Creating Discount Coupon for TenantID: {AppConstant.LoggedInTenantId}");
+            FileLogger.Log($"Start: Creating Discount Coupon for TenantID: {claimsProperty.GetTenantId()}");
 
             try
             {
@@ -172,7 +175,7 @@ namespace ShutterManagement.Business.Services
                 if (!await ValidateTenantAsync())
                     return SetFailureResponse(responseVm, AppConstant.AccessDenied);
 
-                var DiscountList = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId).OrderByDescending(x => x.CreatedAt).Select(
+                var DiscountList = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId()).OrderByDescending(x => x.CreatedAt).Select(
                 x => new DiscoountVm
                 {
                     DiscountId = x.DiscountId,
@@ -191,9 +194,11 @@ namespace ShutterManagement.Business.Services
             ).ToList();
                 foreach (var item in DiscountList)
                 {
-                    var customerData = contactService.GetAllQuerable().Where(x => x.ContactId == item.CustomerId && x.IsDelete == false).Select(x => new { x.FirstName ,x.LastName}  ).FirstOrDefault();
+                    var customerData = contactService.GetAllQuerable().Where(x => x.ContactId == item.CustomerId && x.IsDelete == false).Select(x => new { x.FirstName ,x.LastName,x.Suffix}  ).FirstOrDefault();
                     item.FirstName = customerData?.FirstName ??"";
                     item.LastName = customerData?.LastName??"";
+                    item.Suffix=customerData?.Suffix??"";
+                   
                 }
 
 
@@ -214,11 +219,16 @@ namespace ShutterManagement.Business.Services
                         (x.StartDate.ToString() ?? "").Contains(filter.SearchValue.Trim()))
                 );
 
-                var pagination = Paginate.Pagination(filteredRecords, filter);
+                var queryable = filteredRecords.AsQueryable();
+
+                queryable = Paginate.ApplyColumnFilters(queryable, filter.ColumnFilters);
+                queryable = Paginate.ApplySorting(queryable, filter.SortColumn, filter.SortDirection);
+
+                var TakenRecords = Paginate.Pagination(queryable.ToList(), filter);
 
 
                 responseVm.IsSuccess = true;
-                responseVm.Data = pagination;
+                responseVm.Data = TakenRecords;
                 responseVm.TotalRecords = DiscountList.Count;
                 responseVm.Message = AppConstant.FetchSuccessMsg;
 
@@ -237,14 +247,14 @@ namespace ShutterManagement.Business.Services
 
         private async Task<bool> ValidateTenantAsync()
         {
-            return await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
+            return await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true);
         }
 
         private async Task<TblDiscount> GetActiveDiscountAsync(Guid discountId)
         {
             return await Task.FromResult(FirstOrDefault(x =>
                 x.DiscountId == discountId &&
-                x.TenantId == AppConstant.LoggedInTenantId &&
+                x.TenantId == claimsProperty.GetTenantId() &&
                 x.IsDelete == false));
         }
 
@@ -372,7 +382,7 @@ namespace ShutterManagement.Business.Services
                 StartDate = createDiscount.StartDate,
                 CreatedAt = DateTime.Now,
                 Createdby = AppConstant.LoggedInUserID,
-                TenantId = AppConstant.LoggedInTenantId,
+                TenantId = claimsProperty.GetTenantId(),
                 IsActive = true,
                 IsDelete = false
             };
@@ -381,7 +391,7 @@ namespace ShutterManagement.Business.Services
         private async Task<TblDiscount> FindExistingDiscountAsync(Guid discountId)
         {
             return (await GetAll()).Where(x => x.DiscountId == discountId &&
-                                                                              x.TenantId == AppConstant.LoggedInTenantId &&
+                                                                              x.TenantId == claimsProperty.GetTenantId() &&
                                                                               !(bool)x.IsDelete).FirstOrDefault();
         }
          

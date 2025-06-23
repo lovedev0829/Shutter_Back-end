@@ -31,8 +31,6 @@ public partial class TblVendor
 
     public string? City { get; set; }
 
-    public string? State { get; set; }
-
     public string? ZipCode { get; set; }
 
     public string? VendorCode { get; set; }
@@ -40,6 +38,12 @@ public partial class TblVendor
     public string? FirstName { get; set; }
 
     public string? LastName { get; set; }
+
+    public string? CompanyName { get; set; }
+
+    public Guid? State { get; set; }
+
+    public virtual MstState? StateNavigation { get; set; }
 
     public virtual ICollection<TblRawMaterial> TblRawMaterials { get; set; } = new List<TblRawMaterial>();
 

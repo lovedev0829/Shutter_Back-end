@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using ShutterManagement.Business;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Business.Services;
 using ShutterManagement.Core.Common;
@@ -13,10 +14,12 @@ namespace ShutterManagement.Controllers
     public class OrderController : ControllerBase
     {
         private readonly IOrderService orderService;
+        private readonly ClaimsProperty claimsProperty;
 
-        public OrderController(IOrderService orderService)
+        public OrderController(IOrderService orderService,ClaimsProperty claimsProperty)
         {
             this.orderService = orderService;
+            this.claimsProperty = claimsProperty;
         }
 
       
@@ -35,6 +38,7 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> GetAllOrders(Pagination filter)
         {
             var res = await orderService.GetLatestVersionOrders(filter);
+            res.Data = res?.Data?.Where(x => x.jobDetails?.JobIsActive == true).ToList();
             return Ok(res);
 
         }
@@ -102,6 +106,14 @@ namespace ShutterManagement.Controllers
             var res = await orderService.ChangeStatus(OrderId, Status);
             return Ok(res);
 
+        }
+
+        [HttpPost]
+        [Route("GenerateOrderSheet")]
+        public async Task<IActionResult> GenerateOrderSheet(Guid? Orderid)
+        {
+            var result = await orderService.GenerateOrderSheet(Orderid);
+            return Ok(result);
         }
     }
 }
