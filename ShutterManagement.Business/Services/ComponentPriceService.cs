@@ -8,6 +8,7 @@ using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.Core.ViewModels.Response;
 using ShutterManagement.DAL.Context;
 using ShutterManagement.Services;
+using ShutterManagement.Core;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;

@@ -77,13 +77,13 @@ namespace ShutterManagement.Business.Services
                 { "client_secret", AppConstant.Microsoft365_ClientSecret },
                 { "grant_type", "authorization_code" },
                 { "code", code },
-                { "redirect_uri", AppConstant.Micorsoft365_RedirectUri },
+                { "redirect_uri", AppConstant.Microsoft365_RedirectUri },
                 { "scope", "https://outlook.office365.com/SMTP.Send offline_access User.Read" }
                 };
 
                 using var client = new HttpClient();
                 var response = await client.PostAsync(
-                    $"https://login.microsoftonline.com/{AppConstant.Micorsoft365_tenantId}/oauth2/v2.0/token",
+                    $"https://login.microsoftonline.com/{AppConstant.Microsoft365_TenantId}/oauth2/v2.0/token",
                     new FormUrlEncodedContent(tokenRequest)
                 );
 
