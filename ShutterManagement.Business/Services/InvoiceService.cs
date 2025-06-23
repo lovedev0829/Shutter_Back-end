@@ -612,7 +612,7 @@ namespace ShutterManagement.Business.Services
                 var invoiceData = new InvoiceDataModel
                 {
                     CustomerName = customerDetails?.FirstName ?? "" + customerDetails?.LastName ?? "",
-                    PreparedBy = userDetails?.FirstName + " " + userDetails?.LastName,
+                    PreparedBy = dbContext.TblUsers.Where(s => s.Id == estimationDetails.PreparedBy).Select(n => n.FirstName ?? "" + " " + n.LastName ?? "").FirstOrDefault() ?? "",
                     CustomerId = customerDetails?.ContactUniqueId ?? "",
                     CustomerCity = customerDetails?.billingAddressVm?.City ?? "",
                     CustomerState = customerState??"",
@@ -672,7 +672,7 @@ namespace ShutterManagement.Business.Services
                 var pdfBase64 = Convert.ToBase64String(pdfBytes.Data);
 
 
-
+                var PreparedByEmail = dbContext.TblUsers.Where(u => u.Id == estimationDetails.PreparedBy).Select(s => s.Email).FirstOrDefault() ?? "";
 
 
                 if (model.DocumentType == EstimateDocumentType.ForEmail)
@@ -751,7 +751,7 @@ namespace ShutterManagement.Business.Services
 </div>";
 
 
-                    var emailResponse = await SendEmailWithOAuth(estimationDetails.EstimateCode, pdfBytes.Data, emailBody, customerDetails?.Email ?? "", "Estimate Approval Link and PDF");
+                    var emailResponse = await SendEmailWithOAuth(estimationDetails.EstimateCode, pdfBytes.Data, emailBody, customerDetails?.Email ?? "", PreparedByEmail, "Estimate Approval Link and PDF");
 
                     var jobDetails = await jobService.GetById(IsEstimateExists.JobId ?? Guid.Empty);
 
@@ -817,7 +817,9 @@ namespace ShutterManagement.Business.Services
         <p>Shutter Management and Estimation System</p>
     </div>";
 
-                    var emailResponse = await SendEmailWithOAuth(estimationDetails.EstimateCode,pdfBytes.Data,emailBody,customerDetails?.Email ?? "","Estimate For Approval");
+                    
+
+                    var emailResponse = await SendEmailWithOAuth(estimationDetails.EstimateCode,pdfBytes.Data,emailBody,customerDetails?.Email ?? "" ,PreparedByEmail??"", "Estimate For Approval");
 
                     if (!emailResponse.IsSuccess)
                     {
@@ -1024,7 +1026,7 @@ namespace ShutterManagement.Business.Services
     </div>
 </div>";
 
-                    var emailResponse = await SendEmailWithOAuth(invoiceDetails?.InvoiceNumber, pdfBytesInvoice.Data, emailBody, customerDetails?.Email ?? "", AppConstant.InvoicePaymentLinkandPDF);
+                    var emailResponse = await SendEmailWithOAuth(invoiceDetails?.InvoiceNumber, pdfBytesInvoice.Data, emailBody, customerDetails?.Email ?? "", PreparedByEmail, AppConstant.InvoicePaymentLinkandPDF);
 
                     responseVm.IsSuccess = true;
                     responseVm.Message = isStripeConfigured
@@ -1407,7 +1409,7 @@ namespace ShutterManagement.Business.Services
 
         // this is a common method for sending emails
 
-        public async Task<IResponseVm<string>> SendEmailWithOAuth(string filename,byte[] pdfData,string emailBody,string customerEmail,string subject)
+        public async Task<IResponseVm<string>> SendEmailWithOAuth(string filename,byte[] pdfData,string emailBody,string customerEmail, string preparedbyemail,string subject)
         {
             var responseVm = new ResponseVm<string>();
 
@@ -1429,7 +1431,7 @@ namespace ShutterManagement.Business.Services
 
             var emailRequest = new OAuthEmailRequest
             {
-                FromEmail = config.From ?? "",
+                FromEmail = preparedbyemail ?? "",
                 ToEmail = customerEmail ?? "",
                 Subject = subject,
                 Body = emailBody,
