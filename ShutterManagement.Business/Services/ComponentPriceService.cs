@@ -108,14 +108,15 @@ namespace ShutterManagement.Business.Services
                   where estimatewindow.EstimateId.ToString() == EstimateID
                   join estwindowProduct in dbContext.TblEstimateWindowProducts on estimatewindow.WindowId equals estwindowProduct.WindowId
                   where estwindowProduct.EstimateId.ToString() == EstimateID
-                  join estwinprocomp in dbContext.TblEstimateWindowProductComponents on estwindowProduct.ProductId equals estwinprocomp.ProductId into estwinprocomps
+                  join estwinprocomp in dbContext.TblEstimateWindowProductComponents.Where(x => x.IsActive == true) on estwindowProduct.ProductId equals estwinprocomp.ProductId into estwinprocomps
                   from estwinprocomp in estwinprocomps.DefaultIfEmpty()
                   where (string.IsNullOrEmpty(estwinprocomp.EstimateId.ToString()) || estwinprocomp.EstimateId.ToString() == EstimateID) &&
                   (string.IsNullOrEmpty(estwinprocomp.WindowId.ToString()) || estwindowProduct.WindowId == estwinprocomp.WindowId)
-                  join productComponentmat in dbContext.TblEstimateWindowProductComponentMaterials on estwinprocomp.ComponentId equals
-                  productComponentmat.ComponentId 
-                  into productComponentmats from productComponentmat in productComponentmats.DefaultIfEmpty()
-                  where (string.IsNullOrEmpty(productComponentmat.EstimateId.ToString()) || productComponentmat.EstimateId.ToString() == EstimateID ) &&
+                  join productComponentmat in dbContext.TblEstimateWindowProductComponentMaterials.Where(x => x.IsActive == true) on estwinprocomp.ComponentId equals
+                  productComponentmat.ComponentId
+                  into productComponentmats
+                  from productComponentmat in productComponentmats.DefaultIfEmpty()
+                  where (string.IsNullOrEmpty(productComponentmat.EstimateId.ToString()) || productComponentmat.EstimateId.ToString() == EstimateID) &&
                   (string.IsNullOrEmpty(productComponentmat.WindowId.ToString()) || estwindowProduct.WindowId == productComponentmat.WindowId)
                   where estwindowProduct.WindowProductId == WindowProductId
                   && estimate.IsActive == true && estimate.IsDelete == false
@@ -137,7 +138,7 @@ namespace ShutterManagement.Business.Services
                       TotalPrice = estimate.TotalPrice,
                       TotalTaxAmount = estimate.TotaltaxAmount,
                       // WindowProduct Properties
-                      
+
                       WindowProdcutId = estwindowProduct.WindowProductId,
                       ProductId = estwindowProduct.ProductId,
                       BuildWidth = estimatewindow.BuildWidth,
@@ -252,7 +253,7 @@ namespace ShutterManagement.Business.Services
                 }
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.FetchSuccessMsg;
-               // responseVm.Data = query.DistinctBy(y => y.ComponentId).ToList();
+                // responseVm.Data = query.DistinctBy(y => y.ComponentId).ToList();
                 responseVm.Data = query.ToList();
                 return responseVm;
             }
