@@ -318,8 +318,8 @@ namespace ShutterManagement.Controllers
         [Route("GetAllContacts")]
         public async Task<IActionResult> GetAllContact()
         {
-            var res = await contactService.GetAll_Contact(filter,false);
-            res.Data = res.Data?.Where(x => x.IsActive == true && x.IsArchive==false).ToList();
+            var res = await contactService.GetAll_Contact(filter,false,false);
+            res.Data = res.Data?.Where(x => x.IsActive == true /*&& x.IsArchive==false*/).ToList();
             return Ok(res);
         }
 
