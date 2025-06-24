@@ -1358,8 +1358,10 @@ namespace ShutterManagement.Business.Services
 
             foreach (var estimate in estimates)
             {
+
                 var estimateDetails = new EstimateList
                 {
+
                     EstimateId = estimate.EstimateId,
                     CreatedDate = estimate.CreatedAt,
                     JobId = estimate.JobId,
@@ -1376,9 +1378,9 @@ namespace ShutterManagement.Business.Services
                     Tax = estimate.TotaltaxAmount,
                     TermsCondition = estimate.TermsCondition,
                     IsTaxApplicable = estimate.IsTaxApplied,
-                    PreparedBy = estimate.PreparedBy,
-                    PreparedByName = dbContext.TblUsers.Where(s => s.Id == estimate.PreparedBy).Select(s=>s.FirstName +" "+ s.LastName +" "+ s.Suffix).FirstOrDefault(),
-                    PreparedByEmail = dbContext.TblUsers.Where(s => s.Id == estimate.PreparedBy).Select(s => s.Email).FirstOrDefault(),
+                    PreparedBy = estimate.PreparedBy?? estimate.CreatedBy,
+                    PreparedByName = dbContext.TblUsers.Where(s => s.Id == (estimate.PreparedBy?? estimate.CreatedBy)).Select(s=>s.FirstName +" "+ s.LastName +" "+ s.Suffix).FirstOrDefault(),
+                    PreparedByEmail = dbContext.TblUsers.Where(s => s.Id == (estimate.PreparedBy ?? estimate.CreatedBy)).Select(s => s.Email).FirstOrDefault(),
                     jobDetails = new JobDetails()
                 };
 
@@ -1839,8 +1841,10 @@ namespace ShutterManagement.Business.Services
                 bool isComponentAvailable = (windowComponentData != null ? windowComponentData.IsComponentAvailable : false) ?? false;
                 if (isComponentAvailable)
                 {
+                    Guid[] arr = { product.WindowProductId };
+                    var windowproductdetail1s = await BuildEstimate(arr, true, false, "", false, null);
                     await AddComponentsToEstimate((Guid)windowProductData.ProductId, (Guid)windowProductData.WindowId, estimateId,
-                        windowProdcutDetailsForEstimates.Where(x => x.WindowProdcutId == product.WindowProductId).ToList(), EstimateWindowProduct);
+                        windowproductdetail1s.Data.Where(x => x.WindowProdcutId == product.WindowProductId).ToList(), EstimateWindowProduct);
                 }
                 if (!string.IsNullOrEmpty(Message))
                 {
