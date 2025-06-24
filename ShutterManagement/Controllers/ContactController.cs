@@ -46,8 +46,8 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> GetAllContacts(Pagination filter)
         {
             bool isInContactViewRole = HttpContext.User.IsInRole("PartnerContactView");
-            var res = await _contactService.GetAll_Contact(filter, isInContactViewRole);
-            res.Data = res.Data?.Where(x => x.IsArchive == false).ToList();
+            var res = await _contactService.GetAll_Contact(filter, isInContactViewRole, false);
+            //res.Data = res.Data?.Where(x => x.IsArchive == false).ToList();
             return Ok(res);
         }
 
@@ -93,7 +93,7 @@ namespace ShutterManagement.Controllers
         [Authorize(Roles = "ArchiveCustomerView")]
         public async Task<IActionResult> GetAllArchiveContacts(Pagination filter)
         {
-            var res = await _contactService.GetAll_Contact(filter, false);
+            var res = await _contactService.GetAll_Contact(filter, false, true);
             // res.Data = res.Data?.Where(x => x.De == true && x.IsActive==false).ToList();
             return Ok(res);
         }

@@ -424,7 +424,7 @@ namespace ShutterManagement.Business.Services
                         var filter = new Pagination { SearchValue = record.Email };
                         bool role = true;
 
-                        var existingContactResponse = await contactService.GetAll_Contact(filter, role);
+                        var existingContactResponse = await contactService.GetAll_Contact(filter, role,false);
                         var existingContact = existingContactResponse.Data?.FirstOrDefault();
 
                         bool isUpdate =  false;
