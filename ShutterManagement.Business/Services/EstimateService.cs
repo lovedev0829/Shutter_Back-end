@@ -1841,8 +1841,10 @@ namespace ShutterManagement.Business.Services
                 bool isComponentAvailable = (windowComponentData != null ? windowComponentData.IsComponentAvailable : false) ?? false;
                 if (isComponentAvailable)
                 {
+                    Guid[] arr = { product.WindowProductId };
+                    var windowproductdetail1s = await BuildEstimate(arr, true, false, "", false, null);
                     await AddComponentsToEstimate((Guid)windowProductData.ProductId, (Guid)windowProductData.WindowId, estimateId,
-                        windowProdcutDetailsForEstimates.Where(x => x.WindowProdcutId == product.WindowProductId).ToList(), EstimateWindowProduct);
+                        windowproductdetail1s.Data.Where(x => x.WindowProdcutId == product.WindowProductId).ToList(), EstimateWindowProduct);
                 }
                 if (!string.IsNullOrEmpty(Message))
                 {
