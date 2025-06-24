@@ -833,8 +833,9 @@ namespace ShutterManagement.Business.Services
                     int Version = GetAllQuerable().Where(x => x.TenantId == LoggedInTenantId && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt)
                           .Select(p => (p.JobUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries).Length == 3 ? Convert.ToInt32(p.JobUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries)[2]) : 0)).FirstOrDefault();
                     Version += 1;
-                    var generateUnique = GenerateUniqueId.GenerateUniqueIds(ModuleName.Job, claimsProperty.GetCompanyCode(), Version);
-                    bool IsjobNameExists = await AnyAsync(x => x.JobName == model.JobName.Trim() && x.IsDelete == false && x.TenantId == LoggedInTenantId&& x.ContactId == model.ContactId);
+                   var Companycode = tenantService.GetAllQuerable().Where(x => x.TenantId == TenantId && x.IsActive == true && x.IsDelete == false).Select(x => x.Code).FirstOrDefault();
+                   var generateUnique = GenerateUniqueId.GenerateUniqueIds(ModuleName.Job, Companycode, Version);
+                   bool IsjobNameExists = await AnyAsync(x => x.JobName == model.JobName.Trim() && x.IsDelete == false && x.TenantId == LoggedInTenantId&& x.ContactId == model.ContactId);
                     var StageResponse = await statusAndStageMapping.GetGHLStagesMappingsById(jobStatus);
                     bool IsContactArchiveorInactive = await contact.AnyAsync(x => x.ContactId == model.ContactId && x.TenantId==LoggedInTenantId &&  (x.IsActive == false || x.IsArchive == true) );
                 if(IsContactArchiveorInactive)
