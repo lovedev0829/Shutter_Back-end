@@ -208,6 +208,16 @@ namespace ShutterManagement.Business.Services
                         IsDelete = false
                     };
 
+                   
+
+                    var paymentResult = await invoicePaymentService.Add(tblInvoicePayment);
+                    if (paymentResult == null || paymentResult.InvoicePaymentId == Guid.Empty)
+                    {
+                        responseVm.IsSuccess = false;
+                        responseVm.Message = "Insert Failed";
+                        return responseVm;
+                    }
+                }
                     TblPayment tblPayments = new TblPayment
                     {
                         PaymentId = Guid.NewGuid(),
@@ -229,15 +239,6 @@ namespace ShutterManagement.Business.Services
                     await dbContext.TblPayments.AddAsync(tblPayments);
                     await dbContext.SaveChangesAsync();
                     FileLogger.Log($"Payment Record Created: {tblPayments.PaymentId}");
-
-                    var paymentResult = await invoicePaymentService.Add(tblInvoicePayment);
-                    if (paymentResult == null || paymentResult.InvoicePaymentId == Guid.Empty)
-                    {
-                        responseVm.IsSuccess = false;
-                        responseVm.Message = "Insert Failed";
-                        return responseVm;
-                    }
-                }
 
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.InsertSuccessMsg;
