@@ -218,27 +218,27 @@ namespace ShutterManagement.Business.Services
                         return responseVm;
                     }
                 }
-                    TblPayment tblPayments = new TblPayment
-                    {
-                        PaymentId = Guid.NewGuid(),
-                        InvoiceId = tblInvoice.InvoiceId,
-                        PaymentDate = DateTime.Now,
-                        Amount = tblInvoice.BalanceDue,
-                        PaymentMethod = "",
-                        TransactionId = "",
-                        Notes = "",
-                        Status = EnumValue.GetEnumValue(PaymentStatus.Unpaid),
-                        PaymentTypeStatus = EnumValue.GetEnumValue(PaymentStatus.Draft),
-                        CreatedAt = DateTime.Now,
-                        TenantId = claimsProperty.GetTenantId(),
-                        CreatedBy = AppConstant.LoggedInUserID,
-                        IsActive = true,
-                        IsDelete = false
-                    };
+                TblPayment tblPayments = new TblPayment
+                {
+                    PaymentId = Guid.NewGuid(),
+                    InvoiceId = tblInvoice.InvoiceId,
+                    PaymentDate = DateTime.Now,
+                    Amount = tblInvoice.BalanceDue,
+                    PaymentMethod = "",
+                    TransactionId = "",
+                    Notes = "",
+                    Status = EnumValue.GetEnumValue(PaymentStatus.Unpaid),
+                    PaymentTypeStatus = EnumValue.GetEnumValue(PaymentStatus.Draft),
+                    CreatedAt = DateTime.Now,
+                    TenantId = claimsProperty.GetTenantId(),
+                    CreatedBy = AppConstant.LoggedInUserID,
+                    IsActive = true,
+                    IsDelete = false
+                };
 
-                    await dbContext.TblPayments.AddAsync(tblPayments);
-                    await dbContext.SaveChangesAsync();
-                    FileLogger.Log($"Payment Record Created: {tblPayments.PaymentId}");
+                await dbContext.TblPayments.AddAsync(tblPayments);
+                await dbContext.SaveChangesAsync();
+                FileLogger.Log($"Payment Record Created: {tblPayments.PaymentId}");
 
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.InsertSuccessMsg;
