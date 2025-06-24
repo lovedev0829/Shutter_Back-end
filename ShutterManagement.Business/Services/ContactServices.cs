@@ -839,13 +839,13 @@ namespace ShutterManagement.Business.Services
                     }
                     else
                     {
-                        Contacts = (await GetAll()).Where(x => ( x.IsDelete == false && (IsArchive == true ?  x.IsArchive == true : x.IsArchive == false) ) && x.TenantId.ToString() == filter.TenantId).OrderByDescending(x => x.CreatedAt).ToList();
+                        Contacts = (await GetAll()).Where(x => ( x.IsDelete == false && (IsArchive == true ?  x.IsArchive == true || x.IsActive==false : x.IsArchive == false) ) && x.TenantId.ToString() == filter.TenantId).OrderByDescending(x => x.CreatedAt).ToList();
                         IsSubtenants = true;
                     }
                 }
                 else
                 {
-                    Contacts = (await GetAll()).Where(x => ( x.IsDelete == false && (IsArchive == true ? x.IsArchive == true : x.IsArchive == false)) && x.TenantId == claimsProperty.GetTenantId()).OrderByDescending(x => x.CreatedAt).ToList();
+                    Contacts = (await GetAll()).Where(x => ( x.IsDelete == false && (IsArchive == true ?  x.IsArchive == true || x.IsActive==false : x.IsArchive == false) ) && x.TenantId == claimsProperty.GetTenantId()).OrderByDescending(x => x.CreatedAt).ToList();
                 }
 
                 if (!string.IsNullOrEmpty(filter?.CustomerId))
