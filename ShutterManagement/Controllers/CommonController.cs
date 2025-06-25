@@ -318,8 +318,8 @@ namespace ShutterManagement.Controllers
         [Route("GetAllContacts")]
         public async Task<IActionResult> GetAllContact()
         {
-            var res = await contactService.GetAll_Contact(filter,false);
-            res.Data = res.Data?.Where(x => x.IsActive == true && x.IsArchive==false).ToList();
+            var res = await contactService.GetAll_Contact(filter,false,false);
+            res.Data = res.Data?.Where(x => x.IsActive == true /*&& x.IsArchive==false*/).ToList();
             return Ok(res);
         }
 
@@ -1040,6 +1040,17 @@ namespace ShutterManagement.Controllers
             {
                 return Ok(Checkghlresponse);
             }
+        }
+
+        // get Tenant there related user details
+
+        [HttpGet]
+        [Route("GetAllTenantAnd_Users")]
+        public async Task<IActionResult> GetAllTenantAnd_Users()
+        {
+            var res = await userService.GetAllUserList();
+            return Ok(res);
+
         }
 
 

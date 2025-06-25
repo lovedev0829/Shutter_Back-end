@@ -53,8 +53,5 @@ namespace ShutterManagement.Core.ViewModels.Request
         public DateTime? lastasync { get; set; }
         public string? GHLUserId { get; set; }
 
-        [DefaultValue("")]
-        public Guid? PowderCoatColorId { get; set; }
-
     }
 }

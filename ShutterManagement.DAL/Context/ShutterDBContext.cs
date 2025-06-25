@@ -176,13 +176,8 @@ public partial class ShutterDBContext : DbContext
     public virtual DbSet<WindowOption> WindowOptions { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-        // Only configure if not already configured via Dependency Injection
-        if (!optionsBuilder.IsConfigured)
-        {
-            optionsBuilder.UseSqlServer("Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=shutterdb;Integrated Security=True;Connect Timeout=30;Encrypt=False;Trust Server Certificate=False;Application Intent=ReadWrite;Multi Subnet Failover=False");
-        }
-    }
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+        => optionsBuilder.UseSqlServer("Server=tcp:shuttermanagementdb.database.windows.net,1433;Initial Catalog=shutterdev;Persist Security Info=False;User ID=shutter_admin;Password=TaKugAbiGfb4eU$y;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=60;");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -12,6 +12,7 @@ using ShutterManagement.Core;
 using static ShutterManagement.Business.Services.ReportServices;
 using System.ComponentModel;
 using Microsoft.IdentityModel.Tokens;
+using System.IO.Compression;
 
 namespace ShutterManagement.Business.Services
 {
@@ -38,7 +39,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<List<ContactsList>> responseVm = new ResponseVm<List<ContactsList>>();
             try
             {
-                var res = await contactService.GetAll_Contact(filter, false);
+                var res = await contactService.GetAll_Contact(filter, false, false);
                 if (res?.Data != null)
                 {
                     var activeContacts = res.Data.Where(x => x.IsActive == true).ToList();
@@ -67,7 +68,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<List<ContactBreakdown>> responseVm = new ResponseVm<List<ContactBreakdown>>();
             try
             {
-                var res = await contactService.GetAll_Contact(filter, false);
+                var res = await contactService.GetAll_Contact(filter, false,false);
                 if (res?.Data != null)
                 {
                     var activeContacts = res.Data.Where(x => x.IsActive == true).ToList();
@@ -240,7 +241,7 @@ namespace ShutterManagement.Business.Services
                     ? estimateData
                     : estimateData.Where(x => x.WindowProdcutId.HasValue && filterIds.Contains(x.WindowProdcutId.Value)).ToList();
 
-                foreach (var item in itemsToBind)
+                foreach (var item in itemsToBind.DistinctBy(x => x.ComponentId))
                 {
                     filteredList.Add(new WindowProdcutDetailsForEstimate
                     {

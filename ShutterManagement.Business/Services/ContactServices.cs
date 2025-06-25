@@ -196,8 +196,8 @@ namespace ShutterManagement.Business.Services
                     int Version = GetAllQuerable().Where(x => x.TenantId == LoggedInTenantId && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt)
                         .Select(p => (p.ContactUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries).Length == 3 ? Convert.ToInt32(p.ContactUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries)[2]) : 0)).FirstOrDefault();
                     Version += 1;
-                    var contactUniqueId = GenerateUniqueId.GenerateUniqueIds(ModuleName.Contact, claimsProperty.GetCompanyCode(), Version);
-
+                    var Companycode = tenantService.GetAllQuerable().Where(x => x.TenantId == TenantId && x.IsActive == true && x.IsDelete == false).Select(x => x.Code).FirstOrDefault();
+                    var contactUniqueId = GenerateUniqueId.GenerateUniqueIds(ModuleName.Contact, Companycode, Version);
 
                     TblContact CreateContact = new TblContact
                     {
@@ -633,7 +633,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var contact = GetAllQuerable()
-                    .Where(c => c.ContactId == ContactId
+                    .Where(c => c.ContactId.ToString().ToLower() == ContactId.ToString().ToLower()
                     && c.TenantId == claimsProperty.GetTenantId() && c.IsDelete == false).FirstOrDefault();
                 if (contact == null)
                 {
@@ -820,7 +820,7 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        public async Task<IResponseVm<List<ContactsList>>> GetAll_Contact(Pagination filter, bool Role)
+        public async Task<IResponseVm<List<ContactsList>>> GetAll_Contact(Pagination filter, bool Role, bool? IsArchive)
         {
             IResponseVm<List<ContactsList>> responseVm = new ResponseVm<List<ContactsList>>();
             try
@@ -839,13 +839,13 @@ namespace ShutterManagement.Business.Services
                     }
                     else
                     {
-                        Contacts = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId.ToString() == filter.TenantId).OrderByDescending(x => x.CreatedAt).ToList();
+                        Contacts = (await GetAll()).Where(x => ( x.IsDelete == false && (IsArchive == true ?  x.IsArchive == true || x.IsActive==false : x.IsArchive == false) ) && x.TenantId.ToString() == filter.TenantId).OrderByDescending(x => x.CreatedAt).ToList();
                         IsSubtenants = true;
                     }
                 }
                 else
                 {
-                    Contacts = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId()).OrderByDescending(x => x.CreatedAt).ToList();
+                    Contacts = (await GetAll()).Where(x => ( x.IsDelete == false && (IsArchive == true ?  x.IsArchive == true || x.IsActive==false : x.IsArchive == false) ) && x.TenantId == claimsProperty.GetTenantId()).OrderByDescending(x => x.CreatedAt).ToList();
                 }
 
                 if (!string.IsNullOrEmpty(filter?.CustomerId))

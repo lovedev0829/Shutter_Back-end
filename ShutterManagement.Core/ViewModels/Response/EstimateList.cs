@@ -36,6 +36,10 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? primarycolor { get; set; }
         public string? CompanyName { get; set; }
 
+        public Guid? PreparedBy { get; set; }
+        public string? PreparedByName { get; set; }
+        public string? PreparedByEmail { get; set; }
+
         public bool? IsTaxApplicable { get; set; } = false;
 
         public bool? IsTaxApplied { get; set; } = false;

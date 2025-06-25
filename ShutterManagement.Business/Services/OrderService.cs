@@ -363,7 +363,14 @@ namespace ShutterManagement.Business.Services
                 var filteredOrders = ApplyFilters(latestVersionOrders, filter);
 
                 // Apply pagination
-                var paginatedOrders = Paginate.Pagination(filteredOrders, filter);
+              //  var paginatedOrders = Paginate.Pagination(filteredOrders, filter);
+
+                var queryable = filteredOrders.AsQueryable();
+
+                queryable = Paginate.ApplyColumnFilters(queryable, filter.ColumnFilters);
+                queryable = Paginate.ApplySorting(queryable, filter.SortColumn, filter.SortDirection);
+
+                var TakenRecords = Paginate.Pagination(queryable.ToList(), filter);
 
                 var queryable = paginatedOrders.AsQueryable();
 
@@ -373,12 +380,12 @@ namespace ShutterManagement.Business.Services
                 var TakenRecords = Paginate.Pagination(queryable.ToList(), filter);
 
                 responseVm.IsSuccess = true;
-                if (paginatedOrders.Any())
+                if (TakenRecords.Any())
                 {
-                    responseVm.Data = paginatedOrders;
+                    responseVm.Data = TakenRecords;
                     responseVm.Message = AppConstant.FetchSuccessMsg;
                     responseVm.TotalRecords = filteredOrders.Count;
-                    FileLogger.Log($"Successfully fetched {paginatedOrders.Count} orders.");
+                    FileLogger.Log($"Successfully fetched {TakenRecords.Count} orders.");
                 }
                 else
                 {

@@ -197,6 +197,109 @@ namespace ShutterManagement.Controllers
         {
             var result = await appointmentScheduleService.GetAppointmentSchedule(JobId);
             return Ok(result);
+
+        }
+
+                if (!Request.Headers.TryGetValue("Authentication", out var token))
+                {
+                    FileLogger.Log("Token not found in request headers.");
+                    return Unauthorized("Token is missing.");
+                }
+
+                FileLogger.Log("Token: {0}", token);
+                var tenantId = authService.ReadTokenDetails(token);
+
+                if (tenantId == null || string.IsNullOrEmpty(tenantId.Data))
+                {
+                    FileLogger.Log("Invalid token: Unable to extract tenant ID.");
+                    return Unauthorized("Invalid token.");
+                }
+
+                bool isTenantExist = await gHLConfiguration.AnyAsync(x => x.TenantId.ToString().ToLower() == tenantId.Data.ToLower());
+                if (!isTenantExist)
+                {
+                    FileLogger.Log($"Tenant ID {tenantId.Data} does not exist.");
+                    return NotFound("Tenant does not exist.");
+                }
+                opportunityTrigger.WebhookTenantId = tenantId?.Data;
+                var res = await jobService.OpportunityFromGHL(opportunityTrigger);
+                if (res == null)
+                {
+                    return StatusCode(500, "Failed to process contact.");
+                }
+
+                FileLogger.Log("Contact saved: {0}", res.Message);
+                return Ok(res);
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Log("Error while creating contact: {0}", ex.Message);
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+
+        [HttpPost("UpdateOpportunityFromGHL")]
+        public async Task<IActionResult> UpdateOpporunityFromGHL(GHLOpportunityTrigger opportunityData)
+        {
+            try
+            {
+                FileLogger.Log("Token print message....");
+
+                if (!Request.Headers.TryGetValue("Authentication", out var token))
+                {
+                    FileLogger.Log("Token not found in request headers.");
+                    return Unauthorized("Token is missing.");
+                }
+
+                FileLogger.Log("Token: {0}", token);
+                var tenantId = authService.ReadTokenDetails(token);
+
+                if (tenantId == null || string.IsNullOrEmpty(tenantId.Data))
+                {
+                    FileLogger.Log("Invalid token: Unable to extract tenant ID.");
+                    return Unauthorized("Invalid token.");
+                }
+
+                bool isTenantExist = await gHLConfiguration.AnyAsync(x => x.TenantId.ToString().ToLower() == tenantId.Data.ToLower());
+                if (!isTenantExist)
+                {
+                    FileLogger.Log($"Tenant ID {tenantId.Data} does not exist.");
+                    return NotFound("Tenant does not exist.");
+                }
+                opportunityData.WebhookTenantId = tenantId?.Data;
+                var res = await jobService.UpdateOpportunityFromGHL(opportunityData);
+                if (res == null)
+                {
+                    return StatusCode(500, "Failed to process contact.");
+                }
+
+                FileLogger.Log("Contact saved: {0}", res.Message);
+                return Ok(res);
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Log("Error while creating contact: {0}", ex.Message);
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        [HttpPost]
+        [Route("CreateAppointment")]
+        [Authorize(Roles = "JobEdit")]
+        public async Task<IActionResult> CreateAppointmentSchedule(CreateAppointment model)
+        {
+            var result = await appointmentScheduleService.CreateAppointmentSchedule(model);
+            return Ok(result);
+        }
+
+        [HttpGet]
+        [Route("GetAppointment")]
+        [Authorize(Roles = "JobView")]
+        public async Task<IActionResult> GetAppointment(Guid? JobId)
+        {
+            var result = await appointmentScheduleService.GetAppointmentSchedule(JobId);
+            return Ok(result);
         }
 
         [HttpPost]

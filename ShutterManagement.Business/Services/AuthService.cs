@@ -136,7 +136,7 @@ namespace ShutterManagement.Services
                 //claims.AddClaim(new Claim("GHL_APIKey", GHLres.APIkey ?? ""));
                 //claims.AddClaim(new Claim("GHL_BaseAddress", GHLres.BaseAddress ?? ""));
                 //claims.AddClaim(new Claim("GHL_PipelineId", GHLres.PipelineId ?? ""));
-                //claims.AddClaim(new Claim("GHL_LocationId", GHLres.StageId ?? ""));
+                //claims.AddClaim(new Claim("GHL_Locationd", GHLres.StageId ?? ""));
                 // Fetch GHL Configuration (Ensure to await the method)
                
                 var tokenHandler = new JwtSecurityTokenHandler();

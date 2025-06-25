@@ -208,27 +208,7 @@ namespace ShutterManagement.Business.Services
                         IsDelete = false
                     };
 
-                    TblPayment tblPayments = new TblPayment
-                    {
-                        PaymentId = Guid.NewGuid(),
-                        InvoiceId = tblInvoice.InvoiceId,
-                        PaymentDate = DateTime.Now,
-                        Amount = tblInvoice.BalanceDue,
-                        PaymentMethod = "",
-                        TransactionId = "",
-                        Notes = "",
-                        Status = EnumValue.GetEnumValue(PaymentStatus.Unpaid),
-                        PaymentTypeStatus = EnumValue.GetEnumValue(PaymentStatus.Draft),
-                        CreatedAt = DateTime.Now,
-                        TenantId = claimsProperty.GetTenantId(),
-                        CreatedBy = AppConstant.LoggedInUserID,
-                        IsActive = true,
-                        IsDelete = false
-                    };
-
-                    await dbContext.TblPayments.AddAsync(tblPayments);
-                    await dbContext.SaveChangesAsync();
-                    FileLogger.Log($"Payment Record Created: {tblPayments.PaymentId}");
+                   
 
                     var paymentResult = await invoicePaymentService.Add(tblInvoicePayment);
                     if (paymentResult == null || paymentResult.InvoicePaymentId == Guid.Empty)
@@ -238,6 +218,27 @@ namespace ShutterManagement.Business.Services
                         return responseVm;
                     }
                 }
+                TblPayment tblPayments = new TblPayment
+                {
+                    PaymentId = Guid.NewGuid(),
+                    InvoiceId = tblInvoice.InvoiceId,
+                    PaymentDate = DateTime.Now,
+                    Amount = tblInvoice.BalanceDue,
+                    PaymentMethod = "",
+                    TransactionId = "",
+                    Notes = "",
+                    Status = EnumValue.GetEnumValue(PaymentStatus.Unpaid),
+                    PaymentTypeStatus = EnumValue.GetEnumValue(PaymentStatus.Draft),
+                    CreatedAt = DateTime.Now,
+                    TenantId = claimsProperty.GetTenantId(),
+                    CreatedBy = AppConstant.LoggedInUserID,
+                    IsActive = true,
+                    IsDelete = false
+                };
+
+                await dbContext.TblPayments.AddAsync(tblPayments);
+                await dbContext.SaveChangesAsync();
+                FileLogger.Log($"Payment Record Created: {tblPayments.PaymentId}");
 
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.InsertSuccessMsg;
@@ -561,7 +562,7 @@ namespace ShutterManagement.Business.Services
                 }
                 filter.RecordPerPage = 1000;
                 filter.CustomerId = model.ContactId.ToString();
-                var customerDetails = (await contactService.GetAll_Contact(filter,false))
+                var customerDetails = (await contactService.GetAll_Contact(filter,false,false))
                     .Data.FirstOrDefault(x => x.ContactId == model.ContactId && x.IsActive == true);
 
 
@@ -612,7 +613,7 @@ namespace ShutterManagement.Business.Services
                 var invoiceData = new InvoiceDataModel
                 {
                     CustomerName = customerDetails?.FirstName ?? "" + customerDetails?.LastName ?? "",
-                    PreparedBy = userDetails?.FirstName + " " + userDetails?.LastName,
+                    PreparedBy = dbContext.TblUsers.Where(s => s.Id == estimationDetails.PreparedBy).Select(n => n.FirstName ?? "" + " " + n.LastName ?? "").FirstOrDefault() ?? "",
                     CustomerId = customerDetails?.ContactUniqueId ?? "",
                     CustomerCity = customerDetails?.billingAddressVm?.City ?? "",
                     CustomerState = customerState??"",
@@ -672,7 +673,7 @@ namespace ShutterManagement.Business.Services
                 var pdfBase64 = Convert.ToBase64String(pdfBytes.Data);
 
 
-
+                var PreparedByEmail = dbContext.TblUsers.Where(u => u.Id == estimationDetails.PreparedBy).Select(s => s.Email).FirstOrDefault() ?? "";
 
 
                 if (model.DocumentType == EstimateDocumentType.ForEmail)
@@ -751,7 +752,7 @@ namespace ShutterManagement.Business.Services
 </div>";
 
 
-                    var emailResponse = await SendEmailWithOAuth(estimationDetails.EstimateCode, pdfBytes.Data, emailBody, customerDetails?.Email ?? "", "Estimate Approval Link and PDF");
+                    var emailResponse = await SendEmailWithOAuth(estimationDetails.EstimateCode, pdfBytes.Data, emailBody, customerDetails?.Email ?? "", PreparedByEmail, "Estimate Approval Link and PDF");
 
                     var jobDetails = await jobService.GetById(IsEstimateExists.JobId ?? Guid.Empty);
 
@@ -817,7 +818,9 @@ namespace ShutterManagement.Business.Services
         <p>Shutter Management and Estimation System</p>
     </div>";
 
-                    var emailResponse = await SendEmailWithOAuth(estimationDetails.EstimateCode,pdfBytes.Data,emailBody,customerDetails?.Email ?? "","Estimate For Approval");
+                    
+
+                    var emailResponse = await SendEmailWithOAuth(estimationDetails.EstimateCode,pdfBytes.Data,emailBody,customerDetails?.Email ?? "" ,PreparedByEmail??"", "Estimate For Approval");
 
                     if (!emailResponse.IsSuccess)
                     {
@@ -1024,7 +1027,7 @@ namespace ShutterManagement.Business.Services
     </div>
 </div>";
 
-                    var emailResponse = await SendEmailWithOAuth(invoiceDetails?.InvoiceNumber, pdfBytesInvoice.Data, emailBody, customerDetails?.Email ?? "", AppConstant.InvoicePaymentLinkandPDF);
+                    var emailResponse = await SendEmailWithOAuth(invoiceDetails?.InvoiceNumber, pdfBytesInvoice.Data, emailBody, customerDetails?.Email ?? "", PreparedByEmail, AppConstant.InvoicePaymentLinkandPDF);
 
                     responseVm.IsSuccess = true;
                     responseVm.Message = isStripeConfigured
@@ -1407,7 +1410,7 @@ namespace ShutterManagement.Business.Services
 
         // this is a common method for sending emails
 
-        public async Task<IResponseVm<string>> SendEmailWithOAuth(string filename,byte[] pdfData,string emailBody,string customerEmail,string subject)
+        public async Task<IResponseVm<string>> SendEmailWithOAuth(string filename,byte[] pdfData,string emailBody,string customerEmail, string preparedbyemail,string subject)
         {
             var responseVm = new ResponseVm<string>();
 
@@ -1429,7 +1432,7 @@ namespace ShutterManagement.Business.Services
 
             var emailRequest = new OAuthEmailRequest
             {
-                FromEmail = config.From ?? "",
+                FromEmail = preparedbyemail ?? "",
                 ToEmail = customerEmail ?? "",
                 Subject = subject,
                 Body = emailBody,

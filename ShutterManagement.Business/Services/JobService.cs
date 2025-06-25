@@ -833,8 +833,9 @@ namespace ShutterManagement.Business.Services
                     int Version = GetAllQuerable().Where(x => x.TenantId == LoggedInTenantId && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt)
                           .Select(p => (p.JobUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries).Length == 3 ? Convert.ToInt32(p.JobUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries)[2]) : 0)).FirstOrDefault();
                     Version += 1;
-                    var generateUnique = GenerateUniqueId.GenerateUniqueIds(ModuleName.Job, claimsProperty.GetCompanyCode(), Version);
-                    bool IsjobNameExists = await AnyAsync(x => x.JobName == model.JobName.Trim() && x.IsDelete == false && x.TenantId == LoggedInTenantId&& x.ContactId == model.ContactId);
+                   var Companycode = tenantService.GetAllQuerable().Where(x => x.TenantId == TenantId && x.IsActive == true && x.IsDelete == false).Select(x => x.Code).FirstOrDefault();
+                   var generateUnique = GenerateUniqueId.GenerateUniqueIds(ModuleName.Job, Companycode, Version);
+                   bool IsjobNameExists = await AnyAsync(x => x.JobName == model.JobName.Trim() && x.IsDelete == false && x.TenantId == LoggedInTenantId&& x.ContactId == model.ContactId);
                     var StageResponse = await statusAndStageMapping.GetGHLStagesMappingsById(jobStatus);
                     bool IsContactArchiveorInactive = await contact.AnyAsync(x => x.ContactId == model.ContactId && x.TenantId==LoggedInTenantId &&  (x.IsActive == false || x.IsArchive == true) );
                 if(IsContactArchiveorInactive)
@@ -1141,10 +1142,17 @@ namespace ShutterManagement.Business.Services
                                         || (x.City ?? "").ToLower().Contains(filter.SearchValue)))
                                     .ToList();
 
-                    var TakenRecords = FilterRecords
-                        .Skip((filter.PageNo - 1) * filter.RecordPerPage)
-                        .Take(filter.RecordPerPage)
-                        .ToList();
+                    //var TakenRecords = FilterRecords
+                    //    .Skip((filter.PageNo - 1) * filter.RecordPerPage)
+                    //    .Take(filter.RecordPerPage)
+                    //    .ToList();
+
+                    var queryable = FilterRecords.AsQueryable();
+
+                    queryable = Paginate.ApplyColumnFilters(queryable, filter.ColumnFilters);
+                    queryable = Paginate.ApplySorting(queryable, filter.SortColumn, filter.SortDirection);
+
+                    var TakenRecords = Paginate.Pagination(queryable.ToList(), filter);
 
                     responseVm.Data = TakenRecords;
                     responseVm.TotalRecords = FilterRecords.Count;
@@ -1666,6 +1674,125 @@ namespace ShutterManagement.Business.Services
                 return responseVm;
             }
         }
+
+
+        // update Estimate URLs links
+        public async Task<IResponseVm<string>> UpdateEstimateUrlInGhlOnly(TblJob job, string newEstimateUrl)
+         {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+
+            try
+            {
+                await gHLConfiguration.GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
+
+                if (string.IsNullOrEmpty(job.GhlOpportunityId))
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = "No associated GHL Opportunity ID found.";
+                    FileLogger.Log("UpdateEstimateUrlInGhlOnly: Missing GHL Opportunity ID.");
+                    return responseVm;
+                }
+
+                if (new[] { job.EstimateUrl1, job.EstimateUrl2, job.EstimateUrl3, job.EstimateUrl4 }
+                    .Any(url => url == newEstimateUrl))
+                {
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = "Estimate URL already exists. No update needed.";
+                    FileLogger.Log("UpdateEstimateUrlInGhlOnly: URL already exists.");
+                    return responseVm;
+                }
+
+                string fieldKey = null;
+
+                if (string.IsNullOrEmpty(job.EstimateUrl1))
+                {
+                    job.EstimateUrl1 = newEstimateUrl;
+                    fieldKey = "opportunity.estimate_url_1";
+                }
+                else if (string.IsNullOrEmpty(job.EstimateUrl2))
+                {
+                    job.EstimateUrl2 = newEstimateUrl;
+                    fieldKey = "opportunity.estimate_url_2";
+                }
+                else if (string.IsNullOrEmpty(job.EstimateUrl3))
+                {
+                    job.EstimateUrl3 = newEstimateUrl;
+                    fieldKey = "opportunity.estimate_url_3";
+                }
+                else if (string.IsNullOrEmpty(job.EstimateUrl4))
+                {
+                    job.EstimateUrl4 = newEstimateUrl;
+                    fieldKey = "opportunity.estimate_url_4";
+                }
+                else
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = "All estimate URL slots are already filled.";
+                    FileLogger.Log("UpdateEstimateUrlInGhlOnly: All URL slots filled.");
+                    return responseVm;
+                }
+
+                var fieldRecord = ghlCustomFieldsService.GetAllQuerable()
+                    .Where(x => x.TenantId == claimsProperty.GetTenantId() && x.FieldKey == fieldKey  && x.IsDelete == false)
+                    .FirstOrDefault();
+
+                if (fieldRecord == null || string.IsNullOrEmpty(fieldRecord.GhlFieldId))
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = $"Custom field '{fieldKey}' not configured.";
+                    FileLogger.Log("UpdateEstimateUrlInGhlOnly: Missing custom field ID in DB for " + fieldKey);
+                    return responseVm;
+                }
+
+                await Update(job);
+
+                var payload = new
+                {
+                    customFields = new[]
+                    {
+                new
+                {
+                    id = fieldRecord.GhlFieldId,
+                    key = fieldKey,
+                    field_value = newEstimateUrl
+                }
+            }
+                };
+
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
+                httpClient.DefaultRequestHeaders.Remove("Version");
+                httpClient.DefaultRequestHeaders.Add("Version", AppConstant.GHL_Version);
+
+                var url = $"{AppConstant.GHL_BaseAddress}/opportunities/{job.GhlOpportunityId}";
+                var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
+
+                var response = await httpClient.PutAsync(url, content);
+                var responseBody = await response.Content.ReadAsStringAsync();
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = $"Failed to update GHL: {response.StatusCode}, {responseBody}";
+                    FileLogger.Log($"UpdateEstimateUrlInGhlOnly: Failed API call. Status: {response.StatusCode}, Body: {responseBody}");
+                    return responseVm;
+                }
+
+                responseVm.IsSuccess = true;
+                responseVm.Message = $"Estimate URL updated in GHL field '{fieldKey}'.";
+                FileLogger.Log($"UpdateEstimateUrlInGhlOnly: Success for field {fieldKey}");
+            }
+            catch (Exception ex)
+            {
+                responseVm.IsSuccess = false;
+                responseVm.Message = $"Error: {ex.Message}";
+                FileLogger.Log($"Error in UpdateEstimateUrlInGhlOnly: {ex}");
+            }
+
+            return responseVm;
+        }
+
+
+
 
 
         // update Estimate URLs links
