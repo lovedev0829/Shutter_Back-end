@@ -1139,10 +1139,17 @@ namespace ShutterManagement.Business.Services
                                         || (x.City ?? "").ToLower().Contains(filter.SearchValue)))
                                     .ToList();
 
-                    var TakenRecords = FilterRecords
-                        .Skip((filter.PageNo - 1) * filter.RecordPerPage)
-                        .Take(filter.RecordPerPage)
-                        .ToList();
+                    //var TakenRecords = FilterRecords
+                    //    .Skip((filter.PageNo - 1) * filter.RecordPerPage)
+                    //    .Take(filter.RecordPerPage)
+                    //    .ToList();
+
+                    var queryable = FilterRecords.AsQueryable();
+
+                    queryable = Paginate.ApplyColumnFilters(queryable, filter.ColumnFilters);
+                    queryable = Paginate.ApplySorting(queryable, filter.SortColumn, filter.SortDirection);
+
+                    var TakenRecords = Paginate.Pagination(queryable.ToList(), filter);
 
                     responseVm.Data = TakenRecords;
                     responseVm.TotalRecords = FilterRecords.Count;
