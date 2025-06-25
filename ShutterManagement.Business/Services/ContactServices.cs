@@ -196,8 +196,8 @@ namespace ShutterManagement.Business.Services
                     int Version = GetAllQuerable().Where(x => x.TenantId == LoggedInTenantId && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt)
                         .Select(p => (p.ContactUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries).Length == 3 ? Convert.ToInt32(p.ContactUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries)[2]) : 0)).FirstOrDefault();
                     Version += 1;
-                    var contactUniqueId = GenerateUniqueId.GenerateUniqueIds(ModuleName.Contact, claimsProperty.GetCompanyCode(), Version);
-
+                    var Companycode = tenantService.GetAllQuerable().Where(x => x.TenantId == TenantId && x.IsActive == true && x.IsDelete == false).Select(x => x.Code).FirstOrDefault();
+                    var contactUniqueId = GenerateUniqueId.GenerateUniqueIds(ModuleName.Contact, Companycode, Version);
 
                     TblContact CreateContact = new TblContact
                     {
