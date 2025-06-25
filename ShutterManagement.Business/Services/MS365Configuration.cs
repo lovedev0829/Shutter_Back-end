@@ -40,10 +40,10 @@ namespace ShutterManagement.Business.Services
             {
                 var query = new Dictionary<string, string>
              {
-             { "client_id", AppConstant.Micorsoft365_ClientId },
-             { "client_secret", AppConstant.Micorsoft365_ClientSecret },
+             { "client_id", AppConstant.Microsoft365_ClientId },
+             { "client_secret", AppConstant.Microsoft365_ClientSecret },
              { "response_type", "code" },
-             { "redirect_uri", AppConstant.Micorsoft365_RedirectUri },
+             { "redirect_uri", AppConstant.Microsoft365_RedirectUri },
              { "response_mode", "query" },
              { "scope", "SMTP.Send offline_access User.Read " },
              { "state", Guid.NewGuid().ToString() }
@@ -73,17 +73,17 @@ namespace ShutterManagement.Business.Services
             {
                 var tokenRequest = new Dictionary<string, string>
                 {
-                { "client_id", AppConstant.Micorsoft365_ClientId },
-                { "client_secret", AppConstant.Micorsoft365_ClientSecret },
+                { "client_id", AppConstant.Microsoft365_ClientId },
+                { "client_secret", AppConstant.Microsoft365_ClientSecret },
                 { "grant_type", "authorization_code" },
                 { "code", code },
-                { "redirect_uri", AppConstant.Micorsoft365_RedirectUri },
+                { "redirect_uri", AppConstant.Microsoft365_RedirectUri },
                 { "scope", "https://outlook.office365.com/SMTP.Send offline_access User.Read" }
                 };
 
                 using var client = new HttpClient();
                 var response = await client.PostAsync(
-                    $"https://login.microsoftonline.com/{AppConstant.Micorsoft365_tenantId}/oauth2/v2.0/token",
+                    $"https://login.microsoftonline.com/{AppConstant.Microsoft365_TenantId}/oauth2/v2.0/token",
                     new FormUrlEncodedContent(tokenRequest)
                 );
 
@@ -220,8 +220,8 @@ namespace ShutterManagement.Business.Services
         {
             var values = new Dictionary<string, string>
             {
-                ["client_id"] = AppConstant.Micorsoft365_ClientId,
-                ["client_secret"] = AppConstant.Micorsoft365_ClientSecret,
+                ["client_id"] = AppConstant.Microsoft365_ClientId,
+                ["client_secret"] = AppConstant.Microsoft365_ClientSecret,
                 ["grant_type"] = "refresh_token",
                 ["refresh_token"] = refreshToken,
                 ["scope"] = "https://outlook.office365.com/SMTP.Send offline_access"
@@ -230,7 +230,7 @@ namespace ShutterManagement.Business.Services
             using var client = new HttpClient();
             var content = new FormUrlEncodedContent(values);
             var response = await client.PostAsync(
-                $"https://login.microsoftonline.com/{AppConstant.Micorsoft365_tenantId}/oauth2/v2.0/token",
+                $"https://login.microsoftonline.com/{AppConstant.Microsoft365_TenantId}/oauth2/v2.0/token",
                 content);
 
             var json = await response.Content.ReadAsStringAsync();

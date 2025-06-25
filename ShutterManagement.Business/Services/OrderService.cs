@@ -372,12 +372,9 @@ namespace ShutterManagement.Business.Services
 
                 var TakenRecords = Paginate.Pagination(queryable.ToList(), filter);
 
-                var queryable = paginatedOrders.AsQueryable();
-
                 queryable = Paginate.ApplyColumnFilters(queryable, filter.ColumnFilters);
                 queryable = Paginate.ApplySorting(queryable, filter.SortColumn, filter.SortDirection);
 
-                var TakenRecords = Paginate.Pagination(queryable.ToList(), filter);
 
                 responseVm.IsSuccess = true;
                 if (TakenRecords.Any())
