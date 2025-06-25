@@ -1079,6 +1079,8 @@ namespace ShutterManagement.Business.Services
                                    join t6 in _context.TblContacts.Where(x => x.IsActive == true && x.IsDelete == false) on
                                    t2.ContactId equals t6.ContactId into contact
                                    from t6 in contact.DefaultIfEmpty()
+                                   join t7 in _context.MstPowderCoatColors on t2.PowderCoatColorId equals t7.Id into PowderCoatColor
+                                   from t7 in PowderCoatColor.DefaultIfEmpty()
                                    where t2.TenantId == claimsProperty.GetTenantId() && t2.IsDelete == false
                                    select new GetAllJobsdetails
                                    {
@@ -1102,6 +1104,7 @@ namespace ShutterManagement.Business.Services
                                        Label = t1.Label != null ? t1.Label : "",
                                        StreetAddress = t1.StreetAddress != null ? t1.StreetAddress : "",
                                        City = t1.City != null ? t1.City : string.Empty,
+                                       PowderCoatColorId = t2.PowderCoatColorId,
                                        //State = dbContext.MstStates.Where(s => s.Id == t1.State).Select(y => y.StateName ?? "").FirstOrDefault(),
                                        ZipCode = t1.ZipCode != null ? t1.ZipCode : string.Empty,
                                        JobUniqueCode = t2.JobUniqueId ?? "",
@@ -1780,9 +1783,34 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-
-
-
-
+        public async Task<IResponseVm<string>> UpdateJobPowderCoatColor(Guid? JobId, Guid? powderCoatColorId)
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+            try
+            {
+                var existingJob = await _context.TblJobs.FindAsync(JobId);
+                if (existingJob != null)
+                {
+                    existingJob.PowderCoatColorId = powderCoatColorId;
+                    existingJob.UpdatedAt = DateTime.Now;
+                    existingJob.ModifiedBy = claimsProperty.GetUserId();
+                    
+                    _context.TblJobs.Update(existingJob);
+                    await _context.SaveChangesAsync();
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = "Job powder coat color updated successfully.";
+                }
+                else
+                {
+                    responseVm.Message = "Job not found.";
+                }
+            }
+            catch (Exception ex)
+            {
+                responseVm.IsSuccess = false;
+                responseVm.Message = ex.Message;
+            }
+            return responseVm;
+        }
     }
 }

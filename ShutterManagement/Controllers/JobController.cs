@@ -197,8 +197,15 @@ namespace ShutterManagement.Controllers
         {
             var result = await appointmentScheduleService.GetAppointmentSchedule(JobId);
             return Ok(result);
-
         }
 
+        [HttpPost]
+        [Route("UpdateJobPowderCoatColor")]
+        [Authorize(Roles = "JobEdit")]
+        public async Task<IActionResult> UpdateJobPowderCoatColor(Guid? JobId, Guid? powderCoatColorId)
+        {
+            var res = await jobService.UpdateJobPowderCoatColor(JobId, powderCoatColorId);
+            return Ok(res);
+        }
     }
 }

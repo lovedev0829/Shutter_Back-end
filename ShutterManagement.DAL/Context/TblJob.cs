@@ -61,6 +61,8 @@ public partial class TblJob
 
     public string? EstimateUrl4 { get; set; }
 
+    public Guid? PowderCoatColorId { get; set; }
+
     public virtual TblAddress? Address { get; set; }
 
     public virtual TblContact? Contact { get; set; }
@@ -84,4 +86,6 @@ public partial class TblJob
     public virtual ICollection<TblWindow> TblWindows { get; set; } = new List<TblWindow>();
 
     public virtual TblTenant? Tenant { get; set; }
+
+    public virtual MstPowderCoatColor? PowderCoatColor { get; set; }
 }

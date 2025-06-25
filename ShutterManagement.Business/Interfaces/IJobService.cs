@@ -32,5 +32,6 @@ namespace ShutterManagement.Business.Interfaces
         //Task<IResponseVm<string>> GetAndSaveContactsAsync();
 
         Task<IResponseVm<string>> UpdateEstimateUrlInGhlOnly(TblJob job, string newEstimateUrl);
+        Task<IResponseVm<string>> UpdateJobPowderCoatColor(Guid? JobId, Guid? powderCoatColorId);
     }
 }

@@ -25,8 +25,8 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? AssignedPersonnelName { get; set; }
 
         public DateTime? ScheduledDate { get; set; }
+        public Guid? PowderCoatColorId { get; set; }
 
-   
         public Guid? JobStatus { get; set; }
         public string? JobStatusName { get; set; }
         public string? Suffix { get; set; }
