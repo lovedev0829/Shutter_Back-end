@@ -6,6 +6,7 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 using System.Linq.Dynamic.Core;
+using System.Reflection;
 
 namespace ShutterManagement.Core.Common
 {
@@ -62,26 +63,37 @@ namespace ShutterManagement.Core.Common
                 //    }
                 //}
 
-                var firstNameProp = entityType.GetProperties().FirstOrDefault(p => p.Name.EndsWith("FirstName", StringComparison.OrdinalIgnoreCase));
-                var lastNameProp = entityType.GetProperties()
-                    .FirstOrDefault(p => p.Name.EndsWith("LastName", StringComparison.OrdinalIgnoreCase));
-
-                if (firstNameProp != null && lastNameProp != null)
+                if (col.Field.EndsWith("FirstName", StringComparison.OrdinalIgnoreCase))
                 {
-                    var firstNameExpr = Expression.Property(parameter, firstNameProp);
-                    var lastNameExpr = Expression.Property(parameter, lastNameProp);
+                    var firstNameProp = entityType.GetProperty(col.Field, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
 
-                    var concatExpr = Expression.Call(
-                        typeof(string).GetMethod("Concat", new[] { typeof(string), typeof(string), typeof(string) }),
-                        firstNameExpr,
-                        Expression.Constant(" "),
-                        lastNameExpr
-                    );
+                    // Try to find corresponding LastName
+                    var lastNameField = col.Field.Replace("FirstName", "LastName", StringComparison.OrdinalIgnoreCase);
+                    var lastNameProp = entityType.GetProperty(lastNameField, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
 
-                    var toLower = Expression.Call(concatExpr, "ToLower", null);
-                    var containsMethod = typeof(string).GetMethod("Contains", new[] { typeof(string) });
-                    predicateBody = Expression.Call(toLower, containsMethod, Expression.Constant(val.ToLower()));
+                    if (firstNameProp != null && lastNameProp != null)
+                    {
+                        var firstNameExpr = Expression.Property(parameter, firstNameProp);
+                        var lastNameExpr = Expression.Property(parameter, lastNameProp);
+
+                        var coalesceFirst = Expression.Coalesce(firstNameExpr, Expression.Constant(string.Empty));
+                        var coalesceLast = Expression.Coalesce(lastNameExpr, Expression.Constant(string.Empty));
+
+                        var concatExpr = Expression.Call(
+                            typeof(string).GetMethod("Concat", new[] { typeof(string), typeof(string), typeof(string) }),
+                            coalesceFirst,
+                            Expression.Constant(" "),
+                            coalesceLast
+                        );
+
+                        var toLower = Expression.Call(concatExpr, "ToLower", null);
+                        var containsMethod = typeof(string).GetMethod("Contains", new[] { typeof(string) });
+                        predicateBody = Expression.Call(toLower, containsMethod, Expression.Constant(val.ToLower()));
+                    }
                 }
+
+
+
 
                 else
                 {
