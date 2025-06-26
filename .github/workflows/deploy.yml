@@ -4,7 +4,7 @@ name: .NET CI/CD Pipeline
 on:
   push:
     branches:
-      - Estimation
+      - master-azure 
 
 jobs:
   build-and-test:
