@@ -63,11 +63,8 @@ namespace ShutterManagement.Services
                 responseVm.Message = "Password required.";
                 return responseVm;
             }
-            if (string.IsNullOrEmpty(user.CompanyCode))
-            {
-                responseVm.Message = "CompanyCode required.";
-                return responseVm;
-            }
+           
+
             UserLoginDetails loginDetails = new UserLoginDetails();
             var HashPassword = AesEncryptionHelper.Encrypt(user.Password ?? "");
             var UserDetails = await dataServices.CallSPtoRead<LoginDetails>("Sp_GetUserDetailsOnLogin", reader =>
@@ -94,7 +91,6 @@ namespace ShutterManagement.Services
             },
              new SqlParameter("@Username", SqlDbType.NVarChar, 100) { SqlValue = user.Username },
              new SqlParameter("@Password", SqlDbType.NVarChar, 100) { SqlValue = HashPassword },
-             new SqlParameter("@CompanyCode", SqlDbType.NVarChar, 100) { SqlValue = user.CompanyCode },
              new SqlParameter("@Result", SqlDbType.VarChar, 1000) { Direction = ParameterDirection.Output }
              );
 
@@ -127,7 +123,6 @@ namespace ShutterManagement.Services
                 claims.AddClaim(new Claim("Phone", UserDetails[0].Phone ?? ""));
                 claims.AddClaim(new Claim("TenantId", UserDetails[0].TenantId.ToString().ToUpper() ?? ""));
                 claims.AddClaim(new Claim("ParentTenantId", UserDetails[0].ParentTenantId.ToString().ToUpper() ?? ""));
-               // claims.AddClaim(new Claim("CompanyCode", user.CompanyCode));
                 claims.AddClaim(new Claim("CompanyCode", UserDetails[0].Code));
                 claims.AddClaim(new Claim("CompanyName", UserDetails[0].CompanyName));
                 claims.AddClaim(new Claim("IsTenant", IsTenant.ToString()));

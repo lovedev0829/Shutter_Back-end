@@ -18,8 +18,5 @@ namespace ShutterManagement.Core.ViewModels
         [Required]
         public string? Password { get; set; }
 
-        [DefaultValue("")]
-        [Required]
-        public string? CompanyCode { get; set; }
     }
 }

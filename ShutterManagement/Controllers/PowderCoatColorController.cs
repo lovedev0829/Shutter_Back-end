@@ -63,7 +63,7 @@ namespace ShutterManagement.Controllers
 
         [HttpGet]
         [Route("GetAllForDropdown")]
-        //[Authorize(Roles = "JobView")]
+        [Authorize(Roles = "JobView")]
         public async Task<IActionResult> GetPowderCoatColorsForDropdown()
         {
             var res = await powderCoatColorService.GetPowderCoatColorsForDropdown();
