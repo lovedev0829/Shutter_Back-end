@@ -65,7 +65,7 @@ namespace ShutterManagement.Business.Services
              IEstimateService estimateService, ShutterDBContext context,
              IWindowOptionService windowOptionService, IOptionsTypeService optionsTypeService, IMstProductType productType,
              IJobService jobService, IContactService contactService, IEstimateWindowProductService estimateWindowProduct, ITaxRate taxRate,
-            IRegion region,ITenantBrandingService tenantBrandingService,IConverter converter,
+            IRegion region,ITenantBrandingService tenantBrandingService, IConverter converter,
             IEstimateWindowProductComponentService estimateWindowProductComponentService
             ,IEstimateWindowProductComponentMaterialService estimateWindowProductComponentMaterialService)
         {

@@ -821,7 +821,7 @@ namespace ShutterManagement.Business.Services
                 {
                     ColorMode = DinkToPdf.ColorMode.Color,
                     Orientation = Orientation.Portrait,
-                    PaperSize = DinkToPdf.PaperKind.A4
+                                          PaperSize = DinkToPdf.PaperKind.A4
                 },
                 Objects = { new ObjectSettings { HtmlContent = htmlContent } }
             };
