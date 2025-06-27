@@ -19,7 +19,7 @@ namespace ShutterManagment.GHL.ViewModel.Request
         public string? pipeline_name { get; set; }
 
         [JsonProperty("user")]
-        public User Users { get; set; }
+        public User? Users { get; set; } = new User();
     }
 
     //public partial class User
