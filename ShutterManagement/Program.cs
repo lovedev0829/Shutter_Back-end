@@ -27,6 +27,7 @@ using ShutterManagement.Core.ViewModels.Response;
 
 var builder = WebApplication.CreateBuilder(args);
 
+FileLogger.Initialize(builder.Environment.EnvironmentName);
 IConfiguration configuration= builder.Configuration;
 builder.Configuration.AddConstants();
 

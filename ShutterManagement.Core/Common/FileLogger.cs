@@ -10,9 +10,16 @@ namespace ShutterManagement.Core.Common
     public class FileLogger
     {
         private static readonly string logFilePath = "Files/logs.txt";
+        private static string? _environment;
 
+        public static void Initialize(string environment)
+        {
+            _environment = environment;
+        }
         public static void Log(string message, params object?[] objects)
             {
+            if (_environment != "Development")
+                return;
             string logMessage = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} : {message}";
             if (objects != null && objects.Length > 0)
             {
