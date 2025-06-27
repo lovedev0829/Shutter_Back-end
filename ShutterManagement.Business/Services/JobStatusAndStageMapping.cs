@@ -63,13 +63,13 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        public async Task<IResponseVm<JobStatusList>> GetJobStatusByName(string? JobstatusName ,Guid? Stageid =null)
+        public async Task<IResponseVm<JobStatusList>> GetJobStatusByName(string? JobstatusName ,Guid? Stageid =null, Guid? LoggedInTenantId = null)
         {
             IResponseVm<JobStatusList> responseVm = new ResponseVm<JobStatusList>();
 
             try
             {
-
+                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : claimsProperty.GetTenantId());
                 JobStatusList? mapping = null;
 
                 if (!string.IsNullOrEmpty(JobstatusName))
@@ -87,7 +87,7 @@ namespace ShutterManagement.Business.Services
                 if (mapping == null && Stageid != null && Stageid != Guid.Empty)
                 {
                     var stageMapping = dBContext.TblGhlStagesmappings
-                        .Where(x => x.StageId == Stageid && x.TenantId == claimsProperty.GetTenantId())
+                        .Where(x => x.StageId == Stageid && x.TenantId == LoggedInTenantId)
                         .FirstOrDefault();
 
                     if (stageMapping?.StatusId != null)
@@ -124,14 +124,15 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        public async Task<IResponseVm<StageMapping>> GetGHLStagesMappingsById(Guid? JobstatusId)
+        public async Task<IResponseVm<StageMapping>> GetGHLStagesMappingsById(Guid? JobstatusId, Guid? LoggedInTenantId = null)
         {
             IResponseVm<StageMapping> responseVm = new ResponseVm<StageMapping>();
 
             try
             {
+                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : claimsProperty.GetTenantId());
                 var mapping = dBContext.TblGhlStagesmappings
-                    .Where(x => x.TenantId == claimsProperty.GetTenantId() && x.StatusId == JobstatusId)
+                    .Where(x => x.TenantId == LoggedInTenantId && x.StatusId == JobstatusId)
                     .Select(x => new StageMapping
                     {
                         StageId = x.StageId ?? Guid.Empty,
