@@ -2,6 +2,7 @@
 using Azure;
 using MailKit;
 using Microsoft.Data.SqlClient;
+using Org.BouncyCastle.Bcpg.OpenPgp;
 using ShutterManagement.Business;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Business.Services;
@@ -534,6 +535,22 @@ namespace ShutterManagement.Services
         }
 
 
+        public async Task<string> GetTenantIdByUserEmailAndPwd(string Username, string Password)
+        {
+            var user = GetAllQuerable().Where(u => u.Username == Username && u.Pwd == Password 
+                && u.IsActive == true && u.IsDelete == false)
+                .OrderByDescending(x => x.CreatedAt)
+                .FirstOrDefault();
+
+            if (user == null)
+            {
+                Console.WriteLine("No user found with all criteria");
+                return "";
+            }
+
+            Console.WriteLine($"User found, TenantId: {user.TenantId}");
+            return user.TenantId.ToString();
+        }
 
         public async Task PasswordEnc()
         {

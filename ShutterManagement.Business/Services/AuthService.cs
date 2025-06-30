@@ -21,56 +21,480 @@ using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core.Common;
 using System.Security.AccessControl;
 using ShutterManagement.Business;
+using MimeKit.Cryptography;
 
 namespace ShutterManagement.Services
 {
-    public class AuthService : BaseRepository<ShutterDBContext,TblUser >, IAuthService
+    public class AuthService : BaseRepository<ShutterDBContext, TblUser>, IAuthService
     {
-        private readonly DataServices dataServices;
-        private readonly IMapper mapper;
-        private readonly IConfiguration _config;
-        private readonly ITenantService tenantService;
-        private readonly ITenantBrandingService tenantBrandingService;
-        private readonly INotificationService notification;
-        private readonly ClaimsProperty claimsProperty;
-        private readonly IGHLConfiguration gHLConfiguration;
-        private readonly IStripeConfiguration stripeConfiguration;
+        #region Private Constants
+        private const int MIN_CODE_LENGTH = 3;
+        private const int MAX_CODE_LENGTH = 10;
+        private const int MAX_GENERATION_ATTEMPTS = 50;
+        private const string LOGIN_COMPANY_CODE = "login";
+        #endregion
 
-        public AuthService(DataServices dataServices, IMapper mapper, IConfiguration config,
-            ITenantService tenantService, ITenantBrandingService tenantBrandingService,INotificationService notification,ClaimsProperty claimsProperty,
-            IGHLConfiguration gHLConfiguration,IStripeConfiguration stripeConfiguration)
+        #region Private Fields
+        private readonly DataServices _dataServices;
+        private readonly IMapper _mapper;
+        private readonly IConfiguration _config;
+        private readonly ITenantService _tenantService;
+        private readonly ITenantBrandingService _tenantBrandingService;
+        private readonly INotificationService _notification;
+        private readonly ClaimsProperty _claimsProperty;
+        private readonly IGHLConfiguration _ghlConfiguration;
+        private readonly IStripeConfiguration _stripeConfiguration;
+        private readonly IUserService _userService;
+        #endregion
+
+        #region Constructor
+        public AuthService(
+            DataServices dataServices, 
+            IMapper mapper, 
+            IConfiguration config,
+            ITenantService tenantService, 
+            ITenantBrandingService tenantBrandingService,
+            INotificationService notification,
+            ClaimsProperty claimsProperty,
+            IGHLConfiguration ghlConfiguration,
+            IStripeConfiguration stripeConfiguration, 
+            IUserService userService)
         {
-            this.dataServices = dataServices;
-            this.mapper = mapper;
-            _config = config;
-            this.tenantService = tenantService;
-            this.tenantBrandingService = tenantBrandingService;
-            this.notification = notification;
-            this.claimsProperty = claimsProperty;
-            this.gHLConfiguration = gHLConfiguration;
-            this.stripeConfiguration = stripeConfiguration;
+            _dataServices = dataServices ?? throw new ArgumentNullException(nameof(dataServices));
+            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+            _config = config ?? throw new ArgumentNullException(nameof(config));
+            _tenantService = tenantService ?? throw new ArgumentNullException(nameof(tenantService));
+            _tenantBrandingService = tenantBrandingService ?? throw new ArgumentNullException(nameof(tenantBrandingService));
+            _notification = notification ?? throw new ArgumentNullException(nameof(notification));
+            _claimsProperty = claimsProperty ?? throw new ArgumentNullException(nameof(claimsProperty));
+            _ghlConfiguration = ghlConfiguration ?? throw new ArgumentNullException(nameof(ghlConfiguration));
+            _stripeConfiguration = stripeConfiguration ?? throw new ArgumentNullException(nameof(stripeConfiguration));
+            _userService = userService ?? throw new ArgumentNullException(nameof(userService));
         }
+        #endregion
+
+        #region Public Methods
         public async Task<IResponseVm<UserLoginDetails>> LoginAsync(LoginDetailVM user)
         {
-            IResponseVm<UserLoginDetails> responseVm = new ResponseVm<UserLoginDetails>();
-            if (string.IsNullOrEmpty(user.Username))
+            var responseVm = new ResponseVm<UserLoginDetails>();
+
+            try
             {
-                responseVm.Message = "Username required.";
-                return responseVm;
+                // Validate input
+                var validationResult = ValidateLoginInput(user);
+                if (!validationResult.IsValid)
+                {
+                    responseVm.Message = validationResult.ErrorMessage;
+                    return responseVm;
+                }
+
+                // Handle special login case and get company code
+                var companyCode = await GetValidCompanyCodeAsync(user);
+                if (string.IsNullOrEmpty(companyCode))
+                {
+                    responseVm.Message = AppConstant.InvalidCred;
+                    return responseVm;
+                }
+
+                // Get user details
+                var userDetails = await GetUserLoginDetailsAsync(user.Username, user.Password, companyCode);
+                if (!userDetails.Any())
+                {
+                    responseVm.Message = AppConstant.InvalidCred;
+                    return responseVm;
+                }
+
+                var loginDetail = userDetails.First();
+
+                // Get user roles and create token
+                var userRoles = await GetUserRolesAsync(loginDetail.UserId);
+                var token = CreateAuthenticationToken(loginDetail, userRoles);
+
+                // Build response
+                var loginResponse = BuildLoginResponse(loginDetail, userRoles, token);
+                
+                responseVm.Data = loginResponse;
+                responseVm.IsSuccess = true;
+                responseVm.Message = AppConstant.LoginSuccessMessage;
+                responseVm.TotalRecords = 1;
+
+                // Initialize configurations
+                await _ghlConfiguration.GetGHLConfiguration(loginDetail.TenantId.ToString());
             }
-            if (string.IsNullOrEmpty(user.Password))
+            catch (Exception ex)
             {
-                responseVm.Message = "Password required.";
-                return responseVm;
+                responseVm.Message = $"{AppConstant.ExceptionError} {ex.Message}";
             }
-            if (string.IsNullOrEmpty(user.CompanyCode))
+
+            return responseVm;
+        }
+
+        public async Task<IResponseVm<HomePageContent>> HomePageContent(string companyCode)
+        {
+            var responseVm = new ResponseVm<HomePageContent>();
+
+            try
             {
-                responseVm.Message = "CompanyCode required.";
-                return responseVm;
+                if (string.IsNullOrWhiteSpace(companyCode))
+                {
+                    responseVm.Message = "Company code required.";
+                    return responseVm;
+                }
+
+                var tenantData = await GetTenantByCodeAsync(companyCode);
+                if (tenantData == null)
+                {
+                    responseVm.Message = AppConstant.TenantNotFound;
+                    return responseVm;
+                }
+
+                var brandInfo = await GetTenantBrandingInfoAsync(tenantData.BrandingInfo);
+                if (brandInfo == null)
+                {
+                    responseVm.Message = "Branding information not found.";
+                    return responseVm;
+                }
+
+                var homePageContent = CreateHomePageContent(tenantData, brandInfo);
+                
+                responseVm.IsSuccess = true;
+                responseVm.Data = homePageContent;
             }
-            UserLoginDetails loginDetails = new UserLoginDetails();
-            var HashPassword = AesEncryptionHelper.Encrypt(user.Password ?? "");
-            var UserDetails = await dataServices.CallSPtoRead<LoginDetails>("Sp_GetUserDetailsOnLogin", reader =>
+            catch (Exception ex)
+            {
+                responseVm.Message = $"{AppConstant.ExceptionError} {ex.Message}";
+            }
+
+                return responseVm;
+        }
+
+        public async Task<IResponseVm<PasswordChangeVm>> ResetPassWord(PasswordChangeVm vm)
+        {
+            var result = new ResponseVm<PasswordChangeVm>();
+
+            try
+            {
+                if (vm == null || string.IsNullOrWhiteSpace(vm.OldPassWord) || string.IsNullOrWhiteSpace(vm.PassWord))
+                {
+                    result.Message = "Invalid password change request.";
+                    return result;
+                }
+
+                var user = await GetUserForPasswordChangeAsync(vm.OldPassWord);
+                if (user == null)
+                {
+                    result.Message = AppConstant.NoUserFound;
+                    return result;
+                }
+
+                await UpdateUserPasswordAsync(user, vm.PassWord);
+                
+                result.IsSuccess = true;
+                result.Message = AppConstant.PasswordChangeMessage;
+            }
+            catch (Exception ex)
+            {
+                result.Message = $"{AppConstant.ExceptionError} {ex.Message}";
+            }
+
+            return result;
+        }
+
+        public async Task<IResponseVm<string>> ProfileUpdate(ProfileUpdateVm profileUpdate)
+        {
+            var result = new ResponseVm<string>();
+
+            try
+            {
+                if (profileUpdate == null)
+                {
+                    result.Message = "Profile data is required.";
+                    return result;
+                }
+
+                var user = await GetCurrentUserAsync();
+                if (user == null)
+                {
+                    result.Message = AppConstant.NoUserFound;
+                    return result;
+                }
+
+                // Validate phone uniqueness
+                if (await IsPhoneAlreadyExistsAsync(profileUpdate.Phone, user.Id))
+                {
+                    result.Message = "Phone " + AppConstant.AlreadyExists;
+                    return result;
+                }
+
+                await UpdateUserProfileAsync(user, profileUpdate);
+                await CreateNotificationAsync(NotificationModule.Tenant, $"Tenant profile {AppConstant.Update_Notification}");
+
+                result.IsSuccess = true;
+                result.Message = AppConstant.UpdateSuccessMsg;
+            }
+            catch (Exception ex)
+            {
+                result.Message = $"{AppConstant.ExceptionError} {ex.Message}";
+            }
+
+            return result;
+        }
+
+        public async Task<IResponseVm<UserResponse>> ProfileGetById()
+        {
+            var responseVm = new ResponseVm<UserResponse>();
+
+            try
+            {
+                var userProfile = await GetUserProfileAsync();
+                if (userProfile == null)
+                {
+                    responseVm.Message = AppConstant.NoDataFound;
+                return responseVm;
+                }
+
+                responseVm.IsSuccess = true;
+                responseVm.Message = AppConstant.FetchSuccessMsg;
+                responseVm.Data = userProfile;
+                responseVm.TotalRecords = 1;
+            }
+            catch (Exception ex)
+            {
+                responseVm.Message = $"{AppConstant.ExceptionError} {ex.Message}";
+            }
+
+                return responseVm;
+        }
+
+        public async Task<IResponseVm<string>> ForgetPassword(ForgetPassword forgetPassword)
+        {
+            var result = new ResponseVm<string>();
+
+            try
+            {
+                if (forgetPassword == null || string.IsNullOrWhiteSpace(forgetPassword.Email) || string.IsNullOrWhiteSpace(forgetPassword.Code))
+                {
+                    result.Message = "Email and code are required.";
+                    return result;
+                }
+
+                var user = await GetUserByEmailAsync(forgetPassword.Email);
+                if (user == null)
+                {
+                    result.Message = AppConstant.UserNotExist;
+                    return result;
+                }
+
+                var isValidCode = await ValidateCompanyCodeAsync(forgetPassword.Code, user.TenantId ?? Guid.Empty);
+                if (!isValidCode)
+                {
+                    result.Message = "Invalid company code.";
+                    return result;
+                }
+
+                var token = GeneratePasswordResetToken(user.Email, user.Id);
+                if (string.IsNullOrEmpty(token))
+                {
+                    result.Message = "Failed to generate reset token.";
+                    return result;
+                }
+
+                await UpdateUserTokenAsync(user, token);
+                await SendPasswordResetEmailAsync(user.Email, forgetPassword.Code, token);
+                await CreateNotificationAsync(NotificationModule.Tenant, $"Tenant password {AppConstant.Update_Notification}");
+
+                result.IsSuccess = true;
+                result.Message = AppConstant.ForgotPasswordSuccess;
+            }
+            catch (Exception ex)
+            {
+                result.Message = $"{AppConstant.ExceptionError} {ex.Message}";
+            }
+
+            return result;
+        }
+
+        public async Task<IResponseVm<string>> VerifyForgetPassword(VerifyPassword verifyPassword)
+        {
+            var result = new ResponseVm<string>();
+
+            try
+            {
+                if (verifyPassword == null || string.IsNullOrWhiteSpace(verifyPassword.Token) || string.IsNullOrWhiteSpace(verifyPassword.Password))
+                {
+                    result.Message = "Token and password are required.";
+                    return result;
+                }
+
+                var user = await GetUserByTokenAsync(verifyPassword.Token);
+                if (user == null)
+                {
+                    result.Message = "Invalid or expired link.";
+                    return result;
+                }
+
+                var tokenValidation = ValidatePasswordResetToken(verifyPassword.Token, user.Id, user.Email);
+                if (!string.IsNullOrEmpty(tokenValidation))
+                {
+                    result.Message = tokenValidation;
+                    return result;
+                }
+
+                await ResetUserPasswordAsync(user, verifyPassword.Password);
+                EmailHelper.ResetPassword(user.Email);
+
+                result.IsSuccess = true;
+                result.Message = AppConstant.PasswordChangeMessage;
+            }
+            catch (Exception ex)
+            {
+                result.Message = $"{AppConstant.ExceptionError} {ex.Message}";
+            }
+
+            return result;
+        }
+
+        public async Task<IResponseVm<string>> GenerateToken()
+        {
+            var result = new ResponseVm<string>();
+
+            try
+            {
+                FileLogger.Log("Generate Token start");
+                
+                var token = CreateNonExpiringToken();
+                await UpdateGHLConfigurationTokenAsync(token);
+
+                result.IsSuccess = true;
+                result.Data = token;
+                
+                FileLogger.Log("Token generated successfully", true);
+            }
+            catch (Exception ex)
+            {
+                result.Message = $"{AppConstant.ExceptionError} {ex.Message}";
+                FileLogger.Log("Token generation failed", ex.Message);
+            }
+
+            return result;
+        }
+
+        public IResponseVm<string> ReadTokenDetails(string token)
+        {
+            var result = new ResponseVm<string>();
+
+            try
+            {
+                if (string.IsNullOrWhiteSpace(token))
+                {
+                    result.Message = "Token is required.";
+                    return result;
+                }
+
+                var tenantId = ExtractTenantIdFromToken(token);
+                if (string.IsNullOrEmpty(tenantId))
+                {
+                    result.Message = "Invalid token format.";
+                    return result;
+                }
+
+                result.IsSuccess = true;
+                result.Data = tenantId;
+            }
+            catch (Exception ex)
+            {
+                result.Message = $"Error reading token: {ex.Message}";
+            }
+
+            return result;
+        }
+
+        public async Task<IResponseVm<Dictionary<string, string>>> GenerateLetterOnlyUniqueCodeAsync(string inputName)
+        {
+            var response = new ResponseVm<Dictionary<string, string>>();
+
+            try
+            {
+                if (string.IsNullOrWhiteSpace(inputName))
+                {
+                    response.Message = "Input name cannot be empty.";
+                    return response;
+                }
+
+                var cleanedInput = CleanInputForCodeGeneration(inputName);
+                if (cleanedInput.Length < MIN_CODE_LENGTH)
+                {
+                    response.Message = $"Input must contain at least {MIN_CODE_LENGTH} valid letters.";
+                    return response;
+                }
+
+                var generatedCode = await GenerateUniqueCodeAsync(cleanedInput);
+                var generatedPrefix = await GenerateUniqueInvoicePrefixAsync(cleanedInput, generatedCode);
+
+                if (string.IsNullOrEmpty(generatedCode) || string.IsNullOrEmpty(generatedPrefix))
+                {
+                    response.Message = "Failed to generate unique codes after maximum attempts.";
+                    return response;
+                }
+
+                response.IsSuccess = true;
+                response.Message = "Unique codes generated successfully.";
+                response.Data = new Dictionary<string, string>
+                {
+                    { "Code", generatedCode },
+                    { "InvoicePrefix", generatedPrefix }
+                };
+            }
+            catch (Exception ex)
+            {
+                response.Message = $"Error generating codes: {ex.Message}";
+            }
+
+            return response;
+        }
+        #endregion
+
+        #region Private Helper Methods
+        private static (bool IsValid, string ErrorMessage) ValidateLoginInput(LoginDetailVM user)
+        {
+            if (user == null)
+                return (false, "Login data is required.");
+            
+            if (string.IsNullOrWhiteSpace(user.Username))
+                return (false, "Username required.");
+            
+            if (string.IsNullOrWhiteSpace(user.Password))
+                return (false, "Password required.");
+            
+            if (string.IsNullOrWhiteSpace(user.CompanyCode))
+                return (false, "CompanyCode required.");
+
+            return (true, string.Empty);
+        }
+
+        private async Task<string> GetValidCompanyCodeAsync(LoginDetailVM user)
+        {
+            if (user.CompanyCode != LOGIN_COMPANY_CODE)
+                return user.CompanyCode;
+
+            var hashPassword = AesEncryptionHelper.Encrypt(user.Password);
+            var tenantId = await _userService.GetTenantIdByUserEmailAndPwd(user.Username, hashPassword);
+            
+            if (string.IsNullOrEmpty(tenantId))
+                return null;
+
+            var tenant = await _tenantService.GetAllQuerable()
+                .Where(x => x.TenantId.ToString() == tenantId && x.IsActive == true && x.IsDelete != true)
+                .FirstOrDefaultAsync();
+
+            return tenant?.Code;
+        }
+
+        private async Task<List<LoginDetails>> GetUserLoginDetailsAsync(string username, string password, string companyCode)
+        {
+            var hashPassword = AesEncryptionHelper.Encrypt(password);
+            
+            return await _dataServices.CallSPtoRead<LoginDetails>("Sp_GetUserDetailsOnLogin", reader =>
             {
                 return new LoginDetails
                 {
@@ -92,17 +516,17 @@ namespace ShutterManagement.Services
                     IsGHLConfigSameAsTenant = reader.GetBoolean(reader.GetOrdinal("IsGHLConfigSameAsTenant"))
                 };
             },
-             new SqlParameter("@Username", SqlDbType.NVarChar, 100) { SqlValue = user.Username },
-             new SqlParameter("@Password", SqlDbType.NVarChar, 100) { SqlValue = HashPassword },
-             new SqlParameter("@CompanyCode", SqlDbType.NVarChar, 100) { SqlValue = user.CompanyCode },
-             new SqlParameter("@Result", SqlDbType.VarChar, 1000) { Direction = ParameterDirection.Output }
-             );
+            new SqlParameter("@Username", SqlDbType.NVarChar, 100) { SqlValue = username },
+            new SqlParameter("@Password", SqlDbType.NVarChar, 100) { SqlValue = hashPassword },
+            new SqlParameter("@CompanyCode", SqlDbType.NVarChar, 100) { SqlValue = companyCode },
+            new SqlParameter("@Result", SqlDbType.VarChar, 1000) { Direction = ParameterDirection.Output });
+        }
 
-            if (UserDetails.Count > 0)
+        private async Task<List<UserRoles>> GetUserRolesAsync(Guid userId)
+        {
+            return await _dataServices.CallSPtoRead<UserRoles>("Sp_GetLoggedinUserRoles", reader =>
             {
-                var UserRole = await dataServices.CallSPtoRead<UserRoles>("Sp_GetLoggedinUserRoles", reader =>
-                {
-                    return new UserRoles
+                return new UserRoles
                     {
                         PermissionId = reader.GetGuid(reader.GetOrdinal("Id")),
                         PermissionName = reader.GetString(reader.GetOrdinal("Name")),
@@ -112,35 +536,36 @@ namespace ShutterManagement.Services
                         Url = reader.GetString(reader.GetOrdinal("Url"))
                     };
                 },
-                new SqlParameter("@UserId", SqlDbType.UniqueIdentifier) { SqlValue = UserDetails[0].UserId }
-                );
+            new SqlParameter("@UserId", SqlDbType.UniqueIdentifier) { SqlValue = userId });
+        }
+                
+        private string CreateAuthenticationToken(LoginDetails userDetail, List<UserRoles> userRoles)
+        {
                 var claims = new ClaimsIdentity();
-                foreach(var item in UserRole)
-                {
-                    claims.AddClaim(new Claim(ClaimTypes.Role, item.PermissionName));
-                }
-                bool IsTenant = string.IsNullOrEmpty(UserDetails[0].ParentTenantId) ? true : false;
-                claims.AddClaim(new Claim("UserId", UserDetails[0].UserId.ToString().ToUpper()));
-                claims.AddClaim(new Claim("Username", UserDetails[0].Username ?? ""));
-                claims.AddClaim(new Claim(ClaimTypes.Name, UserDetails[0].FirstName + " " + UserDetails[0].MiddleName + " " + UserDetails[0].LastName));
-                claims.AddClaim(new Claim(ClaimTypes.Email, UserDetails[0].Email ?? ""));
-                claims.AddClaim(new Claim("Phone", UserDetails[0].Phone ?? ""));
-                claims.AddClaim(new Claim("TenantId", UserDetails[0].TenantId.ToString().ToUpper() ?? ""));
-                claims.AddClaim(new Claim("ParentTenantId", UserDetails[0].ParentTenantId.ToString().ToUpper() ?? ""));
-               // claims.AddClaim(new Claim("CompanyCode", user.CompanyCode));
-                claims.AddClaim(new Claim("CompanyCode", UserDetails[0].Code));
-                claims.AddClaim(new Claim("CompanyName", UserDetails[0].CompanyName));
-                claims.AddClaim(new Claim("IsTenant", IsTenant.ToString()));
-              //  AppConstant.IsTenant = IsTenant;
-                //// Store GHL Credentials in Claims
-                //claims.AddClaim(new Claim("GHL_APIKey", GHLres.APIkey ?? ""));
-                //claims.AddClaim(new Claim("GHL_BaseAddress", GHLres.BaseAddress ?? ""));
-                //claims.AddClaim(new Claim("GHL_PipelineId", GHLres.PipelineId ?? ""));
-                //claims.AddClaim(new Claim("GHL_Locationd", GHLres.StageId ?? ""));
-                // Fetch GHL Configuration (Ensure to await the method)
+            
+            // Add role claims
+            foreach (var role in userRoles)
+            {
+                claims.AddClaim(new Claim(ClaimTypes.Role, role.PermissionName));
+            }
+
+            // Add user claims
+            var isTenant = string.IsNullOrEmpty(userDetail.ParentTenantId);
+            
+            claims.AddClaim(new Claim("UserId", userDetail.UserId.ToString().ToUpper()));
+            claims.AddClaim(new Claim("Username", userDetail.Username ?? string.Empty));
+            claims.AddClaim(new Claim(ClaimTypes.Name, $"{userDetail.FirstName} {userDetail.MiddleName} {userDetail.LastName}".Trim()));
+            claims.AddClaim(new Claim(ClaimTypes.Email, userDetail.Email ?? string.Empty));
+            claims.AddClaim(new Claim("Phone", userDetail.Phone ?? string.Empty));
+            claims.AddClaim(new Claim("TenantId", userDetail.TenantId.ToString().ToUpper()));
+            claims.AddClaim(new Claim("ParentTenantId", userDetail.ParentTenantId?.ToUpper() ?? string.Empty));
+            claims.AddClaim(new Claim("CompanyCode", userDetail.Code));
+            claims.AddClaim(new Claim("CompanyName", userDetail.CompanyName));
+            claims.AddClaim(new Claim("IsTenant", isTenant.ToString()));
                
                 var tokenHandler = new JwtSecurityTokenHandler();
                 var key = Encoding.UTF8.GetBytes(AppConstant.JWTSecretKey);
+
                 var tokenDescriptor = new SecurityTokenDescriptor
                 {
                     Subject = claims,
@@ -151,13 +576,15 @@ namespace ShutterManagement.Services
                 };
 
                 var token = tokenHandler.CreateToken(tokenDescriptor);
-                string TokenValue = tokenHandler.WriteToken(token);
+            return tokenHandler.WriteToken(token);
+        }
 
-                responseVm.Data = mapper.Map(UserDetails[0], loginDetails);
-                responseVm.Data.Roles = UserRole
-                    .Select(x => x.PermissionName).ToArray();
-
-                responseVm.Data.Menu = UserRole
+        private UserLoginDetails BuildLoginResponse(LoginDetails userDetail, List<UserRoles> userRoles, string token)
+        {
+            var loginDetails = _mapper.Map<UserLoginDetails>(userDetail);
+            
+            loginDetails.Roles = userRoles.Select(x => x.PermissionName).ToArray();
+            loginDetails.Menu = userRoles
                     .Select(x => new LoginRoles
                     {
                         RoleName = RoleNameHelper.CleanRoleName(x.PermissionName),
@@ -168,49 +595,40 @@ namespace ShutterManagement.Services
                     .Where(x => !string.IsNullOrWhiteSpace(x.RoleName))
                     .ToArray();
              
-                   bool IsGHLConfigSameAsTenant = (bool)UserDetails[0].IsGHLConfigSameAsTenant;
-                
-                responseVm.Data.IsGHLConfigSameAsTenant = IsGHLConfigSameAsTenant;
-                responseVm.Data.Token = TokenValue;
-                responseVm.Data.IsTenant = IsTenant;
-                responseVm.IsSuccess = true;
-                responseVm.Message = AppConstant.LoginSuccessMessage;
-                responseVm.TotalRecords = 1;
+            loginDetails.IsGHLConfigSameAsTenant = userDetail.IsGHLConfigSameAsTenant;
+            loginDetails.Token = token;
+            loginDetails.IsTenant = string.IsNullOrEmpty(userDetail.ParentTenantId);
 
-                await gHLConfiguration.GetGHLConfiguration(UserDetails[0].TenantId.ToString());
-               // await stripeConfiguration.GetStripeConfiguration(UserDetails[0].TenantId.ToString());
-            }
-            else
-            {
-                responseVm.Message = AppConstant.InvalidCred;
-            }
-            return responseVm;
+            return loginDetails;
         }
 
-        public async Task<IResponseVm<HomePageContent>> HomePageContent(string CompanyCode)
+        private async Task<TblTenant> GetTenantByCodeAsync(string companyCode)
         {
-            IResponseVm<HomePageContent> responseVm = new ResponseVm<HomePageContent>();
-            if (string.IsNullOrEmpty(CompanyCode))
-            {
-                responseVm.Message = "Company code required.";
-                return responseVm;
-            }
+            return await _tenantService.GetAllQuerable()
+                .Where(x => x.Code == companyCode && x.IsDelete != true && x.IsActive == true)
+                .FirstOrDefaultAsync();
+        }
 
-            var TenantHomePageData = await tenantService.GetAllQuerable().Where(x => x.Code == CompanyCode
-            && x.IsDelete == false && x.IsActive == true).FirstOrDefaultAsync();
-            if (TenantHomePageData != null)
+        private async Task<TblTenantBrandingInfo> GetTenantBrandingInfoAsync(Guid? brandingInfoId)
+        {
+            if (!brandingInfoId.HasValue)
+                return null;
+
+            return await _tenantBrandingService.GetAllQuerable()
+                .Where(x => x.Id == brandingInfoId.Value)
+                .FirstOrDefaultAsync();
+        }
+
+        private static HomePageContent CreateHomePageContent(TblTenant tenant, TblTenantBrandingInfo brandInfo)
+        {
+            return new HomePageContent
             {
-                var brandInfo = await tenantBrandingService.GetAllQuerable().Where(x => x.Id == TenantHomePageData.BrandingInfo).FirstOrDefaultAsync();
-                if (brandInfo != null)
-                {
-                    HomePageContent homePageContent = new HomePageContent
-                    {
-                        Code = TenantHomePageData.Code,
-                        URL = TenantHomePageData.Url,
-                        FirstName = TenantHomePageData.FirstName,
-                        LastName = TenantHomePageData.LastName,
-                        suffix=TenantHomePageData.Suffix,
-                        MiddleName = TenantHomePageData.MiddleName,
+                Code = tenant.Code,
+                URL = tenant.Url,
+                FirstName = tenant.FirstName,
+                LastName = tenant.LastName,
+                suffix = tenant.Suffix,
+                MiddleName = tenant.MiddleName,
                         Email = brandInfo.Email,
                         PhoneNumber = brandInfo.PhoneNumber,
                         Logo = brandInfo.Logo,
@@ -218,332 +636,202 @@ namespace ShutterManagement.Services
                         SecondaryColor = brandInfo.SecondaryColor,
                         CompanyName = brandInfo.CompanyName,
                     };
-
-                    responseVm.IsSuccess = true;
-                    responseVm.Data = homePageContent;
-                }
-
-            }
-            else
-            {
-                responseVm.Message = AppConstant.TenantNotFound;
-            }
-            return responseVm;
         }
 
-        public async Task<IResponseVm<PasswordChangeVm>> ResetPassWord(PasswordChangeVm vm)
+        private async Task<TblUser> GetUserForPasswordChangeAsync(string oldPassword)
         {
-            IResponseVm<PasswordChangeVm> result = new ResponseVm<PasswordChangeVm>();
-            try
-            {
-                var IsUserExists = (await GetAll()).Where(x => x.IsDelete == false 
-                && x.IsActive == true && x.Id == claimsProperty.GetUserId() && x.Pwd == AesEncryptionHelper.Encrypt(vm.OldPassWord ?? "") && x.TenantId == claimsProperty.GetTenantId()).FirstOrDefault();
-                if(IsUserExists != null)
-                {
-                    IsUserExists.Pwd = AesEncryptionHelper.Encrypt(vm.PassWord ?? "");
-                    IsUserExists.ModifiedAt = DateTime.Now;
-                    IsUserExists.ModifiedBy= claimsProperty.GetUserId();
-                    IsUserExists.ExpireAt = null;
-                    IsUserExists.Token = null;
-                    await Update(IsUserExists);
-                    result.IsSuccess = true;
-                    result.Message = AppConstant.PasswordChangeMessage;
-                }
-                else
-                {
-                    result.Message = AppConstant.NoUserFound;
-                }
-            }
-            catch (Exception ex)
-            {
-                result.Message = ex.Message;
-                return result;
-            }
-            return result;
+            var hashPassword = AesEncryptionHelper.Encrypt(oldPassword);
+            
+            return await GetAllQuerable()
+                .Where(x => x.IsDelete != true && x.IsActive == true && 
+                           x.Id == _claimsProperty.GetUserId() && 
+                           x.Pwd == hashPassword && 
+                           x.TenantId == _claimsProperty.GetTenantId())
+                .FirstOrDefaultAsync();
         }
 
-        public async Task<IResponseVm<string>> ProfileUpdate(ProfileUpdateVm profileUpdate)
+        private async Task UpdateUserPasswordAsync(TblUser user, string newPassword)
         {
-            IResponseVm<string> result = new ResponseVm<string>();
-            try
+            user.Pwd = AesEncryptionHelper.Encrypt(newPassword);
+            user.ModifiedAt = DateTime.Now;
+            user.ModifiedBy = _claimsProperty.GetUserId();
+            user.ExpireAt = null;
+            user.Token = null;
+            
+            await Update(user);
+        }
+
+        private async Task<TblUser> GetCurrentUserAsync()
+        {
+            return await GetAllQuerable()
+                .Where(x => x.IsDelete != true && x.IsActive == true && 
+                           x.Id == _claimsProperty.GetUserId() && 
+                           x.TenantId == _claimsProperty.GetTenantId())
+                .FirstOrDefaultAsync();
+        }
+
+        private async Task<bool> IsPhoneAlreadyExistsAsync(string phone, Guid currentUserId)
+        {
+            return await AnyAsync(x => x.IsDelete != true && 
+                                     x.Phone == phone && 
+                                     x.Id != currentUserId && 
+                                     x.TenantId == _claimsProperty.GetTenantId());
+        }
+
+        private async Task UpdateUserProfileAsync(TblUser user, ProfileUpdateVm profileUpdate)
+        {
+            user.FirstName = profileUpdate.FirstName;
+            user.LastName = profileUpdate.LastName;
+            user.Suffix = profileUpdate.suffix;
+            user.Phone = profileUpdate.Phone;
+            user.ModifiedAt = DateTime.Now;
+            user.ModifiedBy = _claimsProperty.GetUserId();
+            
+            await Update(user);
+        }
+
+        private async Task CreateNotificationAsync(NotificationModule module, string body)
+        {
+            var notification = new CreateNotification
             {
-                var UserExistsDetails = GetAllQuerable().Where(x => x.IsDelete == false && x.IsActive == true &&
-                x.Id == (claimsProperty.GetUserId())
-                && x.TenantId == claimsProperty.GetTenantId()
-                ).FirstOrDefault();
-                if (UserExistsDetails != null)
-                {
-
-                    bool IsPhoneExists = await AnyAsync(x => x.IsDelete == false &&
-                    (x.Phone == profileUpdate.Phone) && x.Id != claimsProperty.GetUserId() && x.TenantId == claimsProperty.GetTenantId());
-                    if (IsPhoneExists)
-                    {
-                        result.Message = "Phone " + AppConstant.AlreadyExists;
-                        return result;
-                    }
-
-                    //bool IsEmailExists = await AnyAsync(x => x.IsDelete == false &&
-                    //  (x.Email == profileUpdate.Email) && x.Id != claimsProperty.GetUserId() && x.TenantId == claimsProperty.GetTenantId());
-                    //if (IsEmailExists)
-                    //{
-                    //    result.Message = "Email " + AppConstant.AlreadyExists;
-                    //    return result;
-                    //}
-
-                    var UpdateUserDetails = UserExistsDetails;
-                    if (UpdateUserDetails != null)
-                    {
-                        UpdateUserDetails.FirstName = profileUpdate.FirstName;
-                        UpdateUserDetails.LastName = profileUpdate.LastName;
-                        UpdateUserDetails.Suffix = profileUpdate.suffix;
-                        //UpdateUserDetails.Username = profileUpdate.Email;
-                        //UpdateUserDetails.Email = profileUpdate.Email;
-                        UpdateUserDetails.Phone = profileUpdate.Phone;
-                        UpdateUserDetails.ModifiedAt = DateTime.Now;
-                        UpdateUserDetails.ModifiedBy = claimsProperty.GetUserId();
-                        var res = await Update(UpdateUserDetails);
-                        result.IsSuccess = true;
-                        result.Message = AppConstant.UpdateSuccessMsg;
-
-                        CreateNotification notification2 = new CreateNotification()
-                        {
-                            UserId = claimsProperty.GetUserId(),
-                            Subject = Enum.GetName(typeof(NotificationModule), NotificationModule.Tenant),
-                            Body = $"Tenant profile {AppConstant.Update_Notification}",
+                UserId = _claimsProperty.GetUserId(),
+                Subject = Enum.GetName(typeof(NotificationModule), module),
+                Body = body,
                             CreatedDate = DateTime.Now,
                             IsReaded = true
                         };
-                        var result1 = notification.CreateNotification(notification2);
-                    }
-                    else
-                    {
-                        result.Message = AppConstant.NoUserFound;
-                    }
-                }
-                else
-                {
-                    result.Message = AppConstant.NoUserFound;
-                }
-            }
-            catch (Exception ex)
-            {
-                result.Message = AppConstant.ExceptionError + ex.Message;
-            }
-            return result;
+            
+            await _notification.CreateNotification(notification);
         }
 
-        public async Task<IResponseVm<UserResponse>> ProfileGetById()
+        private async Task<UserResponse> GetUserProfileAsync()
         {
-            IResponseVm<UserResponse> responseVm = new ResponseVm<UserResponse>();
-            try
-            {
-                var address = await GetAllQuerable()
-                    .Where(c => c.Id == claimsProperty.GetUserId() && c.IsActive == true && c.IsDelete == false && c.TenantId == claimsProperty.GetTenantId())
+            return await GetAllQuerable()
+                .Where(c => c.Id == _claimsProperty.GetUserId() && c.IsActive == true && c.IsDelete != true && 
+                           c.TenantId == _claimsProperty.GetTenantId())
                     .Select(c => new UserResponse
                     {
                         FirstName = c.FirstName,
                         LastName = c.LastName,
-                        suffix=c.Suffix??"",
+                    suffix = c.Suffix ?? string.Empty,
                         Email = c.Email,
                         UserName = c.Username,
                         Phone = c.Phone
                     })
                     .FirstOrDefaultAsync();
-
-                if (address != null)
-                {
-                    responseVm.IsSuccess = true;
-                    responseVm.Message = $"{AppConstant.FetchSuccessMsg}";
-                    responseVm.Data = address;
-                    responseVm.TotalRecords = 1;
-                }
-                else
-                {
-                    responseVm.Message = AppConstant.NoDataFound;
-                }
-            }
-            catch (Exception ex)
-            {
-                responseVm.Message = AppConstant.ExceptionError + ex.Message;
-            }
-            return responseVm;
         }
 
-        public async Task<IResponseVm<string>> ForgetPassword(ForgetPassword forgetPassword)
+        private async Task<TblUser> GetUserByEmailAsync(string email)
         {
-            IResponseVm<string> result = new ResponseVm<string>();
-            try
-            {
-                var user = (await GetAll())
-                    .FirstOrDefault(x => x.IsActive ==true && x.IsDelete==false && x.Email == forgetPassword.Email);
-
-                if (user == null)
-                {
-                    result.IsSuccess = false;
-                    result.Message = AppConstant.UserNotExist;
-                    return result;
-                }
-
-                var verifyCode = tenantService.GetAllQuerable()
-                    .FirstOrDefault(x => x.Code == forgetPassword.Code && x.IsActive==true && x.IsDelete==false);
-
-                if (verifyCode == null)
-                {
-                    result.IsSuccess = false;
-                    result.Message = "Code does not Exist.";
-                    return result;
-                }
-
-                var isRelateToTenant = await tenantService.AnyAsync(x =>
-                    x.IsDelete==false && x.IsActive==true &&
-                    (x.TenantId == verifyCode.TenantId || x.ParentTenantId == verifyCode.TenantId) &&
-                    x.TenantId == user.TenantId);
-
-                if (!isRelateToTenant)
-                {
-                    result.IsSuccess = false;
-                    result.Message = AppConstant.UserNotExist;
-                    return result;
-                }
-
-                var token = GenerateTokenForgotPassword(user.Email ?? "", user.Id);
-                if (string.IsNullOrEmpty(token))
-                {
-                    result.IsSuccess = false;
-                    result.Message = "TokenGeneration getting Failed.";
-                    return result;
-                }
-
-                //string resetLink = $"{AppConstant.UIBaseURL}reset-password/{forgetPassword.Code}/{token}";
-
-                user.Token = token;
-                user.ModifiedAt = DateTime.Now;
-                await Update(user);
-
-                var content = $"Please reset your password using the following link: <a href='{AppConstant.UIBaseURL}reset-password/{forgetPassword.Code}/{token}'>Reset Password</a>";
-                EmailHelper.ForgotPassword(user.Email, content);
-                result.IsSuccess = true;
-                result.Message = AppConstant.ForgotPasswordSuccess;
-
-                CreateNotification notification2 = new CreateNotification()
-                {
-                    UserId = claimsProperty.GetUserId(),
-                    Subject = Enum.GetName(typeof(NotificationModule), NotificationModule.Tenant),
-                    Body = $"Tenant password {AppConstant.Update_Notification}",
-                    CreatedDate = DateTime.Now,
-                    IsReaded = true
-                };
-                var result1 = notification.CreateNotification(notification2);
-            }
-            catch (Exception ex)
-            {
-                result.Message = $"{AppConstant.ExceptionError} {ex.Message}";
-            }
-
-            return result;
+            return await GetAllQuerable()
+                .Where(x => x.IsActive == true && x.IsDelete != true && x.Email == email)
+                .FirstOrDefaultAsync();
         }
 
-        private string GenerateTokenForgotPassword(string Email, Guid UserId)
+        private async Task<bool> ValidateCompanyCodeAsync(string code, Guid userTenantId)
         {
-            DateTime PasswordExpiry = DateTime.Now.AddMinutes(Convert.ToInt32(AppConstant.JwtExpiryTime));
-            var securitykey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(AppConstant.JWTSecretKey));
-            var credentials = new SigningCredentials(securitykey, SecurityAlgorithms.HmacSha256);
+            var tenant = await _tenantService.GetAllQuerable()
+                .Where(x => x.Code == code && x.IsActive == true && x.IsDelete != true)
+                .FirstOrDefaultAsync();
+
+            if (tenant == null)
+                return false;
+
+            return await _tenantService.AnyAsync(x => x.IsDelete != true && x.IsActive == true &&
+                                                     (x.TenantId == tenant.TenantId || x.ParentTenantId == tenant.TenantId) &&
+                                                     x.TenantId == userTenantId);
+        }
+
+        private string GeneratePasswordResetToken(string email, Guid userId)
+        {
+            var passwordExpiry = DateTime.Now.AddMinutes(Convert.ToInt32(AppConstant.JwtExpiryTime));
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(AppConstant.JWTSecretKey));
+            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+            
             var claims = new List<Claim>
         {
-          new Claim("UserId",UserId.ToString()),
-          new Claim("EmailId",Email.ToString()),
-          new Claim("ExpiredOn",PasswordExpiry.ToString())
-         };
-            var token = new JwtSecurityToken(AppConstant.JwtIssuer, AppConstant.JwtAudience, claims,
-                         expires: PasswordExpiry, signingCredentials: credentials);
+                new Claim("UserId", userId.ToString()),
+                new Claim("EmailId", email),
+                new Claim("ExpiredOn", passwordExpiry.ToString())
+            };
+            
+            var token = new JwtSecurityToken(
+                AppConstant.JwtIssuer, 
+                AppConstant.JwtAudience, 
+                claims,
+                expires: passwordExpiry, 
+                signingCredentials: credentials);
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        private string DecodeJwt(string Token, Guid UserId, string Email)
+        private async Task UpdateUserTokenAsync(TblUser user, string token)
         {
-            string res = "";
-            var handler = new JwtSecurityTokenHandler();
-            var token = handler.ReadJwtToken(Token);
-            var claims = token.Claims.Select(claim => (claim.Type, claim.Value)).ToList();
-            if (claims.Any(x => x.Type == "ExpiredOn" && Convert.ToDateTime(x.Value) < DateTime.Now))
-            {
-                res = "Token Expired.";
-                return res;
-            }
-            if (claims.Any(x => x.Type == "UserId" && Guid.Parse(x.Value) != UserId))
-            {
-                res = "Invalid User.";
-                return res;
-            }
-            if (claims.Any(x => x.Type == "EmailId" && x.Value != Email))
-            {
-                res = "Invalid User Email.";
-                return res;
-            }
-            return res;
+            user.Token = token;
+            user.ModifiedAt = DateTime.Now;
+            await Update(user);
         }
 
-        public async Task<IResponseVm<string>> VerifyForgetPassword(VerifyPassword verifyPassword)
+        private async Task SendPasswordResetEmailAsync(string email, string companyCode, string token)
         {
-            IResponseVm<string> result = new ResponseVm<string>();
+            var resetLink = $"{AppConstant.UIBaseURL}reset-password/{companyCode}/{token}";
+            var content = $"Please reset your password using the following link: <a href='{resetLink}'>Reset Password</a>";
+            
+            EmailHelper.ForgotPassword(email, content);
+        }
 
+        private async Task<TblUser> GetUserByTokenAsync(string token)
+        {
+            return await GetAllQuerable()
+                .Where(x => x.IsDelete != true && x.IsActive == true && x.Token == token)
+                .FirstOrDefaultAsync();
+        }
+
+        private string ValidatePasswordResetToken(string token, Guid userId, string email)
+        {
             try
             {
-                var tokenValidationResult = verifyPassword.Token;
-                if (!string.IsNullOrEmpty(tokenValidationResult))
-                {
-                    var IsUserTokenExists = (await GetAll())
-                        .Where(x => x.IsDelete == false && x.IsActive == true && x.Token == verifyPassword.Token)
-                        .FirstOrDefault();
-                    if (IsUserTokenExists == null)
-                    {
-                        result.Message = "Invalid Link.";
-                        return result;
-                    }
-                    var res = DecodeJwt(verifyPassword.Token ?? "", IsUserTokenExists.Id, IsUserTokenExists.Email ?? "");
-                    if (string.IsNullOrEmpty(res))
-                    {
-                        IsUserTokenExists.Token = null;
-                        IsUserTokenExists.ModifiedAt = DateTime.Now;
-                        IsUserTokenExists.Pwd = AesEncryptionHelper.Encrypt(verifyPassword.Password);
-                        await Update(IsUserTokenExists);
+                var handler = new JwtSecurityTokenHandler();
+                var jwtToken = handler.ReadJwtToken(token);
+                var claims = jwtToken.Claims.Select(claim => (claim.Type, claim.Value)).ToList();
 
-                        EmailHelper.ResetPassword(IsUserTokenExists.Email);
-                        result.Message = AppConstant.PasswordChangeMessage;
-                    }
-                    else
-                    {
-                        result.Message = res;
-                    }
-                }
-                else
-                {
-                    result.Message = "Invalid or malformed token.";
-                }
+                if (claims.Any(x => x.Type == "ExpiredOn" && Convert.ToDateTime(x.Value) < DateTime.Now))
+                    return "Token expired.";
+
+                if (claims.Any(x => x.Type == "UserId" && Guid.Parse(x.Value) != userId))
+                    return "Invalid user.";
+
+                if (claims.Any(x => x.Type == "EmailId" && x.Value != email))
+                    return "Invalid user email.";
+
+                return string.Empty;
             }
-            catch (Exception ex)
+            catch
             {
-                result.Message = AppConstant.ExceptionError + ex.Message;
+                return "Invalid token format.";
             }
-            return result;
         }
 
-        public async Task<IResponseVm<string>> GenerateToken()
+        private async Task ResetUserPasswordAsync(TblUser user, string newPassword)
         {
-            IResponseVm<string> result = new ResponseVm<string>();
-            FileLogger.Log("Generate Token start");
+            user.Token = null;
+            user.ModifiedAt = DateTime.Now;
+            user.Pwd = AesEncryptionHelper.Encrypt(newPassword);
+            
+            await Update(user);
+        }
+
+        private string CreateNonExpiringToken()
+        {
             var claims = new List<Claim>
     {
-        new Claim("tenant_id", claimsProperty.GetTenantId().ToString()),
+                new Claim("tenant_id", _claimsProperty.GetTenantId().ToString()),
         new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
         new Claim(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64)
     };
-            FileLogger.Log("Generate Token claims",claims);
 
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.UTF8.GetBytes(AppConstant.JWTSecretKey);
-            FileLogger.Log("AppConstant.JWTSecretKey", AppConstant.JWTSecretKey);
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
@@ -551,163 +839,96 @@ namespace ShutterManagement.Services
                 Issuer = AppConstant.JwtIssuer,
                 Audience = AppConstant.JwtAudience,
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-                // Expires is removed to make token never expire
+                // Expires is intentionally omitted to make token never expire
             };
 
             var token = tokenHandler.CreateToken(tokenDescriptor);
-            FileLogger.Log("token", token);
-
-            string TokenValue = tokenHandler.WriteToken(token);
-
-            var GHLConfig = gHLConfiguration.GetAllQuerable().Where(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true
-            && x.IsDelete == false).FirstOrDefault();
-            if(GHLConfig != null)
-            {
-                GHLConfig.GeneratedToken = TokenValue;
-                await gHLConfiguration.Update(GHLConfig);
-            }
-            result.IsSuccess = true;
-            result.Data = TokenValue;
-            FileLogger.Log("IsSuccess", true);
-
-            return result;
+            return tokenHandler.WriteToken(token);
         }
 
-        public IResponseVm<string> ReadTokenDetails(string token)
+        private async Task UpdateGHLConfigurationTokenAsync(string token)
         {
-            IResponseVm<string> result = new ResponseVm<string>();
-            var handler = new JwtSecurityTokenHandler();
-            var jwtToken = handler.ReadJwtToken(token);
+            var ghlConfig = await _ghlConfiguration.GetAllQuerable()
+                .Where(x => x.TenantId == _claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete != true)
+                .FirstOrDefaultAsync();
 
-            if (jwtToken == null)
+            if (ghlConfig != null)
             {
-                Console.WriteLine("Invalid token.");
-                return result;
+                ghlConfig.GeneratedToken = token;
+                await _ghlConfiguration.Update(ghlConfig);
             }
-
-            var tenantId = jwtToken.Claims.FirstOrDefault(c => c.Type == "tenant_id")?.Value;
-
-           result.IsSuccess = true;
-            result.Data = tenantId;
-            return result;
         }
 
-        public async Task<IResponseVm<Dictionary<string, string>>> GenerateLetterOnlyUniqueCodeAsync(string inputName)
+        private static string ExtractTenantIdFromToken(string token)
         {
-            IResponseVm<Dictionary<string, string>> response = new ResponseVm<Dictionary<string, string>>();
-
-            if (string.IsNullOrWhiteSpace(inputName))
-            {
-                response.IsSuccess = false;
-                response.Message = "Input cannot be empty.";
-                return response;
-            }
-
-            // Clean input: Only letters
-            string cleaned = new string(inputName.Where(char.IsLetter).ToArray());
-            if (string.IsNullOrEmpty(cleaned) || cleaned.Length < 3)
-            {
-                response.IsSuccess = false;
-                response.Message = "Input must contain at least 3 valid letters.";
-                return response;
-            }
-
-            string code = "";
-            string invoicePrefix = "";
-            int attempt = 0;
-            const int maxAttempts = 50;
-
             try
             {
-                Random rng = new Random();
-
-                // Try generating unique lowercase code
-                while (attempt < maxAttempts)
-                {
-                    string shuffled = new string(cleaned.OrderBy(_ => rng.Next()).ToArray());
-                    string candidateCode = shuffled.Substring(0, Math.Min(10, shuffled.Length)).ToLowerInvariant();
-
-                    if (candidateCode.Length < 3)
-                    {
-                        attempt++;
-                        continue;
-                    }
-
-                    bool isCodeExists = await tenantService.AnyAsync(x =>
-                        x.IsActive == true && x.IsDelete == false && x.Code == candidateCode);
-
-                    if (!isCodeExists)
-                    {
-                        code = candidateCode;
-                        break;
-                    }
-
-                    attempt++;
-                }
-
-                if (string.IsNullOrEmpty(code))
-                {
-                    response.IsSuccess = false;
-                    response.Message = "Failed to generate a unique code.";
-                    return response;
-                }
-
-                // Reset attempt for prefix
-                attempt = 0;
-
-                while (attempt < maxAttempts)
-                {
-                    string shuffled = new string(cleaned.OrderBy(_ => rng.Next()).ToArray());
-                    string candidatePrefix = shuffled.Substring(0, Math.Min(10, shuffled.Length)).ToUpperInvariant();
-
-                    if (candidatePrefix.Length < 3)
-                    {
-                        attempt++;
-                        continue;
-                    }
-
-                    bool isPrefixExists = await dbContext.TblTenantBrandingInfos.AnyAsync(x =>
-                        x.IsActive == true && x.IsDelete == false && x.InvoicePrefix == candidatePrefix);
-
-                    string lowerPrefix = candidatePrefix.ToLowerInvariant();
-
-                    bool conflicts = lowerPrefix == code ||
-                                     code.StartsWith(lowerPrefix.Substring(0, 3)) ||
-                                     code.EndsWith(lowerPrefix.Substring(lowerPrefix.Length - 3, 3));
-
-                    if (!isPrefixExists && !conflicts)
-                    {
-                        invoicePrefix = candidatePrefix;
-                        break;
-                    }
-
-                    attempt++;
-                }
-
-                if (string.IsNullOrEmpty(invoicePrefix))
-                {
-                    response.IsSuccess = false;
-                    response.Message = "Failed to generate a valid unique invoice prefix.";
-                    return response;
-                }
-
-                response.IsSuccess = true;
-                response.Message = "Unique codes generated successfully.";
-                response.Data = new Dictionary<string, string>
-        {
-            { "Code", code },
-            { "InvoicePrefix", invoicePrefix }
-        };
+                var handler = new JwtSecurityTokenHandler();
+                var jwtToken = handler.ReadJwtToken(token);
+                return jwtToken.Claims.FirstOrDefault(c => c.Type == "tenant_id")?.Value;
             }
-            catch (Exception ex)
+            catch
             {
-                response.IsSuccess = false;
-                response.Message = $"Error occurred while generating codes: {ex.Message}";
+                return null;
             }
-
-            return response;
         }
 
+        private static string CleanInputForCodeGeneration(string input)
+        {
+            return new string(input.Where(char.IsLetter).ToArray());
+        }
+
+        private async Task<string> GenerateUniqueCodeAsync(string cleanedInput)
+        {
+            var rng = new Random();
+            
+            for (int attempt = 0; attempt < MAX_GENERATION_ATTEMPTS; attempt++)
+            {
+                var shuffled = new string(cleanedInput.OrderBy(_ => rng.Next()).ToArray());
+                var candidateCode = shuffled.Substring(0, Math.Min(MAX_CODE_LENGTH, shuffled.Length)).ToLowerInvariant();
+
+                if (candidateCode.Length < MIN_CODE_LENGTH)
+                        continue;
+
+                var codeExists = await _tenantService.AnyAsync(x => x.IsActive == true && x.IsDelete != true && x.Code == candidateCode);
+                if (!codeExists)
+                    return candidateCode;
+            }
+
+            return null;
+        }
+
+        private async Task<string> GenerateUniqueInvoicePrefixAsync(string cleanedInput, string excludeCode)
+        {
+            var rng = new Random();
+            
+            for (int attempt = 0; attempt < MAX_GENERATION_ATTEMPTS; attempt++)
+            {
+                var shuffled = new string(cleanedInput.OrderBy(_ => rng.Next()).ToArray());
+                var candidatePrefix = shuffled.Substring(0, Math.Min(MAX_CODE_LENGTH, shuffled.Length)).ToUpperInvariant();
+
+                if (candidatePrefix.Length < MIN_CODE_LENGTH)
+                    continue;
+
+                var prefixExists = await dbContext.TblTenantBrandingInfos
+                    .AnyAsync(x => x.IsActive == true && x.IsDelete != true && x.InvoicePrefix == candidatePrefix);
+
+                if (prefixExists || HasCodeConflict(candidatePrefix.ToLowerInvariant(), excludeCode))
+                    continue;
+
+                return candidatePrefix;
+            }
+
+            return null;
+        }
+
+        private static bool HasCodeConflict(string prefix, string code)
+        {
+            return prefix == code ||
+                   code.StartsWith(prefix.Substring(0, MIN_CODE_LENGTH)) ||
+                   code.EndsWith(prefix.Substring(prefix.Length - MIN_CODE_LENGTH, MIN_CODE_LENGTH));
+        }
+        #endregion
     }
 }
 

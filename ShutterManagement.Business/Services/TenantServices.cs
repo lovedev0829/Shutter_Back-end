@@ -17,6 +17,7 @@ using ShutterManagement.Core;
 using AutoMapper;
 using ShutterManagement.Core.Common;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using ShutterManagement.Core.SPModel.SP_Responses;
 
 namespace ShutterManagement.Business.Services
 {
@@ -395,6 +396,139 @@ namespace ShutterManagement.Business.Services
             }
             return responseVm;
 
+        }
+
+        public async Task<IResponseVm<List<TenantList>>> GetTenantsListByUsername(string UserName)
+        {
+            IResponseVm<List<TenantList>> responseVm = new ResponseVm<List<TenantList>>();
+
+            try
+            {
+                var users = userService.GetAllQuerable().Where(u => u.Username == UserName && u.IsDelete == false && u.IsActive == true).ToList();
+                var tenantIds = users.Select(u => u.TenantId).Distinct().ToList();
+
+                var tenants = GetAllQuerable().Where(t => tenantIds.Contains(t.TenantId) && t.IsDelete == false).ToList();
+                
+                var tenantList = new List<TenantList>();
+                
+                foreach (var tenant in tenants)
+                {
+                    var brandingInfo = tenantBrandingService.GetAllQuerable().Where(x => x.Id == tenant.BrandingInfo && x.IsDelete == false).FirstOrDefault();
+                    
+                    tenantList.Add(new TenantList
+                    {
+                        TenantId = tenant.TenantId,
+                        FirstName = tenant.FirstName,
+                        MiddleName = tenant.MiddleName,
+                        LastName = tenant.LastName,
+                        Code = tenant.Code,
+                        URL = tenant.Url,
+                        Email = brandingInfo?.Email,
+                        PhoneNumber = brandingInfo?.PhoneNumber,
+                        Logo = brandingInfo?.Logo,
+                        PrimaryColor = brandingInfo?.PrimaryColor,
+                        SecondaryColor = brandingInfo?.SecondaryColor,
+                        IsActive = tenant.IsActive,
+                        IsDelete = tenant.IsDelete
+                    });
+                }
+
+                responseVm.Data = tenantList;
+                responseVm.IsSuccess = true;
+                responseVm.Message = AppConstant.UpdateSuccessMsg;
+            }
+            catch(Exception ex)
+            {
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+            }
+
+            return responseVm;
+        }
+
+        public async Task<IResponseVm<object>> GetUserDataForTenantSwitch(string UserName, string TenantId)
+        {
+            IResponseVm<object> responseVm = new ResponseVm<object>();
+
+            try
+            {
+                var user = userService.GetAllQuerable()
+                    .Where(u => u.Username == UserName && u.TenantId.ToString() == TenantId && u.IsDelete == false && u.IsActive == true)
+                    .FirstOrDefault();
+
+                if (user == null)
+                {
+                    responseVm.Message = "User not found for the selected tenant";
+                    return responseVm;
+                }
+
+                var tenant = GetAllQuerable().Where(t => t.TenantId.ToString() == TenantId && t.IsDelete == false).FirstOrDefault();
+                if (tenant == null)
+                {
+                    responseVm.Message = "Tenant not found";
+                    return responseVm;
+                }
+
+                var brandingInfo = tenantBrandingService.GetAllQuerable().Where(x => x.Id == tenant.BrandingInfo && x.IsDelete == false).FirstOrDefault();
+
+                // Get user roles and permissions for this tenant using stored procedure
+                var userRoles = await dataServices.CallSPtoRead<UserRoles>("Sp_GetLoggedinUserRoles", reader =>
+                {
+                    return new UserRoles
+                    {
+                        PermissionId = reader.GetGuid(reader.GetOrdinal("Id")),
+                        PermissionName = reader.GetString(reader.GetOrdinal("Name")),
+                        PermissionDisplayName = reader.GetString(reader.GetOrdinal("DisplayName")),
+                        ModuleDisplayName = reader.GetString(reader.GetOrdinal("ModuleDisplayName")),
+                        Icon = reader.GetString(reader.GetOrdinal("Icon")),
+                        Url = reader.GetString(reader.GetOrdinal("Url"))
+                    };
+                },
+                new SqlParameter("@UserId", SqlDbType.UniqueIdentifier) { SqlValue = user.Id });
+
+                var roles = userRoles.Select(x => x.PermissionName).ToArray();
+                var menu = userRoles
+                    .Select(x => new 
+                    {
+                        roleName = RoleNameHelper.CleanRoleName(x.PermissionName),
+                        icon = x.Icon,
+                        url = x.Url
+                    })
+                    .DistinctBy(x => x.roleName)
+                    .Where(x => !string.IsNullOrWhiteSpace(x.roleName))
+                    .ToArray();
+
+                var userData = new 
+                {
+                    userId = user.Id.ToString(),
+                    username = user.Username,
+                    firstName = user.FirstName,
+                    middleName = user.MiddleName ?? "",
+                    lastName = user.LastName,
+                    email = user.Email,
+                    phone = user.Phone,
+                    tenantId = tenant.TenantId.ToString(),
+                    parentTenantId = tenant.ParentTenantId?.ToString() ?? "",
+                    code = tenant.Code,
+                    companyName = brandingInfo?.CompanyName ?? $"{tenant.FirstName} {tenant.LastName}",
+                    logo = brandingInfo?.Logo ?? "",
+                    primaryColor = brandingInfo?.PrimaryColor ?? "",
+                    secondaryColor = brandingInfo?.SecondaryColor ?? "",
+                    isTenant = tenant.ParentTenantId == null,
+                    suffix = user.Suffix ?? "",
+                    roles = roles,
+                    menu = menu,
+                    isGHLConfigSameAsTenant = tenant.IsGhlconfigSameAsTenant ?? false
+                };
+
+                responseVm.Data = userData;
+                responseVm.IsSuccess = true;
+            }
+            catch (Exception ex)
+            {
+                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+            }
+
+            return responseVm;
         }
 
         public async Task<IResponseVm<List<GetAllTenant>>> TenantGetAll(Pagination filter)
