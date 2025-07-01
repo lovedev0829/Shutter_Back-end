@@ -18,6 +18,9 @@ using AutoMapper;
 using ShutterManagement.Core.Common;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using ShutterManagement.Core.SPModel.SP_Responses;
+using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
+using Microsoft.IdentityModel.Tokens;
 
 namespace ShutterManagement.Business.Services
 {
@@ -29,10 +32,11 @@ namespace ShutterManagement.Business.Services
         private readonly ClaimsProperty claimsProperty;
         private readonly IUserService userService;
         private readonly INotificationService notification;
+        private readonly IGHLConfiguration ghlConfiguration;
        // private readonly GoogleAuthService googleAuthService;
 
         public TenantServices(DataServices dataServices, IMapper mapper, ITenantBrandingService tenantBrandingService
-            , ClaimsProperty claimsProperty, IUserService userService,INotificationService notification/*,GoogleAuthService googleAuthService*/
+            , ClaimsProperty claimsProperty, IUserService userService,INotificationService notification, IGHLConfiguration ghlConfiguration/*,GoogleAuthService googleAuthService*/
             )
         {
             this.dataServices = dataServices;
@@ -41,6 +45,7 @@ namespace ShutterManagement.Business.Services
             this.claimsProperty = claimsProperty;
             this.userService = userService;
             this.notification = notification;
+            this.ghlConfiguration = ghlConfiguration;
             //this.googleAuthService = googleAuthService;
         }
 
@@ -445,9 +450,9 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        public async Task<IResponseVm<object>> GetUserDataForTenantSwitch(string UserName, string TenantId)
+        public async Task<IResponseVm<UserLoginDetails>> GetUserDataForTenantSwitch(string UserName, string TenantId)
         {
-            IResponseVm<object> responseVm = new ResponseVm<object>();
+            IResponseVm<UserLoginDetails> responseVm = new ResponseVm<UserLoginDetails>();
 
             try
             {
@@ -485,43 +490,38 @@ namespace ShutterManagement.Business.Services
                 },
                 new SqlParameter("@UserId", SqlDbType.UniqueIdentifier) { SqlValue = user.Id });
 
-                var roles = userRoles.Select(x => x.PermissionName).ToArray();
-                var menu = userRoles
-                    .Select(x => new 
-                    {
-                        roleName = RoleNameHelper.CleanRoleName(x.PermissionName),
-                        icon = x.Icon,
-                        url = x.Url
-                    })
-                    .DistinctBy(x => x.roleName)
-                    .Where(x => !string.IsNullOrWhiteSpace(x.roleName))
-                    .ToArray();
-
-                var userData = new 
+                // Create login details object for token generation
+                var loginDetail = new LoginDetails
                 {
-                    userId = user.Id.ToString(),
-                    username = user.Username,
-                    firstName = user.FirstName,
-                    middleName = user.MiddleName ?? "",
-                    lastName = user.LastName,
-                    email = user.Email,
-                    phone = user.Phone,
-                    tenantId = tenant.TenantId.ToString(),
-                    parentTenantId = tenant.ParentTenantId?.ToString() ?? "",
-                    code = tenant.Code,
-                    companyName = brandingInfo?.CompanyName ?? $"{tenant.FirstName} {tenant.LastName}",
-                    logo = brandingInfo?.Logo ?? "",
-                    primaryColor = brandingInfo?.PrimaryColor ?? "",
-                    secondaryColor = brandingInfo?.SecondaryColor ?? "",
-                    isTenant = tenant.ParentTenantId == null,
-                    suffix = user.Suffix ?? "",
-                    roles = roles,
-                    menu = menu,
-                    isGHLConfigSameAsTenant = tenant.IsGhlconfigSameAsTenant ?? false
+                    UserId = user.Id,
+                    Username = user.Username,
+                    FirstName = user.FirstName,
+                    MiddleName = user.MiddleName,
+                    LastName = user.LastName,
+                    suffix = user.Suffix,
+                    Email = user.Email,
+                    Phone = user.Phone,
+                    TenantId = tenant.TenantId,
+                    ParentTenantId = tenant.ParentTenantId?.ToString(),
+                    Code = tenant.Code,
+                    Logo = brandingInfo?.Logo ?? "",
+                    PrimaryColor = brandingInfo?.PrimaryColor ?? "",
+                    SecondaryColor = brandingInfo?.SecondaryColor ?? "",
+                    CompanyName = brandingInfo?.CompanyName ?? $"{tenant.FirstName} {tenant.LastName}",
+                    IsGHLConfigSameAsTenant = tenant.IsGhlconfigSameAsTenant ?? false
                 };
 
-                responseVm.Data = userData;
+                // Create new JWT token with updated roles
+                var token = CreateAuthenticationToken(loginDetail, userRoles);
+                
+                var loginDetails = BuildLoginResponse(loginDetail, userRoles, token);
+
+                responseVm.Data = loginDetails;
                 responseVm.IsSuccess = true;
+                responseVm.Message = "Tenant switched successfully with updated permissions.";
+
+                await ghlConfiguration.GetGHLConfiguration(loginDetail.TenantId.ToString());
+
             }
             catch (Exception ex)
             {
@@ -615,6 +615,69 @@ namespace ShutterManagement.Business.Services
             }
             return responseVm;
 
+        }
+
+        private string CreateAuthenticationToken(LoginDetails userDetail, List<UserRoles> userRoles)
+        {
+            var claims = new ClaimsIdentity();
+            
+            // Add role claims
+            foreach (var role in userRoles)
+            {
+                claims.AddClaim(new Claim(ClaimTypes.Role, role.PermissionName));
+            }
+
+            // Add user claims
+            var isTenant = string.IsNullOrEmpty(userDetail.ParentTenantId);
+            
+            claims.AddClaim(new Claim("UserId", userDetail.UserId.ToString().ToUpper()));
+            claims.AddClaim(new Claim("Username", userDetail.Username ?? string.Empty));
+            claims.AddClaim(new Claim(ClaimTypes.Name, $"{userDetail.FirstName} {userDetail.MiddleName} {userDetail.LastName}".Trim()));
+            claims.AddClaim(new Claim(ClaimTypes.Email, userDetail.Email ?? string.Empty));
+            claims.AddClaim(new Claim("Phone", userDetail.Phone ?? string.Empty));
+            claims.AddClaim(new Claim("TenantId", userDetail.TenantId.ToString().ToUpper()));
+            claims.AddClaim(new Claim("ParentTenantId", userDetail.ParentTenantId?.ToUpper() ?? string.Empty));
+            claims.AddClaim(new Claim("CompanyCode", userDetail.Code));
+            claims.AddClaim(new Claim("CompanyName", userDetail.CompanyName));
+            claims.AddClaim(new Claim("IsTenant", isTenant.ToString()));
+               
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = Encoding.UTF8.GetBytes(AppConstant.JWTSecretKey);
+
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = claims,
+                Expires = DateTime.UtcNow.AddMinutes(Convert.ToDouble(AppConstant.JwtExpiryTime)),
+                Issuer = AppConstant.JwtIssuer,
+                Audience = AppConstant.JwtAudience,
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+            };
+
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            return tokenHandler.WriteToken(token);
+        }
+
+        private UserLoginDetails BuildLoginResponse(LoginDetails userDetail, List<UserRoles> userRoles, string token)
+        {
+            var loginDetails = mapper.Map<UserLoginDetails>(userDetail);
+            
+            loginDetails.Roles = userRoles.Select(x => x.PermissionName).ToArray();
+            loginDetails.Menu = userRoles
+                .Select(x => new LoginRoles
+                {
+                    RoleName = RoleNameHelper.CleanRoleName(x.PermissionName),
+                    Icon = x.Icon,
+                    Url = x.Url
+                })
+                .DistinctBy(x => x.RoleName)
+                .Where(x => !string.IsNullOrWhiteSpace(x.RoleName))
+                .ToArray();
+             
+            loginDetails.IsGHLConfigSameAsTenant = userDetail.IsGHLConfigSameAsTenant;
+            loginDetails.Token = token;
+            loginDetails.IsTenant = string.IsNullOrEmpty(userDetail.ParentTenantId);
+
+            return loginDetails;
         }
 
     }
