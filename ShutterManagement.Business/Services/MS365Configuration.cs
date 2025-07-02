@@ -1,4 +1,6 @@
-﻿using Microsoft.Identity.Client;
+﻿
+
+using Microsoft.Identity.Client;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using MimeKit;
@@ -45,7 +47,7 @@ namespace ShutterManagement.Business.Services
              { "response_type", "code" },
              { "redirect_uri", AppConstant.Microsoft365_RedirectUri },
              { "response_mode", "query" },
-             { "scope", "SMTP.Send offline_access User.Read " },
+             { "scope", "SMTP.Send offline_access User.Read Mail.Send Mail.ReadWrite" },
              { "state", Guid.NewGuid().ToString() }
                 };
 
