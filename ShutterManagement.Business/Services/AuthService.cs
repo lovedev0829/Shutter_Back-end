@@ -588,6 +588,7 @@ namespace ShutterManagement.Services
                     .Select(x => new LoginRoles
                     {
                         RoleName = RoleNameHelper.CleanRoleName(x.PermissionName),
+                        RoleDisplayName = x.ModuleDisplayName,
                         Icon = x.Icon,
                         Url = x.Url
                     })
