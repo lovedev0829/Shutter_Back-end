@@ -1173,9 +1173,15 @@ namespace ShutterManagement.Business.Services
                     {
                         ColorMode = ColorMode.Color,
                         Orientation = Orientation.Portrait,
-                        PaperSize = PaperKind.A4
+                        PaperSize = PaperKind.A4,
+                        Margins = new MarginSettings { Top = 0, Bottom = 0, Left = 0, Right = 0 } // Remove all margins
                     },
-                    Objects = { new ObjectSettings { HtmlContent = htmlContent } }
+                    Objects = {
+                        new ObjectSettings {
+                            HtmlContent = htmlContent,
+                            WebSettings = new WebSettings { DefaultEncoding = "utf-8" },
+                        }
+                    }
                 };
 
                 byte[] pdfBytes = converter.Convert(pdfDocument);
