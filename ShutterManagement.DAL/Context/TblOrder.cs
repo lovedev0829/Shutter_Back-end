@@ -52,4 +52,8 @@ public partial class TblOrder
     public Guid? TaxId { get; set; }
 
     public decimal? AdditionalCost { get; set; }
+
+    public bool? IsTaxApplied { get; set; }
+
+    public decimal? TotaltaxAmount { get; set; }
 }

@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using ShutterManagement.Business.Interfaces;
+using ShutterManagement.Core.Common;
+using ShutterManagement.Core.ViewModels;
 using ShutterManagement.Core.ViewModels.Request;
 
 namespace ShutterManagement.Controllers
@@ -12,21 +14,24 @@ namespace ShutterManagement.Controllers
     {
         private readonly IGHLConfiguration gHLConfiguration;
         private readonly IStripeConfiguration stripeConfiguration;
+        private readonly IEmailConfigurationService emailConfigurationService;
 
-        public ConfigurationController(IGHLConfiguration gHLConfiguration,IStripeConfiguration stripeConfiguration) {
+        public ConfigurationController(IGHLConfiguration gHLConfiguration,IStripeConfiguration stripeConfiguration ,
+            IEmailConfigurationService emailConfigurationService) {
             this.gHLConfiguration = gHLConfiguration;
             this.stripeConfiguration = stripeConfiguration;
+            this.emailConfigurationService = emailConfigurationService;
         }
 
         [HttpGet]
         [Route("GetGHLConfiguration")]
         [Authorize(Roles = "GHLView")]
-
-        public async Task<IActionResult> GetGHLConfiguration()
+        public async Task<IActionResult> GetGHLConfiguration(string? code)
         {
-            var res = await gHLConfiguration.GetGHLConfiguration();
+            var res = await gHLConfiguration.GetGHLConfigurations(code);
             return Ok(res);
         }
+
 
         [HttpPost]
         [Route("AddGHLConfiguration")]
@@ -59,6 +64,85 @@ namespace ShutterManagement.Controllers
             return Ok(res);
         }
 
-        
+        [HttpPost]
+        [Route("DeleteConfiguration")]
+        [Authorize(Roles = "StripeEdit,GHLEdit")]
+        public async Task<IActionResult> DeleteStripeOrGHLConfiguration(DeleteType deleteType, Guid? configurationId)
+        {
+            if (deleteType == DeleteType.Stripe)
+            {
+                var stripeResponse = await stripeConfiguration.DeleteStripeConfiguration(configurationId);
+                return Ok(stripeResponse);
+            }
+            else if (deleteType == DeleteType.GHL)
+            {
+                var ghlResponse = await gHLConfiguration.DeleteGHLConfiguration(configurationId);
+                return Ok(ghlResponse);
+            }
+
+            return BadRequest("Invalid delete type.");
+        }
+
+
+        // Email Configuration APIs
+        [HttpPost]
+        [Route("AddOrUpdateEmailConfiguration")]
+        [Authorize(Roles = "EmailConfigurationEdit")]
+        public async Task<IActionResult> AddOrUpdateEmailConfiguration(CreateEmailConfiguration model)
+        {
+            var res = await emailConfigurationService.AddOrUpdateEmailConfiguration(model);
+            return Ok(res);
+        }
+
+
+        [HttpGet]
+        [Route("GetEmailConfiguration")]
+        [Authorize(Roles = "EmailConfigurationView")]
+        public async Task<IActionResult> GetEmailConfiguration()
+        {
+            var res = await emailConfigurationService.GetAll_EmailConfigurations();
+            return Ok(res);
+        }
+
+        [HttpGet]
+        [Route("GetEmailTypeConfiguration")]
+        [Authorize(Roles = "EmailConfigurationView")]
+        public async Task<IActionResult> GetEmailTypeConfiguration()
+        {
+            var res = await emailConfigurationService.GetAll_EmailTypeConfigurations();
+            return Ok(res);
+        }
+
+      
+        [HttpPost]
+        [Route("UpdateGHlConfigforPartner")]
+        //[Authorize(Roles = "Tenan")]
+        public async Task<IActionResult> UpdateGHlConfigforPartner(CreateGHLConfigforPartner model)
+        {
+            var res = await gHLConfiguration.UpdateGHlConfigforPartner(model);
+            return Ok(res);
+        }
+
+        [HttpPost]
+        [Route("SyncContactandJobforPartner")]
+        //[Authorize(Roles = "Tenan")]
+        public async Task<IActionResult> SyncContactandJobforPartner(string TenantId)
+        {
+            var res = await gHLConfiguration.SyncContactandJobforPartner(TenantId);
+            return Ok(res);
+        }
+
+        [HttpPost]
+        [Route("GetGhlConfigforPartner")]
+        //[Authorize(Roles = "Tenan")]
+        public async Task<IActionResult> GetGhlConfigforPartner(string TenantId)
+        {
+            var res = await gHLConfiguration.GetGHlConfigforPartner(TenantId);
+            return Ok(res);
+        }
+
+
+
+
     }
 }

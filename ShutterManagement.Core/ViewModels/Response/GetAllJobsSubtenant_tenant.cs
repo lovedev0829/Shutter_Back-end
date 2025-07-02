@@ -14,8 +14,9 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? ContactLastName { get; set; }
         public string? ContactPhone { get; set; }
         public string? ContactEmail { get; set; }
-
+        public string? Suffix { get; set; }
         public Guid? AddressId { get; set; }
+        public string? JobCode { get; set; }
 
         public string? JobName { get; set; }
         public Guid? JobType { get; set; }
@@ -44,6 +45,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? CreatedBy { get; set; }
         public string? CreatedbyUsername { get; set; }
         public string? SubtenantName { get; set; }
+        public string? CompanyName { get; set; }
         public Guid? TenantId { get; set; }
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }

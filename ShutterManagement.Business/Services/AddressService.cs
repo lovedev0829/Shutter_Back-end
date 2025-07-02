@@ -39,7 +39,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var IsContactExists = await contactService.AnyAsync(x => x.ContactId.ToString() == model.ContactId
-                 && x.TenantId == AppConstant.LoggedInTenantId);
+                 && x.TenantId == claimsProperty.GetTenantId());
                 if (IsContactExists)
                 {
                     var address = new TblAddress
@@ -48,7 +48,7 @@ namespace ShutterManagement.Business.Services
                         Label = model.Label,
                         StreetAddress = model.StreetAddress,
                         City = model.City,
-                        State = model.State,
+                        State = model.StateId,
                         ZipCode = model.ZipCode,
                         Notes = model.Notes,
                         AccessCode = model.AccessCode,
@@ -60,7 +60,7 @@ namespace ShutterManagement.Business.Services
                         IsDelete = false,
                         CreatedAt = DateTime.Now,
                         CreatedBy = AppConstant.LoggedInUserID,
-                        TenantId = AppConstant.LoggedInTenantId
+                        TenantId = claimsProperty.GetTenantId()
                     };
 
                     var res = await Add(address);
@@ -94,11 +94,11 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var IsContactExists = await contactService.AnyAsync(x => x.ContactId.ToString() == model.ContactId
-                 && x.TenantId == AppConstant.LoggedInTenantId);
+                 && x.TenantId == claimsProperty.GetTenantId());
                 if (IsContactExists)
                 {
                     var AddressDetails = GetAllQuerable().Where(x => x.AddressId.ToString() == model.AddressId 
-                    && x.ContactId.ToString() == model.ContactId && x.TenantId == AppConstant.LoggedInTenantId
+                    && x.ContactId.ToString() == model.ContactId && x.TenantId == claimsProperty.GetTenantId()
                     && x.IsDelete == false).FirstOrDefault();
 
                     if (AddressDetails != null)
@@ -107,7 +107,7 @@ namespace ShutterManagement.Business.Services
                         AddressDetails.StreetAddress = model.StreetAddress;
                         AddressDetails.Notes = model.Notes;
                         AddressDetails.City = model.City;
-                        AddressDetails.State = model.State;
+                        AddressDetails.State = model.StateId;
                         AddressDetails.ZipCode = model.ZipCode;
                         AddressDetails.FirstName = model.FirstName;
                         AddressDetails.LastName = model.LastName;
@@ -145,7 +145,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var AddressDetails = GetAllQuerable().Where(x => x.AddressId == AddressId && x.TenantId == AppConstant.LoggedInTenantId
+                var AddressDetails = GetAllQuerable().Where(x => x.AddressId == AddressId && x.TenantId == claimsProperty.GetTenantId()
                 && x.IsDelete == false).FirstOrDefault();
 
                 if (AddressDetails != null)
@@ -177,7 +177,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var AddressDetails = GetAllQuerable().Where(x => x.AddressId == AddressId && x.TenantId == AppConstant.LoggedInTenantId
+                var AddressDetails = GetAllQuerable().Where(x => x.AddressId == AddressId && x.TenantId == claimsProperty.GetTenantId()
                 && x.IsDelete == false).FirstOrDefault();
 
                 if (AddressDetails != null)
@@ -209,7 +209,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<List<GetAllAddress>> responseVm = new ResponseVm<List<GetAllAddress>>();
             try
             {
-                var AddressList = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId).OrderByDescending(x=>x.CreatedAt).ToList();
+                var AddressList = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId()).OrderByDescending(x=>x.CreatedAt).ToList();
                 filter.SearchValue = filter.SearchValue.Trim().ToLower();
                 var FilterRecords = AddressList
                                     .Where(x =>
@@ -222,7 +222,7 @@ namespace ShutterManagement.Business.Services
                                     || (x.Label ?? "").ToLower().Contains(filter.SearchValue.Trim())
                                     || (x.ZipCode ?? "").Contains(filter.SearchValue.Trim())
                                     || (x.City ?? "").ToLower().Contains(filter.SearchValue.Trim())
-                                    || (x.State ?? "").ToLower().Contains(filter.SearchValue.Trim())
+                                    //|| (x. ?? "").ToLower().Contains(filter.SearchValue.Trim())
                                     || (x.FirstName ?? "").ToLower().Contains(filter.SearchValue.Trim())
                                     || (x.LastName ?? "").ToLower().Contains(filter.SearchValue.Trim())
                                     || ((x.FirstName + " "  + x.LastName) ?? "").ToLower().Contains(filter.SearchValue.Trim())
@@ -241,7 +241,8 @@ namespace ShutterManagement.Business.Services
                     StreetAddress = x.StreetAddress,
                     Notes = x.Notes,
                     City = x.City,
-                    State = x.State,
+                    StateName = dbContext.MstStates.Where(s => s.Id == x.State).Select(y => y.StateName ?? "").FirstOrDefault(),
+                    StateId=x.State,
                     ZipCode = x.ZipCode,
                     AccessCode = x.AccessCode,
                     FirstName = x.FirstName,
@@ -253,7 +254,7 @@ namespace ShutterManagement.Business.Services
                 }).ToList();
                 responseVm.IsSuccess = true;
                 responseVm.Message = $"{AppConstant.FetchSuccessMsg}";
-                responseVm.TotalRecords = TakenRecords.Count;
+                responseVm.TotalRecords = FilterRecords.Count;
 
 
             }
@@ -275,7 +276,7 @@ namespace ShutterManagement.Business.Services
         //    try
         //    {
         //        var address = await GetAllQuerable() 
-        //            .Where(c => c.AddressId == id && c.IsActive == true && c.TenantId == AppConstant.LoggedInTenantId)
+        //            .Where(c => c.AddressId == id && c.IsActive == true && c.TenantId == claimsProperty.GetTenantId())
         //            .Select(c => new AddressResponse
         //            {
         //                ContactId = c.ContactId,

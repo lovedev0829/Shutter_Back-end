@@ -21,5 +21,7 @@ namespace ShutterManagement.Business.Interfaces
 
         Task<IResponseVm<List<UsersList>>> GetAll(Pagination filter);
         Task PasswordEnc();
+        Task<IResponseVm<List<UsersList>>> GetAllUserList();
+        Task<string> GetTenantIdByUserEmailAndPwd(string Username, string Password);
     }
 }

@@ -33,6 +33,12 @@ public partial class TblTenant
 
     public Guid? ModifiedBy { get; set; }
 
+    public string? Suffix { get; set; }
+
+    public bool? IsGhlconfigSameAsTenant { get; set; }
+
+    public string? GhluserId { get; set; }
+
     public virtual TblTenantBrandingInfo? BrandingInfoNavigation { get; set; }
 
     public virtual ICollection<TblTenant> InverseParentTenant { get; set; } = new List<TblTenant>();
@@ -58,6 +64,8 @@ public partial class TblTenant
     public virtual ICollection<TblEstimate> TblEstimates { get; set; } = new List<TblEstimate>();
 
     public virtual ICollection<TblJob> TblJobs { get; set; } = new List<TblJob>();
+
+    public virtual ICollection<TblManagePartnersProduct> TblManagePartnersProducts { get; set; } = new List<TblManagePartnersProduct>();
 
     public virtual ICollection<TblOption> TblOptions { get; set; } = new List<TblOption>();
 

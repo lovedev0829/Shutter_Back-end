@@ -17,12 +17,12 @@ namespace ShutterManagement.Core.ViewModels.Request
         [DefaultValue("")]
         [Required]
         [MaxLength(100)]
-        [RegularExpression(@"^[a-zA-Z0-9!@#$%^&*()_+={}\[\]:;""'<>,.?/\|`~ \s-]*$", ErrorMessage = AppConstant.AlphabaticalError)]
+        [RegularExpression(@"^[a-zA-Z0-9!@#$%^&*()_+={}\[\]:;""'<>,.?/\|`~ \s-]*$", ErrorMessage = AppConstant.AlphabeticalError)]
         public string? ComponentName { get; set; }
 
         [DefaultValue("")]
         [Required]
-        //[RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabaticalError)]
+        //[RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabeticalError)]
         public string? ProductType { get; set; }
 
         [DefaultValue("")]

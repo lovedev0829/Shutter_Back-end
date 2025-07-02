@@ -15,6 +15,7 @@ namespace ShutterManagement.Core.SPModel.SP_Responses
         public string? FirstName { get; set; }
         public string? MiddleName { get; set; }
         public string? LastName { get; set; }
+        public string? suffix { get; set; }
         public string? Email { get; set; }
         public string? Phone { get; set; }
         public string? Code { get; set; }
@@ -24,6 +25,8 @@ namespace ShutterManagement.Core.SPModel.SP_Responses
         public string? CompanyName { get; set; }
         public Guid? TenantId { get; set; }
         public string? ParentTenantId { get; set; }
+        public bool? IsTenant { get; set; }
+        public bool? IsGHLConfigSameAsTenant { get; set; }
 
     }
 }

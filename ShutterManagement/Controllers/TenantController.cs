@@ -71,6 +71,23 @@ namespace ShutterManagement.Controllers
             return Ok(res);
         }
 
+        [HttpGet]
+        [Route("GetTenantsListByUsername")]
+        [Authorize]
+        public async Task<IActionResult> GetTenantsListByUsername(string UserName)
+        {
+            var res = await tenantService.GetTenantsListByUsername(UserName);
+            return Ok(res);
+        }
+
+        [HttpGet]
+        [Route("GetUserDataForTenantSwitch")]
+        [Authorize]
+        public async Task<IActionResult> GetUserDataForTenantSwitch(string UserName, string TenantId)
+        {
+            var res = await tenantService.GetUserDataForTenantSwitch(UserName, TenantId);
+            return Ok(res);
+        }
 
     }
 }

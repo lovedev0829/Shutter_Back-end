@@ -19,19 +19,26 @@ namespace ShutterManagement.Core.ViewModels.Request
         //public Guid? ConctactId { get; set; }
 
         [Default("")]
-    
+
         public Guid? taxRateId { get; set; }
-      
+
+        [Default(null)]
+        public Guid? PreparedBy { get; set; }
+
         [Default("")]
         [Required]
         public string? EstimateName { get; set; }
         [Default("")]
         [Required]
-        public Guid[]? WindowProductId { get; set; } = new Guid[] {};
+        public List<ProductListing> ProductsList { get; set; } = new List<ProductListing> { };
         [Default("")]
         public string? TermsCondition { get; set; }
         [Default("")]
         public string? Notes { get; set; }
+
+        public bool? IsTaxApplicable { get; set; } =false;
+        //[Default(false)]
+        //public bool? IsLinkSent { get; set; } = false;
 
         [Default("")]
         public Guid? DiscountId { get; set; }
@@ -47,5 +54,42 @@ namespace ShutterManagement.Core.ViewModels.Request
         [Default(0.00)]
         [Required]
         public decimal? GrandTotal { get; set; }
+
     }
+
+    public class ProductListing
+    {
+        public Guid WindowProductId { get; set; }
+
+        public decimal ProductPrice { get; set; }
+    }
+
+    public class DimensionModel
+    {
+        public decimal? Quantity { get; set; }
+        public decimal? BuildHeight { get; set; }
+        public decimal? BuildWidth { get; set; }
+        public decimal? Optionprice { get; set; }
+        public bool? IsView { get; set; }
+        public string? Unit { get; set; }
+    }
+
+    //public class OptionPriceResult
+    //{
+    //    public List<decimal> OptionWholesale { get; set; } = new List<decimal>();
+    //    public List<decimal> OptionMSRP { get; set; } = new List<decimal>();
+    //    public decimal TotalCost { get; set; } = 0.0m; 
+    //}
+
+    public class OptionPriceResult
+    {
+        public decimal? TotalCost { get; set; } = 0;
+        public decimal? OptionMarkup { get; set; } = 0;
+
+        public Dictionary<string, decimal> OptionWholesale { get; set; } = new Dictionary<string, decimal>();
+        public Dictionary<string, decimal> OptionMSRP { get; set; } = new Dictionary<string, decimal>();
+    }
+
+
+
 }

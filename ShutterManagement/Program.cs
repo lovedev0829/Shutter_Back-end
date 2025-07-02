@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Business.Services;
-//sing ShutterManagement.GHL;
 using ShutterManagement.DAL.Context;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -18,31 +17,44 @@ using ShutterManagement.Core.Common;
 using Microsoft.Extensions.FileProviders;
 using DinkToPdf.Contracts;
 using DinkToPdf;
-using Microsoft.Extensions.Options;
-using System.Runtime;
-using ShutterManagement.GHL.Service;
+using System.Text.Json.Serialization;
+using System.Text.Json;
+using ShutterManagement.GHL.Services;
+using ShutterManagement.Stripe;
+using ShutterManagement.GHLv2;
+using ShutterManagement.Core.ViewModels.Response;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
+FileLogger.Initialize(builder.Environment.EnvironmentName);
 IConfiguration configuration= builder.Configuration;
 builder.Configuration.AddConstants();
 
 builder.Services.AddDbContext<ShutterDBContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
-    sqlOptions => sqlOptions.CommandTimeout(60)));
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        sqlOptions =>
+        {
+            sqlOptions.CommandTimeout(180);
+            sqlOptions.EnableRetryOnFailure(
+                maxRetryCount: 3,
+                maxRetryDelay: TimeSpan.FromSeconds(10),
+                errorNumbersToAdd: null); // Optional: add specific error codes if needed
+        }));
 
-//builder.Services.AddCors(options =>
-//{
-//    options.AddPolicy("AllowedCorsPolicy",
-//        builder => builder
-//            //.SetIsOriginAllowedToAllowWildcardSubdomains()
-//            //.WithOrigins("http://localhost:4200", "https://localhost:90", "https://*.sentridocs.com", "http://*.sentridocs.com")
-//            .AllowAnyOrigin()
-//            .AllowAnyHeader()
-//            .AllowAnyMethod()
-//        //.AllowCredentials()
-//        );
-//});
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowedCorsPolicy",
+        builder => builder
+            //.SetIsOriginAllowedToAllowWildcardSubdomains()
+            //.WithOrigins("http://localhost:4200", "https://localhost:90", "https://*.sentridocs.com", "http://*.sentridocs.com")
+            .AllowAnyOrigin()
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+        //.AllowCredentials()
+        );
+});
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo { Title = "Shutter Management API", Version = "v1" });
@@ -91,18 +103,14 @@ builder.Services.AddAuthentication(options =>
     
 });
 
-//// GHL API Settings Configuration
-//builder.Services.Configure<GhlSettings>(builder.Configuration.GetSection("GhlSettings"));
-//builder.Services.AddHttpClient<IGhlApiClient, GhlApiClient>((sp, client) =>
-//{
-//    var ghlSettings = sp.GetRequiredService<IOptions<GhlSettings>>().Value;
-//    client.BaseAddress = new Uri(ghlSettings.BaseAddress);
-//    client.DefaultRequestHeaders.Authorization =
-//        new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", ghlSettings.ApiKey);
-//});
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+        options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+        options.JsonSerializerOptions.WriteIndented = true;
+    });
 
-// Add GhlSyncService to DI container
-builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
@@ -175,15 +183,34 @@ builder.Services.AddScoped<IEstimationBreakdownService,EstimationBreakdownServic
 builder.Services.AddScoped<ILocationService, LocationService>();
 builder.Services.AddScoped<ISubtenantProductMarkup, SubtenantProductMarkup>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
-builder.Services.AddHttpClient<GhlOpportunityService>();
-builder.Services.AddSingleton<GhlService>();
-builder.Services.AddSingleton<GHLAsyncService>();
+builder.Services.AddScoped<IGHLConfiguration, GHLConfigurationService>();
+builder.Services.AddScoped<IStripeConfiguration, StripeConfigurationService>();
+builder.Services.AddScoped<IStateService, StateService>();
+builder.Services.AddScoped<IAppointmentScheduleService, AppointmentScheduleService>();
+builder.Services.AddScoped<GoHighLevelOAuthService>();
+builder.Services.AddScoped<JobStatusAndStageMapping>();
+builder.Services.AddScoped<IjobStageStatusAutomAtionHistory,JobStageStatusAutomationHistoryRepository>();
+builder.Services.AddScoped<IManagePartnersProducts,ManagePartnersProductsService>();
+builder.Services.AddScoped<IManagePartnersProductsOptions,ManagePartnersProductsOptionService>();
+builder.Services.AddScoped<IEmailConfigurationService, EmailConfigurationService>();
+builder.Services.AddScoped<IGhlCustomFieldsService, GhlCustomFieldsService>();
+builder.Services.AddScoped<IPowderCoatColorService, PowderCoatColorService>();
+builder.Services.AddScoped<MS365Configuration>();
+// Add services to the DI container
+builder.Services.AddHttpClient<GHLService_v2>(); // Register HttpClient for GhlService
+builder.Services.AddScoped<GhlService>(); // Register GhlService as a scoped dependency
 builder.Services.AddSingleton(typeof(IConverter), new SynchronizedConverter(new PdfTools()));
 
 
+builder.Services.Configure<GoHighLevelOAuthSettings>(builder.Configuration.GetSection("GoHighLevelOAuthSettings"));
+builder.Services.Configure<StripeSettings>(builder.Configuration.GetSection("Stripe"));
+builder.Services.Configure<GoogleOAuthSettings>(builder.Configuration.GetSection("GoogleOAuth"));
+builder.Services.AddScoped<GoogleAuthService>();
+builder.Services.AddScoped<EmailTypeService>();
 
 
-
+// Register the StripeService as a singleton
+builder.Services.AddSingleton<StripeService>();
 
 var app = builder.Build();
 
@@ -217,7 +244,7 @@ else
         EnableDirectoryBrowsing = false
     });
 }
-//app.UseCors("AllowedCorsPolicy");
+app.UseCors("AllowedCorsPolicy");
 app.UseSwagger();
 
 app.UseSwaggerUI();

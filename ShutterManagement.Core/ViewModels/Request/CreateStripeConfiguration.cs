@@ -17,5 +17,6 @@ namespace ShutterManagement.Core.ViewModels.Request
         public string? cancelUrl { get; set; }
         //[Required]
         public string? successUrl { get; set; }
+        public string? WebhookSecret { get; set; }
     }
 }

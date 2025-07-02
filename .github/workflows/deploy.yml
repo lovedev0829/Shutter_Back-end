@@ -4,7 +4,7 @@ name: .NET CI/CD Pipeline
 on:
   push:
     branches:
-      - Estimation
+      - master-azure 
 
 jobs:
   build-and-test:
@@ -19,7 +19,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: '6.0' # Specify the .NET version
+          dotnet-version: '8.0' # Specify the .NET version
 
       # Step 3: Restore dependencies
       - name: Restore dependencies
@@ -44,7 +44,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: '6.0'
+          dotnet-version: '8.0'
 
       - name: Publish application
         run: dotnet publish -c Release -o out

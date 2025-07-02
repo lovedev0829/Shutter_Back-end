@@ -19,7 +19,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         [Required]
         public Guid? ContactId { get; set; }
         [Required]
-        public Guid EstimationId { get; set; }
+        public Guid? EstimationId { get; set; }
         public Guid? InvoiceId { get; set; }
         public Guid? OrderId { get; set; }
   

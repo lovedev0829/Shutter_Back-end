@@ -49,7 +49,15 @@ public partial class TblEstimateWindowProductComponentMaterial
 
     public Guid? WindowId { get; set; }
 
+    public Guid? EstimateWindowProductComponentId { get; set; }
+
+    public decimal? MaterialPrice { get; set; }
+
+    public string? MaterialPricingExpression { get; set; }
+
     public virtual TblEstimate Estimate { get; set; } = null!;
+
+    public virtual TblEstimateWindowProductComponent? EstimateWindowProductComponent { get; set; }
 
     public virtual MstProductType? ProductTypeNavigation { get; set; }
 

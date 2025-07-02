@@ -19,16 +19,23 @@ namespace ShutterManagement.Business.Interfaces
         Task<IResponseVm<string>> ActiveInActiveEstimate(Guid EstimateId);
         Task<IResponseVm<string>> DeleteEstimate(Guid EstimateId);
         Task<IResponseVm<string>> ValidateExpression(ValidateExpression model);
-        Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> BuildEstimate(Guid[] windowProductIds, bool IsBreakDown,string EstimateId = "", bool IsView = false);
-        Task<IResponseVm<List<EstimateList>>> GetAll_Estimate(Pagination filter);
+        Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> BuildEstimate(Guid[] windowProductIds, bool IsBreakDown,bool IsMaterialBreakdown = false
+            , string EstimateId = "", bool IsView = false, List<ProductListing> products = null);
+        Task<IResponseVm<List<EstimateList>>> GetAll_Estimate(Pagination filter, Guid? TenantId = null);
         Task<IResponseVm<string>> SendForApproval(Guid EstimateId);
-        Task<IResponseVm<List<EstimateList>>> ViewEachEstimation(Guid EstimateId);
+        Task<IResponseVm<List<EstimateList>>> ViewEachEstimation(Guid? EstimateId);
         Task<IResponseVm<string>> ChangeStatus(Guid EstimationId, Estimation NewEstimationStatus);
         Task<decimal?> CalculateGrandTotal(Guid? discountId, decimal subtotal, Guid? taxId);
         Task<bool> IsTaxApplied(Guid JobId);
         NCalc.Expression CalculateExpression(string formula, dynamic values);
         Task<IResponseVm<string>> EstimationUniqueName();
-
+        Task<OptionPriceResult> CalculateOptionPrice(
+                 string[] optionTypeIds,
+                 decimal? quantity,
+                 decimal? height,
+                 decimal? width,
+                 bool? IsManageProduct);
         //Task<IResponseVm<List<EstimationBreakdown>>> EstimationBreakdown(Guid windowProductId);
+
     }
 }

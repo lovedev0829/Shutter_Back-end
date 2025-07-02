@@ -22,13 +22,13 @@ namespace ShutterManagement.Business.Services
     {
         private readonly ITenantService _tenantService;
         private readonly IMaterial materialService;
+        private readonly ClaimsProperty claimsProperty;
         private readonly IVendorItemService vendorItemService;
         private readonly IVendorService vendorService;
         private readonly ITenantBrandingService tenantBrandingService;
         private readonly IJobService jobService;
         private readonly IConverter converter;
 
-        public ClaimsProperty ClaimsProperty { get; }
 
         public VendorOrderService(ITenantService tenantService, IMaterial materialService, ClaimsProperty claimsProperty,
             IVendorItemService vendorItemService ,IVendorService vendorService,
@@ -36,7 +36,7 @@ namespace ShutterManagement.Business.Services
         {
             _tenantService = tenantService;
             this.materialService = materialService;
-            ClaimsProperty = claimsProperty;
+            this.claimsProperty = claimsProperty;
             this.vendorItemService = vendorItemService;
             this.vendorService = vendorService;
             this.tenantBrandingService = tenantBrandingService;
@@ -49,12 +49,12 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenant = await _tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+                var IsTenant = await _tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
                 if (IsTenant)
                 {
                     var IsVendorOrderExists = GetAllQuerable()
                        .Where(c => c.VendorOrderId == VendorOrderId
-                                   && c.TenentId == AppConstant.LoggedInTenantId
+                                   && c.TenentId == claimsProperty.GetTenantId()
                                    && c.IsDelete == false)
                        .FirstOrDefault();
                     if (IsVendorOrderExists != null)
@@ -101,7 +101,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var isTenantValid = await _tenantService.AnyAsync(x =>
-                    x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true
+                    x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true
                     && x.IsDelete == false
                   );
 
@@ -113,7 +113,7 @@ namespace ShutterManagement.Business.Services
                 var isOrderNumberExist = await AnyAsync(x =>
                     x.IsDelete == false &&
                     x.OrderNumber == model.OrderNumber.Trim() &&
-                    x.TenentId == AppConstant.LoggedInTenantId);
+                    x.TenentId == claimsProperty.GetTenantId());
 
                 if (isOrderNumberExist)
                 {
@@ -139,7 +139,7 @@ namespace ShutterManagement.Business.Services
                     TotalCost = totalCost,
                     CreatedAt = DateTime.Now,
                     CreatedBy = AppConstant.LoggedInUserID,
-                    TenentId = AppConstant.LoggedInTenantId
+                    TenentId = claimsProperty.GetTenantId()
                 };
                 var res = await Add(vendorOrder);
 
@@ -177,7 +177,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var IsTenant = await _tenantService.AnyAsync(x =>
-                    x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true
+                    x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true
                     && x.IsDelete == false
                   );
 
@@ -189,7 +189,7 @@ namespace ShutterManagement.Business.Services
                 var existingOrder = await FirstOrDefaultAsync(x =>
                     x.IsDelete == false &&
                     x.VendorOrderId == model.VendorOrderId &&
-                    x.TenentId == AppConstant.LoggedInTenantId);
+                    x.TenentId == claimsProperty.GetTenantId());
 
                 if (existingOrder == null)
                 {
@@ -265,13 +265,13 @@ namespace ShutterManagement.Business.Services
             {
                 if (vendorOrderId != Guid.Empty)
                 {
-                    var IsTenant = await _tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false);
+                    var IsTenant = await _tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.IsDelete == false);
                     if (IsTenant)
                     {
                         var existingOrder = GetAllQuerable().Where(x =>
                             x.IsDelete == false &&
                             x.VendorOrderId == vendorOrderId &&
-                            x.TenentId == AppConstant.LoggedInTenantId)
+                            x.TenentId == claimsProperty.GetTenantId())
                             .FirstOrDefault();
 
                         if (existingOrder != null)
@@ -330,7 +330,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var isTenantValid = await _tenantService.AnyAsync(x =>
-                    x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true
+                    x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true
                     && x.IsDelete == false
                   );
                 if (!isTenantValid)
@@ -341,7 +341,7 @@ namespace ShutterManagement.Business.Services
                 var vendorOrdersQuery = from vo in dbContext.TblVendorOrders
                                         join v in dbContext.TblVendors on vo.VendorId equals v.VendorId
                                         join j in dbContext.TblJobs on vo.JobId equals j.JobId
-                                        where vo.IsDelete == false && vo.TenentId == AppConstant.LoggedInTenantId
+                                        where vo.IsDelete == false && vo.TenentId == claimsProperty.GetTenantId()
                                         orderby vo.CreatedAt descending
                                         select new VendorOrderListVm
                                         {
@@ -365,6 +365,11 @@ namespace ShutterManagement.Business.Services
 
 
                 var filteredRecords = await vendorOrdersQuery.ToListAsync();
+
+                 var queryable = filteredRecords.AsQueryable();
+
+                queryable = Paginate.ApplyColumnFilters(queryable, filter.ColumnFilters);
+                queryable = Paginate.ApplySorting(queryable, filter.SortColumn, filter.SortDirection);
 
                 foreach (var item in filteredRecords)
                 {
@@ -404,7 +409,14 @@ namespace ShutterManagement.Business.Services
                     )
                     .ToList();
 
-                var paginatedRecords = Paginate.Pagination(filteredRecords, filter);
+
+                var queryable2 = filteredRecords.AsQueryable();
+
+                queryable2 = Paginate.ApplyColumnFilters(queryable2, filter.ColumnFilters);
+                queryable2 = Paginate.ApplySorting(queryable2, filter.SortColumn, filter.SortDirection);
+
+
+                var paginatedRecords = Paginate.Pagination(queryable2.ToList(), filter);
 
                 responseVm.IsSuccess = true;
                 responseVm.Data = paginatedRecords;
@@ -425,7 +437,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 bool isTenantValid = await _tenantService.AnyAsync(x =>
-                    x.TenantId == AppConstant.LoggedInTenantId &&
+                    x.TenantId == claimsProperty.GetTenantId() &&
                     x.IsActive == true &&
                     x.IsDelete == false);
                 if (!isTenantValid)
@@ -505,7 +517,7 @@ namespace ShutterManagement.Business.Services
                 }
 
                 bool isTenantValid = await _tenantService.AnyAsync(x =>
-                    x.TenantId == AppConstant.LoggedInTenantId &&
+                    x.TenantId == claimsProperty.GetTenantId() &&
                     x.IsDelete == false);
                 if (!isTenantValid)
                 {
@@ -562,7 +574,7 @@ namespace ShutterManagement.Business.Services
             {
                 // Validate Tenant
                 var isTenantValid = await _tenantService.AnyAsync(x =>
-                    x.TenantId == AppConstant.LoggedInTenantId && x.IsActive==true && x.IsDelete==false);
+                    x.TenantId == claimsProperty.GetTenantId() && x.IsActive==true && x.IsDelete==false);
 
                 if (!isTenantValid)
                 {
@@ -573,7 +585,7 @@ namespace ShutterManagement.Business.Services
 
                 // Fetch Tenant Details
                 var tenantDetails =  _tenantService.GetAllQuerable()
-                    .FirstOrDefault(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete==false);
+                    .FirstOrDefault(x => x.TenantId == claimsProperty.GetTenantId() && x.IsDelete==false);
 
                 if (tenantDetails == null)
                 {
@@ -599,7 +611,7 @@ namespace ShutterManagement.Business.Services
 
                 // Fetch Vendor Details
                 var vendorDetails =  vendorService.GetAllQuerable()
-                    .FirstOrDefault(x => x.TenantId == AppConstant.LoggedInTenantId &&
+                    .FirstOrDefault(x => x.TenantId == claimsProperty.GetTenantId() &&
                                               x.VendorId == model.VendorId &&
                                               x.IsDelete == false);
 
@@ -628,7 +640,7 @@ namespace ShutterManagement.Business.Services
                 // Fetch User Details
                 var userDetails =  dbContext.TblUsers
                     .FirstOrDefault(c => c.Id == orderDetails.CreatedBy &&
-                                              c.TenantId == AppConstant.LoggedInTenantId &&
+                                              c.TenantId == claimsProperty.GetTenantId() &&
                                               c.IsDelete==false);
 
                 var materialList = await materialService.GetAllQuerable()
@@ -660,7 +672,7 @@ namespace ShutterManagement.Business.Services
                     JobName = jobDetails?.JobName ?? "N/A",
                     StreetAddress = vendorDetails.StreetAddress ?? "",
                     VendorCity = vendorDetails.City ?? "",
-                    VendorState = vendorDetails.State ?? "",
+                    VendorState = dbContext.MstStates.Where(s => s.Id == vendorDetails.State).Select(y => y.StateName ?? "").FirstOrDefault(),
                     VendorZipCode = vendorDetails.ZipCode ?? "",
                     MobilePhone = vendorDetails.PhoneNumber ?? "",
                     EmailAddress = vendorDetails.Email ?? "",
@@ -693,7 +705,7 @@ namespace ShutterManagement.Business.Services
                 var pdfBytes = GenerateInvoicePdf(htmlContent);
 
                 // Save PDF to Disk
-                var tenantId = AppConstant.LoggedInTenantId.ToString();
+                var tenantId = claimsProperty.GetTenantId().ToString();
                 var rootPath = Path.Combine(AppConstant.FileUploadPath, tenantId);
                 if (!Directory.Exists(rootPath))
                 {
@@ -809,7 +821,7 @@ namespace ShutterManagement.Business.Services
                 {
                     ColorMode = DinkToPdf.ColorMode.Color,
                     Orientation = Orientation.Portrait,
-                    PaperSize = DinkToPdf.PaperKind.A4
+                                          PaperSize = DinkToPdf.PaperKind.A4
                 },
                 Objects = { new ObjectSettings { HtmlContent = htmlContent } }
             };

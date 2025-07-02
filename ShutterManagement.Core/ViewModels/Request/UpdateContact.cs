@@ -10,7 +10,7 @@ namespace ShutterManagement.Core.ViewModels.Request
 {
     public class UpdateContact : Sp_Contact
     {
-        public Guid ContactId { get; set; } = Guid.Empty;
+        public Guid? ContactId { get; set; } = Guid.Empty;
 
     }
 }

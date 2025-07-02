@@ -13,16 +13,16 @@ namespace ShutterManagement.Core.ViewModels.Request
         [DefaultValue("")]
         [Required]
         [MaxLength(50)]
-        [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabaticalError)]
+        [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabeticalError)]
         public string? FirstName { get; set; }
         [DefaultValue("")]
         [MaxLength(50)]
-        [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabaticalError)]
+        [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabeticalError)]
         public string? MiddleName { get; set; }
         [DefaultValue("")]
         [Required]
         [MaxLength(50)]
-        [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabaticalError)]
+        [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabeticalError)]
         public string? LastName { get; set; }
         [DefaultValue("")]
         [Required, MaxLength(100)]
@@ -36,7 +36,10 @@ namespace ShutterManagement.Core.ViewModels.Request
         [RegularExpression(@"^\d{10}$", ErrorMessage = "Phone number must be exactly 10 digits.")]
 
         public string? Phone { get; set; }
-       
+
+        public string? GhlUserId { get; set; }
+
+        public string? Suffix { get; set; }
 
         [DefaultValue("")]
         [Required]

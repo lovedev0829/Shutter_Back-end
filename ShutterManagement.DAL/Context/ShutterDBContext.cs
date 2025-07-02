@@ -25,6 +25,8 @@ public partial class ShutterDBContext : DbContext
 
     public virtual DbSet<MstJobType> MstJobTypes { get; set; }
 
+    public virtual DbSet<MstPowderCoatColor> MstPowderCoatColors { get; set; }
+
     public virtual DbSet<MstModule> MstModules { get; set; }
 
     public virtual DbSet<MstModulePermission> MstModulePermissions { get; set; }
@@ -35,9 +37,13 @@ public partial class ShutterDBContext : DbContext
 
     public virtual DbSet<MstRegion> MstRegions { get; set; }
 
+    public virtual DbSet<MstState> MstStates { get; set; }
+
     public virtual DbSet<MstUnitofMeasurement> MstUnitofMeasurements { get; set; }
 
     public virtual DbSet<TblAddress> TblAddresses { get; set; }
+
+    public virtual DbSet<TblAppointmentSchedule> TblAppointmentSchedules { get; set; }
 
     public virtual DbSet<TblComponent> TblComponents { get; set; }
 
@@ -51,6 +57,10 @@ public partial class ShutterDBContext : DbContext
 
     public virtual DbSet<TblDiscount> TblDiscounts { get; set; }
 
+    public virtual DbSet<TblEmailConfiguration> TblEmailConfigurations { get; set; }
+
+    public virtual DbSet<TblEmailType> TblEmailTypes { get; set; }
+
     public virtual DbSet<TblEstimate> TblEstimates { get; set; }
 
     public virtual DbSet<TblEstimateApproved> TblEstimateApproveds { get; set; }
@@ -63,9 +73,17 @@ public partial class ShutterDBContext : DbContext
 
     public virtual DbSet<TblEstimateWindowProductComponentMaterial> TblEstimateWindowProductComponentMaterials { get; set; }
 
+    public virtual DbSet<TblEstimateWindowProductOption> TblEstimateWindowProductOptions { get; set; }
+
     public virtual DbSet<TblExpression> TblExpressions { get; set; }
 
+    public virtual DbSet<TblGhlCustomField> TblGhlCustomFields { get; set; }
+
     public virtual DbSet<TblGhlStage> TblGhlStages { get; set; }
+
+    public virtual DbSet<TblGhlStagesmapping> TblGhlStagesmappings { get; set; }
+
+    public virtual DbSet<TblGhlUser> TblGhlUsers { get; set; }
 
     public virtual DbSet<TblGhlconfiguration> TblGhlconfigurations { get; set; }
 
@@ -81,9 +99,15 @@ public partial class ShutterDBContext : DbContext
 
     public virtual DbSet<TblJobSchedule> TblJobSchedules { get; set; }
 
+    public virtual DbSet<TblJobStageStatusAutomAtionHistory> TblJobStageStatusAutomAtionHistories { get; set; }
+
     public virtual DbSet<TblJobStatus> TblJobStatuses { get; set; }
 
     public virtual DbSet<TblLocation> TblLocations { get; set; }
+
+    public virtual DbSet<TblManagePartnersProduct> TblManagePartnersProducts { get; set; }
+
+    public virtual DbSet<TblManagePartnersProductsOption> TblManagePartnersProductsOptions { get; set; }
 
     public virtual DbSet<TblMeasurement> TblMeasurements { get; set; }
 
@@ -103,6 +127,8 @@ public partial class ShutterDBContext : DbContext
 
     public virtual DbSet<TblOrderWindowProductComponentMaterial> TblOrderWindowProductComponentMaterials { get; set; }
 
+    public virtual DbSet<TblOrderWindowProductOption> TblOrderWindowProductOptions { get; set; }
+
     public virtual DbSet<TblPayment> TblPayments { get; set; }
 
     public virtual DbSet<TblProduct> TblProducts { get; set; }
@@ -116,6 +142,8 @@ public partial class ShutterDBContext : DbContext
     public virtual DbSet<TblRolesPermission> TblRolesPermissions { get; set; }
 
     public virtual DbSet<TblStripeConfiguration> TblStripeConfigurations { get; set; }
+
+    public virtual DbSet<TblStripePayment> TblStripePayments { get; set; }
 
     public virtual DbSet<TblSubtenantProductMarkup> TblSubtenantProductMarkups { get; set; }
 
@@ -149,7 +177,7 @@ public partial class ShutterDBContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Server=tcp:shuttermanagementdb.database.windows.net,1433;Initial Catalog=shutterdev;Persist Security Info=False;User ID=shutter_admin;Password=TaKugAbiGfb4eU$y;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;");
+        => optionsBuilder.UseSqlServer("Server=tcp:shuttermanagementdb.database.windows.net,1433;Initial Catalog=shutterdev;Persist Security Info=False;User ID=shutter_admin;Password=TaKugAbiGfb4eU$y;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=60;");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -284,6 +312,21 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.RegionName).HasMaxLength(200);
         });
 
+        modelBuilder.Entity<MstState>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__MstState__3213E83FEB8BE5D3");
+
+            entity.ToTable("MstState", "dbo");
+
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("(newid())")
+                .HasColumnName("id");
+            entity.Property(e => e.StateCode)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.StateName).HasMaxLength(100);
+        });
+
         modelBuilder.Entity<MstUnitofMeasurement>(entity =>
         {
             entity.HasKey(e => e.UnitofMeasurementId).HasName("PK__MstUnito__21E7C5537FB3558A");
@@ -323,7 +366,6 @@ public partial class ShutterDBContext : DbContext
                 .HasMaxLength(50)
                 .IsUnicode(false);
             entity.Property(e => e.Phone).HasMaxLength(128);
-            entity.Property(e => e.State).HasMaxLength(100);
             entity.Property(e => e.StreetAddress).HasMaxLength(128);
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(getdate())")
@@ -334,9 +376,48 @@ public partial class ShutterDBContext : DbContext
                 .HasForeignKey(d => d.ContactId)
                 .HasConstraintName("FK__TblAddres__Conta__59C55456");
 
+            entity.HasOne(d => d.StateNavigation).WithMany(p => p.TblAddresses)
+                .HasForeignKey(d => d.State)
+                .HasConstraintName("FK__TblAddres__State__58DC1D15");
+
             entity.HasOne(d => d.Tenant).WithMany(p => p.TblAddresses)
                 .HasForeignKey(d => d.TenantId)
                 .HasConstraintName("FK__TblAddres__Tenan__3FD07829");
+        });
+
+        modelBuilder.Entity<TblAppointmentSchedule>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__TblAppoi__3213E83F377B440E");
+
+            entity.ToTable("TblAppointmentSchedule", "dbo");
+
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("(newid())")
+                .HasColumnName("id");
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.Description)
+                .HasMaxLength(200)
+                .IsUnicode(false);
+            entity.Property(e => e.GhlEventId)
+                .HasMaxLength(100)
+                .HasColumnName("GHL_EventId");
+            entity.Property(e => e.GhlUserId)
+                .HasMaxLength(100)
+                .HasColumnName("GHL_UserId");
+            entity.Property(e => e.LastSync).HasColumnType("datetime");
+            entity.Property(e => e.ScheduleDateTime).HasColumnType("datetime");
+            entity.Property(e => e.Title)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+
+            entity.HasOne(d => d.Job).WithMany(p => p.TblAppointmentSchedules)
+                .HasForeignKey(d => d.JobId)
+                .HasConstraintName("FK__TblAppoin__JobId__6ECB5E34");
+
+            entity.HasOne(d => d.User).WithMany(p => p.TblAppointmentSchedules)
+                .HasForeignKey(d => d.UserId)
+                .HasConstraintName("FK__TblAppoin__UserI__261B931E");
         });
 
         modelBuilder.Entity<TblComponent>(entity =>
@@ -344,6 +425,8 @@ public partial class ShutterDBContext : DbContext
             entity.HasKey(e => e.ComponentId).HasName("PK__TblCompo__D79CF04E96E58156");
 
             entity.ToTable("TblComponent", "dbo");
+
+            entity.HasIndex(e => e.TenantId, "IX_TblComponent_TenantId");
 
             entity.Property(e => e.ComponentId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.ComponentName).HasMaxLength(255);
@@ -369,6 +452,8 @@ public partial class ShutterDBContext : DbContext
             entity.HasKey(e => e.ComponentMaterialId).HasName("PK__TblCompo__82FB769C2564F192");
 
             entity.ToTable("TblComponentMaterial", "dbo");
+
+            entity.HasIndex(e => e.ComponentId, "IX_TblComponentMaterial_ComponentId");
 
             entity.Property(e => e.ComponentMaterialId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.CreatedAt)
@@ -423,6 +508,9 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.Name).HasMaxLength(255);
             entity.Property(e => e.PhoneNumber).HasMaxLength(50);
             entity.Property(e => e.Referral).HasMaxLength(100);
+            entity.Property(e => e.Suffix)
+                .HasMaxLength(100)
+                .IsUnicode(false);
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
@@ -510,6 +598,39 @@ public partial class ShutterDBContext : DbContext
                 .HasConstraintName("FK_Customer");
         });
 
+        modelBuilder.Entity<TblEmailConfiguration>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__EmailCon__3214EC07F0945E3A");
+
+            entity.ToTable("TblEmailConfiguration", "dbo");
+
+            entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.AccessExpirationtime).HasColumnType("datetime");
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.From).HasMaxLength(255);
+            entity.Property(e => e.ModifiedAt).HasColumnType("datetime");
+            entity.Property(e => e.Password).HasMaxLength(500);
+            entity.Property(e => e.RefreshExpirationtime).HasColumnType("datetime");
+            entity.Property(e => e.ReplyTo).HasMaxLength(255);
+            entity.Property(e => e.SmtpServer).HasMaxLength(255);
+            entity.Property(e => e.UseSsl).HasColumnName("UseSSL");
+            entity.Property(e => e.Username).HasMaxLength(255);
+        });
+
+        modelBuilder.Entity<TblEmailType>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__tblEmail__3214EC076EF4B1D0");
+
+            entity.ToTable("tblEmailType", "dbo");
+
+            entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.Description).HasMaxLength(255);
+            entity.Property(e => e.IsOauth).HasColumnName("IsOAuth");
+            entity.Property(e => e.ModifiedAt).HasColumnType("datetime");
+            entity.Property(e => e.Name).HasMaxLength(50);
+        });
+
         modelBuilder.Entity<TblEstimate>(entity =>
         {
             entity.HasKey(e => e.EstimateId).HasName("PK__TblEstim__ABEBF4B51ABC6B71");
@@ -535,6 +656,7 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.TaxAmount).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.TermsCondition).HasMaxLength(2000);
             entity.Property(e => e.TotalPrice).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.TotaltaxAmount).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
@@ -567,6 +689,14 @@ public partial class ShutterDBContext : DbContext
             entity.HasKey(e => e.EstWindowId).HasName("PK__TblEstim__F0A94F98E0C7CBA1");
 
             entity.ToTable("TblEstimateWindow", "dbo");
+
+            entity.HasIndex(e => e.AddressId, "IX_TblEstimateWindow_AddressId");
+
+            entity.HasIndex(e => e.EstimateId, "IX_TblEstimateWindow_EstimateId");
+
+            entity.HasIndex(e => e.TenantId, "IX_TblEstimateWindow_TenantId");
+
+            entity.HasIndex(e => e.WindowId, "IX_TblEstimateWindow_WindowId");
 
             entity.Property(e => e.EstWindowId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.ArchHeight).HasColumnType("decimal(10, 2)");
@@ -610,11 +740,23 @@ public partial class ShutterDBContext : DbContext
 
             entity.ToTable("TblEstimateWindowProduct", "dbo");
 
+            entity.HasIndex(e => e.EstWindowId, "IX_TblEstimateWindowProduct_EstWindowId");
+
+            entity.HasIndex(e => e.EstimateId, "IX_TblEstimateWindowProduct_EstimateId");
+
+            entity.HasIndex(e => e.TaxId, "IX_TblEstimateWindowProduct_TaxId");
+
+            entity.HasIndex(e => e.TenantId, "IX_TblEstimateWindowProduct_TenantId");
+
+            entity.HasIndex(e => e.WindowProductId, "IX_TblEstimateWindowProduct_WindowProductId");
+
             entity.Property(e => e.EstimateWindowProductId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.AdditionalWidth).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.ArchHeight).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.Area).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.City).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.Color).HasMaxLength(100);
+            entity.Property(e => e.ComponentMarkup).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
@@ -623,21 +765,36 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
             entity.Property(e => e.Length).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.Markup).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.Municipality).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.OptionMarkup).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.Price).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.ProductMarkup).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.ProductName).HasMaxLength(255);
+            entity.Property(e => e.ProductPrice).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.ProductType)
                 .HasMaxLength(50)
                 .IsUnicode(false);
             entity.Property(e => e.ProductTypeName).HasMaxLength(50);
+            entity.Property(e => e.State).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.TaxName).HasMaxLength(200);
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
+            entity.Property(e => e.WholeSalePrice).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.Width).HasColumnType("decimal(10, 2)");
+
+            entity.HasOne(d => d.EstWindow).WithMany(p => p.TblEstimateWindowProducts)
+                .HasForeignKey(d => d.EstWindowId)
+                .HasConstraintName("FK__TblEstima__EstWi__50D0E6F9");
 
             entity.HasOne(d => d.Estimate).WithMany(p => p.TblEstimateWindowProducts)
                 .HasForeignKey(d => d.EstimateId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__TblEstima__Estim__0F4D3C5F");
+
+            entity.HasOne(d => d.Tax).WithMany(p => p.TblEstimateWindowProducts)
+                .HasForeignKey(d => d.TaxId)
+                .HasConstraintName("FK__TblEstima__TaxId__04859529");
 
             entity.HasOne(d => d.Tenant).WithMany(p => p.TblEstimateWindowProducts)
                 .HasForeignKey(d => d.TenantId)
@@ -653,6 +810,12 @@ public partial class ShutterDBContext : DbContext
             entity.HasKey(e => e.EstimateWindowProductComponentId).HasName("PK__TblEstim__198C247355EF57A0");
 
             entity.ToTable("TblEstimateWindowProductComponent", "dbo");
+
+            entity.HasIndex(e => e.EstimateId, "IX_TblEstimateWindowProductComponent_EstimateId");
+
+            entity.HasIndex(e => e.EstimateWindowProductId, "IX_TblEstimateWindowProductComponent_EstimateWindowProductId");
+
+            entity.HasIndex(e => e.TenantId, "IX_TblEstimateWindowProductComponent_TenantId");
 
             entity.Property(e => e.EstimateWindowProductComponentId).ValueGeneratedNever();
             entity.Property(e => e.ComponentId).HasDefaultValueSql("(newid())");
@@ -676,6 +839,10 @@ public partial class ShutterDBContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__TblEstima__Estim__05C3D225");
 
+            entity.HasOne(d => d.EstimateWindowProduct).WithMany(p => p.TblEstimateWindowProductComponents)
+                .HasForeignKey(d => d.EstimateWindowProductId)
+                .HasConstraintName("FK__TblEstima__Estim__51C50B32");
+
             entity.HasOne(d => d.Tenant).WithMany(p => p.TblEstimateWindowProductComponents)
                 .HasForeignKey(d => d.TenantId)
                 .HasConstraintName("FK__TblEstima__Tenan__04CFADEC");
@@ -687,6 +854,14 @@ public partial class ShutterDBContext : DbContext
 
             entity.ToTable("TblEstimateWindowProductComponentMaterial", "dbo");
 
+            entity.HasIndex(e => e.EstimateId, "IX_TblEstimateWindowProductComponentMaterial_EstimateId");
+
+            entity.HasIndex(e => e.EstimateWindowProductComponentId, "IX_TblEstimateWindowProductComponentMaterial_EstimateWindowProductComponentId");
+
+            entity.HasIndex(e => e.ProductType, "IX_TblEstimateWindowProductComponentMaterial_ProductType");
+
+            entity.HasIndex(e => e.TenantId, "IX_TblEstimateWindowProductComponentMaterial_TenantId");
+
             entity.Property(e => e.EstimateWindowProductComponentMaterialId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
@@ -694,6 +869,7 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
             entity.Property(e => e.MaterialName).HasMaxLength(255);
+            entity.Property(e => e.MaterialPrice).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.RawMaterialId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.ReorderLevel).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.Sku)
@@ -713,6 +889,10 @@ public partial class ShutterDBContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__EstimateW__Estim__1BB31344");
 
+            entity.HasOne(d => d.EstimateWindowProductComponent).WithMany(p => p.TblEstimateWindowProductComponentMaterials)
+                .HasForeignKey(d => d.EstimateWindowProductComponentId)
+                .HasConstraintName("FK__TblEstima__Estim__52B92F6B");
+
             entity.HasOne(d => d.ProductTypeNavigation).WithMany(p => p.TblEstimateWindowProductComponentMaterials)
                 .HasForeignKey(d => d.ProductType)
                 .HasConstraintName("FK__EstimateW__Produ__19CACAD2");
@@ -720,6 +900,56 @@ public partial class ShutterDBContext : DbContext
             entity.HasOne(d => d.Tenant).WithMany(p => p.TblEstimateWindowProductComponentMaterials)
                 .HasForeignKey(d => d.TenantId)
                 .HasConstraintName("FK__EstimateW__Tenan__1ABEEF0B");
+        });
+
+        modelBuilder.Entity<TblEstimateWindowProductOption>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__TblEstim__3213E83F9C96ED79");
+
+            entity.ToTable("TblEstimateWindowProductOption", "dbo");
+
+            entity.HasIndex(e => e.EstimateWindowProductId, "IX_TblEstimateWindowProductOption_EstimateWindowProductId");
+
+            entity.HasIndex(e => e.TaxId, "IX_TblEstimateWindowProductOption_TaxId");
+
+            entity.HasIndex(e => e.WindowOptionId, "IX_TblEstimateWindowProductOption_WindowOptionId");
+
+            entity.HasIndex(e => e.WindowProductId, "IX_TblEstimateWindowProductOption_WindowProductId");
+
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("(newid())")
+                .HasColumnName("id");
+            entity.Property(e => e.CityTax).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.MunicipilityTax).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.OptionName)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.OptionPrice).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.OptionTypeName)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.StateTax).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.TaxName)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+
+            entity.HasOne(d => d.EstimateWindowProduct).WithMany(p => p.TblEstimateWindowProductOptions)
+                .HasForeignKey(d => d.EstimateWindowProductId)
+                .HasConstraintName("FK__TblEstima__Estim__25E688F4");
+
+            entity.HasOne(d => d.Tax).WithMany(p => p.TblEstimateWindowProductOptions)
+                .HasForeignKey(d => d.TaxId)
+                .HasConstraintName("FK__TblEstima__TaxId__26DAAD2D");
+
+            entity.HasOne(d => d.WindowOption).WithMany(p => p.TblEstimateWindowProductOptions)
+                .HasForeignKey(d => d.WindowOptionId)
+                .HasConstraintName("FK__TblEstima__Windo__24F264BB");
+
+            entity.HasOne(d => d.WindowProduct).WithMany(p => p.TblEstimateWindowProductOptions)
+                .HasForeignKey(d => d.WindowProductId)
+                .HasConstraintName("FK__TblEstima__Windo__23FE4082");
         });
 
         modelBuilder.Entity<TblExpression>(entity =>
@@ -738,6 +968,29 @@ public partial class ShutterDBContext : DbContext
                 .HasConstraintName("FK__TblExpres__Produ__353DDB1D");
         });
 
+        modelBuilder.Entity<TblGhlCustomField>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__TblGhlCu__3214EC07E7938FF4");
+
+            entity.ToTable("TblGhlCustomFields", "dbo");
+
+            entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.DataType).HasMaxLength(50);
+            entity.Property(e => e.DateAdded).HasColumnType("datetime");
+            entity.Property(e => e.DocumentType).HasMaxLength(50);
+            entity.Property(e => e.FieldKey).HasMaxLength(255);
+            entity.Property(e => e.FieldName).HasMaxLength(255);
+            entity.Property(e => e.GhlFieldId).HasMaxLength(100);
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
+            entity.Property(e => e.IsDelete).HasDefaultValue(false);
+            entity.Property(e => e.LocationId).HasMaxLength(100);
+            entity.Property(e => e.Model).HasMaxLength(100);
+            entity.Property(e => e.ModifiedAt).HasColumnType("datetime");
+            entity.Property(e => e.ParentId).HasMaxLength(100);
+            entity.Property(e => e.Placeholder).HasMaxLength(255);
+        });
+
         modelBuilder.Entity<TblGhlStage>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK__tblGHL_S__3213E83FA5D504FE");
@@ -747,12 +1000,63 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.Id)
                 .HasDefaultValueSql("(newid())")
                 .HasColumnName("id");
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
             entity.Property(e => e.GhlLastSync)
                 .HasColumnType("datetime")
                 .HasColumnName("GHL_lastSync");
             entity.Property(e => e.GhlPipelineId).HasColumnName("GHL_PipelineId");
+            entity.Property(e => e.GhlPipelineName)
+                .HasMaxLength(100)
+                .IsUnicode(false)
+                .HasColumnName("GHL_PipelineName");
             entity.Property(e => e.GhlStageId).HasColumnName("GHL_StageId");
             entity.Property(e => e.GhlStageName).HasColumnName("GHL_StageName");
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+        });
+
+        modelBuilder.Entity<TblGhlStagesmapping>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__TblGHlSt__3213E83F082DBD6A");
+
+            entity.ToTable("TblGHlStagesmapping", "dbo");
+
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("(newid())")
+                .HasColumnName("id");
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+        });
+
+        modelBuilder.Entity<TblGhlUser>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__tblGHL_U__3214EC0715BD3216");
+
+            entity.ToTable("tblGHL_Users", "dbo");
+
+            entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.GhlCalendarId)
+                .HasMaxLength(100)
+                .HasColumnName("GHL_CalendarId");
+            entity.Property(e => e.GhlCalendarName)
+                .HasMaxLength(100)
+                .HasColumnName("GHL_CalendarName");
+            entity.Property(e => e.GhlEmail)
+                .HasMaxLength(100)
+                .HasColumnName("GHL_Email");
+            entity.Property(e => e.GhlFirstName)
+                .HasMaxLength(100)
+                .HasColumnName("GHL_FirstName");
+            entity.Property(e => e.GhlLastName)
+                .HasMaxLength(100)
+                .HasColumnName("GHL_LastName");
+            entity.Property(e => e.GhlLastSync)
+                .HasColumnType("datetime")
+                .HasColumnName("GHL_lastSync");
+            entity.Property(e => e.GhlUserId)
+                .HasMaxLength(100)
+                .HasColumnName("GHL_UserId");
+            entity.Property(e => e.GhlUserName)
+                .HasMaxLength(100)
+                .HasColumnName("GHL_UserName");
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
         });
 
@@ -763,7 +1067,13 @@ public partial class ShutterDBContext : DbContext
             entity.ToTable("TblGHLConfiguration", "dbo");
 
             entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
-            entity.Property(e => e.Apikey).HasColumnName("APIkey");
+            entity.Property(e => e.AccessExpirationtime).HasColumnType("datetime");
+            entity.Property(e => e.AccessToken).HasColumnName("Access_token");
+            entity.Property(e => e.LastSync)
+                .HasColumnType("datetime")
+                .HasColumnName("lastSync");
+            entity.Property(e => e.RefreshExpirationtime).HasColumnType("datetime");
+            entity.Property(e => e.RefreshToken).HasColumnName("Refresh_token");
         });
 
         modelBuilder.Entity<TblInvoice>(entity =>
@@ -771,6 +1081,8 @@ public partial class ShutterDBContext : DbContext
             entity.HasKey(e => e.InvoiceId).HasName("PK__TblInvoi__D796AAB5ED5E9A49");
 
             entity.ToTable("TblInvoice", "dbo");
+
+            entity.HasIndex(e => e.EstimateId, "IX_TblInvoice_EstimateId");
 
             entity.Property(e => e.InvoiceId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.BalanceDue).HasColumnType("decimal(10, 2)");
@@ -809,6 +1121,8 @@ public partial class ShutterDBContext : DbContext
 
             entity.ToTable("TblInvoicePayment", "dbo");
 
+            entity.HasIndex(e => e.InvoiceId, "IX_TblInvoicePayment_InvoiceId");
+
             entity.Property(e => e.InvoicePaymentId).ValueGeneratedNever();
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
@@ -831,19 +1145,35 @@ public partial class ShutterDBContext : DbContext
 
             entity.ToTable("TblJob", "dbo");
 
+            entity.HasIndex(e => e.AddressId, "IX_TblJob_AddressId");
+
+            entity.HasIndex(e => e.ContactId, "IX_TblJob_ContactId");
+
+            entity.HasIndex(e => e.JobStatus, "IX_TblJob_JobStatus");
+
+            entity.HasIndex(e => e.TenantId, "IX_TblJob_TenantId");
+
             entity.Property(e => e.JobId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
+            entity.Property(e => e.GhlContactId)
+                .HasMaxLength(100)
+                .HasColumnName("GHL_ContactId");
+            entity.Property(e => e.GhlOpportunityId)
+                .HasMaxLength(100)
+                .HasColumnName("GHL_OpportunityId");
             entity.Property(e => e.GhlStageId).HasColumnName("GHL_StageId");
             entity.Property(e => e.GhlStageName)
                 .HasMaxLength(100)
                 .IsUnicode(false)
                 .HasColumnName("GHL_StageName");
+            entity.Property(e => e.GhluserId).HasColumnName("GHLUserId");
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
             entity.Property(e => e.JobName).HasMaxLength(250);
             entity.Property(e => e.JobUniqueId).HasMaxLength(200);
+            entity.Property(e => e.LastAsync).HasColumnType("datetime");
             entity.Property(e => e.ScheduledDate).HasColumnType("datetime");
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(getdate())")
@@ -871,6 +1201,12 @@ public partial class ShutterDBContext : DbContext
             entity.HasKey(e => e.JobComponentId).HasName("PK__TblJobCo__E85D56C0B9BBDFB8");
 
             entity.ToTable("TblJobComponent", "dbo");
+
+            entity.HasIndex(e => e.AssemblyId, "IX_TblJobComponent_AssemblyId");
+
+            entity.HasIndex(e => e.ComponentId, "IX_TblJobComponent_ComponentId");
+
+            entity.HasIndex(e => e.JobId, "IX_TblJobComponent_JobId");
 
             entity.Property(e => e.JobComponentId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.ActualDeliveryDate).HasColumnType("datetime");
@@ -913,6 +1249,12 @@ public partial class ShutterDBContext : DbContext
 
             entity.ToTable("TblJobContact", "dbo");
 
+            entity.HasIndex(e => e.ContactId, "IX_TblJobContact_ContactId");
+
+            entity.HasIndex(e => e.ContactTypeId, "IX_TblJobContact_ContactTypeId");
+
+            entity.HasIndex(e => e.JobId, "IX_TblJobContact_JobId");
+
             entity.Property(e => e.JobContactId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
@@ -939,6 +1281,11 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.JobScheduleId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
             entity.Property(e => e.EndDate).HasColumnType("datetime");
+            entity.Property(e => e.GhlEventId).HasColumnName("GHL_EventId");
+            entity.Property(e => e.GhlUserId)
+                .HasMaxLength(100)
+                .HasColumnName("GHL_UserId");
+            entity.Property(e => e.LasSync).HasColumnType("datetime");
             entity.Property(e => e.StartDate).HasColumnType("datetime");
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
 
@@ -957,6 +1304,16 @@ public partial class ShutterDBContext : DbContext
             entity.HasOne(d => d.User).WithMany(p => p.TblJobSchedules)
                 .HasForeignKey(d => d.UserId)
                 .HasConstraintName("FK__TblJobSch__UserI__4C214075");
+        });
+
+        modelBuilder.Entity<TblJobStageStatusAutomAtionHistory>(entity =>
+        {
+            entity.HasKey(e => e.HistoryId).HasName("PK__TblJobSt__4D7B4ABDB0385C6F");
+
+            entity.ToTable("TblJobStageStatusAutomAtionHistory");
+
+            entity.Property(e => e.HistoryId).ValueGeneratedNever();
+            entity.Property(e => e.ChangedAt).HasColumnType("datetime");
         });
 
         modelBuilder.Entity<TblJobStatus>(entity =>
@@ -983,6 +1340,66 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
             entity.Property(e => e.LocationName).HasMaxLength(100);
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+        });
+
+        modelBuilder.Entity<TblManagePartnersProduct>(entity =>
+        {
+            entity.HasKey(e => e.ManageProductId).HasName("PK__TblManag__E07C429B7F9C28E8");
+
+            entity.ToTable("TblManagePartnersProducts", "dbo");
+
+            entity.Property(e => e.ManageProductId).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.MarkupType).HasMaxLength(20);
+            entity.Property(e => e.MaxPartnerPrice).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.PartnerSellingPrice).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.PriceType).HasMaxLength(20);
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+            entity.Property(e => e.WholeSalePrice).HasColumnType("decimal(10, 2)");
+
+            entity.HasOne(d => d.Product).WithMany(p => p.TblManagePartnersProducts)
+                .HasForeignKey(d => d.ProductId)
+                .HasConstraintName("FK_TblManagePartnersProducts_Product");
+
+            entity.HasOne(d => d.Tax).WithMany(p => p.TblManagePartnersProducts)
+                .HasForeignKey(d => d.TaxId)
+                .HasConstraintName("FK__TblManage__TaxId__2B9F624A");
+
+            entity.HasOne(d => d.Tenant).WithMany(p => p.TblManagePartnersProducts)
+                .HasForeignKey(d => d.TenantId)
+                .HasConstraintName("FK_TblManagePartnersProducts_ManageProductTenant");
+        });
+
+        modelBuilder.Entity<TblManagePartnersProductsOption>(entity =>
+        {
+            entity.HasKey(e => e.ManageProductOptionId).HasName("PK__TblManag__5912BD4E4EAB5C00");
+
+            entity.ToTable("TblManagePartnersProductsOptions", "dbo");
+
+            entity.Property(e => e.ManageProductOptionId).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.MarkupOptionType).HasMaxLength(20);
+            entity.Property(e => e.MaxPrice).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.PartnerSellingPrice).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.PriceType).HasMaxLength(20);
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+            entity.Property(e => e.WholeSalePrice).HasColumnType("decimal(10, 2)");
+
+            entity.HasOne(d => d.ManageProduct).WithMany(p => p.TblManagePartnersProductsOptions)
+                .HasForeignKey(d => d.ManageProductId)
+                .HasConstraintName("FK_TblManagePartnersProducts_ManageProduct");
+
+            entity.HasOne(d => d.Option).WithMany(p => p.TblManagePartnersProductsOptions)
+                .HasForeignKey(d => d.OptionId)
+                .HasConstraintName("FK_TblOptions_ManagePartnerProductOptionId");
+
+            entity.HasOne(d => d.OptionType).WithMany(p => p.TblManagePartnersProductsOptions)
+                .HasForeignKey(d => d.OptionTypeId)
+                .HasConstraintName("FK_TBLOptionsType_ManagePartnerProductOptionTypeId");
+
+            entity.HasOne(d => d.Tax).WithMany(p => p.TblManagePartnersProductsOptions)
+                .HasForeignKey(d => d.TaxId)
+                .HasConstraintName("FK__TblManage__TaxId__2AAB3E11");
         });
 
         modelBuilder.Entity<TblMeasurement>(entity =>
@@ -1025,20 +1442,38 @@ public partial class ShutterDBContext : DbContext
 
             entity.ToTable("TblOptions", "dbo");
 
+            entity.HasIndex(e => e.ProductId, "IX_TblOptions_ProductId");
+
+            entity.HasIndex(e => e.ProductTypeId, "IX_TblOptions_ProductTypeId");
+
+            entity.HasIndex(e => e.TaxId, "IX_TblOptions_TaxId");
+
+            entity.HasIndex(e => e.TenantId, "IX_TblOptions_TenantId");
+
             entity.Property(e => e.OptionId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
+            entity.Property(e => e.Markup).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.OptionName).HasMaxLength(255);
+            entity.Property(e => e.Unit).HasMaxLength(20);
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
 
+            entity.HasOne(d => d.Product).WithMany(p => p.TblOptions)
+                .HasForeignKey(d => d.ProductId)
+                .HasConstraintName("FK_TblOption_Product");
+
             entity.HasOne(d => d.ProductType).WithMany(p => p.TblOptions)
                 .HasForeignKey(d => d.ProductTypeId)
-                .HasConstraintName("FK__TblOption__Produ__10E07F16");
+                .HasConstraintName("FK_TblOption_ProductType");
+
+            entity.HasOne(d => d.Tax).WithMany(p => p.TblOptions)
+                .HasForeignKey(d => d.TaxId)
+                .HasConstraintName("FK__TblOption__TaxId__0579B962");
 
             entity.HasOne(d => d.Tenant).WithMany(p => p.TblOptions)
                 .HasForeignKey(d => d.TenantId)
@@ -1084,6 +1519,7 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.TaxAmount).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.TermsCondition).HasMaxLength(2000);
             entity.Property(e => e.TotalPrice).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.TotaltaxAmount).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
             entity.Property(e => e.Version).HasMaxLength(3);
         });
@@ -1116,21 +1552,34 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.AdditionalWidth).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.ArchHeight).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.Area).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.City).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.Color).HasMaxLength(100);
+            entity.Property(e => e.ComponentMarkup).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
             entity.Property(e => e.Height).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.Length).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.Markup).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.Municipality).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.OptionMarkup).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.OrderId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.Price).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.ProductMarkup).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.ProductName).HasMaxLength(255);
+            entity.Property(e => e.ProductPrice).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.ProductType)
                 .HasMaxLength(50)
                 .IsUnicode(false);
             entity.Property(e => e.ProductTypeName).HasMaxLength(50);
+            entity.Property(e => e.State).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.TaxName).HasMaxLength(200);
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
             entity.Property(e => e.Version).HasMaxLength(3);
+            entity.Property(e => e.WholeSalePrice).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.Width).HasColumnType("decimal(10, 2)");
+
+            entity.HasOne(d => d.Tax).WithMany(p => p.TblOrderWindowProducts)
+                .HasForeignKey(d => d.TaxId)
+                .HasConstraintName("FK__TblOrderW__TaxId__3DBE1285");
         });
 
         modelBuilder.Entity<TblOrderWindowProductComponent>(entity =>
@@ -1160,6 +1609,7 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.OrderWindowProductComponentMaterialId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
             entity.Property(e => e.MaterialName).HasMaxLength(255);
+            entity.Property(e => e.MaterialPrice).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.OrderId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.ReorderLevel).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.Sku)
@@ -1174,6 +1624,39 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.Version).HasMaxLength(3);
         });
 
+        modelBuilder.Entity<TblOrderWindowProductOption>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__TblOrder__3213E83F716A4742");
+
+            entity.ToTable("TblOrderWindowProductOption", "dbo");
+
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("(newid())")
+                .HasColumnName("id");
+            entity.Property(e => e.CityTax).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.MunicipilityTax).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.OptionPrice).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.StateTax).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+
+            entity.HasOne(d => d.OrderWindowProduct).WithMany(p => p.TblOrderWindowProductOptions)
+                .HasForeignKey(d => d.OrderWindowProductId)
+                .HasConstraintName("FK__TblOrderW__Order__4376EBDB");
+
+            entity.HasOne(d => d.Tax).WithMany(p => p.TblOrderWindowProductOptions)
+                .HasForeignKey(d => d.TaxId)
+                .HasConstraintName("FK__TblOrderW__TaxId__446B1014");
+
+            entity.HasOne(d => d.WindowOption).WithMany(p => p.TblOrderWindowProductOptions)
+                .HasForeignKey(d => d.WindowOptionId)
+                .HasConstraintName("FK__TblOrderW__Windo__4282C7A2");
+
+            entity.HasOne(d => d.WindowProduct).WithMany(p => p.TblOrderWindowProductOptions)
+                .HasForeignKey(d => d.WindowProductId)
+                .HasConstraintName("FK__TblOrderW__Windo__418EA369");
+        });
+
         modelBuilder.Entity<TblPayment>(entity =>
         {
             entity.HasKey(e => e.PaymentId).HasName("PK__TblPayme__9B556A38349E201F");
@@ -1186,6 +1669,9 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.PaymentDate).HasColumnType("datetime");
             entity.Property(e => e.PaymentDueDate).HasColumnType("datetime");
             entity.Property(e => e.PaymentMethod)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.PaymentTypeStatus)
                 .HasMaxLength(100)
                 .IsUnicode(false);
             entity.Property(e => e.Status)
@@ -1204,6 +1690,10 @@ public partial class ShutterDBContext : DbContext
             entity.HasKey(e => e.ProductId).HasName("PK__TblAssem__1C02BDABE36F3A37");
 
             entity.ToTable("TblProduct", "dbo");
+
+            entity.HasIndex(e => e.TaxId, "IX_TblProduct_TaxId");
+
+            entity.HasIndex(e => e.TenantId, "IX_TblProduct_TenantId");
 
             entity.Property(e => e.ProductId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.AdditionalWidth).HasColumnType("decimal(10, 2)");
@@ -1227,6 +1717,10 @@ public partial class ShutterDBContext : DbContext
                 .HasColumnType("datetime");
             entity.Property(e => e.Width).HasColumnType("decimal(10, 2)");
 
+            entity.HasOne(d => d.Tax).WithMany(p => p.TblProducts)
+                .HasForeignKey(d => d.TaxId)
+                .HasConstraintName("FK__TblProduc__TaxId__7172C0B5");
+
             entity.HasOne(d => d.Tenant).WithMany(p => p.TblProducts)
                 .HasForeignKey(d => d.TenantId)
                 .HasConstraintName("FK__TblProduc__Tenan__5D2BD0E6");
@@ -1237,6 +1731,12 @@ public partial class ShutterDBContext : DbContext
             entity.HasKey(e => e.ProductComponentId).HasName("PK__TblProdu__E29891DF9ACD9DBE");
 
             entity.ToTable("TblProductComponent", "dbo");
+
+            entity.HasIndex(e => e.ComponentId, "IX_TblProductComponent_ComponentId");
+
+            entity.HasIndex(e => e.ProductId, "IX_TblProductComponent_ProductId");
+
+            entity.HasIndex(e => e.TenantId, "IX_TblProductComponent_TenantId");
 
             entity.Property(e => e.ProductComponentId).ValueGeneratedNever();
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
@@ -1263,12 +1763,19 @@ public partial class ShutterDBContext : DbContext
 
             entity.ToTable("TblRawMaterial", "dbo");
 
+            entity.HasIndex(e => e.ProductType, "IX_TblRawMaterial_ProductType");
+
+            entity.HasIndex(e => e.TenantId, "IX_TblRawMaterial_TenantId");
+
+            entity.HasIndex(e => e.VendorId, "IX_TblRawMaterial_VendorId");
+
             entity.Property(e => e.RawMaterialId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
+            entity.Property(e => e.Length).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.MaterialName).HasMaxLength(255);
             entity.Property(e => e.NonRatedUnitCost)
                 .HasColumnType("decimal(10, 2)")
@@ -1285,6 +1792,7 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
+            entity.Property(e => e.Width).HasColumnType("decimal(10, 2)");
 
             entity.HasOne(d => d.ProductTypeNavigation).WithMany(p => p.TblRawMaterials)
                 .HasForeignKey(d => d.ProductType)
@@ -1348,6 +1856,33 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
         });
 
+        modelBuilder.Entity<TblStripePayment>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__TblStrip__3214EC07FE6CDD49");
+
+            entity.ToTable("TblStripePayment", "dbo");
+
+            entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.CreatedDate).HasColumnType("datetime");
+            entity.Property(e => e.CustomerEmail)
+                .HasMaxLength(100)
+                .HasColumnName("customer_email");
+            entity.Property(e => e.CustomerName)
+                .HasMaxLength(100)
+                .HasColumnName("customer_name");
+            entity.Property(e => e.ModeifiedAt).HasColumnType("datetime");
+            entity.Property(e => e.PaymentAmount).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.PaymentDate).HasColumnType("datetime");
+            entity.Property(e => e.PaymentMode)
+                .HasMaxLength(100)
+                .HasColumnName("payment_mode");
+            entity.Property(e => e.Status).HasMaxLength(50);
+            entity.Property(e => e.StripeEventType).HasMaxLength(100);
+            entity.Property(e => e.StripeTransactionId)
+                .HasMaxLength(100)
+                .HasColumnName("stripeTransactionId");
+        });
+
         modelBuilder.Entity<TblSubtenantProductMarkup>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK__TblSubte__3214EC077FC08328");
@@ -1390,6 +1925,7 @@ public partial class ShutterDBContext : DbContext
             entity.ToTable("TblTaxRate", "dbo");
 
             entity.Property(e => e.TaxRateId).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.City).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
@@ -1397,7 +1933,10 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.ExpiryDate).HasColumnType("datetime");
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
+            entity.Property(e => e.Municipality).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.Rate).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.State).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.TaxName).HasMaxLength(200);
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
@@ -1415,6 +1954,9 @@ public partial class ShutterDBContext : DbContext
 
             entity.Property(e => e.TemplateId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.TemplateCategory)
+                .HasMaxLength(100)
+                .IsUnicode(false);
             entity.Property(e => e.TemplateName)
                 .HasMaxLength(200)
                 .IsUnicode(false);
@@ -1448,11 +1990,16 @@ public partial class ShutterDBContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.FirstName).HasMaxLength(128);
+            entity.Property(e => e.GhluserId).HasColumnName("GHLUserId");
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
+            entity.Property(e => e.IsGhlconfigSameAsTenant).HasColumnName("IsGHLConfigSameAsTenant");
             entity.Property(e => e.LastName).HasMaxLength(128);
             entity.Property(e => e.MiddleName).HasMaxLength(128);
             entity.Property(e => e.ModifiedBy).HasColumnName("ModifiedBY");
+            entity.Property(e => e.Suffix)
+                .HasMaxLength(100)
+                .IsUnicode(false);
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
@@ -1508,8 +2055,12 @@ public partial class ShutterDBContext : DbContext
                 .HasMaxLength(100)
                 .IsUnicode(false);
             entity.Property(e => e.ForgetPassword).IsUnicode(false);
+            entity.Property(e => e.GhlUserId)
+                .HasMaxLength(100)
+                .HasColumnName("GHL_UserId");
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
+            entity.Property(e => e.IsTenantAdmin).HasDefaultValue(false);
             entity.Property(e => e.LastName)
                 .HasMaxLength(50)
                 .IsUnicode(false);
@@ -1521,6 +2072,9 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.Pwd)
                 .HasMaxLength(128)
                 .HasColumnName("pwd");
+            entity.Property(e => e.Suffix)
+                .HasMaxLength(100)
+                .IsUnicode(false);
             entity.Property(e => e.Token).HasMaxLength(500);
             entity.Property(e => e.Username)
                 .HasMaxLength(128)
@@ -1560,9 +2114,16 @@ public partial class ShutterDBContext : DbContext
 
             entity.ToTable("TblVendor", "dbo");
 
+            entity.HasIndex(e => e.State, "IX_TblVendor_State");
+
+            entity.HasIndex(e => e.TenantId, "IX_TblVendor_TenantId");
+
             entity.Property(e => e.VendorId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.City)
                 .HasMaxLength(200)
+                .IsUnicode(false);
+            entity.Property(e => e.CompanyName)
+                .HasMaxLength(100)
                 .IsUnicode(false);
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
@@ -1579,9 +2140,6 @@ public partial class ShutterDBContext : DbContext
                 .HasMaxLength(100)
                 .IsUnicode(false);
             entity.Property(e => e.PhoneNumber).HasMaxLength(200);
-            entity.Property(e => e.State)
-                .HasMaxLength(200)
-                .IsUnicode(false);
             entity.Property(e => e.StreetAddress)
                 .HasMaxLength(200)
                 .IsUnicode(false);
@@ -1591,6 +2149,10 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.VendorCode).HasMaxLength(100);
             entity.Property(e => e.VendorName).HasMaxLength(255);
             entity.Property(e => e.ZipCode).HasMaxLength(200);
+
+            entity.HasOne(d => d.StateNavigation).WithMany(p => p.TblVendors)
+                .HasForeignKey(d => d.State)
+                .HasConstraintName("FK_tblvendor_tblstate");
 
             entity.HasOne(d => d.Tenant).WithMany(p => p.TblVendors)
                 .HasForeignKey(d => d.TenantId)
@@ -1602,6 +2164,12 @@ public partial class ShutterDBContext : DbContext
             entity.HasKey(e => e.VendorOrderId).HasName("PK__TblVendo__477DCB3BE9BC2A7D");
 
             entity.ToTable("TblVendorOrder", "dbo");
+
+            entity.HasIndex(e => e.JobId, "IX_TblVendorOrder_JobId");
+
+            entity.HasIndex(e => e.TenentId, "IX_TblVendorOrder_TenentId");
+
+            entity.HasIndex(e => e.VendorId, "IX_TblVendorOrder_VendorId");
 
             entity.HasIndex(e => e.OrderNumber, "UQ__TblVendo__CAC5E7437EC0F4A6").IsUnique();
 
@@ -1642,6 +2210,10 @@ public partial class ShutterDBContext : DbContext
 
             entity.ToTable("TblVendorOrderItem", "dbo");
 
+            entity.HasIndex(e => e.MaterialId, "IX_TblVendorOrderItem_MaterialId");
+
+            entity.HasIndex(e => e.VendorOrderId, "IX_TblVendorOrderItem_VendorOrderId");
+
             entity.Property(e => e.VendorOrderItemId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
@@ -1675,6 +2247,12 @@ public partial class ShutterDBContext : DbContext
             entity.HasKey(e => e.WindowId).HasName("PK__TblWindo__1EEC642937E205D0");
 
             entity.ToTable("TblWindow", "dbo");
+
+            entity.HasIndex(e => e.AddressId, "IX_TblWindow_AddressId");
+
+            entity.HasIndex(e => e.JobId, "IX_TblWindow_JobId");
+
+            entity.HasIndex(e => e.TenantId, "IX_TblWindow_TenantId");
 
             entity.Property(e => e.WindowId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.ArchHeight).HasColumnType("decimal(10, 2)");
@@ -1711,6 +2289,14 @@ public partial class ShutterDBContext : DbContext
 
             entity.ToTable("tblWindowProduct", "dbo");
 
+            entity.HasIndex(e => e.ProductId, "IX_TblWindowProduct_ProductId");
+
+            entity.HasIndex(e => e.ProductTypeId, "IX_TblWindowProduct_ProductTypeId");
+
+            entity.HasIndex(e => e.TenantId, "IX_TblWindowProduct_TenantId");
+
+            entity.HasIndex(e => e.WindowId, "IX_TblWindowProduct_WindowId");
+
             entity.Property(e => e.WindowProductId).ValueGeneratedNever();
             entity.Property(e => e.BuildHeight).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.BuildWidth).HasColumnType("decimal(10, 2)");
@@ -1740,6 +2326,14 @@ public partial class ShutterDBContext : DbContext
 
             entity.ToTable("WindowOption", "dbo");
 
+            entity.HasIndex(e => e.OptionTypeId, "IX_WindowOption_OptionTypeId");
+
+            entity.HasIndex(e => e.TenantId, "IX_WindowOption_TenantId");
+
+            entity.HasIndex(e => e.WindowId, "IX_WindowOption_WindowId");
+
+            entity.HasIndex(e => e.WindowProductId, "IX_WindowOption_WindowProductId");
+
             entity.Property(e => e.WindowoptionId).ValueGeneratedNever();
             entity.Property(e => e.AdditionalCost).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
@@ -1760,6 +2354,24 @@ public partial class ShutterDBContext : DbContext
             entity.HasOne(d => d.WindowProduct).WithMany(p => p.WindowOptions)
                 .HasForeignKey(d => d.WindowProductId)
                 .HasConstraintName("FK__WindowOpt__Windo__19FFD4FC");
+        });
+
+        modelBuilder.Entity<MstPowderCoatColor>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK_MstPowderCoatColor");
+
+            entity.ToTable("MstPowderCoatColor", "dbo");
+
+            entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.ColorName)
+                .IsRequired()
+                .HasMaxLength(100);
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
+            entity.Property(e => e.IsDelete).HasDefaultValue(false);
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
         });
 
         OnModelCreatingPartial(modelBuilder);

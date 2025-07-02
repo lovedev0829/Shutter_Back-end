@@ -1,5 +1,6 @@
 ﻿using ShutterManagement.Business.Services;
 using ShutterManagement.Core.SPModel;
+using ShutterManagement.Core.SPModel.SP_Responses;
 using ShutterManagement.Core.ViewModels;
 using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.Core.ViewModels.Response;
@@ -20,5 +21,7 @@ namespace ShutterManagement.Business.Interfaces
         Task<IResponseVm<string>> TenantDelete(string TenantId);
         Task<IResponseVm<string>> TenantActiveInactive(string TenantId);
         Task<IResponseVm<List<GetAllTenant>>> TenantGetAll(Pagination filter);
+        Task<IResponseVm<List<TenantList>>> GetTenantsListByUsername(string UserName);
+        Task<IResponseVm<UserLoginDetails>> GetUserDataForTenantSwitch(string UserName, string TenantId);
     }
 }

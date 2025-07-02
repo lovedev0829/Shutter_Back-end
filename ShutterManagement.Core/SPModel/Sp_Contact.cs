@@ -14,30 +14,31 @@ namespace ShutterManagement.Core.SPModel
 
         [Required]
         [MaxLength(50)]
-        [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabaticalError)]
+        [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabeticalError)]
         [DefaultValue("")]
         public string ContactType { get; set; } = string.Empty;
 
         //[Required]
         //[MaxLength(255)]
-        //[RegularExpression("^[\\p{L} .'-]+$", ErrorMessage = AppConstant.AlphabaticalError)]
+        //[RegularExpression("^[\\p{L} .'-]+$", ErrorMessage = AppConstant.AlphabeticalError)]
         //[DefaultValue("")]
         //public string? Name { get; set; }
 
         [Required]
         [MaxLength(50)]
-        [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabaticalError)]
+        [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabeticalError)]
         [DefaultValue("")]
         public string? FirstName { get; set; }
 
         [Required]
         [MaxLength(50)]
-        [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabaticalError)]
+        [RegularExpression("^[a-zA-Z]+$", ErrorMessage = AppConstant.AlphabeticalError)]
         [DefaultValue("")]
         public string? LastName { get; set; }
+        public string? Suffix { get; set; }
         [Required]
-        [MaxLength(10)]
-        [RegularExpression(@"^\d{10}$", ErrorMessage = "Phone number must be exactly 10 digits.")]
+        [RegularExpression(@"^\+?1?\d{10}$", ErrorMessage = "Phone number must be 10 digits.")]
+        //[RegularExpression(@"^(\+1)?\d{10}$", ErrorMessage = "Phone number must be 10 digits, optionally prefixed by +1.")]
         [DefaultValue("")]
         public string? PhoneNumber { get; set; }
 
@@ -57,6 +58,10 @@ namespace ShutterManagement.Core.SPModel
 
         [DefaultValue("")]
         public string? Referral { get; set; }
+        public string? GHLContactId { get; set; }
+        public string? ContactId { get; set; }
+        public DateTime? lastAsync { get; set; }
+        public string? locationId { get; set; }
 
         public bool IsBillingAddressSameAsAddress { get; set; } = false;
         public BillingAddressVm? BillingAddressVm { get; set; }

@@ -35,30 +35,46 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId != null && x.IsActive == true && x.IsDelete ==false);
+                var IsTenantExists = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.ParentTenantId != null && x.IsActive == true && x.IsDelete ==false);
                 if (IsTenantExists)
                 {
                     var isproductExists = GetAllQuerable().Where(x => x.ProductId.ToString().ToLower() == model.ProductId.ToString().ToLower() && x.Isdelete == false && x.IsActive == true).FirstOrDefault();
                     if(isproductExists != null)
                     {
-                        responseVm.Message = "Product" + AppConstant.AlreadyExists;
-                        return responseVm;
-                    }
-                    var markup = new TblSubtenantProductMarkup
-                    {
-                        ProductId = model.ProductId,
-                        Markup = model.Markup,
-                        TenantId = AppConstant.LoggedInTenantId,
-                        ParentTenantId = Guid.Parse(AppConstant.LoggedInParentTenantId),
-                        IsActive = true,
-                        Isdelete = false,
-                        CreatedAt = DateTime.Now,
-                        CreatedBy = AppConstant.LoggedInUserID,
-                    };
 
-                    var res = await Add(markup);
-                    responseVm.IsSuccess = true;
-                    responseVm.Message = AppConstant.InsertSuccessMsg;
+                        isproductExists.ProductId = model.ProductId;
+                        isproductExists.Markup = model.Markup;
+                        isproductExists.TenantId = claimsProperty.GetTenantId();
+                        isproductExists.ParentTenantId = Guid.Parse(claimsProperty.GetParentTenantId());
+                        isproductExists.IsActive = true;
+                        isproductExists.Isdelete = false;
+                        isproductExists.CreatedAt = DateTime.Now;
+                        isproductExists.CreatedBy = AppConstant.LoggedInUserID;
+                       
+
+                        var res = await Update(isproductExists);
+                        responseVm.IsSuccess = true;
+                        responseVm.Message = AppConstant.UpdateSuccessMsg;
+                    }
+                    else
+                    {
+                        var markup = new TblSubtenantProductMarkup
+                        {
+                            ProductId = model.ProductId,
+                            Markup = model.Markup,
+                            TenantId = claimsProperty.GetTenantId(),
+                            ParentTenantId = Guid.Parse(claimsProperty.GetParentTenantId()),
+                            IsActive = true,
+                            Isdelete = false,
+                            CreatedAt = DateTime.Now,
+                            CreatedBy = AppConstant.LoggedInUserID,
+                        };
+
+                        var res = await Add(markup);
+                        responseVm.IsSuccess = true;
+                        responseVm.Message = AppConstant.InsertSuccessMsg;
+                    }
+                    
                 }
                 else
                 {
@@ -78,7 +94,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId != null && x.IsActive == true && x.IsDelete == false);
+                var IsTenantExists = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.ParentTenantId != null && x.IsActive == true && x.IsDelete == false);
                 if (IsTenantExists)
                 {
                     var isproductExists = GetAllQuerable().Where(x => x.Id.ToString().ToLower() != model.Id.ToString().ToLower() && x.ProductId.ToString().ToLower() == model.ProductId.ToString().ToLower() && x.Isdelete == false && x.IsActive == true).FirstOrDefault();
@@ -87,7 +103,7 @@ namespace ShutterManagement.Business.Services
                         responseVm.Message = "Product" + AppConstant.AlreadyExists;
                         return responseVm;
                     }
-                    var markup = GetAllQuerable().Where(x => x.Id == model.Id && x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
+                    var markup = GetAllQuerable().Where(x => x.Id == model.Id && x.TenantId == claimsProperty.GetTenantId()).FirstOrDefault();
                     if(markup != null)
                     {
                         markup.ProductId = model.ProductId;
@@ -118,10 +134,10 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId != null && x.IsActive == true && x.IsDelete == false);
+                var IsTenantExists = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.ParentTenantId != null && x.IsActive == true && x.IsDelete == false);
                 if (IsTenantExists)
                 {
-                    var markup = GetAllQuerable().Where(x => x.Id == Id && x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
+                    var markup = GetAllQuerable().Where(x => x.Id == Id && x.TenantId == claimsProperty.GetTenantId()).FirstOrDefault();
                     if (markup != null)
                     {
                         markup.IsActive = !markup.IsActive;
@@ -151,10 +167,10 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId != null && x.IsActive == true && x.IsDelete == false);
+                var IsTenantExists = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.ParentTenantId != null && x.IsActive == true && x.IsDelete == false);
                 if (IsTenantExists)
                 {
-                    var markup = GetAllQuerable().Where(x => x.Id == Id && x.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
+                    var markup = GetAllQuerable().Where(x => x.Id == Id && x.TenantId == claimsProperty.GetTenantId()).FirstOrDefault();
                     if (markup != null)
                     {
                         markup.IsActive = false;
@@ -185,16 +201,16 @@ namespace ShutterManagement.Business.Services
             IResponseVm<List<GetAllSubtenantProductMarkup>> responseVm = new ResponseVm<List<GetAllSubtenantProductMarkup>>();
             try
             {
-                var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId
+                var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId()
                     && x.ParentTenantId != null && x.IsActive == true && x.IsDelete == false);
 
                 if (isTenantExists)
                 {
                     var markups = (await GetAll())
-                        .Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.Isdelete == false && x.IsActive == true)
+                        .Where(x => x.TenantId == claimsProperty.GetTenantId() && x.Isdelete == false && x.IsActive == true)
                         .ToList(); 
 
-                    var products =  productService.GetAllQuerable().Where(x => x.IsActive == true && x.IsDelete == false)
+                    var products =  productService.GetAllQuerable().Where(x => x.IsActive == true && x.IsDelete == false && x.TenantId.ToString().ToLower()==claimsProperty.GetParentTenantId())
                         .ToList();
 
                     var markup = products

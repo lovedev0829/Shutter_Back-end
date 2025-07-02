@@ -15,9 +15,15 @@ using System.ComponentModel;
 using ShutterManagement.DAL.Context;
 using ShutterManagement.Business.Services;
 using ShutterManagement.Core.ViewModels.Response;
-using ShutterManagement;
-using ShutterManagement.GHL.Service;
-using ShutterManagement.GHL;
+using System.Text.Json.Serialization;
+using System.Text.Json;
+using ShutterManagement.GHL.Services;
+using ShutterManagment.GHL.ViewModel.Response;
+using ShutterManagement.GHLv2;
+using System.Runtime.InteropServices;
+using ShutterManagment.GHL.ViewModel.Request;
+using Microsoft.OpenApi.Extensions;
+using static ShutterManagement.Business.Services.MS365Configuration;
 
 namespace ShutterManagement.Controllers
 {
@@ -57,7 +63,16 @@ namespace ShutterManagement.Controllers
         private readonly ILocationService locationService;
         private readonly IDashboard dashboard;
         private readonly INotificationService notification;
+        private readonly IGHLConfiguration gHLConfiguration;
+        private readonly IStripeConfiguration stripeConfiguration;
+        private readonly IPaymentsService paymentsService;
+        private readonly GHLService_v2 gHLService_V2;
+        private readonly IJobSchedule jobSchedule;
         private readonly GhlService ghlService;
+        private readonly IStateService stateService;
+        private readonly MS365Configuration mS365Configuration;
+        private readonly IGhlCustomFieldsService ghlCustomFieldsService;
+        private readonly IAuthService authService;
 
         public CommonController(IMasterCreate masterCreate, 
             FileUploadHelper fileUpload, ClaimsProperty claimsProperty,
@@ -69,9 +84,11 @@ namespace ShutterManagement.Controllers
             IAddress address, IOption option, IProductService productService,
             IUnitofMeasurementService unitofMeasurementService, IRoleService roleService, IRegion region, IContactService contactService,
             IMstContactType contactType, IJobService jobService,IExpressionService expression ,IInvoiceService invoiceService,
-            ITaxRate taxService,IEstimateService estimateService,
+            ITaxRate taxService,IEstimateService estimateService, IAuthService authService,
             IEstimationBreakdownService estimationBreakdownService, ILocationService locationService,
-           IDashboard dashboard,INotificationService notification, GhlService ghlService)
+           IDashboard dashboard, INotificationService notification, IGHLConfiguration gHLConfiguration,IStripeConfiguration stripeConfiguration,
+           GhlService ghlService ,IPaymentsService paymentsService ,GHLService_v2 gHLService_V2,IJobSchedule jobSchedule,
+           IStateService stateService,MS365Configuration mS365Configuration,IGhlCustomFieldsService ghlCustomFieldsService)
         {
             this.masterCreate = masterCreate;
             this.fileUpload = fileUpload;
@@ -109,11 +126,20 @@ namespace ShutterManagement.Controllers
             this.invoiceService = invoiceService;
             this.taxService = taxService;
             this.estimateService = estimateService;
+            this.authService = authService;
             this.estimationBreakdownService = estimationBreakdownService;
             this.locationService = locationService;
             this.dashboard = dashboard;
             this.notification = notification;
+            this.gHLConfiguration = gHLConfiguration;
+            this.stripeConfiguration = stripeConfiguration;
+            this.paymentsService = paymentsService;
+            this.gHLService_V2 = gHLService_V2;
+            this.jobSchedule = jobSchedule;
             this.ghlService = ghlService;
+            this.stateService = stateService;
+            this.mS365Configuration = mS365Configuration;
+            this.ghlCustomFieldsService = ghlCustomFieldsService;
         }
 
 
@@ -125,7 +151,7 @@ namespace ShutterManagement.Controllers
             List<string> uploads = new List<string>();
             foreach (var file in files)
             {
-                var res = await fileUpload.UploadFile(file, AppConstant.LoggedInTenantId.ToString() ?? "");
+                var res = await fileUpload.UploadFile(file, claimsProperty.GetTenantId().ToString() ?? "");
                 if (res.IsSuccess)
                 {
                     result.IsSuccess = res.IsSuccess;
@@ -160,9 +186,21 @@ namespace ShutterManagement.Controllers
         [Route("GetAllAssignedPerson")]
         public async Task<IActionResult> GetAllAssignedPerson()
         {
-            var res = await userService.GetAll(filter);
-            res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
-            return Ok(res);
+            var tenantid = claimsProperty.GetTenantId();
+            await gHLConfiguration.GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
+            var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration(tenantid);
+            if (Checkghlresponse.IsSuccess)
+            {
+                var UserGHLs = await userService.GetAll(filter);
+                UserGHLs.Data = UserGHLs?.Data?.Where(x => x.IsActive == true && !string.IsNullOrEmpty(x.GhlUserId)).ToList();
+                return Ok(UserGHLs);
+            }
+            else
+            {
+                var res = await userService.GetAll(filter);
+                res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
+                return Ok(res);
+            }
         }
         [HttpGet]
         [Route("GetAllJobStatus")]
@@ -237,19 +275,8 @@ namespace ShutterManagement.Controllers
             return Ok(res);
         }
 
-        [HttpGet]
-        [Route("GHLContact")]
-        [AllowAnonymous]
-        public async Task<IActionResult> GHLContact()
-        {
-            var res = await ghlService.GetContactsAsync();
-            return Ok(res);
-        }
 
-     
-
-  
-
+        
         //public IActionResult Dashboard()
         //{
         //    var res = new ResponseVm<string>();
@@ -277,6 +304,11 @@ namespace ShutterManagement.Controllers
         [Route("GetAllJobs")]
         public async Task<IActionResult> GetAll(Pagination filter1)
         {
+            if (filter1.TenantId == "")
+            {
+                filter1.TenantId = claimsProperty.GetTenantId().ToString().ToLower();
+            }
+
             var result = await jobService.GetAllJobsTenant_SubTenant(filter1);
             return Ok(result);
         }
@@ -286,8 +318,8 @@ namespace ShutterManagement.Controllers
         [Route("GetAllContacts")]
         public async Task<IActionResult> GetAllContact()
         {
-            var res = await contactService.GetAll_Contact(filter);
-            res.Data = res.Data?.Where(x => x.IsActive == true && x.IsArchive==false).ToList();
+            var res = await contactService.GetAll_Contact(filter,false,false);
+            res.Data = res.Data?.Where(x => x.IsActive == true /*&& x.IsArchive==false*/).ToList();
             return Ok(res);
         }
 
@@ -541,10 +573,10 @@ namespace ShutterManagement.Controllers
         //}
         [HttpGet]
         [Route("GetAllOption")]
-        public async Task<IActionResult> GetAllOption(string ProductTypeId)
+        public async Task<IActionResult> GetAllOption(string ProductId, bool IsManageProductOption = false)
         {
-            var res = await option.GetAll_Option(filter);
-            res.Data = res.Data?.Where(x => x.IsActive == true && x.ProductTypeId == Guid.Parse(ProductTypeId)).ToList();
+            var res = await option.GetAll_Option(filter, IsManageProductOption);
+            res.Data = res.Data?.Where(x => x.IsActive == true && x.ProductId == Guid.Parse(ProductId)).ToList();
             return Ok(res);
         }
 
@@ -575,16 +607,16 @@ namespace ShutterManagement.Controllers
             return Ok(res);
         }
 
-        [HttpGet]
+        [HttpPost]
         [Route("GetAllExpression")]
-        public async Task<IActionResult> GetAllExpression(Guid ProductId)
+        public async Task<IActionResult> GetAllExpression(Pagination filter)
         {
-
-            filter.SearchValue = ProductId.ToString();
+            filter.RecordPerPage = this.filter.RecordPerPage;
             var res = await expression.Get_AllExpression(filter);
-            res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
+            
             return Ok(res);
         }
+
 
         [HttpPost]
         [Route("SettingById")]
@@ -642,7 +674,7 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> GetAllJobs()
         {
             var res = await jobService.GetAllJobsTenant_SubTenant(filter);
-            res.Data = res.Data?.Where(x => x.IsActive == true && x.TenantId==AppConstant.LoggedInTenantId).ToList();
+            res.Data = res.Data?.Where(x => x.IsActive == true && x.TenantId==claimsProperty.GetTenantId()).ToList();
             return Ok(res);
         }
 
@@ -663,7 +695,7 @@ namespace ShutterManagement.Controllers
             var res = await taxService.GetAll_Tax(filter);
             DateTime current = Convert.ToDateTime(DateTime.Now.ToShortDateString());
             var d = res.Data
-        .Where(x => x.IsActive == true && x.EffectiveDate <= current && x.ExpiryDate >= current)
+        .Where(x => x.IsActive == true/* && x.EffectiveDate <= current && x.ExpiryDate >= current*/)
         .ToList();
             res.Data = d;
             return Ok(res);
@@ -675,7 +707,10 @@ namespace ShutterManagement.Controllers
         {
             filter.Status = 1;
             filter.JobId=JobId?.ToLower();
-            var res = await estimateService.GetAll_Estimate(filter);
+            // filter.SearchValue = EnumValue.GetEnumValue(Estimation.GenerateOrder);
+            var TenantId = claimsProperty.GetTenantId();
+            var res = await estimateService.GetAll_Estimate(filter,TenantId);
+            res.Data = res?.Data?.Where(x => x.Status == EnumValue.GetEnumValue(Estimation.GenerateOrder)).ToList();
             return Ok(res);
         }
 
@@ -713,7 +748,8 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> GetAllJobDetails()
         {
             filter.Status = 1;
-            filter.TenantId = AppConstant.LoggedInTenantId.ToString();
+            filter.RecordPerPage = 10;
+            filter.TenantId = claimsProperty.GetTenantId().ToString();
             var res = await jobService.GetAllJobsTenant_SubTenant(filter);
             return Ok(res);
         }
@@ -733,6 +769,305 @@ namespace ShutterManagement.Controllers
             var result = await notification.GetAllNotifications();
             return Ok(result);
         }
+
+
+        [HttpGet]
+        [Route("GetAllGHLContact")]
+        public async Task<IActionResult> GetAllGHLContact()
+        {
+            var result = await ghlService.GetContactsAsync();
+            return Ok(result);
+        }
+
+        [HttpGet]
+        [Route("SaveStageGHLToDB")]
+        public async Task<IActionResult> GetPipeline()
+        {
+            // var pipelineData = await ghlService.GetAndSaveDefaultPipelineAndStage();
+            await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInUserID.ToString());  
+            var pipelineData_v2 = await gHLService_V2.GetAllPipelinesWithStagesAsync();
+
+            if (pipelineData_v2 == null)
+            {
+                return NotFound("Pipeline not found");
+            }
+
+            var options = new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+                WriteIndented = true
+            };
+
+            var json = JsonSerializer.Serialize(pipelineData_v2, options);
+            return Ok(json);
+        }
+
+        [HttpGet]
+        [Route("GetAllStages")]
+        public async Task<IActionResult> GetStages()
+        {
+            var Tenantid = claimsProperty.GetTenantId();
+            var res = await gHLConfiguration.CheckGHLConfiguration(Tenantid);
+            if (res.IsSuccess)
+            {
+                var result = await ghlService.GetGHLStages();
+                return Ok(result);
+            }
+            return Ok(res);
+        }
+
+
+        [HttpGet]
+        [Route("GetOpportunity")]
+        public async Task<IActionResult> GetOpportunity()
+        {
+            var result = await ghlService.GetOpportunitiesFromGhl();
+            return Ok(result);
+        }
+
+
+        [HttpGet]
+        [Route("ghlsync")]
+        public async Task<IActionResult> SyncAllData()
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+            var LoggedInTenantId = claimsProperty.GetTenantId();
+             await gHLConfiguration.GetGHLConfiguration(LoggedInTenantId.ToString());
+            var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration(LoggedInTenantId);
+            if (Checkghlresponse.IsSuccess)
+            {
+                var pipelineResult = await gHLService_V2.GetAndSaveDefaultPipelineAndStage(LoggedInTenantId);
+                var CheckStageMapping = await gHLConfiguration.CheckStageMapping(LoggedInTenantId);
+                if (!CheckStageMapping.IsSuccess)
+                {
+                    return Ok(CheckStageMapping);
+                }
+
+                _ = Task.Run(async () =>
+                {
+                    var syncStart = DateTime.Now;
+                    FileLogger.Log("Sync Process Started", $"Start Time: {syncStart}");
+
+                    try
+                    {
+                        FileLogger.Log("ContactSync", "Started");
+                        var contact = await contactService.ContactSync(LoggedInTenantId);
+                        FileLogger.Log("ContactSync", $"Completed. Message: {contact.Message}");
+
+                        FileLogger.Log("SyncOpportunitiesFromGhl", "Started");
+                        var opportunity = await jobService.SyncOpportunitiesFromGhl(LoggedInTenantId);
+                        FileLogger.Log("SyncOpportunitiesFromGhl", $"Completed. Message: {opportunity.Message}");
+
+                        FileLogger.Log("AppointmentSync", "Started");
+                        var appointment = await jobSchedule.AppointmentSync(LoggedInTenantId);
+                        FileLogger.Log("AppointmentSync", $"Completed. Message: {appointment.Message}");
+
+                        FileLogger.Log("GetUsersByCalendarIdAsync", "Started");
+                        var users = await gHLService_V2.GetUsersByCalendarIdAsync(LoggedInTenantId);
+                        FileLogger.Log("GetUsersByCalendarIdAsync", $"Completed. Message: {users.Message}");
+
+                        FileLogger.Log("GetAndSaveGhlCustomeFields", "Started");
+                        var Customfields = await ghlCustomFieldsService.SaveGhlCustomFieldsAsync(LoggedInTenantId);
+                        FileLogger.Log("GetAndSaveGhlCustomeFields", $"Completed. Message: {users.Message}");
+
+                        var syncEnd = DateTime.Now;
+                        FileLogger.Log("Sync Process Completed", $"End Time: {syncEnd}, Duration: {(syncEnd - syncStart).TotalSeconds} seconds");
+                    }
+                    catch (Exception ex)
+                    {
+                        var errorTime = DateTime.Now;
+                        FileLogger.Log("Sync Process Error", $"Time: {errorTime}, Error: {ex.Message}");
+                        FileLogger.Log("StackTrace", ex.StackTrace ?? "No stack trace");
+
+                        // Optional: write more detailed error trace if inner exceptions exist
+                        if (ex.InnerException != null)
+                        {
+                            FileLogger.Log("Inner Exception", ex.InnerException.Message);
+                            FileLogger.Log("Inner StackTrace", ex.InnerException.StackTrace ?? "No inner stack trace");
+                        }
+                    }
+                });
+
+                responseVm.IsSuccess= true;
+                responseVm.Message = "Data synchronization started successfully. Please wait for syncing .";
+                return Ok(responseVm);
+            }
+            else
+            {
+                return Ok(Checkghlresponse);
+            }
+
+        }
+
+
+
+
+
+
+
+        [HttpGet]
+        [Route("EstimateAmmount")]
+        public async Task<IActionResult> EstimateAmmount(Guid? EstimateId)
+        {
+            var result = await paymentsService.GetEstimateAmmount(EstimateId);
+            return Ok(result);
+        }
+
+        [HttpGet]
+        [Route("GenerateToken")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GenerateToken()
+        {
+            var result =await authService.GenerateToken();
+            return Ok(result);
+        }
+        [HttpGet]
+        [Route("GoHighLevelAuthorization")]
+        public async Task<IActionResult> GoHighLevelAuthorization()
+        {
+            var authorizationUrl =await gHLConfiguration.GetOauthGHL();
+            return Ok(authorizationUrl);
+        }
+
+        [HttpGet]
+        [Route("UserSync")]
+        public async Task<IActionResult> GetUserAsync()
+        {
+
+            var TenantId = claimsProperty.GetTenantId();
+            await gHLConfiguration.GetGHLConfiguration(TenantId.ToString());
+            // var authorizationUrl = await gHLService_V2.GetUsersAsync();
+
+
+            var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration(TenantId);
+            if (Checkghlresponse.IsSuccess)
+            {
+                var users = await gHLService_V2.GetUsersByCalendarIdAsync(TenantId);
+                users.Data = users.Data = null;
+                return Ok(users);
+            }
+            return Ok(Checkghlresponse);
+        }
+ 
+
+        [HttpPost]
+        [Route("GHLAppointment")]
+        public async Task<IActionResult> GHLAppointment(GHLAppointmentAdd appointment)
+        {
+            await gHLConfiguration.GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
+            var accessToken = await gHLService_V2.CreateAppointmentAsync(appointment);
+            return Ok(accessToken);
+
+        }
+
+
+
+        //[HttpGet]
+        //[Route("ghlsync")]
+        //public async Task<IActionResult> GHLSync()
+        //{
+        //    var result = await jobService.SyncOpportunitiesFromGhl();
+        //    return Ok(result);
+        //}
+
+        //[HttpPost("HandleOpportunityWebhook")]
+        //[AllowAnonymous]
+        //public async Task<IActionResult> HandleOpportunityWebhook([FromBody] GhlOpportunityWebhookModel webhookData)
+        //{
+        //    var response = await jobser.ProcessGhlOpportunityWebhook(webhookData);
+        //    return response.IsSuccess ? Ok(response) : BadRequest(response);
+        //}
+
+
+        [HttpGet]
+        [Route("GetAllState")]
+        public async Task<IActionResult> GetAllState()
+        {
+            var res = await stateService.GetAll(filter);
+            res.Data = res.Data.Where(x => x.IsActive == true).ToList();
+            return Ok(res);
+        }
+
+        [HttpGet]
+        [Route("GetAccessToken")]
+        public async Task<IActionResult> GetAccessToken(string? code)
+        {
+            var res = await gHLConfiguration.GetGHLConfigurations(code);
+            return Ok(res);
+        }
+
+        [HttpPost("GHLStagesMapping")]
+        [Authorize(Roles = "GHLEdit")]
+        public async Task<IActionResult> GHLStagesMapping([FromBody] StageMappingRequest input)
+        {
+            var result = await gHLConfiguration.MapGHLStagesStages(input);
+            return Ok(result);
+        }
+        [HttpGet("GetallStagesMapping")]
+        public async Task<IActionResult> GetallStagesMapping()
+        {
+            var tenantId = claimsProperty.GetTenantId();
+            var pipelineResult = await gHLService_V2.GetAndSaveDefaultPipelineAndStage(tenantId);
+            var result = await gHLConfiguration.GetGHLStagesMappings(tenantId);
+
+            return Ok(result);
+        }
+
+        [HttpPost]
+        [Route("GenerateCode")]
+        public async Task<IActionResult> GenerateCode(string code)
+        {
+            var result = await authService.GenerateLetterOnlyUniqueCodeAsync(code);
+            return Ok(result);
+        }
+
+       
+
+        [HttpGet]
+        [Route("GetAllGHL_Users")]
+        public async Task<IActionResult> GetAllGHL_Users()
+        {
+            var LoggedInTenantId = claimsProperty.GetTenantId();
+            await gHLConfiguration.GetGHLConfiguration(LoggedInTenantId.ToString());
+            var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration(LoggedInTenantId);
+            if (Checkghlresponse.IsSuccess)
+            {
+                var result = await gHLService_V2.GetGHLUsersByCalendarId(LoggedInTenantId);
+                return Ok(result);
+            }
+            else
+            {
+                return Ok(Checkghlresponse);
+            }
+        }
+
+        // get Tenant there related user details
+
+        [HttpGet]
+        [Route("GetAllTenantAnd_Users")]
+        public async Task<IActionResult> GetAllTenantAnd_Users()
+        {
+            var res = await userService.GetAllUserList();
+            return Ok(res);
+
+        }
+
+
+        //[HttpGet]
+        //[Route("GetCustomeFields")]
+        //public async Task<IActionResult> GetCustomeFields()
+        //{
+        //    var tenantid = AppConstant.LoggedInTenantId;
+        //    await gHLConfiguration.GetGHLConfiguration(tenantid.ToString());
+        //    var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration(tenantid);
+        //    if (Checkghlresponse.IsSuccess)
+        //    {
+        //        var result = await gHLService_V2.SyncGhlCustomFields(tenantid);
+        //        return Ok(result);
+        //    }
+        //    return Ok(Checkghlresponse);
+        //}
 
     }
 }

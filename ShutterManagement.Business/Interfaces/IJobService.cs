@@ -8,19 +8,30 @@ using System.Text;
 using System.Threading.Tasks;
 using ShutterManagement.DAL.Context;
 using ShutterManagement.Interfaces;
+using ShutterManagment.GHL.ViewModel.Response;
+using ShutterManagment.GHL.ViewModel.Request;
 
 namespace ShutterManagement.Business.Interfaces
 {
     public interface IJobService : IGenericRepository<TblJob>
     {
-        Task<IResponseVm<string>> Create(CreateJob model);
-        Task<IResponseVm<string>> Update(UpdateJob model);
-        Task<IResponseVm<string>> Delete(string Id);
+        Task<IResponseVm<string>> Create(CreateJob model, Guid? LoggedInTenantId = null);
+        Task<IResponseVm<string>> UpdateJob(UpdateJob model, Guid? LoggedInTenantId = null);
+        Task<IResponseVm<string>> DeleteJob(string Id);
         Task<IResponseVm<string>> ActiveInactive(string Id);
         Task<IResponseVm<string>> UpdateJobStatus(UpdateJobStatus model);
 
         Task<IResponseVm<List<GetAllJobsdetails>>> GetAll(Pagination filter);
 
         Task<IResponseVm<List<GetAllJobsSubtenant_tenant>>> GetAllJobsTenant_SubTenant(Pagination filter);
+
+        Task<IResponseVm<List<Opportunity>>> SyncOpportunitiesFromGhl(Guid? LoggedInTenantId = null);
+        Task<IResponseVm<string>> UpdateOpportunityFromGHL(GHLOpportunityTrigger opportunitydata);
+        Task<IResponseVm<string>> OpportunityFromGHL(GHLOpportunityTrigger opportunitydata);
+
+        //Task<IResponseVm<string>> GetAndSaveContactsAsync();
+
+        Task<IResponseVm<string>> UpdateEstimateUrlInGhlOnly(TblJob job, string newEstimateUrl);
+        Task<IResponseVm<string>> UpdateJobPowderCoatColor(Guid? JobId, Guid? powderCoatColorId);
     }
 }

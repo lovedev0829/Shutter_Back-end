@@ -13,10 +13,20 @@ namespace ShutterManagement.Core.ViewModels.Response
     {
         public Guid? OptionId { get; set; }
         public string? OptionName { get; set; }
+        public Guid? ProductId { get; set; }
         public Guid? ProductTypeId { get; set; }
+        public string? ProductName { get; set; }
+        public decimal? Markup { get; set; }
+        public string? OptionExpression { get; set; }
         public string? ProductTypeName { get; set; }
         public bool? IsActive { get; set; }
+        public string? Unit { get; set; }
         public List<OptionsType>? Options { get; set; }
+
+        public bool? IsTaxAvailable { get; set; } = true;
+        public Guid? TaxId { get; set; }
+
+        public string? TaxName { get; set; }
     }
     public class OptionsType
     {
@@ -24,5 +34,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? OptionType { get; set; }
         public decimal? AdditionalCost { get; set; }
         public bool? IsDefault { get; set; }
+        public int? SortOrder { get; set; }
+
     }
 }

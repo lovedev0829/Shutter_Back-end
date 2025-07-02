@@ -30,6 +30,8 @@ namespace ShutterManagement.Business.Services
             this.address = address;
             this.tenantService = tenantService;
         }
+
+
         /// <summary>
         /// Retrieves all dashboard data for the logged-in tenant, including job status counts.
         /// </summary>
@@ -42,7 +44,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 bool isTenant = await tenantService.AnyAsync(x =>
-                    x.TenantId == AppConstant.LoggedInTenantId &&  
+                    x.TenantId == claimsProperty.GetTenantId() &&  
                     x.IsDelete==false &&                               
                     x.IsActive==true);   
                 if (!isTenant)
@@ -54,7 +56,7 @@ namespace ShutterManagement.Business.Services
                 var Data = new List<StatusCountVm>();
 
                 var statusCounts = dbContext.MstJobStatuses
-                            .GroupJoin(dbContext.TblJobs.Where(j => j.TenantId == AppConstant.LoggedInTenantId && j.IsDelete==false),
+                            .GroupJoin(dbContext.TblJobs.Where(j => j.TenantId == claimsProperty.GetTenantId() && j.IsDelete==false),
                                 m => m.JobStatusId,
                                 j => j.JobStatus,
                                 (m, jobGroup) => new
@@ -67,17 +69,17 @@ namespace ShutterManagement.Business.Services
                                 })
                             .ToList();
 
-                Data = statusCounts.Where(x=>x.JobStatusName == "Inproduction" || x.JobStatusName == "Awarded").Select(x => new StatusCountVm
+                Data = statusCounts.Where(x=>x.JobStatusName == "In-Production" || x.JobStatusName == "Installation Scheduled").Select(x => new StatusCountVm
                 {
-                    Label = x.JobStatusName.Replace("Inproduction", "In Production").Replace("Awarded", "Awarded Jobs"),
+                    Label = x.JobStatusName.Replace("In-Production", "In Production").Replace("Installation Scheduled", "Installation Scheduled"),
                     Image = x.Icon,
-                    Count = x.TenantId.Where(x => x == AppConstant.LoggedInTenantId).Count().ToString(),
+                    Count = x.TenantId.Where(x => x == claimsProperty.GetTenantId()).Count().ToString(),
                     Url=$"/job/{x.JobStatusId}"
                 }).ToList();
 
                 
                 var contactsCount =  (from c in dbContext.TblContacts
-                                           where c.IsDelete ==false && c.TenantId == AppConstant.LoggedInTenantId 
+                                           where c.IsDelete ==false && c.TenantId == claimsProperty.GetTenantId() 
                                            select c).Count();
                 StatusCountVm contactVm = new StatusCountVm
                 {
@@ -89,7 +91,7 @@ namespace ShutterManagement.Business.Services
                 Data.Add(contactVm);
 
                 decimal? totalEstimateRevenue =  (from est in dbContext.TblEstimates
-                                                  where est.Status == "GenerateOrder" && est.IsDelete==false &&  est.TenantId == AppConstant.LoggedInTenantId
+                                                  where est.Status == "GenerateOrder" && est.IsDelete==false &&  est.TenantId == claimsProperty.GetTenantId()
                                              select est.GrandTotal).Sum();
 
                 StatusCountVm estVm = new StatusCountVm

@@ -3,15 +3,19 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.10.34928.147
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShutterManagement", "ShutterManagement\ShutterManagement.csproj", "{40F1210E-0629-4958-8320-58940BB20A9F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ShutterManagement", "ShutterManagement\ShutterManagement.csproj", "{40F1210E-0629-4958-8320-58940BB20A9F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShutterManagement.Business", "ShutterManagement.Business\ShutterManagement.Business.csproj", "{9FA95022-DE39-48FB-B677-86C6BD8B6546}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ShutterManagement.Business", "ShutterManagement.Business\ShutterManagement.Business.csproj", "{9FA95022-DE39-48FB-B677-86C6BD8B6546}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShutterManagement.Core", "ShutterManagement.Core\ShutterManagement.Core.csproj", "{3B9EDB71-2AC0-41FE-8C32-404EB760AC53}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ShutterManagement.Core", "ShutterManagement.Core\ShutterManagement.Core.csproj", "{3B9EDB71-2AC0-41FE-8C32-404EB760AC53}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShutterManagement.DAL", "ShutterManagement.DAL\ShutterManagement.DAL.csproj", "{30338B50-24DB-42DC-96FF-57ED8649B904}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ShutterManagement.DAL", "ShutterManagement.DAL\ShutterManagement.DAL.csproj", "{30338B50-24DB-42DC-96FF-57ED8649B904}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShutterManagement.GHL", "ShutterManagement.GHL\ShutterManagement.GHL.csproj", "{07C8200D-5C7B-42B5-BB31-CD6EE6C4AEE3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShutterManagment.GHL", "ShutterManagment.GHL\ShutterManagment.GHL.csproj", "{74073202-A6FC-445B-B403-01585B2EC5F9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShutterManagement.Stripe", "ShutterManagement.Stripe\ShutterManagement.Stripe.csproj", "{BA120E65-E966-4EA7-8A8B-8BC2B11C4453}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShutterManagement.GHLv2", "ShutterManagement.GHLv2\ShutterManagement.GHLv2.csproj", "{A404FF7B-7DF7-4B09-93AE-DD226170BA94}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -35,10 +39,18 @@ Global
 		{30338B50-24DB-42DC-96FF-57ED8649B904}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{30338B50-24DB-42DC-96FF-57ED8649B904}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{30338B50-24DB-42DC-96FF-57ED8649B904}.Release|Any CPU.Build.0 = Release|Any CPU
-		{07C8200D-5C7B-42B5-BB31-CD6EE6C4AEE3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{07C8200D-5C7B-42B5-BB31-CD6EE6C4AEE3}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{07C8200D-5C7B-42B5-BB31-CD6EE6C4AEE3}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{07C8200D-5C7B-42B5-BB31-CD6EE6C4AEE3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{74073202-A6FC-445B-B403-01585B2EC5F9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{74073202-A6FC-445B-B403-01585B2EC5F9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{74073202-A6FC-445B-B403-01585B2EC5F9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{74073202-A6FC-445B-B403-01585B2EC5F9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BA120E65-E966-4EA7-8A8B-8BC2B11C4453}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BA120E65-E966-4EA7-8A8B-8BC2B11C4453}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BA120E65-E966-4EA7-8A8B-8BC2B11C4453}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BA120E65-E966-4EA7-8A8B-8BC2B11C4453}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A404FF7B-7DF7-4B09-93AE-DD226170BA94}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A404FF7B-7DF7-4B09-93AE-DD226170BA94}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A404FF7B-7DF7-4B09-93AE-DD226170BA94}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A404FF7B-7DF7-4B09-93AE-DD226170BA94}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

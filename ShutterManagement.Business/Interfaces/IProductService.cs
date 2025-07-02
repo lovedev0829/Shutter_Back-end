@@ -20,5 +20,7 @@ namespace ShutterManagement.Business.Interfaces
 
         Task<IResponseVm<string>> ActiveInActiveProduct(Guid ProductId);
         Task<IResponseVm<string>> DeleteProduct(Guid ProductId);
+
+       // Task<IResponseVm<List<ProductOptionsVm>>> GetAllProductOptions();
     }
 }

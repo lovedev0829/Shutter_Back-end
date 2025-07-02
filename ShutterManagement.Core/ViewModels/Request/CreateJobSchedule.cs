@@ -18,6 +18,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         
         [Required(ErrorMessage = "JobId is required.")]
         public Guid? JobId { get; set; }
+        public string? GhlUserId { get; set; }
 
         [Required(ErrorMessage = "Estimate is required.")]
         public Guid? EstimateId { get; set; }
@@ -33,6 +34,7 @@ namespace ShutterManagement.Core.ViewModels.Request
 
         [Required(ErrorMessage = "DayEndDateTime is required.")]
         public string? DayEndDateTime { get; set; }
+
 
 
     }

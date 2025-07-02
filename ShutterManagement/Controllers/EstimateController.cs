@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using ShutterManagement.Business;
 using ShutterManagement.Business.Interfaces;
-using ShutterManagement.Business.Services;
 using ShutterManagement.Core.Common;
 using ShutterManagement.Core.SPModel;
 using ShutterManagement.Core.ViewModels.Request;
@@ -14,19 +14,20 @@ namespace ShutterManagement.Controllers
     public class EstimateController : ControllerBase
     {
         private readonly IEstimateService _EstimateService;
-        private readonly GhlOpportunityService ghlOpportunityService;
+        private readonly ClaimsProperty claimsProperty;
 
-        public EstimateController(IEstimateService EstimateService,GhlOpportunityService ghlOpportunityService)
+        public EstimateController(IEstimateService EstimateService,ClaimsProperty claimsProperty)
         {
             _EstimateService = EstimateService;
-            this.ghlOpportunityService = ghlOpportunityService;
+            this.claimsProperty = claimsProperty;
         }
 
         [HttpPost("GetAll")]
         [Authorize(Roles = "EstimateView")]
         public async Task<IActionResult> GetAllEstimates(Pagination filter)
         {
-            var res = await _EstimateService.GetAll_Estimate(filter);
+            var TenantId = claimsProperty.GetTenantId();
+            var res = await _EstimateService.GetAll_Estimate(filter,TenantId);
             return Ok(res);
 
         }
@@ -37,11 +38,6 @@ namespace ShutterManagement.Controllers
         {
 
             var res = await _EstimateService.Create_Estimate(model);
-            if (res != null)
-            {
-                var opportunityRes = await ghlOpportunityService.CreateOpportunityFromEstimateAsync(model);
-                return Ok(new { Estimate = res, OpportunityResponse = opportunityRes });
-            }
             return Ok(res);
         }
 
@@ -56,7 +52,7 @@ namespace ShutterManagement.Controllers
 
         [HttpPost]
         [Route("Validate")]
-        [Authorize(Roles = "ExpressionAdd")]
+        [Authorize(Roles = "ExpressionAdd,OptionExpressionAdd")]
         public async Task<IActionResult> ValidateExpression(ValidateExpression Expression)
         {
             var result = await _EstimateService.ValidateExpression(Expression);
@@ -68,7 +64,7 @@ namespace ShutterManagement.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> BuildEstimate(BuildEstimate buildEstimate)
         {
-            var res = await _EstimateService.BuildEstimate(buildEstimate.WindowProductIds, buildEstimate.IsBreakDown,buildEstimate.EstimateId, buildEstimate.IsView);
+            var res = await _EstimateService.BuildEstimate(buildEstimate.WindowProductIds, buildEstimate.IsBreakDown,buildEstimate.IsMaterialBreakdown, buildEstimate.EstimateId, buildEstimate.IsView);
             return Ok(res);
         }
 

@@ -6,6 +6,8 @@ using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.Core.ViewModels.Response;
 using ShutterManagement.DAL.Context;
 using ShutterManagement.Services;
+using Stripe;
+using Stripe.Climate;
 using System;
 using System.Collections.Generic;
 using System.Data.Entity;
@@ -21,13 +23,19 @@ namespace ShutterManagement.Business.Services
         private readonly ITenantService tenantService;
         private readonly IExpressionService expressionService;
         private readonly IProductComponentService productComponentService;
-        private readonly ClaimsProperty claimProperty;
+        private readonly ClaimsProperty claimsProperty;
+        private readonly IOption option;
+        private readonly IOptionsTypeService optionsType;
         private readonly IComponentService componentService;
-        public ProductService(ITenantService tenantService, IExpressionService expressionService, IProductComponentService productComponentService, ClaimsProperty claimsProperty,IComponentService componentService)
+        public ProductService(ITenantService tenantService, IExpressionService expressionService, 
+            IProductComponentService productComponentService, ClaimsProperty claimsProperty, IComponentService componentService,
+            IOption option,IOptionsTypeService optionsType )
         {
             this.tenantService = tenantService;
             this.expressionService = expressionService;
-            this.claimProperty = claimsProperty;
+            this.claimsProperty = claimsProperty;
+            this.option = option;
+            this.optionsType = optionsType;
             this.productComponentService = productComponentService;
         }
         public async Task<IResponseVm<string>> ActiveInActiveProduct(Guid ProductId)
@@ -36,13 +44,13 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
 
                 if (IsTenant)
                 {
                     var IsProductExists = GetAllQuerable()
                         .Where(c => c.ProductId == ProductId
-                                    && c.TenantId == AppConstant.LoggedInTenantId
+                                    && c.TenantId == claimsProperty.GetTenantId()
                                     && c.IsDelete == false)
                         .FirstOrDefault();
 
@@ -51,12 +59,11 @@ namespace ShutterManagement.Business.Services
                         var IsProductInComponent = productComponentService
                     .GetAllQuerable().Where(x => x.ProductId == ProductId &&
                                          x.IsDelete == false &&
-                                         x.TenantId == AppConstant.LoggedInTenantId)
+                                         x.TenantId == claimsProperty.GetTenantId())
                     .ToList();
                         foreach (var component in IsProductInComponent)
                         {
-                            component.IsActive = false;
-                            component.IsDelete = true;
+                            component.IsActive = !component.IsActive;
                             component.UpdatedAt = DateTime.Now;
                             component.ModifiedBy = AppConstant.LoggedInUserID;
                             await productComponentService.Update(component);
@@ -89,23 +96,27 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-
         public async Task<IResponseVm<string>> Create_Product(CreateProduct model)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
                 var IsProductName = await AnyAsync(x => x.ProductName == model.ProductName.Trim()
-                    && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId
+                    && x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId()
                     && x.ProductType == model.ProductType);
                 if (IsProductName)
                 {
                     responseVm.Message = "ProductName " + AppConstant.AlreadyExists;
                     return responseVm;
                 }
+                if(model.IsTaxAvailable==true && model.TaxId==null)
+                {
+                    responseVm.Message = "Please select tax";
+                    return responseVm;
+                }
 
-
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
+               
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
                 if (IsTenant)
                 {
                     TblProduct product = new TblProduct
@@ -126,35 +137,40 @@ namespace ShutterManagement.Business.Services
                         CreatedBy = AppConstant.LoggedInUserID,
                         IsActive = true,
                         IsDelete = false,
-                        TenantId = AppConstant.LoggedInTenantId
+                        TenantId = claimsProperty.GetTenantId(),
+                        IsComponentAvailable = model.IsComponentAvailable,
+                        IsTaxApplied = model.IsTaxAvailable,
+                        TaxId = model.TaxId,
+                        
                     };
 
                     await Add(product);
-
-                    foreach (var item in model.ProductComponents)
+                    if (model.IsComponentAvailable != null && (bool)model.IsComponentAvailable)
                     {
-
-                        var isComponentExists = await productComponentService.AnyAsync(x => x.ComponentId == item.ComponentId && x.ProductId == product.ProductId
-                        && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
-                        var isPricingExpression = await expressionService.AnyAsync(x => x.Id.ToString() == item.PricingExpression && x.IsActive == true && x.IsDelete == false
-                         && x.TenantId == AppConstant.LoggedInTenantId);
-                        if (!isComponentExists && isPricingExpression)
+                        foreach (var item in model.ProductComponents)
                         {
-                            TblProductComponent productcomponent = new TblProductComponent
+                            var isComponentExists = await productComponentService.AnyAsync(x => x.ComponentId == item.ComponentId && x.ProductId == product.ProductId
+                            && x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId());
+                            var isPricingExpression = await expressionService.AnyAsync(x => x.Id.ToString() == item.PricingExpression && x.IsActive == true && x.IsDelete == false
+                             && x.TenantId == claimsProperty.GetTenantId());
+                            if ((!isComponentExists && string.IsNullOrEmpty(item.PricingExpression))||  (!string.IsNullOrEmpty(item.PricingExpression) && isPricingExpression))
                             {
-                                ProductComponentId = Guid.NewGuid(),
-                                ProductId = product.ProductId,
-                                ComponentId = item.ComponentId,
-                                PricingExpression = item.PricingExpression,
-                                Quantity = item.Quantity,
-                                CreatedAt = DateTime.Now,
-                                CreatedBy = AppConstant.LoggedInUserID,
-                                IsActive = true,
-                                IsDelete = false,
-                                TenantId = AppConstant.LoggedInTenantId
-                            };
+                                TblProductComponent productcomponent = new TblProductComponent
+                                {
+                                    ProductComponentId = Guid.NewGuid(),
+                                    ProductId = product.ProductId,
+                                    ComponentId = item.ComponentId,
+                                    PricingExpression = item.PricingExpression,
+                                    Quantity = item.Quantity,
+                                    CreatedAt = DateTime.Now,
+                                    CreatedBy = AppConstant.LoggedInUserID,
+                                    IsActive = true,
+                                    IsDelete = false,
+                                    TenantId = claimsProperty.GetTenantId()
+                                };
 
-                            await productComponentService.Add(productcomponent);
+                                await productComponentService.Add(productcomponent);
+                            }
                         }
                     }
                     responseVm.IsSuccess = true;
@@ -179,20 +195,17 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
 
                 if (IsTenant)
                 {
                     var IsProductExists = GetAllQuerable()
                         .Where(c => c.ProductId == ProductId
-                                    && c.TenantId == AppConstant.LoggedInTenantId
+                                    && c.TenantId == claimsProperty.GetTenantId()
                                     && c.IsDelete == false)
                         .FirstOrDefault();
 
-                    bool isProductUsed =
-                  dbContext.TblEstimateWindowProducts.Any(p => p.ProductId == ProductId && p.IsDelete == false);
-
-
+                    bool isProductUsed = dbContext.TblEstimateWindowProducts.Any(p => p.ProductId == ProductId && p.IsDelete == false);
 
                     if (isProductUsed)
                     {
@@ -205,7 +218,7 @@ namespace ShutterManagement.Business.Services
                         var IsProductInComponent = productComponentService
                     .GetAllQuerable().Where(x => x.ProductId == ProductId &&
                                          x.IsDelete == false &&
-                                         x.TenantId == AppConstant.LoggedInTenantId)
+                                         x.TenantId == claimsProperty.GetTenantId())
                     .ToList();
                         foreach (var component in IsProductInComponent)
                         {
@@ -244,24 +257,61 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-
         public async Task<IResponseVm<List<ProductListVm>>> GetAll_Product(Pagination filter)
         {
             IResponseVm<List<ProductListVm>> responseVm = new ResponseVm<List<ProductListVm>>();
 
             try
             {
-                var isTenantValid = await tenantService.AnyAsync(x =>
-                    x.TenantId == AppConstant.LoggedInTenantId &&
-                  //  x.ParentTenantId == null &&
-                    x.IsDelete == false &&
-                    x.IsActive == true);
+                var tenant = await tenantService.FirstOrDefaultAsync(x =>
+                        x.TenantId == claimsProperty.GetTenantId() &&
+                        x.IsDelete == false &&
+                        x.IsActive == true);
 
-                if (isTenantValid)
+                if (tenant != null)
                 {
-                    var productList = (from p in dbContext.TblProducts.OrderByDescending(x => x.CreatedAt)
+                    bool isSubTenant = tenant.ParentTenantId != null;
+
+                    List<ProductListVm> productList;
+
+                    if (isSubTenant)
+                    {
+                        // Sub-tenant: Fetch from ManageProducts (shared from parent)
+                        productList = (from mp in dbContext.TblManagePartnersProducts.OrderByDescending(x => x.CreatedAt)
+                                       join p in dbContext.TblProducts on mp.ProductId equals p.ProductId
                                        join pt in dbContext.MstProductTypes on p.ProductType equals pt.ProductId.ToString()
-                                       where p.IsDelete == false && (p.TenantId == AppConstant.LoggedInTenantId || p.TenantId.ToString() == AppConstant.LoggedInParentTenantId) 
+                                       join tax in dbContext.TblTaxRates on p.TaxId equals tax.TaxRateId
+                                       into PTax
+                                       from taxdata in PTax.DefaultIfEmpty()
+                                       where mp.TenantId == claimsProperty.GetTenantId()
+                                             && mp.IsDelete == false
+                                             && mp.IsAvailable == true
+                                             && p.IsDelete == false
+                                       select new ProductListVm
+                                       {
+                                           ProductId = p.ProductId,
+                                           ProductName = p.ProductName,
+                                           Markup = p.Markup,
+                                           Notes = p.Notes,
+                                           TaxId = p.TaxId,
+                                           TaxName = taxdata.TaxName ?? "",
+                                           IsTaxAvailable = p.IsTaxApplied,
+                                           ProductType = pt.ProductId.ToString().ToLower(),
+                                           ProductTypeName = pt.ProductName,
+                                           TenantId = p.TenantId,
+                                           IsActive = p.IsActive,
+                                           IsComponentAvailable = p.IsComponentAvailable,
+                                       }).ToList();
+                    }
+                    else
+                    {
+                        // Parent or regular tenant: Fetch directly from TblProducts
+                        productList = (from p in dbContext.TblProducts.OrderByDescending(x => x.CreatedAt)
+                                       join pt in dbContext.MstProductTypes on p.ProductType equals pt.ProductId.ToString()
+                                       join tax in dbContext.TblTaxRates on p.TaxId equals tax.TaxRateId into PTax
+                                       from taxdata in PTax.DefaultIfEmpty()
+                                       where p.IsDelete == false &&
+                                             (p.TenantId == claimsProperty.GetTenantId() || p.TenantId.ToString() == claimsProperty.GetParentTenantId())
                                        select new ProductListVm
                                        {
                                            ProductId = p.ProductId,
@@ -270,21 +320,30 @@ namespace ShutterManagement.Business.Services
                                            Notes = p.Notes,
                                            ProductType = pt.ProductId.ToString().ToLower(),
                                            ProductTypeName = pt.ProductName,
+                                           TaxId = p.TaxId,
+                                           TaxName = taxdata.TaxName ?? "",
+                                           IsTaxAvailable = p.IsTaxApplied,
                                            TenantId = p.TenantId,
                                            IsActive = p.IsActive,
+                                           IsComponentAvailable = p.IsComponentAvailable,
                                        }).ToList();
+                    }
+
                     foreach (var item in productList)
                     {
                         var productComponent = (from pm in dbContext.TblProductComponents.OrderByDescending(x => x.CreatedAt)
-                                                join c in dbContext.TblComponents on pm.ComponentId equals c.ComponentId
-                                                join pe in dbContext.TblExpressions on pm.PricingExpression equals pe.Id.ToString()
+                                                join c in dbContext.TblComponents on pm.ComponentId equals c.ComponentId into Comp
+                                                from comp in Comp.DefaultIfEmpty()
+                                                join pe in dbContext.TblExpressions on pm.PricingExpression equals pe.Id.ToString() into Exp
+                                                from exp in Exp.DefaultIfEmpty()
                                                 where pm.ProductId == item.ProductId && pm.IsDelete == false
                                                 select new ProductComponentVmm
                                                 {
                                                     ComponentId = pm.ComponentId,
                                                     PricingExpression = pm.PricingExpression,
-                                                    PricingExpressionFormula = !string.IsNullOrEmpty(pe.DisplayArray) ? pe.DisplayArray.Split(new[] { ", " }, StringSplitOptions.TrimEntries) : new string[0],
-                                                    ComponentName = c.ComponentName,
+                                                    PricingExpressionName = exp.ExpressionName,
+                                                    PricingExpressionFormula = !string.IsNullOrEmpty(exp.DisplayArray) ? exp.DisplayArray.Split(new[] { ", " }, StringSplitOptions.TrimEntries) : new string[0],
+                                                    ComponentName = comp.ComponentName,
                                                     Quantity = pm.Quantity,
                                                     ProductComponentId = pm.ProductComponentId,
                                                     IsActive = pm.IsActive,
@@ -292,6 +351,7 @@ namespace ShutterManagement.Business.Services
 
                         item.ProductComponents = productComponent;
                     }
+
 
                     filter.SearchValue = filter.SearchValue?.Trim().ToLower();
                     var FilterRecords = productList
@@ -304,12 +364,20 @@ namespace ShutterManagement.Business.Services
                                  (x.ProductName ?? "").ToLower().Contains(filter.SearchValue) ||
                                  (x.Notes ?? "").ToLower().Contains(filter.SearchValue) ||
                                  (x.Markup.ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
+                                 (x.TaxName.ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
+                                 (x.ToString() ?? "").ToLower().Contains(filter.SearchValue) ||
                                  (x.ProductTypeName ?? "").ToLower().Contains(filter.SearchValue))
                              ).ToList();
 
 
 
-                    var TakenRecords = Paginate.Pagination(FilterRecords, filter);
+                    var queryable = FilterRecords.AsQueryable();
+
+                    queryable = Paginate.ApplyColumnFilters(queryable, filter.ColumnFilters);
+                    queryable = Paginate.ApplySorting(queryable, filter.SortColumn, filter.SortDirection);
+
+                    var TakenRecords = Paginate.Pagination(queryable.ToList(), filter);
+
                     responseVm.IsSuccess = true;
 
                     if (TakenRecords != null && TakenRecords.Count > 0)
@@ -342,10 +410,10 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
 
                 var IsProductName = await AnyAsync(x => x.ProductName == model.ProductName
-                    && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId
+                    && x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId()
                     && x.ProductType == model.ProductType && x.ProductId!=model.ProductId);
                 if (IsProductName)
                 {
@@ -356,7 +424,7 @@ namespace ShutterManagement.Business.Services
                 {
                     var IsProductExists = GetAllQuerable()
                         .Where(c => c.ProductId == model.ProductId
-                                    && c.TenantId == AppConstant.LoggedInTenantId
+                                    && c.TenantId == claimsProperty.GetTenantId()
                                     && c.IsDelete == false)
                         .FirstOrDefault();
 
@@ -374,6 +442,9 @@ namespace ShutterManagement.Business.Services
                         IsProductExists.Markup = model.Markup;
                         IsProductExists.UpdatedAt = DateTime.Now;
                         IsProductExists.ModifiedBy = AppConstant.LoggedInUserID;
+                        IsProductExists.IsComponentAvailable = model.IsComponentAvailable;
+                        IsProductExists.IsTaxApplied = model.IsTaxAvailable;
+                        IsProductExists.TaxId = model.TaxId;
                         await Update(IsProductExists);
                         responseVm.IsSuccess = true;
                         responseVm.Message = AppConstant.UpdateSuccessMsg;
@@ -395,6 +466,8 @@ namespace ShutterManagement.Business.Services
             }
             return responseVm;
         }
+
+       
     }
 }
 

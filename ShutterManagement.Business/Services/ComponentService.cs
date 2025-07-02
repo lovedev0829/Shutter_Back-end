@@ -48,13 +48,13 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
                 if (IsTenant)
                 {
 
                     bool IsComponentExists = await AnyAsync(x => x.IsDelete == false &&
                       (x.ComponentName == model.ComponentName.Trim())
-                      && x.TenantId==AppConstant.LoggedInTenantId);
+                      && x.TenantId==claimsProperty.GetTenantId());
                       
                     if (IsComponentExists)
                     {
@@ -67,14 +67,14 @@ namespace ShutterManagement.Business.Services
                         ComponentId = Guid.NewGuid(),
                         ComponentName = model.ComponentName.Trim(),
                         ProductType = model.ProductType,
-                        PricingExpression = model.PricingExpression,
+                        //PricingExpression = model.PricingExpression,
                         MarkupPercentage = model.MarkupPercentage,
                         Notes = model.Notes,
                         CreatedAt = DateTime.Now,
                         CreatedBy = AppConstant.LoggedInUserID,
                         IsActive = true,
                         IsDelete = false,
-                        TenantId = AppConstant.LoggedInTenantId
+                        TenantId = claimsProperty.GetTenantId()
                     };
 
                     await Add(component);
@@ -85,6 +85,8 @@ namespace ShutterManagement.Business.Services
                         && x.IsDelete == false);
                         if (!isMaterialExists)
                         {
+                            Guid MaterialPricingExp = Guid.Empty;
+                            Guid.TryParse(material.MaterialPricingExpression, out MaterialPricingExp);
                             TblComponentMaterial componentmaterial = new TblComponentMaterial
                             {
                                 ComponentId = component.ComponentId,
@@ -95,7 +97,8 @@ namespace ShutterManagement.Business.Services
                                 CreatedBy = AppConstant.LoggedInUserID,
                                 IsActive = true,
                                 IsDelete = false,
-                                TenantId = AppConstant.LoggedInTenantId
+                                TenantId = claimsProperty.GetTenantId(),
+                                MaterialPricingExpression = MaterialPricingExp
                             };
 
                             await _componentMaterial.Add(componentmaterial);
@@ -122,18 +125,18 @@ namespace ShutterManagement.Business.Services
             IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
             try
             {
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
 
                 if (IsTenant)
                 {
                     var IsComponentExists = GetAllQuerable()
                         .Where(c => c.ComponentId == Guid.Parse(model.ComponentId)
-                                    && c.TenantId == AppConstant.LoggedInTenantId
+                                    && c.TenantId == claimsProperty.GetTenantId()
                                     && c.IsDelete == false)
                         .FirstOrDefault();
                     bool IsComponentNameExists = await AnyAsync(x => x.IsDelete == false &&
                     (x.ComponentName == model.ComponentName.Trim())
-                    && x.TenantId == AppConstant.LoggedInTenantId && x.ComponentId.ToString()!=model.ComponentId);
+                    && x.TenantId == claimsProperty.GetTenantId() && x.ComponentId.ToString()!=model.ComponentId);
 
                     if (IsComponentNameExists)
                     {
@@ -175,17 +178,32 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.ParentTenantId == null && x.IsDelete == false && x.IsActive == true);
                 var IsComponentExists = GetAllQuerable()
                       .Where(c => c.ComponentId == Id
-                                  && c.TenantId == AppConstant.LoggedInTenantId
+                                  && c.TenantId == claimsProperty.GetTenantId()
                                   && c.IsDelete == false)
                       .FirstOrDefault();
+                bool isComponenteUsed =
+              dbContext.TblEstimateWindowProductComponents.Any(p => p.ComponentId == Id && p.IsDelete == false);
+
+                if (isComponenteUsed)
+                {
+                    responseVm.Message = "This Component is used in another entity (Estimate,) and cannot be deactivate.";
+                    responseVm.IsSuccess = false;
+                    return responseVm;
+                }
+                var IsComponentInProduct = await productService.AnyAsync(x => x.ComponentId == Id && x.IsActive == true && x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId());
+                if (IsComponentInProduct)
+                {
+                    responseVm.Message = "Component exists in Product";
+                    return responseVm;
+                }
                 if (IsComponentExists != null)
                 {
                     var IsMaterialInComponent = _componentMaterial.GetAllQuerable().Where
                       (x => x.ComponentId == Id && x.IsDelete == false
-                      && x.TenantId == AppConstant.LoggedInTenantId).ToList();
+                      && x.TenantId == claimsProperty.GetTenantId()).ToList();
                     if (IsMaterialInComponent != null && IsMaterialInComponent.Count > 0)
                     {
                         foreach (var item in IsMaterialInComponent)
@@ -225,19 +243,17 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsActive == true && x.IsDelete == false);
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.ParentTenantId == null && x.IsActive == true && x.IsDelete == false);
                 if (IsTenant)
                 {
                     var IsComponentExists = GetAllQuerable()
                           .Where(c => c.ComponentId == Id
-                                      && c.TenantId == AppConstant.LoggedInTenantId
+                                      && c.TenantId == claimsProperty.GetTenantId()
                                       && c.IsDelete == false)
                           .FirstOrDefault();
 
                     bool isComponenteUsed =
-                   dbContext.TblEstimateWindowProductComponents.Any(p => p.ComponentId == Id && p.IsDelete == false);
-                  
-
+                  dbContext.TblEstimateWindowProductComponents.Any(p => p.ComponentId == Id && p.IsDelete == false);
 
                     if (isComponenteUsed)
                     {
@@ -245,14 +261,17 @@ namespace ShutterManagement.Business.Services
                         responseVm.IsSuccess = false;
                         return responseVm;
                     }
-                    var IsComponentInProduct = await productService.AnyAsync(x => x.ComponentId == Id && x.IsActive == true && x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
-                    if (!IsComponentInProduct)
+                    var IsComponentInProduct = await productService.AnyAsync(x => x.ComponentId == Id && x.IsActive == true && x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId());
+                    if (IsComponentInProduct)
                     {
-                        if (IsComponentExists != null)
+                        responseVm.Message = "Component exists in Product";
+                        return responseVm;
+                    }
+                    if (IsComponentExists != null)
                         {
                             var IsMaterialInComponent = _componentMaterial.GetAllQuerable().Where
                             (x => x.ComponentId == Id && x.IsDelete == false
-                            && x.TenantId == AppConstant.LoggedInTenantId).ToList();
+                            && x.TenantId == claimsProperty.GetTenantId()).ToList();
 
                             if (IsMaterialInComponent != null && IsMaterialInComponent.Count > 0)
                             {
@@ -280,11 +299,7 @@ namespace ShutterManagement.Business.Services
                         {
                             responseVm.Message = $"{AppConstant.NoDataFound}";
                         }
-                    }
-                    else
-                    {
-                        responseVm.Message = "Component exists in Product";
-                    }
+                   
 
                 }
                 else
@@ -317,12 +332,20 @@ namespace ShutterManagement.Business.Services
 
                 var filteredRecords = ApplyFilters(componentList, filter);
 
-                var pagedRecords = Paginate(filteredRecords, filter);
+               // var pagedRecords = Paginate(filteredRecords, filter);
+
+
+                var queryable = filteredRecords.AsQueryable();
+
+                queryable = ShutterManagement.Core.Common.Paginate.ApplyColumnFilters(queryable, filter.ColumnFilters);
+                queryable = ShutterManagement.Core.Common.Paginate.ApplySorting(queryable, filter.SortColumn, filter.SortDirection);
+
+                var TakenRecords = ShutterManagement.Core.Common.Paginate.Pagination(queryable.ToList(), filter);
 
                 responseVm.IsSuccess = true;
-                if (pagedRecords.Any())
+                if (TakenRecords.Any())
                 {
-                    responseVm.Data = pagedRecords;
+                    responseVm.Data = TakenRecords;
                     responseVm.Message = AppConstant.FetchSuccessMsg;
                     responseVm.TotalRecords = filteredRecords.Count();
                 }
@@ -342,7 +365,7 @@ namespace ShutterManagement.Business.Services
         private async Task<bool> IsTenantValid()
         {
             return await tenantService.AnyAsync(x =>
-                x.TenantId == AppConstant.LoggedInTenantId &&
+                x.TenantId == claimsProperty.GetTenantId() &&
                 x.ParentTenantId == null &&
                 x.IsDelete == false &&
                 x.IsActive == true);
@@ -351,7 +374,7 @@ namespace ShutterManagement.Business.Services
         private TblComponent GetComponent()
         {
             return GetAllQuerable()
-                .Where(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false)
+                .Where(x => x.TenantId == claimsProperty.GetTenantId() && x.IsDelete == false)
                 .FirstOrDefault();
         }
 
@@ -372,7 +395,7 @@ namespace ShutterManagement.Business.Services
         private List<ComponentListVm> GetComponentList()
         {
             var componentList = GetAllQuerable()
-                .Where(c => c.TenantId == AppConstant.LoggedInTenantId && c.IsDelete == false).OrderByDescending(x=> x.CreatedAt)
+                .Where(c => c.TenantId == claimsProperty.GetTenantId() && c.IsDelete == false).OrderByDescending(x=> x.CreatedAt)
                 .Select(c => new ComponentListVm
                 {
                     ComponentId = c.ComponentId,
@@ -381,7 +404,7 @@ namespace ShutterManagement.Business.Services
                     MarkupPercentage = c.MarkupPercentage,
                     Notes = c.Notes,
                     ProductType = c.ProductType,
-                    PricingExpression = c.PricingExpression,
+                    //PricingExpression = c.PricingExpression,
                     TenantId = c.TenantId,
                 }).ToList();
 
@@ -389,10 +412,10 @@ namespace ShutterManagement.Business.Services
             {
                 //var component = GetComponent();
                 var productTypeDetail = GetProductTypeDetail(item.ProductType ?? "");
-                var expression = GetExpression(item.PricingExpression ?? "");
-                item.ExpressionName = expression?.ExpressionName;
-                item.ExpressionFormulae = expression?.DisplayArray;
-                //item.displayArray = expression?.DisplayArray;
+                //var expression = GetExpression(item.PricingExpression ?? "");
+                //item.ExpressionName = expression?.ExpressionName;
+                //item.ExpressionFormulae = expression?.DisplayArray;
+                ////item.displayArray = expression?.DisplayArray;
                 item.ProductType = productTypeDetail?.ProductId.ToString().ToLower();
                 item.ProductTypeName = productTypeDetail?.ProductName;
 
@@ -404,20 +427,49 @@ namespace ShutterManagement.Business.Services
 
         private List<ComponentMaterialVm> GetComponentMaterials(Guid componentId)
         {
-            return (from cm in dbContext.TblComponentMaterials.OrderByDescending(x => x.CreatedAt)
-                    join m in dbContext.TblRawMaterials on cm.RawMaterialId equals m.RawMaterialId
-                    where cm.ComponentId == componentId && cm.IsDelete == false && cm.TenantId == AppConstant.LoggedInTenantId
-                    select new ComponentMaterialVm
-                    {
-                        ComponentMaterialId = cm.ComponentMaterialId,
-                        RawMaterialId = cm.RawMaterialId,
-                        WasteFactor = cm.WasteFactor,
-                        Quantity = cm.Quantity,
-                        MaterialName = m.MaterialName,
-                        IsDelete = cm.IsDelete,
-                        IsActive = cm.IsActive
-                    }).ToList();
+            var materialCompoenent = (from cm in dbContext.TblComponentMaterials.OrderByDescending(x => x.CreatedAt)
+                                      join m in dbContext.TblRawMaterials on cm.RawMaterialId equals m.RawMaterialId
+                                      where cm.ComponentId == componentId && cm.IsDelete == false && cm.TenantId == claimsProperty.GetTenantId()
+                                      select new
+                                      {
+                                          cm.ComponentMaterialId,
+                                          cm.RawMaterialId,
+                                          cm.WasteFactor,
+                                          cm.Quantity,
+                                          m.MaterialName,
+                                          cm.IsDelete,
+                                          cm.IsActive,
+                                          cm.MaterialPricingExpression,
+                                      }).ToList();
+
+            var result = new List<ComponentMaterialVm>();
+
+
+            foreach (var item in materialCompoenent)
+            {
+                var exp = GetExpression(item.MaterialPricingExpression?.ToString());
+
+                var matcomp = new ComponentMaterialVm
+                {
+                    ComponentMaterialId = item.ComponentMaterialId,
+                    RawMaterialId = item.RawMaterialId ?? Guid.Empty,
+                    WasteFactor = item.WasteFactor ?? 0.0m,
+                    Quantity = item.Quantity ?? 0.0m,
+                    MaterialName = item.MaterialName ?? "",
+                    IsActive = item.IsActive,
+                    IsDelete = item.IsDelete,
+                    MaterialPricingExpression = item.MaterialPricingExpression ?? Guid.Empty,
+                    displayArray = !string.IsNullOrEmpty(exp?.DisplayArray) ? exp.DisplayArray.Split(new[] { ", " }, StringSplitOptions.TrimEntries) : new string[0],
+                    ExpressionFormulae = exp?.ExpressionFormulae ?? "",
+                    ExpressionName = exp?.ExpressionName ?? "",
+                };
+
+                result.Add(matcomp);
+            }
+
+            return result;
         }
+
 
         private IEnumerable<ComponentListVm> ApplyFilters(IEnumerable<ComponentListVm> componentList, Pagination filter)
         {

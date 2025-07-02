@@ -24,6 +24,7 @@ using System.Diagnostics.Metrics;
 using ShutterManagement.Core.Common;
 using System.ComponentModel.DataAnnotations;
 using AutoMapper.Internal;
+using Stripe;
 
 namespace ShutterManagement.Business.Services
 {
@@ -44,7 +45,7 @@ namespace ShutterManagement.Business.Services
         private readonly IInvoiceService invoiceService;
         private readonly IReportServices reportServices;
         private readonly IMstProductType productType;
-
+        public Pagination filter = new Pagination();
         public ImportandExportCSV(ShutterDBContext context, IVendorService vendorService,
             IMaterial material, IContactService contactService, ClaimsProperty claimsProperty,
             IUnitofMeasurementService unitofMeasurement, ITenantService tenantService,
@@ -66,11 +67,115 @@ namespace ShutterManagement.Business.Services
             this.invoiceService = invoiceService;
             this.reportServices = reportServices;
             this.productType = productType;
+            filter.PageNo = 1;
+            filter.RecordPerPage = 1000;
+            filter.SearchValue = "";
+            filter.TenantId = "";
+            filter.Status = 1;
+            filter.Vendor = "";
+            filter.JobStatus = "";
+            filter.ProductType = "";
+            filter.Region = "";
+            filter.Address = "";
         }
 
         #region Start Export import Contact and material
 
-        public async Task<IResponseVm<List<string>>> ImportCsvToDatabase(Stream csvStream)
+
+        public async Task<IResponseVm<string>> DownloadCsvSampleMaterial()
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+            try
+            {
+                var rootPath = Directory.GetCurrentDirectory();
+                var tenantId = claimsProperty.GetTenantId();
+                var relativePath = Path.Combine("Files", tenantId.ToString(), "Samples");
+                var fullDirectoryPath = Path.Combine(rootPath, relativePath);
+
+                if (!Directory.Exists(fullDirectoryPath))
+                {
+                    Directory.CreateDirectory(fullDirectoryPath);
+                }
+
+                var fileName = "MaterialSample.csv";
+                var filePathWithName = Path.Combine(fullDirectoryPath, fileName);
+
+                // CSV headers with * for required fields
+                if (!System.IO.File.Exists(filePathWithName))
+                {
+                    using (var writer = new StreamWriter(filePathWithName))
+                    {
+                        await writer.WriteLineAsync("MaterialUniqueId,MaterialName*,UnitCost*,UnitOfMeasurement*,Lenght,Width,StockQuantity,ReorderLevel,Vendor*,Notes,ProductType*,SKU,IsCutSheet*");
+                    }
+                }
+
+                byte[] fileBytes = await System.IO.File.ReadAllBytesAsync(filePathWithName);
+                string base64Data = Convert.ToBase64String(fileBytes);
+
+                responseVm.IsSuccess = true;
+                responseVm.Message = "Material Sample Downloaded successfully.";
+                responseVm.Data = base64Data;
+
+                // Clean up temporary file
+                System.IO.File.Delete(filePathWithName);
+            }
+            catch (Exception ex)
+            {
+                responseVm.IsSuccess = false;
+                responseVm.Message = $"{AppConstant.ExceptionError} {ex.Message}";
+            }
+
+            return responseVm;
+        }
+
+        public async Task<IResponseVm<string>> DownloadCsvSampleContact()
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+            try
+            {
+                var rootPath = Directory.GetCurrentDirectory();
+
+                var tenantId = claimsProperty.GetTenantId();
+                var relativePath = Path.Combine("Files", claimsProperty.GetTenantId().ToString(), "Samples");
+                var fullDirectoryPath = Path.Combine(rootPath, relativePath);
+
+                if (!Directory.Exists(fullDirectoryPath))
+                {
+                    Directory.CreateDirectory(fullDirectoryPath);
+                }
+
+                var fileName = "MaterialSample.csv";
+                var filePathWithName = Path.Combine(fullDirectoryPath, fileName);
+
+                if (!System.IO.File.Exists(filePathWithName))
+                {
+                    using (var writer = new StreamWriter(filePathWithName))
+                    {
+                      
+                        await writer.WriteLineAsync("ContactType*,FirstName*,LastName*,Suffix*,PhoneNumber*,Email*,Website,Notes,Referral,BillingFirstName*,BillingLastName*,PhoneNumber*,Email*,City*,StateName*,ZipCode*,StreetAddress*,EffectiveDate,ExpiryDate");
+                    }
+                }
+
+                byte[] fileBytes = await System.IO.File.ReadAllBytesAsync(filePathWithName);
+                string base64Data = Convert.ToBase64String(fileBytes);
+
+                responseVm.IsSuccess = true;
+                responseVm.Message = "Material Sample Downloaded successfully..";
+                responseVm.Data = base64Data;
+                System.IO.File.Delete(filePathWithName);
+            }
+            catch (Exception ex)
+            {
+                responseVm.IsSuccess = false;
+                responseVm.Message = $"{AppConstant.ExceptionError} {ex.Message}";
+            }
+
+            return responseVm;
+        }
+
+
+
+        public async Task<IResponseVm<List<string>>> ImportMaterialDatabase(Stream csvStream)
         {
             IResponseVm<List<string>> responseVm = new ResponseVm<List<string>>();
             List<string> validationErrors = new List<string>();
@@ -78,7 +183,7 @@ namespace ShutterManagement.Business.Services
             int successfulImports = 0;
             int totalRecords = 0;
 
-            var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
+            var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true);
             if (!isTenantExists)
             {
                 responseVm.Message = AppConstant.TenantNotFound;
@@ -88,22 +193,31 @@ namespace ShutterManagement.Business.Services
             try
             {
                 using (var reader = new StreamReader(csvStream))
-                using (var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture)))
+                using (var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture)
+                {
+                    MissingFieldFound = null
+                }))
                 {
                     //var records = csv.GetRecords<ImportMaterial>().ToList();
                     var expectedHeaders = new[]
-                   {
-                   "MaterialName", "UnitCost", "UnitOfMeasurement", "StockQuantity", "ReorderLevel",
-                   "VendorCode", "Notes", "ProductType", "SKU", "IsCutSheet"
+                    {
+                   "MaterialUniqueId","MaterialName", "UnitCost", "UnitOfMeasurement","Lenght","Width", "StockQuantity", "ReorderLevel",
+                   "Vendor", "Notes", "ProductType", "SKU", "IsCutSheet"
                     };
+
+
 
                     csv.Read();
                     csv.ReadHeader();
-                    var actualHeaders = csv.HeaderRecord;
+                    var actualHeaders = csv.HeaderRecord.Select(h => h.Trim().TrimEnd('*').ToLower()).ToArray();
 
-                    if (!expectedHeaders.SequenceEqual(actualHeaders, StringComparer.InvariantCultureIgnoreCase))
+                    var normalizedExpectedHeaders = expectedHeaders
+                        .Select(h => h.Trim().ToLower())
+                        .ToArray();
+
+                    if (!normalizedExpectedHeaders.SequenceEqual(actualHeaders))
                     {
-                        responseVm.Message = "The CSV file header format is  incorrect. Please export format";
+                        responseVm.Message = "The CSV file header format is incorrect. Please download the sample format.";
                         return responseVm;
                     }
                     var records = csv.GetRecords<ImportMaterial>().ToList();
@@ -120,7 +234,7 @@ namespace ShutterManagement.Business.Services
 
                     foreach (var record in records)
                     {
-                        if (string.IsNullOrEmpty(record.VendorCode))
+                        if (string.IsNullOrEmpty(record.Vendor))
                         {
                             validationErrors.Add($"Error in row {rowNumber}: VendorCode is required.");
                             hasValidationError = true;
@@ -128,18 +242,18 @@ namespace ShutterManagement.Business.Services
                         }
 
                         var vendor = vendorService.GetAllQuerable()
-                            .Where(v => v.VendorCode == record.VendorCode && v.IsDelete == false)
+                            .Where(v => (v.VendorCode == record.Vendor || v.CompanyName == record.Vendor) && v.IsDelete == false && v.TenantId == claimsProperty.GetTenantId())
                             .FirstOrDefault();
 
                         if (vendor == null)
                         {
-                            validationErrors.Add($"Error in row {rowNumber}: Vendor  Code Required");
+                            validationErrors.Add($"Error in row {rowNumber}: Vendor  Required");
                             hasValidationError = true;
                             continue;
                         }
 
                         var productType = dbContext.MstProductTypes
-                            .Where(p => p.ProductName == record.ProductType && p.IsDelete == false)
+                            .Where(p => p.ProductName == record.ProductType && p.IsDelete == false && p.TenantId == claimsProperty.GetTenantId())
                             .FirstOrDefault();
 
                         if (productType == null)
@@ -157,7 +271,7 @@ namespace ShutterManagement.Business.Services
 
                         foreach (var unitOfMeasurementExist in unitOfMeasurement)
                         {
-                            if (unitOfMeasurementExist.UnitofMeasurementName == record.UnitOfMeasurement?.Trim())
+                            if (unitOfMeasurementExist?.UnitofMeasurementName?.ToLower() == record?.UnitOfMeasurement?.ToLower()?.Trim())
                             {
                                 unitFound = true;
                                 break;
@@ -166,17 +280,20 @@ namespace ShutterManagement.Business.Services
 
                         if (!unitFound)
                         {
-                            validationErrors.Add($"Error in row {rowNumber}: UnitOfMeasurement '{record.UnitOfMeasurement}' is Not Valid.");
+                            validationErrors.Add($"Error in row {rowNumber}: UnitOfMeasurement '{record?.UnitOfMeasurement}' is Not Valid.");
                             hasValidationError = true;
                             continue;
 
                         }
-
                         var materialModel = new CreateMaterial
                         {
                             SKU = record.SKU?.Trim(),
                             MaterialName = record.MaterialName?.Trim(),
+                            Lenght = record.Lenght ?? null,
+                            Width = record.Width ?? null,
                             UnitCost = record.UnitCost,
+                            //NonRatedUnitCost=record.NonRatedUnitCost,
+                            // NonRatedUnitCost=record.UnitCost,
                             UnitOfMeasurement = record.UnitOfMeasurement,
                             StockQuantity = record.StockQuantity,
                             ReorderLevel = record.ReorderLevel,
@@ -184,6 +301,7 @@ namespace ShutterManagement.Business.Services
                             VendorId = vendor.VendorId,
                             Notes = record.Notes,
                             ProductType = productType.ProductId.ToString(),
+                            MaterialUniqueId = record.MaterialUniqueId ?? ""
                         };
 
                         var existingMaterialdata = await material.Validate_MaterialExcell(record);
@@ -210,19 +328,22 @@ namespace ShutterManagement.Business.Services
                     else
                     {
                         int successfulInserts = 0;
-
-                        foreach (var validMaterial in validMaterials)
+                        _ = Task.Run(async () =>
                         {
-                            var createMaterialResponse = await material.Create_Material(validMaterial);
-                            if (createMaterialResponse.IsSuccess)
+                            foreach (var validMaterial in validMaterials)
                             {
-                                successfulInserts++;
+
+                                var createMaterialResponse = await material.Create_Material(validMaterial);
+                                if (createMaterialResponse.IsSuccess)
+                                {
+                                    successfulInserts++;
+                                }
+                                else
+                                {
+                                    validationErrors.Add($"Error inserting material: {createMaterialResponse.Message}");
+                                }
                             }
-                            else
-                            {
-                                validationErrors.Add($"Error inserting material: {createMaterialResponse.Message}");
-                            }
-                        }
+                        });
 
                         if (validationErrors.Any())
                         {
@@ -254,12 +375,13 @@ namespace ShutterManagement.Business.Services
             IResponseVm<List<string>> responseVm = new ResponseVm<List<string>>();
             List<string> validationErrors = new List<string>();
             List<Sp_Contact> validContacts = new List<Sp_Contact>();
-            int successfulImports = 0;
+            int successfulUpdates = 0;
+            int successfulInserts = 0;
             int totalRecords = 0;
 
             try
             {
-                var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
+                var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive==true);
                 if (!isTenantExists)
                 {
                     responseVm.Message = AppConstant.TenantNotFound;
@@ -267,71 +389,84 @@ namespace ShutterManagement.Business.Services
                 }
 
                 using (var reader = new StreamReader(csvStream))
-                using (var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture)))
+                using (var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture)
+                {
+                    MissingFieldFound = null
+                }))
                 {
                     var expectedHeaders = new[]
                     {
-                   "ContactType", "FirstName","LastName", "PhoneNumber", "Email", "Website",
-                   "Notes", "Referral", "BillingFirstName","BillingLastName", "PhoneNumber", "Email","City","State","ZipCode","StreetAddress","EffectiveDate","ExpiryDate"
-                    };
+                "ContactType", "FirstName", "LastName","Suffix", "PhoneNumber", "Email", "Website",
+                "Notes", "Referral", "BillingFirstName", "BillingLastName", "PhoneNumber",
+                "Email", "City", "StateName", "ZipCode", "StreetAddress", "EffectiveDate", "ExpiryDate"
+            };
 
                     csv.Read();
                     csv.ReadHeader();
-                    var actualHeaders = csv.HeaderRecord;
+                    var actualHeaders = csv.HeaderRecord.Select(h => h.Trim().TrimEnd('*').ToLower()).ToArray();
 
-                    if (!expectedHeaders.SequenceEqual(actualHeaders, StringComparer.InvariantCultureIgnoreCase))
+                    var normalizedExpectedHeaders = expectedHeaders
+                        .Select(h => h.Trim().ToLower())
+                        .ToArray();
+
+                    if (!normalizedExpectedHeaders.SequenceEqual(actualHeaders))
                     {
-                        responseVm.Message = "The CSV file header format is  incorrect. Please export format";
+                        responseVm.Message = "The CSV file header format is incorrect. Please download the sample format.";
                         return responseVm;
                     }
 
                     var records = csv.GetRecords<ImportContact>().ToList();
                     totalRecords = records.Count;
                     int rowNumber = 1;
-                    bool hasValidationError = false;
 
                     foreach (var record in records)
                     {
-                        var contactModel = MapToSpContact(record);
+                        var filter = new Pagination { SearchValue = record.Email };
+                        bool role = true;
 
-                        var validationError = await ValidateContactAsync(contactModel, rowNumber);
-                        if (validationError != null)
+                        var existingContactResponse = await contactService.GetAll_Contact(filter, role,false);
+                        var existingContact = existingContactResponse.Data?.FirstOrDefault();
+
+                        bool isUpdate =  false;
+                        if(existingContact!=null)
                         {
-                            validationErrors.Add(validationError);
-                            hasValidationError = true;
+                            isUpdate = true;
+                        }
+
+                        var contactModel =  await MapToSpContact(record, isUpdate, existingContact?.ContactId);
+
+                        if (existingContact != null)
+                        {
+                            contactModel.ContactId = existingContact.ContactId;
+
+                            var updateResponse = await contactService.Update_Contact(contactModel);
+                            if (updateResponse.IsSuccess)
+                            {
+                                successfulUpdates++;
+                            }
+                            else
+                            {
+                                validationErrors.Add($"Error updating contact in row {rowNumber}: {updateResponse.Message}");
+                            }
                         }
                         else
                         {
                             validContacts.Add(contactModel);
                         }
-
                         rowNumber++;
                     }
 
-                    if (hasValidationError)
+                    if (validContacts.Any())
                     {
-                        responseVm.IsSuccess = false;
-                        responseVm.Message = "Validation errors occurred during the import.";
-                        responseVm.Data = validationErrors;
-                        responseVm.TotalRecords = validContacts.Count;
+                        successfulInserts = await SaveOrUpdateContacts(validContacts, validationErrors);
                     }
-                    else
-                    {
-                        successfulImports = await InsertValidContacts(validContacts, validationErrors);
 
-                        if (validationErrors.Any())
-                        {
-                            responseVm.IsSuccess = false;
-                            responseVm.Message = "Some contacts failed to be inserted.";
-                            responseVm.Data = validationErrors;
-                            responseVm.TotalRecords = successfulImports;
-                        }
-                        else
-                        {
-                            responseVm.IsSuccess = true;
-                            responseVm.Message = AppConstant.UploadSuccessMsg;
-                            responseVm.TotalRecords = successfulImports;
-                        }
+                    responseVm.IsSuccess = !validationErrors.Any();
+                    responseVm.Message = $"Processed {successfulUpdates + successfulInserts} contacts ({successfulUpdates} updated, {successfulInserts} inserted).";
+                    responseVm.TotalRecords = successfulUpdates + successfulInserts;
+                    if (validationErrors.Any())
+                    {
+                        responseVm.Data = validationErrors;
                     }
                 }
             }
@@ -344,24 +479,77 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        private Sp_Contact MapToSpContact(ImportContact record)
+        private async Task<int> SaveOrUpdateContacts(List<Sp_Contact> contacts, List<string> validationErrors)
         {
-            var contactModel = new Sp_Contact
+            int successfulInserts = 0;
+
+            foreach (var contact in contacts)
+            {
+                var createContactResponse = await contactService.Create_Contact(contact);
+
+                if (createContactResponse.IsSuccess)
+                {
+                    successfulInserts++;
+                }
+                else
+                {
+                    validationErrors.Add($"Error creating contact {contact.Email}: {createContactResponse.Message}");
+                }
+            }
+
+            return successfulInserts;
+        }
+
+        private async Task<dynamic> MapToSpContact(ImportContact record, bool isUpdate, Guid? contactId)
+        {
+            var stateId =  GetStateIdByCode(record.BillingAddressVm?.StateName);
+            if (isUpdate)
+            {
+                return new UpdateContact
+                {
+                    ContactId = contactId,
+                    ContactType=record.ContactType?.Trim(),
+                    FirstName = record.FirstName?.Trim(),
+                    LastName = record.LastName?.Trim(),
+                    Suffix = record.Suffix?.Trim(),
+                    PhoneNumber = record.PhoneNumber?.Trim(),
+                    Email = record.Email?.Trim(),
+                    Website = record.Website?.Trim(),
+                    Notes = record.Notes?.Trim(),
+                    Referral = record.Referral?.Trim(),
+                    BillingAddressVm = record.BillingAddressVm != null ? new BillingAddressVm
+                    {
+                        FirstName = record.BillingAddressVm.BillingFirstName?.Trim(),
+                        LastName = record.BillingAddressVm.BillingLastName?.Trim(),
+                        PhoneNumber = record.BillingAddressVm.PhoneNumber?.Trim(),
+                        Email = record.BillingAddressVm.Email?.Trim(),
+                        StreetAddress = record.BillingAddressVm.StreetAddress?.Trim(),
+                        ZipCode = record.BillingAddressVm.ZipCode?.Trim(),
+                        City = record.BillingAddressVm.City?.Trim(),
+                        StateId= stateId
+                    } : null,
+                    TaxExemptionVm = record.TaxExemptionVm != null ? new TaxExemption
+                    {
+                        ExemptionCertificate = record.TaxExemptionVm.ExemptionCertificate,
+                        EffectiveDate = record.TaxExemptionVm.EffectiveDate,
+                        ExpiryDate = record.TaxExemptionVm.ExpiryDate
+                    } : null
+                };
+            }
+
+            return new Sp_Contact
             {
                 ContactType = record.ContactType?.Trim(),
                 FirstName = record.FirstName?.Trim(),
                 LastName = record.LastName?.Trim(),
-                PhoneNumber = record.PhoneNumber.Trim(),
+                Suffix=record.Suffix?.Trim(),
+                PhoneNumber = record.PhoneNumber?.Trim(),
                 Email = record.Email?.Trim(),
-                Website = record.Website.Trim(),
-                Notes = record.Notes,
-                Referral = record.Referral.Trim(),
+                Website = record.Website?.Trim(),
+                Notes = record.Notes?.Trim(),
+                Referral = record.Referral?.Trim(),
                 IsBillingAddressSameAsAddress = false,
-            };
-
-            if (record.BillingAddressVm != null)
-            {
-                contactModel.BillingAddressVm = new BillingAddressVm
+                BillingAddressVm = record.BillingAddressVm != null ? new BillingAddressVm
                 {
                     FirstName = record.BillingAddressVm.BillingFirstName?.Trim(),
                     LastName = record.BillingAddressVm.BillingLastName?.Trim(),
@@ -370,22 +558,107 @@ namespace ShutterManagement.Business.Services
                     StreetAddress = record.BillingAddressVm.StreetAddress?.Trim(),
                     ZipCode = record.BillingAddressVm.ZipCode?.Trim(),
                     City = record.BillingAddressVm.City?.Trim(),
-                    State = record.BillingAddressVm.State?.Trim()
-                };
-            }
-
-            if (record.TaxExemptionVm != null)
-            {
-                contactModel.TaxExemptionVm = new TaxExemption
+                    StateName = record.BillingAddressVm.StateName?.Trim(),
+                    StateId=stateId
+                } : null,
+                TaxExemptionVm = record.TaxExemptionVm != null ? new TaxExemption
                 {
                     ExemptionCertificate = record.TaxExemptionVm.ExemptionCertificate,
                     EffectiveDate = record.TaxExemptionVm.EffectiveDate,
-                    ExpiryDate = record.TaxExemptionVm?.ExpiryDate
-                };
-            }
-
-            return contactModel;
+                    ExpiryDate = record.TaxExemptionVm.ExpiryDate
+                } : null
+            };
         }
+
+
+        private Guid GetStateIdByCode(string stateCode)
+        {
+            if (string.IsNullOrWhiteSpace(stateCode))
+                return Guid.Empty;
+
+            var state = dbContext.MstStates
+                .FirstOrDefault(s =>
+                    s.StateCode.Trim().ToLower() == stateCode.Trim().ToLower() ||
+                    s.StateName.Trim().ToLower() == stateCode.Trim().ToLower());
+
+            return state?.Id ?? Guid.Empty;
+        }
+
+
+        //private async Task<int> SaveOrUpdateContacts(List<Sp_Contact> contacts, List<string> validationErrors)
+        //{
+        //    int successfulInserts = 0;
+
+        //    foreach (var contact in contacts)
+        //    {
+        //        var createContactResponse = await contactService.Create_Contact(contact);
+
+        //        if (createContactResponse.IsSuccess)
+        //        {
+        //            successfulInserts++;
+        //        }
+        //        else
+        //        {
+        //            validationErrors.Add($"Error creating contact {contact.Email}: {createContactResponse.Message}");
+        //        }
+        //    }
+
+        //    return successfulInserts;
+        //}
+
+
+
+        //private Sp_Contact MapToSpContact(ImportContact record , bool IsUpdate)
+        //{
+        //    if(IsUpdate)
+        //    {
+        //        var contact = new UpdateContact();
+
+        //        {
+
+        //        }
+        //    }
+        //    var contactModel = new Sp_Contact
+        //    {
+        //        ContactType = record.ContactType?.Trim(),
+        //        ContactId= record?.ContactId.Trim(),
+        //        FirstName = record.FirstName?.Trim(),
+        //        LastName = record.LastName?.Trim(),
+        //        PhoneNumber = record.PhoneNumber.Trim(),
+        //        Email = record.Email?.Trim(),
+        //        Website = record.Website.Trim(),
+        //        Notes = record.Notes,
+        //        Referral = record.Referral.Trim(),
+        //        IsBillingAddressSameAsAddress = false,
+        //    };
+
+        //    if (record.BillingAddressVm != null)
+        //    {
+        //        contactModel.BillingAddressVm = new BillingAddressVm
+        //        {
+        //            FirstName = record.BillingAddressVm.BillingFirstName?.Trim(),
+        //            LastName = record.BillingAddressVm.BillingLastName?.Trim(),
+        //            PhoneNumber = record.BillingAddressVm.PhoneNumber?.Trim(),
+        //            Email = record.BillingAddressVm.Email?.Trim(),
+        //            StreetAddress = record.BillingAddressVm.StreetAddress?.Trim(),
+        //            ZipCode = record.BillingAddressVm.ZipCode?.Trim(),
+        //            City = record.BillingAddressVm.City?.Trim(),
+        //            State = record.BillingAddressVm.State?.Trim()
+        //        };
+        //    }
+
+        //    if (record.TaxExemptionVm != null)
+        //    {
+        //        contactModel.TaxExemptionVm = new TaxExemption
+        //        {
+        //            ExemptionCertificate = record.TaxExemptionVm.ExemptionCertificate,
+        //            EffectiveDate = record.TaxExemptionVm.EffectiveDate,
+        //            ExpiryDate = record.TaxExemptionVm?.ExpiryDate
+        //        };
+        //    }
+
+        //    return contactModel;
+        //}
 
         private async Task<string> ValidateContactAsync(Sp_Contact contactModel, int rowNumber)
         {
@@ -420,97 +693,7 @@ namespace ShutterManagement.Business.Services
 
         #endregion Start Export import Contact and material
 
-        //public async Task<IResponseVm<dynamic>> ExportContactsToCsvAsync(string filePath)
-        //{
-        //    IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
-        //    try
-        //    {
-        //        var IsTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
-        //        if (IsTenantExists)
-        //        {
-        //            var Contacts = new List<TblContact>();
-        //            List<ContactsList> ContactList = new List<ContactsList>();
-
-        //            Contacts = (await contactService.GetAll()).Where(x => x.IsDelete == false && x.IsArchive == false && x.TenantId == AppConstant.LoggedInTenantId).OrderByDescending(x => x.CreatedAt).ToList();
-
-        //            foreach (var contact in Contacts)
-        //            {
-        //                ContactsList contacts = new ContactsList
-        //                {
-        //                    ContactId = contact.ContactId,
-        //                    ContactType = contact.ContactType ?? "",
-        //                    Email = contact.Email,
-        //                    PhoneNumber = contact.PhoneNumber,
-        //                    Name = contact.Name,
-        //                    Website = contact.Website,
-        //                    Notes = contact.Notes,
-        //                    Referral = contact.Referral,
-        //                    IsTaxExemption = contact.IsTaxExemption ?? false,
-        //                    IsBillingAddressSameAsAddress = contact.IsBillingAddressSameAsAddress,
-        //                    IsActive = contact.IsActive
-        //                };
-
-        //                contacts.billingAddressVm = billingService.GetAllQuerable()
-        //                    .Where(x => x.ContactId == contact.ContactId
-        //                    && x.IsDelete == false).Select(x => new BillingAddressVm
-        //                    {
-        //                        City = x.City,
-        //                        Email = x.Email,
-        //                        FullName = x.FullName,
-        //                        PhoneNumber = x.PhoneNumber,
-        //                        State = x.State,
-        //                        StreetAddress = x.StreetAddress,
-        //                        ZipCode = x.ZipCode,
-        //                    }).FirstOrDefault();
-        //                contacts.taxExemptionVm = taxExemptionService.GetAllQuerable()
-        //                    .Where(x => x.ContactId == contact.ContactId
-        //                    && x.IsDelete == false).Select(x => new TaxExemption
-        //                    {
-        //                        EffectiveDate = x.EffectiveDate,
-        //                        ExemptionCertificate = x.ExemptionCertificate.Split(new[] {","},StringSplitOptions.None),
-        //                        ExpiryDate = x.ExpiryDate
-        //                    }).FirstOrDefault();
-        //                ContactList.Add(contacts);
-        //            }
-        //            var csvBuilder = new StringBuilder();
-        //            csvBuilder.AppendLine("ContactType,Name,PhoneNumber,Email,Website,Notes,Referral,FullName,PhoneNumber,Email,City,State,ZipCode,StreetAddress,ExemptionCertificate,EffectiveDate,ExpiryDate");
-
-
-        //            foreach (var contact in ContactList)
-        //            {
-        //                var billingAddress = contact.billingAddressVm ?? new BillingAddressVm();
-
-
-        //                var line = $"{contact.ContactType},{contact.Name},{contact.PhoneNumber},{contact.Email},{contact.Website},{contact.Notes},{contact.Referral}," +
-        //                           $"{billingAddress.FullName},{billingAddress.PhoneNumber},{billingAddress.Email},{billingAddress.City},{billingAddress.State}," +
-        //                           $"{billingAddress.ZipCode},{billingAddress.StreetAddress},{contact.taxExemptionVm?.ExemptionCertificate},{contact.taxExemptionVm?.EffectiveDate},{contact.taxExemptionVm?.ExpiryDate}";
-
-        //                csvBuilder.AppendLine(line);
-        //            }
-
-        //            try
-        //            {
-        //                await File.WriteAllTextAsync(filePath, csvBuilder.ToString());
-        //                responseVm.IsSuccess = true;
-        //                responseVm.Message = AppConstant.ExportSuccessMsg; 
-        //            }
-        //            catch (Exception ex)
-        //            {
-        //                responseVm.IsSuccess = false;
-        //                responseVm.Message = AppConstant.ExceptionError + ex.Message; 
-        //            }
-
-        //            return responseVm;
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        responseVm.IsSuccess = false;
-        //        responseVm.Message = AppConstant.ExceptionError + ex.Message; 
-        //        return responseVm;
-        //    }
-        //    return responseVm;
-        //}
+        
 
         #region Start Export ExportContactsToCsv
 
@@ -525,7 +708,7 @@ namespace ShutterManagement.Business.Services
 
                 if (filter.TenantId != "")
                 {
-                    var IsRealtedTenant = tenantService.GetAllQuerable().Where(x => x.TenantId.ToString() == filter.TenantId && x.ParentTenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
+                    var IsRealtedTenant = tenantService.GetAllQuerable().Where(x => x.TenantId.ToString() == filter.TenantId && x.ParentTenantId == claimsProperty.GetTenantId()).FirstOrDefault();
                     if (IsRealtedTenant == null)
                     {
                         responseVm.Message = AppConstant.NoDataFound;
@@ -538,7 +721,7 @@ namespace ShutterManagement.Business.Services
                 }
                 else
                 {
-                    Contacts = (await contactService.GetAll()).Where(x => x.IsDelete == false && x.IsArchive == false && x.TenantId == AppConstant.LoggedInTenantId).OrderByDescending(x => x.CreatedAt).ToList();
+                    Contacts = (await contactService.GetAll()).Where(x => x.IsDelete == false && x.IsArchive == false && x.TenantId == claimsProperty.GetTenantId()).OrderByDescending(x => x.CreatedAt).ToList();
                 }
 
                 if (filter.Status == 0)
@@ -572,27 +755,30 @@ namespace ShutterManagement.Business.Services
                         contact.PhoneNumber,
                         contact.FirstName,
                         contact.LastName,
+                        contact.Suffix,
                         contact.Website,
                         contact.Notes,
                         contact.Referral,
                         contact.IsTaxExemption,
                         contact.IsBillingAddressSameAsAddress,
+                        contact.PrimaryAddress,
                         contact.IsActive
                     }).ToList();
 
                 var detailedContactList = new List<ContactsList>();
                 foreach (var contact in contactsList)
                 {
-                    var billingAddress = billingService.GetAllQuerable()
-                        .Where(x => x.ContactId == contact.ContactId && !x.IsDelete)
+                    var billingAddress = dbContext.TblAddresses
+                        .Where(x => x.AddressId == contact.PrimaryAddress
+                        && x.IsDelete == false)
                         .Select(x => new BillingAddressVm
                         {
                             City = x.City,
                             Email = x.Email,
                             FirstName = x.FirstName,
                             LastName = x.LastName,
-                            PhoneNumber = x.PhoneNumber,
-                            State = x.State,
+                            PhoneNumber = x.Phone,
+                            StateName =  dbContext.MstStates.Where(s=>s.Id==x.State).Select(y=>y.StateName).FirstOrDefault(),
                             StreetAddress = x.StreetAddress,
                             ZipCode = x.ZipCode,
                         }).FirstOrDefault();
@@ -617,6 +803,7 @@ namespace ShutterManagement.Business.Services
                         FirstName = contact.FirstName,
                         LastName = contact.LastName,
                         Website = contact.Website,
+                        Suffix=contact.Suffix,
                         Notes = contact.Notes,
                         Referral = contact.Referral,
                         IsTaxExemption = contact.IsTaxExemption ?? false,
@@ -628,7 +815,7 @@ namespace ShutterManagement.Business.Services
                 }
 
                 var csvBuilder = new StringBuilder();
-                csvBuilder.AppendLine("ContactType,FirstName,LastName,PhoneNumber,Email,Website,Notes,Referral,BillingFirstName,BillingLastName,PhoneNumber,Email,City,State,ZipCode,StreetAddress,EffectiveDate,ExpiryDate");
+                csvBuilder.AppendLine("ContactType*,FirstName*,LastName*,Suffix*,PhoneNumber*,Email*,Website,Notes,Referral,BillingFirstName*,BillingLastName*,PhoneNumber*,Email*,City*,StateName*,ZipCode*,StreetAddress*,EffectiveDate,ExpiryDate");
 
                 foreach (var contact in detailedContactList)
                 {
@@ -637,8 +824,8 @@ namespace ShutterManagement.Business.Services
                         ? string.Join(";", contact.taxExemptionVm.ExemptionCertificate)
                         : "";
 
-                    var line = $"{contact.ContactType},{contact.FirstName},{contact.LastName},{contact.PhoneNumber},{contact.Email},{contact.Website},{contact.Notes},{contact.Referral}," +
-                               $"{billingAddress.FirstName},{billingAddress.LastName},{billingAddress.PhoneNumber},{billingAddress.Email},{billingAddress.City},{billingAddress.State}," +
+                    var line = $"{contact.ContactType},{contact.FirstName},{contact.LastName},{contact.Suffix},{contact.PhoneNumber},{contact.Email},{contact.Website},{contact.Notes},{contact.Referral}," +
+                               $"{billingAddress.FirstName},{billingAddress.LastName},{billingAddress.PhoneNumber},{billingAddress.Email},{billingAddress.City},{billingAddress.StateName}," +
                                $"{billingAddress.ZipCode},{billingAddress.StreetAddress},{contact.taxExemptionVm?.EffectiveDate},{contact.taxExemptionVm?.ExpiryDate}";
 
                     csvBuilder.AppendLine(line);
@@ -670,7 +857,7 @@ namespace ShutterManagement.Business.Services
 
             try
             {
-                var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
+                var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true);
                 if (!isTenantExists)
                 {
                     responseVm.IsSuccess = false;
@@ -679,7 +866,7 @@ namespace ShutterManagement.Business.Services
                 }
 
                 var materialQuery = dbContext.TblRawMaterials
-                    .Where(x => x.IsDelete == false && x.TenantId == AppConstant.LoggedInTenantId);
+                    .Where(x => x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId());
 
                 if (filter.Status == 0)
                 {
@@ -711,6 +898,7 @@ namespace ShutterManagement.Business.Services
                         (x.ReorderLevel.ToString() ?? "").ToLower().Contains(searchValue) ||
                         (x.StockQuantity.ToString() ?? "").ToLower().Contains(searchValue) ||
                         (x.Notes ?? "").ToLower().Contains(searchValue) ||
+                        (x.MaterialUniqueId ?? "").ToLower().Contains(searchValue) ||
                         (x.UnitOfMeasurement ?? "").ToLower().Contains(searchValue));
                 }
 
@@ -725,22 +913,27 @@ namespace ShutterManagement.Business.Services
                                         Notes = t2.Notes,
                                         ReorderLevel = t2.ReorderLevel,
                                         SKU = t2.Sku,
+                                        Lenght=t2.Length??null,
+                                        Width=t2.Width??null,
                                         StockQuantity = t2.StockQuantity,
                                         UnitCost = t2.UnitCost,
                                         ProductTypeName = t3.ProductName,
                                         UnitOfMeasurement = t2.UnitOfMeasurement,
+                                       // Non_Rated_UnitCost = t2.NonRatedUnitCost,
                                         VendorId = t2.VendorId,
-                                        VendorName = t1.VendorName,
+                                        FirstName = t1.FirstName,
+                                        LastName = t1.LastName,
                                         VendorCode = t1.VendorCode,
                                         IsCutSheet = t2.IsCutSheet,
+                                        MaterialUniqueId = t2.MaterialUniqueId,
                                     }).ToList();
 
                 var csvBuilder = new StringBuilder();
-                csvBuilder.AppendLine("MaterialName,UnitCost,UnitOfMeasurement,StockQuantity,ReorderLevel,VendorCode,Notes,ProductType,SKU,IsCutSheet");
+                csvBuilder.AppendLine("MaterialUniqueId,MaterialName*,UnitCost*,UnitOfMeasurement*,Lenght,Width,StockQuantity,ReorderLevel,Vendor*,Notes,ProductType*,SKU,IsCutSheet*");
 
                 foreach (var material in materialList)
                 {
-                    var line = $"{material.MaterialName},{material.UnitCost},{material.UnitOfMeasurement},{material.StockQuantity}," +
+                    var line = $"{material.MaterialUniqueId},{material.MaterialName},{material.UnitCost},{material.UnitOfMeasurement},{material.Lenght},{material.Width},{material.StockQuantity}," +
                                $"{material.ReorderLevel},{material.VendorCode},{material.Notes},{material.ProductTypeName},{material.SKU},{material.IsCutSheet}";
 
                     csvBuilder.AppendLine(line);
@@ -771,7 +964,8 @@ namespace ShutterManagement.Business.Services
 
             try
             {
-                var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
+                filter.RecordPerPage = 1000;
+                var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true);
                 if (!isTenantExists)
                 {
                     responseVm.IsSuccess = false;
@@ -780,12 +974,12 @@ namespace ShutterManagement.Business.Services
                 }
 
                 var subTenantlist = (await tenantService.GetAll())
-                    .Where(x => x.ParentTenantId == AppConstant.LoggedInTenantId && x.IsActive == true && x.IsDelete == false)
+                    .Where(x => x.ParentTenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false)
                     .Select(pt => pt.TenantId)
                     .ToList();
 
                 var jobsQuery = dbContext.TblJobs
-                    .Where(x => x.TenantId == AppConstant.LoggedInTenantId || subTenantlist.Contains((Guid)x.TenantId));
+                    .Where(x => x.TenantId == claimsProperty.GetTenantId() || subTenantlist.Contains((Guid)x.TenantId));
 
                 if (filter.Status == 0)
                 {
@@ -846,7 +1040,7 @@ namespace ShutterManagement.Business.Services
                                    JobStatusName = t5.JobStatusName,
                                    StreetAddress = t1.StreetAddress,
                                    City = t1.City,
-                                   State = t1.State,
+                                   State = dbContext.MstStates.Where(s => s.Id == t1.State).Select(y => y.StateName ?? "").FirstOrDefault(),
                                    ZipCode = t1.ZipCode
                                }).ToList();
 
@@ -889,13 +1083,17 @@ namespace ShutterManagement.Business.Services
 
             try
             {
-                var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive==true);
+                var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive==true);
                 if (!isTenantExists)
                 {
                     return CreateErrorResponse(AppConstant.TenantNotFound);
                 }
 
-                Guid[] ids = string.IsNullOrEmpty(windowProductId) ? null : new Guid[] { Guid.Parse(windowProductId) };
+                Guid[] ids = windowProductId?.Split(',')
+                .Where(id => !string.IsNullOrWhiteSpace(id))
+                .Select(id => Guid.Parse(id))
+                 .ToArray();
+
                 var estimateResponse = !string.IsNullOrEmpty(estimationId)
                     ? await estimationBreakdownService.GetProductBreakdown(Guid.Parse(estimationId), null)
                     : await estimateService.BuildEstimate(ids, true);
@@ -915,13 +1113,16 @@ namespace ShutterManagement.Business.Services
                 "Height"
                 };
 
-
+                var csvBuilder = new StringBuilder();
                 var dynamicHeaders = GetDynamicHeaders(estimateResponse.Data, "ComponentName");
 
-                var headers = commonHeaders.Concat(dynamicHeaders).ToList();
+                var optionHeaders = GetOptionNameTypeHeaders(estimateResponse.Data);
 
-                var csvBuilder = new StringBuilder();
-                csvBuilder.AppendLine(string.Join(",", headers));
+                var finalHeaders = commonHeaders.Concat(dynamicHeaders).Concat(optionHeaders).Concat(new[] { "Sub Total","Over Head","Total" }).ToList();
+
+                csvBuilder.AppendLine(string.Join(",", finalHeaders));
+
+
 
                 foreach (var breakdownGroup in estimateResponse.Data.GroupBy(d => d.GetType().GetProperty("WindowId")?.GetValue(d)))
                 {
@@ -933,6 +1134,45 @@ namespace ShutterManagement.Business.Services
                     var componentPrices = GetComponentPrices(breakdownGroup, "ComponentName", "Price");
 
                     rowValues.AddRange(dynamicHeaders.Select(header => componentPrices.GetValueOrDefault(header, "0")));
+
+                    //var optionValues = GetOptionPriceValues(firstEntry);
+                    //rowValues.AddRange(optionHeaders.Select(header => optionValues.GetValueOrDefault(header, "0")));
+
+                    // ✅ Fetch the entry that contains non-empty optionTaxDetails
+                    var withOptionTaxDetails = breakdownGroup.FirstOrDefault(x =>
+                    {
+                        var prop = x.GetType().GetProperty("OptionTaxDetails");
+                        var value = prop?.GetValue(x);
+                        if (value == null) return false;
+
+                        if (value is IEnumerable<object> list)
+                            return list.Cast<object>().Any();
+
+                        return false;
+                    });
+
+
+                    // ✅ Use that entry to get the option values
+                    var optionValues = GetOptionPriceValues(withOptionTaxDetails ?? firstEntry);
+                    rowValues.AddRange(optionHeaders.Select(header => optionValues.GetValueOrDefault(header, "0")));
+
+                    // Add Sub Total and Total
+                    decimal subTotal = GetDynamicValue(firstEntry, "productPrice");  
+                    decimal additionalCost = GetDynamicValue(firstEntry, "additionalCost");
+                    decimal componentMarkup = GetDynamicValue(firstEntry, "componentMarkup");
+                    decimal productMarkup = GetDynamicValue(firstEntry, "productMarkup");
+                    decimal optionMarkup = GetDynamicValue(firstEntry, "optionMarkup");
+
+                    decimal subtotalwithadditionalCost = subTotal + additionalCost;
+
+                    decimal OverHead = componentMarkup+productMarkup+optionMarkup;
+
+                    decimal totalPrice = (OverHead+ subtotalwithadditionalCost);
+
+                    rowValues.Add($"${subtotalwithadditionalCost.ToString("F2")}");
+                    rowValues.Add($"${OverHead.ToString("F2")}");
+                    rowValues.Add($"${totalPrice.ToString("F2")}");
+                    
 
                     csvBuilder.AppendLine(string.Join(",", rowValues));
                 }
@@ -952,6 +1192,39 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
+
+        private decimal GetDynamicValue(object obj, string propertyName)
+        {
+            if (obj == null || string.IsNullOrEmpty(propertyName))
+                return 0;
+
+            var type = obj.GetType();
+
+            // Find property case-insensitive
+            var property = type.GetProperties()
+                               .FirstOrDefault(p => string.Equals(p.Name, propertyName, StringComparison.OrdinalIgnoreCase));
+
+            if (property == null)
+                return 0;
+
+            var value = property.GetValue(obj);
+
+            if (value == null)
+                return 0;
+
+            // Try parse decimal from value
+            if (value is decimal dec)
+                return dec;
+
+            if (decimal.TryParse(value.ToString(), out decimal result))
+                return result;
+
+            return 0;
+        }
+
+
+
+
 
         private List<string> GetDynamicHeaders(IEnumerable<object> data, string propertyName)
         {
@@ -995,7 +1268,7 @@ namespace ShutterManagement.Business.Services
 
                 if (!string.IsNullOrEmpty(componentName))
                 {
-                    componentPrices[componentName] = componentPrice ?? "0";
+                    componentPrices[componentName] = $"${componentPrice}"  ?? "0";
                 }
             }
             return componentPrices;
@@ -1010,6 +1283,49 @@ namespace ShutterManagement.Business.Services
             };
         }
 
+        private List<string> GetOptionNameTypeHeaders(IEnumerable<object> data)
+        {
+            return data
+                .SelectMany(d =>
+                {
+                    var optionTaxDetails = d.GetType().GetProperty("OptionTaxDetails")?.GetValue(d) as IEnumerable<object>;
+                    return optionTaxDetails ?? new List<object>();
+                })
+                .Select(option =>
+                {
+                    var name = option.GetType().GetProperty("OptionName")?.GetValue(option)?.ToString();
+                    var type = option.GetType().GetProperty("OptionTypeName")?.GetValue(option)?.ToString();
+                    return $"{name} - {type}";
+                })
+                .Where(header => !string.IsNullOrWhiteSpace(header))
+                .Distinct()
+                .ToList();
+        }
+
+        private Dictionary<string, string> GetOptionPriceValues(object entry)
+        {
+            var optionPrices = new Dictionary<string, string>();
+
+            var optionList = entry.GetType().GetProperty("OptionTaxDetails")?.GetValue(entry) as IEnumerable<object>;
+
+            if (optionList != null)
+            {
+                foreach (var option in optionList)
+                {
+                    var name = option.GetType().GetProperty("OptionName")?.GetValue(option)?.ToString();
+                    var type = option.GetType().GetProperty("OptionTypeName")?.GetValue(option)?.ToString();
+                    var price = option.GetType().GetProperty("OptionPrice")?.GetValue(option)?.ToString() ?? "0";
+
+                    var key = $"{name} - {type}";
+                    optionPrices[key] = $"${price}";
+                }
+            }
+
+            return optionPrices;
+        }
+
+
+
         #endregion End Export Breakdowns
 
 
@@ -1020,7 +1336,7 @@ namespace ShutterManagement.Business.Services
 
             try
             {
-                var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
+                var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true);
                 if (!isTenantExists)
                 {
                     responseVm.IsSuccess = false;
@@ -1160,7 +1476,7 @@ namespace ShutterManagement.Business.Services
 
             try
             {
-                var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
+                var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true);
                 if (!isTenantExists)
                 {
                     responseVm.IsSuccess = false;
@@ -1208,7 +1524,7 @@ namespace ShutterManagement.Business.Services
 
             try
             {
-                var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsActive == true);
+                var isTenantExists = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true);
                 if (!isTenantExists)
                 {
                     responseVm.IsSuccess = false;
@@ -1247,6 +1563,28 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
         #endregion Start Export ExportTaxToCsv
+
+
+        //public class ImportContactMap : ClassMap<ImportContact>
+        //{
+        //    public ImportContactMap()
+        //    {
+        //        Map(m => m.ContactType).Name("ContactType", "ContactType*");
+        //        Map(m => m.FirstName).Name("FirstName", "firstname", "firstname*");
+        //        Map(m => m.LastName).Name("LastName", "lastname", "lastname*");
+        //        Map(m => m.Suffix).Name("Suffix", "Suffix", "Suffix*");
+        //        Map(m => m.PhoneNumber).Name("PhoneNumber", "PhoneNumber", "PhoneNumber*");
+        //        Map(m => m.Email).Name("Email", "email", "email*");
+        //        Map(m => m.PhoneNumber).Name("PhoneNumber", "phone", "phone*");
+        //        Map(m => m.BillingAddressVm.StreetAddress).Name("StreetAddress", "StreetAddress", "StreetAddress*");
+        //        Map(m => m.BillingAddressVm.City).Name("City", "city", "city*");
+        //        Map(m => m.BillingAddressVm.ZipCode).Name("ZipCode", "zipcode", "zipcode*");
+        //        Map(m => m.BillingAddressVm.StateName).Name("StateName", "StateName", "StateName*");
+        //        Map(m => m.BillingAddressVm.StateName).Name("StateName", "StateName", "StateName*");
+        //    }
+        //}
+
+
     }
 
 

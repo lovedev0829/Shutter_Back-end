@@ -29,6 +29,8 @@ public partial class TblComponentMaterial
 
     public Guid? TenantId { get; set; }
 
+    public Guid? MaterialPricingExpression { get; set; }
+
     public virtual TblComponent? Component { get; set; }
 
     public virtual TblRawMaterial? RawMaterial { get; set; }

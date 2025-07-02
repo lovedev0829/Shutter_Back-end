@@ -21,6 +21,8 @@ public partial class MstJobTitle
 
     public Guid? ModifiedBy { get; set; }
 
+    public Guid? TenantId { get; set; }
+
     public virtual ICollection<TblJobSchedule> TblJobSchedules { get; set; } = new List<TblJobSchedule>();
 
     public virtual ICollection<TblUser> TblUsers { get; set; } = new List<TblUser>();

@@ -30,8 +30,8 @@ namespace ShutterManagement.Core.ViewModels.Request
         [Required]
         public Guid? AssignedPersonnel { get; set; }
 
-        [DefaultValue("")]
-        [Required]
+        //[DefaultValue("")]
+        //[Required]
         public DateTime? ScheduledDate { get; set; }
 
         //[DefaultValue("")]
@@ -41,7 +41,17 @@ namespace ShutterManagement.Core.ViewModels.Request
         [DefaultValue("")]
       
         public string? Notes { get; set; }
+        public string? GHL_ContactId { get; set; }
+
+        public string? GhlOpportunityId { get; set; }
+        public Guid? GHL_StageId { get; set; }
+        public string? GHL_StageName { get; set; }
+        public string? locationId { get; set; }
+        public string? GHL_jobstatus { get; set; }
+       // public string? GHL_StageName { get; set; }
         public string[]? AttachmentsAny { get; set; } = [];
+        public DateTime? lastasync { get; set; }
+        public string? GHLUserId { get; set; }
 
     }
 }

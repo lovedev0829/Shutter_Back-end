@@ -34,11 +34,11 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsActive == true && x.IsDelete == false);
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.ParentTenantId == null && x.IsActive == true && x.IsDelete == false);
                 if (IsTenant)
                 {
                     var IstemplateNameExist = GetAllQuerable().Where(t => t.TemplateId == Id &&
-                     t.IsDelete == false && t.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
+                     t.IsDelete == false && t.TenantId == claimsProperty.GetTenantId()).FirstOrDefault();
                     if (IstemplateNameExist != null)
                     {
                         IstemplateNameExist.IsActive = !IstemplateNameExist.IsActive;
@@ -66,11 +66,11 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-            var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsDelete == false);
+            var IsTenant = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.ParentTenantId == null && x.IsDelete == false);
             if(IsTenant)
                 {
                     var IstemplateNameExist = await AnyAsync(t => t.TemplateName == model.TemplateName &&
-                    t.IsDelete == false && t.TenantId == AppConstant.LoggedInTenantId);
+                    t.IsDelete == false && t.TenantId == claimsProperty.GetTenantId());
                     if(IstemplateNameExist)
                     {
                         responseVm.Message = "TemplateName" + " " + AppConstant.AlreadyExists;
@@ -81,7 +81,7 @@ namespace ShutterManagement.Business.Services
                         TemplateId = Guid.NewGuid(),
                         TemplateName = model.TemplateName,
                         TemplateValue = model.TemplateValue,
-                        TenantId = AppConstant.LoggedInTenantId,
+                        TenantId = claimsProperty.GetTenantId(),
                         IsActive = true,
                         IsDelete = false,
                         CreatedAt = DateTime.Now,
@@ -148,11 +148,11 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsActive == true && x.IsDelete == false);
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.ParentTenantId == null && x.IsActive == true && x.IsDelete == false);
                 if (IsTenant)
                 {
                     var IstemplateNameExist = GetAllQuerable().Where(t => t.TemplateId == Id &&
-                     t.IsDelete == false && t.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
+                     t.IsDelete == false && t.TenantId == claimsProperty.GetTenantId()).FirstOrDefault();
                     if (IstemplateNameExist != null)
                     {
                         IstemplateNameExist.IsDelete = true;
@@ -182,12 +182,12 @@ namespace ShutterManagement.Business.Services
             IResponseVm<List<GetAllTemplate>> responseVm = new ResponseVm<List<GetAllTemplate>>();
             try
             {
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.IsDelete == false && x.IsActive == true);
+                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.IsDelete == false && x.IsActive == true);
 
                 if (IsTenant)
                 {
 
-                    var Templatelist = (await GetAll()).Where(t => t.TenantId == AppConstant.LoggedInTenantId && t.IsDelete == false).ToList();
+                    var Templatelist = (await GetAll()).Where(t => t.TenantId == claimsProperty.GetTenantId() && t.IsDelete == false).ToList();
                     filter.SearchValue = filter.SearchValue?.Trim().ToLower();
                     var FilterRecords = Templatelist
                                     .Where(x =>
@@ -234,18 +234,18 @@ namespace ShutterManagement.Business.Services
             IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
             try
             {
-             var IsTenant = await tenantService.AnyAsync(x => x.TenantId == AppConstant.LoggedInTenantId && x.ParentTenantId == null && x.IsActive == true && x.IsDelete == false);
+             var IsTenant = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.ParentTenantId == null && x.IsActive == true && x.IsDelete == false);
               if(IsTenant)
                 {
                     var IstemplateNameExist = GetAllQuerable().Where(t => t.TemplateId != Guid.Parse(model.TemplateId) &&
-                    t.TemplateName == model.TemplateName && t.IsDelete == false && t.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
+                    t.TemplateName == model.TemplateName && t.IsDelete == false && t.TenantId == claimsProperty.GetTenantId()).FirstOrDefault();
                     if(IstemplateNameExist != null)
                     {
                         responseVm.Message = "TemplateName" + AppConstant.AlreadyExists;
                         return responseVm;
                     }
                     var IstemplateExist = GetAllQuerable().Where(t => t.TemplateId == Guid.Parse(model.TemplateId) &&
-                    t.IsDelete == false && t.TenantId == AppConstant.LoggedInTenantId).FirstOrDefault();
+                    t.IsDelete == false && t.TenantId == claimsProperty.GetTenantId()).FirstOrDefault();
 
                     if (IstemplateExist != null)
                     {
@@ -259,7 +259,7 @@ namespace ShutterManagement.Business.Services
                         var matches = Regex.Matches(IstemplateExist.TemplateValue, pattern);
 
                         var IsPlaceholderTemplateExist = context.TblTemplatePlaceholders.Where(x => x.TemplateId == IstemplateExist.TemplateId && x.IsDelete == false && x.TenantId
-                        == AppConstant.LoggedInTenantId).ToList();
+                        == claimsProperty.GetTenantId()).ToList();
                         if (IsPlaceholderTemplateExist != null)
                         {
                             foreach (var items in IsPlaceholderTemplateExist)
