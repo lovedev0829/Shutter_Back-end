@@ -17,6 +17,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? AccessToken { get; set; }
 
         public string? SmtpServer { get; set; }
+        public string? ReplyToEmail { get; set; }
 
         public int Port { get; set; }
 

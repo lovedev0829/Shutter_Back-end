@@ -1438,11 +1438,12 @@ namespace ShutterManagement.Business.Services
 
             var emailRequest = new OAuthEmailRequest
             {
-                FromEmail = preparedbyemail ?? "",
+                FromEmail = config.Username ?? "",
                 ToEmail = customerEmail ?? "",
                 Subject = subject,
                 Body = emailBody,
                 UserEmail = config.Username ?? "",
+                ReplyToEmail = preparedbyemail ?? "",
                 Username = config.Username ?? "",
                 SmtpServer = config.SmtpServer ?? "",
                 Port = config.Port ?? 0,
