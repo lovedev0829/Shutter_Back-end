@@ -516,7 +516,7 @@ namespace ShutterManagement.Business.Services
 
             OAuthEmailRequest vm = new OAuthEmailRequest
             {
-                FromEmail = config.From ?? "",
+                FromEmail = config?.Username ?? "",
                 ToEmail = Email,
                 Subject = AppConstant.Sub_WelcomeEmail,
                 Body = content,
