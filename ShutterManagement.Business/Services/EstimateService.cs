@@ -714,9 +714,11 @@ namespace ShutterManagement.Business.Services
 
                         if (string.IsNullOrEmpty(materialFormula))
                             materialPrice = Convert.ToDecimal(materialItem.UnitCost);
+
                         else
                             materialPrice = Convert.ToDecimal(CalculateExpression(materialFormula, materialItem).Evaluate());
-
+                        if (materialItem.WasteFactor != null)
+                            materialPrice = (Convert.ToDecimal(materialPrice) * (100 + (materialItem.WasteFactor ?? 0)) / 100);
                         basePrice += materialPrice;
                         materialItem.MaterialPrice = Math.Round(materialPrice, 2);
                     }
@@ -775,6 +777,9 @@ namespace ShutterManagement.Business.Services
                             item.StateTaxAmount = 0;
                             item.CityTaxAmount = 0;
                             item.TotalTaxAmount = 0;
+                            item.MunicipalityTax = 0;
+                            item.StateTax = 0;
+                            item.CityTax = 0;
                         }
                     }
 
@@ -908,6 +913,8 @@ namespace ShutterManagement.Business.Services
                         var info = property.Split("__");
                         if (info.Length == 3 && info[0] == "Material")
                         {
+                            if(values.MaterialPricingExpression == null && (values.PricingExpression != null || values.PricingExpression))
+                            { }
                             var material = materialService.GetAllQuerable()
                                 .FirstOrDefault(x => x.ProductType.ToString() == info[1] &&
                                                      (x.MaterialName == info[2] || x.RawMaterialId.ToString() == info[2]) &&
@@ -920,17 +927,29 @@ namespace ShutterManagement.Business.Services
                             object componentId = GetProperty.GetColumnValue(values, "ComponentId");
                             if (componentId != null && material != null)
                             {
-                                var wasteFactor = componentMaterialService.GetAllQuerable()
-                                    .Where(x => x.RawMaterialId == material.RawMaterialId &&
-                                                x.ComponentId.ToString() == componentId.ToString() &&
-                                                !x.IsDelete == true &&
-                                                (x.TenantId == claimsProperty.GetTenantId() ||
-                                                 x.TenantId.ToString() == claimsProperty.GetParentTenantId()))
-                                    .Select(x => x.WasteFactor)
-                                    .FirstOrDefault();
+                                if (values.MaterialPricingExpression == null && (values.PricingExpression != null || values.PricingExpression))
+                                {
+                                    var wasteFactor = componentMaterialService.GetAllQuerable()
+                                                                        .Where(x => x.RawMaterialId == material.RawMaterialId &&
+                                                                                    x.ComponentId.ToString() == componentId.ToString() &&
+                                                                                    !x.IsDelete == true &&
+                                                                                    (x.TenantId == claimsProperty.GetTenantId() ||
+                                                                                     x.TenantId.ToString() == claimsProperty.GetParentTenantId()))
+                                                                        .Select(x => x.WasteFactor)
+                                                                        .FirstOrDefault();
 
-                                if (wasteFactor != null)
-                                    val = (Convert.ToDecimal(val) * (100 + (wasteFactor ?? 0)) / 100);
+                                    if (wasteFactor != null)
+                                        val = (Convert.ToDecimal(val) * (100 + (wasteFactor ?? 0)) / 100);
+                                }
+                                //var wasteFactor = componentMaterialService.GetAllQuerable()
+                                //    .Where(x => x.RawMaterialId == material.RawMaterialId &&
+                                //                x.ComponentId.ToString() == componentId.ToString() &&
+                                //                !x.IsDelete == true &&
+                                //                (x.TenantId == claimsProperty.GetTenantId() ||
+                                //                 x.TenantId.ToString() == claimsProperty.GetParentTenantId()))
+                                //    .Select(x => x.WasteFactor)
+                                //    .FirstOrDefault();
+
                             }
                         }
                         else if (info.Length == 4 && info[0] == "Material" && info[3] == "Unit")
