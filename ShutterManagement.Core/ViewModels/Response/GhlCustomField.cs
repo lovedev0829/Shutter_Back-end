@@ -15,7 +15,7 @@ namespace ShutterManagement.Core.ViewModels.Response
             public string fieldKey { get; set; }
             public string placeholder { get; set; }
             public string dataType { get; set; }
-            public int position { get; set; }
+            //public int position { get; set; } 
             public string documentType { get; set; }
             public string parentId { get; set; }
             public string locationId { get; set; }

@@ -612,7 +612,16 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-                string userProvidedPipelineNameOrId = AppConstant.GHL_PipelineId;
+                var configdetails = dbContext.TblGhlconfigurations.Where(s => s.TenantId == claimsProperty.GetTenantId() && s.IsDelete == false && s.IsActive == true).FirstOrDefault();
+                if (configdetails == null)
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = "GHL configuration not found.";
+                    FileLogger.Log("Error in UpdateOpportunityInGhl: GHL configuration not found.");
+                    return responseVm;
+                }
+
+                string userProvidedPipelineNameOrId = configdetails?.PipelineId??"";
 
                 var targetPipeline = dbContext.TblGhlStages
                     .FirstOrDefault(p => p.GhlPipelineId.Contains(userProvidedPipelineNameOrId) || p.GhlPipelineName.Contains(userProvidedPipelineNameOrId));
@@ -632,7 +641,7 @@ namespace ShutterManagement.Business.Services
                   
                 };
 
-                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", configdetails?.AccessToken ?? "");
                 httpClient.DefaultRequestHeaders.Add("Version", AppConstant.GHL_Version);
 
                 var url = $"{AppConstant.GHL_BaseAddress}/opportunities/{job.GhlOpportunityId}";

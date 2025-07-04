@@ -1069,5 +1069,18 @@ namespace ShutterManagement.Controllers
         //    return Ok(Checkghlresponse);
         //}
 
+        [HttpGet]
+        [Route("Sync-Custome-Field")]
+        public async Task<IActionResult> GetAll_Custom_field()
+        {
+            var LoggedInTenantId = claimsProperty.GetTenantId();
+            await gHLConfiguration.GetGHLConfiguration(LoggedInTenantId.ToString());
+            var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration(LoggedInTenantId);
+            var Customfields = await ghlCustomFieldsService.SaveGhlCustomFieldsAsync(claimsProperty.GetTenantId());
+            return Ok(Customfields);
+
+        }
+        
+
     }
 }
