@@ -1070,7 +1070,7 @@ namespace ShutterManagement.Controllers
         //}
 
         [HttpGet]
-        [Route("Sync-Custome-Field")]
+        [Route("Sync-Custom-Field")]
         public async Task<IActionResult> GetAll_Custom_field()
         {
             var LoggedInTenantId = claimsProperty.GetTenantId();
