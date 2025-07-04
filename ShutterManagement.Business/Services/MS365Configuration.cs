@@ -242,7 +242,7 @@ namespace ShutterManagement.Business.Services
         }
 
 
-        public async Task<IResponseVm<EmailConfigurationVm?>> ValidateAndRefreshMSEmailOauthAccessToken()
+        public async Task<IResponseVm<EmailConfigurationVm?>> ValidateAndRefreshMSEmailOauthAccessToken(TblEmailConfiguration emailConfiguration)
         {
             IResponseVm<EmailConfigurationVm> responseVm = new ResponseVm<EmailConfigurationVm>();
 

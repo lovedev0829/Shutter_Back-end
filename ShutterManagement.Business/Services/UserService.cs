@@ -164,7 +164,7 @@ namespace ShutterManagement.Services
                         var emailContent = EmailHelper.ReplacePlaceholdersForlWelcomeEmail(WelcomeTemplate?.TemplateValue, welcomemodel);
                         var emailtypeId = dbContext.TblEmailConfigurations.Where(s => s.TenantId == claimsProperty.GetTenantId() && s.IsDelete == false && s.IsActive == true).Select(p => p.EmailType).FirstOrDefault();
                       
-                        var emailType = dbContext.TblEmailTypes.Where(x => x.Id == emailtypeId).Select(x => x.Name).FirstOrDefault();
+                        //var emailType = dbContext.TblEmailTypes.Where(x => x.Id == emailtypeId).Select(x => x.Name).FirstOrDefault();
                         await emailSendHelperService.WelcomeEmailWithOauth(UserDetails?.Email, emailContent, emailType);
 
                         result.IsSuccess = true;

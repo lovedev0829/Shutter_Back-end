@@ -218,44 +218,16 @@ namespace ShutterManagement.Business.Services
 
 
 
-        public async Task<IResponseVm<EmailConfigurationVm?>> ValidateAndRefreshGoogleEmailOauthAccessToken()
+        public async Task<IResponseVm<EmailConfigurationVm?>> ValidateAndRefreshGoogleEmailOauthAccessToken(TblEmailConfiguration emailConfig, string EmailType)
         {
             IResponseVm<EmailConfigurationVm> responseVm = new ResponseVm<EmailConfigurationVm>();
 
             try
             {
-                var emailConfig = emailConfigurationService.GetAllQuerable()
-                    .FirstOrDefault(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive==true && x.IsDelete==false);
-
-                if (emailConfig == null)
-                {
-                    responseVm.Message = "No email configuration found.";
-                    return responseVm;
-                }
-
-                var emailType = emailTypeService.GetAllQuerable()
-                    .Where(s => s.Id == emailConfig.EmailType)
-                    .Select(x => x.Name??"")
-                    .FirstOrDefault();
-
-                if (string.IsNullOrEmpty(emailType))
-                {
-                    responseVm.Message = "Email type is not defined.";
-                    return responseVm;
-                }
-
-                var lowerEmailType = emailType.ToLower();
-
-                if (emailType == EnumValue.GetEnumValue(EmailSendType.SMTP))
-                {
-                    // For SMTP, no token check needed, return directly
-                    return SuccessResponse(emailConfig, emailType);
-                }
-
                 // If refresh token expired
                 if (emailConfig.RefreshExpirationtime <= DateTime.Now)
                 {
-                    responseVm.Message = "Your authentication has expired. Please reconnect your email to continue sending emails.";
+                    responseVm.Message = AppConstant.AuthenticationExpiry;
                     return responseVm;
                 }
 
@@ -281,10 +253,7 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = "Google access token refreshed.";
                 }
 
-
-
-                // Return success response
-                return SuccessResponse(emailConfig, emailType);
+                return EmailConfigurationVm.ConfigResponse(emailConfig, EmailType);
             }
             catch (Exception ex)
             {

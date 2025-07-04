@@ -75,6 +75,7 @@ namespace ShutterManagement.Core
         public const string ZipCodeError = "Invalid zip code format";
         public const string NumericError = "Only numerical values are allowed.";
         public const string SKUError = "Invalid SKU format.";
+        public const string AuthenticationExpiry = "Your authentication has expired. Please reconnect your email to continue sending emails.";
         #endregion
 
         #region Success Messages (Additional)
