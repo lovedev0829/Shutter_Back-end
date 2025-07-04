@@ -24,19 +24,15 @@ namespace ShutterManagement.Business.Services
         private readonly IConfiguration _config;
         private readonly IEmailConfigurationService emailConfigurationService;
         private readonly ClaimsProperty claimsProperty;
-        private readonly ITenantService tenant;
-        private readonly ShutterDBContext dBContext;
         private readonly MS365Configuration mS365Configuration;
         private readonly EmailTypeService emailTypeService;
 
         public GoogleAuthService(IConfiguration config,IEmailConfigurationService emailConfigurationService,
-            ClaimsProperty claimsProperty,ITenantService tenant,ShutterDBContext dBContext,MS365Configuration mS365Configuration,EmailTypeService emailTypeService)
+            ClaimsProperty claimsProperty,MS365Configuration mS365Configuration,EmailTypeService emailTypeService)
         {
             _config = config;
             this.emailConfigurationService = emailConfigurationService;
             this.claimsProperty = claimsProperty;
-            this.tenant = tenant;
-            this.dBContext = dBContext;
             this.mS365Configuration = mS365Configuration;
             this.emailTypeService = emailTypeService;
         }
@@ -266,6 +262,23 @@ namespace ShutterManagement.Business.Services
 
                 bool isAccessTokenExpired = emailConfig.AccessExpirationtime <= DateTime.Now;
                 bool isAccessTokenValid = false;
+
+                if (!isAccessTokenValid || isAccessTokenExpired)
+                {
+                    var newAccessToken = await GoogleRefreshAccessToken(emailConfig.RefreshToken);
+
+                    if (string.IsNullOrEmpty(newAccessToken))
+                    {
+                        responseVm.Message = "Failed to refresh Google access token.";
+                        return responseVm;
+                    }
+
+                    emailConfig.AccessToken = newAccessToken;
+                    emailConfig.AccessExpirationtime = DateTime.Now.AddHours(1);
+                    await emailConfigurationService.Update(emailConfig);
+
+                    responseVm.Message = "Google access token refreshed.";
+                }
 
                 switch (lowerEmailType)
                 {
