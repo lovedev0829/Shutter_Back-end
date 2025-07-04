@@ -925,7 +925,7 @@ namespace ShutterManagement.Business.Services
                             object componentId = GetProperty.GetColumnValue(values, "ComponentId");
                             if (componentId != null && material != null)
                             {
-                                if (values.MaterialPricingExpression == null && (values.PricingExpression != null || values.PricingExpression))
+                                if (values.MaterialPricingExpression == null)
                                 {
                                     var wasteFactor = componentMaterialService.GetAllQuerable()
                                                                         .Where(x => x.RawMaterialId == material.RawMaterialId &&
