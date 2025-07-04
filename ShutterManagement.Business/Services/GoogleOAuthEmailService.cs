@@ -24,16 +24,14 @@ namespace ShutterManagement.Business.Services
         private readonly IConfiguration _config;
         private readonly IEmailConfigurationService emailConfigurationService;
         private readonly ClaimsProperty claimsProperty;
-        private readonly MS365Configuration mS365Configuration;
         private readonly EmailTypeService emailTypeService;
 
         public GoogleAuthService(IConfiguration config,IEmailConfigurationService emailConfigurationService,
-            ClaimsProperty claimsProperty,MS365Configuration mS365Configuration,EmailTypeService emailTypeService)
+            ClaimsProperty claimsProperty,EmailTypeService emailTypeService)
         {
             _config = config;
             this.emailConfigurationService = emailConfigurationService;
             this.claimsProperty = claimsProperty;
-            this.mS365Configuration = mS365Configuration;
             this.emailTypeService = emailTypeService;
         }
 
@@ -88,6 +86,7 @@ namespace ShutterManagement.Business.Services
                               $"&access_type=offline" +
                               $"&prompt=consent" +
                               $"&login_hint={existingEmailConfiguration.Username}";
+
                 responseVm.IsSuccess = true;
                 responseVm.Message = "Google OAuth URL generated successfully";
                 responseVm.Data = authUrl;
@@ -219,7 +218,7 @@ namespace ShutterManagement.Business.Services
 
 
 
-        public async Task<IResponseVm<EmailConfigurationVm?>> ValidateAndRefreshEmailOauthAccessToken()
+        public async Task<IResponseVm<EmailConfigurationVm?>> ValidateAndRefreshGoogleEmailOauthAccessToken()
         {
             IResponseVm<EmailConfigurationVm> responseVm = new ResponseVm<EmailConfigurationVm>();
 
@@ -263,6 +262,8 @@ namespace ShutterManagement.Business.Services
                 bool isAccessTokenExpired = emailConfig.AccessExpirationtime <= DateTime.Now;
                 bool isAccessTokenValid = false;
 
+                isAccessTokenValid = await IsGoogleAccessTokenValid(emailConfig.AccessToken);
+
                 if (!isAccessTokenValid || isAccessTokenExpired)
                 {
                     var newAccessToken = await GoogleRefreshAccessToken(emailConfig.RefreshToken);
@@ -280,54 +281,7 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = "Google access token refreshed.";
                 }
 
-                switch (lowerEmailType)
-                {
-                    case "google":
-                        isAccessTokenValid = await IsGoogleAccessTokenValid(emailConfig.AccessToken);
 
-                        if (!isAccessTokenValid || isAccessTokenExpired)
-                        {
-                            var newAccessToken = await GoogleRefreshAccessToken(emailConfig.RefreshToken);
-
-                            if (string.IsNullOrEmpty(newAccessToken))
-                            {
-                                responseVm.Message = "Failed to refresh Google access token.";
-                                return responseVm;
-                            }
-
-                            emailConfig.AccessToken = newAccessToken;
-                            emailConfig.AccessExpirationtime = DateTime.Now.AddHours(1);
-                            await emailConfigurationService.Update(emailConfig);
-
-                            responseVm.Message = "Google access token refreshed.";
-                        }
-                        break;
-
-                    case "microsoft365":
-                        isAccessTokenValid = await mS365Configuration.IsMicrosoftAccessTokenValid(emailConfig.AccessToken);
-
-                        if (!isAccessTokenValid || isAccessTokenExpired)
-                        {
-                            var newAccessToken = await mS365Configuration.RefreshMicrosoft365AccessToken(emailConfig.RefreshToken);
-
-                            if (string.IsNullOrEmpty(newAccessToken))
-                            {
-                                responseVm.Message = "Failed to refresh Microsoft 365 access token.";
-                                return responseVm;
-                            }
-
-                            emailConfig.AccessToken = newAccessToken;
-                            emailConfig.AccessExpirationtime = DateTime.Now.AddHours(1);
-                            await emailConfigurationService.Update(emailConfig);
-
-                            responseVm.Message = "Microsoft 365 access token refreshed.";
-                        }
-                        break;
-
-                    default:
-                        responseVm.Message = $"Unsupported Email Type: {emailType}";
-                        return responseVm;
-                }
 
                 // Return success response
                 return SuccessResponse(emailConfig, emailType);
@@ -513,39 +467,7 @@ namespace ShutterManagement.Business.Services
         //}
 
 
-        public  async Task<IResponseVm<string>> WelcomeEmailWithOauth(string Email, string content)
-        {
-            var emailConfig = await ValidateAndRefreshEmailOauthAccessToken();
-            if (emailConfig == null || emailConfig?.Data == null)
-            {
-                return new ResponseVm<string>
-                {
-                    IsSuccess = false,
-                    Message = "Email Configuration not found. Please add configurations."
-                };
-            }
-
-            var config = emailConfig?.Data;
-
-            OAuthEmailRequest vm = new OAuthEmailRequest
-            {
-                FromEmail = config?.Username ?? "",
-                ToEmail = Email,
-                Subject = AppConstant.Sub_WelcomeEmail,
-                Body = content,
-                UserEmail = config.Username ?? "",
-                Username = config.Username ?? "",
-                SmtpServer = config.SmtpServer ?? "",
-                Port = config.Port ?? 0,
-                AccessToken = config.AccessToken ?? "",
-                Password = config.Password ?? "",
-                UseSsl = config.UseSsl ?? true,
-                EmailType = config.EmailTypeName ?? "",
-                Attachments = null
-            };
-
-            return await EmailHelper.SendEmailWithOAuth(vm);
-        }
+       
 
 
 

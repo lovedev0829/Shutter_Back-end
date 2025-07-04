@@ -27,10 +27,11 @@ using Microsoft.Extensions.Options;
 using ShutterManagement.Stripe;
 using Microsoft.Extensions.Logging;
 using Stripe;
+using System.Linq.Dynamic.Core;
 
 namespace ShutterManagement.Business.Services
 {
-    public class InvoiceService : BaseRepository<ShutterDBContext, TblInvoice>, IInvoiceService
+    public  class InvoiceService : BaseRepository<ShutterDBContext, TblInvoice>, IInvoiceService
     {
         private readonly ITenantService tenantService;
         private readonly IInvoicePaymentService invoicePaymentService;
@@ -48,15 +49,15 @@ namespace ShutterManagement.Business.Services
         private readonly JobStatusAndStageMapping statusAndStageMapping;
         private readonly ClaimsProperty claimsProperty;
         private readonly ITemplatesService templatesService;
-        private readonly GoogleAuthService googleAuthService;
         private readonly IEmailConfigurationService emailConfigurationService;
+        private readonly EmailSendHelperService emailSendHelperService;
 
         public InvoiceService(ITenantService tenantService, IInvoicePaymentService invoicePaymentService,
             IHostEnvironment environment, IConverter converter, IContactService contactService
             , IEstimateService estimateService, ITenantBrandingService tenantBrandingService, IUserService userService
             , IJobService jobService, IOrderService orderService, StripeService stripeService,
             IStripeConfiguration stripeConfiguration, JobStatusAndStageMapping statusAndStageMapping, ClaimsProperty claimsProperty,
-            ITemplatesService templatesService, GoogleAuthService googleAuthService, IEmailConfigurationService emailConfigurationService)
+            ITemplatesService templatesService, IEmailConfigurationService emailConfigurationService,EmailSendHelperService emailSendHelperService)
         {
             this.tenantService = tenantService;
             this.invoicePaymentService = invoicePaymentService;
@@ -73,8 +74,8 @@ namespace ShutterManagement.Business.Services
             this.statusAndStageMapping = statusAndStageMapping;
             this.claimsProperty = claimsProperty;
             this.templatesService = templatesService;
-            this.googleAuthService = googleAuthService;
             this.emailConfigurationService = emailConfigurationService;
+            this.emailSendHelperService = emailSendHelperService;
         }
 
         #region Create  update ActiveInActive Delete Getall
@@ -546,6 +547,8 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
+                var EmailType = string.Empty;
+
                 await stripeConfiguration.GetStripeConfiguration(claimsProperty.GetTenantId().ToString());
 
                 var invoiceTemplate = templatesService.GetAllQuerable().Where(c =>
@@ -751,8 +754,11 @@ namespace ShutterManagement.Business.Services
     </div>
 </div>";
 
+                    var emailtypeId = dbContext.TblEmailConfigurations.Where(s => s.TenantId == claimsProperty.GetTenantId() && s.IsDelete == false && s.IsActive == true).Select(p => p.EmailType).FirstOrDefault();
 
-                    var emailResponse = await SendEmailWithOAuth(estimationDetails.EstimateCode, pdfBytes.Data, emailBody, customerDetails?.Email ?? "", PreparedByEmail, "Estimate Approval Link and PDF");
+                    EmailType = dbContext.TblEmailTypes.Where(x => x.Id == emailtypeId && x.IsActive == true && x.IsDelete == false).Select(x => x.Name).FirstOrDefault();
+
+                    var emailResponse = await SendDataForEmail(estimationDetails.EstimateCode, pdfBytes.Data, emailBody, customerDetails?.Email ?? "", PreparedByEmail, "Estimate Approval Link and PDF", EmailType);
 
                     var jobDetails = await jobService.GetById(IsEstimateExists.JobId ?? Guid.Empty);
 
@@ -820,7 +826,7 @@ namespace ShutterManagement.Business.Services
 
 
 
-                    var emailResponse = await SendEmailWithOAuth(estimationDetails.EstimateCode, pdfBytes.Data, emailBody, customerDetails?.Email ?? "", PreparedByEmail ?? "", "Estimate For Approval");
+                    var emailResponse = await SendDataForEmail(estimationDetails.EstimateCode, pdfBytes.Data, emailBody, customerDetails?.Email ?? "", PreparedByEmail ?? "", "Estimate For Approval", EmailType);
 
                     if (!emailResponse.IsSuccess)
                     {
@@ -1027,7 +1033,7 @@ namespace ShutterManagement.Business.Services
     </div>
 </div>";
 
-                    var emailResponse = await SendEmailWithOAuth(invoiceDetails?.InvoiceNumber, pdfBytesInvoice.Data, emailBody, customerDetails?.Email ?? "", PreparedByEmail, AppConstant.InvoicePaymentLinkandPDF);
+                    var emailResponse = await SendDataForEmail(invoiceDetails?.InvoiceNumber, pdfBytesInvoice.Data, emailBody, customerDetails?.Email ?? "", PreparedByEmail, AppConstant.InvoicePaymentLinkandPDF, EmailType);
 
                     responseVm.IsSuccess = true;
                     responseVm.Message = isStripeConfigured
@@ -1416,7 +1422,7 @@ namespace ShutterManagement.Business.Services
 
         // this is a common method for sending emails
 
-        public async Task<IResponseVm<string>> SendEmailWithOAuth(string filename, byte[] pdfData, string emailBody, string customerEmail, string preparedbyemail, string subject)
+        public async Task<IResponseVm<string>> SendDataForEmail(string filename, byte[] pdfData, string emailBody, string customerEmail, string preparedbyemail, string subject,string? emailType)
         {
             var responseVm = new ResponseVm<string>();
 
@@ -1426,15 +1432,15 @@ namespace ShutterManagement.Business.Services
                 Stream = new MemoryStream(pdfData),
                 MediaType = "application/pdf"
             };
-            var emailConfig = googleAuthService.ValidateAndRefreshEmailOauthAccessToken();
-            if (emailConfig == null || emailConfig.Result?.Data == null)
-            {
-                responseVm.IsSuccess = false;
-                responseVm.Message = "Email Configuration not found. Please add configurations.";
-                return responseVm;
-            }
 
-            var config = emailConfig.Result.Data;
+            // store emailconfig response EmailConfigurationVm 
+            var lowerEmailType = emailType.ToLower();
+            EmailConfigurationVm config = await emailSendHelperService.GetEmailConfigurationByTypeAsync(lowerEmailType);
+
+            if (config == null)
+            {
+                return responseVm; 
+            }
 
             var emailRequest = new OAuthEmailRequest
             {
@@ -1456,6 +1462,9 @@ namespace ShutterManagement.Business.Services
 
             return await EmailHelper.SendEmailWithOAuth(emailRequest);
         }
+
+
+        
 
     }
 }

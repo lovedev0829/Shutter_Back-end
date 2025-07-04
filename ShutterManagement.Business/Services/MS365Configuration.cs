@@ -18,6 +18,8 @@ using MimeKit;
 using MailKit.Security;
 using Microsoft.AspNetCore.Http;
 using ShutterManagement.Core.Common;
+using ShutterManagement.Core.ViewModels.Response;
+using ShutterManagement.DAL.Context;
 
 namespace ShutterManagement.Business.Services
 {
@@ -25,14 +27,13 @@ namespace ShutterManagement.Business.Services
     {
         private readonly IEmailConfigurationService emailConfigurationService;
         private readonly ClaimsProperty claimsProperty;
-        private readonly string _smtpServer = "smtp.office365.com";
-        private readonly int _smtpPort = 587;
-        private readonly string _userEmail;
-        private readonly string _accessToken;
-        public MS365Configuration(IEmailConfigurationService emailConfigurationService,ClaimsProperty claimsProperty)
+        private readonly EmailTypeService emailTypeService;
+
+        public MS365Configuration(IEmailConfigurationService emailConfigurationService,ClaimsProperty claimsProperty ,EmailTypeService emailTypeService)
         {
             this.emailConfigurationService = emailConfigurationService;
             this.claimsProperty = claimsProperty;
+            this.emailTypeService = emailTypeService;
         }
 
         public async Task<IResponseVm<string>> GetAuthorizationurl()
@@ -240,6 +241,104 @@ namespace ShutterManagement.Business.Services
             return tokenResult?.access_token;
         }
 
+
+        public async Task<IResponseVm<EmailConfigurationVm?>> ValidateAndRefreshMSEmailOauthAccessToken()
+        {
+            IResponseVm<EmailConfigurationVm> responseVm = new ResponseVm<EmailConfigurationVm>();
+
+            try
+            {
+                var emailConfig = emailConfigurationService.GetAllQuerable()
+                    .FirstOrDefault(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
+
+                if (emailConfig == null)
+                {
+                    responseVm.Message = "No email configuration found.";
+                    return responseVm;
+                }
+
+                var emailType = emailTypeService.GetAllQuerable()
+                    .Where(s => s.Id == emailConfig.EmailType)
+                    .Select(x => x.Name ?? "")
+                    .FirstOrDefault();
+
+                if (string.IsNullOrEmpty(emailType))
+                {
+                    responseVm.Message = "Email type is not defined.";
+                    return responseVm;
+                }
+
+                var lowerEmailType = emailType.ToLower();
+
+                if (emailType == EnumValue.GetEnumValue(EmailSendType.SMTP))
+                {
+                    // For SMTP, no token check needed, return directly
+                    return SuccessResponse(emailConfig, emailType);
+                }
+
+                // If refresh token expired
+                if (emailConfig.RefreshExpirationtime <= DateTime.Now)
+                {
+                    responseVm.Message = "Your authentication has expired. Please reconnect your email to continue sending emails.";
+                    return responseVm;
+                }
+
+                bool isAccessTokenExpired = emailConfig.AccessExpirationtime <= DateTime.Now;
+                bool isAccessTokenValid = false;
+
+                isAccessTokenValid = await IsMicrosoftAccessTokenValid(emailConfig.AccessToken);
+
+                if (!isAccessTokenValid || isAccessTokenExpired)
+                {
+                    var newAccessToken = await RefreshMicrosoft365AccessToken(emailConfig.RefreshToken);
+
+                    if (string.IsNullOrEmpty(newAccessToken))
+                    {
+                        responseVm.Message = "Failed to refresh Microsoft 365 access token.";
+                        return responseVm;
+                    }
+
+                    emailConfig.AccessToken = newAccessToken??"";
+                    emailConfig.AccessExpirationtime = DateTime.Now.AddHours(1);
+                    await emailConfigurationService.Update(emailConfig);
+
+                    responseVm.Message = "Microsoft 365 access token refreshed.";
+                }
+
+
+                // Return success response
+                return SuccessResponse(emailConfig, emailType);
+            }
+            catch (Exception ex)
+            {
+                responseVm.Message = "Exception: " + ex.Message;
+                return responseVm;
+            }
+        }
+
+        private IResponseVm<EmailConfigurationVm> SuccessResponse(TblEmailConfiguration emailConfig, string emailType)
+        {
+            return new ResponseVm<EmailConfigurationVm>
+            {
+                IsSuccess = true,
+                Data = new EmailConfigurationVm
+                {
+                    Id = emailConfig.Id,
+                    SmtpServer = emailConfig.SmtpServer,
+                    Port = emailConfig.Port,
+                    Username = emailConfig.Username,
+                    Password = emailConfig.Password,
+                    UseSsl = emailConfig.UseSsl,
+                    ReplyTo = emailConfig.ReplyTo,
+                    EmailType = emailConfig.EmailType,
+                    EmailTypeName = emailType,
+                    From = emailConfig.From,
+                    AccessToken = emailConfig.AccessToken,
+                    TenantId = emailConfig.TenantId,
+                    IsActive = emailConfig.IsActive
+                }
+            };
+        }
 
         public class EmailMessageModel
         {

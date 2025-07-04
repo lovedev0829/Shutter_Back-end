@@ -29,11 +29,12 @@ namespace ShutterManagement.Business.Services
         private readonly ClaimsProperty claimsProperty;
         private readonly ITenantBrandingService tenantBrandingService;
         private readonly INotificationService notification;
+        private readonly EmailSendHelperService emailSendHelperService;
         private readonly IGHLConfiguration gHLConfiguration;
-        private readonly GoogleAuthService googleAuthService;
 
         public SubtenantServices(DataServices dataServices, IUserService userService
-            , ClaimsProperty claimsProperty, ITenantBrandingService tenantBrandingService,INotificationService notification,GoogleAuthService googleAuthService
+            , ClaimsProperty claimsProperty, ITenantBrandingService tenantBrandingService,
+            INotificationService notification,EmailSendHelperService emailSendHelperService
             )
         {
             this.dataServices = dataServices;
@@ -41,8 +42,8 @@ namespace ShutterManagement.Business.Services
             this.claimsProperty = claimsProperty;
             this.tenantBrandingService = tenantBrandingService;
             this.notification = notification;
+            this.emailSendHelperService = emailSendHelperService;
             this.gHLConfiguration = gHLConfiguration;
-            this.googleAuthService = googleAuthService;
         }
 
         public async Task<IResponseVm<string>> SubTenantCreate(CreateTenant model)
@@ -238,10 +239,15 @@ namespace ShutterManagement.Business.Services
                 };
 
                 var template =  dbContext.TblTemplates
-                    .FirstOrDefault(x => x.IsDelete==false && x.TemplateCategory == EnumValue.GetEnumValue(EmailTemplateType.WelcomeEmail));
+                    .FirstOrDefault(x => x.IsDelete==false && x.TemplateCategory.ToLower() == EnumValue.GetEnumValue(EmailTemplateType.WelcomeEmail).ToLower());
 
                 var emailContent = EmailHelper.ReplacePlaceholdersForlWelcomeEmail(template?.TemplateValue, welcomeModel);
-                await googleAuthService.WelcomeEmailWithOauth(model.Email, emailContent);
+                var emailtypeId = dbContext.TblEmailConfigurations.Where(s => s.TenantId == claimsProperty.GetTenantId() && s.IsDelete == false && s.IsActive == true).Select(p => p.EmailType).FirstOrDefault();
+
+                var emailType = dbContext.TblEmailTypes.Where(x => x.Id == emailtypeId).Select(x => x.Name).FirstOrDefault();
+                await emailSendHelperService.WelcomeEmailWithOauth(model.Email, emailContent, emailType);
+
+              
 
 
             }

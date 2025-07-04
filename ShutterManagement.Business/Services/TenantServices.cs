@@ -33,10 +33,13 @@ namespace ShutterManagement.Business.Services
         private readonly IUserService userService;
         private readonly INotificationService notification;
         private readonly IGHLConfiguration ghlConfiguration;
-       // private readonly GoogleAuthService googleAuthService;
+        private readonly EmailSendHelperService emailSendHelperService;
+
+        // private readonly GoogleAuthService googleAuthService;
 
         public TenantServices(DataServices dataServices, IMapper mapper, ITenantBrandingService tenantBrandingService
-            , ClaimsProperty claimsProperty, IUserService userService,INotificationService notification, IGHLConfiguration ghlConfiguration/*,GoogleAuthService googleAuthService*/
+            , ClaimsProperty claimsProperty, IUserService userService,INotificationService notification,
+            IGHLConfiguration ghlConfiguration ,EmailSendHelperService emailSendHelperService /*,GoogleAuthService googleAuthService*/
             )
         {
             this.dataServices = dataServices;
@@ -46,6 +49,7 @@ namespace ShutterManagement.Business.Services
             this.userService = userService;
             this.notification = notification;
             this.ghlConfiguration = ghlConfiguration;
+            this.emailSendHelperService = emailSendHelperService;
             //this.googleAuthService = googleAuthService;
         }
 
@@ -179,8 +183,7 @@ namespace ShutterManagement.Business.Services
 
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.InsertSuccessMsg;
-                //  background email task
-               await Task.Run(() => SendWelcomeEmailAsync(model));
+                await SendWelcomeEmailAsync(model);
             }
             catch (Exception ex)
             {
@@ -211,7 +214,10 @@ namespace ShutterManagement.Business.Services
                 if (WelcomeTemplate != null)
                 {
                     var emailContent = EmailHelper.ReplacePlaceholdersForlWelcomeEmail(WelcomeTemplate.TemplateValue, welcomemodel);
-                   //await  googleAuthService.WelcomeEmailWithOauth(model.Email, emailContent);
+                    var emailtypeId = dbContext.TblEmailConfigurations.Where(s => s.TenantId == claimsProperty.GetTenantId() && s.IsDelete == false && s.IsActive == true).Select(p => p.EmailType).FirstOrDefault();
+
+                    var emailType = dbContext.TblEmailTypes.Where(x => x.Id == emailtypeId).Select(x => x.Name).FirstOrDefault();
+                    await emailSendHelperService.WelcomeEmailWithOauth(model?.Email, emailContent, emailType);
                 }
             }
             catch (Exception ex)
