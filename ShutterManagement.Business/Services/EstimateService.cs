@@ -1049,9 +1049,9 @@ namespace ShutterManagement.Business.Services
                 }
                 subtotal += (decimal)windowproductdetails.Data.Where(x => x.TotalPrice != null).DistinctBy(x => x.WindowProdcutId).Sum(x => x.TotalPrice);
                 additionalCost += (decimal)windowproductdetails.Data.Sum(x => x.AdditionalCost);
-                var ComponentMarkup = (decimal)windowproductdetails.Data.Where(x => x.ComponentMarkup != null).DistinctBy(x => x.ProductId).Sum(x => x.ComponentMarkup);
-                var ProductMarkup = (decimal)windowproductdetails.Data.Where(x => x.ProductMarkup != null).DistinctBy(x => x.ProductId).Sum(x => x.ProductMarkup);
-                var OptionMarkup = (decimal)windowproductdetails.Data.Where(x => x.OptionMarkup != null).DistinctBy(x => x.ProductId).Sum(x => x.OptionMarkup);
+                var ComponentMarkup = (decimal)windowproductdetails.Data.Where(x => x.ComponentMarkup != null).DistinctBy(x => x.WindowProdcutId).Sum(x => x.ComponentMarkup);
+                var ProductMarkup = (decimal)windowproductdetails.Data.Where(x => x.ProductMarkup != null).DistinctBy(x => x.WindowProdcutId).Sum(x => x.ProductMarkup);
+                var OptionMarkup = (decimal)windowproductdetails.Data.Where(x => x.OptionMarkup != null).DistinctBy(x => x.WindowProdcutId).Sum(x => x.OptionMarkup);
                 subtotal += (ComponentMarkup + ProductMarkup + OptionMarkup);
                 SumofSubtotalandAdditionalCost = subtotal + additionalCost;
                 //if (string.IsNullOrEmpty((model.taxRateId).ToString()) && string.IsNullOrEmpty(model.DiscountCoupon))
@@ -1671,7 +1671,7 @@ namespace ShutterManagement.Business.Services
             Guid? taxRateId = null;
             Guid? discountId = null;
             var PricedProductsList = model.ProductsList.Where(x => x.ProductPrice != null && x.ProductPrice > 0).ToList();
-            var windowproductdetails = await BuildEstimate(model.ProductsList.Select(x => x.WindowProductId).ToArray(), true, false,"", false, model.ProductsList);
+            var windowproductdetails = await BuildEstimate(model.ProductsList.Select(x => x.WindowProductId).ToArray(), false, false,"", false, model.ProductsList);
 
 
             if (windowproductdetails.Data != null && windowproductdetails.Data.Any())
@@ -1685,10 +1685,10 @@ namespace ShutterManagement.Business.Services
                 }
             }
             subtotal += (decimal)windowproductdetails.Data.Where(x => x.TotalPrice != null).DistinctBy(x => x.WindowProdcutId).Sum(x => x.TotalPrice);
-            var ComponentMarkup = (decimal)windowproductdetails.Data.Where(x => x.ComponentMarkup != null).DistinctBy(x => x.ProductId).Sum(x => x.ComponentMarkup);
-            var ProductMarkup = (decimal)windowproductdetails.Data.Where(x => x.ProductMarkup != null).DistinctBy(x => x.ProductId).Sum(x => x.ProductMarkup);
-            var OptionMarkup = (decimal)windowproductdetails.Data.Where(x => x.OptionMarkup != null).DistinctBy(x => x.ProductId).Sum(x => x.OptionMarkup);
-            additionalCostAsOptionPrice += (decimal)windowproductdetails.Data.DistinctBy(x => x.ProductId).Sum(x => x.AdditionalCost);
+            var ComponentMarkup = (decimal)windowproductdetails.Data.Where(x => x.ComponentMarkup != null).DistinctBy(x => x.WindowProdcutId).Sum(x => x.ComponentMarkup);
+            var ProductMarkup = (decimal)windowproductdetails.Data.Where(x => x.ProductMarkup != null).DistinctBy(x => x.WindowProdcutId).Sum(x => x.ProductMarkup);
+            var OptionMarkup = (decimal)windowproductdetails.Data.Where(x => x.OptionMarkup != null).DistinctBy(x => x.WindowProdcutId).Sum(x => x.OptionMarkup);
+            additionalCostAsOptionPrice += (decimal)windowproductdetails.Data.DistinctBy(x => x.WindowProdcutId).Sum(x => x.AdditionalCost);
             subtotal += (ComponentMarkup + ProductMarkup + OptionMarkup);
             SumofSubtotalandAdditionalCost = subtotal + additionalCostAsOptionPrice;
 
