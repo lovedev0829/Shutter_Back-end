@@ -397,9 +397,9 @@ namespace ShutterManagement.Business.Services
                     return new List<OptionTaxVM>();
 
                 optionTaxDetails = (from windowOptions in dbContext.WindowOptions
-                                    join partnerOptions in dbContext.TblManagePartnersProductsOptions on windowOptions.OptionTypeId equals partnerOptions.OptionTypeId
-                                    join optionValues in dbContext.TblOptionsTypes on partnerOptions.OptionTypeId equals optionValues.OptionTypeId
-                                    join options in dbContext.TblOptions on optionValues.OptionId equals options.OptionId
+                                    join partnerOptions in dbContext.TblManagePartnersProductsOptions.Where(x => x.IsActive == true) on windowOptions.OptionTypeId equals partnerOptions.OptionTypeId
+                                    join optionValues in dbContext.TblOptionsTypes.Where(x => x.IsActive == true) on partnerOptions.OptionTypeId equals optionValues.OptionTypeId
+                                    join options in dbContext.TblOptions.Where(x => x.IsActive == true) on optionValues.OptionId equals options.OptionId
                                     join taxDetails in dbContext.TblTaxRates.Where(x => x.TenantId == claimsProperty.GetTenantId()) on
                                     (partnerOptions.TaxId == null || partnerOptions.TaxId == Guid.Empty ? manageProduct.TaxId : partnerOptions.TaxId)
                                     equals taxDetails.TaxRateId into taxJoin
@@ -427,8 +427,8 @@ namespace ShutterManagement.Business.Services
             else
             {
                 optionTaxDetails = (from windowOptions in dbContext.WindowOptions
-                                    join optionValues in dbContext.TblOptionsTypes on windowOptions.OptionTypeId equals optionValues.OptionTypeId
-                                    join options in dbContext.TblOptions on optionValues.OptionId equals options.OptionId
+                                    join optionValues in dbContext.TblOptionsTypes.Where(x => x.IsActive == true) on windowOptions.OptionTypeId equals optionValues.OptionTypeId
+                                    join options in dbContext.TblOptions.Where(x => x.IsActive == true) on optionValues.OptionId equals options.OptionId
                                     join taxDetails in dbContext.TblTaxRates.Where(x => x.TenantId == claimsProperty.GetTenantId()) on options.TaxId equals taxDetails.TaxRateId into taxJoin
                                     from tax in taxJoin.DefaultIfEmpty()
                                     where options.IsActive == true
@@ -452,7 +452,6 @@ namespace ShutterManagement.Business.Services
                                         OptionMarkup = options.Markup,
                                     }).ToList();
             }
-
             return optionTaxDetails;
         }
 
