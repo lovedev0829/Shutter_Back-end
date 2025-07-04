@@ -913,8 +913,6 @@ namespace ShutterManagement.Business.Services
                         var info = property.Split("__");
                         if (info.Length == 3 && info[0] == "Material")
                         {
-                            if(values.MaterialPricingExpression == null && (values.PricingExpression != null || values.PricingExpression))
-                            { }
                             var material = materialService.GetAllQuerable()
                                 .FirstOrDefault(x => x.ProductType.ToString() == info[1] &&
                                                      (x.MaterialName == info[2] || x.RawMaterialId.ToString() == info[2]) &&
