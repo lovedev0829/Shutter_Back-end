@@ -630,6 +630,7 @@ namespace ShutterManagement.Business.Services
                 decimal componentOwnMarkup = 0.0m;
                 decimal productOwnMarkup = 0.0m;
 
+                //when component have pricing expression
                 if (!string.IsNullOrEmpty(formula))
                 {
                     var expression = CalculateExpression(formula, item);
@@ -701,6 +702,7 @@ namespace ShutterManagement.Business.Services
 
                     componentSubTotal += Math.Round(basePrice, 2);
                 }
+                //when material have pricing expression
                 else if (string.IsNullOrEmpty(formula))
                 {
                     var distinctComponentMaterials = data
@@ -712,13 +714,18 @@ namespace ShutterManagement.Business.Services
                         var materialFormula = materialItem.MaterialExpressionFormulae ?? string.Empty;
                         var materialPrice = 0.0m;
 
+                        //when material dont have any pricing expression
                         if (string.IsNullOrEmpty(materialFormula))
                             materialPrice = Convert.ToDecimal(materialItem.UnitCost);
 
+                        // when material have expression
                         else
                             materialPrice = Convert.ToDecimal(CalculateExpression(materialFormula, materialItem).Evaluate());
-                        if (materialItem.WasteFactor != null)
+
+                        //apply waste factor on matrial final price after formula calculation or unit price
+                        if (materialItem.WasteFactor != null && materialItem.WasteFactor > 0m)
                             materialPrice = (Convert.ToDecimal(materialPrice) * (100 + (materialItem.WasteFactor ?? 0)) / 100);
+
                         basePrice += materialPrice;
                         materialItem.MaterialPrice = Math.Round(materialPrice, 2);
                     }
@@ -925,7 +932,7 @@ namespace ShutterManagement.Business.Services
                             object componentId = GetProperty.GetColumnValue(values, "ComponentId");
                             if (componentId != null && material != null)
                             {
-                                if (values.MaterialPricingExpression == null)
+                                if (!string.IsNullOrEmpty(values.PricingExpression))
                                 {
                                     var wasteFactor = componentMaterialService.GetAllQuerable()
                                                                         .Where(x => x.RawMaterialId == material.RawMaterialId &&
