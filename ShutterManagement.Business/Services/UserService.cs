@@ -409,9 +409,9 @@ namespace ShutterManagement.Services
                 }
                 else
                 {
-                    Users = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId() && x.IsTenantAdmin == false).OrderByDescending(x => x.CreatedAt).ToList();
+                    Users = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId() /*&& x.IsTenantAdmin == false*/).OrderByDescending(x => x.CreatedAt).ToList();
                 }
-                Users = Users.Where(x => x.Id != AppConstant.LoggedInUserID ).ToList();
+              //  Users = Users.Where(x => x.Id != AppConstant.LoggedInUserID ).ToList();
                 foreach (var user in Users)
                 {
                     UsersList users = new UsersList
@@ -427,7 +427,8 @@ namespace ShutterManagement.Services
                         Phone = user.Phone,
                         JobTitle = user.JobTitleId,
                         TenantId = user.TenantId,
-                        IsActive = user.IsActive
+                        IsActive = user.IsActive,
+                        IsTenantAdmin = user.IsTenantAdmin
                     };
                     users.JobTitleName = dbContext.MstJobTitles
                         .Where(x => x.Id == users.JobTitle

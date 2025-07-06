@@ -26,5 +26,6 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? UserName { get; set; }
         public Guid? TenantId { get; set; }
         public bool? IsActive { get; set; }
+        public bool? IsTenantAdmin { get; set; }
     }
 }

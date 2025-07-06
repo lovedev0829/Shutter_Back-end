@@ -679,39 +679,12 @@ namespace ShutterManagement.Business.Services
                 if (model.DocumentType == EstimateDocumentType.ForEmail)
                 {
                     var IsEstimateExists = dbContext.TblEstimates
-                        .Where(x => x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId() && x.EstimateId == model.EstimationId)
-                        .OrderByDescending(x => x.CreatedAt)
-                        .FirstOrDefault();
-
-                    if (IsEstimateExists == null)
-                    {
-                        responseVm.Message = "Estimate " + AppConstant.NoDataFound;
-                        return responseVm;
-                    }
-
-                    IsEstimateExists.Status = EnumValue.GetEnumValue(Estimation.PendingForApproval);
-                    IsEstimateExists.UpdatedAt = DateTime.Now;
-                    IsEstimateExists.ModifiedBy = AppConstant.LoggedInUserID;
-                    await estimateService.Update(IsEstimateExists);
-
-
-                    var jobStatusName = EnumValue.GetEnumValue(JobStatus.Quote_Sent);
-                    var updateResponse = await statusAndStageMapping.UpdateOpportunityAndJobStatus(IsEstimateExists?.JobId ?? Guid.Empty, jobStatusName);
-
-                    if (!updateResponse.IsSuccess)
-                    {
-                        responseVm.IsSuccess = false;
-                        responseVm.Message = updateResponse.Message;
-                        return responseVm;
-                    }
-
-
+                          .Where(x => x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId() && x.EstimateId == model.EstimationId)
+                          .OrderByDescending(x => x.CreatedAt)
+                          .FirstOrDefault();
 
 
                     string approvalEmailLink = $"{AppConstant.UIBaseURL}contacts/estimate/preview/{IsEstimateExists?.EstimateId}";
-
-
-
                     var emailBody = $@"
 <div style='font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px; margin: auto; background: #f9f9f9; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);'>
     <div style='background: white; padding: 20px; border-radius: 10px;'>
@@ -754,6 +727,7 @@ namespace ShutterManagement.Business.Services
 
                     var emailResponse = await SendEmailWithOAuth(estimationDetails.EstimateCode, pdfBytes.Data, emailBody, customerDetails?.Email ?? "", PreparedByEmail, "Estimate Approval Link and PDF");
 
+
                     var jobDetails = await jobService.GetById(IsEstimateExists.JobId ?? Guid.Empty);
 
                     if (jobDetails != null)
@@ -766,8 +740,37 @@ namespace ShutterManagement.Business.Services
                             FileLogger.Log($"GHL URL Update failed: {ghlUrlResponse.Message}");
                         }
                     }
+                    if (emailResponse.IsSuccess)
+                    {
 
-                    responseVm.IsSuccess = true;
+                        IsEstimateExists = dbContext.TblEstimates
+                          .Where(x => x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId() && x.EstimateId == model.EstimationId)
+                          .OrderByDescending(x => x.CreatedAt)
+                          .FirstOrDefault();
+
+                        if (IsEstimateExists == null)
+                        {
+                            responseVm.Message = "Estimate " + AppConstant.NoDataFound;
+                            return responseVm;
+                        }
+
+                        IsEstimateExists.Status = EnumValue.GetEnumValue(Estimation.PendingForApproval);
+                        IsEstimateExists.UpdatedAt = DateTime.Now;
+                        IsEstimateExists.ModifiedBy = AppConstant.LoggedInUserID;
+                        await estimateService.Update(IsEstimateExists);
+
+
+                        var jobStatusName = EnumValue.GetEnumValue(JobStatus.Quote_Sent);
+                        var updateResponse = await statusAndStageMapping.UpdateOpportunityAndJobStatus(IsEstimateExists?.JobId ?? Guid.Empty, jobStatusName);
+
+                        if (!updateResponse.IsSuccess)
+                        {
+                            responseVm.IsSuccess = false;
+                            responseVm.Message = updateResponse.Message;
+                            return responseVm;
+                        }
+                    }
+                    responseVm.IsSuccess = emailResponse.IsSuccess;
                     responseVm.Message = emailResponse.Message;
                     System.IO.File.Delete(savePath);
 
