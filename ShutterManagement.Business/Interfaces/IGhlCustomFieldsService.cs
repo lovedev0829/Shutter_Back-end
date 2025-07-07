@@ -12,6 +12,6 @@ namespace ShutterManagement.Business.Interfaces
 {
     public interface IGhlCustomFieldsService : IGenericRepository<TblGhlCustomField>
     {
-        Task<IResponseVm<string>> SaveGhlCustomFieldsAsync(Guid? tenantId = null);
+        Task<IResponseVm<string>> SaveGhlCustomFieldsAsync(GetGHLConfiguration getGHLConfiguration,Guid? tenantId = null);
     }
 }

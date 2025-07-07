@@ -189,13 +189,17 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = "GHL configuration check failed.";
                     return responseVm;
                 }
+                var GHLConfiguration = await gHLConfiguration.GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
+
+               
+                
 
                 FileLogger.Log("Starting SyncOpportunitiesFromGhl process.");
 
                 using var client = new HttpClient();
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GHLConfiguration?.Data?.Access_Token??"");
 
-                var pipelineResponse = await gHLService_V2.GetAllPipelinesWithStagesAsync();
+                var pipelineResponse = await gHLService_V2.GetAllPipelinesWithStagesAsync(GHLConfiguration.Data);
                 if (pipelineResponse?.Pipelines == null || !pipelineResponse.Pipelines.Any())
                 {
                     FileLogger.Log("No pipelines found in GHL.");
@@ -205,11 +209,11 @@ namespace ShutterManagement.Business.Services
                 }
 
                 var targetPipeline = pipelineResponse.Pipelines
-                    .FirstOrDefault(p => p.Id.Contains(AppConstant.GHL_PipelineId) || p.Name.Contains(AppConstant.GHL_PipelineId));
+                    .FirstOrDefault(p => p.Id.Contains(GHLConfiguration?.Data?.PipelineId ?? "") || p.Name.Contains(GHLConfiguration?.Data?.PipelineId ?? ""));
 
                 if (targetPipeline == null)
                 {
-                    FileLogger.Log($"Target pipeline '{AppConstant.GHL_PipelineId}' not found.");
+                    FileLogger.Log($"Target pipeline '{GHLConfiguration?.Data?.PipelineId ?? ""}' not found.");
                     responseVm.IsSuccess = false;
                     responseVm.Message = "Target pipeline not found.";
                     return responseVm;
@@ -235,7 +239,7 @@ namespace ShutterManagement.Business.Services
                 FileLogger.Log($"Fetched {opportunities.Count} opportunities from GHL.");
 
                 var ghlStages = await GetGHLStages();
-                var contacts = await gHLService_V2.GetContactsAsync();
+                var contacts = await gHLService_V2.GetContactsAsync(GHLConfiguration.Data);
 
                 foreach (var opportunity in opportunities)
                 {
@@ -332,6 +336,7 @@ namespace ShutterManagement.Business.Services
                 try
                 {
                 var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration();
+                var ghlconfigdetails = await gHLConfiguration.GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
                 if (Checkghlresponse.IsSuccess)
                 {
                     FileLogger.Log("Starting UpdateOpportunityInGHLfromApp process.");
@@ -340,7 +345,7 @@ namespace ShutterManagement.Business.Services
                         .Where(x => x.TenantId == claimsProperty.GetTenantId())
                         .ToList();
 
-                    var ghlOpportunitiesResponse = await gHLService_V2.GetOpportunitiesFromGhl();
+                    var ghlOpportunitiesResponse = await gHLService_V2.GetOpportunitiesFromGhl(ghlconfigdetails?.Data);
                     var ghlOpportunities = ghlOpportunitiesResponse?.Data ?? new List<Opportunity>();
 
                     foreach (var opportunity in getAppOpportunities)
@@ -355,7 +360,7 @@ namespace ShutterManagement.Business.Services
                                 GhlStageId = opportunity.GhlStageId
                             };
 
-                            var responseghl = await gHLService_V2.CreateOpportunityInGhl(job);
+                            var responseghl = await gHLService_V2.CreateOpportunityInGhl(ghlconfigdetails.Data,job);
                             FileLogger.Log($"Created Opportunity in GHL: {responseghl.Message}, Success: {responseghl.IsSuccess}");
                         }
                         else
@@ -400,7 +405,7 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        public async Task<IResponseVm<List<Opportunity>>> SyncOpportunitiesFromGhl(Guid? LoggedInTenantId = null)
+        public async Task<IResponseVm<List<Opportunity>>> SyncOpportunitiesFromGhl(GetGHLConfiguration getGHLConfiguration, Guid? LoggedInTenantId = null)
         {
             var responseVm = new ResponseVm<List<Opportunity>>();
 
@@ -410,7 +415,7 @@ namespace ShutterManagement.Business.Services
 
                 FileLogger.Log($"Exception occurred GHLContact is null.{LoggedInTenantId}");
 
-                await gHLConfiguration.GetGHLConfiguration(LoggedInTenantId.ToString());
+                var ghlConfigdetails = await gHLConfiguration.GetGHLConfiguration(LoggedInTenantId.ToString());
                 var configCheck = await gHLConfiguration.CheckGHLConfiguration(LoggedInTenantId);
 
                 if (!configCheck.IsSuccess)
@@ -422,9 +427,9 @@ namespace ShutterManagement.Business.Services
 
                 FileLogger.Log("Starting SyncOpportunitiesFromGhl process.");
 
-                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", getGHLConfiguration.Access_Token);
 
-                var pipelineResponse = await gHLService_V2.GetAllPipelinesWithStagesAsync();
+                var pipelineResponse = await gHLService_V2.GetAllPipelinesWithStagesAsync(getGHLConfiguration);
                 if (pipelineResponse?.Pipelines == null || !pipelineResponse.Pipelines.Any())
                 {
                     FileLogger.Log("No pipelines found in GHL.");
@@ -433,13 +438,12 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-                var userProvidedPipelineNameOrId = AppConstant.GHL_PipelineId;
                 var targetPipeline = pipelineResponse.Pipelines
-                    .FirstOrDefault(p => p.Id.Contains(userProvidedPipelineNameOrId) || p.Name.Contains(userProvidedPipelineNameOrId));
+                    .FirstOrDefault(p => p.Id.Contains(getGHLConfiguration?.PipelineId??"") || p.Name.Contains(getGHLConfiguration?.PipelineId ?? ""));
 
                 if (targetPipeline == null)
                 {
-                    FileLogger.Log($"Target pipeline '{userProvidedPipelineNameOrId}' not found.");
+                    FileLogger.Log($"Target pipeline '{getGHLConfiguration?.PipelineId ?? ""}' not found.");
                     responseVm.IsSuccess = false;
                     responseVm.Message = "Target pipeline not found.";
                     return responseVm;
@@ -447,9 +451,9 @@ namespace ShutterManagement.Business.Services
 
                 FileLogger.Log($"Fetching opportunities from pipeline ID: {targetPipeline.Id}");
 
-                var opportunities = await gHLService_V2.GetOpportunitiesFromGhl();
+                var opportunities = await gHLService_V2.GetOpportunitiesFromGhl(getGHLConfiguration);
                 var stages = await GetGHLStages(LoggedInTenantId);
-                var allContacts = await gHLService_V2.GetContactsAsync();
+                var allContacts = await gHLService_V2.GetContactsAsync(getGHLConfiguration);
                 FileLogger.Log($"getting contacts from ghl process.{allContacts}");
 
                 foreach (var opportunity in opportunities.Data)
@@ -902,12 +906,12 @@ namespace ShutterManagement.Business.Services
                     {
                         if (model.GhlOpportunityId == null)
                         {
-                            await gHLConfiguration.GetGHLConfiguration(LoggedInTenantId.ToString());
+                            var ghlconfigdetails =  await gHLConfiguration.GetGHLConfiguration(LoggedInTenantId.ToString());
                             var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration(LoggedInTenantId);
                             if (Checkghlresponse.IsSuccess)
                             {
 
-                                var responseghl = await gHLService_V2.CreateOpportunityInGhl(job);
+                                var responseghl = await gHLService_V2.CreateOpportunityInGhl(ghlconfigdetails?.Data,job);
                                 FileLogger.Log($"Start: Creating CreateOpportunityInGhl : {responseghl.Message}");
                                 FileLogger.Log($"Start: Creating CreateOpportunityInGhl : {responseghl.IsSuccess}");
                                 FileLogger.Log($"Start: Creating CreateOpportunityInGhl : {responseghl.Data}");
@@ -1698,13 +1702,13 @@ namespace ShutterManagement.Business.Services
 
 
         // update Estimate URLs links incoming
-        public async Task<IResponseVm<string>> UpdateEstimateUrlInGhlOnly(TblJob job, string newEstimateUrl)
+        public async Task<IResponseVm<string>> UpdateEstimateUrlInGhlOnly(TblJob job, string newEstimateUrl,decimal Grandtotal)
          {
             IResponseVm<string> responseVm = new ResponseVm<string>();
 
             try
             {
-                await gHLConfiguration.GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
+                var ghlconfigDetails =  await gHLConfiguration.GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
 
                 if (string.IsNullOrEmpty(job.GhlOpportunityId))
                 {
@@ -1724,26 +1728,31 @@ namespace ShutterManagement.Business.Services
                 }
 
                 string fieldKey = null;
+                string valueFieldKey = null;
 
                 if (string.IsNullOrEmpty(job.EstimateUrl1))
                 {
                     job.EstimateUrl1 = newEstimateUrl;
                     fieldKey = "opportunity.estimate_url_1";
+                    valueFieldKey = "opportunity.estimate_value_1";
                 }
                 else if (string.IsNullOrEmpty(job.EstimateUrl2))
                 {
                     job.EstimateUrl2 = newEstimateUrl;
                     fieldKey = "opportunity.estimate_url_2";
+                    valueFieldKey = "opportunity.estimate_value_2";
                 }
                 else if (string.IsNullOrEmpty(job.EstimateUrl3))
                 {
                     job.EstimateUrl3 = newEstimateUrl;
                     fieldKey = "opportunity.estimate_url_3";
+                    valueFieldKey = "opportunity.estimate_value_3";
                 }
                 else if (string.IsNullOrEmpty(job.EstimateUrl4))
                 {
                     job.EstimateUrl4 = newEstimateUrl;
                     fieldKey = "opportunity.estimate_url_4";
+                    valueFieldKey = "opportunity.estimate_value_4";
                 }
                 else
                 {
@@ -1753,15 +1762,28 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-                var fieldRecord = ghlCustomFieldsService.GetAllQuerable()
-                    .Where(x => x.TenantId == claimsProperty.GetTenantId() && x.FieldKey == fieldKey  && x.IsDelete == false)
-                    .FirstOrDefault();
+         
 
-                if (fieldRecord == null || string.IsNullOrEmpty(fieldRecord.GhlFieldId))
+
+                var fieldRecord = ghlCustomFieldsService.GetAllQuerable()
+                    .Where(x => x.TenantId == claimsProperty.GetTenantId() && x.IsDelete == false)
+                    .ToList();
+
+                var urlField = fieldRecord.FirstOrDefault(x => x.FieldKey == fieldKey);
+                var valueField = fieldRecord.FirstOrDefault(x => x.FieldKey == valueFieldKey);
+
+                if (fieldRecord == null || string.IsNullOrEmpty(urlField.GhlFieldId))
                 {
                     responseVm.IsSuccess = false;
                     responseVm.Message = $"Custom field '{fieldKey}' not configured.";
                     FileLogger.Log("UpdateEstimateUrlInGhlOnly: Missing custom field ID in DB for " + fieldKey);
+                    return responseVm;
+                }
+                if (valueField == null || string.IsNullOrEmpty(valueField.GhlFieldId))
+                {
+                    responseVm.IsSuccess = false;
+                    responseVm.Message = $"Custom field '{valueFieldKey}' not configured.";
+                    FileLogger.Log("UpdateEstimateUrlInGhlOnly: Missing VALUE field ID for " + valueFieldKey);
                     return responseVm;
                 }
 
@@ -1773,14 +1795,23 @@ namespace ShutterManagement.Business.Services
                     {
                 new
                 {
-                    id = fieldRecord.GhlFieldId,
+                    id = urlField.GhlFieldId,
                     key = fieldKey,
                     field_value = newEstimateUrl
+                },
+                 new
+                {
+                    id = valueField.GhlFieldId,
+                    key = valueFieldKey,
+                    field_value = Grandtotal.ToString("0.00")
                 }
-            }
+
+                    }
+
+
                 };
 
-                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", ghlconfigDetails?.Data?.Access_Token);
                 httpClient.DefaultRequestHeaders.Remove("Version");
                 httpClient.DefaultRequestHeaders.Add("Version", AppConstant.GHL_Version);
 
@@ -1811,6 +1842,10 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
+
+
+       
+
 
         public async Task<IResponseVm<string>> UpdateJobPowderCoatColor(Guid? JobId, Guid? powderCoatColorId)
         {

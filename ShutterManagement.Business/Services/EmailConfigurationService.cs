@@ -20,12 +20,10 @@ namespace ShutterManagement.Business.Services
 {
     public class EmailConfigurationService : BaseRepository<ShutterDBContext, TblEmailConfiguration>, IEmailConfigurationService
     {
-        private readonly ITenantService tenantService;
         private readonly ClaimsProperty claimsProperty;
 
-        public EmailConfigurationService(ITenantService tenantService, ClaimsProperty claimsProperty)
+        public EmailConfigurationService(ClaimsProperty claimsProperty)
         {
-            this.tenantService = tenantService;
             this.claimsProperty = claimsProperty;
         }
         public async Task<IResponseVm<EmailConfigurationVm>> GetAll_EmailConfigurations()

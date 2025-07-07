@@ -19,11 +19,12 @@ using System.Web;
 [Route("api/[controller]")]
 public class EmailOAuthController : ControllerBase
 {
-    private readonly GoogleAuthService _googleAuthService;
 
     private readonly IConfiguration _config;
     private readonly IEmailConfigurationService emailConfigurationService;
     private readonly MS365Configuration mS365Configuration;
+    private readonly GoogleAuthService _googleAuthService;
+
 
     public EmailOAuthController(GoogleAuthService authService, IConfiguration config,
         IEmailConfigurationService emailConfigurationService,MS365Configuration mS365Configuration)

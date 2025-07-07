@@ -18,5 +18,9 @@ namespace ShutterManagment.GHL.ViewModel.Request
         public string Website { get; set; }
         public string Referral { get; set; }
         public string? GHLContactId { get; set; }
+        public string? StreetAddress { get; set; }
+        public string? City { get; set; }
+        public string? State { get; set; }
+        public string? ZipCode { get; set; }
     }
 }

@@ -126,7 +126,7 @@ namespace ShutterManagement.Business.Services
                 var res = await Add(tblJobSchedule);
 
                 var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration();
-                await gHLConfiguration.GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
+                var ghlconfigDetails =  await gHLConfiguration.GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
                 if (Checkghlresponse.IsSuccess)
                 {
                     var contactId = dbContext.TblJobs.Where(x => x.JobId.ToString().ToLower() == res.JobId.ToString().ToLower() && x.IsDelete == false).Select(x => x.GhlContactId).FirstOrDefault();
@@ -140,11 +140,11 @@ namespace ShutterManagement.Business.Services
                         contactId = contactId,
                         startTime = formattedstartDate,
                         endtime = formattedstartDateend,
-                        locationId = AppConstant.GHL_LocationId,
+                        locationId = ghlconfigDetails?.Data?.LocationId,
                         assignedUserId = tblJobSchedule.GhlUserId??"",
                         ignoreDateRange = true,
                     };
-                    var ghlResponse = await gHLService_V2.CreateAppointmentAsync(appointment);
+                    var ghlResponse = await gHLService_V2.CreateAppointmentAsync(ghlconfigDetails.Data,appointment);
                     if(ghlResponse != null)
                     {
                         res.GhlEventId = ghlResponse.Data.id;
@@ -354,7 +354,7 @@ namespace ShutterManagement.Business.Services
 
                 await Update(JobSchedule);
                 var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration();
-                await gHLConfiguration.GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
+                var ghlconfigdetails =  await gHLConfiguration.GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
                 if (Checkghlresponse.IsSuccess)
                 {
                     if (JobSchedule.GhlEventId != null)
@@ -370,10 +370,10 @@ namespace ShutterManagement.Business.Services
                             contactId = contactId,
                             startTime = formattedstartDate,
                             endtime = formattedstartDateend,
-                            locationId = AppConstant.GHL_LocationId,
+                            locationId = ghlconfigdetails?.Data?.LocationId??"",
                             assignedUserId = model.GhlUserId ?? "",
                         };
-                        var ghlResponse = await gHLService_V2.UpdateAppointmentAsync(JobSchedule.GhlEventId, appointment);
+                        var ghlResponse = await gHLService_V2.UpdateAppointmentAsync(ghlconfigdetails?.Data,JobSchedule.GhlEventId, appointment);
                     }
                     else
                     {
@@ -387,11 +387,11 @@ namespace ShutterManagement.Business.Services
                             contactId = contactId,
                             startTime = formattedstartDate,
                             endtime = formattedstartDateend,
-                            locationId = AppConstant.GHL_LocationId,
+                            locationId = ghlconfigdetails?.Data?.LocationId,
                             assignedUserId = model.GhlUserId,
                             ignoreDateRange = true,
                         };
-                        var ghlResponse = await gHLService_V2.CreateAppointmentAsync(appointment);
+                        var ghlResponse = await gHLService_V2.CreateAppointmentAsync(ghlconfigdetails?.Data,appointment);
                         if (ghlResponse != null)
                         {
                             JobSchedule.GhlEventId = ghlResponse.Data.id;
@@ -436,7 +436,7 @@ namespace ShutterManagement.Business.Services
                 LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : claimsProperty.GetTenantId());
 
                 var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration(LoggedInTenantId);
-                await gHLConfiguration.GetGHLConfiguration(LoggedInTenantId.ToString());
+                 var ghlconfigDetails = await gHLConfiguration.GetGHLConfiguration(LoggedInTenantId.ToString());
                 if (Checkghlresponse.IsSuccess)
                 {
                     var jobschedule = GetAllQuerable().Where(x => x.TenantId.ToString().ToLower() == LoggedInTenantId.ToString().ToLower()
@@ -461,9 +461,9 @@ namespace ShutterManagement.Business.Services
                             contactId = contactId??"",
                             startTime = formattedstartDate??"",
                             endtime = formattedstartDateend ?? "",
-                            locationId = AppConstant.GHL_LocationId??"",
+                            locationId = ghlconfigDetails?.Data?.LocationId??"",
                           };
-                          var ghlResponse = await gHLService_V2.UpdateAppointmentAsync(item.GhlEventId, appointment);
+                          var ghlResponse = await gHLService_V2.UpdateAppointmentAsync(ghlconfigDetails.Data,item.GhlEventId, appointment);
                           if(!ghlResponse.IsSuccess)
                                 {
                                 FileLogger.Log("Error while creating Appointment.");
@@ -486,9 +486,9 @@ namespace ShutterManagement.Business.Services
                                 contactId = contactId,
                                 startTime = formattedstartDate,
                                 endtime = formattedstartDateend,
-                                locationId = AppConstant.GHL_LocationId,
+                                locationId = ghlconfigDetails?.Data?.LocationId??"",
                             };
-                            var ghlResponse = await gHLService_V2.CreateAppointmentAsync(appointment);
+                            var ghlResponse = await gHLService_V2.CreateAppointmentAsync(ghlconfigDetails?.Data,appointment);
                             if (!ghlResponse.IsSuccess)
                             {
                                 FileLogger.Log("Error while creating Appointment.");

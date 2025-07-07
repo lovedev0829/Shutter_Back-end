@@ -1085,13 +1085,17 @@ namespace ShutterManagement.Business.Services
                     Notes = model.Notes ?? string.Empty,
                     ContactType = model.ContactType ?? string.Empty,
                     Website = model.Website ?? string.Empty,
-                    Referral = model.Referral ?? string.Empty
+                    Referral = model.Referral ?? string.Empty,
+                    StreetAddress = model?.BillingAddressVm?.StreetAddress ?? string.Empty,
+                    City = model?.BillingAddressVm?.City ?? string.Empty,
+                    State = dbContext.MstStates.Where(x=>x.Id== model.BillingAddressVm.StateId).Select(s=>s.StateName).FirstOrDefault() ,
+                    ZipCode = model?.BillingAddressVm?.ZipCode ?? string.Empty,
                 };
 
                 if (contact.GhlcontactId == null)
                 {
-                    await gHLConfigurationService.GetGHLConfiguration(LoggedInTenantId.ToString());
-                    ghlResponse = await gHLService_V2.CreateContactAsync(ghlContactAdd);
+                    var ghlconfigdetails =  await gHLConfigurationService.GetGHLConfiguration(LoggedInTenantId.ToString());
+                    ghlResponse = await gHLService_V2.CreateContactAsync(ghlconfigdetails?.Data,ghlContactAdd);
                     if (ghlResponse.IsSuccess)
                     {
                         var contactExist = (await GetById(contact.ContactId));
@@ -1111,8 +1115,8 @@ namespace ShutterManagement.Business.Services
                 }
                 else
                 {
-                    await gHLConfigurationService.GetGHLConfiguration(LoggedInTenantId.ToString());
-                    ghlResponse = await gHLService_V2.UpdateContactAsync(contact.GhlcontactId, ghlContactAdd);
+                    var ghlconfigdetails =await gHLConfigurationService.GetGHLConfiguration(LoggedInTenantId.ToString());
+                    ghlResponse = await gHLService_V2.UpdateContactAsync(ghlconfigdetails?.Data,contact.GhlcontactId, ghlContactAdd);
                 }
                 if (ghlResponse != null)
                 {
@@ -1269,10 +1273,11 @@ namespace ShutterManagement.Business.Services
                 LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : claimsProperty.GetTenantId());
 
                 TextInfo textInfo;
+                var configDetails = await gHLConfigurationService.GetGHLConfiguration(LoggedInTenantId.ToString());
                 var Checkghlresponse = await gHLConfigurationService.CheckGHLConfiguration(LoggedInTenantId);
                 if (Checkghlresponse.IsSuccess)
                 {
-                    var getGHLContacts = await gHLService_V2.GetContactsAsync();
+                    var getGHLContacts = await gHLService_V2.GetContactsAsync(configDetails.Data);
                     if (getGHLContacts != null)
                     {
                         FileLogger.Log("GHL", getGHLContacts.Count());
@@ -1334,7 +1339,7 @@ namespace ShutterManagement.Business.Services
                                     GHLContactId = existingContact.GhlcontactId ?? ""
                                 };
                                 FileLogger.Log("Updating Contact in application(GhlContactId).", existingContact.GhlcontactId);
-                                var res = await gHLService_V2.UpdateContactAsync(ghlUpdatecontact.GHLContactId, ghlUpdatecontact);
+                                var res = await gHLService_V2.UpdateContactAsync(configDetails?.Data,ghlUpdatecontact.GHLContactId, ghlUpdatecontact);
                                 if (res == null)
                                 {
                                     FileLogger.Log("Exception occurred: Response object is null.");
@@ -1452,7 +1457,7 @@ namespace ShutterManagement.Business.Services
                             {
 
                                 FileLogger.Log("Creating bulk Contact in GHL(GhlContactId).", contact);
-                                var res = await gHLService_V2.CreateContactAsync(contact);
+                                var res = await gHLService_V2.CreateContactAsync(configDetails?.Data,contact);
                                 if (res.IsSuccess)
                                 {
                                     var contactExist = (await GetAll()).Where(x => x.Email == contact.Email && x.TenantId==LoggedInTenantId).FirstOrDefault();
@@ -1470,7 +1475,7 @@ namespace ShutterManagement.Business.Services
                             else
                             {
                                 FileLogger.Log("Updating Contact in GHL.", contact.GHLContactId);
-                                var res = await gHLService_V2.UpdateContactAsync(contact.GHLContactId, contact);
+                                var res = await gHLService_V2.UpdateContactAsync(configDetails?.Data,contact.GHLContactId, contact);
                                 if (!res.IsSuccess)
                                 { FileLogger.Log("Updating Contact in GHL.", contact.GHLContactId); }
 

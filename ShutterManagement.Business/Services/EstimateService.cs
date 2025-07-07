@@ -277,49 +277,6 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        public async Task<IResponseVm<string>> SendForApproval(Guid EstimateId)
-        {
-            IResponseVm<string> responseVm = new ResponseVm<string>();
-            try
-            {
-                var IsEstimateExists = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId() && x.EstimateId == EstimateId).
-                    OrderByDescending(x => x.CreatedAt).FirstOrDefault();
-                if (IsEstimateExists == null)
-                {
-                    responseVm.Message = "Estimate " + AppConstant.NoDataFound;
-                    return responseVm;
-                }
-                IsEstimateExists.Status = EnumValue.GetEnumValue(Estimation.PendingForApproval);
-                IsEstimateExists.UpdatedAt = DateTime.Now;
-                IsEstimateExists.ModifiedBy = AppConstant.LoggedInUserID;
-                await Update(IsEstimateExists);
-
-                var jobData = jobService.GetAllQuerable().Where(x => x.JobId == IsEstimateExists.JobId && x.IsDelete == false).FirstOrDefault();
-                if (jobData != null)
-                {
-                    var contactData = contactService.GetAllQuerable().Where(x => x.ContactId == jobData.ContactId && x.IsDelete == false).FirstOrDefault();
-                    if (contactData != null)
-                    {
-                        var contactEmail = contactData.Email;
-                        SendEmail sendEmail = new SendEmail
-                        {
-                            ToEmail = contactEmail,
-                        };
-                        EmailHelper.SendMail(sendEmail);
-
-                    }
-                }
-
-                responseVm.IsSuccess = true;
-                responseVm.Message = AppConstant.UpdateSuccessMsg;
-            }
-            catch (Exception ex)
-            {
-                responseVm.Message = AppConstant.ExceptionError + ex.Message;
-            }
-            return responseVm;
-        }
-
         public async Task<IResponseVm<string>> Create_Estimate(CreateEstimate model)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
@@ -977,14 +934,22 @@ namespace ShutterManagement.Business.Services
                 string replacement = property switch
                 {
                     "Unit" => $"'{val}'",
-                    "OptionPrice" => Convert.ToDecimal(values.Optionprice).ToString("N2"),
-                    _ => Convert.ToDecimal(val).ToString("N2")
+                    "OptionPrice" => Convert.ToDecimal(values.Optionprice).ToString("F2", System.Globalization.CultureInfo.InvariantCulture),
+                    _ => Convert.ToDecimal(val).ToString("F2", System.Globalization.CultureInfo.InvariantCulture)
                 };
 
                 formula = formula?.Replace(placeholder, " " + replacement + " ");
             }
             //values.CalculateExpression = formula;
-            return new NCalc.Expression(formula);
+            try
+            {
+                return new NCalc.Expression(formula);
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Log($"Expression parsing error. Formula: '{formula}', Error: {ex.Message}");
+                throw new InvalidOperationException($"Invalid expression formula: '{formula}'. Error: {ex.Message}", ex);
+            }
         }
 
         public async Task<IResponseVm<string>> Update_Estimate(UpdatetEstimate model)

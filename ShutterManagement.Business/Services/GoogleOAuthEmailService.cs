@@ -24,16 +24,18 @@ namespace ShutterManagement.Business.Services
         private readonly IConfiguration _config;
         private readonly IEmailConfigurationService emailConfigurationService;
         private readonly ClaimsProperty claimsProperty;
-        private readonly MS365Configuration mS365Configuration;
         private readonly EmailTypeService emailTypeService;
+        private readonly string _googleOAuthGrantTypeAuthorization = "authorization_code";
+        private readonly string _googleOAuthGrantTypeRefresh = "refresh_token";
+        private readonly string _googleTokenInfoUrl = "https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=";
+        private readonly string _googleTokenUrl = "https://oauth2.googleapis.com/token";
 
         public GoogleAuthService(IConfiguration config,IEmailConfigurationService emailConfigurationService,
-            ClaimsProperty claimsProperty,MS365Configuration mS365Configuration,EmailTypeService emailTypeService)
+            ClaimsProperty claimsProperty,EmailTypeService emailTypeService)
         {
             _config = config;
             this.emailConfigurationService = emailConfigurationService;
             this.claimsProperty = claimsProperty;
-            this.mS365Configuration = mS365Configuration;
             this.emailTypeService = emailTypeService;
         }
 
@@ -41,8 +43,8 @@ namespace ShutterManagement.Business.Services
         {
             var query = new Dictionary<string, string>
             {
-                ["client_id"] = _config["GoogleOAuth:ClientId"],
-                ["redirect_uri"] = _config["GoogleOAuth:RedirectUri"],
+                ["client_id"] = AppConstant.Google_ClientId,
+                ["redirect_uri"] = AppConstant.Google_RedirectUri,
                 ["response_type"] = "code",
                 ["scope"] = "https://mail.google.com/",
                 ["access_type"] = "offline",
@@ -59,17 +61,17 @@ namespace ShutterManagement.Business.Services
             var responseVm = new ResponseVm<string>();
             try
             {
-                var existingEmailConfiguration = emailConfigurationService
-                    .GetAllQuerable()
+                var existingEmailConfiguration = (await emailConfigurationService
+                    .GetAll())
                     .FirstOrDefault(x => x.TenantId == claimsProperty.GetTenantId());
-                if (string.IsNullOrEmpty(existingEmailConfiguration.Username))
+                if (string.IsNullOrEmpty(existingEmailConfiguration?.Username))
                 {
                     responseVm.IsSuccess = false;
                     responseVm.Message = "User email is required Enter Username in configuration ";
                     return responseVm;
                 }
-                var clientId = _config["GoogleOAuth:ClientId"];
-                var redirectUri = _config["GoogleOAuth:RedirectUri"];
+                var clientId = AppConstant.Google_ClientId;
+                var redirectUri = AppConstant.Google_RedirectUri;
 
                 var scopes = new[]
                 {
@@ -80,7 +82,7 @@ namespace ShutterManagement.Business.Services
 
                 var scope = string.Join(" ", scopes);
 
-                var authUrl = $"https://accounts.google.com/o/oauth2/v2/auth" +
+                var authUrl = $"{AppConstant.Google_AuthUrl}" +
                               $"?client_id={clientId}" +
                               $"&redirect_uri={Uri.EscapeDataString(redirectUri)}" +
                               $"&response_type=code" +
@@ -88,6 +90,7 @@ namespace ShutterManagement.Business.Services
                               $"&access_type=offline" +
                               $"&prompt=consent" +
                               $"&login_hint={existingEmailConfiguration.Username}";
+
                 responseVm.IsSuccess = true;
                 responseVm.Message = "Google OAuth URL generated successfully";
                 responseVm.Data = authUrl;
@@ -111,15 +114,15 @@ namespace ShutterManagement.Business.Services
                 var values = new Dictionary<string, string>
                 {
                     ["code"] = code,
-                    ["client_id"] = _config["GoogleOAuth:ClientId"],
-                    ["client_secret"] = _config["GoogleOAuth:ClientSecret"],
-                    ["redirect_uri"] = _config["GoogleOAuth:RedirectUri"],
-                    ["grant_type"] = "authorization_code"
+                    ["client_id"] = AppConstant.Google_ClientId,
+                    ["client_secret"] = AppConstant.Google_ClientSecret,
+                    ["redirect_uri"] = AppConstant.Google_RedirectUri,
+                    ["grant_type"] = _googleOAuthGrantTypeAuthorization
                 };
 
                 using var client = new HttpClient();
                 var content = new FormUrlEncodedContent(values);
-                var response = await client.PostAsync("https://oauth2.googleapis.com/token", content);
+                var response = await client.PostAsync(_googleTokenUrl, content);
 
                 var result = await response.Content.ReadAsStringAsync();
 
@@ -149,8 +152,8 @@ namespace ShutterManagement.Business.Services
 
                 if (config != null)
                 {
-                    config.AccessToken = tokenResponse.AccessToken;
-                    config.RefreshToken = tokenResponse.RefreshToken;
+                    config.AccessToken = tokenResponse?.AccessToken;
+                    config.RefreshToken = tokenResponse?.RefreshToken;
                     config.AccessExpirationtime = DateTime.Now.AddHours(1);
                     config.RefreshExpirationtime = DateTime.Now.AddDays(7);
 
@@ -177,19 +180,21 @@ namespace ShutterManagement.Business.Services
         {
             var values = new Dictionary<string, string>
             {
-                ["client_id"] = _config["GoogleOAuth:ClientId"],
-                ["client_secret"] = _config["GoogleOAuth:ClientSecret"],
+                ["client_id"] =  AppConstant.Google_ClientId,
+                ["client_secret"] = AppConstant.Google_ClientSecret,
                 ["refresh_token"] = refreshToken,
-                ["grant_type"] = "refresh_token"
+                ["grant_type"] = _googleOAuthGrantTypeRefresh
             };
 
             using var client = new HttpClient();
             var content = new FormUrlEncodedContent(values);
-            var response = await client.PostAsync("https://oauth2.googleapis.com/token", content);
+            var response = await client.PostAsync(_googleTokenUrl, content);
             var result = await response.Content.ReadAsStringAsync();
             dynamic json = JsonConvert.DeserializeObject(result);
-
+            if(json != null && !string.IsNullOrEmpty(json.access_token)) 
             return json.access_token;
+
+            return string.Empty;
         }
 
         public async Task<bool> IsGoogleAccessTokenValid(string accessToken)
@@ -198,7 +203,7 @@ namespace ShutterManagement.Business.Services
 
             try
             {
-                var response = await client.GetAsync($"https://www.googleapis.com/oauth2/v1/tokeninfo?access_token={accessToken}");
+                var response = await client.GetAsync($"{_googleTokenInfoUrl}{accessToken}");
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -219,53 +224,27 @@ namespace ShutterManagement.Business.Services
 
 
 
-        public async Task<IResponseVm<EmailConfigurationVm?>> ValidateAndRefreshEmailOauthAccessToken()
+        public async Task<IResponseVm<EmailConfigurationVm?>> ValidateAndRefreshGoogleEmailOauthAccessToken(TblEmailConfiguration emailConfig, string EmailType)
         {
             IResponseVm<EmailConfigurationVm> responseVm = new ResponseVm<EmailConfigurationVm>();
 
             try
             {
-                var emailConfig = emailConfigurationService.GetAllQuerable()
-                    .FirstOrDefault(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive==true && x.IsDelete==false);
-
-                if (emailConfig == null)
-                {
-                    responseVm.Message = "No email configuration found.";
-                    return responseVm;
-                }
-
-                var emailType = emailTypeService.GetAllQuerable()
-                    .Where(s => s.Id == emailConfig.EmailType)
-                    .Select(x => x.Name??"")
-                    .FirstOrDefault();
-
-                if (string.IsNullOrEmpty(emailType))
-                {
-                    responseVm.Message = "Email type is not defined.";
-                    return responseVm;
-                }
-
-                var lowerEmailType = emailType.ToLower();
-
-                if (emailType == EnumValue.GetEnumValue(EmailSendType.SMTP))
-                {
-                    // For SMTP, no token check needed, return directly
-                    return SuccessResponse(emailConfig, emailType);
-                }
-
                 // If refresh token expired
                 if (emailConfig.RefreshExpirationtime <= DateTime.Now)
                 {
-                    responseVm.Message = "Your authentication has expired. Please reconnect your email to continue sending emails.";
+                    responseVm.Message = AppConstant.AuthenticationExpiry;
                     return responseVm;
                 }
 
                 bool isAccessTokenExpired = emailConfig.AccessExpirationtime <= DateTime.Now;
                 bool isAccessTokenValid = false;
 
+                isAccessTokenValid = await IsGoogleAccessTokenValid(emailConfig.AccessToken ?? "");
+
                 if (!isAccessTokenValid || isAccessTokenExpired)
                 {
-                    var newAccessToken = await GoogleRefreshAccessToken(emailConfig.RefreshToken);
+                    var newAccessToken = await GoogleRefreshAccessToken(emailConfig.RefreshToken ?? "");
 
                     if (string.IsNullOrEmpty(newAccessToken))
                     {
@@ -278,59 +257,11 @@ namespace ShutterManagement.Business.Services
                     await emailConfigurationService.Update(emailConfig);
 
                     responseVm.Message = "Google access token refreshed.";
+
                 }
+                responseVm = EmailConfigurationVm.ConfigResponse(emailConfig, EmailType);
+                return responseVm;
 
-                switch (lowerEmailType)
-                {
-                    case "google":
-                        isAccessTokenValid = await IsGoogleAccessTokenValid(emailConfig.AccessToken);
-
-                        if (!isAccessTokenValid || isAccessTokenExpired)
-                        {
-                            var newAccessToken = await GoogleRefreshAccessToken(emailConfig.RefreshToken);
-
-                            if (string.IsNullOrEmpty(newAccessToken))
-                            {
-                                responseVm.Message = "Failed to refresh Google access token.";
-                                return responseVm;
-                            }
-
-                            emailConfig.AccessToken = newAccessToken;
-                            emailConfig.AccessExpirationtime = DateTime.Now.AddHours(1);
-                            await emailConfigurationService.Update(emailConfig);
-
-                            responseVm.Message = "Google access token refreshed.";
-                        }
-                        break;
-
-                    case "microsoft365":
-                        isAccessTokenValid = await mS365Configuration.IsMicrosoftAccessTokenValid(emailConfig.AccessToken);
-
-                        if (!isAccessTokenValid || isAccessTokenExpired)
-                        {
-                            var newAccessToken = await mS365Configuration.RefreshMicrosoft365AccessToken(emailConfig.RefreshToken);
-
-                            if (string.IsNullOrEmpty(newAccessToken))
-                            {
-                                responseVm.Message = "Failed to refresh Microsoft 365 access token.";
-                                return responseVm;
-                            }
-
-                            emailConfig.AccessToken = newAccessToken;
-                            emailConfig.AccessExpirationtime = DateTime.Now.AddHours(1);
-                            await emailConfigurationService.Update(emailConfig);
-
-                            responseVm.Message = "Microsoft 365 access token refreshed.";
-                        }
-                        break;
-
-                    default:
-                        responseVm.Message = $"Unsupported Email Type: {emailType}";
-                        return responseVm;
-                }
-
-                // Return success response
-                return SuccessResponse(emailConfig, emailType);
             }
             catch (Exception ex)
             {
@@ -339,240 +270,12 @@ namespace ShutterManagement.Business.Services
             }
         }
 
-        // Helper to generate response
-        private IResponseVm<EmailConfigurationVm> SuccessResponse(TblEmailConfiguration emailConfig, string emailType)
-        {
-            return new ResponseVm<EmailConfigurationVm>
-            {
-                IsSuccess = true,
-                Data = new EmailConfigurationVm
-                {
-                    Id = emailConfig.Id,
-                    SmtpServer = emailConfig.SmtpServer,
-                    Port = emailConfig.Port,
-                    Username = emailConfig.Username,
-                    Password = emailConfig.Password,
-                    UseSsl = emailConfig.UseSsl,
-                    ReplyTo = emailConfig.ReplyTo,
-                    EmailType = emailConfig.EmailType,
-                    EmailTypeName = emailType,
-                    From = emailConfig.From,
-                    AccessToken = emailConfig.AccessToken,
-                    TenantId = emailConfig.TenantId,
-                    IsActive = emailConfig.IsActive
-                }
-            };
-        }
-
-
-
-        //public async Task<IResponseVm<EmailConfigurationVm?>> ValidateAndRefreshEmailOauthAccessToken()
-        //{
-
-        //    IResponseVm<EmailConfigurationVm> responseVm = new ResponseVm<EmailConfigurationVm>();
-
-        //    try
-        //    {
-        //        var emailConfig =  emailConfigurationService.GetAllQuerable()
-        //            .Where(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false).FirstOrDefault();
-
-
-        //        if (emailConfig == null)
-        //        {
-        //            responseVm.Message = "No email configuration found.";
-        //            return responseVm;
-        //        }
-
-
-
-
-        //        var emailType = dBContext.TblEmailTypes.Where(s => s.Id == emailConfig.EmailType).Select(x => x.Name).FirstOrDefault();
-
-        //        if (string.IsNullOrEmpty(emailType))
-        //        {
-        //            responseVm.Message = "Email type is not defined.";
-        //            return responseVm;
-        //        }
-        //        if(emailType==EnumValue.GetEnumValue(EmailSendType.SMTP))
-        //        {
-        //            // it work without refeshh token or any other it work normally like skipp for check any expiration and get return emailConfig data 
-        //        }
-
-        //        if (emailConfig.RefreshExpirationtime <= DateTime.Now)
-        //        {
-        //            responseVm.Message = "Your authentication has expired. Please reconnect your email to continue sending emails.";
-        //            return responseVm;
-        //        }
-
-        //        bool isAccessTokenExpired = emailConfig.AccessExpirationtime <= DateTime.Now;
-        //        bool isAccessTokenValid = false;
-
-        //        switch (emailType.ToLower())
-        //        {
-        //            case "google":
-        //                isAccessTokenValid = await IsGoogleAccessTokenValid(emailConfig.AccessToken);
-        //                if (!isAccessTokenValid || isAccessTokenExpired)
-        //                {
-        //                    var newAccessToken = await GoogleRefreshAccessToken(emailConfig.RefreshToken);
-        //                    if (!string.IsNullOrEmpty(newAccessToken))
-        //                    {
-        //                        emailConfig.AccessToken = newAccessToken;
-        //                        emailConfig.AccessExpirationtime = DateTime.Now.AddHours(1);
-        //                        await emailConfigurationService.Update(emailConfig);
-        //                        responseVm.Message = "Google access token refreshed.";
-        //                    }
-        //                    else
-        //                    {
-        //                        responseVm.Message = "Failed to refresh Google access token.";
-        //                        return responseVm;
-        //                    }
-        //                }
-        //                break;
-
-        //            case "microsoft365":
-        //                isAccessTokenValid = await mS365Configuration.IsMicrosoftAccessTokenValid(emailConfig.AccessToken);
-        //                if (!isAccessTokenValid || isAccessTokenExpired)
-        //                {
-        //                    var newAccessToken = await mS365Configuration.RefreshMicrosoft365AccessToken(emailConfig.RefreshToken);
-        //                    if (!string.IsNullOrEmpty(newAccessToken))
-        //                    {
-        //                        emailConfig.AccessToken = newAccessToken;
-        //                        emailConfig.AccessExpirationtime = DateTime.Now.AddHours(1);
-        //                        await emailConfigurationService.Update(emailConfig);
-        //                        responseVm.Message = "Microsoft 365 access token refreshed.";
-        //                    }
-        //                    else
-        //                    {
-        //                        responseVm.Message = "Failed to refresh Microsoft 365 access token.";
-        //                        return responseVm;
-        //                    }
-        //                }
-        //                break;
-
-        //            default:
-        //                responseVm.Message = $"Unsupported Email Type: {emailType}";
-        //                return responseVm;
-        //        }
-
-        //        var vm = new EmailConfigurationVm
-        //        {
-        //            Id = emailConfig.Id,
-        //            SmtpServer = emailConfig.SmtpServer,
-        //            Port = emailConfig.Port,
-        //            Username = emailConfig.Username,
-        //            Password = emailConfig.Password,
-        //            UseSsl = emailConfig.UseSsl,
-        //            ReplyTo = emailConfig.ReplyTo,
-        //            EmailType = emailConfig.EmailType,
-        //            EmailTypeName = emailType,
-        //            From = emailConfig.From,
-        //            AccessToken = emailConfig.AccessToken,
-        //            TenantId = emailConfig.TenantId,
-        //            IsActive = emailConfig.IsActive
-        //        };
-
-        //        responseVm.IsSuccess = true;
-        //        responseVm.Data = vm;
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        responseVm.Message = "Exception: " + ex.Message;
-        //    }
-
-        //    return responseVm;
-        //}
-
-
-
-
-        //public async Task<TblEmailConfiguration?> ValidateAndRefreshGoogleAccessToken()
-        //{
-
-        //    var emailConfig = emailConfigurationService.GetAllQuerable()
-        //        .FirstOrDefault(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive==true && x.IsDelete==false);
-
-        //    if (emailConfig == null)
-        //        return null;
-
-        //    bool isAccessTokenExpired = emailConfig.AccessExpirationtime <= DateTime.Now;
-        //    bool isAccessTokenValid = await IsAccessTokenValid(emailConfig.AccessToken);
-
-        //    if (!isAccessTokenValid || isAccessTokenExpired)
-        //    {
-        //        var newAccessToken = await RefreshAccessTokenAsync(emailConfig.RefreshToken);
-        //        if (!string.IsNullOrEmpty(newAccessToken))
-        //        {
-        //            emailConfig.AccessToken = newAccessToken;
-        //            emailConfig.AccessExpirationtime = DateTime.Now.AddHours(1);
-
-        //            await emailConfigurationService.Update(emailConfig); 
-        //        }
-        //    }
-
-        //    return emailConfig;
-        //}
-
-
-        public  async Task<IResponseVm<string>> WelcomeEmailWithOauth(string Email, string content)
-        {
-            var emailConfig = await ValidateAndRefreshEmailOauthAccessToken();
-            if (emailConfig == null || emailConfig?.Data == null)
-            {
-                return new ResponseVm<string>
-                {
-                    IsSuccess = false,
-                    Message = "Email Configuration not found. Please add configurations."
-                };
-            }
-
-            var config = emailConfig?.Data;
-
-            OAuthEmailRequest vm = new OAuthEmailRequest
-            {
-                FromEmail = config?.Username ?? "",
-                ToEmail = Email,
-                Subject = AppConstant.Sub_WelcomeEmail,
-                Body = content,
-                UserEmail = config.Username ?? "",
-                Username = config.Username ?? "",
-                SmtpServer = config.SmtpServer ?? "",
-                Port = config.Port ?? 0,
-                AccessToken = config.AccessToken ?? "",
-                Password = config.Password ?? "",
-                UseSsl = config.UseSsl ?? true,
-                EmailType = config.EmailTypeName ?? "",
-                Attachments = null
-            };
-
-            return await EmailHelper.SendEmailWithOAuth(vm);
-        }
-
-
-
-    }
-
-
-
-    public class EmailRequest
-    {
-        public string FromEmail { get; set; }
-        public string ToEmail { get; set; }
-        public string Subject { get; set; }
-        public string Body { get; set; }
-    }
-
-    public class GoogleToken
-    {
-        public string Email { get; set; }
-        public string AccessToken { get; set; }
-        public string RefreshToken { get; set; }
-        public DateTime ExpiryTime { get; set; }
     }
 
     public class GoogleTokenResponse
     {
         [JsonProperty("access_token")]
-        public string AccessToken { get; set; }
+        public string? AccessToken { get; set; }
 
         [JsonProperty("expires_in")]
         public int ExpiresIn { get; set; }
@@ -581,13 +284,13 @@ namespace ShutterManagement.Business.Services
         public int RefreshTokenExpiresIn { get; set; }
 
         [JsonProperty("refresh_token")]
-        public string RefreshToken { get; set; }
+        public string? RefreshToken { get; set; }
 
         [JsonProperty("scope")]
-        public string Scope { get; set; }
+        public string? Scope { get; set; }
 
         [JsonProperty("token_type")]
-        public string TokenType { get; set; }
+        public string? TokenType { get; set; }
     }
 
 

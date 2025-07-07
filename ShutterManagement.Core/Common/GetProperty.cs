@@ -11,8 +11,10 @@ namespace ShutterManagement.Core.Common
     {
         public static object GetColumnValue(object obj, string columnName)
         {
-            // Get the property info using reflection
-            PropertyInfo propertyInfo = obj.GetType().GetProperty(columnName);
+            // Get all properties and find the one that matches the column name, case-insensitive
+            PropertyInfo propertyInfo = obj.GetType()
+                .GetProperties()
+                .FirstOrDefault(p => string.Equals(p.Name, columnName, StringComparison.OrdinalIgnoreCase));
 
             // Check if property exists
             if (propertyInfo != null)

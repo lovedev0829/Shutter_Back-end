@@ -16,13 +16,17 @@ using ShutterManagement.Core.ViewModels.Response;
 using ShutterManagement.DAL.Context;
 using ShutterManagment.GHL.ViewModel.Request;
 using ShutterManagment.GHL.ViewModel.Response;
+using Stripe;
 using System;
+using System.Linq;
+
 
 //using System.Globalization;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Numerics;
+using System.Reflection;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
@@ -52,15 +56,15 @@ namespace ShutterManagement.GHL.Services
 
         #region Start pipeLine and Stages Related Methods
 
-        public async Task<PipelineResponse> GetAllPipelinesWithStagesAsync()
+        public async Task<PipelineResponse> GetAllPipelinesWithStagesAsync(GetGHLConfiguration ghlconfiguration)
         {
             try
             {
                 
-                var requestUrl = $"{AppConstant.GHL_BaseAddress}/opportunities/pipelines?locationId={AppConstant.GHL_LocationId}";
+                var requestUrl = $"{AppConstant.GHL_BaseAddress}/opportunities/pipelines?locationId={ghlconfiguration.LocationId}";
                 using var requestMessage = new HttpRequestMessage(HttpMethod.Get, requestUrl);
                 requestMessage.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
+                requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", ghlconfiguration.Access_Token);
                 requestMessage.Headers.Add("Version", AppConstant.GHL_Version);
                 //_httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
                 HttpResponseMessage response = await _httpClient.SendAsync(requestMessage);
@@ -83,13 +87,13 @@ namespace ShutterManagement.GHL.Services
 
 
 
-        public async Task<IResponseVm<string>> GetAndSaveDefaultPipelineAndStage(Guid? LoggedInTenantId = null)
+        public async Task<IResponseVm<string>> GetAndSaveDefaultPipelineAndStage(GetGHLConfiguration getGHLConfiguration, Guid? LoggedInTenantId = null)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
                 LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : claimsProperty.GetTenantId());
-                var pipelineResponse = await GetAllPipelinesWithStagesAsync();
+                var pipelineResponse = await GetAllPipelinesWithStagesAsync(getGHLConfiguration);
 
                 if (pipelineResponse?.Pipelines == null || !pipelineResponse.Pipelines.Any())
                 {
@@ -98,10 +102,8 @@ namespace ShutterManagement.GHL.Services
                     return responseVm;
                 }
 
-                string userProvidedPipelineNameOrId = AppConstant.GHL_PipelineId;
-
                 var targetPipeline = pipelineResponse.Pipelines
-                    .FirstOrDefault(p => p.Id.Contains(userProvidedPipelineNameOrId) || p.Name.Contains(userProvidedPipelineNameOrId));
+                    .FirstOrDefault(p => p.Id.Contains(getGHLConfiguration?.PipelineId??"") || p.Name.Contains(getGHLConfiguration?.PipelineId ?? ""));
 
                 if (targetPipeline == null)
                 {
@@ -295,7 +297,7 @@ namespace ShutterManagement.GHL.Services
         //    }
         //}
 
-        public async Task<List<GhlContactVM>> GetContactsAsync()
+        public async Task<List<GhlContactVM>> GetContactsAsync(GetGHLConfiguration getGHLConfiguration)
         {
             var allContacts = new List<GhlContactVM>();
 
@@ -304,13 +306,13 @@ namespace ShutterManagement.GHL.Services
                 var baseUrl = $"{AppConstant.GHL_BaseAddress}/contacts/search";
                 var headers = new Dictionary<string, string>
         {
-            { "Authorization", $"Bearer {AppConstant.GHL_AccessToken}" },
+            { "Authorization", $"Bearer {getGHLConfiguration.Access_Token}" },
             { "Version", AppConstant.GHL_Version }
         };
 
                 var initialPayload = new
                 {
-                    locationId = AppConstant.GHL_LocationId,
+                    locationId = getGHLConfiguration.LocationId,
                     pageLimit = 1,
                     page = 1
                 };
@@ -329,7 +331,7 @@ namespace ShutterManagement.GHL.Services
                 {
                     var pagedPayload = new
                     {
-                        locationId = AppConstant.GHL_LocationId,
+                        locationId = getGHLConfiguration.LocationId,
                         pageLimit = maxLimit,
                         page = page
                     };
@@ -410,7 +412,7 @@ namespace ShutterManagement.GHL.Services
 
 
 
-        public async Task<IResponseVm<GhlContactSingleResponse>> CreateContactAsync(GhlContactAdd contact)
+        public async Task<IResponseVm<GhlContactSingleResponse>> CreateContactAsync(GetGHLConfiguration getGHLConfiguration, GhlContactAdd contact)
         {
             IResponseVm<GhlContactSingleResponse> responseVm = new ResponseVm<GhlContactSingleResponse>();
             try
@@ -422,7 +424,7 @@ namespace ShutterManagement.GHL.Services
                     return responseVm;
                 }
 
-                if (string.IsNullOrEmpty(AppConstant.GHL_AccessToken))
+                if (string.IsNullOrEmpty(getGHLConfiguration.Access_Token))
                 {
                     FileLogger.Log("CreateContactAsync: OAuth token is missing or invalid.");
                     responseVm.Message = "OAuth token is missing or invalid.";
@@ -435,15 +437,22 @@ namespace ShutterManagement.GHL.Services
                     lastName = contact.LastName,
                     email = contact.Email,
                     phone = contact.Phone,
-                    locationId = AppConstant.GHL_LocationId,
-               };
+                    locationId = getGHLConfiguration.LocationId,
+                    address1= contact.StreetAddress??"",
+                    city= contact.City??"",
+                    state= contact.State??"",
+                    postalCode= contact.ZipCode??"",
+
+                };
+
+
 
                 var requestUrl = $"{AppConstant.GHL_BaseAddress}/contacts";
                 var contactJson = JsonConvert.SerializeObject(contactData);
                 var content = new StringContent(contactJson, Encoding.UTF8, "application/json");
 
                 using var httpClient = new HttpClient();
-                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", getGHLConfiguration.Access_Token);
                 httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
                 httpClient.DefaultRequestHeaders.Add("Version", AppConstant.GHL_Version);
 
@@ -493,7 +502,7 @@ namespace ShutterManagement.GHL.Services
             return responseVm;
         }
 
-        public async Task<IResponseVm<GhlContactSingleResponse?>> UpdateContactAsync(string contactId, GhlContactAdd contact)
+        public async Task<IResponseVm<GhlContactSingleResponse?>> UpdateContactAsync(GetGHLConfiguration getGHLConfiguration, string contactId, GhlContactAdd contact)
         {
             IResponseVm<GhlContactSingleResponse> responseVm = new ResponseVm<GhlContactSingleResponse>();
             try
@@ -505,12 +514,15 @@ namespace ShutterManagement.GHL.Services
                     return responseVm;
                 }
 
-                if (string.IsNullOrEmpty(AppConstant.GHL_AccessToken))
+                if (string.IsNullOrEmpty(getGHLConfiguration.Access_Token))
                 {
                     FileLogger.Log("UpdateContactAsync: OAuth token is missing or invalid.");
                     responseVm.Message = "OAuth token is missing or invalid.";
                     return responseVm;
                 }
+
+             
+
 
                 var contactData = new
                 {
@@ -519,6 +531,11 @@ namespace ShutterManagement.GHL.Services
                     email = contact.Email,
                     phone = contact.Phone,
                     //locationId = AppConstant.GHL_LocationId,
+                    address1 = contact.StreetAddress ?? "",
+                    city = contact.City ?? "",
+                    state = contact.State ?? "",
+                    postalCode = contact.ZipCode ?? "",
+
                 };
 
                 var requestUrl = $"{AppConstant.GHL_BaseAddress}/contacts/{contactId}";
@@ -526,7 +543,7 @@ namespace ShutterManagement.GHL.Services
                 var content = new StringContent(contactJson, Encoding.UTF8, "application/json");
 
                 using var httpClient = new HttpClient();
-                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", getGHLConfiguration.Access_Token);
                 httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
                 httpClient.DefaultRequestHeaders.Add("Version", AppConstant.GHL_Version);
 
@@ -559,7 +576,7 @@ namespace ShutterManagement.GHL.Services
 
         #region Start Opportunity Related Methods
 
-        public async Task<IResponseVm<string>> CreateOpportunityInGhl(TblJob job)
+        public async Task<IResponseVm<string>> CreateOpportunityInGhl(GetGHLConfiguration getGHLConfiguration, TblJob job)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
 
@@ -590,7 +607,7 @@ namespace ShutterManagement.GHL.Services
                     return responseVm;
                 }
 
-                if (string.IsNullOrEmpty(stage.GhlPipelineId) || string.IsNullOrEmpty(contact.ContactId.ToString()) || string.IsNullOrEmpty(AppConstant.GHL_LocationId))
+                if (string.IsNullOrEmpty(stage.GhlPipelineId) || string.IsNullOrEmpty(contact.ContactId.ToString()) || string.IsNullOrEmpty(getGHLConfiguration.LocationId))
                 {
                     responseVm.IsSuccess = false;
                     responseVm.Message = "Missing required GHL identifiers.";
@@ -600,7 +617,7 @@ namespace ShutterManagement.GHL.Services
                 var opportunityData = new
                 {
                     pipelineId = stage.GhlPipelineId,
-                    locationId = AppConstant.GHL_LocationId,
+                    locationId = getGHLConfiguration.LocationId,
                     name = job.JobName ?? "Unnamed Job",
                     pipelineStageId = stageResponse?.Data?.StageId?.ToString()??"",
                     status = "open",
@@ -614,7 +631,7 @@ namespace ShutterManagement.GHL.Services
                 FileLogger.Log($"[CreateOpportunityInGhl] Request Payload: {opportunityJson}");
 
                 using var httpClient = new HttpClient();
-                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", getGHLConfiguration.Access_Token);
                 httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
                 httpClient.DefaultRequestHeaders.Add("Version", AppConstant.GHL_Version);
 
@@ -743,13 +760,13 @@ namespace ShutterManagement.GHL.Services
         //}
 
 
-        public async Task<IResponseVm<List<Opportunity>>> GetOpportunitiesFromGhl()
+        public async Task<IResponseVm<List<Opportunity>>> GetOpportunitiesFromGhl(GetGHLConfiguration getGHLConfiguration)
         {
             IResponseVm<List<Opportunity>> responseVm = new ResponseVm<List<Opportunity>>();
 
             try
             {
-                var pipelineResponse = await GetAllPipelinesWithStagesAsync();
+                var pipelineResponse = await GetAllPipelinesWithStagesAsync(getGHLConfiguration);
 
                 if (pipelineResponse?.Pipelines == null || !pipelineResponse.Pipelines.Any())
                 {
@@ -761,11 +778,10 @@ namespace ShutterManagement.GHL.Services
                     };
                 }
 
-                string userProvidedPipelineNameOrId = AppConstant.GHL_PipelineId;
 
                 var targetPipeline = pipelineResponse.Pipelines
-                    .FirstOrDefault(p => p.Id.Contains(userProvidedPipelineNameOrId) ||
-                                         p.Name.Contains(userProvidedPipelineNameOrId));
+                    .FirstOrDefault(p => p.Id.Contains(getGHLConfiguration?.PipelineId ?? "") ||
+                                         p.Name.Contains(getGHLConfiguration?.PipelineId ?? ""));
 
                 if (targetPipeline == null)
                 {
@@ -778,12 +794,12 @@ namespace ShutterManagement.GHL.Services
                 }
 
                 string url = $"{AppConstant.GHL_BaseAddress}/opportunities/search" +
-                             $"?location_id={AppConstant.GHL_LocationId}" +
+                             $"?location_id={getGHLConfiguration?.LocationId ?? ""}" +
                              $"&pipeline_id={targetPipeline.Id}";
 
                 using var request = new HttpRequestMessage(HttpMethod.Get, url);
                 request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", getGHLConfiguration?.Access_Token ?? "");
                 request.Headers.Add("Version", AppConstant.GHL_Version);
 
                 HttpResponseMessage response = await _httpClient.SendAsync(request);
@@ -823,12 +839,12 @@ namespace ShutterManagement.GHL.Services
 
         #endregion End Opportunity Related Methods
 
-        public async Task<IResponseVm<GHLAppointment>> CreateAppointmentAsync(GHLAppointmentAdd appointment)
+        public async Task<IResponseVm<GHLAppointment>> CreateAppointmentAsync(GetGHLConfiguration getGHLConfiguration, GHLAppointmentAdd appointment)
         {
             IResponseVm<GHLAppointment> responseVm = new ResponseVm<GHLAppointment>();
             try
             {
-                var CalendarId = GetCalendarAsync().Result.Where(x => x.name.ToLower() == AppConstant.GHL_CalendarName.ToLower() || x.id.ToLower() == AppConstant.GHL_CalendarName.ToLower()).Select(x=> x.id).FirstOrDefault();
+                var CalendarId = GetCalendarAsync(getGHLConfiguration).Result.Where(x => x.name.ToLower() == getGHLConfiguration.CalendarName.ToLower() || x.id.ToLower() == getGHLConfiguration.CalendarName.ToLower()).Select(x=> x.id).FirstOrDefault();
                 FileLogger.Log($"Base Address from Create Appointment: {AppConstant.GHL_BaseAddress}");
                 if (CalendarId == null)
                 {
@@ -868,7 +884,7 @@ namespace ShutterManagement.GHL.Services
 
                 // Set headers (authorization and versioning)
                 requestMessage.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
+                requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", getGHLConfiguration.Access_Token);
                 requestMessage.Headers.Add("Version", AppConstant.GHL_Version);
 
                 var response = await _httpClient.SendAsync(requestMessage);
@@ -921,13 +937,13 @@ namespace ShutterManagement.GHL.Services
             return responseVm;
         }
 
-        public async Task<IResponseVm<GHLAppointment>> UpdateAppointmentAsync(string eventId, GHLAppointmentAdd appointment)
+        public async Task<IResponseVm<GHLAppointment>> UpdateAppointmentAsync(GetGHLConfiguration getGHLConfiguration, string eventId, GHLAppointmentAdd appointment)
         {
             IResponseVm<GHLAppointment> responseVm = new ResponseVm<GHLAppointment>();
             try
             {
-                var calendarId = (await GetCalendarAsync())
-                                     .Where(x => x.name.ToLower() == AppConstant.GHL_CalendarName.ToLower() || x.id.ToLower() == AppConstant.GHL_CalendarName.ToLower())
+                var calendarId = (await GetCalendarAsync(getGHLConfiguration))
+                                     .Where(x => x.name.ToLower() == getGHLConfiguration?.CalendarName?.ToLower() || x.id.ToLower() == getGHLConfiguration?.CalendarName?.ToLower())
                                      .Select(x => x.id)
                                      .FirstOrDefault();
 
@@ -959,7 +975,7 @@ namespace ShutterManagement.GHL.Services
                 var content = new StringContent(contactJson, Encoding.UTF8, "application/json");
 
                 httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", getGHLConfiguration?.Access_Token);
                 httpClient.DefaultRequestHeaders.Add("Version", "2021-04-15");
                 var response = await httpClient.PutAsync(requestUrl, content);
 
@@ -987,20 +1003,20 @@ namespace ShutterManagement.GHL.Services
 
         }
 
-        public async Task<List<Calendar>> GetCalendarAsync()
+        public async Task<List<Calendar>> GetCalendarAsync( GetGHLConfiguration getGHLConfiguration)
         {
             try
             {
                 FileLogger.Log("Fetching Calendar:-");
                 // Construct the URL for the API request
-                var requestUrl = $"{AppConstant.GHL_BaseAddress}/calendars/?locationId={AppConstant.GHL_LocationId}";
+                var requestUrl = $"{AppConstant.GHL_BaseAddress}/calendars/?locationId={getGHLConfiguration.LocationId}";
 
                 // Create a new HttpRequestMessage with GET method
                 using var requestMessage = new HttpRequestMessage(HttpMethod.Get, requestUrl);
 
                 // Set the necessary headers (Authorization and Version)
                 requestMessage.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
+                requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", getGHLConfiguration.Access_Token);
                 requestMessage.Headers.Add("Version", AppConstant.GHL_Version);
 
                 // Send the request using the _httpClient
@@ -1032,50 +1048,50 @@ namespace ShutterManagement.GHL.Services
                 return new List<Calendar>();
             }
         }
-        public async Task<List<User>> GetUsersAsync()
-        {
-            var users = new List<User>();
-            try
-            {
-                var requestUrl = $"{AppConstant.GHL_BaseAddress}/users/?locationId={AppConstant.GHL_LocationId}";
-                using var requestMessage = new HttpRequestMessage(HttpMethod.Get, requestUrl)
-                {
-                    Headers =
-                {
-                Accept = { new MediaTypeWithQualityHeaderValue("application/json") },
-                Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken),
-                }
-                };
-                requestMessage.Headers.Add("Version", AppConstant.GHL_Version);
-                HttpResponseMessage response = await _httpClient.SendAsync(requestMessage);
-                response.EnsureSuccessStatusCode();
-                var json = await response.Content.ReadAsStringAsync();
+        //public async Task<List<User>> GetUsersAsync()
+        //{
+        //    var users = new List<User>();
+        //    try
+        //    {
+        //        var requestUrl = $"{AppConstant.GHL_BaseAddress}/users/?locationId={AppConstant.GHL_LocationId}";
+        //        using var requestMessage = new HttpRequestMessage(HttpMethod.Get, requestUrl)
+        //        {
+        //            Headers =
+        //        {
+        //        Accept = { new MediaTypeWithQualityHeaderValue("application/json") },
+        //        Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken),
+        //        }
+        //        };
+        //        requestMessage.Headers.Add("Version", AppConstant.GHL_Version);
+        //        HttpResponseMessage response = await _httpClient.SendAsync(requestMessage);
+        //        response.EnsureSuccessStatusCode();
+        //        var json = await response.Content.ReadAsStringAsync();
 
-                var result = System.Text.Json.JsonSerializer.Deserialize<GetUserVM>(json, new JsonSerializerOptions
-                {
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-                });
+        //        var result = System.Text.Json.JsonSerializer.Deserialize<GetUserVM>(json, new JsonSerializerOptions
+        //        {
+        //            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        //        });
 
-                if (result?.users != null)
-                {
-                    users = result.users
-                        .Where(user =>
-                            user.Calendars != null &&
-                            user.Calendars.Any(c =>
-                                string.Equals(c.id.ToLower(), AppConstant.GHL_CalendarName.ToLower(), StringComparison.OrdinalIgnoreCase) ||
-                                string.Equals(c.name, AppConstant.GHL_CalendarName, StringComparison.OrdinalIgnoreCase)))
-                        .ToList();
-                }
-            }
-            catch (Exception ex)
-            {
-                FileLogger.Log($"Error fetching users: {ex.Message}");
-                return new List<User>(); 
-            }
-            return users;
-        }
+        //        if (result?.users != null)
+        //        {
+        //            users = result.users
+        //                .Where(user =>
+        //                    user.Calendars != null &&
+        //                    user.Calendars.Any(c =>
+        //                        string.Equals(c.id.ToLower(), AppConstant.GHL_CalendarName.ToLower(), StringComparison.OrdinalIgnoreCase) ||
+        //                        string.Equals(c.name, AppConstant.GHL_CalendarName, StringComparison.OrdinalIgnoreCase)))
+        //                .ToList();
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        FileLogger.Log($"Error fetching users: {ex.Message}");
+        //        return new List<User>(); 
+        //    }
+        //    return users;
+        //}
 
-        public async Task<IResponseVm<List<User>>> GetUsersByCalendarIdAsync(Guid? LoggedInTenantId = null)
+        public async Task<IResponseVm<List<User>>> GetUsersByCalendarIdAsync(GetGHLConfiguration getGHLConfiguration, Guid? LoggedInTenantId = null)
         {
             var responseVm = new ResponseVm<List<User>>
             {
@@ -1086,10 +1102,10 @@ namespace ShutterManagement.GHL.Services
             {
                 LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : claimsProperty.GetTenantId());
 
-                var calendarRequestUrl = $"{AppConstant.GHL_BaseAddress}/calendars/?locationId={AppConstant.GHL_LocationId}";
+                var calendarRequestUrl = $"{AppConstant.GHL_BaseAddress}/calendars/?locationId={getGHLConfiguration?.LocationId}";
                 using var calendarRequest = new HttpRequestMessage(HttpMethod.Get, calendarRequestUrl);
                 calendarRequest.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                calendarRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
+                calendarRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", getGHLConfiguration?.Access_Token);
                 calendarRequest.Headers.Add("Version", AppConstant.GHL_Version);
 
                 var calendarResponse = await _httpClient.SendAsync(calendarRequest);
@@ -1101,7 +1117,7 @@ namespace ShutterManagement.GHL.Services
                     PropertyNamingPolicy = JsonNamingPolicy.CamelCase
                 });
 
-                var calendar = calendarResult?.calendars?.FirstOrDefault(c => c.name == AppConstant.GHL_CalendarName || c.id == AppConstant.GHL_CalendarName);
+                var calendar = calendarResult?.calendars?.FirstOrDefault(c => c.name == getGHLConfiguration?.CalendarName || c.id == getGHLConfiguration?.CalendarName);
                 if (calendar == null || calendar.teamMembers == null || !calendar.teamMembers.Any())
                 {
                     responseVm.IsSuccess = false;
@@ -1111,10 +1127,10 @@ namespace ShutterManagement.GHL.Services
 
                 var userIds = calendar.teamMembers.Select(tm => tm.userId).ToHashSet();
 
-                var userRequestUrl = $"{AppConstant.GHL_BaseAddress}/users/?locationId={AppConstant.GHL_LocationId}";
+                var userRequestUrl = $"{AppConstant.GHL_BaseAddress}/users/?locationId={getGHLConfiguration?.LocationId}";
                 using var userRequest = new HttpRequestMessage(HttpMethod.Get, userRequestUrl);
                 userRequest.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                userRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
+                userRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", getGHLConfiguration?.Access_Token);
                 userRequest.Headers.Add("Version", AppConstant.GHL_Version);
 
                 var userResponse = await _httpClient.SendAsync(userRequest);
@@ -1284,7 +1300,7 @@ namespace ShutterManagement.GHL.Services
         }
 
 
-        public async Task<IResponseVm<List<TblGhlUser>>> GetGHLUsersByCalendarId(Guid? LoggedInTenantId=null)
+        public async Task<IResponseVm<List<TblGhlUser>>> GetGHLUsersByCalendarId(GetGHLConfiguration getGHLConfiguration, Guid? LoggedInTenantId=null)
         {
             IResponseVm<List<TblGhlUser>> responseVm = new ResponseVm<List<TblGhlUser>>();
 
@@ -1293,7 +1309,7 @@ namespace ShutterManagement.GHL.Services
                 LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : claimsProperty.GetTenantId());
 
                 var users = await dBContext.TblGhlUsers
-                    .Where(x => x.TenantId == LoggedInTenantId && x.IsDelete==false && (x.GhlCalendarId == AppConstant.GHL_CalendarName ||  x.GhlCalendarName == AppConstant.GHL_CalendarName))
+                    .Where(x => x.TenantId == LoggedInTenantId && x.IsDelete==false && (x.GhlCalendarId == getGHLConfiguration.CalendarName ||  x.GhlCalendarName == getGHLConfiguration.CalendarName))
                     .ToListAsync();
 
                 if (users != null && users.Count > 0)
@@ -1377,7 +1393,7 @@ namespace ShutterManagement.GHL.Services
             public string ContactId { get; set; }
         }
 
-        public async Task<IResponseVm<GHLJobAssignedtoPartner>> GetOpportunityforPartner(string GHLUserId)
+        public async Task<IResponseVm<GHLJobAssignedtoPartner>> GetOpportunityforPartner(GetGHLConfiguration getGHLConfiguration, string GHLUserId)
         {
             var responseVm = new ResponseVm<GHLJobAssignedtoPartner>();
 
@@ -1385,15 +1401,15 @@ namespace ShutterManagement.GHL.Services
             {
                 FileLogger.Log("Fetching Opportunities...");
 
-                var PipelineId = dBContext.TblGhlStages.Where(x => x.GhlPipelineName.ToLower() == AppConstant.GHL_PipelineId.ToLower() && x.IsActive == true).
+                var PipelineId = dBContext.TblGhlStages.Where(x => x.GhlPipelineName.ToLower() == getGHLConfiguration.PipelineId.ToLower() && x.IsActive == true).
                     Select(x => x.GhlPipelineId).FirstOrDefault();
-                var requestUrl = $"{AppConstant.GHL_BaseAddress}/opportunities/search?location_id={AppConstant.GHL_LocationId}&pipeline_id={PipelineId}&assigned_to={GHLUserId}";
+                var requestUrl = $"{AppConstant.GHL_BaseAddress}/opportunities/search?location_id={getGHLConfiguration.LocationId}&pipeline_id={PipelineId}&assigned_to={GHLUserId}";
 
                 using var requestMessage = new HttpRequestMessage(HttpMethod.Get, requestUrl);
 
                 // Set the necessary headers (Authorization and Version)
                 requestMessage.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
+                requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", getGHLConfiguration.Access_Token);
                 requestMessage.Headers.Add("Version", AppConstant.GHL_Version);
 
                 // Send the request using the _httpClient
@@ -1527,17 +1543,17 @@ namespace ShutterManagement.GHL.Services
         //}
 
 
-        public async Task<IResponseVm<List<GhlCustomField>>> GetGhlCustomFieldsAsync()
+        public async Task<IResponseVm<List<GhlCustomField>>> GetGhlCustomFieldsAsync(GetGHLConfiguration getGHLConfiguration)
         {
             IResponseVm<List<GhlCustomField>> responseVm = new ResponseVm<List<GhlCustomField>>();
 
             try
             {
                 FileLogger.Log("Fetching GHL Custom Fields...");
-                string url = $"{AppConstant.GHL_BaseAddress}/locations/{AppConstant.GHL_LocationId}/customFields?model=all";
+                string url = $"{AppConstant.GHL_BaseAddress}/locations/{getGHLConfiguration?.LocationId}/customFields?model=all";
 
                 var request = new HttpRequestMessage(HttpMethod.Get, url);
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", getGHLConfiguration?.Access_Token);
                 request.Headers.Add("Version", "2021-07-28");
                 request.Headers.Add("Accept", "application/json");
 

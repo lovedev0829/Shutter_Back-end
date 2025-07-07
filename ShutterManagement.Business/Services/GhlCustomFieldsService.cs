@@ -24,13 +24,13 @@ namespace ShutterManagement.Business.Services
             this.claimsProperty = claimsProperty;
         }
 
-        public async Task<IResponseVm<string>> SaveGhlCustomFieldsAsync(Guid? tenantId = null)
+        public async Task<IResponseVm<string>> SaveGhlCustomFieldsAsync(GetGHLConfiguration getGHLConfiguration, Guid? tenantId = null)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
 
             try
             {
-                var getFieldsResponse = await gHLService_V2.GetGhlCustomFieldsAsync();
+                var getFieldsResponse = await gHLService_V2.GetGhlCustomFieldsAsync(getGHLConfiguration);
 
                 if (!getFieldsResponse.IsSuccess || getFieldsResponse.Data == null || !getFieldsResponse.Data.Any())
                 {
