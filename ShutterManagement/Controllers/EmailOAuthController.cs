@@ -37,16 +37,16 @@ public class EmailOAuthController : ControllerBase
 
     [HttpGet("LoginOauth")]
     [Authorize(Roles = "EmailConfigurationEdit")]
-    public IActionResult StartGoogleAuth(string OauthType)
+    public async Task<IActionResult> StartGoogleAuth(string OauthType)
     {
        if(OauthType==EnumValue.GetEnumValue(EmailSendType.Google))
         {
-            var Respose = _googleAuthService.GenerateGoogleOAuthUrl().Result;
+            var Respose = await _googleAuthService.GenerateGoogleOAuthUrl();
             return Ok(Respose);
         }
         else if (OauthType == EnumValue.GetEnumValue(EmailSendType.Microsoft365))
         {
-            var ResponseMS  = mS365Configuration.GetAuthorizationurl().Result;
+            var ResponseMS  = await mS365Configuration.GetAuthorizationurl();
             return Ok(ResponseMS);
         }
         return Ok(new { message = "Invalid OAuth Type" });
