@@ -23,6 +23,7 @@ using System.Reflection;
 using System.Linq.Expressions;
 using Azure;
 using System.Globalization;
+using System.Diagnostics.Contracts;
 
 namespace ShutterManagement.Business.Services
 {
@@ -117,14 +118,13 @@ namespace ShutterManagement.Business.Services
                 FileLogger.Log($"Location id fetched {model.locationId}");
                 if (model.locationId != null)
                 {
-                   // await gHLConfigurationService.GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
+                    // await gHLConfigurationService.GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
                     TenantId = (Guid)LoggedInTenantId;
                     FileLogger.Log($"Tenant id fetched {TenantId}");
                     if (TenantId != null)
                     {
                         IsTenantExists = true;
                         model.IsTaxExemption = true;
-                        model.IsBillingAddressSameAsAddress = true;
                     }
                 }
                 else
@@ -134,9 +134,9 @@ namespace ShutterManagement.Business.Services
                     FileLogger.Log($"Tenant Id id fetched {TenantId}");
                     //model.IsTaxExemption = true;
                 }
-                if(!model.IsTaxExemption)
+                if (!model.IsTaxExemption)
                 {
-                    if(model.TaxExemptionVm.EffectiveDate == null && model.TaxExemptionVm.ExpiryDate == null)
+                    if (model.TaxExemptionVm.EffectiveDate == null && model.TaxExemptionVm.ExpiryDate == null)
                     {
                         responseVm.Message = "Please Fill TaxExemption Details.";
                         return responseVm;
@@ -170,7 +170,26 @@ namespace ShutterManagement.Business.Services
                                 Referral = model.Referral ?? string.Empty,
                                 GHLContactId = model.GHLContactId ?? string.Empty,
                                 //locationId = model.locationId ?? string.Empty,
+                                
                             };
+                            if (!model.IsBillingAddressSameAsAddress)
+                            {
+                                var stateId = dbContext.MstStates.Where(x => x.StateCode.ToLower() == model.BillingAddressVm.StateCode.ToLower().Trim() ||
+                                x.StateName == model.BillingAddressVm.StateCode.ToLower().Trim()).Select(y => y.Id).FirstOrDefault();
+                                ghlContactAdd.BillingAddressVm = new BillingAddressVm
+                                {
+                                    BillingFirstName = model.BillingAddressVm.FirstName ?? "",
+                                    BillingLastName = model.BillingAddressVm.LastName ?? "",
+                                    FirstName = model.BillingAddressVm.FirstName ?? "",
+                                    LastName = model.BillingAddressVm.LastName ?? "",
+                                    Email = model.BillingAddressVm.Email ?? "",
+                                    PhoneNumber = model.BillingAddressVm.PhoneNumber ?? "",
+                                    City = model.BillingAddressVm.City ?? "",
+                                    StateId = stateId != Guid.Empty ? stateId : null,
+                                    ZipCode = model.BillingAddressVm.ZipCode,
+                                    StreetAddress = model.BillingAddressVm.StreetAddress ?? ""
+                                };
+                            }
                             var result = await Update_Contact(ghlContactAdd, LoggedInTenantId);
                             return result;
                         }
@@ -180,160 +199,159 @@ namespace ShutterManagement.Business.Services
                             return responseVm;
                         }
                     }
-                    //for Billing address
-                    if (!model.IsBillingAddressSameAsAddress && model.BillingAddressVm == null)
-                    {
-                        responseVm.Message = "Billing details required.";
-                        return responseVm;
-                    }
-                    //for Tax exemption
-                    if (model.TaxExemptionVm != null && model.TaxExemptionVm.ExpiryDate < model.TaxExemptionVm.EffectiveDate)
-                    {
-                        responseVm.Message = "ExpiryDate must be greater than EffectiveDate.";
-                        return responseVm;
-                    }
-
-                    //generate unique version
-                    int Version = GetAllQuerable().Where(x => x.TenantId == LoggedInTenantId && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt)
-                        .Select(p => (p.ContactUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries).Length == 3 ? Convert.ToInt32(p.ContactUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries)[2]) : 0)).FirstOrDefault();
-                    Version += 1;
-                    var Companycode = tenantService.GetAllQuerable().Where(x => x.TenantId == TenantId && x.IsActive == true && x.IsDelete == false).Select(x => x.Code).FirstOrDefault();
-                    var contactUniqueId = GenerateUniqueId.GenerateUniqueIds(ModuleName.Contact, Companycode, Version);
-
-                    TblContact CreateContact = new TblContact
-                    {
-                        ContactId = Guid.NewGuid(),
-                        ContactType = model.ContactType??"",
-                        FirstName = model.FirstName??"",
-                        LastName = model.LastName ?? "",
-                        Suffix = model.Suffix??"",
-                        // Name = model.Name,
-                        PhoneNumber = model.PhoneNumber ?? "",
-                        Email = model.Email??"",
-                        Website = model.Website ?? "",
-                        Notes = model.Notes ??"",
-                        Referral = model.Referral ?? "",
-                        ContactUniqueId = contactUniqueId ??"",
-                        IsTaxExemption = model.IsTaxExemption,
-                        IsBillingAddressSameAsAddress = model.IsBillingAddressSameAsAddress,
-                        CreatedBy = LoggedInTenantId,
-                        CreatedAt = DateTime.Now,
-                        TenantId = TenantId,
-                        IsActive = true,
-                        IsArchive = false,
-                        IsDelete = false
-                    };
-                    var res = await Add(CreateContact);
-                    if (model.lastAsync != null && model.GHLContactId != null)
-                    {
-                        res.LastSync = model.lastAsync;
-                        res.GhlcontactId = model.GHLContactId??"";
-                        await Update(res);
-                    }
-
-                    if (res.ContactId != Guid.Empty)
-                    {
-                        // Add Billing Address
-                        if (!model.IsBillingAddressSameAsAddress)
+                        //for Billing address
+                        if (!model.IsBillingAddressSameAsAddress && model.BillingAddressVm == null)
                         {
+                            responseVm.Message = "Billing details required.";
+                            return responseVm;
+                        }
+                        //for Tax exemption
+                        if (model.TaxExemptionVm != null && model.TaxExemptionVm.ExpiryDate < model.TaxExemptionVm.EffectiveDate)
+                        {
+                            responseVm.Message = "ExpiryDate must be greater than EffectiveDate.";
+                            return responseVm;
+                        }
 
-                            Guid? stateId = null;
+                        //generate unique version
+                        int Version = GetAllQuerable().Where(x => x.TenantId == LoggedInTenantId && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt)
+                            .Select(p => (p.ContactUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries).Length == 3 ? Convert.ToInt32(p.ContactUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries)[2]) : 0)).FirstOrDefault();
+                        Version += 1;
+                        var Companycode = tenantService.GetAllQuerable().Where(x => x.TenantId == TenantId && x.IsActive == true && x.IsDelete == false).Select(x => x.Code).FirstOrDefault();
+                        var contactUniqueId = GenerateUniqueId.GenerateUniqueIds(ModuleName.Contact, Companycode, Version);
 
-                            // Validate and assign StateId only if it exists in MstState
-                            if (model.BillingAddressVm?.StateId != null &&
-                                model.BillingAddressVm.StateId != Guid.Empty)
-                            {
-                                var isValidState = await dbContext.MstStates
-                                    .AnyAsync(s => s.Id == model.BillingAddressVm.StateId);
-
-                                if (isValidState)
-                                {
-                                    stateId = model.BillingAddressVm.StateId;
-                                }
-                            }
-                            TblAddress address = new TblAddress
-                            {
-                                AddressId = Guid.NewGuid(),
-                                ContactId = res.ContactId,
-                                Label = "Primary Address",
-                                FirstName = model.BillingAddressVm?.FirstName ?? "",
-                                LastName = model.BillingAddressVm?.LastName ??"",
-                                Phone = model.BillingAddressVm?.PhoneNumber??"",
-                                Email = model.BillingAddressVm?.Email??"",
-                                City = model.BillingAddressVm?.City??"",
-                                State = stateId ?? Guid.Empty,
-                                ZipCode = model.BillingAddressVm?.ZipCode??"",
-                                StreetAddress = model.BillingAddressVm?.StreetAddress??"",
-                                CreatedAt = DateTime.Now,
-                                IsActive = true,
-                                IsDelete = false,
-                                TenantId = TenantId,
-                                CreatedBy = AppConstant.LoggedInUserID
-                            };
-                             dbContext.TblAddresses.Add(address);
-                            await dbContext.SaveChangesAsync();
-                            res.PrimaryAddress = address.AddressId;
+                        TblContact CreateContact = new TblContact
+                        {
+                            ContactId = Guid.NewGuid(),
+                            ContactType = model.ContactType ?? "",
+                            FirstName = model.FirstName ?? "",
+                            LastName = model.LastName ?? "",
+                            Suffix = model.Suffix ?? "",
+                            // Name = model.Name,
+                            PhoneNumber = model.PhoneNumber ?? "",
+                            Email = model.Email ?? "",
+                            Website = model.Website ?? "",
+                            Notes = model.Notes ?? "",
+                            Referral = model.Referral ?? "",
+                            ContactUniqueId = contactUniqueId ?? "",
+                            IsTaxExemption = model.IsTaxExemption,
+                            IsBillingAddressSameAsAddress = model.IsBillingAddressSameAsAddress,
+                            CreatedBy = LoggedInTenantId,
+                            CreatedAt = DateTime.Now,
+                            TenantId = TenantId,
+                            IsActive = true,
+                            IsArchive = false,
+                            IsDelete = false
+                        };
+                        var res = await Add(CreateContact);
+                        if (model.lastAsync != null && model.GHLContactId != null)
+                        {
+                            res.LastSync = model.lastAsync;
+                            res.GhlcontactId = model.GHLContactId ?? "";
                             await Update(res);
                         }
 
-                        //Add Tax Exemption
-                        if (!model.IsTaxExemption)
+                        if (res.ContactId != Guid.Empty)
                         {
-                            string arrayString = string.Join(", ", model.TaxExemptionVm?.ExemptionCertificate);
-                            TblTaxExemption taxExemption1 = new TblTaxExemption
+                            // Add Billing Address
+                            if (!model.IsBillingAddressSameAsAddress)
                             {
-                                ContactId = res.ContactId,
-                                ExemptionCertificate = arrayString ??"",
-                                EffectiveDate = model.TaxExemptionVm?.EffectiveDate,
-                                ExpiryDate = model.TaxExemptionVm?.ExpiryDate,
-                                CreatedAt = DateTime.Now,
-                                IsActive = true,
-                                IsDelete = false,
-                            };
-                            await taxExemptionService.Add(taxExemption1);
-                            responseVm.IsSuccess = true;
-                            responseVm.Message = AppConstant.InsertSuccessMsg;
-                        }
-                        if (model.GHLContactId == null)
-                        {
-                            var Checkghlresponse = await gHLConfigurationService.CheckGHLConfiguration(LoggedInTenantId);
-                            if (Checkghlresponse.IsSuccess)
-                            {
-                                var ghlResponse = await SyncWithGHL(res, model);
-                                if (ghlResponse.IsSuccess)
+
+                                Guid? stateId = null;
+
+                                // Validate and assign StateId only if it exists in MstState
+                                if (model.BillingAddressVm?.StateId != null &&
+                                    model.BillingAddressVm.StateId != Guid.Empty)
                                 {
-                                    responseVm.IsSuccess = true;
-                                    responseVm.Message = AppConstant.InsertSuccessMsg + ghlResponse.Message;
+                                    var isValidState = await dbContext.MstStates
+                                        .AnyAsync(s => s.Id == model.BillingAddressVm.StateId);
+
+                                    if (isValidState)
+                                    {
+                                        stateId = model.BillingAddressVm.StateId;
+                                    }
                                 }
-                                else
+                                TblAddress address = new TblAddress
                                 {
-                                    responseVm.IsSuccess = true;
-                                    responseVm.Message = AppConstant.InsertSuccessMsg + ghlResponse.Message;
-                                }
-                            }
-                            if (!Checkghlresponse.IsSuccess)
-                            {
-                                responseVm.IsSuccess = true;
-                                responseVm.Message = AppConstant.InsertSuccessMsg;
-                                FileLogger.Log(Checkghlresponse.Message);
-                                //responseVm.IsSuccess = true;
-                                //responseVm.Message = Checkghlresponse.Message;
+                                    AddressId = Guid.NewGuid(),
+                                    ContactId = res.ContactId,
+                                    Label = "Primary Address",
+                                    FirstName = model.BillingAddressVm?.FirstName ?? "",
+                                    LastName = model.BillingAddressVm?.LastName ?? "",
+                                    Phone = model.BillingAddressVm?.PhoneNumber ?? "",
+                                    Email = model.BillingAddressVm?.Email ?? "",
+                                    City = model.BillingAddressVm?.City ?? "",
+                                    State = stateId ?? null,
+                                    ZipCode = model.BillingAddressVm?.ZipCode ?? "",
+                                    StreetAddress = model.BillingAddressVm?.StreetAddress ?? "",
+                                    CreatedAt = DateTime.Now,
+                                    IsActive = true,
+                                    IsDelete = false,
+                                    TenantId = TenantId,
+                                    CreatedBy = AppConstant.LoggedInUserID
+                                };
+                                dbContext.TblAddresses.Add(address);
+                                await dbContext.SaveChangesAsync();
+                                res.PrimaryAddress = address.AddressId;
+                                await Update(res);
                             }
 
+                            //Add Tax Exemption
+                            if (!model.IsTaxExemption)
+                            {
+                                string arrayString = string.Join(", ", model.TaxExemptionVm?.ExemptionCertificate);
+                                TblTaxExemption taxExemption1 = new TblTaxExemption
+                                {
+                                    ContactId = res.ContactId,
+                                    ExemptionCertificate = arrayString ?? "",
+                                    EffectiveDate = model.TaxExemptionVm?.EffectiveDate,
+                                    ExpiryDate = model.TaxExemptionVm?.ExpiryDate,
+                                    CreatedAt = DateTime.Now,
+                                    IsActive = true,
+                                    IsDelete = false,
+                                };
+                                await taxExemptionService.Add(taxExemption1);
+                                responseVm.IsSuccess = true;
+                                responseVm.Message = AppConstant.InsertSuccessMsg;
+                            }
+                            if (model.GHLContactId == null)
+                            {
+                                var Checkghlresponse = await gHLConfigurationService.CheckGHLConfiguration(LoggedInTenantId);
+                                if (Checkghlresponse.IsSuccess)
+                                {
+                                    var ghlResponse = await SyncWithGHL(res, model);
+                                    if (ghlResponse.IsSuccess)
+                                    {
+                                        responseVm.IsSuccess = true;
+                                        responseVm.Message = AppConstant.InsertSuccessMsg + ghlResponse.Message;
+                                    }
+                                    else
+                                    {
+                                        responseVm.IsSuccess = true;
+                                        responseVm.Message = AppConstant.InsertSuccessMsg + ghlResponse.Message;
+                                    }
+                                }
+                                if (!Checkghlresponse.IsSuccess)
+                                {
+                                    responseVm.IsSuccess = true;
+                                    responseVm.Message = AppConstant.InsertSuccessMsg;
+                                    FileLogger.Log(Checkghlresponse.Message);
+                                    //responseVm.IsSuccess = true;
+                                    //responseVm.Message = Checkghlresponse.Message;
+                                }
+                            }
                         }
-                        
+                        else
+                        {
+                            responseVm.Message = AppConstant.NoDataFound;
+                        }
                     }
                     else
                     {
-                        responseVm.Message = AppConstant.NoDataFound;
+                        responseVm.Message = AppConstant.TenantNotFound;
                     }
                 }
-                else
-                {
-                    responseVm.Message = AppConstant.TenantNotFound;
-                }
-            }
 
+            
             catch (Exception ex)
             {
                 responseVm.Message = AppConstant.ExceptionError + ex.Message;
@@ -362,7 +380,6 @@ namespace ShutterManagement.Business.Services
                     {
                         IsTenantExists = true;
                         model.IsTaxExemption = true;
-                        model.IsBillingAddressSameAsAddress = true;
                     }
                 }
                 else
@@ -410,6 +427,84 @@ namespace ShutterManagement.Business.Services
 
                             await Update(contact); responseVm.IsSuccess = true;
                             responseVm.Message = AppConstant.UpdateSuccessMsg;
+                            if (!model.IsBillingAddressSameAsAddress)
+                            {
+                                var contactBillingAddress = dbContext.TblAddresses
+                                .Where(x => x.ContactId == contact.ContactId && x.AddressId == contact.PrimaryAddress && x.IsDelete == false && x.TenantId == LoggedInTenantId)
+                                .FirstOrDefault();
+
+                                if (contactBillingAddress != null)
+                                {
+                                    Guid? stateId = null;
+
+                                    // Validate and assign StateId only if it exists in MstState
+                                    if (model.BillingAddressVm?.StateId != null &&
+                                        model.BillingAddressVm.StateId != Guid.Empty)
+                                    {
+                                        var isValidState = await dbContext.MstStates
+                                            .AnyAsync(s => s.Id == model.BillingAddressVm.StateId);
+
+                                        if (isValidState)
+                                        {
+                                            stateId = model.BillingAddressVm.StateId;
+                                        }
+                                    }
+
+
+                                    contactBillingAddress.FirstName = model.BillingAddressVm?.FirstName;
+                                    contactBillingAddress.LastName = model.BillingAddressVm?.LastName;
+                                    contactBillingAddress.Phone = model.BillingAddressVm?.PhoneNumber;
+                                    contactBillingAddress.Email = model.BillingAddressVm?.Email;
+                                    contactBillingAddress.City = model.BillingAddressVm?.City;
+                                    contactBillingAddress.State = stateId;
+                                    contactBillingAddress.ZipCode = model.BillingAddressVm?.ZipCode;
+                                    contactBillingAddress.StreetAddress = model.BillingAddressVm?.StreetAddress;
+                                    contactBillingAddress.UpdatedAt = DateTime.Now;
+
+                                    dbContext.TblAddresses.Update(contactBillingAddress);
+                                    await dbContext.SaveChangesAsync();
+                                }
+                                else
+                                {
+                                    Guid? stateId = null;
+
+                                    // Validate and assign StateId only if it exists in MstState
+                                    if (model.BillingAddressVm?.StateId != null &&
+                                        model.BillingAddressVm.StateId != Guid.Empty)
+                                    {
+                                        var isValidState = await dbContext.MstStates
+                                            .AnyAsync(s => s.Id == model.BillingAddressVm.StateId);
+
+                                        if (isValidState)
+                                        {
+                                            stateId = model.BillingAddressVm.StateId;
+                                        }
+                                    }
+                                    TblAddress CreateContactBillingAddress = new TblAddress
+                                    {
+                                        AddressId = Guid.NewGuid(),
+                                        ContactId = contact.ContactId,
+                                        FirstName = model.BillingAddressVm?.FirstName,
+                                        LastName = model.BillingAddressVm?.LastName,
+                                        Phone = model.BillingAddressVm?.PhoneNumber,
+                                        Email = model.BillingAddressVm?.Email,
+                                        City = model.BillingAddressVm?.City,
+                                        State = stateId,
+                                        ZipCode = model.BillingAddressVm?.ZipCode,
+                                        StreetAddress = model.BillingAddressVm?.StreetAddress,
+                                        CreatedAt = DateTime.Now,
+                                        IsActive = true,
+                                        IsDelete = false,
+                                        TenantId = TenantId,
+                                    };
+
+                                    dbContext.TblAddresses.Add(CreateContactBillingAddress);
+                                    await dbContext.SaveChangesAsync();
+
+                                    contact.PrimaryAddress = CreateContactBillingAddress.AddressId;
+                                    await Update(contact);
+                                }
+                            }
                         }
                         else
                         {
@@ -423,8 +518,26 @@ namespace ShutterManagement.Business.Services
                                 PhoneNumber = model.PhoneNumber ?? "",
                                 lastAsync = model.lastAsync,
                                 GHLContactId = model.GHLContactId,
-                                locationId = model.locationId ?? ""
                             };
+                            if (!model.IsBillingAddressSameAsAddress)
+                            {
+                               var stateId = dbContext.MstStates.Where(x => x.StateCode.ToLower() == model.BillingAddressVm.StateCode.ToLower().Trim() 
+                               || x.StateName.ToLower() == model.BillingAddressVm.StateCode.ToLower().Trim()).Select(y => y.Id).FirstOrDefault();
+                                model.BillingAddressVm = new BillingAddressVm
+                                {
+                                    BillingFirstName = model.BillingAddressVm.FirstName,
+                                    BillingLastName = model.BillingAddressVm.LastName,
+                                    FirstName = model.BillingAddressVm.FirstName,
+                                    LastName = model.BillingAddressVm.LastName,
+                                    Email = model.BillingAddressVm.Email,
+                                    PhoneNumber = model.BillingAddressVm.PhoneNumber,
+                                    City = model.BillingAddressVm.City,
+                                    StateId = stateId != Guid.Empty ? stateId : null,
+                                    ZipCode = model.BillingAddressVm.ZipCode,
+                                    StreetAddress = model.BillingAddressVm.StreetAddress
+                                };
+
+                            }
 
                             var res = await Create_Contact(contactCreate,LoggedInTenantId);
                         }
@@ -1024,38 +1137,48 @@ namespace ShutterManagement.Business.Services
             {
                 try
                 {
+                    bool IsbillingAddressSameAsAddress = true;
+                    if (contactData.full_address != null)
+                    {
+                        IsbillingAddressSameAsAddress = false;
+                    }
                     var contact = new Sp_Contact
                     {
-                        ContactType = contactData.contact_type??"",
-                        FirstName = contactData.first_name??"",
-                        LastName = contactData.last_name??"",
-                        Email = contactData.email??"",
+                        ContactType = contactData.contact_type ?? "",
+                        FirstName = contactData.first_name ?? "",
+                        LastName = contactData.last_name ?? "",
+                        Email = contactData.email ?? "",
                         PhoneNumber = contactData.phone ?? "",
-                        locationId = contactData?.location?.id??"",
-                        GHLContactId = contactData?.contact_id??"",
+                      //  locationId = contactData?.location?.id ?? "",
+                        GHLContactId = contactData?.contact_id ?? "",
                         lastAsync = DateTime.Now,
+                        IsBillingAddressSameAsAddress = IsbillingAddressSameAsAddress,
+                        IsTaxExemption = true,
                     };
-                    //if (contactData.location != null)
-                    //{
-                    //    contact.BillingAddressVm = new BillingAddressVm
-                    //    {
-                    //        BillingFirstName = contactData.first_name,
-                    //        BillingLastName = contactData.last_name,
-                    //        FirstName = contactData.first_name,
-                    //        LastName = contactData.last_name,
-                    //        Email = contactData.email,
-                    //        PhoneNumber = contactData.phone,
-                    //        City = contactData.location.city,
-                    //        //State = contactData.location.state,
-                    //        ZipCode = contactData.location.postalCode,
-                    //        StreetAddress = contactData.location.address
-                    //    };
-                    
-                    await gHLConfigurationService.GetGHLConfiguration(contactData.WebhookTenantId);
-                    var res = await Create_Contact(contact,Guid.Parse(contactData.WebhookTenantId));
-                    responseVm.IsSuccess = true;
-                    responseVm.Message = AppConstant.InsertSuccessMsg;
-                }
+                    if (contactData.full_address != null)
+                    {
+                        var stateId = dbContext.MstStates.Where(x => x.StateCode == contactData.state).FirstOrDefault();
+                        contact.BillingAddressVm = new BillingAddressVm
+                        {
+                            BillingFirstName = contactData.first_name,
+                            BillingLastName = contactData.last_name,
+                            FirstName = contactData.first_name,
+                            LastName = contactData.last_name,
+                            Email = contactData.email,
+                            PhoneNumber = contactData.phone,
+                            City = contactData.city,
+                            StateCode = contactData.state ?? "",
+                            ZipCode = contactData.postal_code,
+                            StreetAddress = contactData.StreetAddress
+                        };
+
+                    }
+                        await gHLConfigurationService.GetGHLConfiguration(contactData.WebhookTenantId);
+                        var res = await Create_Contact(contact, Guid.Parse(contactData.WebhookTenantId));
+                        responseVm.IsSuccess = true;
+                        responseVm.Message = AppConstant.InsertSuccessMsg;
+                    }
+                
                 catch (Exception ex)
                 {
                     FileLogger.Log("Error while creating contact: {ExceptionMessage}", ex.Message);
@@ -1070,6 +1193,11 @@ namespace ShutterManagement.Business.Services
             {
                 try
                 {
+                    bool IsbillingAddressSameAsAddress = true;
+                    if (contactData.full_address != null)
+                    {
+                        IsbillingAddressSameAsAddress = false;
+                    }
                     var contact = new UpdateContact
                     {
                         ContactType = contactData.contact_type,
@@ -1080,24 +1208,27 @@ namespace ShutterManagement.Business.Services
                         locationId = contactData.location.id,
                         GHLContactId = contactData.contact_id,
                         lastAsync = DateTime.Now,
+                        IsBillingAddressSameAsAddress = IsbillingAddressSameAsAddress,
+                        IsTaxExemption = true,
                     };
-                    //if (contactData.location != null)
-                    //{
-                    //    contact.BillingAddressVm = new BillingAddressVm
-                    //    {
-                    //        BillingFirstName = contactData.first_name,
-                    //        BillingLastName = contactData.last_name,
-                    //        FirstName = contactData.first_name,
-                    //        LastName = contactData.last_name,
-                    //        Email = contactData.email,
-                    //        PhoneNumber = contactData.phone,
-                    //        City = contactData.location.city,
-                    //        StateName = contactData.location.state,
-                    //        ZipCode = contactData.location.postalCode,
-                    //        StreetAddress = contactData.location.address
-                    //    };
-                    //}
-                    await gHLConfigurationService.GetGHLConfiguration(contactData.WebhookTenantId);
+                    if (contactData.full_address != null)
+                    {
+                        var stateId = dbContext.MstStates.Where(x => x.StateCode == contactData.state).FirstOrDefault();
+                        contact.BillingAddressVm = new BillingAddressVm
+                        {
+                            BillingFirstName = contactData.first_name,
+                            BillingLastName = contactData.last_name,
+                            FirstName = contactData.first_name,
+                            LastName = contactData.last_name,
+                            Email = contactData.email,
+                            PhoneNumber = contactData.phone,
+                            City = contactData.city,
+                            StateCode = contactData.state ?? "",
+                            ZipCode = contactData.postal_code,
+                            StreetAddress = contactData.StreetAddress
+                        };
+                    }
+                        await gHLConfigurationService.GetGHLConfiguration(contactData.WebhookTenantId);
                     var res = await Update_Contact(contact, Guid.Parse(contactData.WebhookTenantId));
                     var AllSubetenants = tenantService.GetAllQuerable().Where(x => x.ParentTenantId.ToString() ==
                     contactData.WebhookTenantId && x.IsActive == true && x.IsDelete == false && x.IsGhlconfigSameAsTenant == true)
