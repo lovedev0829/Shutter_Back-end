@@ -1,120 +1,186 @@
-﻿using ShutterManagement.Core.Common;
-using ShutterManagement.Core.ViewModels.Response;
+﻿using Azure;
+using Newtonsoft.Json.Linq;
+using ShutterManagement.Business.Interfaces;
+using ShutterManagement.Core;
+using ShutterManagement.Core.Common;
 using ShutterManagement.Core.ViewModels;
+using ShutterManagement.Core.ViewModels.Response;
+using ShutterManagement.DAL.Context;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using ShutterManagement.Core;
-using Azure;
-using ShutterManagement.Business.Interfaces;
-using ShutterManagement.DAL.Context;
 
 namespace ShutterManagement.Business.Services
 {
     public class EmailSendHelperService 
     {
         private readonly MS365Configuration mS365Configuration;
+        private readonly ITemplatesService templatesService;
         private readonly GoogleAuthService googleAuthService;
         private readonly IEmailConfigurationService emailConfigurationService;
         private readonly EmailTypeService emailTypeService;
         private readonly ClaimsProperty claimsProperty;
 
-        public EmailSendHelperService(MS365Configuration mS365Configuration,GoogleAuthService googleAuthService,
+        public EmailSendHelperService(MS365Configuration mS365Configuration,ITemplatesService templatesService,GoogleAuthService googleAuthService,
             IEmailConfigurationService emailConfigurationService, EmailTypeService emailTypeService, ClaimsProperty claimsProperty)
         {
             this.mS365Configuration = mS365Configuration;
+            this.templatesService = templatesService;
             this.googleAuthService = googleAuthService;
             this.emailConfigurationService = emailConfigurationService;
             this.emailTypeService = emailTypeService;
             this.claimsProperty = claimsProperty;
         }
-        public async Task<EmailConfigurationVm?> GetEmailConfigurationByTypeAsync()
+
+
+        public async Task<IResponseVm<string>> GetTemplateContent(EmailTemplateType emailTemplateType, dynamic dataObject)
         {
-            IResponseVm<EmailConfigurationVm?> configResponse = new ResponseVm<EmailConfigurationVm?>();
-            var emailConfig = (await emailConfigurationService.GetAll())
-                   .FirstOrDefault(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
-            var emailType = (await emailTypeService.GetAll())
-                    .FirstOrDefault(s => s.Id == emailConfig?.EmailType)?.Name ?? "";
-                   
-
-            if (emailType.ToLower() == EnumValue.GetEnumValue(EmailSendType.Google).ToLower())
+            IResponseVm<string> response = new ResponseVm<string>();
+            try
             {
-                configResponse = await googleAuthService.ValidateAndRefreshGoogleEmailOauthAccessToken(emailConfig);
-            }
-            else if (emailType.ToLower() == EnumValue.GetEnumValue(EmailSendType.Microsoft365).ToLower())
-            {
-                configResponse = await mS365Configuration.ValidateAndRefreshMSEmailOauthAccessToken(emailConfig);
-            }
-            else if(emailType.ToLower() == EnumValue.GetEnumValue(EmailSendType.SMTP))
-            {
-                configResponse = SuccessResponse(emailConfig, emailType);
-            }
-            else
-            {
-                configResponse.IsSuccess = false;
-                configResponse.Message = "Unsupported email type.";
-                return null;
-            }
-
-            if (!configResponse.IsSuccess || configResponse.Data == null)
-            {
-                configResponse.IsSuccess = false;
-                configResponse.Message = configResponse.Message ?? "Email configuration not found. Please add configurations.";
-                return null;
-            }
-
-            return configResponse.Data;
-        }
-        private IResponseVm<EmailConfigurationVm> SuccessResponse(TblEmailConfiguration emailConfig, string emailType)
-        {
-            return new ResponseVm<EmailConfigurationVm>
-            {
-                IsSuccess = true,
-                Data = new EmailConfigurationVm
+                var Template = (await templatesService.GetAll())
+                        .FirstOrDefault(x => x.IsDelete == false &&
+                            x.TemplateName?.ToLower() == EnumValue.GetEnumValue(emailTemplateType).ToLower());
+                if (Template == null)
                 {
-                    Id = emailConfig.Id,
-                    SmtpServer = emailConfig.SmtpServer,
-                    Port = emailConfig.Port,
-                    Username = emailConfig.Username,
-                    Password = emailConfig.Password,
-                    UseSsl = emailConfig.UseSsl,
-                    ReplyTo = emailConfig.ReplyTo,
-                    EmailType = emailConfig.EmailType,
-                    EmailTypeName = emailType,
-                    From = emailConfig.From,
-                    AccessToken = emailConfig.AccessToken,
-                    TenantId = emailConfig.TenantId,
-                    IsActive = emailConfig.IsActive
+                    response.Message = "Email template not found. Please add the template.";
+                    //throw new Exception("Email template not found. Please add the template.");
+                    return response;
                 }
-            };
-        }
-        public async Task<IResponseVm<string>> WelcomeEmailWithOauth(string Email, string content)
-        {
+                var emailContent = PlaceholderReplace(Template.TemplateValue, dataObject);
+                response.Data = emailContent ?? "";
 
-            // store emailconfig response EmailConfigurationVm 
-            var lowerEmailType = EmailType.ToLower();
-            EmailConfigurationVm config = await GetEmailConfigurationByTypeAsync(lowerEmailType);
+            }
+            catch (Exception ex)
+            {
+                response.Message = "Error in GetTemplateContent: " + ex.Message;
+                FileLogger.Log(claimsProperty.GetTenantId().ToString() + " Error in GetTemplateContent: " + ex.Message);
+            }
+            return response;
+        }
+        public async Task<IResponseVm<string>> SendEmailWithReplacedContent(EmailTemplateType emailTemplateType, dynamic dataObject)
+        {
+            IResponseVm<string> response = new ResponseVm<string>();
+            try
+            {
+                var emailContent = await GetTemplateContent(emailTemplateType,dataObject);
+
+                response = await GetEmailConfigAndSendEmail(dataObject.Email, emailContent ,AppConstant.Sub_WelcomeEmail );
+            }
+            catch (Exception ex)
+            {
+                response.Message = "Error in GetTemplateContentWithValues: " + ex.Message;
+                FileLogger.Log(claimsProperty.GetTenantId().ToString() + " Error in GetTemplateContentWithValues: " + ex.Message);
+            }
+            return response;
+        }
+
+        public async Task<IResponseVm<string>> GetEmailConfigAndSendEmail(string ToEmail, string emailContent, string subject = "", string replyTo = "", List<EmailAttachments> emailAttachments = null)
+        {
+            IResponseVm<string> response = new ResponseVm<string>();
+            try
+            {
+                var emailTypeconfiguration = await GetEmailConfigurationByType();
+
+            if (!emailTypeconfiguration.IsSuccess)
+            {
+                response.Message = emailTypeconfiguration.Message ?? "Failed to get email configuration.";
+                return response;
+            }
+
 
             OAuthEmailRequest vm = new OAuthEmailRequest
             {
-                FromEmail = config?.Username ?? "",
-                ToEmail = Email,
-                Subject = AppConstant.Sub_WelcomeEmail,
-                Body = content,
-                UserEmail = config.Username ?? "",
-                Username = config.Username ?? "",
-                SmtpServer = config.SmtpServer ?? "",
-                Port = config.Port ?? 0,
-                AccessToken = config.AccessToken ?? "",
-                Password = config.Password ?? "",
-                UseSsl = config.UseSsl ?? true,
-                EmailType = config.EmailTypeName ?? "",
-                Attachments = null
+                FromEmail = emailTypeconfiguration.Data.Username ?? "",
+                ToEmail = ToEmail,
+                Subject = subject,
+                Body = emailContent,
+                ReplyToEmail = string.IsNullOrEmpty(replyTo) ? emailTypeconfiguration.Data.Username : replyTo,
+                UserEmail = emailTypeconfiguration.Data.Username ?? "",
+                Username = emailTypeconfiguration.Data.Username ?? "",
+                SmtpServer = emailTypeconfiguration.Data.SmtpServer ?? "",
+                Port = emailTypeconfiguration.Data.Port ?? 0,
+                AccessToken = emailTypeconfiguration.Data.AccessToken ?? "",
+                Password = emailTypeconfiguration.Data.Password ?? "",
+                UseSsl = emailTypeconfiguration.Data.UseSsl ?? true,
+                EmailType = emailTypeconfiguration.Data.EmailTypeName ?? "",
+                Attachments = emailAttachments
             };
+            response = await EmailHelper.SendEmail(vm);
+            }
+            catch (Exception ex)
+            {
+                response.Message = "Error in GetTemplateContentWithValues: " + ex.Message;
+                FileLogger.Log(claimsProperty.GetTenantId().ToString() + " Error in GetTemplateContentWithValues: " + ex.Message);
+            }
+            return response;
+        }
+        public async Task<IResponseVm<EmailConfigurationVm>> GetEmailConfigurationByType()
+        {
+            IResponseVm<EmailConfigurationVm?> configResponse = new ResponseVm<EmailConfigurationVm?>();
+            try
+            {
+                var emailConfig = (await emailConfigurationService.GetAll())
+                       .FirstOrDefault(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
+                var emailType = (await emailTypeService.GetAll())
+                        .FirstOrDefault(s => s.Id == emailConfig?.EmailType)?.Name ?? "";
 
-            return await EmailHelper.SendEmailWithOAuth(vm);
+
+                if (emailType.ToLower() == EnumValue.GetEnumValue(EmailSendType.Google).ToLower())
+                {
+                    configResponse = await googleAuthService.ValidateAndRefreshGoogleEmailOauthAccessToken(emailConfig, emailType);
+                }
+                else if (emailType.ToLower() == EnumValue.GetEnumValue(EmailSendType.Microsoft365).ToLower())
+                {
+                    configResponse = await mS365Configuration.ValidateAndRefreshMSEmailOauthAccessToken(emailConfig, emailType);
+                }
+                else if (emailType.ToLower() == EnumValue.GetEnumValue(EmailSendType.SMTP))
+                {
+                    configResponse = EmailConfigurationVm.ConfigResponse(emailConfig, emailType);
+                }
+                else
+                {
+                    FileLogger.Log(claimsProperty.GetTenantId().ToString() + " Unsupported email type.");
+                    configResponse.Message = "Unsupported email type.";
+                }
+            }
+            catch (Exception ex) {
+                configResponse.Message = ex.Message;
+                FileLogger.Log(claimsProperty.GetTenantId().ToString() + " Error in Fetch Email Config: " + ex.Message);
+            }
+            return configResponse;
+        }
+
+        public string PlaceholderReplace(string content, dynamic dataObject)
+        {
+            try
+            {
+                const string pattern = "{{.*?}}";
+                var matches = Regex.Matches(content ?? string.Empty, pattern);
+                foreach (Match match in matches)
+                {
+                    var placeholder = match.Value;
+                    var property = placeholder.Replace("{{", "").Replace("}}", "");
+                    object val = GetProperty.GetColumnValue(dataObject, property);
+
+                    if (val != null)
+                        content = content.Replace(placeholder, val.ToString() ?? string.Empty);
+
+                    else
+                        content = content.Replace(placeholder, string.Empty);
+                }
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Log(claimsProperty.GetTenantId().ToString() + " Error in PlaceholderReplace: " + ex.Message);
+                //throw new Exception("Error in PlaceholderReplace: " + ex.Message);
+            }
+
+            return content;
         }
     }
 }

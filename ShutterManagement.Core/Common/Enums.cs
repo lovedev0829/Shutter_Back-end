@@ -165,6 +165,7 @@ namespace ShutterManagement.Core.Common
         InvoicePDF,
         [EnumMember(Value = "PaymentConfirmation")]
         PaymentConfirmation,
+        ForgotPassword,
        
     }
 

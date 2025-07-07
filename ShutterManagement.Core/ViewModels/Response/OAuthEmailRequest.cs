@@ -26,7 +26,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? Password { get; set; }
 
         public bool UseSsl { get; set; }
-        public List<EmailAttachments>? Attachments { get; set; }
+        public List<EmailAttachments>? Attachments { get; set; } = new List<EmailAttachments>();
     }
     public class EmailAttachments
     {

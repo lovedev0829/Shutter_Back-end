@@ -207,7 +207,7 @@ namespace ShutterManagement.Business.Services
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.InsertSuccessMsg;
 
-                await SendWelcomeEmailAsync(model);
+                await SendWelcomeEmail(model);
             }
             catch (Exception ex)
             {
@@ -216,47 +216,7 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-
-        public async Task SendWelcomeEmailAsync(CreateTenant model)
-        {
-            try
-            {
-                var tenant =  dbContext.TblTenants
-                    .FirstOrDefault(x => x.IsDelete==false && x.TenantId == claimsProperty.GetTenantId());
-
-                var tenantInfo = tenantBrandingService.GetAllQuerable()
-                    .FirstOrDefault(x => x.Id == tenant.BrandingInfo && x.IsActive==true);
-
-                var welcomeModel = new WelcomeEmailModel
-                {
-                    Name = $"{model.FirstName} {model.LastName ?? ""}{model.Suffix ?? ""}".Trim(),
-                    UserName = model.Email ?? "",
-                    Password = model.Password ?? "",
-                    CompanyName = model?.CompanyName ?? "",
-                    Logo = model?.Logo ?? "",
-                    loginUrl = $"{AppConstant.UIBaseURL}{model?.Code}" ?? "",
-                    color = model?.PrimaryColor ?? ""
-                };
-
-                var template =  dbContext.TblTemplates
-                    .FirstOrDefault(x => x.IsDelete==false && x.TemplateCategory.ToLower() == EnumValue.GetEnumValue(EmailTemplateType.WelcomeEmail).ToLower());
-
-                var emailContent = EmailHelper.ReplacePlaceholdersForlWelcomeEmail(template?.TemplateValue, welcomeModel);
-                var emailtypeId = dbContext.TblEmailConfigurations.Where(s => s.TenantId == claimsProperty.GetTenantId() && s.IsDelete == false && s.IsActive == true).Select(p => p.EmailType).FirstOrDefault();
-
-                var emailType = dbContext.TblEmailTypes.Where(x => x.Id == emailtypeId).Select(x => x.Name).FirstOrDefault();
-                await emailSendHelperService.WelcomeEmailWithOauth(model.Email, emailContent, emailType);
-
-              
-
-
-            }
-            catch (Exception ex)
-            {
-                FileLogger.Log($"Error sending welcome email.{ex}");
-            }
-        }
-
+       
 
         public async Task<IResponseVm<string>> SubTenantUpdate(UpdateSubTenant model)
         {
@@ -553,6 +513,29 @@ namespace ShutterManagement.Business.Services
 
         }
 
+        private async Task<IResponseVm<string>> SendWelcomeEmail(CreateTenant model)
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+            try
+            {
+                var welcomeModel = new WelcomeEmailModel
+                {
+                    Name = $"{model.FirstName} {model.LastName ?? ""} {model.Suffix ?? ""}".Trim(),
+                    UserName = model.Email ?? "",
+                    Password = model.Password ?? "",
+                    CompanyName = model?.CompanyName ?? "",
+                    Logo = model?.Logo ?? "",
+                    loginUrl = $"{AppConstant.UIBaseURL}" ?? "",
+                    color = model?.PrimaryColor ?? ""
+                };
+                responseVm = await emailSendHelperService.SendEmailWithReplacedContent(EmailTemplateType.WelcomeEmail, welcomeModel);
+            }
+            catch (Exception ex)
+            {
+                responseVm.Message = ("Welcome email failed: " + ex.Message);
+            }
+            return responseVm;
+        }
 
     }
 }
