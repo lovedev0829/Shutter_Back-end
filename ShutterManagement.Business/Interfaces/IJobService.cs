@@ -25,13 +25,13 @@ namespace ShutterManagement.Business.Interfaces
 
         Task<IResponseVm<List<GetAllJobsSubtenant_tenant>>> GetAllJobsTenant_SubTenant(Pagination filter);
 
-        Task<IResponseVm<List<Opportunity>>> SyncOpportunitiesFromGhl(Guid? LoggedInTenantId = null);
+        Task<IResponseVm<List<Opportunity>>> SyncOpportunitiesFromGhl(GetGHLConfiguration getGHLConfiguration, Guid? LoggedInTenantId = null);
         Task<IResponseVm<string>> UpdateOpportunityFromGHL(GHLOpportunityTrigger opportunitydata);
         Task<IResponseVm<string>> OpportunityFromGHL(GHLOpportunityTrigger opportunitydata);
 
         //Task<IResponseVm<string>> GetAndSaveContactsAsync();
 
-        Task<IResponseVm<string>> UpdateEstimateUrlInGhlOnly(TblJob job, string newEstimateUrl);
+        Task<IResponseVm<string>> UpdateEstimateUrlInGhlOnly(TblJob job, string newEstimateUrl ,decimal Grandtotal);
         Task<IResponseVm<string>> UpdateJobPowderCoatColor(Guid? JobId, Guid? powderCoatColorId);
     }
 }

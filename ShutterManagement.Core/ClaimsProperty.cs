@@ -1,7 +1,11 @@
 ﻿using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using ShutterManagement.Core;
+using ShutterManagement.Core.Common;
+using ShutterManagement.DAL.Context;
 
 namespace ShutterManagement.Business
 {
@@ -92,6 +96,45 @@ namespace ShutterManagement.Business
             AppConstant.LoggedInCompanyCode = value;
             return value;
         }
+
+
+        public async Task SetGHLConfigurationinClaims(TblGhlconfiguration ghlConfiguration)
+        {
+            if (ghlConfiguration == null)
+                return;
+
+            var identity = (ClaimsIdentity)httpContext.HttpContext?.User.Identity!;
+            var claims = identity.Claims.ToList();
+
+            // Remove existing GHL claims
+            claims.RemoveAll(c =>
+                c.Type == "GHLAccessToken" ||
+                c.Type == "GHLRefreshToken" ||
+                c.Type == "GHLLocationId" ||
+                c.Type == "GHLPipelineId" ||
+                c.Type == "GHLCalendarName");
+
+            // Add new claims
+            claims.Add(new Claim("GHLAccessToken", ghlConfiguration.AccessToken ?? ""));
+            claims.Add(new Claim("GHLRefreshToken", ghlConfiguration.RefreshToken ?? ""));
+            claims.Add(new Claim("GHLLocationId", ghlConfiguration.LocationId ?? ""));
+            claims.Add(new Claim("GHLPipelineId", ghlConfiguration.PipelineId ?? ""));
+            claims.Add(new Claim("GHLCalendarName", ghlConfiguration.CalendarName ?? ""));
+
+            var newIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            var newPrincipal = new ClaimsPrincipal(newIdentity);
+
+            await httpContext.HttpContext!.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, newPrincipal);
+        }
+
+        public string? GetGHLAccessToken() =>
+       httpContext.HttpContext?.User.FindFirst("GHLAccessToken")?.Value;
+
+        public string? GetGHLLocationId() =>
+            httpContext.HttpContext?.User.FindFirst("GHLLocationId")?.Value;
+
+        public string? GetGHLPipelineId() =>
+            httpContext.HttpContext?.User.FindFirst("GHLPipelineId")?.Value;
 
         //public bool IsTenant()
         //{

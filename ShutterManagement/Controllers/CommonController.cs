@@ -775,7 +775,8 @@ namespace ShutterManagement.Controllers
         [Route("GetAllGHLContact")]
         public async Task<IActionResult> GetAllGHLContact()
         {
-            var result = await ghlService.GetContactsAsync();
+            var ghldetails = await gHLConfiguration.GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
+            var result = await ghlService.GetContactsAsync(ghldetails.Data);
             return Ok(result);
         }
 
@@ -784,8 +785,8 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> GetPipeline()
         {
             // var pipelineData = await ghlService.GetAndSaveDefaultPipelineAndStage();
-            await gHLConfiguration.GetGHLConfiguration(AppConstant.LoggedInUserID.ToString());  
-            var pipelineData_v2 = await gHLService_V2.GetAllPipelinesWithStagesAsync();
+            var ghldetails= await gHLConfiguration.GetGHLConfiguration(claimsProperty.GetTenantId().ToString());  
+            var pipelineData_v2 = await gHLService_V2.GetAllPipelinesWithStagesAsync(ghldetails?.Data);
 
             if (pipelineData_v2 == null)
             {
@@ -809,9 +810,10 @@ namespace ShutterManagement.Controllers
         {
             var Tenantid = claimsProperty.GetTenantId();
             var res = await gHLConfiguration.CheckGHLConfiguration(Tenantid);
+            var ghlConfigDetails = await gHLConfiguration.GetGHLConfiguration(Tenantid.ToString());
             if (res.IsSuccess)
             {
-                var result = await ghlService.GetGHLStages();
+                var result = await ghlService.GetGHLStages(ghlConfigDetails.Data);
                 return Ok(result);
             }
             return Ok(res);
@@ -822,8 +824,8 @@ namespace ShutterManagement.Controllers
         [Route("GetOpportunity")]
         public async Task<IActionResult> GetOpportunity()
         {
-            var result = await ghlService.GetOpportunitiesFromGhl();
-            return Ok(result);
+            //var result = await ghlService.GetOpportunitiesFromGhl();
+            return Ok();
         }
 
 
@@ -833,11 +835,11 @@ namespace ShutterManagement.Controllers
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
             var LoggedInTenantId = claimsProperty.GetTenantId();
-             await gHLConfiguration.GetGHLConfiguration(LoggedInTenantId.ToString());
+            var ghlConfigDetails = await gHLConfiguration.GetGHLConfiguration(LoggedInTenantId.ToString());
             var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration(LoggedInTenantId);
             if (Checkghlresponse.IsSuccess)
             {
-                var pipelineResult = await gHLService_V2.GetAndSaveDefaultPipelineAndStage(LoggedInTenantId);
+                var pipelineResult = await gHLService_V2.GetAndSaveDefaultPipelineAndStage(ghlConfigDetails?.Data,LoggedInTenantId);
                 var CheckStageMapping = await gHLConfiguration.CheckStageMapping(LoggedInTenantId);
                 if (!CheckStageMapping.IsSuccess)
                 {
@@ -856,7 +858,7 @@ namespace ShutterManagement.Controllers
                         FileLogger.Log("ContactSync", $"Completed. Message: {contact.Message}");
 
                         FileLogger.Log("SyncOpportunitiesFromGhl", "Started");
-                        var opportunity = await jobService.SyncOpportunitiesFromGhl(LoggedInTenantId);
+                        var opportunity = await jobService.SyncOpportunitiesFromGhl(ghlConfigDetails.Data,LoggedInTenantId);
                         FileLogger.Log("SyncOpportunitiesFromGhl", $"Completed. Message: {opportunity.Message}");
 
                         FileLogger.Log("AppointmentSync", "Started");
@@ -864,11 +866,11 @@ namespace ShutterManagement.Controllers
                         FileLogger.Log("AppointmentSync", $"Completed. Message: {appointment.Message}");
 
                         FileLogger.Log("GetUsersByCalendarIdAsync", "Started");
-                        var users = await gHLService_V2.GetUsersByCalendarIdAsync(LoggedInTenantId);
+                        var users = await gHLService_V2.GetUsersByCalendarIdAsync(ghlConfigDetails?.Data, LoggedInTenantId);
                         FileLogger.Log("GetUsersByCalendarIdAsync", $"Completed. Message: {users.Message}");
 
                         FileLogger.Log("GetAndSaveGhlCustomeFields", "Started");
-                        var Customfields = await ghlCustomFieldsService.SaveGhlCustomFieldsAsync(LoggedInTenantId);
+                        var Customfields = await ghlCustomFieldsService.SaveGhlCustomFieldsAsync(ghlConfigDetails.Data,LoggedInTenantId);
                         FileLogger.Log("GetAndSaveGhlCustomeFields", $"Completed. Message: {users.Message}");
 
                         var syncEnd = DateTime.Now;
@@ -936,14 +938,14 @@ namespace ShutterManagement.Controllers
         {
 
             var TenantId = claimsProperty.GetTenantId();
-            await gHLConfiguration.GetGHLConfiguration(TenantId.ToString());
+            var configdetails =  await gHLConfiguration.GetGHLConfiguration(TenantId.ToString());
             // var authorizationUrl = await gHLService_V2.GetUsersAsync();
 
 
             var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration(TenantId);
             if (Checkghlresponse.IsSuccess)
             {
-                var users = await gHLService_V2.GetUsersByCalendarIdAsync(TenantId);
+                var users = await gHLService_V2.GetUsersByCalendarIdAsync(configdetails?.Data,TenantId);
                 users.Data = users.Data = null;
                 return Ok(users);
             }
@@ -955,8 +957,8 @@ namespace ShutterManagement.Controllers
         [Route("GHLAppointment")]
         public async Task<IActionResult> GHLAppointment(GHLAppointmentAdd appointment)
         {
-            await gHLConfiguration.GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
-            var accessToken = await gHLService_V2.CreateAppointmentAsync(appointment);
+            var ghlconfigdetails = await gHLConfiguration.GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
+            var accessToken = await gHLService_V2.CreateAppointmentAsync(ghlconfigdetails?.Data,appointment);
             return Ok(accessToken);
 
         }
@@ -1008,7 +1010,8 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> GetallStagesMapping()
         {
             var tenantId = claimsProperty.GetTenantId();
-            var pipelineResult = await gHLService_V2.GetAndSaveDefaultPipelineAndStage(tenantId);
+            var ghlconfiDetails = await gHLConfiguration.GetGHLConfiguration(tenantId.ToString());
+            var pipelineResult = await gHLService_V2.GetAndSaveDefaultPipelineAndStage(ghlconfiDetails.Data, tenantId);
             var result = await gHLConfiguration.GetGHLStagesMappings(tenantId);
 
             return Ok(result);
@@ -1029,11 +1032,11 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> GetAllGHL_Users()
         {
             var LoggedInTenantId = claimsProperty.GetTenantId();
-            await gHLConfiguration.GetGHLConfiguration(LoggedInTenantId.ToString());
+            var ghlconfigdetails =  await gHLConfiguration.GetGHLConfiguration(LoggedInTenantId.ToString());
             var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration(LoggedInTenantId);
             if (Checkghlresponse.IsSuccess)
             {
-                var result = await gHLService_V2.GetGHLUsersByCalendarId(LoggedInTenantId);
+                var result = await gHLService_V2.GetGHLUsersByCalendarId(ghlconfigdetails.Data,LoggedInTenantId);
                 return Ok(result);
             }
             else
@@ -1074,9 +1077,9 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> GetAll_Custom_field()
         {
             var LoggedInTenantId = claimsProperty.GetTenantId();
-            await gHLConfiguration.GetGHLConfiguration(LoggedInTenantId.ToString());
-            var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration(LoggedInTenantId);
-            var Customfields = await ghlCustomFieldsService.SaveGhlCustomFieldsAsync(claimsProperty.GetTenantId());
+            var ghlconfigdetails =  await gHLConfiguration.GetGHLConfiguration(LoggedInTenantId.ToString());
+            var claimsvalue = claimsProperty.GetGHLAccessToken();
+            var Customfields = await ghlCustomFieldsService.SaveGhlCustomFieldsAsync(ghlconfigdetails.Data,claimsProperty.GetTenantId());
             return Ok(Customfields);
 
         }

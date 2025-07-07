@@ -65,119 +65,119 @@ namespace ShutterManagement.GHL.Services
             }
         }
 
-        public async Task<IResponseVm<string>> GetAndSaveDefaultPipelineAndStage()
-        {
-            IResponseVm<string> responseVm = new ResponseVm<string>();
-            try
-            {
+        //public async Task<IResponseVm<string>> GetAndSaveDefaultPipelineAndStage()
+        //{
+        //    IResponseVm<string> responseVm = new ResponseVm<string>();
+        //    try
+        //    {
 
-                var pipelineResponse = await GetAllPipelinesWithStagesAsync();
+        //        var pipelineResponse = await GetAllPipelinesWithStagesAsync();
 
-                if (pipelineResponse?.Pipelines == null || !pipelineResponse.Pipelines.Any())
-                {
-                    responseVm.IsSuccess = false;
-                    responseVm.Message = "No pipelines found.";
-                    return responseVm;
-                }
+        //        if (pipelineResponse?.Pipelines == null || !pipelineResponse.Pipelines.Any())
+        //        {
+        //            responseVm.IsSuccess = false;
+        //            responseVm.Message = "No pipelines found.";
+        //            return responseVm;
+        //        }
 
-                string userProvidedPipelineNameOrId = AppConstant.GHL_PipelineId;
+        //        string userProvidedPipelineNameOrId = AppConstant.GHL_PipelineId;
 
-                var targetPipeline = pipelineResponse.Pipelines
-                    .FirstOrDefault(p => p.Id.Contains(userProvidedPipelineNameOrId) || p.Name.Contains(userProvidedPipelineNameOrId));
+        //        var targetPipeline = pipelineResponse.Pipelines
+        //            .FirstOrDefault(p => p.Id.Contains(userProvidedPipelineNameOrId) || p.Name.Contains(userProvidedPipelineNameOrId));
 
-                if (targetPipeline == null)
-                {
-                    responseVm.IsSuccess = false;
-                    responseVm.Message = "Target pipeline not found.";
-                    return responseVm;
-                }
+        //        if (targetPipeline == null)
+        //        {
+        //            responseVm.IsSuccess = false;
+        //            responseVm.Message = "Target pipeline not found.";
+        //            return responseVm;
+        //        }
 
-                if (targetPipeline?.Stages == null || !targetPipeline.Stages.Any())
-                {
-                    responseVm.IsSuccess = false;
-                    responseVm.Message = "Target pipeline has no stages.";
-                    return responseVm;
-                }
+        //        if (targetPipeline?.Stages == null || !targetPipeline.Stages.Any())
+        //        {
+        //            responseVm.IsSuccess = false;
+        //            responseVm.Message = "Target pipeline has no stages.";
+        //            return responseVm;
+        //        }
 
-                var existingStages = dBContext.TblGhlStages
-                    .Where(x => x.GhlPipelineId == targetPipeline.Id)
-                    .ToList();
+        //        var existingStages = dBContext.TblGhlStages
+        //            .Where(x => x.GhlPipelineId == targetPipeline.Id)
+        //            .ToList();
 
-                var existingStagesDict = existingStages.ToDictionary(x => x.GhlStageId, x => x);
+        //        var existingStagesDict = existingStages.ToDictionary(x => x.GhlStageId, x => x);
 
-                List<TblGhlStage> stagesToUpdate = new();
-                List<TblGhlStage> stagesToInsert = new();
+        //        List<TblGhlStage> stagesToUpdate = new();
+        //        List<TblGhlStage> stagesToInsert = new();
 
-                // Sort the pipeline stages by name (or another field if required)
-                var orderedStages = targetPipeline.Stages;
-                //var orderedStages = targetPipeline.Stages.OrderBy(s => s.Name).ToList();
+        //        // Sort the pipeline stages by name (or another field if required)
+        //        var orderedStages = targetPipeline.Stages;
+        //        //var orderedStages = targetPipeline.Stages.OrderBy(s => s.Name).ToList();
 
-                for (int i = 0; i < orderedStages.Count; i++)
-                {
-                    var stage = orderedStages[i];
+        //        for (int i = 0; i < orderedStages.Count; i++)
+        //        {
+        //            var stage = orderedStages[i];
 
-                    if (existingStagesDict.TryGetValue(stage.Id, out var existingStage))
-                    {
-                        existingStage.GhlStageName = stage.Name;
-                        existingStage.GhlPipelineName = targetPipeline.Name;
-                        existingStage.StageOrder = i + 1; // Assigning order for sequential storage
-                        existingStage.GhlLastSync = DateTime.Now;
-                        existingStage.UpdatedAt = DateTime.Now;
-                        existingStage.ModifiedBy = claimsProperty.GetTenantId();
-                        stagesToUpdate.Add(existingStage);
-                    }
-                    else
-                    {
-                        stagesToInsert.Add(new TblGhlStage
-                        {
-                            Id = Guid.NewGuid(),
-                            GhlPipelineId = targetPipeline.Id,
-                            GhlStageId = stage.Id,
-                            GhlStageName = stage.Name,
-                            GhlPipelineName = targetPipeline.Name,
-                            StageOrder = i + 1, // Assigning order for new records
-                            GhlLastSync = DateTime.Now,
-                            CreatedAt = DateTime.Now,
-                            TenantId = claimsProperty.GetTenantId(),
-                            CreatedBy = AppConstant.LoggedInUserID,
-                            IsActive = true,
-                        });
-                    }
-                }
+        //            if (existingStagesDict.TryGetValue(stage.Id, out var existingStage))
+        //            {
+        //                existingStage.GhlStageName = stage.Name;
+        //                existingStage.GhlPipelineName = targetPipeline.Name;
+        //                existingStage.StageOrder = i + 1; // Assigning order for sequential storage
+        //                existingStage.GhlLastSync = DateTime.Now;
+        //                existingStage.UpdatedAt = DateTime.Now;
+        //                existingStage.ModifiedBy = claimsProperty.GetTenantId();
+        //                stagesToUpdate.Add(existingStage);
+        //            }
+        //            else
+        //            {
+        //                stagesToInsert.Add(new TblGhlStage
+        //                {
+        //                    Id = Guid.NewGuid(),
+        //                    GhlPipelineId = targetPipeline.Id,
+        //                    GhlStageId = stage.Id,
+        //                    GhlStageName = stage.Name,
+        //                    GhlPipelineName = targetPipeline.Name,
+        //                    StageOrder = i + 1, // Assigning order for new records
+        //                    GhlLastSync = DateTime.Now,
+        //                    CreatedAt = DateTime.Now,
+        //                    TenantId = claimsProperty.GetTenantId(),
+        //                    CreatedBy = AppConstant.LoggedInUserID,
+        //                    IsActive = true,
+        //                });
+        //            }
+        //        }
 
-                if (stagesToUpdate.Any())
-                {
-                    dBContext.TblGhlStages.UpdateRange(stagesToUpdate);
-                }
+        //        if (stagesToUpdate.Any())
+        //        {
+        //            dBContext.TblGhlStages.UpdateRange(stagesToUpdate);
+        //        }
 
-                if (stagesToInsert.Any())
-                {
-                    await dBContext.TblGhlStages.AddRangeAsync(stagesToInsert);
-                }
+        //        if (stagesToInsert.Any())
+        //        {
+        //            await dBContext.TblGhlStages.AddRangeAsync(stagesToInsert);
+        //        }
 
-                await dBContext.SaveChangesAsync();
+        //        await dBContext.SaveChangesAsync();
 
-                var isUpdated = await UpdateLastSyncConfigurationAsync();
+        //        var isUpdated = await UpdateLastSyncConfigurationAsync();
 
-                if (!isUpdated)
-                {
-                    responseVm.IsSuccess = false;
-                    responseVm.Message = "Error: Configuration not found or update failed.";
-                    return responseVm;
-                }
+        //        if (!isUpdated)
+        //        {
+        //            responseVm.IsSuccess = false;
+        //            responseVm.Message = "Error: Configuration not found or update failed.";
+        //            return responseVm;
+        //        }
 
-                responseVm.IsSuccess = true;
-                responseVm.Message = "All stages synced sequentially.";
+        //        responseVm.IsSuccess = true;
+        //        responseVm.Message = "All stages synced sequentially.";
 
-            }
-            catch (Exception ex)
-            {
-                responseVm.IsSuccess = false;
-                responseVm.Message = $"Error: {ex.Message}";
-            }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        responseVm.IsSuccess = false;
+        //        responseVm.Message = $"Error: {ex.Message}";
+        //    }
 
-            return responseVm;
-        }
+        //    return responseVm;
+        //}
 
         public async Task<bool> UpdateLastSyncConfigurationAsync()
         {
@@ -204,15 +204,15 @@ namespace ShutterManagement.GHL.Services
             }
         }
 
-        public async Task<IResponseVm<List<PipelineAndStage>>> GetGHLStages()
+        public async Task<IResponseVm<List<PipelineAndStage>>> GetGHLStages(GetGHLConfiguration getGHLConfiguration)
         {
             IResponseVm<List<PipelineAndStage>> responseVm = new ResponseVm<List<PipelineAndStage>>();
             try
             {
                 
                 var gHLStages = dBContext.TblGhlStages
-                    .Where(x => x.TenantId == claimsProperty.GetTenantId() && (x.GhlPipelineName.ToLower() == AppConstant.GHL_PipelineId.ToLower() || x.GhlPipelineId.ToLower()
-                    == AppConstant.GHL_PipelineId.ToLower())).OrderBy(x => x.StageOrder)
+                    .Where(x => x.TenantId == claimsProperty.GetTenantId() && (x.GhlPipelineName.ToLower() == getGHLConfiguration.PipelineId.ToLower() || x.GhlPipelineId.ToLower()
+                    == getGHLConfiguration.PipelineId.ToLower())).OrderBy(x => x.StageOrder)
                     .ToList();
 
                 var stageList = new List<PipelineAndStage>();
@@ -248,13 +248,13 @@ namespace ShutterManagement.GHL.Services
         #endregion Start pipeLine and Stages Related Methods 
 
         #region Start Contact Related Methods
-        public async Task<List<GhlContactVM>> GetContactsAsync()
+        public async Task<List<GhlContactVM>> GetContactsAsync(GetGHLConfiguration getGHLConfiguration)
         {
             try
             {
                 
                 var requestUrl = $"https://services.leadconnectorhq.com/v2/contacts";
-                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", getGHLConfiguration.Access_Token);
                 _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
                 var response = await _httpClient.GetAsync(requestUrl);
                 response.EnsureSuccessStatusCode();
@@ -371,11 +371,11 @@ namespace ShutterManagement.GHL.Services
 
         #region Start Opportunity Related Methods
 
-        public async Task<IResponseVm<string>> CreateOpportunityInGhl(TblJob job)
+        public async Task<IResponseVm<string>> CreateOpportunityInGhl(GetGHLConfiguration getGHLConfiguration, TblJob job)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
 
-            var res = await GetGHLStages();
+            var res = await GetGHLStages(getGHLConfiguration);
             var stage = res?.Data.FirstOrDefault();
             if (stage == null)
             {
@@ -400,7 +400,7 @@ namespace ShutterManagement.GHL.Services
 
             try
             {
-                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", getGHLConfiguration.Access_Token);
                 var endpoint = $"{AppConstant.GHL_BaseAddress}/pipelines/{stage.GhlPipelineId}/opportunities/";
                 var opportunityJson = JsonConvert.SerializeObject(opportunityData);
                 var content = new StringContent(opportunityJson, Encoding.UTF8, "application/json");
@@ -445,55 +445,55 @@ namespace ShutterManagement.GHL.Services
         }
 
 
-        public async Task<IResponseVm<List<Opportunity>>> GetOpportunitiesFromGhl()
-        {
-            IResponseVm<List<Opportunity>> responseVm = new ResponseVm<List<Opportunity>>();
+        //public async Task<IResponseVm<List<Opportunity>>> GetOpportunitiesFromGhl()
+        //{
+        //    IResponseVm<List<Opportunity>> responseVm = new ResponseVm<List<Opportunity>>();
 
-            try
-            {
-                using var client = new HttpClient();
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetApiKey());
+        //    try
+        //    {
+        //        using var client = new HttpClient();
+        //        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetApiKey());
 
-                var pipelineResponse = await GetAllPipelinesWithStagesAsync();
+        //        var pipelineResponse = await GetAllPipelinesWithStagesAsync();
 
-                if (pipelineResponse?.Pipelines == null || !pipelineResponse.Pipelines.Any())
-                {
-                    responseVm.IsSuccess = false;
-                    responseVm.Message = "No pipelines found.";
-                    return responseVm;
-                }
+        //        if (pipelineResponse?.Pipelines == null || !pipelineResponse.Pipelines.Any())
+        //        {
+        //            responseVm.IsSuccess = false;
+        //            responseVm.Message = "No pipelines found.";
+        //            return responseVm;
+        //        }
 
-                string userProvidedPipelineNameOrId = AppConstant.GHL_PipelineId;
+        //        string userProvidedPipelineNameOrId = getGHLConfiguration.GHL_PipelineId;
 
-                var targetPipeline = pipelineResponse.Pipelines
-                    .FirstOrDefault(p => p.Id.Contains(userProvidedPipelineNameOrId) || p.Name.Contains(userProvidedPipelineNameOrId));
+        //        var targetPipeline = pipelineResponse.Pipelines
+        //            .FirstOrDefault(p => p.Id.Contains(userProvidedPipelineNameOrId) || p.Name.Contains(userProvidedPipelineNameOrId));
 
-                var url = $"{AppConstant.GHL_BaseAddress}pipelines/{targetPipeline?.Id}/opportunities/";
-                var request = new HttpRequestMessage(HttpMethod.Get, url);
+        //        var url = $"{AppConstant.GHL_BaseAddress}pipelines/{targetPipeline?.Id}/opportunities/";
+        //        var request = new HttpRequestMessage(HttpMethod.Get, url);
 
-                var response = await client.SendAsync(request);
-                string responseBody = await response.Content.ReadAsStringAsync();
+        //        var response = await client.SendAsync(request);
+        //        string responseBody = await response.Content.ReadAsStringAsync();
 
-                if (!response.IsSuccessStatusCode)
-                {
-                    responseVm.IsSuccess = false;
-                    responseVm.Message = $"Error: {response.StatusCode}, Details: {responseBody}";
-                    return responseVm;
-                }
+        //        if (!response.IsSuccessStatusCode)
+        //        {
+        //            responseVm.IsSuccess = false;
+        //            responseVm.Message = $"Error: {response.StatusCode}, Details: {responseBody}";
+        //            return responseVm;
+        //        }
 
-                var ghlResponse = JsonConvert.DeserializeObject<GhlOpportunitiesResponse>(responseBody);
-                responseVm.Data = ghlResponse?.Opportunities ?? new List<Opportunity>();
-                responseVm.IsSuccess = true;
-                responseVm.Message = AppConstant.FetchSuccessMsg;
-            }
-            catch (Exception ex)
-            {
-                responseVm.IsSuccess = false;
-                responseVm.Message = $"Exception occurred: {ex.Message}";
-            }
+        //        var ghlResponse = JsonConvert.DeserializeObject<GhlOpportunitiesResponse>(responseBody);
+        //        responseVm.Data = ghlResponse?.Opportunities ?? new List<Opportunity>();
+        //        responseVm.IsSuccess = true;
+        //        responseVm.Message = AppConstant.FetchSuccessMsg;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        responseVm.IsSuccess = false;
+        //        responseVm.Message = $"Exception occurred: {ex.Message}";
+        //    }
 
-            return responseVm;
-        }
+        //    return responseVm;
+        //}
 
         public class OpportunityResponse
         {

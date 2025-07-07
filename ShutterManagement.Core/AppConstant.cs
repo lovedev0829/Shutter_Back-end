@@ -120,11 +120,11 @@ namespace ShutterManagement.Core
         #region GHL Configuration
         public static string GHL_APIKey { get; set; } = string.Empty;
         public static string GHL_BaseAddress { get; set; } = string.Empty;
-        public static string GHL_PipelineId { get; set; } = string.Empty;
-        public static string GHL_LocationId { get; set; } = string.Empty; // Fixed typo: was "GHL_LocationId"
-        public static string GHL_RefreshToken { get; set; } = string.Empty;
-        public static string GHL_AccessToken { get; set; } = string.Empty;
-        public static string GHL_CalendarName { get; set; } = string.Empty;
+        //public static string GHL_PipelineId { get; set; } = string.Empty;
+        //public static string GHL_LocationId { get; set; } = string.Empty; // Fixed typo: was "GHL_LocationId"
+        //public static string GHL_RefreshToken { get; set; } = string.Empty;
+        //public static string GHL_AccessToken { get; set; } = string.Empty;
+        //public static string GHL_CalendarName { get; set; } = string.Empty;
         public static string GHL_ClientSecret { get; set; } = string.Empty;
         public static string GHL_ClientId { get; set; } = string.Empty;
         public static string GHL_RedirectUri { get; set; } = string.Empty;
