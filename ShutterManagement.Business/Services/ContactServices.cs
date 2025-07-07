@@ -712,6 +712,10 @@ namespace ShutterManagement.Business.Services
                             Referral = model.Referral ?? string.Empty,
                             GHLContactId = model.GHLContactId ?? string.Empty,
                         };
+                        if(!model.IsBillingAddressSameAsAddress)
+                        {
+                            ghlContactAdd.BillingAddressVm = model.BillingAddressVm;
+                        }
                         var Checkghlresponse = await gHLConfigurationService.CheckGHLConfiguration(LoggedInTenantId);
                         if (Checkghlresponse.IsSuccess)
                         {
