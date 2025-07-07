@@ -107,6 +107,8 @@ namespace ShutterManagement.Core
         public static string Sub_ResetPassword = "Password reset successfully";
         public static string Sub_ForgotPassword = "Forgot Password";
         public static string Sub_WelcomeEmail = "Welcome Email";
+        public static string Sub_EstimateApproval = "Estimate Approval Link and PDF";
+        public static string Sub_EstimateOrderApproval = "Estimate For Approval";
         public static string Con_ResetPassword = "Your password has been reset successfully";
         #endregion
 
@@ -142,8 +144,19 @@ namespace ShutterManagement.Core
         public static string Microsoft365_ClientId { get; set; } = string.Empty;
         public static string Microsoft365_ClientSecret { get; set; } = string.Empty;
         public static string Microsoft365_RedirectUri { get; set; } = string.Empty;
+        public static string Microsoft365_AuthUri { get; set; } = string.Empty;
         public static string Microsoft365_TenantId { get; set; } = string.Empty;
         public static string Microsoft365_Scopes { get; set; } = string.Empty;
+        #endregion
+
+        #region Google OAuth Configuration
+
+        public static string Google_ClientId { get; set; } = string.Empty;
+        public static string Google_ClientSecret { get; set; } = string.Empty;
+        public static string Google_RedirectUri { get; set; } = string.Empty;
+        public static string Google_AuthUrl { get; set; } = string.Empty;
+        public static string Google_TokenUrl { get; set; } = string.Empty;
+
         #endregion
 
         #region Stripe Configuration (URLs moved to config)
