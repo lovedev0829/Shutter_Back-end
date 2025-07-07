@@ -128,6 +128,9 @@ namespace ShutterManagement.Business.Services
                             TenantId = claimsProperty.GetTenantId(),
                             IsTaxApplied = model.IsTaxAvailable,
                             TaxId = model.TaxId,
+                            RequirePriceAtEstimatePreview = model.RequirePriceAtEstimatePreview,
+                            BuildRequirement = model.BuildRequirement,
+                            UseInCutSheet = model.UseInCutSheet,
                             IsActive = true,
                             IsDelete = false
                         };
@@ -137,6 +140,17 @@ namespace ShutterManagement.Business.Services
                             .FirstOrDefault();
                         if (options.OptionId != Guid.Empty)
                         {
+                            // Validate that if RequirePriceAtEstimatePreview is checked, all AdditionalCosts must not be null or empty
+                            if (model.RequirePriceAtEstimatePreview == true)
+                            {
+                                var emptyPriceOption = model.Options.FirstOrDefault(x => x.AdditionalCost == null || x.AdditionalCost == 0);
+                                if (emptyPriceOption != null)
+                                {
+                                    responseVm.Message = $"Additional cost value is required for option type '{emptyPriceOption.OptionType}' when 'Require Price at Estimate Preview' is checked.";
+                                    return responseVm;
+                                }
+                            }
+
                             foreach (var item in model.Options)
                             {
                                 var IsOptionTypeExists = await optionsTypeService.AnyAsync(x => x.IsActive == true
@@ -335,7 +349,10 @@ namespace ShutterManagement.Business.Services
                                 Unit = x.Unit ?? "",
                                 Markup = x.Markup ?? 0.0m,
                                 OptionExpression = x.OptionExpression.ToString() ?? "",
-                                IsTaxAvailable = x.IsTaxApplied ?? false
+                                IsTaxAvailable = x.IsTaxApplied ?? false,
+                                RequirePriceAtEstimatePreview = x.RequirePriceAtEstimatePreview ?? false,
+                                BuildRequirement = x.BuildRequirement ?? false,
+                                UseInCutSheet = x.UseInCutSheet ?? false
                             })
                             .ToList();
 
@@ -464,6 +481,9 @@ namespace ShutterManagement.Business.Services
                       ProductTypeId = x.ProductTypeId,
                       ProductTypeName = dbContext.MstProductTypes.Where(y => y.ProductId == x.ProductTypeId).Select(z => z.ProductName).FirstOrDefault(),
                       IsTaxAvailable = x.IsTaxApplied,
+                      RequirePriceAtEstimatePreview = x.RequirePriceAtEstimatePreview ?? false,
+                      BuildRequirement = x.BuildRequirement ?? false,
+                      UseInCutSheet = x.UseInCutSheet ?? false,
                   })
                   .ToList();
                     foreach (var item in IsOptionExists)
@@ -584,6 +604,9 @@ public async Task<IResponseVm<string>> Update_Option(UpdateOption model)
                 IsOptionExists.OptionExpression = model.OptionExpression;
                 IsOptionExists.IsTaxApplied = model.IsTaxAvailable;
                 IsOptionExists.TaxId = model.TaxId;
+                IsOptionExists.RequirePriceAtEstimatePreview = model.RequirePriceAtEstimatePreview;
+                IsOptionExists.BuildRequirement = model.BuildRequirement;
+                IsOptionExists.UseInCutSheet = model.UseInCutSheet;
 
 
                 await Update(IsOptionExists);
@@ -636,6 +659,17 @@ public async Task<IResponseVm<string>> Update_Option(UpdateOption model)
                     data.IsDelete = true;
                     data.IsActive = false;
                     await optionsTypeService.Update(data);
+                }
+
+                // Validate that if RequirePriceAtEstimatePreview is checked, all AdditionalCosts must not be null or empty
+                if (model.RequirePriceAtEstimatePreview == true)
+                {
+                    var emptyPriceOption = model.Options.FirstOrDefault(x => x.AdditionalCost == null || x.AdditionalCost == 0);
+                    if (emptyPriceOption != null)
+                    {
+                        responseVm.Message = $"Additional cost value is required for option type '{emptyPriceOption.OptionType}' when 'Require Price at Estimate Preview' is checked.";
+                        return responseVm;
+                    }
                 }
 
                 foreach (var item in InsertRecords)

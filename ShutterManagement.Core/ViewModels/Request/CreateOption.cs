@@ -29,6 +29,9 @@ namespace ShutterManagement.Core.ViewModels.Request
 
         public bool? IsTaxAvailable { get; set; }
         public Guid? TaxId { get; set; }
+        public bool? RequirePriceAtEstimatePreview { get; set; }
+        public bool? BuildRequirement { get; set; }
+        public bool? UseInCutSheet { get; set; }
     }
 
     public class Options
@@ -39,8 +42,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         [RegularExpression(@"^[a-zA-Z0-9!@#$%^&*()_+={}\[\]:;""'<>,.?/\|`~ \s-]*$", ErrorMessage = AppConstant.AlphabeticalError)]
         public string? OptionType { get; set; }
 
-        //[DefaultValue("")]
-        //[Required]
+        [DefaultValue(null)]
         public decimal? AdditionalCost { get; set; }
 
         public bool? IsDefault { get; set; }

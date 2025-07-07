@@ -22,6 +22,20 @@ namespace ShutterManagement.Controllers
         [Authorize(Roles = "OptionsAdd")]
         public async Task<IActionResult> Create([FromBody] CreateOption optionVm)
         {
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState
+                    .Where(x => x.Value.Errors.Count > 0)
+                    .Select(x => new { Field = x.Key, Errors = x.Value.Errors.Select(e => e.ErrorMessage) })
+                    .ToList();
+                
+                return BadRequest(new { 
+                    isSuccess = false, 
+                    message = "Validation failed", 
+                    errors = errors 
+                });
+            }
+            
             var result = await _option.Create_Option(optionVm);
             return Ok(result);
         }
@@ -31,6 +45,20 @@ namespace ShutterManagement.Controllers
         [Authorize(Roles = "OptionsEdit")]
         public async Task<IActionResult> Update([FromBody] UpdateOption optionVm)
         {
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState
+                    .Where(x => x.Value.Errors.Count > 0)
+                    .Select(x => new { Field = x.Key, Errors = x.Value.Errors.Select(e => e.ErrorMessage) })
+                    .ToList();
+                
+                return BadRequest(new { 
+                    isSuccess = false, 
+                    message = "Validation failed", 
+                    errors = errors 
+                });
+            }
+            
             var result = await _option.Update_Option(optionVm);
             return Ok(result);
         }
