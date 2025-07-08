@@ -35,12 +35,10 @@ namespace ShutterManagement.Business.Services
     {
         private readonly ITenantService tenantService;
         private readonly IInvoicePaymentService invoicePaymentService;
-        private readonly IHostEnvironment environment;
         private readonly IConverter converter;
         private readonly IContactService contactService;
         private readonly IEstimateService estimateService;
         private readonly ITenantBrandingService tenantBrandingService;
-        private readonly IUserService userService;
         private readonly IJobService jobService;
         private readonly IOrderService orderService;
         public Pagination filter = new Pagination();
@@ -48,33 +46,27 @@ namespace ShutterManagement.Business.Services
         private readonly IStripeConfiguration stripeConfiguration;
         private readonly JobStatusAndStageMapping statusAndStageMapping;
         private readonly ClaimsProperty claimsProperty;
-        private readonly ITemplatesService templatesService;
-        private readonly IEmailConfigurationService emailConfigurationService;
         private readonly EmailSendHelperService emailSendHelperService;
 
         public InvoiceService(ITenantService tenantService, IInvoicePaymentService invoicePaymentService,
-            IHostEnvironment environment, IConverter converter, IContactService contactService
-            , IEstimateService estimateService, ITenantBrandingService tenantBrandingService, IUserService userService
+           IConverter converter, IContactService contactService
+            , IEstimateService estimateService, ITenantBrandingService tenantBrandingService
             , IJobService jobService, IOrderService orderService, StripeService stripeService,
             IStripeConfiguration stripeConfiguration, JobStatusAndStageMapping statusAndStageMapping, ClaimsProperty claimsProperty,
-            ITemplatesService templatesService, IEmailConfigurationService emailConfigurationService, EmailSendHelperService emailSendHelperService)
+          EmailSendHelperService emailSendHelperService)
         {
             this.tenantService = tenantService;
             this.invoicePaymentService = invoicePaymentService;
-            this.environment = environment;
             this.converter = converter;
             this.contactService = contactService;
             this.estimateService = estimateService;
             this.tenantBrandingService = tenantBrandingService;
-            this.userService = userService;
             this.jobService = jobService;
             this.orderService = orderService;
             _stripeService = stripeService;
             this.stripeConfiguration = stripeConfiguration;
             this.statusAndStageMapping = statusAndStageMapping;
             this.claimsProperty = claimsProperty;
-            this.templatesService = templatesService;
-            this.emailConfigurationService = emailConfigurationService;
             this.emailSendHelperService = emailSendHelperService;
         }
 
@@ -716,7 +708,7 @@ namespace ShutterManagement.Business.Services
                             }
                         }
 
-                        emailBody = Templates.Estimate;
+                        emailBody = emailSendHelperService.PlaceholderReplace(Templates.Estimate,invoiceData);
                         emailAttachments.Add(new EmailAttachments
                         {
                             FileName = $"{invoiceData.EstimationCode}.pdf",
