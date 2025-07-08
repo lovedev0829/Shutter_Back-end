@@ -243,7 +243,7 @@ namespace ShutterManagement.Business.Services
                 content);
 
             var json = await response.Content.ReadAsStringAsync();
-            dynamic tokenResult = JsonConvert.DeserializeObject(json);
+            dynamic tokenResult = JsonConvert.DeserializeObject<OAuthRefereshTokenResponse>(json);
             if(tokenResult != null && !string.IsNullOrEmpty(tokenResult.access_token))
             return tokenResult?.access_token;
 
@@ -283,7 +283,7 @@ namespace ShutterManagement.Business.Services
                     emailConfig.AccessExpirationtime = DateTime.Now.AddHours(1);
                     await emailConfigurationService.Update(emailConfig);
 
-                    responseVm.Message = "Google access token refreshed.";
+                    responseVm.Message = "Access token fetched successfully.";
 
                 }
                 responseVm = EmailConfigurationVm.ConfigResponse(emailConfig, EmailType);

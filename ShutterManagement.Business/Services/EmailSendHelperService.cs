@@ -153,6 +153,7 @@ namespace ShutterManagement.Business.Services
                 FileLogger.Log(claimsProperty.GetTenantId().ToString() + " Error in Fetch Email Config: " + ex.Message);
             }
             return configResponse;
+        
         }
 
         public string PlaceholderReplace(string content, dynamic dataObject)
