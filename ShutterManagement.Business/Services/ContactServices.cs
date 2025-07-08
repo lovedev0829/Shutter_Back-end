@@ -1177,7 +1177,7 @@ namespace ShutterManagement.Business.Services
                             City = contactData.city,
                             StateCode = contactData.state ?? "",
                             ZipCode = contactData.postal_code,
-                            StreetAddress = contactData.StreetAddress
+                            StreetAddress = contactData.StreetAddress == null ? contactData.address1 : contactData.StreetAddress
                         };
 
                     }
@@ -1233,7 +1233,7 @@ namespace ShutterManagement.Business.Services
                             City = contactData.city,
                             StateCode = contactData.state ?? "",
                             ZipCode = contactData.postal_code,
-                            StreetAddress = contactData.StreetAddress
+                            StreetAddress = contactData.StreetAddress == null ? contactData.address1 : contactData.StreetAddress
                         };
                     }
                         await gHLConfigurationService.GetGHLConfiguration(contactData.WebhookTenantId);

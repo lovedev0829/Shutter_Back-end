@@ -59,6 +59,7 @@ namespace ShutterManagment.GHL.ViewModel.Request
 
         [JsonPropertyName("Street Address")]
         public string? StreetAddress { get; set; }
+        public string? address1 { get; set; }
         public string? city { get; set; }
         public string? state { get; set; }
         public string? postal_code { get; set; }
