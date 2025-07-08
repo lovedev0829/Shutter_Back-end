@@ -631,7 +631,7 @@ namespace ShutterManagement.Business.Services
                     Taxes = estimationDetails?.TotaltaxAmount ?? 0.0m,
                     Discount = estimationDetails?.DiscountAmount ?? 0.0m,
                     Additionalcost = estimationDetails?.AdditionalCost.ToString() ?? "",
-                    ProductListHtml = GenerateProductListHtml(productList),
+                    ProductList = GenerateProductListHtml(productList),
 
                 };
 
@@ -641,9 +641,8 @@ namespace ShutterManagement.Business.Services
                 //Generate the Estimate Invoice PDF
                 var pdfBytes = GeneratePdf(htmlContent.Data);
 
-                if (pdfBytes == null || pdfBytes.Data == null || pdfBytes.Data.Length == 0)
+                if (!pdfBytes.IsSuccess)
                 {
-                    responseVm.IsSuccess = false;
                     responseVm.Message = pdfBytes.Message;
                     return responseVm;
                 }
@@ -899,7 +898,6 @@ namespace ShutterManagement.Business.Services
             }
             catch (Exception ex)
             {
-                responseVm.IsSuccess = false;
                 responseVm.Message = $"{AppConstant.ExceptionError}: {ex.Message} :{ex.StackTrace}";
             }
 
