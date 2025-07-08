@@ -39,7 +39,7 @@ namespace ShutterManagement
             AppConstant.Microsoft365_RedirectUri = Configuration["Microsoft365Credentials:RedirectUri"] ?? "";
             AppConstant.Microsoft365_AuthUri = Configuration["Microsoft365Credentials:AuthUri"] ?? "";
             AppConstant.Microsoft365_TenantId = Configuration["Microsoft365Credentials:tenantId"] ?? "";
-            AppConstant.Microsoft365_Scopes = string.Join(",", Configuration.GetSection("Microsoft365Credentials:scopes").Get<string[]>() ?? new string[0]);
+            AppConstant.Microsoft365_Scopes = Configuration["Microsoft365Credentials:scopes"] ?? "";
 
             //Google OAuth Configuration
             AppConstant.Google_ClientId = Configuration["GoogleOAuth:ClientId"] ?? "";

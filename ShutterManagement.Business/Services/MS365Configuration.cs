@@ -30,8 +30,7 @@ namespace ShutterManagement.Business.Services
         private readonly EmailTypeService emailTypeService;
         private readonly string _msOAuthGrantTypeAuthorization = "authorization_code";
         private readonly string _msOAuthGrantTypeRefresh = "refresh_token";
-        private readonly string _msTokenInfoUrl = "https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=";
-        private readonly string _msTokenUrl = "https://oauth2.googleapis.com/token";
+        private readonly string _msTokenUrl = "https://login.microsoftonline.com/common/oauth2/v2.0/token";
 
         public MS365Configuration(IEmailConfigurationService emailConfigurationService,ClaimsProperty claimsProperty ,EmailTypeService emailTypeService)
         {
@@ -48,7 +47,6 @@ namespace ShutterManagement.Business.Services
                 var query = new Dictionary<string, string>
                 {
                     { "client_id", AppConstant.Microsoft365_ClientId },
-                    { "client_secret", AppConstant.Microsoft365_ClientSecret },
                     { "response_type", "code" },
                     { "redirect_uri", AppConstant.Microsoft365_RedirectUri },
                     { "response_mode", "query" },
@@ -56,7 +54,8 @@ namespace ShutterManagement.Business.Services
                     { "state", Guid.NewGuid().ToString() }
                 };
 
-                string authUrl = $"{AppConstant.Microsoft365_AuthUri}?" + string.Join("&", query.Select(kvp => $"{kvp.Key}={Uri.EscapeDataString(kvp.Value)}"));
+                string authUrl = $"{AppConstant.Microsoft365_AuthUri}?" + 
+                 string.Join("&", query.Select(kvp => $"{kvp.Key}={Uri.EscapeDataString(kvp.Value)}"));
 
                 responseVm.IsSuccess = true;
                 responseVm.Message = "Authorization URL generated successfully.";
@@ -80,15 +79,15 @@ namespace ShutterManagement.Business.Services
                 {
                 { "client_id", AppConstant.Microsoft365_ClientId },
                 { "client_secret", AppConstant.Microsoft365_ClientSecret },
-                { "grant_type", _msOAuthGrantTypeAuthorization },
                 { "code", code },
+                { "grant_type", _msOAuthGrantTypeAuthorization },
                 { "redirect_uri", AppConstant.Microsoft365_RedirectUri },
                 { "scope", AppConstant.Microsoft365_Scopes }
                 };
 
                 using var client = new HttpClient();
                 var response = await client.PostAsync(
-                    $"{AppConstant.Microsoft365_AuthUri}",
+                    $"{_msTokenUrl}",
                     new FormUrlEncodedContent(tokenRequest)
                 );
 
@@ -240,7 +239,7 @@ namespace ShutterManagement.Business.Services
             using var client = new HttpClient();
             var content = new FormUrlEncodedContent(values);
             var response = await client.PostAsync(
-                $"{AppConstant.Microsoft365_AuthUri}",
+                $"{_msTokenUrl}",
                 content);
 
             var json = await response.Content.ReadAsStringAsync();
@@ -296,15 +295,6 @@ namespace ShutterManagement.Business.Services
                 responseVm.Message = "Exception: " + ex.Message;
                 return responseVm;
             }
-        }
-
-        public class EmailMessageModel
-        {
-            public string? From { get; set; }
-            public string? To { get; set; }
-            public string? Subject { get; set; }
-            public string? Body { get; set; }
-            public List<IFormFile>? Attachments { get; set; }
         }
 
     }
