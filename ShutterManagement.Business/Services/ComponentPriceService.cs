@@ -105,17 +105,16 @@ namespace ShutterManagement.Business.Services
             {
                 var query =
                  (from estimate in dbContext.TblEstimates
-                  join estimatewindow in dbContext.TblEstimateWindows on estimate.EstimateId equals estimatewindow.EstimateId
+                  join estimatewindow in dbContext.TblEstimateWindows.Where(x => x.IsActive == true) on estimate.EstimateId equals estimatewindow.EstimateId
                   where estimatewindow.EstimateId.ToString() == EstimateID
-                  join estwindowProduct in dbContext.TblEstimateWindowProducts on estimatewindow.WindowId equals estwindowProduct.WindowId
+                  join estwindowProduct in dbContext.TblEstimateWindowProducts.Where(x => x.IsActive == true) on estimatewindow.WindowId equals estwindowProduct.WindowId
                   where estwindowProduct.EstimateId.ToString() == EstimateID
-                  join estwinprocomp in dbContext.TblEstimateWindowProductComponents.Where(x => x.IsActive == true) on estwindowProduct.ProductId equals estwinprocomp.ProductId into estwinprocomps
+                  join estwinprocomp in dbContext.TblEstimateWindowProductComponents.Where(x => x.IsActive == true) on estwindowProduct.EstimateWindowProductId equals estwinprocomp.EstimateWindowProductId into estwinprocomps
                   from estwinprocomp in estwinprocomps.DefaultIfEmpty()
                   where (string.IsNullOrEmpty(estwinprocomp.EstimateId.ToString()) || estwinprocomp.EstimateId.ToString() == EstimateID) &&
                   (string.IsNullOrEmpty(estwinprocomp.WindowId.ToString()) || estwindowProduct.WindowId == estwinprocomp.WindowId)
-                  join productComponentmat in dbContext.TblEstimateWindowProductComponentMaterials.Where(x => x.IsActive == true) on estwinprocomp.ComponentId equals
-                  productComponentmat.ComponentId
-                  into productComponentmats
+                  join productComponentmat in dbContext.TblEstimateWindowProductComponentMaterials.Where(x => x.IsActive == true) on estwinprocomp.EstimateWindowProductComponentId equals
+                  productComponentmat.EstimateWindowProductComponentId into productComponentmats
                   from productComponentmat in productComponentmats.DefaultIfEmpty()
                   where (string.IsNullOrEmpty(productComponentmat.EstimateId.ToString()) || productComponentmat.EstimateId.ToString() == EstimateID) &&
                   (string.IsNullOrEmpty(productComponentmat.WindowId.ToString()) || estwindowProduct.WindowId == productComponentmat.WindowId)
