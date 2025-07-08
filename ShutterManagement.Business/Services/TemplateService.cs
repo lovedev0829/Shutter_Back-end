@@ -17,16 +17,12 @@ namespace ShutterManagement.Business.Services
 {
     public class TemplateService : BaseRepository<ShutterDBContext, TblTemplate>, ITemplatesService
     {
-        private readonly ShutterDBContext context;
         private readonly ClaimsProperty claimsProperty;
-        private readonly ITenantService tenantService;
         private readonly IMstPlaceholderService placeholders;
 
-        public TemplateService(ShutterDBContext context,ClaimsProperty claimsProperty,ITenantService tenantService,IMstPlaceholderService placeholders)
+        public TemplateService(ClaimsProperty claimsProperty,IMstPlaceholderService placeholders)
         {
-            this.context = context;
             this.claimsProperty = claimsProperty;
-            this.tenantService = tenantService;
             this.placeholders = placeholders;
         }
         public async Task<IResponseVm<string>> ActiveInActive(Guid Id)
@@ -34,7 +30,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.ParentTenantId == null && x.IsActive == true && x.IsDelete == false);
+                var IsTenant = await dbContext.TblTenants.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.ParentTenantId == null && x.IsActive == true && x.IsDelete == false);
                 if (IsTenant)
                 {
                     var IstemplateNameExist = GetAllQuerable().Where(t => t.TemplateId == Id &&
@@ -66,7 +62,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-            var IsTenant = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.ParentTenantId == null && x.IsDelete == false);
+            var IsTenant = await dbContext.TblTenants.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.ParentTenantId == null && x.IsDelete == false);
             if(IsTenant)
                 {
                     var IstemplateNameExist = await AnyAsync(t => t.TemplateName == model.TemplateName &&
@@ -115,7 +111,7 @@ namespace ShutterManagement.Business.Services
                                 CreatedAt = DateTime.Now,
                                 CreatedBy = AppConstant.LoggedInUserID
                             };
-                           context.TblTemplatePlaceholders.Add(templatePlaceholder);   
+                           dbContext.TblTemplatePlaceholders.Add(templatePlaceholder);   
                         }
                         else
                         {
@@ -128,7 +124,7 @@ namespace ShutterManagement.Business.Services
                                  CreatedAt = DateTime.Now,
                                  CreatedBy = AppConstant.LoggedInUserID
                             };
-                            context.TblTemplatePlaceholders.Add(placeholder2);
+                            dbContext.TblTemplatePlaceholders.Add(placeholder2);
                         }
                     }
                     responseVm.IsSuccess = true;
@@ -148,7 +144,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.ParentTenantId == null && x.IsActive == true && x.IsDelete == false);
+                var IsTenant = await dbContext.TblTenants.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.ParentTenantId == null && x.IsActive == true && x.IsDelete == false);
                 if (IsTenant)
                 {
                     var IstemplateNameExist = GetAllQuerable().Where(t => t.TemplateId == Id &&
@@ -182,7 +178,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<List<GetAllTemplate>> responseVm = new ResponseVm<List<GetAllTemplate>>();
             try
             {
-                var IsTenant = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.IsDelete == false && x.IsActive == true);
+                var IsTenant = await dbContext.TblTenants.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.IsDelete == false && x.IsActive == true);
 
                 if (IsTenant)
                 {
@@ -234,7 +230,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<dynamic> responseVm = new ResponseVm<dynamic>();
             try
             {
-             var IsTenant = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.ParentTenantId == null && x.IsActive == true && x.IsDelete == false);
+             var IsTenant = await dbContext.TblTenants.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.ParentTenantId == null && x.IsActive == true && x.IsDelete == false);
               if(IsTenant)
                 {
                     var IstemplateNameExist = GetAllQuerable().Where(t => t.TemplateId != Guid.Parse(model.TemplateId) &&
@@ -258,14 +254,14 @@ namespace ShutterManagement.Business.Services
                         string pattern = @"{{[a-zA-Z]+}}";
                         var matches = Regex.Matches(IstemplateExist.TemplateValue, pattern);
 
-                        var IsPlaceholderTemplateExist = context.TblTemplatePlaceholders.Where(x => x.TemplateId == IstemplateExist.TemplateId && x.IsDelete == false && x.TenantId
+                        var IsPlaceholderTemplateExist = dbContext.TblTemplatePlaceholders.Where(x => x.TemplateId == IstemplateExist.TemplateId && x.IsDelete == false && x.TenantId
                         == claimsProperty.GetTenantId()).ToList();
                         if (IsPlaceholderTemplateExist != null)
                         {
                             foreach (var items in IsPlaceholderTemplateExist)
                             {
-                                context.TblTemplatePlaceholders.Remove(items);
-                                await context.SaveChangesAsync();
+                                dbContext.TblTemplatePlaceholders.Remove(items);
+                                await dbContext.SaveChangesAsync();
                             }
                         }
                         foreach (Match match in matches)
@@ -292,7 +288,7 @@ namespace ShutterManagement.Business.Services
                                     CreatedAt = DateTime.Now,
                                     CreatedBy = AppConstant.LoggedInUserID
                                 };
-                                context.TblTemplatePlaceholders.Add(templatePlaceholder);
+                                dbContext.TblTemplatePlaceholders.Add(templatePlaceholder);
                             }
                             else
                             {
@@ -305,7 +301,7 @@ namespace ShutterManagement.Business.Services
                                     CreatedAt = DateTime.Now,
                                     CreatedBy = AppConstant.LoggedInUserID
                                 };
-                                context.TblTemplatePlaceholders.Add(placeholder2);
+                                dbContext.TblTemplatePlaceholders.Add(placeholder2);
                             }
                             responseVm.IsSuccess = true;
                             responseVm.Message = AppConstant.UpdateSuccessMsg;
