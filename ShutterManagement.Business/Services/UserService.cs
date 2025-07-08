@@ -32,12 +32,11 @@ namespace ShutterManagement.Services
         private readonly INotificationService notification;
         private readonly ITenantBrandingService tenantBrandingService;
         private readonly EmailSendHelperService emailSendHelperService;
-        private readonly GoogleAuthService googleAuthService;
 
         public UserService(DataServices dataServices, IRoleService roleService
             , ClaimsProperty claimsProperty, IUserRoleService userRoleService
             , IMapper mapper,INotificationService notification,ITenantBrandingService tenantBrandingService,
-            GoogleAuthService googleAuthService,EmailSendHelperService emailSendHelperService)
+            EmailSendHelperService emailSendHelperService)
         {
             _dataServices = dataServices;
             this.roleService = roleService;
@@ -47,7 +46,6 @@ namespace ShutterManagement.Services
             this.notification = notification;
             this.tenantBrandingService = tenantBrandingService;
             this.emailSendHelperService = emailSendHelperService;
-            //this.googleAuthService = googleAuthService;
         }
 
         public async Task<IResponseVm<string>> Create(CreateUser UserDetails)
