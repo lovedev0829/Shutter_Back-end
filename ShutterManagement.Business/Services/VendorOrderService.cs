@@ -741,12 +741,12 @@ namespace ShutterManagement.Business.Services
                     MediaType = "application/pdf"
                 };
 
-                var emailSent = EmailHelper.SendEmailWithAttachment(
-                    vendorDetails?.Email,
-                    "Your Order Invoice ",
-                    emailBody,
-                    new List<EmailAttachment> { emailAttachment }
-                );
+                //var emailSent = EmailHelper.SendEmailWithAttachment(
+                //    vendorDetails?.Email,
+                //    "Your Order Invoice ",
+                //    emailBody,
+                //    new List<EmailAttachment> { emailAttachment }
+                //);
 
                 responseVm.IsSuccess = true;
                 responseVm.Message = "Email Sent Successfully.";

@@ -708,7 +708,7 @@ namespace ShutterManagement.Business.Services
 
                         if (jobDetails != null)
                         {
-                            var ghlUrlResponse = await jobService.UpdateEstimateUrlInGhlOnly(jobDetails, invoiceData.InvoiceLink);
+                            var ghlUrlResponse = await jobService.UpdateEstimateUrlInGhlOnly(jobDetails, invoiceData.InvoiceLink, IsEstimateExists.GrandTotal ?? 0.0m);
 
                             if (!ghlUrlResponse.IsSuccess)
                             {

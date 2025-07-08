@@ -301,11 +301,11 @@ namespace ShutterManagement.Business.Services
                     if (contactData != null)
                     {
                         var contactEmail = contactData.Email;
-                        SendEmail sendEmail = new SendEmail
-                        {
-                            ToEmail = contactEmail,
-                        };
-                        EmailHelper.SendMail(sendEmail);
+                        //SendEmail sendEmail = new SendEmail
+                        //{
+                        //    ToEmail = contactEmail,
+                        //};
+                        //EmailHelper.SendMail(sendEmail);
 
                     }
                 }
