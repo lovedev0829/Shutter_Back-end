@@ -27,6 +27,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         public decimal Quantity { get; set; }
         public Guid? JobId { get; set; }
         public List<WindowProductVm> WindowProducts { get; set; } = new List<WindowProductVm>();
+        public List<AdditionalCostData>? AdditionalCosts { get; set; } = new List<AdditionalCostData>();
     }
     public class WindowProductVm
     {
@@ -43,6 +44,21 @@ namespace ShutterManagement.Core.ViewModels.Request
         public decimal? AdditionalCost { get; set; }
 
         public int? SortOrder { get; set; }
+    }
+
+    public class AdditionalCostData
+    {
+        public int IndexId { get; set; }
+        public Dictionary<string, AdditionalCostItem> Data { get; set; } = new Dictionary<string, AdditionalCostItem>();
+    }
+
+    public class AdditionalCostItem
+    {
+        public Guid? OptionTypeId { get; set; }
+        public string? OptionGroupName { get; set; }
+        public string? OptionType { get; set; }
+        public string? AdditionalCost { get; set; }
+        public bool RequirePriceAtEstimatePreview { get; set; }
     }
 }
 

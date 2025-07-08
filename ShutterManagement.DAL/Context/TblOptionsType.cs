@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 
 namespace ShutterManagement.DAL.Context;
 
@@ -11,6 +12,7 @@ public partial class TblOptionsType
 
     public string? OptionType { get; set; }
 
+    [DefaultValue("")]
     public decimal? AdditionalCost { get; set; }
 
     public bool? IsActive { get; set; }
@@ -28,6 +30,8 @@ public partial class TblOptionsType
     public bool? IsDefault { get; set; }
 
     public int? SortOrder { get; set; }
+
+    public bool? RequirePriceAtEstimatePreview { get; set; }
 
     public virtual TblOption? Option { get; set; }
 
