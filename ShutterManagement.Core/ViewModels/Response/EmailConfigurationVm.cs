@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ShutterManagement.DAL.Context;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -36,6 +37,29 @@ namespace ShutterManagement.Core.ViewModels.Response
 
         public DateTime? AccessExpirationtime { get; set; }
 
-
+        public static IResponseVm<EmailConfigurationVm> ConfigResponse(TblEmailConfiguration emailConfig, string emailType)
+        {
+            return new ResponseVm<EmailConfigurationVm>
+            {
+                IsSuccess = true,
+                Data = new EmailConfigurationVm
+                {
+                    Id = emailConfig.Id,
+                    SmtpServer = emailConfig.SmtpServer,
+                    Port = emailConfig.Port,
+                    Username = emailConfig.Username,
+                    Password = emailConfig.Password,
+                    UseSsl = emailConfig.UseSsl,
+                    ReplyTo = emailConfig.ReplyTo,
+                    EmailType = emailConfig.EmailType,
+                    EmailTypeName = emailType,
+                    From = emailConfig.From,
+                    AccessToken = emailConfig.AccessToken,
+                    TenantId = emailConfig.TenantId,
+                    IsActive = emailConfig.IsActive
+                }
+            };
+        }
+    
     }
 }

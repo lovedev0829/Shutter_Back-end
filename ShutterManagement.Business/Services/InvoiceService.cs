@@ -27,6 +27,7 @@ using Microsoft.Extensions.Options;
 using ShutterManagement.Stripe;
 using Microsoft.Extensions.Logging;
 using Stripe;
+using System.Linq.Dynamic.Core;
 
 namespace ShutterManagement.Business.Services
 {
@@ -48,15 +49,15 @@ namespace ShutterManagement.Business.Services
         private readonly JobStatusAndStageMapping statusAndStageMapping;
         private readonly ClaimsProperty claimsProperty;
         private readonly ITemplatesService templatesService;
-        private readonly GoogleAuthService googleAuthService;
         private readonly IEmailConfigurationService emailConfigurationService;
+        private readonly EmailSendHelperService emailSendHelperService;
 
         public InvoiceService(ITenantService tenantService, IInvoicePaymentService invoicePaymentService,
             IHostEnvironment environment, IConverter converter, IContactService contactService
             , IEstimateService estimateService, ITenantBrandingService tenantBrandingService, IUserService userService
             , IJobService jobService, IOrderService orderService, StripeService stripeService,
             IStripeConfiguration stripeConfiguration, JobStatusAndStageMapping statusAndStageMapping, ClaimsProperty claimsProperty,
-            ITemplatesService templatesService, GoogleAuthService googleAuthService, IEmailConfigurationService emailConfigurationService)
+            ITemplatesService templatesService, IEmailConfigurationService emailConfigurationService, EmailSendHelperService emailSendHelperService)
         {
             this.tenantService = tenantService;
             this.invoicePaymentService = invoicePaymentService;
@@ -73,8 +74,8 @@ namespace ShutterManagement.Business.Services
             this.statusAndStageMapping = statusAndStageMapping;
             this.claimsProperty = claimsProperty;
             this.templatesService = templatesService;
-            this.googleAuthService = googleAuthService;
             this.emailConfigurationService = emailConfigurationService;
+            this.emailSendHelperService = emailSendHelperService;
         }
 
         #region Create  update ActiveInActive Delete Getall
@@ -536,7 +537,7 @@ namespace ShutterManagement.Business.Services
             try
             {
 
-                FileLogger.Log($"Stripe Configuration{claimsProperty.GetTenantId().ToString()}");
+                //FileLogger.Log($"Stripe Configuration{claimsProperty.GetTenantId().ToString()}");
                 var isTenantValid = await tenantService.AnyAsync(x =>
                     x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
                 if (!isTenantValid)
@@ -548,31 +549,20 @@ namespace ShutterManagement.Business.Services
 
                 await stripeConfiguration.GetStripeConfiguration(claimsProperty.GetTenantId().ToString());
 
-                var invoiceTemplate = templatesService.GetAllQuerable().Where(c =>
-                c.TemplateCategory.Equals(EnumValue.GetEnumValue(EmailTemplateType.EstimatePDF)) &&
-                c.IsDelete == false)
-                .Select(x => x.TemplateValue)
-                .FirstOrDefault();
-
-                if (invoiceTemplate == null)
-                {
-                    responseVm.IsSuccess = false;
-                    responseVm.Message = AppConstant.NoDataFound;
-                    return responseVm;
-                }
                 filter.RecordPerPage = 1000;
                 filter.CustomerId = model.ContactId.ToString();
                 var customerDetails = (await contactService.GetAll_Contact(filter, false, false))
                     .Data.FirstOrDefault(x => x.ContactId == model.ContactId && x.IsActive == true);
 
 
-                var tenantDetails = tenantService.GetAllQuerable().Where(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true).FirstOrDefault();
+                var tenantDetails = (await tenantService.GetAll()).Where(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true).FirstOrDefault();
                 if (tenantDetails == null)
                 {
                     responseVm.IsSuccess = false;
                     responseVm.Message = $"Tenant " + AppConstant.NoDataFound;
                     return responseVm;
                 }
+
                 var tenantInfoDetails = tenantBrandingService.GetAllQuerable().Where(x => x.Id == tenantDetails.BrandingInfo && x.IsActive == true).FirstOrDefault();
 
 
@@ -631,20 +621,25 @@ namespace ShutterManagement.Business.Services
                     CreatedBy = estimationDetails?.CreatedBy.ToString() ?? "",
                     EstimationSubtotal = estimationDetails?.TotalPrice.ToString() ?? "",
                     EstimationGrandTotal = estimationDetails?.GrandTotal.ToString() ?? "",
-                    EstimationId = estimationDetails?.EstimateCode.ToString() ?? "",
+                    EstimationId = estimationDetails?.EstimateId.ToString() ?? "",
+                    EstimationCode = estimationDetails?.EstimateCode ?? "",
                     EmailAddress = customerDetails?.Email ?? "",
                     Terms = estimationDetails?.TermsCondition ?? "",
                     Note = estimationDetails?.Notes ?? "",
-                    OrderId = orderDetails?.OrderName ?? "",
+                    OrderId = orderDetails?.OrderId.ToString() ?? "",
+                    OrderName = orderDetails?.OrderName ?? "",
                     Taxes = estimationDetails?.TotaltaxAmount ?? 0.0m,
                     Discount = estimationDetails?.DiscountAmount ?? 0.0m,
                     Additionalcost = estimationDetails?.AdditionalCost.ToString() ?? "",
-                    ProductListHtml = GenerateProductListHtml(productList)
+                    ProductListHtml = GenerateProductListHtml(productList),
+
                 };
 
-                var htmlContent = ReplaceTemplatePlaceholders(invoiceTemplate, invoiceData);
+                // Generate the Estimate HTML
+                var htmlContent = await emailSendHelperService.GetTemplateContent(EmailTemplateType.EstimatePDF, invoiceData);
 
-                var pdfBytes = GenerateInvoicePdf(htmlContent);
+                //Generate the Estimate Invoice PDF
+                var pdfBytes = GeneratePdf(htmlContent.Data);
 
                 if (pdfBytes == null || pdfBytes.Data == null || pdfBytes.Data.Length == 0)
                 {
@@ -654,7 +649,7 @@ namespace ShutterManagement.Business.Services
                 }
 
                 var rootPath = Path.Combine(AppConstant.FileUploadPath, claimsProperty.GetTenantId().ToString());
-                FileLogger.Log($"Invoice File Path for payment {rootPath}");
+                //FileLogger.Log($"Invoice File Path for payment {rootPath}");
 
                 if (!Directory.Exists(rootPath))
                 {
@@ -674,380 +669,233 @@ namespace ShutterManagement.Business.Services
 
 
                 var PreparedByEmail = dbContext.TblUsers.Where(u => u.Id == estimationDetails.PreparedBy).Select(s => s.Email).FirstOrDefault() ?? "";
-
-
-                if (model.DocumentType == EstimateDocumentType.ForEmail)
+                string emailBody = string.Empty;
+                List<EmailAttachments> emailAttachments = new List<EmailAttachments>();
+                IResponseVm<string> EmailSendResult = new ResponseVm<string>();
+                switch (model.DocumentType)
                 {
-                    var IsEstimateExists = dbContext.TblEstimates
+                    case EstimateDocumentType.ForEmail:
+                        var IsEstimateExists = dbContext.TblEstimates
                         .Where(x => x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId() && x.EstimateId == model.EstimationId)
                         .OrderByDescending(x => x.CreatedAt)
                         .FirstOrDefault();
 
-                    if (IsEstimateExists == null)
-                    {
-                        responseVm.Message = "Estimate " + AppConstant.NoDataFound;
-                        return responseVm;
-                    }
-
-                    IsEstimateExists.Status = EnumValue.GetEnumValue(Estimation.PendingForApproval);
-                    IsEstimateExists.UpdatedAt = DateTime.Now;
-                    IsEstimateExists.ModifiedBy = AppConstant.LoggedInUserID;
-                    await estimateService.Update(IsEstimateExists);
-
-
-                    var jobStatusName = EnumValue.GetEnumValue(JobStatus.Quote_Sent);
-                    var updateResponse = await statusAndStageMapping.UpdateOpportunityAndJobStatus(IsEstimateExists?.JobId ?? Guid.Empty, jobStatusName);
-
-                    if (!updateResponse.IsSuccess)
-                    {
-                        responseVm.IsSuccess = false;
-                        responseVm.Message = updateResponse.Message;
-                        return responseVm;
-                    }
-
-
-
-
-                    string approvalEmailLink = $"{AppConstant.UIBaseURL}contacts/estimate/preview/{IsEstimateExists?.EstimateId}";
-
-
-
-                    var emailBody = $@"
-<div style='font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px; margin: auto; background: #f9f9f9; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);'>
-    <div style='background: white; padding: 20px; border-radius: 10px;'>
-
-        <p style='font-size: 16px; margin-bottom: 10px;'>
-            <strong>Dear {customerDetails?.FirstName} {customerDetails?.LastName},</strong>
-        </p>
-
-        <p style='font-size: 15px;'>
-            Please review the attached <strong>estimate</strong> prepared for your consideration.
-        </p>
-
-        <p style='font-size: 15px;'>
-            You can approve your estimate - <strong>{estimationDetails?.EstimateCode}</strong> by clicking the link below:
-        </p>
-
-        <div style='text-align: center; margin: 25px 0;'>
-            <a href='{approvalEmailLink}' 
-               style='background-color: #0066cc; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold;'>
-                View Estimate
-            </a>
-        </div>
-
-        <p style='font-size: 15px;'>
-            Once approved, an invoice will be automatically created for you to pay online or visit us to complete the payment.
-        </p>
-
-        <p style='font-size: 15px; margin-top: 30px;'>
-            Thank you for your business!
-        </p>
-
-        <img src='{tenantInfoDetails?.Logo}' alt='Company Logo' height='50' style='margin-top: 20px; display: block;' />
-
-        <p style='font-size: 15px; margin-top: 20px;'>Best regards,</p>
-        <p style='font-size: 15px; font-weight: bold;'>{tenantInfoDetails?.CompanyName}</p>
-        <p style='font-size: 14px;'>Shutter Management and Estimation System</p>
-    </div>
-</div>";
-
-
-                    var emailResponse = await SendEmailWithOAuth(estimationDetails.EstimateCode, pdfBytes.Data, emailBody, customerDetails?.Email ?? "", PreparedByEmail, "Estimate Approval Link and PDF");
-
-                    var jobDetails = await jobService.GetById(IsEstimateExists.JobId ?? Guid.Empty);
-
-                    if (jobDetails != null)
-                    {
-                        var ghlUrlResponse = await jobService.UpdateEstimateUrlInGhlOnly(jobDetails, approvalEmailLink);
-
-                        if (!ghlUrlResponse.IsSuccess)
+                        if (IsEstimateExists == null)
                         {
-                            // Optional: log or return a warning, depending on your use case
-                            FileLogger.Log($"GHL URL Update failed: {ghlUrlResponse.Message}");
+                            responseVm.Message = "Estimate " + AppConstant.NoDataFound;
+                            return responseVm;
                         }
-                    }
 
-                    responseVm.IsSuccess = true;
-                    responseVm.Message = emailResponse.Message;
-                    System.IO.File.Delete(savePath);
+                        IsEstimateExists.Status = EnumValue.GetEnumValue(Estimation.PendingForApproval);
+                        IsEstimateExists.UpdatedAt = DateTime.Now;
+                        IsEstimateExists.ModifiedBy = AppConstant.LoggedInUserID;
+                        await estimateService.Update(IsEstimateExists);
+                        invoiceData.InvoiceLink = $"{AppConstant.UIBaseURL}contacts/estimate/preview/{IsEstimateExists?.EstimateId}";
 
-                }
-                else if (model.DocumentType == EstimateDocumentType.OrderForEmail)
-                {
-                    var IsOrderExists = (await orderService.GetAll()).Where(x => x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId() &&
+
+                        var jobStatusName = EnumValue.GetEnumValue(JobStatus.Quote_Sent);
+                        var updateResponse = await statusAndStageMapping.UpdateOpportunityAndJobStatus(IsEstimateExists?.JobId ?? Guid.Empty, jobStatusName);
+
+                        if (!updateResponse.IsSuccess)
+                        {
+                            responseVm.IsSuccess = false;
+                            responseVm.Message = updateResponse.Message;
+                            return responseVm;
+                        }
+
+
+                        var jobDetails = await jobService.GetById(IsEstimateExists.JobId ?? Guid.Empty);
+
+                        if (jobDetails != null)
+                        {
+                            var ghlUrlResponse = await jobService.UpdateEstimateUrlInGhlOnly(jobDetails, invoiceData.InvoiceLink);
+
+                            if (!ghlUrlResponse.IsSuccess)
+                            {
+                                // Optional: log or return a warning, depending on your use case
+                                FileLogger.Log($"GHL URL Update failed: {ghlUrlResponse.Message}");
+                            }
+                        }
+
+                        emailBody = Templates.Estimate;
+                        emailAttachments.Add(new EmailAttachments
+                        {
+                            FileName = $"{invoiceData.EstimationCode}.pdf",
+                            Stream = new MemoryStream(pdfBytes.Data),
+                            MediaType = "application/pdf"
+                        });
+                        EmailSendResult = await emailSendHelperService.GetEmailConfigAndSendEmail(customerDetails?.Email, emailBody, AppConstant.Sub_EstimateApproval, PreparedByEmail, emailAttachments);
+
+                        responseVm.IsSuccess = true;
+                        responseVm.Message = EmailSendResult.Message;
+                        System.IO.File.Delete(savePath);
+                        break;
+
+                    case EstimateDocumentType.OrderForEmail:
+
+                        var IsOrderExists = (await orderService.GetAll()).Where(x => x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId() &&
                     x.OrderId == model.OrderId && x.Status != EnumValue.GetEnumValue(Estimation.Approved)).
                     OrderByDescending(x => x.CreatedAt).FirstOrDefault();
-                    if (IsOrderExists == null)
-                    {
-                        responseVm.Message = "Estimate " + AppConstant.NoDataFound;
-                        return responseVm;
-                    }
-
-                    IsOrderExists.Status = EnumValue.GetEnumValue(Estimation.PendingForApproval);
-                    IsOrderExists.UpdatedAt = DateTime.Now;
-                    IsOrderExists.ModifiedBy = AppConstant.LoggedInUserID;
-                    await orderService.Update(IsOrderExists);
-
-                    // string approvalOrderEmailLink = $"{AppConstant.UIBaseURL}contacts/order/preview/{IsOrderExists?.OrderId}";
-
-                    var emailBody = $@"
-     <div style='font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px;'>
-        <p><strong>Dear {customerDetails?.FirstName + " " + customerDetails?.LastName},</strong></p>
-
-        <p>Please find your invoice attached for your reference.</p>
-
-        <p>You can approve  your Order - {IsOrderExists?.OrderName} by clicking the link below:</p>
-
-        <p>
-            <a href='{AppConstant.UIBaseURL}contacts/order/preview/{IsOrderExists?.OrderId}'>
-               Order Approval link. 
-            </a>
-        </p>
-
-        <p><strong>Thank you for your business!</strong></p>
-
-       
-        
-
-        <p>
-            <img src='{tenantInfoDetails?.Logo}' alt='Company Logo' height='100px' 
-                 style='margin-top: 10px; display: block;'>
-        </p>
-        <p>Best regards,</p>
-        <p><strong>{tenantInfoDetails?.CompanyName}</strong></p>
-        <p>Shutter Management and Estimation System</p>
-    </div>";
-
-
-
-                    var emailResponse = await SendEmailWithOAuth(estimationDetails.EstimateCode, pdfBytes.Data, emailBody, customerDetails?.Email ?? "", PreparedByEmail ?? "", "Estimate For Approval");
-
-                    if (!emailResponse.IsSuccess)
-                    {
-                        responseVm.IsSuccess = false;
-                        responseVm.Message = emailResponse.Message;
-                        return responseVm;
-                    }
-
-                    System.IO.File.Delete(savePath);
-
-                    responseVm.IsSuccess = true;
-                    responseVm.Message = emailResponse.Message;
-                    return responseVm;
-
-                }
-
-                else if (model.DocumentType == EstimateDocumentType.InvoicePaymentForEmail)
-                {
-                    var invoiceForEmailTemplate = dbContext.TblTemplates.FirstOrDefault(c =>
-                        c.TemplateCategory == EnumValue.GetEnumValue(EmailTemplateType.InvoicePDF) &&
-                        c.IsDelete == false);
-
-                    if (invoiceForEmailTemplate == null)
-                    {
-                        responseVm.IsSuccess = false;
-                        responseVm.Message = "Invoice Template " + AppConstant.NoDataFound;
-                        return responseVm;
-                    }
-
-                    var paymentDetails = dbContext.TblInvoicePayments.FirstOrDefault(x => x.InvoiceId == model.InvoiceId && x.IsDelete == false);
-
-                    if (paymentDetails == null)
-                    {
-                        responseVm.Message = "Payment " + AppConstant.NoDataFound;
-                        return responseVm;
-                    }
-
-                    var invoiceDetails = dbContext.TblInvoices
-                        .FirstOrDefault(x => x.InvoiceId == model.InvoiceId && x.TenantId == claimsProperty.GetTenantId() && x.IsDelete == false);
-
-                    if (invoiceDetails == null)
-                    {
-                        responseVm.Message = "Invoice " + AppConstant.NoDataFound;
-                        return responseVm;
-                    }
-
-                    var paymentList = dbContext.TblInvoicePayments
-                        .Where(x => x.InvoiceId == model.InvoiceId && x.IsActive == true)
-                        .Select(p => new Core.ViewModels.Request.InvoicePayment
+                        if (IsOrderExists == null)
                         {
-                            Notes = p.Notes,
-                            InvoiceAmount = p.InvoiceAmount,
+                            responseVm.Message = "Estimate " + AppConstant.NoDataFound;
+                            return responseVm;
+                        }
 
-                        })
-                        .ToList();
+                        IsOrderExists.Status = EnumValue.GetEnumValue(Estimation.PendingForApproval);
+                        IsOrderExists.UpdatedAt = DateTime.Now;
+                        IsOrderExists.ModifiedBy = AppConstant.LoggedInUserID;
+                        await orderService.Update(IsOrderExists);
 
-                    var estimationDetail = dbContext.TblEstimates.FirstOrDefault(c => c.EstimateId == model.EstimationId && c.TenantId == claimsProperty.GetTenantId() && c.IsDelete == false);
-                    if (estimationDetail == null)
-                    {
-                        responseVm.IsSuccess = false;
-                        responseVm.Message = $"EstimationDetails " + AppConstant.NoDataFound;
-                        return responseVm;
-                    }
+                        invoiceData.InvoiceLink = $"{AppConstant.UIBaseURL}contacts/order/preview/{IsOrderExists?.OrderId}";
 
-                    var invoiceDataModel = new InvoiceDataModel
-                    {
-                        CustomerName = customerDetails?.FirstName + " " + customerDetails?.LastName,
-                        PreparedBy = userDetails?.FirstName + " " + userDetails?.LastName,
-                        CustomerId = customerDetails?.ContactUniqueId ?? "",
-                        CustomerCity = customerDetails?.billingAddressVm?.City ?? "",
-                        CustomerState = customerState ?? "",
-                        CustomerZipCode = customerDetails?.billingAddressVm?.ZipCode ?? "",
-                        HomePhone = customerDetails?.billingAddressVm?.PhoneNumber ?? "",
-                        CompanyStreetAddress = tenantInfoDetails?.StreetAddress ?? "",
-                        CompanyCity = tenantInfoDetails?.City ?? "",
-                        CompanyCountry = tenantInfoDetails?.Country ?? "",
-                        CompanyZipCode = tenantInfoDetails?.ZipCode ?? "",
-                        CustomerStreetAddress = customerDetails?.billingAddressVm?.StreetAddress ?? "",
-                        MobilePhone = customerDetails?.PhoneNumber ?? "",
-                        TenantCompanyName = tenantInfoDetails?.CompanyName ?? "",
-                        Logo = tenantInfoDetails?.Logo ?? "",
-                        EstimationDate = Convert.ToDateTime(invoiceDetails?.CreatedAt).ToString("MM-dd-yyyy") ?? "",
-                        CreatedBy = invoiceDetails?.CreatedBy.ToString() ?? "",
-                        EstimationSubtotal = invoiceDetails?.TotalAmount.ToString() ?? "",
-                        EstimationGrandTotal = invoiceDetails?.BalanceDue.ToString() ?? "",
-                        EstimationId = estimationDetail?.EstimateCode?.ToString() ?? "",
-                        EmailAddress = customerDetails?.Email ?? "",
-                        Terms = estimationDetails?.TermsCondition ?? "",
-                        Note = estimationDetails?.Notes ?? "",
-                        OrderId = orderDetails?.OrderName ?? "",
-                        TotalAmount = invoiceDetails?.TotalAmount.ToString() ?? "",
-                        DueAmount = invoiceDetails?.BalanceDue.ToString() ?? "",
-                        InvoiceNo = invoiceDetails?.InvoiceNumber?.ToString() ?? "",
-                        IssueDate = Convert.ToDateTime(invoiceDetails?.IssueDate).ToString("MM-dd-yyyy") ?? "",
-                        PaymentList = GenerateInvoicetListHtml(paymentList)
-                    };
+                        emailBody = Templates.Order;
+                        string orderEmailContent = emailSendHelperService.PlaceholderReplace(emailBody, invoiceData);
 
-                    // Replace placeholders in Invoice Template
-                    var htmlContentforInvoice = ReplaceTemplatePlaceholders(invoiceForEmailTemplate.TemplateValue, invoiceDataModel);
-
-                    // Generate Invoice PDF
-                    var pdfBytesInvoice = GenerateInvoicePdf(htmlContentforInvoice);
-
-                    // Save the invoice PDF
-                    var tenantIdInvoice = claimsProperty.GetTenantId().ToString();
-                    var rootPathInvoice = Path.Combine(AppConstant.FileUploadPath, tenantIdInvoice);
-                    if (!Directory.Exists(rootPathInvoice))
-                    {
-                        Directory.CreateDirectory(rootPathInvoice);
-                    }
-
-                    var InvoicefileName = $"Invoice_{Guid.NewGuid()}.pdf";
-                    var InvicesavePath = Path.Combine(rootPathInvoice, InvoicefileName);
-
-                    await using (var stream1 = new FileStream(InvicesavePath, FileMode.Create))
-                    {
-                        await stream1.WriteAsync(pdfBytesInvoice.Data, 0, pdfBytesInvoice.Data.Length);
-                    }
-
-                    var InvoicepdfBase64 = Convert.ToBase64String(pdfBytesInvoice.Data);
-
-                    string paymentLink = string.Empty;
-                    bool isStripeConfigured = !string.IsNullOrEmpty(AppConstant.Stripe_SecretKey) && IsStripeApiKeyValid();
-                    bool isPaymentLinkGenerated = false;
-
-                    if (invoiceDetails.BalanceDue > 0 && IsStripeApiKeyValid())
-                    {
-
-                        var Payment = dbContext.TblPayments.Where(x => x.InvoiceId == model.InvoiceId && x.PaymentTypeStatus == EnumValue.GetEnumValue(PaymentStatus.Draft) && x.Status == EnumValue.GetEnumValue(PaymentStatus.Unpaid)).FirstOrDefault();
-
-                        if (Payment != null)
+                        emailAttachments.Add(new EmailAttachments
                         {
-                            if (isStripeConfigured)
+                            FileName = $"{invoiceData.EstimationCode}.pdf",
+                            Stream = new MemoryStream(pdfBytes.Data),
+                            MediaType = "application/pdf"
+                        });
+                        EmailSendResult = await emailSendHelperService.GetEmailConfigAndSendEmail(customerDetails?.Email, emailBody, AppConstant.Sub_EstimateOrderApproval, PreparedByEmail, emailAttachments);
+                        responseVm.IsSuccess = true;
+                        responseVm.Message = EmailSendResult.Message;
+                        System.IO.File.Delete(savePath);
+
+                        break;
+
+                    case EstimateDocumentType.InvoicePaymentForEmail:
+                        var paymentDetails = dbContext.TblInvoicePayments.FirstOrDefault(x => x.InvoiceId == model.InvoiceId && x.IsDelete == false);
+
+                        if (paymentDetails == null)
+                        {
+                            responseVm.Message = "Payment " + AppConstant.NoDataFound;
+                            return responseVm;
+                        }
+
+                        var invoiceDetails = dbContext.TblInvoices
+                            .FirstOrDefault(x => x.InvoiceId == model.InvoiceId && x.TenantId == claimsProperty.GetTenantId() && x.IsDelete == false);
+
+                        if (invoiceDetails == null)
+                        {
+                            responseVm.Message = "Invoice " + AppConstant.NoDataFound;
+                            return responseVm;
+                        }
+
+                        var paymentList = dbContext.TblInvoicePayments
+                            .Where(x => x.InvoiceId == model.InvoiceId && x.IsActive == true)
+                            .Select(p => new Core.ViewModels.Request.InvoicePayment
                             {
-                                var paymentRequest = new PaymentRequest
-                                {
-                                    CustomerEmail = customerDetails.Email,
-                                    ProductName = $"Invoice Payment - {invoiceDetails?.InvoiceNumber}",
-                                    Amount = (long)(invoiceDetails?.BalanceDue * 100),
-                                    Quantity = 1,
-                                    InvoiceId = invoiceDetails?.InvoiceId.ToString(),
-                                    PaymentId = Payment?.PaymentId.ToString(),
-                                };
+                                Notes = p.Notes,
+                                InvoiceAmount = p.InvoiceAmount,
 
-                                paymentLink = _stripeService.CreateCheckoutSession(paymentRequest);
-                                isPaymentLinkGenerated = !string.IsNullOrEmpty(paymentLink);
-                                FileLogger.Log($"Payment Link Generated: {paymentLink}");
+                            })
+                            .ToList();
+
+
+                        invoiceData.TotalAmount = invoiceDetails?.TotalAmount.ToString() ?? "";
+                        invoiceData.DueAmount = invoiceDetails?.BalanceDue.ToString() ?? "";
+                        invoiceData.InvoiceNo = invoiceDetails?.InvoiceNumber?.ToString() ?? "";
+                        invoiceData.IssueDate = Convert.ToDateTime(invoiceDetails?.IssueDate).ToString("MM-dd-yyyy") ?? "";
+                        invoiceData.PaymentList = GenerateInvoicetListHtml(paymentList);
+
+                        //placeholders in Invoice Template
+                        var invoiceEmailContent = await emailSendHelperService.GetTemplateContent(EmailTemplateType.InvoicePDF, invoiceData);
+
+                        // Generate Invoice PDF
+                        var pdfBytesInvoice = GeneratePdf(invoiceEmailContent.Data);
+
+                        // Save the invoice PDF
+                        var rootPathInvoice = Path.Combine(AppConstant.FileUploadPath, claimsProperty.GetTenantId().ToString());
+                        if (!Directory.Exists(rootPathInvoice))
+                        {
+                            Directory.CreateDirectory(rootPathInvoice);
+                        }
+
+                        var InvoicefileName = $"Invoice_{Guid.NewGuid()}.pdf";
+                        var InvicesavePath = Path.Combine(rootPathInvoice, InvoicefileName);
+
+                        await using (var stream1 = new FileStream(InvicesavePath, FileMode.Create))
+                        {
+                            await stream1.WriteAsync(pdfBytesInvoice.Data, 0, pdfBytesInvoice.Data.Length);
+                        }
+
+                        var InvoicepdfBase64 = Convert.ToBase64String(pdfBytesInvoice.Data);
+
+                        string paymentLink = string.Empty;
+                        bool isStripeConfigured = !string.IsNullOrEmpty(AppConstant.Stripe_SecretKey) && IsStripeApiKeyValid();
+                        bool isPaymentLinkGenerated = false;
+
+                        if (invoiceDetails?.BalanceDue > 0 && IsStripeApiKeyValid())
+                        {
+
+                            var Payment = dbContext.TblPayments.Where(x => x.InvoiceId == model.InvoiceId && x.PaymentTypeStatus == EnumValue.GetEnumValue(PaymentStatus.Draft) && x.Status == EnumValue.GetEnumValue(PaymentStatus.Unpaid)).FirstOrDefault();
+
+                            if (Payment != null)
+                            {
+                                if (isStripeConfigured)
+                                {
+                                    var paymentRequest = new PaymentRequest
+                                    {
+                                        CustomerEmail = customerDetails?.Email ?? "",
+                                        ProductName = $"Invoice Payment - {invoiceDetails?.InvoiceNumber}",
+                                        Amount = (long)(invoiceDetails?.BalanceDue * 100),
+                                        Quantity = 1,
+                                        InvoiceId = invoiceDetails?.InvoiceId.ToString(),
+                                        PaymentId = Payment?.PaymentId.ToString(),
+                                    };
+
+                                    paymentLink = _stripeService.CreateCheckoutSession(paymentRequest);
+                                    isPaymentLinkGenerated = !string.IsNullOrEmpty(paymentLink);
+                                    FileLogger.Log($"Payment Link Generated: {paymentLink}");
+                                }
+                                else
+                                {
+                                    FileLogger.Log("Stripe credentials are missing. Payment link cannot be generated.");
+                                }
                             }
                             else
                             {
-                                FileLogger.Log("Stripe credentials are missing. Payment link cannot be generated.");
+                                FileLogger.Log($"Payment Not Found Those payment created time on Invoice.{Payment}");
                             }
+
+
                         }
-                        else
+
+                        invoiceData.Message = isPaymentLinkGenerated
+                            ? $"You can make the payment for your invoice <strong>{invoiceDetails?.InvoiceNumber}</strong> by clicking the link below:"
+                            : $"<strong>Note:</strong> Online payment is currently unavailable . Please contact support {tenantInfoDetails?.Email ?? ""}";
+
+                        invoiceData.PaymentLink = isPaymentLinkGenerated ? emailSendHelperService.PlaceholderReplace(Templates.InvoicePaymentLink, paymentLink) : string.Empty;
+
+                        emailBody = emailSendHelperService.PlaceholderReplace(Templates.Invoice, invoiceData);
+                        emailAttachments.Add(new EmailAttachments
                         {
-                            FileLogger.Log($"Payment Not Found Those payment created time on Invoice.{Payment}");
-                        }
+                            FileName = $"{invoiceData.InvoiceNo}.pdf",
+                            Stream = new MemoryStream(pdfBytesInvoice.Data),
+                            MediaType = "application/pdf"
+                        });
+                        EmailSendResult = await emailSendHelperService.GetEmailConfigAndSendEmail(customerDetails?.Email, emailBody, AppConstant.InvoicePaymentLinkandPDF, PreparedByEmail, emailAttachments);
+
+                        responseVm.IsSuccess = true;
+                        responseVm.Message = isStripeConfigured && EmailSendResult.IsSuccess
+                            ? "Email sent successfully."
+                            : EmailSendResult.Message;
+
+                        System.IO.File.Delete(InvicesavePath);
 
 
-                    }
+                        break;
+                    case EstimateDocumentType.DownloadPDF:
 
-                    var paymentMessage = isPaymentLinkGenerated
-                        ? $"You can make the payment for your invoice <strong>{invoiceDetails?.InvoiceNumber}</strong> by clicking the link below:"
-                        : $"<strong>Note:</strong> Online payment is currently unavailable . Please contact support {tenantInfoDetails?.Email ?? ""}";
+                        responseVm.IsSuccess = true;
+                        responseVm.Message = AppConstant.InvoiceDownloadSuccessMsg;
+                        responseVm.Data = pdfBase64;
 
-                    var emailBody = $@"
-<div style='max-width: 600px; margin: auto; background: #fff; border-radius: 8px; box-shadow: 0px 0px 10px rgba(0,0,0,0.1); padding: 20px; font-family: Arial, sans-serif; color: #333;'>
-
-    <div style='background: #007bff; color: #fff; text-align: center; padding: 15px; border-radius: 8px 8px 0 0;'>
-        <h2 style='margin: 0; font-size: 20px;'>Invoice Details</h2>
-    </div>
-
-    <div style='padding: 20px;'>
-        <p style='font-size: 16px; margin: 10px 0;'><strong>Dear {customerDetails?.FirstName + " " + customerDetails?.LastName},</strong></p>
-        <p style='font-size: 14px; margin: 10px 0;'>Please find your invoice attached for your reference.</p>
-
-        <div style='background: #e9ecef; padding: 15px; border-radius: 5px; margin: 15px 0;'>
-            <p style='margin: 5px 0; font-size: 14px;'><strong>Total Amount:</strong> {invoiceDetails?.TotalAmount}</p>
-            <p style='margin: 5px 0; font-size: 14px;'><strong>Due Amount:</strong> {invoiceDetails?.BalanceDue}</p>
-        </div>
-
-        <p style='font-size: 14px; margin: 15px 0;'>{paymentMessage}</p>";
-
-                    if (isPaymentLinkGenerated)
-                    {
-                        emailBody += $@"
-        <div style='text-align: center; margin: 20px 0;'>
-            <a href='{paymentLink}' style='background: #28a745; color: #fff; padding: 12px 20px; text-decoration: none; font-size: 14px; border-radius: 5px; display: inline-block;'>Pay Now</a>
-        </div>";
-                    }
-
-                    emailBody += $@"
-        <hr style='border: 0; height: 1px; background: #ddd; margin: 20px 0;'>
-
-        <p style='font-size: 14px; text-align: center;'>Thank you for your business!</p>
-
-        <div style='text-align: center; margin: 15px 0;'>
-            <img src='{tenantInfoDetails?.Logo}' alt='Company Logo' style='height: 50px;'>
-        </div>
-
-        <p style='text-align: center; font-size: 14px;'><strong>Best regards,</strong></p>
-        <p style='text-align: center; font-size: 14px;'><strong>{tenantInfoDetails?.CompanyName}</strong></p>
-        <p style='text-align: center; font-size: 14px;'>Shutter Management and Estimation System</p>
-    </div>
-</div>";
-
-                    var emailResponse = await SendEmailWithOAuth(invoiceDetails?.InvoiceNumber, pdfBytesInvoice.Data, emailBody, customerDetails?.Email ?? "", PreparedByEmail, AppConstant.InvoicePaymentLinkandPDF);
-
-                    responseVm.IsSuccess = true;
-                    responseVm.Message = isStripeConfigured
-                        ? "Invoice email sent successfully with payment link."
-                        : "Invoice email sent successfully, but Stripe credentials are missing Or Invalid. Payment link not included.";
-
-                    FileLogger.Log($"Invoice Email Status: {responseVm.Message}");
-                    System.IO.File.Delete(InvicesavePath);
-
+                        System.IO.File.Delete(savePath);
+                        break;
                 }
-
-                else if (model.DocumentType == EstimateDocumentType.DownloadPDF)
-                {
-                    responseVm.IsSuccess = true;
-                    responseVm.Message = AppConstant.InvoiceDownloadSuccessMsg;
-                    responseVm.Data = pdfBase64;
-
-                    System.IO.File.Delete(savePath);
-                }
-
             }
             catch (Exception ex)
             {
@@ -1090,7 +938,6 @@ namespace ShutterManagement.Business.Services
             return $"<tbody>{productListHtml}</tbody>";
         }
 
-
         private string GenerateInvoicetListHtml(List<Core.ViewModels.Request.InvoicePayment> payments)
         {
             var paymentsListHtml = new StringBuilder();
@@ -1109,59 +956,7 @@ namespace ShutterManagement.Business.Services
             return $"<tbody>{paymentsListHtml}</tbody>";
         }
 
-
-
-        private string ReplaceTemplatePlaceholders(string template, InvoiceDataModel data)
-        {
-            return template
-                .Replace("{{customerName}}", data.CustomerName ?? "")
-                .Replace("{{customerId}}", data.CustomerId ?? "")
-                .Replace("{{customercity}}", data.CustomerCity ?? "")
-                .Replace("{{customerstate}}", data.CustomerState ?? "")
-                .Replace("{{customerZipcode}}", data.CustomerZipCode ?? "")
-                .Replace("{{streetaddress}}", data.CustomerStreetAddress ?? "")
-                .Replace("{{homephone}}", data.HomePhone ?? "")
-                .Replace("{{companystreetaddress}}", data.CompanyStreetAddress ?? "")
-                .Replace("{{companycity}}", data.CompanyCity ?? "")
-                .Replace("{{companycountry}}", data.CompanyCountry ?? "")
-                .Replace("{{companyzipcode}}", data.CompanyZipCode ?? "")
-                .Replace("{{mobilephone}}", data.MobilePhone ?? "")
-                .Replace("{{tenantCompanyName}}", data.TenantCompanyName ?? "")
-                .Replace("{{logo}}", data.Logo ?? "")
-                .Replace("{{estimationdate}}", data.EstimationDate ?? "")
-                .Replace("{{createdby}}", data.PreparedBy ?? "")
-                .Replace("{{estimationsubtotal}}", data.EstimationSubtotal ?? "")
-                .Replace("{{estimationgrandtotal}}", data.EstimationGrandTotal ?? "")
-                .Replace("{{estimationId}}", data.EstimationId ?? "")
-                .Replace("{{emailaddress}}", data.EmailAddress ?? "")
-                .Replace("{{productlist}}", data.ProductListHtml ?? "")
-                .Replace("{{paymentlist}}", data.PaymentList ?? "")
-                .Replace("{{terms}}", data.Terms ?? "")
-                .Replace("{{note}}", data.Note ?? "")
-                .Replace("{{orderid}}", string.IsNullOrEmpty(data.OrderId) ? "" : $"Order ID: {data.OrderId}")
-                .Replace("{{issuedate}}", data.IssueDate ?? "")
-                .Replace("{{totalamount}}", data.TotalAmount ?? "")
-                .Replace("{{balancedue}}", data.DueAmount ?? "")
-                .Replace("{{invoiceno}}", data.InvoiceNo ?? "")
-                .Replace("{{additionalcost}}", data.Additionalcost ?? "")
-                .Replace("{{discount}}", (data.Discount > 0
-    ? $@"<tr>
-<td style=""padding: 5px 5px; font-weight: 700; font-size: 14px;"">Discount :</td>
-<td style=""text-align: end; padding: 5px 20px; font-weight: 700; font-size: 14px;"">${data.Discount}</td>
-</tr>"
-    : ""))
-
-.Replace("{{taxes}}", (data.Taxes > 0
-    ? $@"<tr>
-<td style=""padding: 5px 5px; font-weight: 700; font-size: 14px;"">Taxes :</td>
-<td style=""text-align: end; padding: 5px 20px; font-weight: 700; font-size: 14px;"">${data.Taxes}</td>
-</tr>"
-    : ""));
-
-
-        }
-
-        public ResponseVm<byte[]> GenerateInvoicePdf(string htmlContent)
+        public ResponseVm<byte[]> GeneratePdf(string htmlContent)
         {
             var response = new ResponseVm<byte[]>();
 
@@ -1208,9 +1003,6 @@ namespace ShutterManagement.Business.Services
 
             return response;
         }
-
-
-
 
         public async Task<IResponseVm<List<InvoiceVM>>> InvoiceReport(Pagination filter, ReportFilterType type)
         {
@@ -1307,7 +1099,6 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-
         public List<InvoiceVM> GetFilteredInvoices(Pagination filter)
         {
             var invoicesQuery = (from i in GetAllQuerable()
@@ -1370,6 +1161,9 @@ namespace ShutterManagement.Business.Services
             return filteredInvoices;
         }
 
+
+        #endregion Invoice_Generate_Methods
+
         #region Validate Stripe API Key 
         public static bool IsStripeApiKeyValid()
         {
@@ -1409,53 +1203,6 @@ namespace ShutterManagement.Business.Services
         }
 
         #endregion Validate Stripe API Key 
-
-
-        #endregion Invoice_Generate_Methods
-
-
-        // this is a common method for sending emails
-
-        public async Task<IResponseVm<string>> SendEmailWithOAuth(string filename, byte[] pdfData, string emailBody, string customerEmail, string preparedbyemail, string subject)
-        {
-            var responseVm = new ResponseVm<string>();
-
-            var emailSendAttach = new EmailAttachments
-            {
-                FileName = $"{filename}.pdf",
-                Stream = new MemoryStream(pdfData),
-                MediaType = "application/pdf"
-            };
-            var emailConfig = googleAuthService.ValidateAndRefreshEmailOauthAccessToken();
-            if (emailConfig == null || emailConfig.Result?.Data == null)
-            {
-                responseVm.IsSuccess = false;
-                responseVm.Message = "Email Configuration not found. Please add configurations.";
-                return responseVm;
-            }
-
-            var config = emailConfig.Result.Data;
-
-            var emailRequest = new OAuthEmailRequest
-            {
-                FromEmail = config.Username ?? "",
-                ToEmail = customerEmail ?? "",
-                Subject = subject,
-                Body = emailBody,
-                UserEmail = config.Username ?? "",
-                ReplyToEmail = preparedbyemail ?? "",
-                Username = config.Username ?? "",
-                SmtpServer = config.SmtpServer ?? "",
-                Port = config.Port ?? 0,
-                AccessToken = config.AccessToken ?? "",
-                Password = config.Password ?? "",
-                UseSsl = config.UseSsl ?? true,
-                EmailType = config.EmailTypeName ?? "",
-                Attachments = new List<EmailAttachments> { emailSendAttach }
-            };
-
-            return await EmailHelper.SendEmailWithOAuth(emailRequest);
-        }
 
     }
 }

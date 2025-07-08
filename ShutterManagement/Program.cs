@@ -206,6 +206,7 @@ builder.Services.Configure<GoHighLevelOAuthSettings>(builder.Configuration.GetSe
 builder.Services.Configure<StripeSettings>(builder.Configuration.GetSection("Stripe"));
 builder.Services.Configure<GoogleOAuthSettings>(builder.Configuration.GetSection("GoogleOAuth"));
 builder.Services.AddScoped<GoogleAuthService>();
+builder.Services.AddScoped<EmailSendHelperService>();
 builder.Services.AddScoped<EmailTypeService>();
 
 
