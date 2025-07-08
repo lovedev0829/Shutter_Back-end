@@ -193,6 +193,7 @@ namespace ShutterManagement.Controllers
             {
                 var UserGHLs = await userService.GetAll(filter);
                 UserGHLs.Data = UserGHLs?.Data?.Where(x => x.IsActive == true && !string.IsNullOrEmpty(x.GhlUserId)).ToList();
+                UserGHLs.TotalRecords = UserGHLs.Data.Count;
                 return Ok(UserGHLs);
             }
             else

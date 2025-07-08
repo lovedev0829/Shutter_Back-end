@@ -69,6 +69,8 @@ namespace ShutterManagement.API.Controllers
             }
 
             var res = await _userService.GetAll(filter);
+            res.Data = res?.Data.Where(x => x.IsTenantAdmin == false && x.UserId != claimsProperty.GetUserId()).ToList();
+            res.TotalRecords = res.Data.Count;
             return Ok(res);
         }
     }

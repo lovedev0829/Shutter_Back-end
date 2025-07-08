@@ -1,7 +1,10 @@
-﻿using System;
+﻿using CsvHelper.Configuration.Attributes;
+using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace ShutterManagment.GHL.ViewModel.Request
@@ -53,6 +56,13 @@ namespace ShutterManagment.GHL.ViewModel.Request
         public string? full_address { get; set; }
         public string contact_type { get; set; }
         public string? WebhookTenantId { get; set; }
+
+        [JsonPropertyName("Street Address")]
+        public string? StreetAddress { get; set; }
+        public string? address1 { get; set; }
+        public string? city { get; set; }
+        public string? state { get; set; }
+        public string? postal_code { get; set; }
         public Location? location { get; set; }
         public Workflow? workflow { get; set; }
         public TriggerData? triggerData { get; set; }
