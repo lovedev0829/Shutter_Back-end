@@ -30,7 +30,6 @@ namespace ShutterManagement.Business.Services
         private readonly EmailTypeService emailTypeService;
         private readonly string _msOAuthGrantTypeAuthorization = "authorization_code";
         private readonly string _msOAuthGrantTypeRefresh = "refresh_token";
-        private readonly string _msTokenInfoUrl = "https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=";
         private readonly string _msTokenUrl = "https://login.microsoftonline.com/common/oauth2/v2.0/token";
 
         public MS365Configuration(IEmailConfigurationService emailConfigurationService,ClaimsProperty claimsProperty ,EmailTypeService emailTypeService)
