@@ -19,19 +19,19 @@ namespace ShutterManagement.Business.Services
     public class EmailSendHelperService 
     {
         private readonly MS365Configuration mS365Configuration;
-        private readonly ITemplatesService templatesService;
         private readonly GoogleAuthService googleAuthService;
         private readonly IEmailConfigurationService emailConfigurationService;
+        private readonly ShutterDBContext dBContext;
         private readonly EmailTypeService emailTypeService;
         private readonly ClaimsProperty claimsProperty;
 
-        public EmailSendHelperService(MS365Configuration mS365Configuration,ITemplatesService templatesService,GoogleAuthService googleAuthService,
-            IEmailConfigurationService emailConfigurationService, EmailTypeService emailTypeService, ClaimsProperty claimsProperty)
+        public EmailSendHelperService(MS365Configuration mS365Configuration,GoogleAuthService googleAuthService,
+            IEmailConfigurationService emailConfigurationService,ShutterDBContext dBContext, EmailTypeService emailTypeService, ClaimsProperty claimsProperty)
         {
             this.mS365Configuration = mS365Configuration;
-            this.templatesService = templatesService;
             this.googleAuthService = googleAuthService;
             this.emailConfigurationService = emailConfigurationService;
+            this.dBContext = dBContext;
             this.emailTypeService = emailTypeService;
             this.claimsProperty = claimsProperty;
         }
@@ -42,9 +42,9 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> response = new ResponseVm<string>();
             try
             {
-                var Template = (await templatesService.GetAll())
-                        .FirstOrDefault(x => x.IsDelete == false &&
-                            x.TemplateName?.ToLower() == EnumValue.GetEnumValue(emailTemplateType).ToLower());
+                var Template = dBContext.TblTemplates.FirstOrDefault(
+                        x => x.IsDelete == false &&
+                            x.TemplateName.ToLower() == EnumValue.GetEnumValue(emailTemplateType).ToLower());
                 if (Template == null)
                 {
                     response.Message = "Email template not found. Please add the template.";
