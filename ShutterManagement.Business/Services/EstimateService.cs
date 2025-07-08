@@ -953,14 +953,22 @@ namespace ShutterManagement.Business.Services
                 string replacement = property switch
                 {
                     "Unit" => $"'{val}'",
-                    "OptionPrice" => Convert.ToDecimal(values.Optionprice).ToString("N2"),
-                    _ => Convert.ToDecimal(val).ToString("N2")
+                    "OptionPrice" => Convert.ToDecimal(values.Optionprice).ToString("F2", System.Globalization.CultureInfo.InvariantCulture),
+                    _ => Convert.ToDecimal(val).ToString("F2", System.Globalization.CultureInfo.InvariantCulture)
                 };
 
                 formula = formula?.Replace(placeholder, " " + replacement + " ");
             }
             //values.CalculateExpression = formula;
-            return new NCalc.Expression(formula);
+            try
+            {
+                return new NCalc.Expression(formula);
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Log($"Expression parsing error. Formula: '{formula}', Error: {ex.Message}");
+                throw new InvalidOperationException($"Invalid expression formula: '{formula}'. Error: {ex.Message}", ex);
+            }
         }
 
         public async Task<IResponseVm<string>> Update_Estimate(UpdatetEstimate model)

@@ -31,7 +31,6 @@ namespace ShutterManagement.Core.ViewModels.Request
 
         public bool? IsTaxAvailable { get; set; }
         public Guid? TaxId { get; set; }
-        public bool? RequirePriceAtEstimatePreview { get; set; }
         public bool? BuildRequirement { get; set; }
         public bool? UseInCutSheet { get; set; }
 

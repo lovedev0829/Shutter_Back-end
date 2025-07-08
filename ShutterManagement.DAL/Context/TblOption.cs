@@ -41,8 +41,6 @@ public partial class TblOption
 
     public string? Unit { get; set; }
 
-    public bool? RequirePriceAtEstimatePreview { get; set; }
-
     public bool? BuildRequirement { get; set; }
 
     public bool? UseInCutSheet { get; set; }
