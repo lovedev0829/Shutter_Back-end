@@ -115,5 +115,39 @@ namespace ShutterManagement.Core.Common
         <div style='text-align: center; margin: 20px 0;'>
             <a href='{{paymentLink}}' style='background: #28a745; color: #fff; padding: 12px 20px; text-decoration: none; font-size: 14px; border-radius: 5px; display: inline-block;'>Pay Now</a>
         </div>";
+
+        public static string PaymentLink { get; set; } = $@"
+<div style='max-width: 600px; margin: auto; background: #fff; border-radius: 8px; 
+            box-shadow: 0px 0px 10px rgba(0,0,0,0.1); padding: 20px; 
+            font-family: Arial, sans-serif; color: #333;'>
+
+    <div style='background: #dc3545; color: #fff; text-align: center; padding: 15px; 
+                border-radius: 8px 8px 0 0;'>
+        <h2 style='margin: 0; font-size: 20px;'>Payment Request</h2>
+    </div>
+
+    <div style='padding: 20px;'>
+        <p style='font-size: 16px; margin: 10px 0;'><strong>Dear {{CustomerName}},</strong></p>
+        <p style='font-size: 14px; margin: 10px 0;'>We are requesting a payment for your invoice <strong>{{InvoiceNumber}}</strong>.</p>
+
+        <!-- Invoice Details -->
+        <div style='background: #e9ecef; padding: 15px; border-radius: 5px; margin: 15px 0;'>
+            <p style='margin: 5px 0; font-size: 14px;'><strong>Total Invoice Amount:</strong> {{TotalAmount}}</p>
+            <p style='margin: 5px 0; font-size: 14px;'><strong>Due Amount:</strong> {{BalanceDue}}</p>
+            <p style='margin: 5px 0; font-size: 14px;'><strong>Amount Requested for Payment:</strong> {{Amount}}</p>
+        </div>
+
+        <p style='font-size: 14px; margin: 15px 0;'>Please click the button below to complete your payment:</p>
+
+        <div style='text-align: center; margin: 20px 0;'>
+            <a href='{{PaymentLink}}' style='background: #007bff; color: #fff; padding: 12px 20px; 
+               text-decoration: none; font-size: 14px; border-radius: 5px; display: inline-block;'>Pay Now</a>
+        </div>
+
+        <hr style='border: 0; height: 1px; background: #ddd; margin: 20px 0;'>
+
+        <p style='font-size: 14px; text-align: center;'>Thank you for your prompt attention to this matter.</p>
+    </div>
+</div>";
     }
 }

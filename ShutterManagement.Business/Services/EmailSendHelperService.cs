@@ -44,7 +44,7 @@ namespace ShutterManagement.Business.Services
             {
                 var Template = dBContext.TblTemplates.FirstOrDefault(
                         x => x.IsDelete == false &&
-                            x.TemplateName.ToLower() == EnumValue.GetEnumValue(emailTemplateType).ToLower());
+                            x.TemplateCategory == EnumValue.GetEnumValue(emailTemplateType));
                 if (Template == null)
                 {
                     response.Message = "Email template not found. Please add the template.";
