@@ -144,7 +144,7 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-                var tokenResponse = JsonConvert.DeserializeObject<GoogleTokenResponse>(result);
+                var tokenResponse = JsonConvert.DeserializeObject<OAuthRefereshTokenResponse>(result);
 
                 var config = emailConfigurationService
                     .GetAllQuerable()
@@ -152,8 +152,8 @@ namespace ShutterManagement.Business.Services
 
                 if (config != null)
                 {
-                    config.AccessToken = tokenResponse?.AccessToken;
-                    config.RefreshToken = tokenResponse?.RefreshToken;
+                    config.AccessToken = tokenResponse?.access_token;
+                    config.RefreshToken = tokenResponse?.refresh_token;
                     config.AccessExpirationtime = DateTime.Now.AddHours(1);
                     config.RefreshExpirationtime = DateTime.Now.AddDays(7);
 
@@ -272,26 +272,7 @@ namespace ShutterManagement.Business.Services
 
     }
 
-    public class GoogleTokenResponse
-    {
-        [JsonProperty("access_token")]
-        public string? AccessToken { get; set; }
-
-        [JsonProperty("expires_in")]
-        public int ExpiresIn { get; set; }
-
-        [JsonProperty("refresh_token_expires_in")]
-        public int RefreshTokenExpiresIn { get; set; }
-
-        [JsonProperty("refresh_token")]
-        public string? RefreshToken { get; set; }
-
-        [JsonProperty("scope")]
-        public string? Scope { get; set; }
-
-        [JsonProperty("token_type")]
-        public string? TokenType { get; set; }
-    }
+   
 
 
 
