@@ -581,7 +581,6 @@ namespace ShutterManagement.Business.Services
                    c.IsDelete == false);
 
                 var estimationRecord = await estimateService.ViewEachEstimation(model.EstimationId);
-
                 var productList = estimationRecord.Data
                     .FirstOrDefault(x => x.IsActive == true)
                     ?.EstimateProductList ?? new List<EstimateProductList>();
@@ -592,6 +591,9 @@ namespace ShutterManagement.Business.Services
                     customerState = dbContext.MstStates.Where(x => x.Id == customerDetails.billingAddressVm.StateId).Select(y => y.StateName ?? "").FirstOrDefault();
                 }
 
+                var powderCoatColor = estimationRecord.Data
+                     .FirstOrDefault(x => x.IsActive == true).jobDetails.PowderCoatColor;
+        
                 var invoiceData = new InvoiceDataModel
                 {
                     CustomerName = customerDetails?.FirstName ?? "" + customerDetails?.LastName ?? "",
@@ -623,8 +625,8 @@ namespace ShutterManagement.Business.Services
                     Taxes = estimationDetails?.TotaltaxAmount ?? 0.0m,
                     Discount = estimationDetails?.DiscountAmount ?? 0.0m,
                     Additionalcost = estimationDetails?.AdditionalCost.ToString() ?? "",
-                    ProductList = GenerateProductListHtml(productList),
-
+                    ProductListHtml = GenerateProductListHtml(productList),
+                    PowderCoatColor = powderCoatColor
                 };
 
                 // Generate the Estimate HTML
@@ -946,7 +948,60 @@ namespace ShutterManagement.Business.Services
             return $"<tbody>{paymentsListHtml}</tbody>";
         }
 
-        public ResponseVm<byte[]> GeneratePdf(string htmlContent)
+
+
+        private string ReplaceTemplatePlaceholders(string template, InvoiceDataModel data)
+        {
+            return template
+                .Replace("{{customerName}}", data.CustomerName ?? "")
+                .Replace("{{customerId}}", data.CustomerId ?? "")
+                .Replace("{{customercity}}", data.CustomerCity ?? "")
+                .Replace("{{customerstate}}", data.CustomerState ?? "")
+                .Replace("{{customerZipcode}}", data.CustomerZipCode ?? "")
+                .Replace("{{streetaddress}}", data.CustomerStreetAddress ?? "")
+                .Replace("{{homephone}}", data.HomePhone ?? "")
+                .Replace("{{companystreetaddress}}", data.CompanyStreetAddress ?? "")
+                .Replace("{{companycity}}", data.CompanyCity ?? "")
+                .Replace("{{companycountry}}", data.CompanyCountry ?? "")
+                .Replace("{{companyzipcode}}", data.CompanyZipCode ?? "")
+                .Replace("{{mobilephone}}", data.MobilePhone ?? "")
+                .Replace("{{tenantCompanyName}}", data.TenantCompanyName ?? "")
+                .Replace("{{logo}}", data.Logo ?? "")
+                .Replace("{{estimationdate}}", data.EstimationDate ?? "")
+                .Replace("{{createdby}}", data.PreparedBy ?? "")
+                .Replace("{{estimationsubtotal}}", data.EstimationSubtotal ?? "")
+                .Replace("{{estimationgrandtotal}}", data.EstimationGrandTotal ?? "")
+                .Replace("{{estimationId}}", data.EstimationId ?? "")
+                .Replace("{{emailaddress}}", data.EmailAddress ?? "")
+                .Replace("{{productlist}}", data.ProductListHtml ?? "")
+                .Replace("{{paymentlist}}", data.PaymentList ?? "")
+                .Replace("{{terms}}", data.Terms ?? "")
+                .Replace("{{note}}", data.Note ?? "")
+                .Replace("{{orderid}}", string.IsNullOrEmpty(data.OrderId) ? "" : $"Order ID: {data.OrderId}")
+                .Replace("{{issuedate}}", data.IssueDate ?? "")
+                .Replace("{{totalamount}}", data.TotalAmount ?? "")
+                .Replace("{{balancedue}}", data.DueAmount ?? "")
+                .Replace("{{powderCoatColor}}", data.PowderCoatColor?? "")
+                .Replace("{{invoiceno}}", data.InvoiceNo ?? "")
+                .Replace("{{additionalcost}}", data.Additionalcost ?? "")
+                .Replace("{{discount}}", (data.Discount > 0
+    ? $@"<tr>
+<td style=""padding: 5px 5px; font-weight: 700; font-size: 14px;"">Discount :</td>
+<td style=""text-align: end; padding: 5px 20px; font-weight: 700; font-size: 14px;"">${data.Discount}</td>
+</tr>"
+    : ""))
+
+.Replace("{{taxes}}", (data.Taxes > 0
+    ? $@"<tr>
+<td style=""padding: 5px 5px; font-weight: 700; font-size: 14px;"">Taxes :</td>
+<td style=""text-align: end; padding: 5px 20px; font-weight: 700; font-size: 14px;"">${data.Taxes}</td>
+</tr>"
+    : ""));
+
+
+        }
+
+        public ResponseVm<byte[]> GenerateInvoicePdf(string htmlContent)
         {
             var response = new ResponseVm<byte[]>();
 

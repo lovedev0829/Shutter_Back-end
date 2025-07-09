@@ -33,6 +33,8 @@ public partial class TblOptionsType
 
     public bool? RequirePriceAtEstimatePreview { get; set; }
 
+    public bool hidePreview{ get; set; }
+
     public virtual TblOption? Option { get; set; }
 
     public virtual ICollection<TblManagePartnersProductsOption> TblManagePartnersProductsOptions { get; set; } = new List<TblManagePartnersProductsOption>();
