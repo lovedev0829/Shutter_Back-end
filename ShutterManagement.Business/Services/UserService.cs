@@ -562,7 +562,8 @@ namespace ShutterManagement.Services
                     CompanyName = tenantInfoDetails.CompanyName ?? "",
                     Logo = tenantInfoDetails.Logo ?? "",
                     loginUrl = $"{AppConstant.UIBaseURL}",
-                    color = tenantInfoDetails.PrimaryColor ?? ""
+                    color = tenantInfoDetails.PrimaryColor ?? "",
+                    Email = model.Email
                 };
                 responseVm = await emailSendHelperService.SendEmailWithReplacedContent(EmailTemplateType.WelcomeEmail, welcomemodel);
             }

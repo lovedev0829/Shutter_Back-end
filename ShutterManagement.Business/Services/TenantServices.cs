@@ -668,7 +668,8 @@ namespace ShutterManagement.Business.Services
                     CompanyName = model.CompanyName ?? "",
                     Logo = model.Logo ?? "",
                     loginUrl = $"{AppConstant.UIBaseURL}",
-                    color = model.PrimaryColor ?? ""
+                    color = model.PrimaryColor ?? "",
+                    Email = model.Email
                 };
                 responseVm = await emailSendHelperService.SendEmailWithReplacedContent(EmailTemplateType.WelcomeEmail, welcomemodel);
             }
