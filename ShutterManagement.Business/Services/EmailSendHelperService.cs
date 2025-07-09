@@ -54,6 +54,7 @@ namespace ShutterManagement.Business.Services
                     return response;
                 }
                 var emailContent = PlaceholderReplace(Template.TemplateValue, dataObject);
+                response.IsSuccess = true;
                 response.Data = emailContent ?? "";
             }
             catch (Exception ex)
@@ -69,8 +70,11 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var emailContent = await GetTemplateContent(emailTemplateType,dataObject);
-
-                response = await GetEmailConfigAndSendEmail(dataObject.Email, emailContent ,AppConstant.Sub_WelcomeEmail );
+                if(!emailContent.IsSuccess || string.IsNullOrEmpty(emailContent.Data))
+                {
+                    return emailContent;
+                }
+                response = await GetEmailConfigAndSendEmail(dataObject.Email, emailContent.Data ,AppConstant.Sub_WelcomeEmail );
             }
             catch (Exception ex)
             {
@@ -87,7 +91,7 @@ namespace ShutterManagement.Business.Services
             {
                 var emailTypeconfiguration = await GetEmailConfigurationByType();
 
-            if (!emailTypeconfiguration.IsSuccess)
+            if (!emailTypeconfiguration.IsSuccess || emailTypeconfiguration.Data == null)
             {
                 response.Message = emailTypeconfiguration.Message ?? "Failed to get email configuration.";
                 return response;
@@ -96,19 +100,19 @@ namespace ShutterManagement.Business.Services
 
             OAuthEmailRequest vm = new OAuthEmailRequest
             {
-                FromEmail = emailTypeconfiguration.Data.Username ?? "",
+                FromEmail = emailTypeconfiguration.Data?.Username ?? "",
                 ToEmail = ToEmail,
                 Subject = subject,
                 Body = emailContent,
-                ReplyToEmail = string.IsNullOrEmpty(replyTo) ? emailTypeconfiguration.Data.Username : replyTo,
-                UserEmail = emailTypeconfiguration.Data.Username ?? "",
-                Username = emailTypeconfiguration.Data.Username ?? "",
-                SmtpServer = emailTypeconfiguration.Data.SmtpServer ?? "",
-                Port = emailTypeconfiguration.Data.Port ?? 0,
-                AccessToken = emailTypeconfiguration.Data.AccessToken ?? "",
-                Password = emailTypeconfiguration.Data.Password ?? "",
-                UseSsl = emailTypeconfiguration.Data.UseSsl ?? true,
-                EmailType = emailTypeconfiguration.Data.EmailTypeName ?? "",
+                ReplyToEmail = string.IsNullOrEmpty(replyTo) ? emailTypeconfiguration.Data?.Username ?? "" : replyTo,
+                UserEmail = emailTypeconfiguration.Data?.Username ?? "",
+                Username = emailTypeconfiguration.Data?.Username ?? "",
+                SmtpServer = emailTypeconfiguration.Data?.SmtpServer ?? "",
+                Port = emailTypeconfiguration.Data?.Port ?? 0,
+                AccessToken = emailTypeconfiguration.Data?.AccessToken ?? "",
+                Password = emailTypeconfiguration.Data?.Password ?? "",
+                UseSsl = emailTypeconfiguration.Data?.UseSsl ?? true,
+                EmailType = emailTypeconfiguration.Data?.EmailTypeName ?? "",
                 Attachments = emailAttachments
             };
             response = await EmailHelper.SendEmail(vm);
@@ -134,14 +138,19 @@ namespace ShutterManagement.Business.Services
                 if (emailType.ToLower() == EnumValue.GetEnumValue(EmailSendType.Google).ToLower())
                 {
                     configResponse = await googleAuthService.ValidateAndRefreshGoogleEmailOauthAccessToken(emailConfig, emailType);
+                    configResponse.IsSuccess = true;
                 }
                 else if (emailType.ToLower() == EnumValue.GetEnumValue(EmailSendType.Microsoft365).ToLower())
                 {
                     configResponse = await mS365Configuration.ValidateAndRefreshMSEmailOauthAccessToken(emailConfig, emailType);
+                    configResponse.IsSuccess = true;
+
                 }
                 else if (emailType.ToLower() == EnumValue.GetEnumValue(EmailSendType.SMTP))
                 {
                     configResponse = EmailConfigurationVm.ConfigResponse(emailConfig, emailType);
+                    configResponse.IsSuccess = true;
+
                 }
                 else
                 {
