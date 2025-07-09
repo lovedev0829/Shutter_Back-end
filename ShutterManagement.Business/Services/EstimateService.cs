@@ -643,6 +643,9 @@ namespace ShutterManagement.Business.Services
                             item.StateTaxAmount = 0;
                             item.CityTaxAmount = 0;
                             item.TotalTaxAmount = 0;
+                            item.MunicipalityTax = 0;
+                            item.StateTax = 0;
+                            item.CityTax = 0;
                         }
                     }
 
