@@ -67,6 +67,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public DateTime? UpdatedAt { get; set; }
 
         public Guid? ContactId { get; set; }
+        public string? PowderCoatColor { get; set; }
         public bool? JobIsActive { get; set; }
 
     }
@@ -103,6 +104,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public EstimateWindowList EstimateWindowDetails { get; set; } = new EstimateWindowList();
 
         public string[]? Options { get; set; } = [];
+        public bool[] hidePreviews { get; set; } = [];
         //public string[] price { get; set; }
     }
     public class OptionList

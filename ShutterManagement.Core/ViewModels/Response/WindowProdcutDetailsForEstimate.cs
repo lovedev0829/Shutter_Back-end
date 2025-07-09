@@ -147,6 +147,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string OptionTypeName { get; set; } = string.Empty;
         public Guid WindowOptionId { get; set; }
         public string TaxName { get; set; } = string.Empty;
+        public bool hidePreview { get; set; }
         public Guid? TaxId { get; set; }
         public decimal? OptionPrice { get; set; }
         public string? OptionTaxName { get; set; }
@@ -158,7 +159,6 @@ namespace ShutterManagement.Core.ViewModels.Response
         public decimal? StateTaxAmount { get; set; }
         public decimal? MunicipalityTaxAmount { get; set; }
         public decimal? OptionMarkup { get; set; }
-
         public decimal? TotalTaxAmount { get; set; }
     }
 

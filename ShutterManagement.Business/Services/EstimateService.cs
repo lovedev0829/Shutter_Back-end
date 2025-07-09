@@ -953,22 +953,14 @@ namespace ShutterManagement.Business.Services
                 string replacement = property switch
                 {
                     "Unit" => $"'{val}'",
-                    "OptionPrice" => Convert.ToDecimal(values.Optionprice).ToString("F2", System.Globalization.CultureInfo.InvariantCulture),
-                    _ => Convert.ToDecimal(val).ToString("F2", System.Globalization.CultureInfo.InvariantCulture)
+                    "OptionPrice" => Convert.ToDecimal(values.Optionprice).ToString("N2"),
+                    _ => Convert.ToDecimal(val).ToString("N2")
                 };
 
                 formula = formula?.Replace(placeholder, " " + replacement + " ");
             }
             //values.CalculateExpression = formula;
-            try
-            {
-                return new NCalc.Expression(formula);
-            }
-            catch (Exception ex)
-            {
-                FileLogger.Log($"Expression parsing error. Formula: '{formula}', Error: {ex.Message}");
-                throw new InvalidOperationException($"Invalid expression formula: '{formula}'. Error: {ex.Message}", ex);
-            }
+             return new NCalc.Expression(formula);
         }
 
         public async Task<IResponseVm<string>> Update_Estimate(UpdatetEstimate model)
@@ -1450,6 +1442,8 @@ namespace ShutterManagement.Business.Services
                                join j5 in dbContext.TblUsers on j1.AssignedPersonnel equals j5.Id into Users
                                from j5 in Users.DefaultIfEmpty()
                                join j6 in dbContext.TblContacts on j1.ContactId equals j6.ContactId
+                               join j7 in dbContext.MstPowderCoatColors on j1.PowderCoatColorId equals j7.Id into PowderCoatColors
+                               from j7 in PowderCoatColors.DefaultIfEmpty()
                                where j1.TenantId == TenantId && j1.IsDelete == false && j1.JobId == e.JobId
                                select new JobDetails
                                {
@@ -1466,7 +1460,8 @@ namespace ShutterManagement.Business.Services
                                    AddressLabel = j3.Label,
                                    ScheduleTime = j1.ScheduledDate,
                                    ContactId = j6.ContactId,
-                                   JobIsActive = j1.IsActive
+                                   JobIsActive = j1.IsActive,
+                                   PowderCoatColor = j7.ColorName
                                }).FirstOrDefault();
 
             e.jobDetails = jobdetails1;
@@ -1503,10 +1498,12 @@ namespace ShutterManagement.Business.Services
                             OptionName = estimateOption.OptionName ?? "",
                             OptionId = estimateOption.Optionid.ToString(),
                             OptionTypeId = estimateOption.OptionTypeid.ToString(),
+                            hidePreview = optionType.hidePreview,
                             OptionTypeName = estimateOption.OptionName + " - " + estimateOption.OptionTypeName
                         }
                     }).ToList();
 
+                Console.WriteLine(allOptions);
                 var windowDetails = estimateWindowService.GetAllQuerable()
                     .Where(x => x.EstimateId == estimate.EstimateId && x.IsDelete == false)
                     .ToList();
@@ -1528,7 +1525,7 @@ namespace ShutterManagement.Business.Services
                         .Where(o => o.EstimateWindowProductId == p.EstimateWindowProductId)
                         .Select(o => o.Option)
                         .ToList();
-
+                    
                     labelQtyMap.TryGetValue(p.WindowId, out var labelQty);
 
                     var isComponentAvailable = componentFlags.Any(x =>
@@ -1550,6 +1547,7 @@ namespace ShutterManagement.Business.Services
                         additionalCost = options.Sum(x => x.OptionPrice),
                         ProductPrice = p.ProductPrice,
                         Options = options.Select(x => x.OptionTypeName).ToArray(),
+                        hidePreviews = options.Select(x => x.hidePreview).ToArray(),
                         IsComponentAvailable = isComponentAvailable,
                         WholesalePrice = p.WholeSalePrice,
                         ProductMarkup = p.ProductMarkup,

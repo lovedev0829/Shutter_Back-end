@@ -599,7 +599,6 @@ namespace ShutterManagement.Business.Services
                    c.IsDelete == false);
 
                 var estimationRecord = await estimateService.ViewEachEstimation(model.EstimationId);
-
                 var productList = estimationRecord.Data
                     .FirstOrDefault(x => x.IsActive == true)
                     ?.EstimateProductList ?? new List<EstimateProductList>();
@@ -610,6 +609,9 @@ namespace ShutterManagement.Business.Services
                     customerState = dbContext.MstStates.Where(x => x.Id == customerDetails.billingAddressVm.StateId).Select(y => y.StateName ?? "").FirstOrDefault();
                 }
 
+                var powderCoatColor = estimationRecord.Data
+                     .FirstOrDefault(x => x.IsActive == true).jobDetails.PowderCoatColor;
+        
                 var invoiceData = new InvoiceDataModel
                 {
                     CustomerName = customerDetails?.FirstName ?? "" + customerDetails?.LastName ?? "",
@@ -639,7 +641,8 @@ namespace ShutterManagement.Business.Services
                     Taxes = estimationDetails?.TotaltaxAmount ?? 0.0m,
                     Discount = estimationDetails?.DiscountAmount ?? 0.0m,
                     Additionalcost = estimationDetails?.AdditionalCost.ToString() ?? "",
-                    ProductListHtml = GenerateProductListHtml(productList)
+                    ProductListHtml = GenerateProductListHtml(productList),
+                    PowderCoatColor = powderCoatColor
                 };
 
                 var htmlContent = ReplaceTemplatePlaceholders(invoiceTemplate, invoiceData);
@@ -1142,6 +1145,7 @@ namespace ShutterManagement.Business.Services
                 .Replace("{{issuedate}}", data.IssueDate ?? "")
                 .Replace("{{totalamount}}", data.TotalAmount ?? "")
                 .Replace("{{balancedue}}", data.DueAmount ?? "")
+                .Replace("{{powderCoatColor}}", data.PowderCoatColor?? "")
                 .Replace("{{invoiceno}}", data.InvoiceNo ?? "")
                 .Replace("{{additionalcost}}", data.Additionalcost ?? "")
                 .Replace("{{discount}}", (data.Discount > 0
