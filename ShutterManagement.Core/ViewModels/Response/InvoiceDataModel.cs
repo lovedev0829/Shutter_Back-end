@@ -43,7 +43,10 @@ namespace ShutterManagement.Core.ViewModels.Response
         public decimal? Taxes { get; set; }
         public string? Additionalcost { get; set; }
         public decimal? Discount { get; set; }
-
+        public string? InvoiceLink { get; set; }
+        public string? Message { get; set; }
+        public string? PaymentLink { get; set; }
         public string? PowderCoatColor { get; set; }
+
     }
 }
