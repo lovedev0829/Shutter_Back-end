@@ -481,11 +481,11 @@ namespace ShutterManagement.Business.Services
                             .Where(x => x.JobStatusName == EnumValue.GetEnumValue(JobStatus.New))
                             .Select(x => x.JobStatusId)
                             .FirstOrDefault();
-
+                       
                         if (existingJob != null)
                         {
                             FileLogger.Log($"Updating existing job: {existingJob.JobId}");
-
+                            existingJob.AddressId = existingJob.AddressId == null ? (dbcontact.PrimaryAddress == null ? null : dbcontact.PrimaryAddress) : existingJob.AddressId;
                             existingJob.JobName = opportunity.Name??"";
                             existingJob.JobStatus = jobstatusId;
                             existingJob.GhlContactId = opportunity.Contact?.Id;
@@ -506,7 +506,7 @@ namespace ShutterManagement.Business.Services
                                 ContactId = dbcontact?.ContactId,
                                 GHL_ContactId = opportunity.Contact?.Id??"",
                                 GhlOpportunityId = opportunity.OpportunityId??"",
-                                AddressId = dbcontact?.PrimaryAddress ??Guid.Empty,
+                                AddressId = dbcontact?.PrimaryAddress ?? Guid.Empty,
                                 GHL_jobstatus = jobstatusId.ToString()??"",
                                 GHL_StageName = stage?.GhlStageName??"",
                                 JobName = opportunity.Name?.Trim()??"",
@@ -1317,6 +1317,7 @@ namespace ShutterManagement.Business.Services
                     if (IsJobExist != null)
                     {
                         string arrayString = string.Join(", ", model.AttachmentsAny);
+                        IsJobExist.AddressId = model.AddressId ?? null;
                         IsJobExist.JobName = model.JobName?.Trim();
                         IsJobExist.JobType = model.JobType;
                         IsJobExist.AssignedPersonnel = model.AssignedPersonnel;
@@ -1338,14 +1339,14 @@ namespace ShutterManagement.Business.Services
                     {
                            var contact1 = contact.GetAllQuerable().Where(x => x.GhlcontactId == model.GHL_ContactId && x.IsDelete == false)
                                  .Select(x => x.ContactId).FirstOrDefault();
-                           var addressId = address.GetAllQuerable().Where(x => x.ContactId == contact1).Select(x => x.AddressId).FirstOrDefault();
+                           //var addressId = address.GetAllQuerable().Where(x => x.ContactId == contact1).Select(x => x.AddressId).FirstOrDefault();
                         
                         var Jobcreated = new CreateJob
                         {
                             JobName = model.JobName,
                             JobType = model.JobType,
                             AssignedPersonnel = model.AssignedPersonnel,
-                            AddressId = addressId,
+                            AddressId = model.AddressId ?? null,
                             GHL_ContactId = model.GHL_ContactId,
                             GhlOpportunityId = model.GhlOpportunityId,
                             GHL_StageId = model.GHL_StageId,
@@ -1584,14 +1585,12 @@ namespace ShutterManagement.Business.Services
             {
                 try
                 {
-                    var addressId = Guid.Empty;
                     var GHLUser = new TblGhlUser();
                     var contact1 = new TblContact();
                     if (opportunitydata != null)
                     {
                         contact1 = contact.GetAllQuerable().Where(x => x.GhlcontactId == opportunitydata.contact_id && x.IsDelete == false && x.IsActive == true)
                              .FirstOrDefault();
-                        //     addressId = (Guid)contact1.PrimaryAddress;
                     }
                     if (opportunitydata.Users != null)
                     {
@@ -1607,6 +1606,7 @@ namespace ShutterManagement.Business.Services
 
                     var job = new CreateJob
                     {
+                        AddressId = contact1.PrimaryAddress ?? null,
                         ContactId = contact1.ContactId,
                         JobName = opportunitydata.opportunity_name,
                         // JobType = jobtype,
@@ -1665,6 +1665,7 @@ namespace ShutterManagement.Business.Services
 
                     var job = new UpdateJob
                     {
+                        AddressId = contact1.PrimaryAddress ?? null,
                         ContactId = contact1.ContactId,
                         JobName = opportunitydata.opportunity_name,
                         AssignedPersonnel = (GHLUser != null && GHLUser.Id != null) ? GHLUser.Id : Guid.Empty,
@@ -1842,10 +1843,6 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
-
-
-       
-
 
         public async Task<IResponseVm<string>> UpdateJobPowderCoatColor(Guid? JobId, Guid? powderCoatColorId)
         {
