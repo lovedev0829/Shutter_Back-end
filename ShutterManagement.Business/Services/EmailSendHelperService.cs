@@ -20,16 +20,19 @@ namespace ShutterManagement.Business.Services
     {
         private readonly MS365Configuration mS365Configuration;
         private readonly GoogleAuthService googleAuthService;
+        private readonly ITemplatesService templatesService;
         private readonly IEmailConfigurationService emailConfigurationService;
         private readonly ShutterDBContext dBContext;
         private readonly EmailTypeService emailTypeService;
         private readonly ClaimsProperty claimsProperty;
 
-        public EmailSendHelperService(MS365Configuration mS365Configuration,GoogleAuthService googleAuthService,
+
+        public EmailSendHelperService(MS365Configuration mS365Configuration,GoogleAuthService googleAuthService, ITemplatesService templatesService,
             IEmailConfigurationService emailConfigurationService,ShutterDBContext dBContext, EmailTypeService emailTypeService, ClaimsProperty claimsProperty)
         {
             this.mS365Configuration = mS365Configuration;
             this.googleAuthService = googleAuthService;
+            this.templatesService = templatesService;
             this.emailConfigurationService = emailConfigurationService;
             this.dBContext = dBContext;
             this.emailTypeService = emailTypeService;
@@ -42,18 +45,16 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> response = new ResponseVm<string>();
             try
             {
-                var Template = dBContext.TblTemplates.FirstOrDefault(
+                var Template = (await templatesService.GetAll()).FirstOrDefault(
                         x => x.IsDelete == false &&
                             x.TemplateCategory == EnumValue.GetEnumValue(emailTemplateType));
                 if (Template == null)
                 {
                     response.Message = "Email template not found. Please add the template.";
-                    //throw new Exception("Email template not found. Please add the template.");
                     return response;
                 }
                 var emailContent = PlaceholderReplace(Template.TemplateValue, dataObject);
                 response.Data = emailContent ?? "";
-
             }
             catch (Exception ex)
             {
@@ -153,6 +154,7 @@ namespace ShutterManagement.Business.Services
                 FileLogger.Log(claimsProperty.GetTenantId().ToString() + " Error in Fetch Email Config: " + ex.Message);
             }
             return configResponse;
+        
         }
 
         public string PlaceholderReplace(string content, dynamic dataObject)

@@ -15,6 +15,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         public string? Logo { get; set; }
         public string? loginUrl { get; set; }
         public string? color { get; set; }
+        public string? Email { get; set; }
     }
 
 }

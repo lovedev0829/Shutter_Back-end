@@ -1,8 +1,8 @@
-﻿2025-07-08 12:47:52 : GHL URL Update failed: Failed to update GHL: BadRequest, {"message":"Opportunity doesn't exist or is deleted.","error":"Bad Request","statusCode":400}
+﻿2025-07-08 16:01:27 : UpdateEstimateUrlInGhlOnly: URL already exists.
 
-Code":400}
-
-,
+1-461a-8fb0-f334cf2aaa63",
+    "PipelineId": "TestPipeline",
+    "TenantId": "553fd1f7-dbbe-4de2-9973-2cc768194529",
     "LocationId": "PTnICMN0mKr03kzJQqPQ",
     "LastSync": "2025-07-08T06:20:02.38",
     "GeneratedToken": "",
