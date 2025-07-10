@@ -41,15 +41,15 @@ public partial class TblJob
 
     public string? JobUniqueId { get; set; }
 
-    public Guid? GhlStageId { get; set; }
+    public DateTime? LastAsync { get; set; }
 
     public string? GhlStageName { get; set; }
+
+    public Guid? GhlStageId { get; set; }
 
     public string? GhlContactId { get; set; }
 
     public string? GhlOpportunityId { get; set; }
-
-    public DateTime? LastAsync { get; set; }
 
     public string? GhluserId { get; set; }
 
@@ -69,6 +69,8 @@ public partial class TblJob
 
     public virtual MstJobStatus? JobStatusNavigation { get; set; }
 
+    public virtual MstPowderCoatColor? PowderCoatColor { get; set; }
+
     public virtual ICollection<TblAppointmentSchedule> TblAppointmentSchedules { get; set; } = new List<TblAppointmentSchedule>();
 
     public virtual ICollection<TblEstimate> TblEstimates { get; set; } = new List<TblEstimate>();
@@ -86,6 +88,4 @@ public partial class TblJob
     public virtual ICollection<TblWindow> TblWindows { get; set; } = new List<TblWindow>();
 
     public virtual TblTenant? Tenant { get; set; }
-
-    public virtual MstPowderCoatColor? PowderCoatColor { get; set; }
 }

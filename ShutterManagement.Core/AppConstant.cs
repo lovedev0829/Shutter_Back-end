@@ -171,5 +171,11 @@ namespace ShutterManagement.Core
         public static string SmtpHost_Google { get; set; } = string.Empty;
         public static string SmtpHost_MSOffice365 { get; set; } = string.Empty;
         #endregion
+
+        #region Blob storedge config
+        public static string AzureBlobStorage_ConnectionString { get; set; } = string.Empty;
+        public static string AzureBlobStorage_ContainerName { get; set; } = string.Empty;
+
+        #endregion Blob storedge config
     }
 }

@@ -25,13 +25,13 @@ public partial class ShutterDBContext : DbContext
 
     public virtual DbSet<MstJobType> MstJobTypes { get; set; }
 
-    public virtual DbSet<MstPowderCoatColor> MstPowderCoatColors { get; set; }
-
     public virtual DbSet<MstModule> MstModules { get; set; }
 
     public virtual DbSet<MstModulePermission> MstModulePermissions { get; set; }
 
     public virtual DbSet<MstPlaceholder> MstPlaceholders { get; set; }
+
+    public virtual DbSet<MstPowderCoatColor> MstPowderCoatColors { get; set; }
 
     public virtual DbSet<MstProductType> MstProductTypes { get; set; }
 
@@ -44,6 +44,8 @@ public partial class ShutterDBContext : DbContext
     public virtual DbSet<TblAddress> TblAddresses { get; set; }
 
     public virtual DbSet<TblAppointmentSchedule> TblAppointmentSchedules { get; set; }
+
+    public virtual DbSet<TblBlobdocument> TblBlobdocuments { get; set; }
 
     public virtual DbSet<TblComponent> TblComponents { get; set; }
 
@@ -153,8 +155,6 @@ public partial class ShutterDBContext : DbContext
 
     public virtual DbSet<TblTemplate> TblTemplates { get; set; }
 
-    public virtual DbSet<TblTemplatePlaceholder> TblTemplatePlaceholders { get; set; }
-
     public virtual DbSet<TblTenant> TblTenants { get; set; }
 
     public virtual DbSet<TblTenantBrandingInfo> TblTenantBrandingInfos { get; set; }
@@ -177,7 +177,7 @@ public partial class ShutterDBContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Server=tcp:shuttermanagementdb.database.windows.net,1433;Initial Catalog=shutterdev;Persist Security Info=False;User ID=shutter_admin;Password=TaKugAbiGfb4eU$y;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=60;");
+        => optionsBuilder.UseSqlServer("Server=103.93.16.117;Database=btprojec_shutteruat;user id=btprojec_admin;password=Bwy0w65ixN*bsE9wy;Integrated Security=false;TrustServerCertificate=true;");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -185,7 +185,7 @@ public partial class ShutterDBContext : DbContext
 
         modelBuilder.Entity<MstComponentPrice>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__MstCompo__3214EC070EAF3683");
+            entity.HasKey(e => e.Id).HasName("PK__MstCompo__3214EC07CE2CF811");
 
             entity.ToTable("MstComponentPrice", "dbo");
 
@@ -200,7 +200,7 @@ public partial class ShutterDBContext : DbContext
 
         modelBuilder.Entity<MstContactType>(entity =>
         {
-            entity.HasKey(e => e.MstContactId).HasName("PK__MstConta__407CE16C606CDB01");
+            entity.HasKey(e => e.MstContactId).HasName("PK__MstConta__407CE16C591FEDD4");
 
             entity.ToTable("MstContactType", "dbo");
 
@@ -212,7 +212,7 @@ public partial class ShutterDBContext : DbContext
 
         modelBuilder.Entity<MstJobStatus>(entity =>
         {
-            entity.HasKey(e => e.JobStatusId).HasName("PK__MstJobSt__EB485721C90CE1FD");
+            entity.HasKey(e => e.JobStatusId).HasName("PK__MstJobSt__EB4857215FCC685F");
 
             entity.ToTable("MstJobStatus", "dbo");
 
@@ -224,7 +224,7 @@ public partial class ShutterDBContext : DbContext
 
         modelBuilder.Entity<MstJobTitle>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__MstJobTi__3214EC07381DB551");
+            entity.HasKey(e => e.Id).HasName("PK__MstJobTi__3214EC0783B9D382");
 
             entity.ToTable("MstJobTitle", "dbo");
 
@@ -238,7 +238,7 @@ public partial class ShutterDBContext : DbContext
 
         modelBuilder.Entity<MstJobType>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__MstJobTy__3214EC0740773D67");
+            entity.HasKey(e => e.Id).HasName("PK__MstJobTy__3214EC07804264B3");
 
             entity.ToTable("MstJobType", "dbo");
 
@@ -250,7 +250,7 @@ public partial class ShutterDBContext : DbContext
 
         modelBuilder.Entity<MstModule>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__MstModul__3214EC07A52C80C7");
+            entity.HasKey(e => e.Id).HasName("PK__MstModul__3214EC077F40F9DB");
 
             entity.ToTable("MstModule", "dbo");
 
@@ -261,7 +261,7 @@ public partial class ShutterDBContext : DbContext
 
         modelBuilder.Entity<MstModulePermission>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__MstModul__3214EC07A88EEEB2");
+            entity.HasKey(e => e.Id).HasName("PK__MstModul__3214EC0770579C30");
 
             entity.ToTable("MstModule_Permission", "dbo");
 
@@ -275,7 +275,7 @@ public partial class ShutterDBContext : DbContext
 
             entity.HasOne(d => d.Module).WithMany(p => p.MstModulePermissions)
                 .HasForeignKey(d => d.ModuleId)
-                .HasConstraintName("FK__MstModule__Modul__58D1301D");
+                .HasConstraintName("FK__MstModule__Modul__6ABAD62E");
         });
 
         modelBuilder.Entity<MstPlaceholder>(entity =>
@@ -288,9 +288,24 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
         });
 
+        modelBuilder.Entity<MstPowderCoatColor>(entity =>
+        {
+            entity.ToTable("MstPowderCoatColor", "dbo");
+
+            entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.ColorName).HasMaxLength(100);
+            entity.Property(e => e.Cost).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Description).HasMaxLength(200);
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+        });
+
         modelBuilder.Entity<MstProductType>(entity =>
         {
-            entity.HasKey(e => e.ProductId).HasName("PK__MstProdu__B40CC6CD3183F577");
+            entity.HasKey(e => e.ProductId).HasName("PK__MstProdu__B40CC6CD0F2D407A");
 
             entity.ToTable("MstProductType", "dbo");
 
@@ -314,7 +329,7 @@ public partial class ShutterDBContext : DbContext
 
         modelBuilder.Entity<MstState>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__MstState__3213E83FEB8BE5D3");
+            entity.HasKey(e => e.Id).HasName("PK__MstState__3213E83F2A9E3802");
 
             entity.ToTable("MstState", "dbo");
 
@@ -329,7 +344,7 @@ public partial class ShutterDBContext : DbContext
 
         modelBuilder.Entity<MstUnitofMeasurement>(entity =>
         {
-            entity.HasKey(e => e.UnitofMeasurementId).HasName("PK__MstUnito__21E7C5537FB3558A");
+            entity.HasKey(e => e.UnitofMeasurementId).HasName("PK__MstUnito__21E7C5530ACB5AD1");
 
             entity.ToTable("MstUnitofMeasurement", "dbo");
 
@@ -344,7 +359,7 @@ public partial class ShutterDBContext : DbContext
 
         modelBuilder.Entity<TblAddress>(entity =>
         {
-            entity.HasKey(e => e.AddressId).HasName("PK__TblAddre__091C2AFBF6AE7E7F");
+            entity.HasKey(e => e.AddressId).HasName("PK__TblAddre__091C2AFBAEF0EE66");
 
             entity.ToTable("TblAddress", "dbo");
 
@@ -374,20 +389,20 @@ public partial class ShutterDBContext : DbContext
 
             entity.HasOne(d => d.Contact).WithMany(p => p.TblAddresses)
                 .HasForeignKey(d => d.ContactId)
-                .HasConstraintName("FK__TblAddres__Conta__59C55456");
+                .HasConstraintName("FK__TblAddres__Conta__6D9742D9");
 
             entity.HasOne(d => d.StateNavigation).WithMany(p => p.TblAddresses)
                 .HasForeignKey(d => d.State)
-                .HasConstraintName("FK__TblAddres__State__58DC1D15");
+                .HasConstraintName("FK__TblAddres__State__7073AF84");
 
             entity.HasOne(d => d.Tenant).WithMany(p => p.TblAddresses)
                 .HasForeignKey(d => d.TenantId)
-                .HasConstraintName("FK__TblAddres__Tenan__3FD07829");
+                .HasConstraintName("FK__TblAddres__Tenan__7167D3BD");
         });
 
         modelBuilder.Entity<TblAppointmentSchedule>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__TblAppoi__3213E83F377B440E");
+            entity.HasKey(e => e.Id).HasName("PK__TblAppoi__3213E83F68F4DF76");
 
             entity.ToTable("TblAppointmentSchedule", "dbo");
 
@@ -413,16 +428,27 @@ public partial class ShutterDBContext : DbContext
 
             entity.HasOne(d => d.Job).WithMany(p => p.TblAppointmentSchedules)
                 .HasForeignKey(d => d.JobId)
-                .HasConstraintName("FK__TblAppoin__JobId__6ECB5E34");
+                .HasConstraintName("FK__TblAppoin__JobId__74444068");
 
             entity.HasOne(d => d.User).WithMany(p => p.TblAppointmentSchedules)
                 .HasForeignKey(d => d.UserId)
-                .HasConstraintName("FK__TblAppoin__UserI__261B931E");
+                .HasConstraintName("FK__TblAppoin__UserI__753864A1");
+        });
+
+        modelBuilder.Entity<TblBlobdocument>(entity =>
+        {
+            entity.HasKey(e => e.DocumentId).HasName("PK__tblBlobd__1ABEEF0F6E68EC0C");
+
+            entity.ToTable("tblBlobdocument", "dbo");
+
+            entity.Property(e => e.DocumentId).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
         });
 
         modelBuilder.Entity<TblComponent>(entity =>
         {
-            entity.HasKey(e => e.ComponentId).HasName("PK__TblCompo__D79CF04E96E58156");
+            entity.HasKey(e => e.ComponentId).HasName("PK__TblCompo__D79CF04E18539337");
 
             entity.ToTable("TblComponent", "dbo");
 
@@ -444,12 +470,12 @@ public partial class ShutterDBContext : DbContext
 
             entity.HasOne(d => d.Tenant).WithMany(p => p.TblComponents)
                 .HasForeignKey(d => d.TenantId)
-                .HasConstraintName("FK__TblCompon__Tenan__79FD19BE");
+                .HasConstraintName("FK__TblCompon__Tenan__762C88DA");
         });
 
         modelBuilder.Entity<TblComponentMaterial>(entity =>
         {
-            entity.HasKey(e => e.ComponentMaterialId).HasName("PK__TblCompo__82FB769C2564F192");
+            entity.HasKey(e => e.ComponentMaterialId).HasName("PK__TblCompo__82FB769C0DAA0A8D");
 
             entity.ToTable("TblComponentMaterial", "dbo");
 
@@ -469,20 +495,20 @@ public partial class ShutterDBContext : DbContext
 
             entity.HasOne(d => d.Component).WithMany(p => p.TblComponentMaterials)
                 .HasForeignKey(d => d.ComponentId)
-                .HasConstraintName("FK__TblCompon__Compo__5AB9788F");
+                .HasConstraintName("FK__TblCompon__Compo__7908F585");
 
             entity.HasOne(d => d.RawMaterial).WithMany(p => p.TblComponentMaterials)
                 .HasForeignKey(d => d.RawMaterialId)
-                .HasConstraintName("FK__TblCompon__RawMa__5BAD9CC8");
+                .HasConstraintName("FK__TblCompon__RawMa__7BE56230");
 
             entity.HasOne(d => d.Tenant).WithMany(p => p.TblComponentMaterials)
                 .HasForeignKey(d => d.TenantId)
-                .HasConstraintName("FK__TblCompon__Tenan__7AF13DF7");
+                .HasConstraintName("FK__TblCompon__Tenan__00AA174D");
         });
 
         modelBuilder.Entity<TblContact>(entity =>
         {
-            entity.HasKey(e => e.ContactId).HasName("PK__TblConta__5C66259BCAB00ED9");
+            entity.HasKey(e => e.ContactId).HasName("PK__TblConta__5C66259BCBF12F12");
 
             entity.ToTable("TblContact", "dbo");
 
@@ -518,12 +544,12 @@ public partial class ShutterDBContext : DbContext
 
             entity.HasOne(d => d.Tenant).WithMany(p => p.TblContacts)
                 .HasForeignKey(d => d.TenantId)
-                .HasConstraintName("FK__TblContac__Tenan__5CA1C101");
+                .HasConstraintName("FK__TblContac__Tenan__019E3B86");
         });
 
         modelBuilder.Entity<TblContactBillingAddress>(entity =>
         {
-            entity.HasKey(e => e.BillingAddressId).HasName("PK__TblConta__90BDB2B1163BA372");
+            entity.HasKey(e => e.BillingAddressId).HasName("PK__TblConta__90BDB2B17FB0249D");
 
             entity.ToTable("TblContact_billingAddress", "dbo");
 
@@ -549,12 +575,12 @@ public partial class ShutterDBContext : DbContext
 
             entity.HasOne(d => d.Contact).WithMany(p => p.TblContactBillingAddresses)
                 .HasForeignKey(d => d.ContactId)
-                .HasConstraintName("FK__TblContac__Conta__5D95E53A");
+                .HasConstraintName("FK__TblContac__Conta__047AA831");
         });
 
         modelBuilder.Entity<TblContactRole>(entity =>
         {
-            entity.HasKey(e => e.ContactRoleId).HasName("PK__TblConta__38FF7537246E4F89");
+            entity.HasKey(e => e.ContactRoleId).HasName("PK__TblConta__38FF753760ADA5BE");
 
             entity.ToTable("TblContactRole", "dbo");
 
@@ -569,12 +595,12 @@ public partial class ShutterDBContext : DbContext
 
             entity.HasOne(d => d.Contact).WithMany(p => p.TblContactRoles)
                 .HasForeignKey(d => d.ContactId)
-                .HasConstraintName("FK__TblContac__Conta__5E8A0973");
+                .HasConstraintName("FK__TblContac__Conta__075714DC");
         });
 
         modelBuilder.Entity<TblDiscount>(entity =>
         {
-            entity.HasKey(e => e.DiscountId).HasName("PK__TblDisco__E43F6D96ED6254AF");
+            entity.HasKey(e => e.DiscountId).HasName("PK__TblDisco__E43F6D9609C9E69B");
 
             entity.ToTable("TblDiscount", "dbo");
 
@@ -600,7 +626,7 @@ public partial class ShutterDBContext : DbContext
 
         modelBuilder.Entity<TblEmailConfiguration>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__EmailCon__3214EC07F0945E3A");
+            entity.HasKey(e => e.Id).HasName("PK__TblEmail__3214EC07A14B0CF4");
 
             entity.ToTable("TblEmailConfiguration", "dbo");
 
@@ -619,7 +645,7 @@ public partial class ShutterDBContext : DbContext
 
         modelBuilder.Entity<TblEmailType>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__tblEmail__3214EC076EF4B1D0");
+            entity.HasKey(e => e.Id).HasName("PK__tblEmail__3214EC07E9C47EBA");
 
             entity.ToTable("tblEmailType", "dbo");
 
@@ -633,7 +659,7 @@ public partial class ShutterDBContext : DbContext
 
         modelBuilder.Entity<TblEstimate>(entity =>
         {
-            entity.HasKey(e => e.EstimateId).HasName("PK__TblEstim__ABEBF4B51ABC6B71");
+            entity.HasKey(e => e.EstimateId).HasName("PK__TblEstim__ABEBF4B5B0E547C5");
 
             entity.ToTable("TblEstimate", "dbo");
 
@@ -663,16 +689,16 @@ public partial class ShutterDBContext : DbContext
 
             entity.HasOne(d => d.Job).WithMany(p => p.TblEstimates)
                 .HasForeignKey(d => d.JobId)
-                .HasConstraintName("FK__TblEstima__JobId__07AC1A97");
+                .HasConstraintName("FK__TblEstima__JobId__0B27A5C0");
 
             entity.HasOne(d => d.Tenant).WithMany(p => p.TblEstimates)
                 .HasForeignKey(d => d.TenantId)
-                .HasConstraintName("FK__TblEstima__Tenan__08A03ED0");
+                .HasConstraintName("FK__TblEstima__Tenan__12C8C788");
         });
 
         modelBuilder.Entity<TblEstimateApproved>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__TblEstim__3214EC074DAE958A");
+            entity.HasKey(e => e.Id).HasName("PK__TblEstim__3214EC07D58A4060");
 
             entity.ToTable("TblEstimateApproved", "dbo");
 
@@ -686,7 +712,7 @@ public partial class ShutterDBContext : DbContext
 
         modelBuilder.Entity<TblEstimateWindow>(entity =>
         {
-            entity.HasKey(e => e.EstWindowId).HasName("PK__TblEstim__F0A94F98E0C7CBA1");
+            entity.HasKey(e => e.EstWindowId).HasName("PK__TblEstim__F0A94F98617D84EC");
 
             entity.ToTable("TblEstimateWindow", "dbo");
 
@@ -718,25 +744,25 @@ public partial class ShutterDBContext : DbContext
 
             entity.HasOne(d => d.Address).WithMany(p => p.TblEstimateWindows)
                 .HasForeignKey(d => d.AddressId)
-                .HasConstraintName("FK__TblEstima__Addre__0A888742");
+                .HasConstraintName("FK__TblEstima__Addre__1A69E950");
 
             entity.HasOne(d => d.Estimate).WithMany(p => p.TblEstimateWindows)
                 .HasForeignKey(d => d.EstimateId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__TblEstima__Estim__0C70CFB4");
+                .HasConstraintName("FK__TblEstima__Estim__2022C2A6");
 
             entity.HasOne(d => d.Tenant).WithMany(p => p.TblEstimateWindows)
                 .HasForeignKey(d => d.TenantId)
-                .HasConstraintName("FK__TblEstima__Tenan__0B7CAB7B");
+                .HasConstraintName("FK__TblEstima__Tenan__25DB9BFC");
 
             entity.HasOne(d => d.Window).WithMany(p => p.TblEstimateWindows)
                 .HasForeignKey(d => d.WindowId)
-                .HasConstraintName("FK__TblEstima__Windo__1CA7377D");
+                .HasConstraintName("FK__TblEstima__Windo__2B947552");
         });
 
         modelBuilder.Entity<TblEstimateWindowProduct>(entity =>
         {
-            entity.HasKey(e => e.EstimateWindowProductId).HasName("PK__TblEstim__30AAFF258DFDC384");
+            entity.HasKey(e => e.EstimateWindowProductId).HasName("PK__TblEstim__30AAFF25CD63B514");
 
             entity.ToTable("TblEstimateWindowProduct", "dbo");
 
@@ -785,35 +811,33 @@ public partial class ShutterDBContext : DbContext
 
             entity.HasOne(d => d.EstWindow).WithMany(p => p.TblEstimateWindowProducts)
                 .HasForeignKey(d => d.EstWindowId)
-                .HasConstraintName("FK__TblEstima__EstWi__50D0E6F9");
+                .HasConstraintName("FK__TblEstima__EstWi__3429BB53");
 
             entity.HasOne(d => d.Estimate).WithMany(p => p.TblEstimateWindowProducts)
                 .HasForeignKey(d => d.EstimateId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__TblEstima__Estim__0F4D3C5F");
+                .HasConstraintName("FK__TblEstima__Estim__2E70E1FD");
 
             entity.HasOne(d => d.Tax).WithMany(p => p.TblEstimateWindowProducts)
                 .HasForeignKey(d => d.TaxId)
-                .HasConstraintName("FK__TblEstima__TaxId__04859529");
+                .HasConstraintName("FK__TblEstima__TaxId__351DDF8C");
 
             entity.HasOne(d => d.Tenant).WithMany(p => p.TblEstimateWindowProducts)
                 .HasForeignKey(d => d.TenantId)
-                .HasConstraintName("FK__TblEstima__Tenan__0E591826");
+                .HasConstraintName("FK__TblEstima__Tenan__361203C5");
 
             entity.HasOne(d => d.WindowProduct).WithMany(p => p.TblEstimateWindowProducts)
                 .HasForeignKey(d => d.WindowProductId)
-                .HasConstraintName("FK__TblEstima__Windo__3296789C");
+                .HasConstraintName("FK__TblEstima__Windo__3BCADD1B");
         });
 
         modelBuilder.Entity<TblEstimateWindowProductComponent>(entity =>
         {
-            entity.HasKey(e => e.EstimateWindowProductComponentId).HasName("PK__TblEstim__198C247355EF57A0");
+            entity.HasKey(e => e.EstimateWindowProductComponentId).HasName("PK__TblEstim__198C24738FFA307B");
 
             entity.ToTable("TblEstimateWindowProductComponent", "dbo");
 
             entity.HasIndex(e => e.EstimateId, "IX_TblEstimateWindowProductComponent_EstimateId");
-
-            entity.HasIndex(e => e.EstimateWindowProductId, "IX_TblEstimateWindowProductComponent_EstimateWindowProductId");
 
             entity.HasIndex(e => e.TenantId, "IX_TblEstimateWindowProductComponent_TenantId");
 
@@ -837,26 +861,24 @@ public partial class ShutterDBContext : DbContext
             entity.HasOne(d => d.Estimate).WithMany(p => p.TblEstimateWindowProductComponents)
                 .HasForeignKey(d => d.EstimateId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__TblEstima__Estim__05C3D225");
+                .HasConstraintName("FK__TblEstima__Estim__3EA749C6");
 
             entity.HasOne(d => d.EstimateWindowProduct).WithMany(p => p.TblEstimateWindowProductComponents)
                 .HasForeignKey(d => d.EstimateWindowProductId)
-                .HasConstraintName("FK__TblEstima__Estim__51C50B32");
+                .HasConstraintName("FK__TblEstima__Estim__4277DAAA");
 
             entity.HasOne(d => d.Tenant).WithMany(p => p.TblEstimateWindowProductComponents)
                 .HasForeignKey(d => d.TenantId)
-                .HasConstraintName("FK__TblEstima__Tenan__04CFADEC");
+                .HasConstraintName("FK__TblEstima__Tenan__45544755");
         });
 
         modelBuilder.Entity<TblEstimateWindowProductComponentMaterial>(entity =>
         {
-            entity.HasKey(e => e.EstimateWindowProductComponentMaterialId).HasName("PK__TblEstim__13E8FE878C48B58A");
+            entity.HasKey(e => e.EstimateWindowProductComponentMaterialId).HasName("PK__TblEstim__13E8FE878F7998DF");
 
             entity.ToTable("TblEstimateWindowProductComponentMaterial", "dbo");
 
             entity.HasIndex(e => e.EstimateId, "IX_TblEstimateWindowProductComponentMaterial_EstimateId");
-
-            entity.HasIndex(e => e.EstimateWindowProductComponentId, "IX_TblEstimateWindowProductComponentMaterial_EstimateWindowProductComponentId");
 
             entity.HasIndex(e => e.ProductType, "IX_TblEstimateWindowProductComponentMaterial_ProductType");
 
@@ -887,34 +909,26 @@ public partial class ShutterDBContext : DbContext
             entity.HasOne(d => d.Estimate).WithMany(p => p.TblEstimateWindowProductComponentMaterials)
                 .HasForeignKey(d => d.EstimateId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__EstimateW__Estim__1BB31344");
+                .HasConstraintName("FK__TblEstima__Estim__4B0D20AB");
 
             entity.HasOne(d => d.EstimateWindowProductComponent).WithMany(p => p.TblEstimateWindowProductComponentMaterials)
                 .HasForeignKey(d => d.EstimateWindowProductComponentId)
-                .HasConstraintName("FK__TblEstima__Estim__52B92F6B");
+                .HasConstraintName("FK__TblEstima__Estim__4CF5691D");
 
             entity.HasOne(d => d.ProductTypeNavigation).WithMany(p => p.TblEstimateWindowProductComponentMaterials)
                 .HasForeignKey(d => d.ProductType)
-                .HasConstraintName("FK__EstimateW__Produ__19CACAD2");
+                .HasConstraintName("FK__TblEstima__Produ__4EDDB18F");
 
             entity.HasOne(d => d.Tenant).WithMany(p => p.TblEstimateWindowProductComponentMaterials)
                 .HasForeignKey(d => d.TenantId)
-                .HasConstraintName("FK__EstimateW__Tenan__1ABEEF0B");
+                .HasConstraintName("FK__TblEstima__Tenan__51BA1E3A");
         });
 
         modelBuilder.Entity<TblEstimateWindowProductOption>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__TblEstim__3213E83F9C96ED79");
+            entity.HasKey(e => e.Id).HasName("PK__TblEstim__3213E83FF65429E0");
 
             entity.ToTable("TblEstimateWindowProductOption", "dbo");
-
-            entity.HasIndex(e => e.EstimateWindowProductId, "IX_TblEstimateWindowProductOption_EstimateWindowProductId");
-
-            entity.HasIndex(e => e.TaxId, "IX_TblEstimateWindowProductOption_TaxId");
-
-            entity.HasIndex(e => e.WindowOptionId, "IX_TblEstimateWindowProductOption_WindowOptionId");
-
-            entity.HasIndex(e => e.WindowProductId, "IX_TblEstimateWindowProductOption_WindowProductId");
 
             entity.Property(e => e.Id)
                 .HasDefaultValueSql("(newid())")
@@ -937,24 +951,20 @@ public partial class ShutterDBContext : DbContext
 
             entity.HasOne(d => d.EstimateWindowProduct).WithMany(p => p.TblEstimateWindowProductOptions)
                 .HasForeignKey(d => d.EstimateWindowProductId)
-                .HasConstraintName("FK__TblEstima__Estim__25E688F4");
-
-            entity.HasOne(d => d.Tax).WithMany(p => p.TblEstimateWindowProductOptions)
-                .HasForeignKey(d => d.TaxId)
-                .HasConstraintName("FK__TblEstima__TaxId__26DAAD2D");
+                .HasConstraintName("FK__TblEstima__Estim__54968AE5");
 
             entity.HasOne(d => d.WindowOption).WithMany(p => p.TblEstimateWindowProductOptions)
                 .HasForeignKey(d => d.WindowOptionId)
-                .HasConstraintName("FK__TblEstima__Windo__24F264BB");
+                .HasConstraintName("FK__TblEstima__Windo__567ED357");
 
             entity.HasOne(d => d.WindowProduct).WithMany(p => p.TblEstimateWindowProductOptions)
                 .HasForeignKey(d => d.WindowProductId)
-                .HasConstraintName("FK__TblEstima__Windo__23FE4082");
+                .HasConstraintName("FK__TblEstima__Windo__558AAF1E");
         });
 
         modelBuilder.Entity<TblExpression>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__TblExpre__3214EC071EF09971");
+            entity.HasKey(e => e.Id).HasName("PK__TblExpre__3214EC07C79583BE");
 
             entity.ToTable("TblExpression", "dbo");
 
@@ -965,12 +975,12 @@ public partial class ShutterDBContext : DbContext
 
             entity.HasOne(d => d.ProductTypeNavigation).WithMany(p => p.TblExpressions)
                 .HasForeignKey(d => d.ProductType)
-                .HasConstraintName("FK__TblExpres__Produ__353DDB1D");
+                .HasConstraintName("FK__TblExpres__Produ__5772F790");
         });
 
         modelBuilder.Entity<TblGhlCustomField>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__TblGhlCu__3214EC07E7938FF4");
+            entity.HasKey(e => e.Id).HasName("PK__TblGhlCu__3214EC0707CF4025");
 
             entity.ToTable("TblGhlCustomFields", "dbo");
 
@@ -993,12 +1003,12 @@ public partial class ShutterDBContext : DbContext
 
         modelBuilder.Entity<TblGhlStage>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__tblGHL_S__3213E83FA5D504FE");
+            entity.HasKey(e => e.Id).HasName("PK__tblGHL_S__3213E83F2B6542FA");
 
             entity.ToTable("tblGHL_Stage", "dbo");
 
             entity.Property(e => e.Id)
-                .HasDefaultValueSql("(newid())")
+                .ValueGeneratedNever()
                 .HasColumnName("id");
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
             entity.Property(e => e.GhlLastSync)
@@ -1016,7 +1026,7 @@ public partial class ShutterDBContext : DbContext
 
         modelBuilder.Entity<TblGhlStagesmapping>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__TblGHlSt__3213E83F082DBD6A");
+            entity.HasKey(e => e.Id).HasName("PK__TblGHlSt__3213E83F74DAC733");
 
             entity.ToTable("TblGHlStagesmapping", "dbo");
 
@@ -1028,7 +1038,7 @@ public partial class ShutterDBContext : DbContext
 
         modelBuilder.Entity<TblGhlUser>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__tblGHL_U__3214EC0715BD3216");
+            entity.HasKey(e => e.Id).HasName("PK__tblGHL_U__3214EC078DD1B770");
 
             entity.ToTable("tblGHL_Users", "dbo");
 
@@ -1062,7 +1072,7 @@ public partial class ShutterDBContext : DbContext
 
         modelBuilder.Entity<TblGhlconfiguration>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__TblGHLCo__3214EC074F1C0B7E");
+            entity.HasKey(e => e.Id).HasName("PK__TblGHLCo__3214EC07C5D4B042");
 
             entity.ToTable("TblGHLConfiguration", "dbo");
 
@@ -1078,7 +1088,7 @@ public partial class ShutterDBContext : DbContext
 
         modelBuilder.Entity<TblInvoice>(entity =>
         {
-            entity.HasKey(e => e.InvoiceId).HasName("PK__TblInvoi__D796AAB5ED5E9A49");
+            entity.HasKey(e => e.InvoiceId).HasName("PK__TblInvoi__D796AAB505594428");
 
             entity.ToTable("TblInvoice", "dbo");
 
@@ -1108,16 +1118,16 @@ public partial class ShutterDBContext : DbContext
 
             entity.HasOne(d => d.Estimate).WithMany(p => p.TblInvoices)
                 .HasForeignKey(d => d.EstimateId)
-                .HasConstraintName("FK__TblInvoic__Estim__149C0161");
+                .HasConstraintName("FK__TblInvoic__Estim__5A4F643B");
 
             entity.HasOne(d => d.Job).WithMany(p => p.TblInvoices)
                 .HasForeignKey(d => d.JobId)
-                .HasConstraintName("FK__TblInvoic__JobId__607251E5");
+                .HasConstraintName("FK__TblInvoic__JobId__5D2BD0E6");
         });
 
         modelBuilder.Entity<TblInvoicePayment>(entity =>
         {
-            entity.HasKey(e => e.InvoicePaymentId).HasName("PK__TblInvoi__A79CC7FE3E232C75");
+            entity.HasKey(e => e.InvoicePaymentId).HasName("PK__TblInvoi__A79CC7FEB628386C");
 
             entity.ToTable("TblInvoicePayment", "dbo");
 
@@ -1136,12 +1146,12 @@ public partial class ShutterDBContext : DbContext
 
             entity.HasOne(d => d.Invoice).WithMany(p => p.TblInvoicePayments)
                 .HasForeignKey(d => d.InvoiceId)
-                .HasConstraintName("FK__TblInvoic__Invoi__52CE3E04");
+                .HasConstraintName("FK__TblInvoic__Invoi__60083D91");
         });
 
         modelBuilder.Entity<TblJob>(entity =>
         {
-            entity.HasKey(e => e.JobId).HasName("PK__TblJob__056690C26EFF9CAD");
+            entity.HasKey(e => e.JobId).HasName("PK__TblJob__056690C29CD631F3");
 
             entity.ToTable("TblJob", "dbo");
 
@@ -1181,24 +1191,29 @@ public partial class ShutterDBContext : DbContext
 
             entity.HasOne(d => d.Address).WithMany(p => p.TblJobs)
                 .HasForeignKey(d => d.AddressId)
-                .HasConstraintName("FK__TblJob__AddressI__6166761E");
+                .HasConstraintName("FK__TblJob__AddressI__62E4AA3C");
 
             entity.HasOne(d => d.Contact).WithMany(p => p.TblJobs)
                 .HasForeignKey(d => d.ContactId)
-                .HasConstraintName("FK__TblJob__ContactI__625A9A57");
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK__TblJob__Contact");
 
             entity.HasOne(d => d.JobStatusNavigation).WithMany(p => p.TblJobs)
                 .HasForeignKey(d => d.JobStatus)
-                .HasConstraintName("FK__TblJob__JobStatu__278EDA44");
+                .HasConstraintName("FK__TblJob__JobStatu__6B79F03D");
+
+            entity.HasOne(d => d.PowderCoatColor).WithMany(p => p.TblJobs)
+                .HasForeignKey(d => d.PowderCoatColorId)
+                .HasConstraintName("FK_TblJob_MstPowderCoatColor");
 
             entity.HasOne(d => d.Tenant).WithMany(p => p.TblJobs)
                 .HasForeignKey(d => d.TenantId)
-                .HasConstraintName("FK__TblJob__TenantId__65F62111");
+                .HasConstraintName("FK__TblJob__TenantId__6F4A8121");
         });
 
         modelBuilder.Entity<TblJobComponent>(entity =>
         {
-            entity.HasKey(e => e.JobComponentId).HasName("PK__TblJobCo__E85D56C0B9BBDFB8");
+            entity.HasKey(e => e.JobComponentId).HasName("PK__TblJobCo__E85D56C045886DA3");
 
             entity.ToTable("TblJobComponent", "dbo");
 
@@ -1232,20 +1247,20 @@ public partial class ShutterDBContext : DbContext
 
             entity.HasOne(d => d.Assembly).WithMany(p => p.TblJobComponents)
                 .HasForeignKey(d => d.AssemblyId)
-                .HasConstraintName("FK__TblJobCom__Assem__634EBE90");
+                .HasConstraintName("FK__TblJobCom__Assem__740F363E");
 
             entity.HasOne(d => d.Component).WithMany(p => p.TblJobComponents)
                 .HasForeignKey(d => d.ComponentId)
-                .HasConstraintName("FK__TblJobCom__Compo__6442E2C9");
+                .HasConstraintName("FK__TblJobCom__Compo__76EBA2E9");
 
             entity.HasOne(d => d.Job).WithMany(p => p.TblJobComponents)
                 .HasForeignKey(d => d.JobId)
-                .HasConstraintName("FK__TblJobCom__JobId__65370702");
+                .HasConstraintName("FK__TblJobCom__JobId__79C80F94");
         });
 
         modelBuilder.Entity<TblJobContact>(entity =>
         {
-            entity.HasKey(e => e.JobContactId).HasName("PK__TblJobCo__BB491B5F0239F7CC");
+            entity.HasKey(e => e.JobContactId).HasName("PK__TblJobCo__BB491B5F410AD4D2");
 
             entity.ToTable("TblJobContact", "dbo");
 
@@ -1261,11 +1276,11 @@ public partial class ShutterDBContext : DbContext
 
             entity.HasOne(d => d.Contact).WithMany(p => p.TblJobContacts)
                 .HasForeignKey(d => d.ContactId)
-                .HasConstraintName("FK__TblJobCon__Conta__28A2FA0E");
+                .HasConstraintName("FK__TblJobCon__Conta__00750D23");
 
             entity.HasOne(d => d.ContactType).WithMany(p => p.TblJobContacts)
                 .HasForeignKey(d => d.ContactTypeId)
-                .HasConstraintName("FK__TblJobCon__Conta__5E3FF0B0");
+                .HasConstraintName("FK__TblJobCon__Conta__0169315C");
 
             entity.HasOne(d => d.Job).WithMany(p => p.TblJobContacts)
                 .HasForeignKey(d => d.JobId)
@@ -1274,7 +1289,7 @@ public partial class ShutterDBContext : DbContext
 
         modelBuilder.Entity<TblJobSchedule>(entity =>
         {
-            entity.HasKey(e => e.JobScheduleId).HasName("PK__TblJobSc__2EB48C451454220D");
+            entity.HasKey(e => e.JobScheduleId).HasName("PK__TblJobSc__2EB48C45632F8AB8");
 
             entity.ToTable("TblJobSchedule", "dbo");
 
@@ -1291,7 +1306,7 @@ public partial class ShutterDBContext : DbContext
 
             entity.HasOne(d => d.Estimate).WithMany(p => p.TblJobSchedules)
                 .HasForeignKey(d => d.EstimateId)
-                .HasConstraintName("FK__TblJobSch__Estim__27AED5D5");
+                .HasConstraintName("FK__TblJobSch__Estim__035179CE");
 
             entity.HasOne(d => d.Job).WithMany(p => p.TblJobSchedules)
                 .HasForeignKey(d => d.JobId)
@@ -1299,18 +1314,18 @@ public partial class ShutterDBContext : DbContext
 
             entity.HasOne(d => d.JobTitle).WithMany(p => p.TblJobSchedules)
                 .HasForeignKey(d => d.JobTitleId)
-                .HasConstraintName("FK__TblJobSch__JobTi__4B2D1C3C");
+                .HasConstraintName("FK__TblJobSch__JobTi__07220AB2");
 
             entity.HasOne(d => d.User).WithMany(p => p.TblJobSchedules)
                 .HasForeignKey(d => d.UserId)
-                .HasConstraintName("FK__TblJobSch__UserI__4C214075");
+                .HasConstraintName("FK__TblJobSch__UserI__0AF29B96");
         });
 
         modelBuilder.Entity<TblJobStageStatusAutomAtionHistory>(entity =>
         {
-            entity.HasKey(e => e.HistoryId).HasName("PK__TblJobSt__4D7B4ABDB0385C6F");
+            entity.HasKey(e => e.HistoryId).HasName("PK__TblJobSt__4D7B4ABDA0902E46");
 
-            entity.ToTable("TblJobStageStatusAutomAtionHistory");
+            entity.ToTable("TblJobStageStatusAutomAtionHistory", "dbo");
 
             entity.Property(e => e.HistoryId).ValueGeneratedNever();
             entity.Property(e => e.ChangedAt).HasColumnType("datetime");
@@ -1318,7 +1333,7 @@ public partial class ShutterDBContext : DbContext
 
         modelBuilder.Entity<TblJobStatus>(entity =>
         {
-            entity.HasKey(e => e.StatusId).HasName("PK__tblJobSt__C8EE20634E71110F");
+            entity.HasKey(e => e.StatusId).HasName("PK__tblJobSt__C8EE206387B35599");
 
             entity.ToTable("tblJobStatus", "dbo");
 
@@ -1332,7 +1347,7 @@ public partial class ShutterDBContext : DbContext
 
         modelBuilder.Entity<TblLocation>(entity =>
         {
-            entity.HasKey(e => e.LocationId).HasName("PK__TblLocat__E7FEA4979D18AAB8");
+            entity.HasKey(e => e.LocationId).HasName("PK__TblLocat__E7FEA49754613090");
 
             entity.ToTable("TblLocation", "dbo");
 
@@ -1344,7 +1359,7 @@ public partial class ShutterDBContext : DbContext
 
         modelBuilder.Entity<TblManagePartnersProduct>(entity =>
         {
-            entity.HasKey(e => e.ManageProductId).HasName("PK__TblManag__E07C429B7F9C28E8");
+            entity.HasKey(e => e.ManageProductId).HasName("PK__TblManag__E07C429BF6BA77BB");
 
             entity.ToTable("TblManagePartnersProducts", "dbo");
 
@@ -1363,7 +1378,7 @@ public partial class ShutterDBContext : DbContext
 
             entity.HasOne(d => d.Tax).WithMany(p => p.TblManagePartnersProducts)
                 .HasForeignKey(d => d.TaxId)
-                .HasConstraintName("FK__TblManage__TaxId__2B9F624A");
+                .HasConstraintName("FK__TblManage__TaxId__0FB750B3");
 
             entity.HasOne(d => d.Tenant).WithMany(p => p.TblManagePartnersProducts)
                 .HasForeignKey(d => d.TenantId)
@@ -1372,7 +1387,7 @@ public partial class ShutterDBContext : DbContext
 
         modelBuilder.Entity<TblManagePartnersProductsOption>(entity =>
         {
-            entity.HasKey(e => e.ManageProductOptionId).HasName("PK__TblManag__5912BD4E4EAB5C00");
+            entity.HasKey(e => e.ManageProductOptionId).HasName("PK__TblManag__5912BD4EC3881CFD");
 
             entity.ToTable("TblManagePartnersProductsOptions", "dbo");
 
@@ -1399,12 +1414,12 @@ public partial class ShutterDBContext : DbContext
 
             entity.HasOne(d => d.Tax).WithMany(p => p.TblManagePartnersProductsOptions)
                 .HasForeignKey(d => d.TaxId)
-                .HasConstraintName("FK__TblManage__TaxId__2AAB3E11");
+                .HasConstraintName("FK__TblManage__TaxId__1293BD5E");
         });
 
         modelBuilder.Entity<TblMeasurement>(entity =>
         {
-            entity.HasKey(e => e.MeasurementId).HasName("PK__TblMeasu__85599FB873C0E0A4");
+            entity.HasKey(e => e.MeasurementId).HasName("PK__TblMeasu__85599FB844359F7E");
 
             entity.ToTable("TblMeasurement", "dbo");
 
@@ -1423,22 +1438,22 @@ public partial class ShutterDBContext : DbContext
 
             entity.HasOne(d => d.Address).WithMany(p => p.TblMeasurements)
                 .HasForeignKey(d => d.AddressId)
-                .HasConstraintName("FK__TblMeasur__Addre__662B2B3B");
+                .HasConstraintName("FK__TblMeasur__Addre__16644E42");
         });
 
         modelBuilder.Entity<TblNotification>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__TblNotif__3214EC0706DB6A2E");
+            entity.HasKey(e => e.Id).HasName("PK__TblNotif__3214EC071BF575A5");
 
             entity.ToTable("TblNotification", "dbo");
 
-            entity.Property(e => e.Id).ValueGeneratedNever();
+            entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
             entity.Property(e => e.Createdate).HasColumnType("datetime");
         });
 
         modelBuilder.Entity<TblOption>(entity =>
         {
-            entity.HasKey(e => e.OptionId).HasName("PK__TblOptio__92C7A1FFEA70BF74");
+            entity.HasKey(e => e.OptionId).HasName("PK__TblOptio__92C7A1FF8D319BC4");
 
             entity.ToTable("TblOptions", "dbo");
 
@@ -1473,33 +1488,34 @@ public partial class ShutterDBContext : DbContext
 
             entity.HasOne(d => d.Tax).WithMany(p => p.TblOptions)
                 .HasForeignKey(d => d.TaxId)
-                .HasConstraintName("FK__TblOption__TaxId__0579B962");
+                .HasConstraintName("FK__TblOption__TaxId__1940BAED");
 
             entity.HasOne(d => d.Tenant).WithMany(p => p.TblOptions)
                 .HasForeignKey(d => d.TenantId)
-                .HasConstraintName("FK__TblOption__Tenan__7DCDAAA2");
+                .HasConstraintName("FK__TblOption__Tenan__1A34DF26");
         });
 
         modelBuilder.Entity<TblOptionsType>(entity =>
         {
-            entity.HasKey(e => e.OptionTypeId).HasName("PK__TblOptio__96A2FCCE87EE3A55");
+            entity.HasKey(e => e.OptionTypeId).HasName("PK__TblOptio__96A2FCCE10931DA0");
 
             entity.ToTable("TblOptions_Type", "dbo");
 
             entity.Property(e => e.OptionTypeId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.AdditionalCost).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.HidePreview).HasColumnName("hidePreview");
             entity.Property(e => e.ModifiedAt).HasColumnType("datetime");
             entity.Property(e => e.OptionType).HasMaxLength(200);
 
             entity.HasOne(d => d.Option).WithMany(p => p.TblOptionsTypes)
                 .HasForeignKey(d => d.OptionId)
-                .HasConstraintName("FK__TblOption__Optio__1C1D2798");
+                .HasConstraintName("FK__TblOption__Optio__1EF99443");
         });
 
         modelBuilder.Entity<TblOrder>(entity =>
         {
-            entity.HasKey(e => e.OrderId).HasName("PK__TblOrder__C3905BCFDFE5CDF2");
+            entity.HasKey(e => e.OrderId).HasName("PK__TblOrder__C3905BCF4ACD9A2C");
 
             entity.ToTable("TblOrder", "dbo");
 
@@ -1526,7 +1542,7 @@ public partial class ShutterDBContext : DbContext
 
         modelBuilder.Entity<TblOrderWindow>(entity =>
         {
-            entity.HasKey(e => e.OrderWindowId).HasName("PK__TblOrder__861D63585D53762E");
+            entity.HasKey(e => e.OrderWindowId).HasName("PK__TblOrder__861D635826845FAD");
 
             entity.ToTable("TblOrderWindow", "dbo");
 
@@ -1544,7 +1560,7 @@ public partial class ShutterDBContext : DbContext
 
         modelBuilder.Entity<TblOrderWindowProduct>(entity =>
         {
-            entity.HasKey(e => e.OrderWindowProductId).HasName("PK__TblOrder__915589245D3C0736");
+            entity.HasKey(e => e.OrderWindowProductId).HasName("PK__TblOrder__91558924636B8EE7");
 
             entity.ToTable("TblOrderWindowProduct", "dbo");
 
@@ -1579,12 +1595,12 @@ public partial class ShutterDBContext : DbContext
 
             entity.HasOne(d => d.Tax).WithMany(p => p.TblOrderWindowProducts)
                 .HasForeignKey(d => d.TaxId)
-                .HasConstraintName("FK__TblOrderW__TaxId__3DBE1285");
+                .HasConstraintName("FK__TblOrderW__TaxId__21D600EE");
         });
 
         modelBuilder.Entity<TblOrderWindowProductComponent>(entity =>
         {
-            entity.HasKey(e => e.OrderWindowProductComponentId).HasName("PK__TblOrder__381A8AF68221E24A");
+            entity.HasKey(e => e.OrderWindowProductComponentId).HasName("PK__TblOrder__381A8AF6ECF80FC2");
 
             entity.ToTable("TblOrderWindowProductComponent", "dbo");
 
@@ -1602,7 +1618,7 @@ public partial class ShutterDBContext : DbContext
 
         modelBuilder.Entity<TblOrderWindowProductComponentMaterial>(entity =>
         {
-            entity.HasKey(e => e.OrderWindowProductComponentMaterialId).HasName("PK__TblOrder__FECF878FF94DC8D6");
+            entity.HasKey(e => e.OrderWindowProductComponentMaterialId).HasName("PK__TblOrder__FECF878F59675489");
 
             entity.ToTable("TblOrderWindowProductComponentMaterial", "dbo");
 
@@ -1626,7 +1642,7 @@ public partial class ShutterDBContext : DbContext
 
         modelBuilder.Entity<TblOrderWindowProductOption>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__TblOrder__3213E83F716A4742");
+            entity.HasKey(e => e.Id).HasName("PK__TblOrder__3213E83F31153770");
 
             entity.ToTable("TblOrderWindowProductOption", "dbo");
 
@@ -1642,24 +1658,24 @@ public partial class ShutterDBContext : DbContext
 
             entity.HasOne(d => d.OrderWindowProduct).WithMany(p => p.TblOrderWindowProductOptions)
                 .HasForeignKey(d => d.OrderWindowProductId)
-                .HasConstraintName("FK__TblOrderW__Order__4376EBDB");
+                .HasConstraintName("FK__TblOrderW__Order__22CA2527");
 
             entity.HasOne(d => d.Tax).WithMany(p => p.TblOrderWindowProductOptions)
                 .HasForeignKey(d => d.TaxId)
-                .HasConstraintName("FK__TblOrderW__TaxId__446B1014");
+                .HasConstraintName("FK__TblOrderW__TaxId__23BE4960");
 
             entity.HasOne(d => d.WindowOption).WithMany(p => p.TblOrderWindowProductOptions)
                 .HasForeignKey(d => d.WindowOptionId)
-                .HasConstraintName("FK__TblOrderW__Windo__4282C7A2");
+                .HasConstraintName("FK__TblOrderW__Windo__25A691D2");
 
             entity.HasOne(d => d.WindowProduct).WithMany(p => p.TblOrderWindowProductOptions)
                 .HasForeignKey(d => d.WindowProductId)
-                .HasConstraintName("FK__TblOrderW__Windo__418EA369");
+                .HasConstraintName("FK__TblOrderW__Windo__24B26D99");
         });
 
         modelBuilder.Entity<TblPayment>(entity =>
         {
-            entity.HasKey(e => e.PaymentId).HasName("PK__TblPayme__9B556A38349E201F");
+            entity.HasKey(e => e.PaymentId).HasName("PK__TblPayme__9B556A3835A1E0C4");
 
             entity.ToTable("TblPayment", "dbo");
 
@@ -1682,12 +1698,12 @@ public partial class ShutterDBContext : DbContext
 
             entity.HasOne(d => d.Invoice).WithMany(p => p.TblPayments)
                 .HasForeignKey(d => d.InvoiceId)
-                .HasConstraintName("FK__TblPaymen__Invoi__5792F321");
+                .HasConstraintName("FK__TblPaymen__Invoi__269AB60B");
         });
 
         modelBuilder.Entity<TblProduct>(entity =>
         {
-            entity.HasKey(e => e.ProductId).HasName("PK__TblAssem__1C02BDABE36F3A37");
+            entity.HasKey(e => e.ProductId).HasName("PK__TblProdu__B40CC6CD53DD59A6");
 
             entity.ToTable("TblProduct", "dbo");
 
@@ -1719,24 +1735,22 @@ public partial class ShutterDBContext : DbContext
 
             entity.HasOne(d => d.Tax).WithMany(p => p.TblProducts)
                 .HasForeignKey(d => d.TaxId)
-                .HasConstraintName("FK__TblProduc__TaxId__7172C0B5");
+                .HasConstraintName("FK__TblProduc__TaxId__297722B6");
 
             entity.HasOne(d => d.Tenant).WithMany(p => p.TblProducts)
                 .HasForeignKey(d => d.TenantId)
-                .HasConstraintName("FK__TblProduc__Tenan__5D2BD0E6");
+                .HasConstraintName("FK__TblProduc__Tenan__2A6B46EF");
         });
 
         modelBuilder.Entity<TblProductComponent>(entity =>
         {
-            entity.HasKey(e => e.ProductComponentId).HasName("PK__TblProdu__E29891DF9ACD9DBE");
+            entity.HasKey(e => e.ProductComponentId).HasName("PK__TblProdu__E29891DFF460AAD5");
 
             entity.ToTable("TblProductComponent", "dbo");
 
             entity.HasIndex(e => e.ComponentId, "IX_TblProductComponent_ComponentId");
 
             entity.HasIndex(e => e.ProductId, "IX_TblProductComponent_ProductId");
-
-            entity.HasIndex(e => e.TenantId, "IX_TblProductComponent_TenantId");
 
             entity.Property(e => e.ProductComponentId).ValueGeneratedNever();
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
@@ -1746,20 +1760,20 @@ public partial class ShutterDBContext : DbContext
 
             entity.HasOne(d => d.Component).WithMany(p => p.TblProductComponents)
                 .HasForeignKey(d => d.ComponentId)
-                .HasConstraintName("FK__TblProduc__Compo__5A4F643B");
+                .HasConstraintName("FK__TblProduc__Compo__2D47B39A");
 
             entity.HasOne(d => d.Product).WithMany(p => p.TblProductComponents)
                 .HasForeignKey(d => d.ProductId)
-                .HasConstraintName("FK__TblProduc__Produ__5B438874");
+                .HasConstraintName("FK__TblProduc__Produ__30242045");
 
             entity.HasOne(d => d.Tenant).WithMany(p => p.TblProductComponents)
                 .HasForeignKey(d => d.TenantId)
-                .HasConstraintName("FK__TblProduc__Tenan__5C37ACAD");
+                .HasConstraintName("FK__TblProduc__Tenan__33008CF0");
         });
 
         modelBuilder.Entity<TblRawMaterial>(entity =>
         {
-            entity.HasKey(e => e.RawMaterialId).HasName("PK__TblRawMa__D99FAE11851EE539");
+            entity.HasKey(e => e.RawMaterialId).HasName("PK__TblRawMa__D99FAE1118F34176");
 
             entity.ToTable("TblRawMaterial", "dbo");
 
@@ -1796,11 +1810,11 @@ public partial class ShutterDBContext : DbContext
 
             entity.HasOne(d => d.ProductTypeNavigation).WithMany(p => p.TblRawMaterials)
                 .HasForeignKey(d => d.ProductType)
-                .HasConstraintName("FK__TblRawMat__Produ__39AD8A7F");
+                .HasConstraintName("FK__TblRawMat__Produ__35DCF99B");
 
             entity.HasOne(d => d.Tenant).WithMany(p => p.TblRawMaterials)
                 .HasForeignKey(d => d.TenantId)
-                .HasConstraintName("FK__TblRawMat__Tenan__7908F585");
+                .HasConstraintName("FK__TblRawMat__Tenan__38B96646");
 
             entity.HasOne(d => d.Vendor).WithMany(p => p.TblRawMaterials)
                 .HasForeignKey(d => d.VendorId)
@@ -1809,7 +1823,7 @@ public partial class ShutterDBContext : DbContext
 
         modelBuilder.Entity<TblRole>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__TblRoles__3214EC072F86598F");
+            entity.HasKey(e => e.Id).HasName("PK__TblRoles__3214EC07D61E5A5E");
 
             entity.ToTable("TblRoles", "dbo");
 
@@ -1818,15 +1832,11 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.IsShow).HasDefaultValue(false);
             entity.Property(e => e.ModifiedAt).HasColumnType("datetime");
             entity.Property(e => e.RoleName).HasMaxLength(100);
-
-            entity.HasOne(d => d.Tenant).WithMany(p => p.TblRoles)
-                .HasForeignKey(d => d.TenantId)
-                .HasConstraintName("FK__TblRoles__Tenant__6AEFE058");
         });
 
         modelBuilder.Entity<TblRolesPermission>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__TblRoles__3214EC07B4BAD913");
+            entity.HasKey(e => e.Id).HasName("PK__TblRoles__3214EC076DBD9E1C");
 
             entity.ToTable("TblRoles_Permission", "dbo");
 
@@ -1834,16 +1844,12 @@ public partial class ShutterDBContext : DbContext
 
             entity.HasOne(d => d.ModulePermission).WithMany(p => p.TblRolesPermissions)
                 .HasForeignKey(d => d.ModulePermissionId)
-                .HasConstraintName("FK__TblRoles___Modul__2EA5EC27");
-
-            entity.HasOne(d => d.Role).WithMany(p => p.TblRolesPermissions)
-                .HasForeignKey(d => d.RoleId)
-                .HasConstraintName("FK__TblRoles___RoleI__2DB1C7EE");
+                .HasConstraintName("FK__TblRoles___Modul__3C89F72A");
         });
 
         modelBuilder.Entity<TblStripeConfiguration>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__TblStrip__3213E83F14DD4311");
+            entity.HasKey(e => e.Id).HasName("PK__TblStrip__3213E83F9A3AC6A1");
 
             entity.ToTable("TblStripeConfiguration", "dbo");
 
@@ -1858,7 +1864,7 @@ public partial class ShutterDBContext : DbContext
 
         modelBuilder.Entity<TblStripePayment>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__TblStrip__3214EC07FE6CDD49");
+            entity.HasKey(e => e.Id).HasName("PK__TblStrip__3214EC071975A2C1");
 
             entity.ToTable("TblStripePayment", "dbo");
 
@@ -1885,7 +1891,7 @@ public partial class ShutterDBContext : DbContext
 
         modelBuilder.Entity<TblSubtenantProductMarkup>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__TblSubte__3214EC077FC08328");
+            entity.HasKey(e => e.Id).HasName("PK__TblSubte__3214EC07F8DCB7F1");
 
             entity.ToTable("TblSubtenantProductMarkup", "dbo");
 
@@ -1897,7 +1903,7 @@ public partial class ShutterDBContext : DbContext
 
         modelBuilder.Entity<TblTaxExemption>(entity =>
         {
-            entity.HasKey(e => e.TaxExemptionId).HasName("PK__TblTaxEx__BCE64BE6436D5A55");
+            entity.HasKey(e => e.TaxExemptionId).HasName("PK__TblTaxEx__BCE64BE67CB47657");
 
             entity.ToTable("TblTaxExemption", "dbo");
 
@@ -1915,12 +1921,12 @@ public partial class ShutterDBContext : DbContext
 
             entity.HasOne(d => d.Contact).WithMany(p => p.TblTaxExemptions)
                 .HasForeignKey(d => d.ContactId)
-                .HasConstraintName("FK__TblTaxExe__Conta__6BE40491");
+                .HasConstraintName("FK__TblTaxExe__Conta__405A880E");
         });
 
         modelBuilder.Entity<TblTaxRate>(entity =>
         {
-            entity.HasKey(e => e.TaxRateId).HasName("PK__TblTaxRa__B114CEC1EE287C42");
+            entity.HasKey(e => e.TaxRateId).HasName("PK__TblTaxRa__B114CEC13BEFDE50");
 
             entity.ToTable("TblTaxRate", "dbo");
 
@@ -1943,12 +1949,12 @@ public partial class ShutterDBContext : DbContext
 
             entity.HasOne(d => d.Tenant).WithMany(p => p.TblTaxRates)
                 .HasForeignKey(d => d.TenantId)
-                .HasConstraintName("FK__TblTaxRat__Tenan__5EDF0F2E");
+                .HasConstraintName("FK__TblTaxRat__Tenan__442B18F2");
         });
 
         modelBuilder.Entity<TblTemplate>(entity =>
         {
-            entity.HasKey(e => e.TemplateId).HasName("PK__TblTempl__F87ADD27F9BFA496");
+            entity.HasKey(e => e.TemplateId).HasName("PK__TblTempl__F87ADD2774913B78");
 
             entity.ToTable("TblTemplate", "dbo");
 
@@ -1961,26 +1967,11 @@ public partial class ShutterDBContext : DbContext
                 .HasMaxLength(200)
                 .IsUnicode(false);
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
-
-            entity.HasOne(d => d.Tenant).WithMany(p => p.TblTemplates)
-                .HasForeignKey(d => d.TenantId)
-                .HasConstraintName("FK__TblTempla__Tenan__31D75E8D");
-        });
-
-        modelBuilder.Entity<TblTemplatePlaceholder>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("PK__TblTempl__3214EC07B9CC024F");
-
-            entity.ToTable("TblTemplatePlaceholder", "dbo");
-
-            entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
-            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
-            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
         });
 
         modelBuilder.Entity<TblTenant>(entity =>
         {
-            entity.HasKey(e => e.TenantId).HasName("PK__TblTenan__2E9B47E14A989554");
+            entity.HasKey(e => e.TenantId).HasName("PK__TblTenan__2E9B47E17CF1381E");
 
             entity.ToTable("TblTenant", "dbo");
 
@@ -2007,16 +1998,16 @@ public partial class ShutterDBContext : DbContext
 
             entity.HasOne(d => d.BrandingInfoNavigation).WithMany(p => p.TblTenants)
                 .HasForeignKey(d => d.BrandingInfo)
-                .HasConstraintName("FK__TblTenant__Brand__6CD828CA");
+                .HasConstraintName("FK__TblTenant__Brand__4707859D");
 
             entity.HasOne(d => d.ParentTenant).WithMany(p => p.InverseParentTenant)
                 .HasForeignKey(d => d.ParentTenantId)
-                .HasConstraintName("FK__TblTenant__Paren__6DCC4D03");
+                .HasConstraintName("FK__TblTenant__Paren__49E3F248");
         });
 
         modelBuilder.Entity<TblTenantBrandingInfo>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__TblTenan__3214EC077ED83EF7");
+            entity.HasKey(e => e.Id).HasName("PK__TblTenan__3214EC07F9C3B2C7");
 
             entity.ToTable("TblTenant_BrandingInfo", "dbo");
 
@@ -2039,7 +2030,7 @@ public partial class ShutterDBContext : DbContext
 
         modelBuilder.Entity<TblUser>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__TblUser__3213E83F28028BF7");
+            entity.HasKey(e => e.Id).HasName("PK__TblUser__3213E83F8272E2C2");
 
             entity.ToTable("TblUser", "dbo");
 
@@ -2082,16 +2073,16 @@ public partial class ShutterDBContext : DbContext
 
             entity.HasOne(d => d.JobTitle).WithMany(p => p.TblUsers)
                 .HasForeignKey(d => d.JobTitleId)
-                .HasConstraintName("FK__TblUser__JobTitl__2116E6DF");
+                .HasConstraintName("FK__TblUser__JobTitl__4CC05EF3");
 
             entity.HasOne(d => d.Tenant).WithMany(p => p.TblUsers)
                 .HasForeignKey(d => d.TenantId)
-                .HasConstraintName("FK__TblUser__TenantI__6EC0713C");
+                .HasConstraintName("FK__TblUser__TenantI__4F9CCB9E");
         });
 
         modelBuilder.Entity<TblUserRole>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__TblUser___3214EC0755EA2C88");
+            entity.HasKey(e => e.Id).HasName("PK__TblUser___3214EC073A434D27");
 
             entity.ToTable("TblUser_Roles", "dbo");
 
@@ -2101,16 +2092,16 @@ public partial class ShutterDBContext : DbContext
 
             entity.HasOne(d => d.Role).WithMany(p => p.TblUserRoles)
                 .HasForeignKey(d => d.RoleId)
-                .HasConstraintName("FK__TblUser_R__RoleI__70A8B9AE");
+                .HasConstraintName("FK__TblUser_R__RoleI__5555A4F4");
 
             entity.HasOne(d => d.User).WithMany(p => p.TblUserRoles)
                 .HasForeignKey(d => d.UserId)
-                .HasConstraintName("FK__TblUser_R__UserI__719CDDE7");
+                .HasConstraintName("FK__TblUser_R__UserI__5832119F");
         });
 
         modelBuilder.Entity<TblVendor>(entity =>
         {
-            entity.HasKey(e => e.VendorId).HasName("PK__TblVendo__FC8618F33D6BB854");
+            entity.HasKey(e => e.VendorId).HasName("PK__TblVendo__FC8618F3504EEF1C");
 
             entity.ToTable("TblVendor", "dbo");
 
@@ -2156,12 +2147,12 @@ public partial class ShutterDBContext : DbContext
 
             entity.HasOne(d => d.Tenant).WithMany(p => p.TblVendors)
                 .HasForeignKey(d => d.TenantId)
-                .HasConstraintName("FK__TblVendor__Tenan__324172E1");
+                .HasConstraintName("FK__TblVendor__Tenan__5B0E7E4A");
         });
 
         modelBuilder.Entity<TblVendorOrder>(entity =>
         {
-            entity.HasKey(e => e.VendorOrderId).HasName("PK__TblVendo__477DCB3BE9BC2A7D");
+            entity.HasKey(e => e.VendorOrderId).HasName("PK__TblVendo__477DCB3BEBA5AC58");
 
             entity.ToTable("TblVendorOrder", "dbo");
 
@@ -2169,9 +2160,7 @@ public partial class ShutterDBContext : DbContext
 
             entity.HasIndex(e => e.TenentId, "IX_TblVendorOrder_TenentId");
 
-            entity.HasIndex(e => e.VendorId, "IX_TblVendorOrder_VendorId");
-
-            entity.HasIndex(e => e.OrderNumber, "UQ__TblVendo__CAC5E7437EC0F4A6").IsUnique();
+            entity.HasIndex(e => e.OrderNumber, "UQ__TblVendo__CAC5E743AC44CEB3").IsUnique();
 
             entity.Property(e => e.VendorOrderId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.ActualDeliveryDate).HasColumnType("datetime");
@@ -2193,20 +2182,20 @@ public partial class ShutterDBContext : DbContext
 
             entity.HasOne(d => d.Job).WithMany(p => p.TblVendorOrders)
                 .HasForeignKey(d => d.JobId)
-                .HasConstraintName("FK__TblVendor__JobId__72910220");
+                .HasConstraintName("FK__TblVendor__JobId__5EDF0F2E");
 
             entity.HasOne(d => d.Tenent).WithMany(p => p.TblVendorOrders)
                 .HasForeignKey(d => d.TenentId)
-                .HasConstraintName("FK__TblVendor__Tenen__041093DD");
+                .HasConstraintName("FK__TblVendor__Tenen__61BB7BD9");
 
             entity.HasOne(d => d.Vendor).WithMany(p => p.TblVendorOrders)
                 .HasForeignKey(d => d.VendorId)
-                .HasConstraintName("FK__TblVendor__Vendo__73852659");
+                .HasConstraintName("FK__TblVendor__Vendo__6497E884");
         });
 
         modelBuilder.Entity<TblVendorOrderItem>(entity =>
         {
-            entity.HasKey(e => e.VendorOrderItemId).HasName("PK__TblVendo__A5401ACCA1A820E9");
+            entity.HasKey(e => e.VendorOrderItemId).HasName("PK__TblVendo__A5401ACCA314DE78");
 
             entity.ToTable("TblVendorOrderItem", "dbo");
 
@@ -2235,16 +2224,16 @@ public partial class ShutterDBContext : DbContext
 
             entity.HasOne(d => d.Material).WithMany(p => p.TblVendorOrderItems)
                 .HasForeignKey(d => d.MaterialId)
-                .HasConstraintName("FK__TblVendor__Mater__0504B816");
+                .HasConstraintName("FK__TblVendor__Mater__6774552F");
 
             entity.HasOne(d => d.VendorOrder).WithMany(p => p.TblVendorOrderItems)
                 .HasForeignKey(d => d.VendorOrderId)
-                .HasConstraintName("FK__TblVendor__Vendo__74794A92");
+                .HasConstraintName("FK__TblVendor__Vendo__6A50C1DA");
         });
 
         modelBuilder.Entity<TblWindow>(entity =>
         {
-            entity.HasKey(e => e.WindowId).HasName("PK__TblWindo__1EEC642937E205D0");
+            entity.HasKey(e => e.WindowId).HasName("PK__TblWindo__1EEC6429BF1126D2");
 
             entity.ToTable("TblWindow", "dbo");
 
@@ -2272,20 +2261,20 @@ public partial class ShutterDBContext : DbContext
 
             entity.HasOne(d => d.Address).WithMany(p => p.TblWindows)
                 .HasForeignKey(d => d.AddressId)
-                .HasConstraintName("FK__TblWindow__Addre__756D6ECB");
+                .HasConstraintName("FK__TblWindow__Addre__6D2D2E85");
 
             entity.HasOne(d => d.Job).WithMany(p => p.TblWindows)
                 .HasForeignKey(d => d.JobId)
-                .HasConstraintName("FK__TblWindow__JobId__52793849");
+                .HasConstraintName("FK__TblWindow__JobId__70099B30");
 
             entity.HasOne(d => d.Tenant).WithMany(p => p.TblWindows)
                 .HasForeignKey(d => d.TenantId)
-                .HasConstraintName("FK__TblWindow__Tenan__5090EFD7");
+                .HasConstraintName("FK__TblWindow__Tenan__72E607DB");
         });
 
         modelBuilder.Entity<TblWindowProduct>(entity =>
         {
-            entity.HasKey(e => e.WindowProductId).HasName("PK__tblWindo__28B91C826392FBD3");
+            entity.HasKey(e => e.WindowProductId).HasName("PK__tblWindo__28B91C826544FF51");
 
             entity.ToTable("tblWindowProduct", "dbo");
 
@@ -2295,8 +2284,6 @@ public partial class ShutterDBContext : DbContext
 
             entity.HasIndex(e => e.TenantId, "IX_TblWindowProduct_TenantId");
 
-            entity.HasIndex(e => e.WindowId, "IX_TblWindowProduct_WindowId");
-
             entity.Property(e => e.WindowProductId).ValueGeneratedNever();
             entity.Property(e => e.BuildHeight).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.BuildWidth).HasColumnType("decimal(10, 2)");
@@ -2305,24 +2292,24 @@ public partial class ShutterDBContext : DbContext
 
             entity.HasOne(d => d.Product).WithMany(p => p.TblWindowProducts)
                 .HasForeignKey(d => d.ProductId)
-                .HasConstraintName("FK__tblWindow__Produ__4DB4832C");
+                .HasConstraintName("FK__tblWindow__Produ__75C27486");
 
             entity.HasOne(d => d.ProductType).WithMany(p => p.TblWindowProducts)
                 .HasForeignKey(d => d.ProductTypeId)
-                .HasConstraintName("FK__tblWindow__Produ__4EA8A765");
+                .HasConstraintName("FK__tblWindow__Produ__76B698BF");
 
             entity.HasOne(d => d.Tenant).WithMany(p => p.TblWindowProducts)
                 .HasForeignKey(d => d.TenantId)
-                .HasConstraintName("FK__tblWindow__Tenan__51851410");
+                .HasConstraintName("FK__tblWindow__Tenan__7B7B4DDC");
 
             entity.HasOne(d => d.Window).WithMany(p => p.TblWindowProducts)
                 .HasForeignKey(d => d.WindowId)
-                .HasConstraintName("FK__tblWindow__Windo__4CC05EF3");
+                .HasConstraintName("FK__tblWindow__Windo__004002F9");
         });
 
         modelBuilder.Entity<WindowOption>(entity =>
         {
-            entity.HasKey(e => e.WindowoptionId).HasName("PK__WindowOp__F9F31DB279AABAC9");
+            entity.HasKey(e => e.WindowoptionId).HasName("PK__WindowOp__F9F31DB2FA334FD4");
 
             entity.ToTable("WindowOption", "dbo");
 
@@ -2341,37 +2328,19 @@ public partial class ShutterDBContext : DbContext
 
             entity.HasOne(d => d.OptionType).WithMany(p => p.WindowOptions)
                 .HasForeignKey(d => d.OptionTypeId)
-                .HasConstraintName("FK__WindowOpt__Optio__636EBA21");
+                .HasConstraintName("FK__WindowOpt__Optio__01342732");
 
             entity.HasOne(d => d.Tenant).WithMany(p => p.WindowOptions)
                 .HasForeignKey(d => d.TenantId)
-                .HasConstraintName("FK__WindowOpt__Tenan__1BE81D6E");
+                .HasConstraintName("FK__WindowOpt__Tenan__041093DD");
 
             entity.HasOne(d => d.Window).WithMany(p => p.WindowOptions)
                 .HasForeignKey(d => d.WindowId)
-                .HasConstraintName("FK__WindowOpt__Windo__1AF3F935");
+                .HasConstraintName("FK__WindowOpt__Windo__07E124C1");
 
             entity.HasOne(d => d.WindowProduct).WithMany(p => p.WindowOptions)
                 .HasForeignKey(d => d.WindowProductId)
-                .HasConstraintName("FK__WindowOpt__Windo__19FFD4FC");
-        });
-
-        modelBuilder.Entity<MstPowderCoatColor>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("PK_MstPowderCoatColor");
-
-            entity.ToTable("MstPowderCoatColor", "dbo");
-
-            entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
-            entity.Property(e => e.ColorName)
-                .IsRequired()
-                .HasMaxLength(100);
-            entity.Property(e => e.IsActive).HasDefaultValue(true);
-            entity.Property(e => e.IsDelete).HasDefaultValue(false);
-            entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
-            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+                .HasConstraintName("FK__WindowOpt__Windo__06ED0088");
         });
 
         OnModelCreatingPartial(modelBuilder);

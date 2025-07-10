@@ -195,6 +195,7 @@ builder.Services.AddScoped<IManagePartnersProductsOptions,ManagePartnersProducts
 builder.Services.AddScoped<IEmailConfigurationService, EmailConfigurationService>();
 builder.Services.AddScoped<IGhlCustomFieldsService, GhlCustomFieldsService>();
 builder.Services.AddScoped<IPowderCoatColorService, PowderCoatColorService>();
+builder.Services.AddScoped<IUploadBlobDocument, UploadBlobDocumentService>();
 builder.Services.AddScoped<MS365Configuration>();
 // Add services to the DI container
 builder.Services.AddHttpClient<GHLService_v2>(); // Register HttpClient for GhlService
