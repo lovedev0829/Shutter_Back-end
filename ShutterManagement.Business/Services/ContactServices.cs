@@ -108,32 +108,31 @@ namespace ShutterManagement.Business.Services
             try
             {
                 LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : claimsProperty.GetTenantId());
-
-                var TenantId = Guid.Empty;
                 var IsTenantExists = false;
-                if (model.PhoneNumber != null)
+
+                //Change the format of phonenumber added with +1 
+                if (!string.IsNullOrEmpty(model.PhoneNumber))
                 {
                     model.PhoneNumber = FormatPhoneNumber(model.PhoneNumber);
                 }
                 FileLogger.Log($"Location id fetched {model.locationId}");
-                if (model.locationId != null)
-                {
-                    // await gHLConfigurationService.GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
-                    TenantId = (Guid)LoggedInTenantId;
-                    FileLogger.Log($"Tenant id fetched {TenantId}");
-                    if (TenantId != null)
-                    {
-                        IsTenantExists = true;
-                        model.IsTaxExemption = true;
-                    }
-                }
-                else
-                {
+                //if (model.locationId != null)
+                //{
+                //    // await gHLConfigurationService.GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
+                //    TenantId = (Guid)LoggedInTenantId;
+                //    FileLogger.Log($"Tenant id fetched {TenantId}");
+                //    if (TenantId != null)
+                //    {
+                //        IsTenantExists = true;
+                //        model.IsTaxExemption = true;
+                //    }
+                //}
+                //else
+                //{
                     IsTenantExists = await tenantService.AnyAsync(x => x.TenantId == LoggedInTenantId && x.IsActive == true);
-                    TenantId = (Guid)LoggedInTenantId;
-                    FileLogger.Log($"Tenant Id id fetched {TenantId}");
+                    FileLogger.Log($"Tenant Id id fetched {LoggedInTenantId}");
                     //model.IsTaxExemption = true;
-                }
+                //}
                 if (!model.IsTaxExemption)
                 {
                     if (model.TaxExemptionVm.EffectiveDate == null && model.TaxExemptionVm.ExpiryDate == null)
@@ -148,17 +147,16 @@ namespace ShutterManagement.Business.Services
                     //await gHLConfigurationService.GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
                     var IsContactExists = GetAllQuerable()
                         .Where(c => (c.Email == model.Email || c.PhoneNumber == model.PhoneNumber)
-                        && c.TenantId == TenantId
+                        && c.TenantId == LoggedInTenantId
                         && c.IsDelete == false).ToList();
 
                     if (IsContactExists.Count > 0)
                     {
                         //If Contact is already exists in Shutter DB then update the GHL Contact if GHLContactId is not null
-                        if (model.GHLContactId != null)
+                        if (!string.IsNullOrEmpty(model.GHLContactId))
                         {
                             var ghlContactAdd = new UpdateContact
                             {
-                                //Id = contact1.GhlcontactId.ToString() ?? string.Empty,
                                 FirstName = model.FirstName ?? string.Empty,
                                 LastName = model.LastName ?? string.Empty,
                                 Suffix = model.Suffix ?? string.Empty,
@@ -169,7 +167,6 @@ namespace ShutterManagement.Business.Services
                                 Website = model.Website ?? string.Empty,
                                 Referral = model.Referral ?? string.Empty,
                                 GHLContactId = model.GHLContactId ?? string.Empty,
-                                //locationId = model.locationId ?? string.Empty,
                                 
                             };
                             if (!model.IsBillingAddressSameAsAddress)
@@ -216,7 +213,7 @@ namespace ShutterManagement.Business.Services
                         int Version = GetAllQuerable().Where(x => x.TenantId == LoggedInTenantId && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt)
                             .Select(p => (p.ContactUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries).Length == 3 ? Convert.ToInt32(p.ContactUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries)[2]) : 0)).FirstOrDefault();
                         Version += 1;
-                        var Companycode = tenantService.GetAllQuerable().Where(x => x.TenantId == TenantId && x.IsActive == true && x.IsDelete == false).Select(x => x.Code).FirstOrDefault();
+                        var Companycode = tenantService.GetAllQuerable().Where(x => x.TenantId == LoggedInTenantId && x.IsActive == true && x.IsDelete == false).Select(x => x.Code).FirstOrDefault();
                         var contactUniqueId = GenerateUniqueId.GenerateUniqueIds(ModuleName.Contact, Companycode, Version);
 
                         TblContact CreateContact = new TblContact
@@ -237,27 +234,25 @@ namespace ShutterManagement.Business.Services
                             IsBillingAddressSameAsAddress = model.IsBillingAddressSameAsAddress,
                             CreatedBy = LoggedInTenantId,
                             CreatedAt = DateTime.Now,
-                            TenantId = TenantId,
+                            TenantId = LoggedInTenantId,
                             IsActive = true,
                             IsArchive = false,
                             IsDelete = false
                         };
                         var res = await Add(CreateContact);
-                        if (model.lastAsync != null && model.GHLContactId != null)
+                        if (model.lastAsync != null && !string.IsNullOrEmpty(model.GHLContactId))
                         {
                             res.LastSync = model.lastAsync;
                             res.GhlcontactId = model.GHLContactId ?? "";
                             await Update(res);
                         }
-
+                         // To add address of contact
                         if (res.ContactId != Guid.Empty)
                         {
                             // Add Billing Address
                             if (!model.IsBillingAddressSameAsAddress)
                             {
-
                                 Guid? stateId = null;
-
                                 // Validate and assign StateId only if it exists in MstState
                                 if (model.BillingAddressVm?.StateId != null &&
                                     model.BillingAddressVm.StateId != Guid.Empty)
@@ -286,12 +281,14 @@ namespace ShutterManagement.Business.Services
                                     CreatedAt = DateTime.Now,
                                     IsActive = true,
                                     IsDelete = false,
-                                    TenantId = TenantId,
+                                    TenantId = LoggedInTenantId,
                                     CreatedBy = AppConstant.LoggedInUserID
                                 };
                                 dbContext.TblAddresses.Add(address);
                                 await dbContext.SaveChangesAsync();
-                                res.PrimaryAddress = address.AddressId;
+
+                            // Update Primary Address in Contact
+                            res.PrimaryAddress = address.AddressId;
                                 await Update(res);
                             }
 
@@ -313,7 +310,9 @@ namespace ShutterManagement.Business.Services
                                 responseVm.IsSuccess = true;
                                 responseVm.Message = AppConstant.InsertSuccessMsg;
                             }
-                            if (model.GHLContactId == null)
+
+                            //Add contct in GHL if contact added from Shutter software
+                            if (string.IsNullOrEmpty(model.GHLContactId))
                             {
                                 var Checkghlresponse = await gHLConfigurationService.CheckGHLConfiguration(LoggedInTenantId);
                                 if (Checkghlresponse.IsSuccess)
@@ -365,28 +364,26 @@ namespace ShutterManagement.Business.Services
             {
                 LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : claimsProperty.GetTenantId());
 
-                var TenantId = Guid.Empty;
                 var IsTenantExists = false;
                 if (model.PhoneNumber != null)
                 {
                     model.PhoneNumber = FormatPhoneNumber(model.PhoneNumber);
                 }
-                if (model.locationId != null)
-                {
-                   // await gHLConfigurationService.GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
-                    TenantId = (Guid)LoggedInTenantId;
+                //if (model.locationId != null)
+                //{
+                //   // await gHLConfigurationService.GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
+                //    TenantId = (Guid)LoggedInTenantId;
 
-                    if (TenantId != Guid.Empty)
-                    {
-                        IsTenantExists = true;
-                        model.IsTaxExemption = true;
-                    }
-                }
-                else
-                {
+                //    if (TenantId != Guid.Empty)
+                //    {
+                //        IsTenantExists = true;
+                //        model.IsTaxExemption = true;
+                //    }
+                //}
+                //else
+                //{
                     IsTenantExists = await tenantService.AnyAsync(x => x.TenantId == LoggedInTenantId && x.IsActive == true);
-                    TenantId = (Guid)LoggedInTenantId;
-                }
+                //}
 
                 if (IsTenantExists)
                 {
@@ -394,11 +391,11 @@ namespace ShutterManagement.Business.Services
                     if (!string.IsNullOrEmpty(model.GHLContactId))
                     {
                         var contact = (await GetAll()).Where
-                            (c => c.GhlcontactId == model.GHLContactId && c.TenantId == TenantId && c.IsDelete == false).FirstOrDefault();
+                            (c => c.GhlcontactId == model.GHLContactId && c.TenantId == LoggedInTenantId && c.IsDelete == false).FirstOrDefault();
 
                         var IsContactExists = GetAllQuerable()
                             .Where(c => (c.Email == model.Email || c.PhoneNumber == model.PhoneNumber)
-                                        && c.TenantId == TenantId && c.IsDelete == false).OrderByDescending(x=>x.CreatedAt)
+                                        && c.TenantId == LoggedInTenantId && c.IsDelete == false).OrderByDescending(x=>x.CreatedAt)
                             .ToList();
 
                         if (contact == null && IsContactExists.Count > 0)
@@ -422,7 +419,7 @@ namespace ShutterManagement.Business.Services
                             contact.Referral = model.Referral ?? "";
                             contact.IsTaxExemption = model.IsTaxExemption ;
                             contact.IsBillingAddressSameAsAddress = model.IsBillingAddressSameAsAddress;
-                            contact.ModifiedBy = TenantId;
+                            contact.ModifiedBy = LoggedInTenantId;
                             contact.UpdatedAt = DateTime.Now;
 
                             await Update(contact); responseVm.IsSuccess = true;
@@ -495,7 +492,7 @@ namespace ShutterManagement.Business.Services
                                         CreatedAt = DateTime.Now,
                                         IsActive = true,
                                         IsDelete = false,
-                                        TenantId = TenantId,
+                                        TenantId = LoggedInTenantId,
                                     };
 
                                     dbContext.TblAddresses.Add(CreateContactBillingAddress);
@@ -545,11 +542,11 @@ namespace ShutterManagement.Business.Services
                     else
                     {
                         var contact1 = GetAllQuerable().Where
-                            (c => c.ContactId == model.ContactId && c.TenantId == TenantId && c.IsDelete == false).FirstOrDefault();
+                            (c => c.ContactId == model.ContactId && c.TenantId == LoggedInTenantId && c.IsDelete == false).FirstOrDefault();
 
                         var IsContactExists1 = (await GetAll())
                             .Where(c => (c.Email == model.Email || c.PhoneNumber == model.PhoneNumber)
-                                        && c.TenantId == TenantId && c.IsDelete == false && c.ContactId != model.ContactId)
+                                        && c.TenantId == LoggedInTenantId && c.IsDelete == false && c.ContactId != model.ContactId)
                             .ToList();
 
                         if (IsContactExists1.Count > 0)
@@ -578,7 +575,7 @@ namespace ShutterManagement.Business.Services
                             contact1.Referral = model.Referral;
                             contact1.IsTaxExemption = model.IsTaxExemption;
                             contact1.IsBillingAddressSameAsAddress = model.IsBillingAddressSameAsAddress;
-                            contact1.ModifiedBy = TenantId;
+                            contact1.ModifiedBy = LoggedInTenantId;
                             contact1.UpdatedAt = DateTime.Now;
 
                             await Update(contact1);
@@ -654,7 +651,7 @@ namespace ShutterManagement.Business.Services
                                         CreatedAt = DateTime.Now,
                                         IsActive = true,
                                         IsDelete = false,
-                                        TenantId = TenantId,
+                                        TenantId = LoggedInTenantId,
                                     };
 
                                     dbContext.TblAddresses.Add(CreateContactBillingAddress);
@@ -1096,7 +1093,7 @@ namespace ShutterManagement.Business.Services
                     ZipCode = model?.BillingAddressVm?.ZipCode ?? string.Empty,
                 };
 
-                if (contact.GhlcontactId == null)
+                if (string.IsNullOrEmpty(contact.GhlcontactId))
                 {
                     var ghlconfigdetails =  await gHLConfigurationService.GetGHLConfiguration(LoggedInTenantId.ToString());
                     ghlResponse = await gHLService_V2.CreateContactAsync(ghlconfigdetails?.Data,ghlContactAdd);
@@ -1146,7 +1143,7 @@ namespace ShutterManagement.Business.Services
                 try
                 {
                     bool IsbillingAddressSameAsAddress = true;
-                    if (contactData.full_address != null)
+                    if (!string.IsNullOrEmpty(contactData.full_address))
                     {
                         IsbillingAddressSameAsAddress = false;
                     }
@@ -1163,7 +1160,7 @@ namespace ShutterManagement.Business.Services
                         IsBillingAddressSameAsAddress = IsbillingAddressSameAsAddress,
                         IsTaxExemption = true,
                     };
-                    if (contactData.full_address != null)
+                    if (!string.IsNullOrEmpty(contactData.full_address))
                     {
                         var stateId = dbContext.MstStates.Where(x => x.StateCode == contactData.state).FirstOrDefault();
                         contact.BillingAddressVm = new BillingAddressVm
@@ -1202,7 +1199,7 @@ namespace ShutterManagement.Business.Services
                 try
                 {
                     bool IsbillingAddressSameAsAddress = true;
-                    if (contactData.full_address != null)
+                    if (!string.IsNullOrEmpty(contactData.full_address))
                     {
                         IsbillingAddressSameAsAddress = false;
                     }
@@ -1219,7 +1216,7 @@ namespace ShutterManagement.Business.Services
                         IsBillingAddressSameAsAddress = IsbillingAddressSameAsAddress,
                         IsTaxExemption = true,
                     };
-                    if (contactData.full_address != null)
+                    if (!string.IsNullOrEmpty(contactData.full_address))
                     {
                         var stateId = dbContext.MstStates.Where(x => x.StateCode == contactData.state).FirstOrDefault();
                         contact.BillingAddressVm = new BillingAddressVm
