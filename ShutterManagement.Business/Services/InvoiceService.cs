@@ -581,7 +581,6 @@ namespace ShutterManagement.Business.Services
                    c.IsDelete == false);
 
                 var estimationRecord = await estimateService.ViewEachEstimation(model.EstimationId);
-
                 var productList = estimationRecord.Data
                     .FirstOrDefault(x => x.IsActive == true)
                     ?.EstimateProductList ?? new List<EstimateProductList>();
@@ -592,6 +591,9 @@ namespace ShutterManagement.Business.Services
                     customerState = dbContext.MstStates.Where(x => x.Id == customerDetails.billingAddressVm.StateId).Select(y => y.StateName ?? "").FirstOrDefault();
                 }
 
+                var powderCoatColor = estimationRecord.Data
+                     .FirstOrDefault(x => x.IsActive == true).jobDetails.PowderCoatColor;
+        
                 var invoiceData = new InvoiceDataModel
                 {
                     CustomerName = customerDetails?.FirstName ?? "" + customerDetails?.LastName ?? "",
@@ -624,7 +626,7 @@ namespace ShutterManagement.Business.Services
                     Discount = estimationDetails?.DiscountAmount ?? 0.0m,
                     Additionalcost = estimationDetails?.AdditionalCost.ToString() ?? "",
                     ProductList = GenerateProductListHtml(productList),
-
+                    PowderCoatColor = powderCoatColor
                 };
 
                 // Generate the Estimate HTML

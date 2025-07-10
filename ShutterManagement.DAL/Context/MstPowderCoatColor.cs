@@ -26,4 +26,5 @@ public partial class MstPowderCoatColor
     public Guid? CreatedBy { get; set; }
 
     public Guid? ModifiedBy { get; set; }
+    public virtual ICollection<TblJob> TblJobs { get; set; } = new List<TblJob>();
 } 

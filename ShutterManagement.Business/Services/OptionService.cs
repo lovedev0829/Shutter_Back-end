@@ -164,6 +164,7 @@ namespace ShutterManagement.Business.Services
                                         CreatedBy = AppConstant.LoggedInUserID,
                                         SortOrder = item.SortOrder,
                                         RequirePriceAtEstimatePreview = item.RequirePriceAtEstimatePreview,
+                                        hidePreview = item.hidePreview,
                                         IsActive = true,
                                         IsDelete = false
                                     };
@@ -398,7 +399,8 @@ namespace ShutterManagement.Business.Services
                                     OptionType = x.OptionType,
                                     OptionTypeId = x.OptionTypeId,
                                     SortOrder = x.SortOrder,
-                                    RequirePriceAtEstimatePreview = x.RequirePriceAtEstimatePreview
+                                    RequirePriceAtEstimatePreview = x.RequirePriceAtEstimatePreview,
+                                    hidePreview = x.hidePreview
                                 })
                                 .ToList();
 
@@ -494,6 +496,7 @@ namespace ShutterManagement.Business.Services
                                 OptionTypeId = x.OptionTypeId,
                                 SortOrder = x.SortOrder,
                                 RequirePriceAtEstimatePreview = x.RequirePriceAtEstimatePreview,
+                                hidePreview = x.hidePreview
                                 //Unit = x.Unit
                             })
                             .ToList();
@@ -615,6 +618,7 @@ public async Task<IResponseVm<string>> Update_Option(UpdateOption model)
                     OptionTypeId = x.OptionTypeId,
                     SortOrder = x.SortOrder,
                     RequirePriceAtEstimatePreview = x.RequirePriceAtEstimatePreview,
+                    hidePreview = x.hidePreview,
                     // Unit = x.Unit
                 }).ToArray();
                 //var Ismanageproductexist = await dbContext.TblManagePartnersProductsOptions.Where
@@ -626,8 +630,8 @@ public async Task<IResponseVm<string>> Update_Option(UpdateOption model)
                 //}
 
 
-                var InsertRecords = model.Options.Where(a1 => !OptionsTypes.Any(a2 => a1.OptionType == a2.OptionType && a1.AdditionalCost == a2.AdditionalCost && a1.IsDefault == a2.IsDefault && a1.RequirePriceAtEstimatePreview == a2.RequirePriceAtEstimatePreview)).ToList();
-                var DeleteRecords = OptionsTypes.Where(a1 => !model.Options.Any(a2 => a1.OptionType == a2.OptionType && a1.AdditionalCost == a2.AdditionalCost && a1.IsDefault == a2.IsDefault && a1.RequirePriceAtEstimatePreview == a2.RequirePriceAtEstimatePreview)).ToList();
+                var InsertRecords = model.Options.Where(a1 => !OptionsTypes.Any(a2 => a1.OptionType == a2.OptionType && a1.AdditionalCost == a2.AdditionalCost && a1.IsDefault == a2.IsDefault && a1.RequirePriceAtEstimatePreview == a2.RequirePriceAtEstimatePreview && a1.hidePreview == a2.hidePreview)).ToList();
+                var DeleteRecords = OptionsTypes.Where(a1 => !model.Options.Any(a2 => a1.OptionType == a2.OptionType && a1.AdditionalCost == a2.AdditionalCost && a1.IsDefault == a2.IsDefault && a1.RequirePriceAtEstimatePreview == a2.RequirePriceAtEstimatePreview && a1.hidePreview == a2.hidePreview)).ToList();
 
                 if (!AppConstant.IsTenant)
                 {
@@ -684,6 +688,7 @@ public async Task<IResponseVm<string>> Update_Option(UpdateOption model)
                             CreatedBy = AppConstant.LoggedInUserID,
                             SortOrder = item.SortOrder,
                             RequirePriceAtEstimatePreview = item.RequirePriceAtEstimatePreview,
+                            hidePreview = item.hidePreview,
                             IsActive = true,
                             IsDelete = false
                         };

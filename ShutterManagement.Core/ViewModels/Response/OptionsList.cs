@@ -40,6 +40,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public bool? IsDefault { get; set; }
         public int? SortOrder { get; set; }
         public bool? RequirePriceAtEstimatePreview { get; set; }
+        public bool hidePreview { get; set; }
 
     }
 }

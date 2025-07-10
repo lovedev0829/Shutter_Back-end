@@ -46,5 +46,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? InvoiceLink { get; set; }
         public string? Message { get; set; }
         public string? PaymentLink { get; set; }
+        public string? PowderCoatColor { get; set; }
+
     }
 }
