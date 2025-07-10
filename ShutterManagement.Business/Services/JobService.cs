@@ -794,33 +794,32 @@ namespace ShutterManagement.Business.Services
             {
                 LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : claimsProperty.GetTenantId());
                 bool IsAddressExist = false;
-                var TenantId = Guid.Empty;
+              //  var TenantId = Guid.Empty;
                 var IsTenantValid = false;
                 TblGhlStage stage = new TblGhlStage();
                 Guid jobStatus = Guid.Empty;
-                if (model.locationId != null)
-                {
-                    //await gHLConfiguration.GetGHLConfiguration(model.locationId);
-                    TenantId = (Guid)LoggedInTenantId;
+                //if (model.locationId != null)
+                //{
+                //    //await gHLConfiguration.GetGHLConfiguration(model.locationId);
+                //    TenantId = (Guid)LoggedInTenantId;
 
-                    if (TenantId != null)
-                    {
-                        IsTenantValid = true;
+                //    if (TenantId != null)
+                //    {
+                //        IsTenantValid = true;
 
-                        stage.GhlStageName = model.GHL_StageName;
-                        Guid.TryParse(model.GHL_jobstatus, out jobStatus);
-                        IsAddressExist = true;
-                        //else
-                        //{
-                        //    responseVm.Message = "Contact is not synced in Application.";
-                        //    return responseVm;
-                        //}
-                    }
-                }
-                else
-                {
+                //        stage.GhlStageName = model.GHL_StageName;
+                //        Guid.TryParse(model.GHL_jobstatus, out jobStatus);
+                //        IsAddressExist = true;
+                //        //else
+                //        //{
+                //        //    responseVm.Message = "Contact is not synced in Application.";
+                //        //    return responseVm;
+                //        //}
+                //    }
+                //}
+                //else
+                //{
                     IsTenantValid = await tenantService.AnyAsync(x => x.TenantId == LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
-                    TenantId = (Guid)LoggedInTenantId;
                     IsAddressExist = await address.AnyAsync(x => x.AddressId.ToString().ToLower() == model.AddressId.ToString().ToLower() && x.ContactId.ToString().ToLower() == model.ContactId.ToString().ToLower()
                     && x.TenantId == LoggedInTenantId && x.IsDelete == false);
                     //stage = _context.TblGhlStages.Where(x => x.TenantId == claimsProperty.GetTenantId() && x.GhlStageId == model.GHL_StageId.ToString()).FirstOrDefault();
@@ -844,7 +843,7 @@ namespace ShutterManagement.Business.Services
                     }
 
 
-                }
+                //}
                 if (!IsTenantValid)
                 {
                     responseVm.Message = AppConstant.TenantNotFound;
@@ -853,7 +852,7 @@ namespace ShutterManagement.Business.Services
                 int Version = GetAllQuerable().Where(x => x.TenantId == LoggedInTenantId && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt)
                       .Select(p => (p.JobUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries).Length == 3 ? Convert.ToInt32(p.JobUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries)[2]) : 0)).FirstOrDefault();
                 Version += 1;
-                var Companycode = tenantService.GetAllQuerable().Where(x => x.TenantId == TenantId && x.IsActive == true && x.IsDelete == false).Select(x => x.Code).FirstOrDefault();
+                var Companycode = tenantService.GetAllQuerable().Where(x => x.TenantId == LoggedInTenantId && x.IsActive == true && x.IsDelete == false).Select(x => x.Code).FirstOrDefault();
                 var generateUnique = GenerateUniqueId.GenerateUniqueIds(ModuleName.Job, Companycode, Version);
                 bool IsjobNameExists = await AnyAsync(x => x.JobName == model.JobName.Trim() && x.IsDelete == false && x.TenantId == LoggedInTenantId && x.ContactId == model.ContactId);
                 var StageResponse = await statusAndStageMapping.GetGHLStagesMappingsById(jobStatus, LoggedInTenantId);
@@ -891,7 +890,7 @@ namespace ShutterManagement.Business.Services
                         GhlStageId = ((model.GHL_StageId != null && model.GHL_StageId != Guid.Empty) ? model.GHL_StageId : StageResponse?.Data?.StageId) ?? null,
                         GhlStageName = ((model.GHL_StageName != null && model.GHL_StageName != string.Empty) ? model.GHL_StageName : stage?.GhlStageName?.Trim() ?? string.Empty) ?? string.Empty,
                         GhlContactId = model.GHL_ContactId ?? string.Empty,
-                        TenantId = TenantId,
+                        TenantId = LoggedInTenantId,
                         IsActive = true,
                         IsDelete = false,
                         CreatedAt = DateTime.Now,
@@ -1202,36 +1201,36 @@ namespace ShutterManagement.Business.Services
             {
                 LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : claimsProperty.GetTenantId());
                 bool IsAddressExist = false;
-                var TenantId = Guid.Empty;
+               // var TenantId = Guid.Empty;
                 var IsTenantValid = false;
                 TblGhlStage stage = new TblGhlStage();
                 var jobStatus = Guid.Empty;
-                if (model.locationId != null)
-                {
-                    //await gHLConfiguration.GetGHLConfiguration(model.locationId);
-                    TenantId = (Guid)claimsProperty.GetTenantId();
+                //if (model.locationId != null)
+                //{
+                //    //await gHLConfiguration.GetGHLConfiguration(model.locationId);
+                //    TenantId = (Guid)claimsProperty.GetTenantId();
 
-                    if (TenantId != null)
-                    {
-                        IsTenantValid = true;
+                //    if (TenantId != null)
+                //    {
+                //        IsTenantValid = true;
 
-                        stage.GhlStageName = model.GHL_StageName;
-                        jobStatus = Guid.Parse(model.GHL_jobstatus);
-                        //if (model.AddressId != null)
-                        //{
-                            IsAddressExist = true;
-                        //}
-                        //else
-                        //{
-                        //    responseVm.Message = "Contact is not synced in Application.";
-                        //    return responseVm;
-                        //}
-                    }
-                }
-                else
-                {
+                //        stage.GhlStageName = model.GHL_StageName;
+                //        jobStatus = Guid.Parse(model.GHL_jobstatus);
+                //        //if (model.AddressId != null)
+                //        //{
+                //            IsAddressExist = true;
+                //        //}
+                //        //else
+                //        //{
+                //        //    responseVm.Message = "Contact is not synced in Application.";
+                //        //    return responseVm;
+                //        //}
+                //    }
+                //}
+                //else
+                //{
                     IsTenantValid = await tenantService.AnyAsync(x => x.TenantId == LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
-                    TenantId = (Guid)LoggedInTenantId;
+                  //  TenantId = (Guid)LoggedInTenantId;
                     IsAddressExist = await address.AnyAsync(x => x.AddressId == model.AddressId && x.ContactId == model.ContactId
                     && x.TenantId == LoggedInTenantId && x.IsDelete == false);
                     if (model.GHL_StageId != null && model.GHL_StageId != Guid.Empty)
@@ -1245,7 +1244,7 @@ namespace ShutterManagement.Business.Services
                         }
                     }
                     stage = _context.TblGhlStages.Where(x => x.TenantId == LoggedInTenantId && x.GhlStageId == model.GHL_StageId.ToString()).FirstOrDefault();
-                }
+               // }
                 if (!IsTenantValid)
                 {
                     responseVm.Message = AppConstant.TenantNotFound;

@@ -93,7 +93,6 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-
         public static string FormatPhoneNumber(string phoneNumber)
         {
             if (string.IsNullOrWhiteSpace(phoneNumber))
@@ -1210,7 +1209,6 @@ namespace ShutterManagement.Business.Services
             await Create_Contact(newContact, tenantId);
         }
 
-
         public async Task<IResponseVm<string>> ActiveInActiveContact(Guid ContactId)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
@@ -1733,7 +1731,6 @@ namespace ShutterManagement.Business.Services
                 ? string.Empty
                 : CultureInfo.CurrentCulture.TextInfo.ToTitleCase(input);
         }
-
 
         public async Task<IResponseVm<string>> ContactSync(Guid? LoggedInTenantId = null)
         {
