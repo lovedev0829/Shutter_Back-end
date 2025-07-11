@@ -32,14 +32,14 @@ namespace ShutterManagement.Controllers
         }
 
         [HttpPost("Create")]
-        public async Task<IActionResult> UploadDocument([FromForm]CreateBlobDocument model)
+        public async Task<IActionResult> UploadDocument(CreateBlobDocument model)
         {
             var res = await uploadBlobDocument.UploadDocument(model);
             return Ok(res);
         }
 
         [HttpPost("Update")]
-        public async Task<IActionResult> UpdateDocument([FromForm]UpdateBlobDocument model)
+        public async Task<IActionResult> UpdateDocument(UpdateBlobDocument model)
         {
 
             var res = await uploadBlobDocument.UpdateDocument(model);
@@ -55,7 +55,7 @@ namespace ShutterManagement.Controllers
 
 
         [HttpPost("DownloadBlobAsBase64")]
-        public async Task<IActionResult> DownloadBlobAsBase64([FromBody] string blobUrl)
+        public async Task<IActionResult> DownloadBlobAsBase64(string blobUrl)
         {
             var result = await blobStorageService.DownloadBlobAsBase64AndSaveAsync(blobUrl);
             return Ok(result);
