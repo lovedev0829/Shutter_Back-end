@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using ShutterManagement.Business;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Business.Services;
+using ShutterManagement.Core.ViewModels;
 using ShutterManagement.Core.ViewModels.Request;
 
 namespace ShutterManagement.Controllers
@@ -11,10 +13,12 @@ namespace ShutterManagement.Controllers
     public class UploadDocumentController : ControllerBase
     {
         private readonly IUploadBlobDocument uploadBlobDocument;
+        private readonly BlobStorageService blobStorageService;
 
-        public UploadDocumentController(IUploadBlobDocument uploadBlobDocument)
+        public UploadDocumentController(IUploadBlobDocument uploadBlobDocument ,BlobStorageService blobStorageService)
         {
             this.uploadBlobDocument = uploadBlobDocument;
+            this.blobStorageService = blobStorageService;
         }
 
         [HttpPost("GetAll")]
@@ -26,15 +30,14 @@ namespace ShutterManagement.Controllers
         }
 
         [HttpPost("Create")]
-        public async Task<IActionResult> UploadDocument([FromBody] CreateBlobDocument model)
+        public async Task<IActionResult> UploadDocument([FromForm]CreateBlobDocument model)
         {
-
             var res = await uploadBlobDocument.UploadDocument(model);
             return Ok(res);
         }
 
         [HttpPost("Update")]
-        public async Task<IActionResult> UpdateDocument([FromBody] UpdateBlobDocument model)
+        public async Task<IActionResult> UpdateDocument([FromForm]UpdateBlobDocument model)
         {
 
             var res = await uploadBlobDocument.UpdateDocument(model);
@@ -47,6 +50,15 @@ namespace ShutterManagement.Controllers
             var res = await uploadBlobDocument.DeleteDocument(DocumentId);
             return Ok(res);
         }
+
+
+        [HttpPost("DownloadBlobAsBase64")]
+        public async Task<IActionResult> DownloadBlobAsBase64([FromBody] string blobUrl)
+        {
+            var result = await blobStorageService.DownloadBlobAsBase64AndSaveAsync(blobUrl);
+            return Ok(result);
+        }
+
 
 
     }

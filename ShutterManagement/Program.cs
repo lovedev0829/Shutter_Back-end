@@ -197,6 +197,7 @@ builder.Services.AddScoped<IGhlCustomFieldsService, GhlCustomFieldsService>();
 builder.Services.AddScoped<IPowderCoatColorService, PowderCoatColorService>();
 builder.Services.AddScoped<IUploadBlobDocument, UploadBlobDocumentService>();
 builder.Services.AddScoped<MS365Configuration>();
+builder.Services.AddScoped<BlobStorageService>();
 // Add services to the DI container
 builder.Services.AddHttpClient<GHLService_v2>(); // Register HttpClient for GhlService
 builder.Services.AddScoped<GhlService>(); // Register GhlService as a scoped dependency

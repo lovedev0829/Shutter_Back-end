@@ -23,13 +23,11 @@ namespace ShutterManagement.Business.Services
     {
         private readonly BlobStorageService _blobService;
         private readonly ClaimsProperty claimsProperty;
-        private readonly TenantServices tenantServices;
 
-        public UploadBlobDocumentService(BlobStorageService blobService ,ClaimsProperty claimsProperty,TenantServices tenantServices)
+        public UploadBlobDocumentService(BlobStorageService blobService ,ClaimsProperty claimsProperty)
         {
             _blobService = blobService;
             this.claimsProperty = claimsProperty;
-            this.tenantServices = tenantServices;
         }
 
         public async Task<IResponseVm<string>> UploadDocument(CreateBlobDocument model)
@@ -37,27 +35,22 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var isTenantValid = await tenantServices.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
+               
+                var uploadeToBlobRes = await _blobService.UploadAsync(model.File,model.DocumentTitle,model.JobId,null);
 
-                if (!isTenantValid)
+                if(!uploadeToBlobRes.IsSuccess)
                 {
-                    responseVm.Message = AppConstant.TenantNotFound;
+                    responseVm.Message = uploadeToBlobRes.Message;
                     return responseVm;
                 }
-
-                var uploadeToBlobRes = await _blobService.UploadAsync(model.BlobDocument);
-
-                if(uploadeToBlobRes == null && uploadeToBlobRes?.Data==null)
-                {
-                    responseVm.Message = "Failed to upload document. Please try again.";
-                    return responseVm;
-                }
+                
                 var document = new TblBlobdocument
                 {
                     DocumentId = Guid.NewGuid(),
                     Title = model.DocumentTitle,
                     TenantId = claimsProperty.GetTenantId(),
                     CreatedBy = claimsProperty.GetUserId(),
+                    JobId = model.JobId,
                     CreatedAt = DateTime.Now,
                     UpdatedAt = DateTime.Now,
                     IsActive = true,
@@ -80,13 +73,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var isTenantValid = await tenantServices.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
-
-                if (!isTenantValid)
-                {
-                    responseVm.Message = AppConstant.TenantNotFound;
-                    return responseVm;
-                }
+               
                 var ExistDocumentUploaded = GetAllQuerable().Where(x => x.DocumentId == model.DocumentId && x.IsDelete == false).FirstOrDefault();
 
                 if (ExistDocumentUploaded == null)
@@ -96,8 +83,8 @@ namespace ShutterManagement.Business.Services
                 if (ExistDocumentUploaded.BlobUrl != null)
                 {
                     await _blobService.DeleteAsync(ExistDocumentUploaded.BlobUrl);
-                    var BlobDataAsync = await _blobService.UploadAsync(model.BlobDocument);
-                    model.BlobUrl= BlobDataAsync.Data ?? "";
+                    var BlobDataAsync = await _blobService.UploadAsync(model.File,model.DocumentTitle, model.JobId,model.BlobUrl);
+                    model.BlobUrl = BlobDataAsync.Data ?? "";
 
                 }
 
@@ -124,22 +111,23 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var isTenantValid = await tenantServices.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.IsDelete == false);
-
-                if (!isTenantValid)
-                {
-                    responseVm.Message = $"Document {AppConstant.TenantNotFound}";
-                    return responseVm;
-                }
+               
                 var ExistDocumentUploaded = GetAllQuerable().Where(x => x.DocumentId == DocumentId && x.IsDelete==false).FirstOrDefault();
 
                 if (ExistDocumentUploaded == null)
                 {
                     responseVm.Message = "Document not found.";
                 }
+
+                if (ExistDocumentUploaded.BlobUrl != null)
+                {
+                    await _blobService.DeleteAsync(ExistDocumentUploaded.BlobUrl);
+                }
+
                 ExistDocumentUploaded.IsDelete = true;
+                ExistDocumentUploaded.IsActive = false;
                 ExistDocumentUploaded.ModifiedBy = claimsProperty.GetUserId();
-                ExistDocumentUploaded.ModifiedBy = claimsProperty.GetTenantId();
+                ExistDocumentUploaded.TenantId = claimsProperty.GetTenantId();
                 ExistDocumentUploaded.UpdatedAt = DateTime.Now;
 
                 await Update(ExistDocumentUploaded);
@@ -160,34 +148,36 @@ namespace ShutterManagement.Business.Services
 
             try
             {
-                var isTenantValid = await tenantServices.AnyAsync(x =>
-                    x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
-
-                if (!isTenantValid)
-                {
-                    responseVm.Message = AppConstant.TenantNotFound;
-                    return responseVm;
-                }
-
-                var BlobDocumentlis = GetAllQuerable().Where(x => x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId()).OrderByDescending(x => x.CreatedAt).
+                
+                var BlobDocumentlist = GetAllQuerable().Where(x => x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId()).OrderByDescending(x => x.CreatedAt).
                                     Select(i => new GetAllBlobDocument
                                     {
                                         DocumentId = i.DocumentId,
-                                        DocumentTitle = i.Title,
-                                        BlobUrl = i.BlobUrl,
-                                        CreatedAt = i.CreatedAt,
-                                        CreatedBy = dbContext.TblUsers.Where(x=>x.Id==i.CreatedBy).Select(s=>s.FirstName+" "+s.LastName).FirstOrDefault(),
+                                        DocumentTitle = i.Title??"",
+                                        BlobUrl = i.BlobUrl??"",
+                                        CreatedAt = i.CreatedAt ?? null,
+                                        JobId = i.JobId ?? null,
+                                        TenantId = i.TenantId ?? null,
+                                        CreatedBy = dbContext.TblUsers.Where(x=>x.Id==i.CreatedBy).Select(s=>s.FirstName+" "+s.LastName).FirstOrDefault()??"",
+                                        JobName = dbContext.TblJobs.Where(x => x.JobId == i.JobId).Select(s => s.JobName).FirstOrDefault() ??"",
                                     }).ToList();
 
-                filter.SearchValue = filter?.SearchValue.Trim().ToLower(); 
-                var queryable = BlobDocumentlis.AsQueryable();
+                filter.SearchValue = filter?.SearchValue.Trim().ToLower();
+                if (!string.IsNullOrEmpty(filter?.SearchValue))
+                {
+                    BlobDocumentlist = BlobDocumentlist.Where(x => x.DocumentTitle.ToLower().Contains(filter.SearchValue) || 
+                                                                x.JobName.ToLower().Contains(filter.SearchValue)).ToList();
+                }
+
+                
+                var queryable = BlobDocumentlist.AsQueryable();
                 queryable = Paginate.ApplyColumnFilters(queryable, filter.ColumnFilters);
                 queryable = Paginate.ApplySorting(queryable, filter.SortColumn, filter.SortDirection);
                 var TakenRecords = Paginate.Pagination(queryable.ToList(), filter);
 
                 responseVm.IsSuccess = true;
                 responseVm.Data = TakenRecords;
-                responseVm.TotalRecords = BlobDocumentlis.Count();
+                responseVm.TotalRecords = BlobDocumentlist.Count();
                 responseVm.Message = AppConstant.FetchSuccessMsg;
             }
             catch (Exception ex)

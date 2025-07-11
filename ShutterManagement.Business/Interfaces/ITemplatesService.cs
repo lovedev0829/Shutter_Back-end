@@ -13,10 +13,10 @@ namespace ShutterManagement.Business.Interfaces
 {
     public interface ITemplatesService : IGenericRepository<TblTemplate>
     {
-        Task<IResponseVm<string>> Create_Temaplate(CreateTemplate model);
-        Task<IResponseVm<dynamic>> Update_Template(UpdateTemplate model);
-        Task<IResponseVm<List<GetAllTemplate>>> GetAll_Template(Pagination filter);
-        Task<IResponseVm<string>> ActiveInActive(Guid Id);
-        Task<IResponseVm<string>> Delete(Guid Id);
+        //Task<IResponseVm<string>> Create_Temaplate(CreateTemplate model);
+        //Task<IResponseVm<dynamic>> Update_Template(UpdateTemplate model);
+        //Task<IResponseVm<List<GetAllTemplate>>> GetAll_Template(Pagination filter);
+        //Task<IResponseVm<string>> ActiveInActive(Guid Id);
+        //Task<IResponseVm<string>> Delete(Guid Id);
     }
 }

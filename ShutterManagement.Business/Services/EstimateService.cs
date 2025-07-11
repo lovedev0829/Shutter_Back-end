@@ -1471,7 +1471,7 @@ namespace ShutterManagement.Business.Services
                             OptionName = estimateOption.OptionName ?? "",
                             OptionId = estimateOption.Optionid.ToString(),
                             OptionTypeId = estimateOption.OptionTypeid.ToString(),
-                            hidePreview = optionType.hidePreview,
+                            //hidePreview = optionType.hidePreview,
                             OptionTypeName = estimateOption.OptionName + " - " + estimateOption.OptionTypeName
                         }
                     }).ToList();

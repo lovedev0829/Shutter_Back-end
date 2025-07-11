@@ -12,7 +12,11 @@ namespace ShutterManagement.Core.ViewModels
         public string? DocumentTitle { get; set; }
         public string? BlobUrl { get; set; }
         public string? CreatedBy { get; set; }
+        public string? JobName { get; set; }
+
+        public Guid? JobId { get; set; }
         public DateTime? CreatedAt { get; set; }
+        public Guid? TenantId { get; set; }
 
     }
 }

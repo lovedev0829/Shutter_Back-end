@@ -913,13 +913,13 @@ namespace ShutterManagement.Business.Services
                                         Notes = t2.Notes,
                                         ReorderLevel = t2.ReorderLevel,
                                         SKU = t2.Sku,
-                                        Lenght=t2.Length??null,
-                                        Width=t2.Width??null,
+                                        Lenght = t2.Length ?? null,
+                                        Width = t2.Width ?? null,
                                         StockQuantity = t2.StockQuantity,
                                         UnitCost = t2.UnitCost,
                                         ProductTypeName = t3.ProductName,
                                         UnitOfMeasurement = t2.UnitOfMeasurement,
-                                       // Non_Rated_UnitCost = t2.NonRatedUnitCost,
+                                        // Non_Rated_UnitCost = t2.NonRatedUnitCost,
                                         VendorId = t2.VendorId,
                                         FirstName = t1.FirstName,
                                         LastName = t1.LastName,
@@ -933,9 +933,9 @@ namespace ShutterManagement.Business.Services
 
                 foreach (var material in materialList)
                 {
-                    var line = $"{material.MaterialUniqueId},{material.MaterialName},{material.UnitCost},{material.UnitOfMeasurement},{material.Lenght},{material.Width},{material.StockQuantity}," +
-                               $"{material.ReorderLevel},{material.VendorCode},{material.Notes},{material.ProductTypeName},{material.SKU},{material.IsCutSheet}";
-
+                    var line = $"{material.MaterialUniqueId},{EscapeCsv(material.MaterialName ?? "")},{material.UnitCost},{material.UnitOfMeasurement}," +
+            $"{material.Lenght},{material.Width},{material.StockQuantity},{material.ReorderLevel},{EscapeCsv(material.VendorCode ?? "")}," +
+            $"{EscapeCsv(material.Notes ?? "")},{EscapeCsv(material.ProductTypeName ?? "")},{EscapeCsv(material.SKU ?? "")},{material.IsCutSheet}";
                     csvBuilder.AppendLine(line);
                 }
 
@@ -953,6 +953,16 @@ namespace ShutterManagement.Business.Services
             }
 
             return responseVm;
+        }
+
+
+        private string EscapeCsv(string field = "")
+        {
+            if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
+            {
+                return $"\"{field.Replace("\"", "\"\"")}\"";
+            }
+            return field;
         }
         #endregion Start Export ExportMaterialsToCsvAsync
 
