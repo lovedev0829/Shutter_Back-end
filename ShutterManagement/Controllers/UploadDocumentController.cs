@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using ShutterManagement.Business;
 using ShutterManagement.Business.Interfaces;
@@ -10,6 +11,7 @@ namespace ShutterManagement.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class UploadDocumentController : ControllerBase
     {
         private readonly IUploadBlobDocument uploadBlobDocument;
