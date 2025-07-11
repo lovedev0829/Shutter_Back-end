@@ -31,7 +31,7 @@ public partial class TblGhlUser
 
     public bool? IsActive { get; set; }
 
-    public Guid? ModifiedBy { get; set; }
-
     public bool? IsDelete { get; set; }
+
+    public Guid? ModifiedBy { get; set; }
 }

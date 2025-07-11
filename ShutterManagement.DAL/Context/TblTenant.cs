@@ -75,11 +75,7 @@ public partial class TblTenant
 
     public virtual ICollection<TblRawMaterial> TblRawMaterials { get; set; } = new List<TblRawMaterial>();
 
-    public virtual ICollection<TblRole> TblRoles { get; set; } = new List<TblRole>();
-
     public virtual ICollection<TblTaxRate> TblTaxRates { get; set; } = new List<TblTaxRate>();
-
-    public virtual ICollection<TblTemplate> TblTemplates { get; set; } = new List<TblTemplate>();
 
     public virtual ICollection<TblUser> TblUsers { get; set; } = new List<TblUser>();
 

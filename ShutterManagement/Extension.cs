@@ -54,6 +54,10 @@ namespace ShutterManagement
             AppConstant.Stripe_WebhookSecret = Configuration["Stripe:WebhookSecret"] ?? "";
             AppConstant.Stripe_CancelUrl = Configuration["Stripe:cancelUrl"] ?? "";
             AppConstant.Stripe_SuccessUrl = Configuration["Stripe:successUrl"] ?? "";
+
+            // Azure Blob Storage Configuration
+            AppConstant.AzureBlobStorage_ConnectionString = Configuration["AzureBlobStorage:ConnectionString"] ?? "";
+            AppConstant.AzureBlobStorage_ContainerName = Configuration["AzureBlobStorage:ContainerName"] ?? "";
         }
     }
 }

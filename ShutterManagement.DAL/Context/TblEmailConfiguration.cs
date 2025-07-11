@@ -19,6 +19,10 @@ public partial class TblEmailConfiguration
 
     public string? ReplyTo { get; set; }
 
+    public string? From { get; set; }
+
+    public string? AccessToken { get; set; }
+
     public Guid? CreatedBy { get; set; }
 
     public Guid? EmailType { get; set; }
@@ -34,10 +38,6 @@ public partial class TblEmailConfiguration
     public bool? IsActive { get; set; }
 
     public bool? IsDelete { get; set; }
-
-    public string? From { get; set; }
-
-    public string? AccessToken { get; set; }
 
     public string? RefreshToken { get; set; }
 

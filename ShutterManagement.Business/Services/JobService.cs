@@ -1489,6 +1489,8 @@ namespace ShutterManagement.Business.Services
 
             if (existingJob != null)
             {
+                model.AddressId = (existingJob.AddressId != null && existingJob.AddressId != Guid.Empty) ? existingJob.AddressId : model.AddressId;
+                model.JobType = (existingJob.JobType != null && existingJob.JobType != Guid.Empty) ? existingJob.JobType : model.JobType;
                 UpdateJobDetails(existingJob, model, jobStatus, stage);
                 await Update(existingJob);
 

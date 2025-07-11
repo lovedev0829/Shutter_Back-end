@@ -913,13 +913,13 @@ namespace ShutterManagement.Business.Services
                                         Notes = t2.Notes,
                                         ReorderLevel = t2.ReorderLevel,
                                         SKU = t2.Sku,
-                                        Lenght=t2.Length??null,
-                                        Width=t2.Width??null,
+                                        Lenght = t2.Length ?? null,
+                                        Width = t2.Width ?? null,
                                         StockQuantity = t2.StockQuantity,
                                         UnitCost = t2.UnitCost,
                                         ProductTypeName = t3.ProductName,
                                         UnitOfMeasurement = t2.UnitOfMeasurement,
-                                       // Non_Rated_UnitCost = t2.NonRatedUnitCost,
+                                        // Non_Rated_UnitCost = t2.NonRatedUnitCost,
                                         VendorId = t2.VendorId,
                                         FirstName = t1.FirstName,
                                         LastName = t1.LastName,
@@ -954,6 +954,7 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
+
 
         private string EscapeCsv(string field = "")
         {

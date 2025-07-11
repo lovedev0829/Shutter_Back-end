@@ -49,8 +49,6 @@ public partial class TblEstimateWindowProductOption
 
     public virtual TblEstimateWindowProduct? EstimateWindowProduct { get; set; }
 
-    public virtual TblTaxRate? Tax { get; set; }
-
     public virtual WindowOption? WindowOption { get; set; }
 
     public virtual TblWindowProduct? WindowProduct { get; set; }
