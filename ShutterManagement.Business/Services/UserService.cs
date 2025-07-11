@@ -149,7 +149,9 @@ namespace ShutterManagement.Services
 
                         var Tenantcode = dbContext.TblTenants.Where(x => x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId()).FirstOrDefault();
                         var tenantInfoDetails = tenantBrandingService.GetAllQuerable().Where(x => x.Id == Tenantcode.BrandingInfo && x.IsActive == true).FirstOrDefault();
-                        await SendWelcomeEmail(UserDetails, tenantInfoDetails);
+                        var mailResult = await SendWelcomeEmail(UserDetails, tenantInfoDetails);
+                        if (!mailResult.IsSuccess)
+                            result.Message += "; Email Status: " + mailResult.Message;
 
                     }
                     else
