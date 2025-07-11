@@ -207,7 +207,10 @@ namespace ShutterManagement.Business.Services
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.InsertSuccessMsg;
 
-                await SendWelcomeEmail(model);
+                
+                var mailResult = await SendWelcomeEmail(model);
+                if (!mailResult.IsSuccess)
+                    responseVm.Message += " " + mailResult.Message;
             }
             catch (Exception ex)
             {
