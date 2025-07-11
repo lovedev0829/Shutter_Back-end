@@ -933,9 +933,9 @@ namespace ShutterManagement.Business.Services
 
                 foreach (var material in materialList)
                 {
-                    var line = $"{material.MaterialUniqueId},{material.MaterialName},{material.UnitCost},{material.UnitOfMeasurement},{material.Lenght},{material.Width},{material.StockQuantity}," +
-                               $"{material.ReorderLevel},{material.VendorCode},{material.Notes},{material.ProductTypeName},{material.SKU},{material.IsCutSheet}";
-
+                    var line = $"{material.MaterialUniqueId},{EscapeCsv(material.MaterialName ?? "")},{material.UnitCost},{material.UnitOfMeasurement}," +
+            $"{material.Lenght},{material.Width},{material.StockQuantity},{material.ReorderLevel},{EscapeCsv(material.VendorCode ?? "")}," +
+            $"{EscapeCsv(material.Notes ?? "")},{EscapeCsv(material.ProductTypeName ?? "")},{EscapeCsv(material.SKU ?? "")},{material.IsCutSheet}";
                     csvBuilder.AppendLine(line);
                 }
 
@@ -954,7 +954,17 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
+
+        private string EscapeCsv(string field = "")
+        {
+            if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
+            {
+                return $"\"{field.Replace("\"", "\"\"")}\"";
+            }
+            return field;
+        }
         #endregion Start Export ExportMaterialsToCsvAsync
+
 
 
         #region Start Export ExportJobsToCsv
@@ -1073,7 +1083,7 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
         #endregion Start Export ExportJobsToCsv
-
+        
 
         #region Start Export Breakdowns
 
