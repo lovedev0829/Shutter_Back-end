@@ -149,7 +149,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 
-                var BlobDocumentlist = GetAllQuerable().Where(x => x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId()).OrderByDescending(x => x.CreatedAt).
+                var BlobDocumentlist = GetAllQuerable().Where(x => x.IsDelete == false && filter.JobId.ToString().ToLower()== x.JobId.ToString().ToLower() && x.TenantId == claimsProperty.GetTenantId()).OrderByDescending(x => x.CreatedAt).
                                     Select(i => new GetAllBlobDocument
                                     {
                                         DocumentId = i.DocumentId,
