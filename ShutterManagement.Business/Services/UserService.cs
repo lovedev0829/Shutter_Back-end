@@ -17,6 +17,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Data;
+using System.Data.Entity;
 using System.Data.Entity.Core.Metadata.Edm;
 using System.Threading.Tasks;
 
@@ -85,6 +86,12 @@ namespace ShutterManagement.Services
                     result.Message = "Email " + AppConstant.AlreadyExists;
                     return result;
                 }
+                bool IsGHLUserExists = dbContext.TblGhlUsers.AnyAsync(x => x.GhlUserId == UserDetails.GhlUserId && x.IsActive == true && x.IsDelete == false).FirstOrDefault();
+                if(IsGHLUserExists)
+                {
+                    result.Message = "GHL User " + AppConstant.AlreadyExists;
+                    return result;  
+                }
                 bool IsRoleExists = await roleService.AnyAsync(x => x.Id == UserDetails.RoleId
                 && x.IsShow == false && x.IsActive == true && x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId());
                 if (IsRoleExists)
@@ -133,6 +140,7 @@ namespace ShutterManagement.Services
                             TypeId = AppConstant.LoggedInUserID,
                         };
                         var result3 = notification.CreateNotification(notification3);
+                        
                         TblUserRole userRole = new TblUserRole
                         {
                             UserId = res.Id,
@@ -225,6 +233,12 @@ namespace ShutterManagement.Services
                     if (!IsRoleExists)
                     {
                         result.Message = "Role " + AppConstant.NoDataFound;
+                        return result;
+                    }
+                    bool IsGHLUserExists = dbContext.TblGhlUsers.AnyAsync(x => x.GhlUserId == UserDetails.GhlUserId && x.IsActive == true && x.IsDelete == false).FirstOrDefault();
+                    if (IsGHLUserExists)
+                    {
+                        result.Message = "GHL User " + AppConstant.AlreadyExists;
                         return result;
                     }
                     var UpdateUserDetails = UserExistsDetails.FirstOrDefault();
