@@ -779,7 +779,7 @@ namespace ShutterManagement.Business.Services
                     }
                     else
                     {
-                        responseVm.Message = $"Email {model.Email} or Phone {model.PhoneNumber} {AppConstant.AlreadyExists}";
+                        responseVm.Message = $"Email {model.Email} {AppConstant.AlreadyExists}";
                         return responseVm;
                     }
                 }
@@ -1002,13 +1002,13 @@ namespace ShutterManagement.Business.Services
                         .FirstOrDefault(c => c.ContactId == model.ContactId && c.TenantId == tenantId && c.IsDelete == false);
 
                     var duplicateContacts = (await GetAll())
-                        .Where(c => (c.Email == model.Email || c.PhoneNumber == model.PhoneNumber)
+                        .Where(c => (c.Email == model.Email)
                                     && c.TenantId == tenantId && c.IsDelete == false && c.ContactId != model.ContactId)
                         .ToList();
 
                     if (duplicateContacts.Any())
                     {
-                        responseVm.Message = "Email or Phone " + AppConstant.AlreadyExists;
+                        responseVm.Message = "Email" + AppConstant.AlreadyExists;
                         return responseVm;
                     }
 
