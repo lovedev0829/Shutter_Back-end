@@ -1,35 +1,29 @@
 name: .NET CI/CD Pipeline
 
-# Trigger the workflow on push to the main branch
 on:
   push:
     branches:
-      - master-azure 
+      - master-azure
 
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout the code
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Step 2: Setup .NET environment
       - name: Setup .NET
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: '8.0' # Specify the .NET version
+          dotnet-version: '8.0'
 
-      # Step 3: Restore dependencies
       - name: Restore dependencies
         run: dotnet restore
 
-      # Step 4: Build the project
       - name: Build project
         run: dotnet build --no-restore --configuration Release
 
-      # Step 5: Run tests
       - name: Run tests
         run: dotnet test --no-build --verbosity normal
 
@@ -49,11 +43,15 @@ jobs:
       - name: Publish application
         run: dotnet publish -c Release -o out
 
-      - name: Deploy to server
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      - name: Set up SSH key
+        uses: webfactory/ssh-agent@v0.8.1
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Copy files via SCP
         run: |
           scp -o StrictHostKeyChecking=no -r out/* user@your-server:/var/www/your-app
-          ssh -o StrictHostKeyChecking=no user@your-server << EOF
-          systemctl restart your-dotnet-service
-          EOF
+
+      - name: Restart service on server
+        run: |
+          ssh -o StrictHostKeyChecking=no user@your-server "sudo systemctl restart your-dotnet-service"
