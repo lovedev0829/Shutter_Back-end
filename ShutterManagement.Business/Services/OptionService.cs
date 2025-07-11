@@ -164,7 +164,7 @@ namespace ShutterManagement.Business.Services
                                         CreatedBy = AppConstant.LoggedInUserID,
                                         SortOrder = item.SortOrder,
                                         RequirePriceAtEstimatePreview = item.RequirePriceAtEstimatePreview,
-                                        //hidePreview = item.hidePreview,
+                                        HidePreview = item.hidePreview,
                                         IsActive = true,
                                         IsDelete = false
                                     };
@@ -400,7 +400,7 @@ namespace ShutterManagement.Business.Services
                                     OptionTypeId = x.OptionTypeId,
                                     SortOrder = x.SortOrder,
                                     RequirePriceAtEstimatePreview = x.RequirePriceAtEstimatePreview,
-                                    //hidePreview = x.hidePreview
+                                    hidePreview = x.HidePreview??false
                                 })
                                 .ToList();
 
@@ -496,7 +496,7 @@ namespace ShutterManagement.Business.Services
                                 OptionTypeId = x.OptionTypeId,
                                 SortOrder = x.SortOrder,
                                 RequirePriceAtEstimatePreview = x.RequirePriceAtEstimatePreview,
-                               // hidePreview = x.hidePreview
+                                 hidePreview = x.HidePreview ?? false
                                 //Unit = x.Unit
                             })
                             .ToList();
@@ -618,7 +618,7 @@ public async Task<IResponseVm<string>> Update_Option(UpdateOption model)
                     OptionTypeId = x.OptionTypeId,
                     SortOrder = x.SortOrder,
                     RequirePriceAtEstimatePreview = x.RequirePriceAtEstimatePreview,
-                    //hidePreview = x.hidePreview,
+                    hidePreview = x.HidePreview??false,
                     // Unit = x.Unit
                 }).ToArray();
                 //var Ismanageproductexist = await dbContext.TblManagePartnersProductsOptions.Where
@@ -688,7 +688,7 @@ public async Task<IResponseVm<string>> Update_Option(UpdateOption model)
                             CreatedBy = AppConstant.LoggedInUserID,
                             SortOrder = item.SortOrder,
                             RequirePriceAtEstimatePreview = item.RequirePriceAtEstimatePreview,
-                            //hidePreview = item.hidePreview,
+                            HidePreview = item.hidePreview,
                             IsActive = true,
                             IsDelete = false
                         };
