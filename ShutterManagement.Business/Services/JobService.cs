@@ -865,7 +865,7 @@ namespace ShutterManagement.Business.Services
                 {
                     name = job.JobName,
                     pipelineStageId = job.GhlStageId,
-                  
+                    assignedTo = job.GhluserId ?? null,
                 };
 
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", configdetails?.AccessToken ?? "");
