@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace ShutterManagment.GHL.ViewModel.Request
@@ -18,7 +19,7 @@ namespace ShutterManagment.GHL.ViewModel.Request
         public string? id { get; set; }
         public string? pipeline_name { get; set; }
 
-        [JsonProperty("user")]
+        [JsonPropertyName("user")]
         public User? Users { get; set; } = new User();
     }
 
