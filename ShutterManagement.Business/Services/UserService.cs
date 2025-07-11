@@ -86,7 +86,8 @@ namespace ShutterManagement.Services
                     result.Message = "Email " + AppConstant.AlreadyExists;
                     return result;
                 }
-                bool IsGHLUserExists = dbContext.TblGhlUsers.Any(x => x.GhlUserId == UserDetails.GhlUserId && x.IsActive == true && x.IsDelete == false);
+                bool IsGHLUserExists = dbContext.TblGhlUsers.Any(x => x.GhlUserId == UserDetails.GhlUserId && x.IsActive == true
+                && x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId());
                 if(IsGHLUserExists)
                 {
                     result.Message = "GHL User " + AppConstant.AlreadyExists;
@@ -235,7 +236,7 @@ namespace ShutterManagement.Services
                         result.Message = "Role " + AppConstant.NoDataFound;
                         return result;
                     }
-                    bool IsGHLUserExists = dbContext.TblGhlUsers.Any(x => x.GhlUserId == UserDetails.GhlUserId && x.IsActive == true && x.IsDelete == false);
+                    bool IsGHLUserExists = dbContext.TblGhlUsers.Any(x => x.GhlUserId == UserDetails.GhlUserId && x.IsActive == true && x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId());
                     if (IsGHLUserExists)
                     {
                         result.Message = "GHL User " + AppConstant.AlreadyExists;
