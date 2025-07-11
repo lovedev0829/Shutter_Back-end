@@ -622,6 +622,7 @@ namespace ShutterManagement.GHL.Services
                     pipelineStageId = stageResponse?.Data?.StageId?.ToString()??"",
                     status = "open",
                     contactId = contact.GhlcontactId,
+                    assignedTo = job.GhluserId
                 };
 
                 var requestUrl = $"{AppConstant.GHL_BaseAddress}/opportunities/";
