@@ -373,14 +373,25 @@ namespace ShutterManagement.Business.Services
             {
                 LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : claimsProperty.GetTenantId());
 
-                var mappings =  dbContext.TblGhlStagesmappings
+                var jobStatusList = dbContext.TblJobStatuses
+                     .OrderBy(js => js.StatusId)
+                     .Select((js, index) => new { js.StatusId, SortOrder = index + 1 })
+                     .ToList();
+
+                var mappings = dbContext.TblGhlStagesmappings
                     .Where(x => x.TenantId == LoggedInTenantId)
-                    .Select(x => new StageMapping
+                    .AsEnumerable()
+                    .Select(x =>
                     {
-                        StageId = x.StageId??Guid.Empty,
-                        StatusId = x.StatusId ?? Guid.Empty,
-                        CreatedAt = x.CreatedAt
-                    }).OrderBy(x => x.CreatedAt)
+                        var jobStatus = jobStatusList.FirstOrDefault(js => js.StatusId == (x.StatusId ?? Guid.Empty));
+                        return new StageMapping
+                        {
+                            StageId = x.StageId ?? Guid.Empty,
+                            StatusId = x.StatusId ?? Guid.Empty,
+                            SortOrder = jobStatus?.SortOrder
+                        };
+                    })
+                    .OrderBy(x => x.SortOrder)
                     .ToList();
 
                 responseVm.IsSuccess = true;
