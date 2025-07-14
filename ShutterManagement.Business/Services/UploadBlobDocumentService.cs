@@ -35,8 +35,8 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-               
-                var uploadeToBlobRes = await _blobService.UploadAsync(model.File,model.DocumentTitle,model.JobId,null);
+                var sanitizedTitle = model.DocumentTitle?.Replace(" ", "_");
+                var uploadeToBlobRes = await _blobService.UploadAsync(model.File, sanitizedTitle, model.JobId,null);
 
                 if(!uploadeToBlobRes.IsSuccess)
                 {
@@ -93,7 +93,8 @@ namespace ShutterManagement.Business.Services
                     {
                         await _blobService.DeleteAsync(ExistDocumentUploaded.BlobUrl);
                     }
-                    var blobUploadResult = await _blobService.UploadAsync(model.File,model.DocumentTitle,model.JobId,model.BlobUrl);
+                    var sanitizedTitle = model.DocumentTitle?.Replace(" ", "_");
+                    var blobUploadResult = await _blobService.UploadAsync(model.File, sanitizedTitle, model.JobId,model.BlobUrl);
 
                     ExistDocumentUploaded.BlobUrl = blobUploadResult.Data ?? "";
                 }
@@ -144,6 +145,33 @@ namespace ShutterManagement.Business.Services
 
                 responseVm.Message = $"Document {AppConstant.UploadSuccessMsg}";
                 responseVm.IsSuccess = true;
+            }
+            catch (Exception ex)
+            {
+                responseVm.Message = ex.Message;
+            }
+            return responseVm;
+        }
+
+        public async Task<IResponseVm<string>> DownloadDocument(Guid? DocumentId)
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+            try
+            {
+
+                var ExistDocumentUploaded = GetAllQuerable().Where(x => x.DocumentId == DocumentId && x.IsDelete == false).FirstOrDefault();
+
+                if (ExistDocumentUploaded == null)
+                {
+                    responseVm.Message = "Document not found.";
+                }
+
+                var Base64Data= await _blobService.DownloadBlobAsBase64AndSaveAsync(ExistDocumentUploaded.BlobUrl);
+                
+
+                responseVm.Message = $"Document Downloaded successfully.";
+                responseVm.IsSuccess = true;
+                responseVm.Data = Base64Data?.Data??"";
             }
             catch (Exception ex)
             {
