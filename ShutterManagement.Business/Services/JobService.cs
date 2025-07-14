@@ -638,15 +638,15 @@ namespace ShutterManagement.Business.Services
 
                 FileLogger.Log($"Exception occurred GHLContact is null.{LoggedInTenantId}");
 
-                var ghlConfigdetails = await gHLConfiguration.GetGHLConfiguration(LoggedInTenantId.ToString());
-                var configCheck = await gHLConfiguration.CheckGHLConfiguration(LoggedInTenantId);
+                //var ghlConfigdetails = await gHLConfiguration.GetGHLConfiguration(LoggedInTenantId.ToString());
+                //var configCheck = await gHLConfiguration.CheckGHLConfiguration(LoggedInTenantId);
 
-                if (!configCheck.IsSuccess)
-                {
-                    responseVm.IsSuccess = false;
-                    responseVm.Message = "GHL configuration check failed.";
-                    return responseVm;
-                }
+                //if (!configCheck.IsSuccess)
+                //{
+                //    responseVm.IsSuccess = false;
+                //    responseVm.Message = "GHL configuration check failed.";
+                //    return responseVm;
+                //}
 
                 FileLogger.Log("Starting SyncOpportunitiesFromGhl process.");
 
