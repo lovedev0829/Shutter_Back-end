@@ -100,7 +100,6 @@ namespace ShutterManagement.Business.Services
                 }
 
                 ExistDocumentUploaded.Title = model.DocumentTitle;
-                ExistDocumentUploaded.BlobUrl = model.BlobUrl;
                 ExistDocumentUploaded.ModifiedBy = claimsProperty.GetUserId();
                 ExistDocumentUploaded.TenantId = claimsProperty.GetTenantId();
                 ExistDocumentUploaded.UpdatedAt = DateTime.Now;
