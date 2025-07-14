@@ -105,7 +105,6 @@ namespace ShutterManagement.Controllers
             return Ok(res);
         }
 
-
         //[HttpGet("GHLContact")]
         //[Authorize]
         //public async Task<IActionResult> GHLContact()

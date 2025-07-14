@@ -53,7 +53,7 @@ jobs:
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         run: |
-          scp -o StrictHostKeyChecking=no -r out/* user@your-server:/var/www/your-app
-          ssh -o StrictHostKeyChecking=no user@your-server << EOF
+          scp -o StrictHostKeyChecking=no -r out/* randy@gccsla.com:/var/www/your-app
+          ssh -o StrictHostKeyChecking=no randy@gccsla.com << EOF
           systemctl restart your-dotnet-service
           EOF

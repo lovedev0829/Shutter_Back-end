@@ -31,9 +31,9 @@ public partial class TblOption
 
     public Guid? ProductId { get; set; }
 
-    public bool? IsTaxApplied { get; set; }
-
     public Guid? TaxId { get; set; }
+
+    public bool? IsTaxApplied { get; set; }
 
     public decimal? Markup { get; set; }
 

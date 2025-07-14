@@ -1,18 +1,17 @@
-﻿2025-07-10 10:36:12 : Tenant Id id fetched c8bd9520-41cf-48f9-b082-2e4e46f0e1c8
+﻿2025-07-11 13:01:00 : [OAuthEmail] AuthException: MailKit.Security.AuthenticationException: 535: 5.7.3 Authentication unsuccessful [MA0PR01CA0107.INDPRD01.PROD.OUTLOOK.COM 2025-07-11T07:30:48.419Z 08DDC005A0C0B809]
+   at MailKit.Net.Smtp.SmtpClient.AuthenticateAsync(SaslMechanism mechanism, CancellationToken cancellationToken)
+   at ShutterManagement.Core.Common.EmailHelper.SendEmail(OAuthEmailRequest request)
 
-d-ba730857e7c2",
-    "PipelineId": "TestPipeline",
-    "TenantId": "c8bd9520-41cf-48f9-b082-2e4e46f0e1c8",
-    "LocationId": "PTnICMN0mKr03kzJQqPQ",
-    "LastSync": "2025-07-09T12:41:07.233",
-    "GeneratedToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0ZW5hbnRfaWQiOiJjOGJkOTUyMC00MWNmLTQ4ZjktYjA4Mi0yZTRlNDZmMGUxYzgiLCJqdGkiOiI4OTlkZDQ5Ni1jMWMyLTQ3Y2YtYmNmZi00MGU2YmRiNTFhZDIiLCJpYXQiOjE3NTIxMjM4NTUsIm5iZiI6MTc1MjEyMzg1NSwiZXhwIjoxNzUyMTI3NDU1LCJpc3MiOiJTaHV0dGVyTWFuYWdlbWVudCIsImF1ZCI6IlNodXR0ZXJNYW5hZ2VtZW50In0.P_qXhzj7EwI50vrawC8u_EUndMsCu5dJlHMzsuPdGkU",
-    "RefreshToken": null,
-    "AccessToken": null,
-    "RefreshExpirationtime": null,
-    "AccessExpirationtime": null,
-    "CalendarName": "MsrhAADdSWWdJt2dMJYB",
-    "IsActive": true,
-    "IsDelete": false,
+D:\Shutter Client Azure\ShutterManagement.Core\Common\EmailHelper.cs:line 58
+
+ at MimeKit.MailboxAddress.set_Address(String value)
+   at MimeKit.MailboxAddress..ctor(Encoding encoding, String name, String address)
+   at MimeKit.MailboxAddress..ctor(String name, String address)
+   at ShutterManagement.Core.Common.EmailHelper.SendEmail(OAuthEmailRequest request)
+
+D:\Shutter Client Azure\ShutterManagement.Core\Common\EmailHelper.cs:line 32
+
+
     "ModifiedBy": null
   }
 ]

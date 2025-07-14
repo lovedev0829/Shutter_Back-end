@@ -493,7 +493,7 @@ namespace ShutterManagement.Business.Services
                     var isTaxExempt = GetIsTaxExemptByWindowId(item.WindowId);
                     var isJobTaxable = item.JobId != null && jobTaxStatus.ContainsKey((Guid)item.JobId) && jobTaxStatus[(Guid)item.JobId];
 
-                    var priceWithMarkup = (item.TotalPrice ?? 0) + item.ComponentMarkup + item.ProductMarkup;
+                    var priceWithMarkup = (item.TotalPrice ?? 0) + item.ProductMarkup;
                     item.TotalTaxAmount = item.IsTaxAvailable == true && isTaxExempt
                         ? CalculateTotalTaxAmount(priceWithMarkup, item.MunicipalityTax, item.CityTax, item.StateTax)
                         : 0.0m;
@@ -645,9 +645,11 @@ namespace ShutterManagement.Business.Services
                     }
 
                     componentOwnMarkup = ((basePrice * item.MarkupPercentage) / 100) ?? 0.0m;
-                    componentMarkup += componentOwnMarkup;
+                    basePrice += componentOwnMarkup;
+                    //componentMarkup += componentOwnMarkup;
 
-                    productOwnMarkup = (((basePrice + componentOwnMarkup) * item.Markup) / 100) ?? 0.0m;
+                    //productOwnMarkup = (((basePrice + componentOwnMarkup) * item.Markup) / 100) ?? 0.0m;
+                    productOwnMarkup = ((basePrice * item.Markup) / 100) ?? 0.0m;
 
                     if (isSubtenant)
                     {
@@ -656,10 +658,16 @@ namespace ShutterManagement.Business.Services
 
                         productOwnMarkup += partnerMarkup?.MarkupType switch
                         {
-                            "Percentage" => (basePrice + componentOwnMarkup + productOwnMarkup) * (partnerMarkup.PartnerSellingPrice ?? 0) / 100,
-                            "Fixed" => (basePrice + componentOwnMarkup + productOwnMarkup + (partnerMarkup.PartnerSellingPrice ?? 0)),
+                            "Percentage" => (basePrice + productOwnMarkup) * (partnerMarkup.PartnerSellingPrice ?? 0) / 100,
+                            "Fixed" => (basePrice + productOwnMarkup + (partnerMarkup.PartnerSellingPrice ?? 0)),
                             _ => 0.0m
                         };
+                        //productOwnMarkup += partnerMarkup?.MarkupType switch
+                        //{
+                        //    "Percentage" => (basePrice + componentOwnMarkup + productOwnMarkup) * (partnerMarkup.PartnerSellingPrice ?? 0) / 100,
+                        //    "Fixed" => (basePrice + componentOwnMarkup + productOwnMarkup + (partnerMarkup.PartnerSellingPrice ?? 0)),
+                        //    _ => 0.0m
+                        //};
 
                         var taxId = partnerMarkup?.TaxId;
                         var taxDetails = dbContext.TblTaxRates
@@ -724,10 +732,11 @@ namespace ShutterManagement.Business.Services
                     }
 
                     componentOwnMarkup = ((basePrice * item.MarkupPercentage) / 100) ?? 0.0m;
-                    componentMarkup += componentOwnMarkup;
+                    basePrice += componentOwnMarkup;
+                    //componentMarkup += componentOwnMarkup;
 
-                    productOwnMarkup = (((basePrice + componentOwnMarkup) * item.Markup) / 100) ?? 0.0m;
-
+                    //productOwnMarkup = (((basePrice + componentOwnMarkup) * item.Markup) / 100) ?? 0.0m;
+                    productOwnMarkup = ((basePrice * item.Markup) / 100) ?? 0.0m;
                     if (isSubtenant)
                     {
                         var partnerMarkup = dbContext.TblManagePartnersProducts
@@ -735,10 +744,16 @@ namespace ShutterManagement.Business.Services
 
                         productOwnMarkup += partnerMarkup?.MarkupType switch
                         {
-                            "Percentage" => (basePrice + componentOwnMarkup + productOwnMarkup) * (partnerMarkup.PartnerSellingPrice ?? 0) / 100,
-                            "Fixed" => (basePrice + componentOwnMarkup + productOwnMarkup + (partnerMarkup.PartnerSellingPrice ?? 0)),
+                            "Percentage" => (basePrice + productOwnMarkup) * (partnerMarkup.PartnerSellingPrice ?? 0) / 100,
+                            "Fixed" => (basePrice + productOwnMarkup + (partnerMarkup.PartnerSellingPrice ?? 0)),
                             _ => 0.0m
                         };
+                        //productOwnMarkup += partnerMarkup?.MarkupType switch
+                        //{
+                        //    "Percentage" => (basePrice + componentOwnMarkup + productOwnMarkup) * (partnerMarkup.PartnerSellingPrice ?? 0) / 100,
+                        //    "Fixed" => (basePrice + componentOwnMarkup + productOwnMarkup + (partnerMarkup.PartnerSellingPrice ?? 0)),
+                        //    _ => 0.0m
+                        //};
 
                         var taxId = partnerMarkup?.TaxId;
                         var taxDetails = dbContext.TblTaxRates
@@ -779,7 +794,8 @@ namespace ShutterManagement.Business.Services
                   //  TaxAppliedWithMarkup(item, productPrice, componentOwnMarkup, productOwnMarkup);
 
                 }
-               TaxAppliedWithMarkup(item, item.Price ?? 0.0m, componentOwnMarkup, productOwnMarkup);
+               //TaxAppliedWithMarkup(item, item.Price ?? 0.0m, componentOwnMarkup, productOwnMarkup);
+               TaxAppliedWithMarkup(item, item.Price ?? 0.0m, 0, productOwnMarkup);
                 
 
                 //Option price calculation
@@ -847,6 +863,7 @@ namespace ShutterManagement.Business.Services
         public NCalc.Expression CalculateExpression(string formula, dynamic values)
         {
             const string pattern = "{{.*?}}";
+
             var matches = Regex.Matches(formula ?? string.Empty, pattern);
 
             foreach (Match match in matches)
@@ -1471,7 +1488,7 @@ namespace ShutterManagement.Business.Services
                             OptionName = estimateOption.OptionName ?? "",
                             OptionId = estimateOption.Optionid.ToString(),
                             OptionTypeId = estimateOption.OptionTypeid.ToString(),
-                            hidePreview = optionType.hidePreview,
+                            hidePreview = optionType.HidePreview??false,
                             OptionTypeName = estimateOption.OptionName + " - " + estimateOption.OptionTypeName
                         }
                     }).ToList();

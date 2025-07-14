@@ -11,6 +11,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         public Guid? StatusId { get; set; }
         public Guid? StageId { get; set; }
         public DateTime? CreatedAt { get; set; }
+        public int? SortOrder { get; set; }
     }
 
     public class StageMappingRequest

@@ -43,11 +43,11 @@ public partial class TblUser
 
     public string? ForgetPassword { get; set; }
 
-    public string? GhlUserId { get; set; }
-
     public string? Suffix { get; set; }
 
     public bool? IsTenantAdmin { get; set; }
+
+    public string? GhlUserId { get; set; }
 
     public virtual MstJobTitle? JobTitle { get; set; }
 

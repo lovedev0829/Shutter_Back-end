@@ -175,6 +175,229 @@ namespace ShutterManagement.Business.Services
         //    return responseVm;
         //}
 
+        private Guid? GetValidTenantId(Guid? tenantId)
+        {
+            return (tenantId != Guid.Empty && tenantId != null) ? tenantId : claimsProperty.GetTenantId();
+        }
+
+        private async Task<bool> IsTenantValid(Guid? tenantId)
+        {
+            return await tenantService.AnyAsync(x => x.TenantId == tenantId && x.IsActive == true && x.IsDelete == false);
+        }
+
+        private async Task<bool> IsJobNameDuplicate(string jobName, Guid contactId, Guid? tenantId)
+        {
+            return await AnyAsync(x => x.JobName == jobName.Trim() && x.IsDelete == false && x.TenantId == tenantId && x.ContactId == contactId);
+        }
+
+        private async Task<bool> IsContactInactiveOrArchived(Guid contactId, Guid? tenantId)
+        {
+            return await contact.AnyAsync(x => x.ContactId == contactId && x.TenantId == tenantId && (x.IsActive == false || x.IsArchive == true));
+        }
+
+        private async Task<bool> ValidateAddress(CreateJob model, Guid? tenantId)
+        {
+            if (model.GhlOpportunityId != null)
+                return true;
+
+            return await address.AnyAsync(x =>
+                x.AddressId.ToString().ToLower() == model.AddressId.ToString().ToLower() &&
+                x.ContactId.ToString().ToLower() == model.ContactId.ToString().ToLower() &&
+                x.TenantId == tenantId && x.IsDelete == false);
+        }
+
+        private async Task<Guid> ResolveJobStatus(CreateJob model, Guid? tenantId)
+        {
+            var jobStatusName = EnumValue.GetEnumValue(JobStatus.New);
+
+            if (model.GHL_StageId != null && model.GHL_StageId != Guid.Empty)
+            {
+                var statusWithStage = await statusAndStageMapping.GetJobStatusByName(jobStatusName, model.GHL_StageId, tenantId);
+                return statusWithStage.IsSuccess ? statusWithStage.Data.JobStatusId ?? Guid.Empty : Guid.Empty;
+            }
+
+            var status = await statusAndStageMapping.GetJobStatusByName(jobStatusName, tenantId);
+            return status.IsSuccess ? status.Data.JobStatusId ?? Guid.Empty : Guid.Empty;
+        }
+
+        private async Task<string> GenerateJobUniqueId(Guid? tenantId)
+        {
+            int Version = GetAllQuerable().Where(x => x.TenantId == tenantId && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt)
+                      .Select(p => (p.JobUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries).Length == 3 ? Convert.ToInt32(p.JobUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries)[2]) : 0)).FirstOrDefault();
+            Version += 1;
+
+            var companyCode = tenantService.GetAllQuerable()
+                .Where(x => x.TenantId == tenantId && x.IsActive == true && x.IsDelete == false)
+                .Select(x => x.Code)
+                .FirstOrDefault();
+
+            return GenerateUniqueId.GenerateUniqueIds(ModuleName.Job, companyCode, Version);
+        }
+
+        public async Task<IResponseVm<string>> Create(CreateJob model, Guid? loggedInTenantId = null)
+        {
+            var tenantId = GetValidTenantId(loggedInTenantId);
+
+            var validationResult = await ValidateJobRequestAsync(model, tenantId);
+            if (!validationResult.IsSuccess)
+                return BuildErrorResponse(validationResult.Message);
+
+            var job = await BuildJobAsync(model, tenantId, validationResult.Data.JobStatus, validationResult.Data.StageName);
+
+            var result = await ProcessJobCreationAsync(job, model, tenantId);
+            return result;
+        }
+
+        private async Task<IResponseVm<(Guid JobStatus, string StageName)>> ValidateJobRequestAsync(CreateJob model, Guid? tenantId)
+        {
+            var response = new ResponseVm<(Guid, string)>();
+
+            if (!await IsTenantValid(tenantId))
+                return BuildErrorResponse<(Guid, string)>(AppConstant.TenantNotFound);
+
+            if (await IsContactInactiveOrArchived((Guid)model.ContactId, tenantId))
+                return BuildErrorResponse<(Guid, string)>("Contact is Archived or Inactive, You cannot create Job.");
+            if (string.IsNullOrEmpty(model.GhlOpportunityId))
+            {
+                if (await IsJobNameDuplicate(model.JobName, (Guid)model.ContactId, tenantId))
+                    return BuildErrorResponse<(Guid, string)>("JobName " + AppConstant.AlreadyExists);
+            }
+            else
+            {
+                if (await IsGHLOpportunityExist((Guid)model.ContactId,tenantId,model.GhlOpportunityId))
+                {
+                    var job = new UpdateJob
+                    {
+                        AddressId = model.AddressId ?? null,
+                        ContactId = model.ContactId,
+                        JobName = model.JobName,
+                        AssignedPersonnel = model.AssignedPersonnel ?? null,
+                        GhlOpportunityId = model.GhlOpportunityId,
+                        GHL_StageId = model.GHL_StageId,
+                        GHL_StageName = model.GHL_StageName,
+                        GHL_ContactId = model.GHL_ContactId,
+                        lastasync = DateTime.Now,
+                        GHLUserId = model.GHLUserId ?? null,
+                    };
+                    await gHLConfiguration.GetGHLConfiguration(tenantId.ToString());
+                    var res = await UpdateJob(job, tenantId);
+                }
+            }
+
+            if (model.GhlOpportunityId == null && !await ValidateAddress(model, tenantId))
+                return BuildErrorResponse<(Guid, string)>("Address " + AppConstant.NoDataFound);
+
+            var jobStatus = await ResolveJobStatus(model, tenantId);
+            var stageResponse = await statusAndStageMapping.GetGHLStagesMappingsById(jobStatus, tenantId);
+            var stage = _context.TblGhlStages.Where(x => x.TenantId == tenantId && x.GhlStageId == model.GHL_StageId.ToString()).FirstOrDefault();
+            string stageName = model.GHL_StageName ?? stage?.GhlStageName ?? string.Empty;
+
+            response.IsSuccess = true;
+            response.Data = (jobStatus, stageName);
+            return response;
+        }
+        private async Task<bool> IsGHLOpportunityExist(Guid contactId, Guid? tenantId,string GHLOpportunityId)
+        {
+            return await AnyAsync(x => x.ContactId == contactId && x.TenantId == tenantId && x.IsActive == false && x.GhlOpportunityId == GHLOpportunityId);
+        }
+
+        private async Task<TblJob> BuildJobAsync(CreateJob model, Guid? tenantId, Guid jobStatus, string stageName)
+        {
+            string jobUniqueId = await GenerateJobUniqueId(tenantId);
+            string arrayString = string.Join(", ", model.AttachmentsAny);
+
+            return new TblJob
+            {
+                AddressId = model.AddressId != Guid.Empty ? model.AddressId : null,
+                ContactId = model.ContactId,
+                JobName = model.JobName?.Trim(),
+                JobType = model.JobType != Guid.Empty ? model.JobType : null,
+                AssignedPersonnel = model.AssignedPersonnel ?? Guid.Empty,
+                ScheduledDate = model.ScheduledDate,
+                JobStatus = jobStatus != Guid.Empty ? jobStatus : null,
+                Notes = model.Notes ?? string.Empty,
+                AttachmentAny = arrayString ?? null,
+                JobUniqueId = jobUniqueId,
+                GhlStageId = model.GHL_StageId != Guid.Empty ? model.GHL_StageId : null,
+                GhlStageName = stageName.Trim(),
+                GhlContactId = model.GHL_ContactId ?? string.Empty,
+                GhlOpportunityId = model.GhlOpportunityId ?? string.Empty,
+                TenantId = tenantId,
+                IsActive = true,
+                IsDelete = false,
+                CreatedAt = DateTime.Now,
+                CreatedBy = tenantId ?? Guid.Empty,
+                GhluserId = model.GHLUserId ?? string.Empty
+            };
+        }
+
+        private async Task<IResponseVm<string>> ProcessJobCreationAsync(TblJob job, CreateJob model, Guid? tenantId)
+        {
+            var response = new ResponseVm<string>();
+
+            var insertedJob = await Add(job);
+
+            response.IsSuccess = true;
+            response.Message = AppConstant.InsertSuccessMsg;
+
+            if (model.GhlOpportunityId == null)
+            {
+                await HandleGhlOpportunityCreationAsync(insertedJob, tenantId);
+            }
+            else
+            {
+                insertedJob.GhlOpportunityId = model.GhlOpportunityId;
+                insertedJob.ContactId = model.ContactId;
+                insertedJob.LastAsync = DateTime.Now;
+                await Update(insertedJob);
+            }
+
+            await CreateJobNotificationAsync(insertedJob, tenantId);
+            return response;
+        }
+
+        private IResponseVm<T> BuildErrorResponse<T>(string message)
+        {
+            return new ResponseVm<T>
+            {
+                IsSuccess = false,
+                Message = message
+            };
+        }
+
+        private async Task HandleGhlOpportunityCreationAsync(TblJob job, Guid? tenantId)
+        {
+            var config = await gHLConfiguration.GetGHLConfiguration(tenantId.ToString());
+            var isConfigured = await gHLConfiguration.CheckGHLConfiguration(tenantId);
+
+            if (isConfigured.IsSuccess)
+            {
+                var response = await gHLService_V2.CreateOpportunityInGhl(config?.Data, job);
+                FileLogger.Log($"CreateOpportunityInGhl: {response.Message}, Success: {response.IsSuccess}, Data: {response.Data}");
+            }
+        }
+
+        private async Task CreateJobNotificationAsync(TblJob job, Guid? tenantId)
+        {
+            var notificationData = new CreateNotification
+            {
+                UserId = tenantId,
+                Subject = nameof(NotificationModule.Job),
+                Body = $"{job.JobName} {AppConstant.Create_Notification}",
+                CreatedDate = DateTime.Now,
+                Type = nameof(NotificationModule.Job),
+                TypeId = job.JobId
+            };
+
+            await notification.CreateNotification(notificationData);
+        }
+
+
+        private IResponseVm<string> BuildErrorResponse(string message)
+        {
+            return BuildErrorResponse<string>(message);
+        }
+
 
         public async Task<IResponseVm<List<Opportunity>>> SyncOpportunitiesFromGhl1()
         {
@@ -644,7 +867,7 @@ namespace ShutterManagement.Business.Services
                 {
                     name = job.JobName,
                     pipelineStageId = job.GhlStageId,
-                  
+                    assignedTo = job.GhluserId ?? null,
                 };
 
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", configdetails?.AccessToken ?? "");
@@ -789,166 +1012,165 @@ namespace ShutterManagement.Business.Services
         //}
         //#endregion Contact Sync Related Method
 
-        public async Task<IResponseVm<string>> Create(CreateJob model, Guid? LoggedInTenantId = null)
-        {
-            IResponseVm<string> responseVm = new ResponseVm<string>();
-            try
-            {
-                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : claimsProperty.GetTenantId());
-                bool IsAddressExist = false;
-                var TenantId = Guid.Empty;
-                var IsTenantValid = false;
-                TblGhlStage stage = new TblGhlStage();
-                Guid jobStatus = Guid.Empty;
-                if (model.locationId != null)
-                {
-                    //await gHLConfiguration.GetGHLConfiguration(model.locationId);
-                    TenantId = (Guid)LoggedInTenantId;
+        //public async Task<IResponseVm<string>> Create(CreateJob model, Guid? LoggedInTenantId = null)
+        //{
+        //    IResponseVm<string> responseVm = new ResponseVm<string>();
+        //    try
+        //    {
+        //        LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : claimsProperty.GetTenantId());
+        //        bool IsAddressExist = false;
+        //      //  var TenantId = Guid.Empty;
+        //        var IsTenantValid = false;
+        //        TblGhlStage stage = new TblGhlStage();
+        //        Guid jobStatus = Guid.Empty;
+        //        //if (model.locationId != null)
+        //        //{
+        //        //    //await gHLConfiguration.GetGHLConfiguration(model.locationId);
+        //        //    TenantId = (Guid)LoggedInTenantId;
 
-                    if (TenantId != null)
-                    {
-                        IsTenantValid = true;
+        //        //    if (TenantId != null)
+        //        //    {
+        //        //        IsTenantValid = true;
 
-                        stage.GhlStageName = model.GHL_StageName;
-                        Guid.TryParse(model.GHL_jobstatus, out jobStatus);
-                        IsAddressExist = true;
-                        //else
-                        //{
-                        //    responseVm.Message = "Contact is not synced in Application.";
-                        //    return responseVm;
-                        //}
-                    }
-                }
-                else
-                {
-                    IsTenantValid = await tenantService.AnyAsync(x => x.TenantId == LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
-                    TenantId = (Guid)LoggedInTenantId;
-                    IsAddressExist = await address.AnyAsync(x => x.AddressId.ToString().ToLower() == model.AddressId.ToString().ToLower() && x.ContactId.ToString().ToLower() == model.ContactId.ToString().ToLower()
-                    && x.TenantId == LoggedInTenantId && x.IsDelete == false);
-                    //stage = _context.TblGhlStages.Where(x => x.TenantId == claimsProperty.GetTenantId() && x.GhlStageId == model.GHL_StageId.ToString()).FirstOrDefault();
-                    //jobStatus = _context.MstJobStatuses.Where(s => s.JobStatusName.ToLower() == EnumValue.GetEnumValue(JobStatus.New).ToLower() && s.IsActive == true).Select(x=> x.JobStatusId).FirstOrDefault();
+        //        //        stage.GhlStageName = model.GHL_StageName;
+        //        //        Guid.TryParse(model.GHL_jobstatus, out jobStatus);
+        //        //        IsAddressExist = true;
+        //        //        //else
+        //        //        //{
+        //        //        //    responseVm.Message = "Contact is not synced in Application.";
+        //        //        //    return responseVm;
+        //        //        //}
+        //        //    }
+        //        //}
+        //        //else
+        //        //{
+        //            IsTenantValid = await tenantService.AnyAsync(x => x.TenantId == LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
+        //            IsAddressExist = await address.AnyAsync(x => x.AddressId.ToString().ToLower() == model.AddressId.ToString().ToLower() && x.ContactId.ToString().ToLower() == model.ContactId.ToString().ToLower()
+        //            && x.TenantId == LoggedInTenantId && x.IsDelete == false);
+        //            //stage = _context.TblGhlStages.Where(x => x.TenantId == claimsProperty.GetTenantId() && x.GhlStageId == model.GHL_StageId.ToString()).FirstOrDefault();
+        //            //jobStatus = _context.MstJobStatuses.Where(s => s.JobStatusName.ToLower() == EnumValue.GetEnumValue(JobStatus.New).ToLower() && s.IsActive == true).Select(x=> x.JobStatusId).FirstOrDefault();
 
-                    if (model.GHL_StageId != null && model.GHL_StageId != Guid.Empty)
-                    {
-                        var JobStatusResponseWithStage = await statusAndStageMapping.GetJobStatusByName(EnumValue.GetEnumValue(JobStatus.New), model.GHL_StageId, LoggedInTenantId);
-                        if (JobStatusResponseWithStage.IsSuccess)
-                        {
-                            jobStatus = JobStatusResponseWithStage.Data.JobStatusId ?? Guid.Empty;
-                        }
-                    }
-                    else
-                    {
-                        var JobStatusResponse = await statusAndStageMapping.GetJobStatusByName(EnumValue.GetEnumValue(JobStatus.New), LoggedInTenantId);
-                        if (JobStatusResponse.IsSuccess)
-                        {
-                            jobStatus = JobStatusResponse.Data.JobStatusId ?? Guid.Empty;
-                        }
-                    }
+        //            if (model.GHL_StageId != null && model.GHL_StageId != Guid.Empty)
+        //            {
+        //                var JobStatusResponseWithStage = await statusAndStageMapping.GetJobStatusByName(EnumValue.GetEnumValue(JobStatus.New), model.GHL_StageId, LoggedInTenantId);
+        //                if (JobStatusResponseWithStage.IsSuccess)
+        //                {
+        //                    jobStatus = JobStatusResponseWithStage.Data.JobStatusId ?? Guid.Empty;
+        //                }
+        //            }
+        //            else
+        //            {
+        //                var JobStatusResponse = await statusAndStageMapping.GetJobStatusByName(EnumValue.GetEnumValue(JobStatus.New), LoggedInTenantId);
+        //                if (JobStatusResponse.IsSuccess)
+        //                {
+        //                    jobStatus = JobStatusResponse.Data.JobStatusId ?? Guid.Empty;
+        //                }
+        //            }
 
 
-                }
-                if (!IsTenantValid)
-                {
-                    responseVm.Message = AppConstant.TenantNotFound;
-                    return responseVm;
-                }
-                int Version = GetAllQuerable().Where(x => x.TenantId == LoggedInTenantId && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt)
-                      .Select(p => (p.JobUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries).Length == 3 ? Convert.ToInt32(p.JobUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries)[2]) : 0)).FirstOrDefault();
-                Version += 1;
-                var Companycode = tenantService.GetAllQuerable().Where(x => x.TenantId == TenantId && x.IsActive == true && x.IsDelete == false).Select(x => x.Code).FirstOrDefault();
-                var generateUnique = GenerateUniqueId.GenerateUniqueIds(ModuleName.Job, Companycode, Version);
-                bool IsjobNameExists = await AnyAsync(x => x.JobName == model.JobName.Trim() && x.IsDelete == false && x.TenantId == LoggedInTenantId && x.ContactId == model.ContactId);
-                var StageResponse = await statusAndStageMapping.GetGHLStagesMappingsById(jobStatus, LoggedInTenantId);
-                bool IsContactArchiveorInactive = await contact.AnyAsync(x => x.ContactId == model.ContactId && x.TenantId == LoggedInTenantId && (x.IsActive == false || x.IsArchive == true));
-                if (IsContactArchiveorInactive)
-                {
-                    responseVm.Message = "Contact is Archived or Inactive,You can not create Job.";
-                    return responseVm;
-                }
-                if (IsjobNameExists)
-                {
-                    responseVm.Message = "JobName" + AppConstant.AlreadyExists;
-                    return responseVm;
-                }
+        //        //}
+        //        if (!IsTenantValid)
+        //        {
+        //            responseVm.Message = AppConstant.TenantNotFound;
+        //            return responseVm;
+        //        }
+        //        int Version = GetAllQuerable().Where(x => x.TenantId == LoggedInTenantId && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt)
+        //              .Select(p => (p.JobUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries).Length == 3 ? Convert.ToInt32(p.JobUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries)[2]) : 0)).FirstOrDefault();
+        //        Version += 1;
+        //        var Companycode = tenantService.GetAllQuerable().Where(x => x.TenantId == LoggedInTenantId && x.IsActive == true && x.IsDelete == false).Select(x => x.Code).FirstOrDefault();
+        //        var generateUnique = GenerateUniqueId.GenerateUniqueIds(ModuleName.Job, Companycode, Version);
+        //        bool IsjobNameExists = await AnyAsync(x => x.JobName == model.JobName.Trim() && x.IsDelete == false && x.TenantId == LoggedInTenantId && x.ContactId == model.ContactId);
+        //        var StageResponse = await statusAndStageMapping.GetGHLStagesMappingsById(jobStatus, LoggedInTenantId);
+        //        bool IsContactArchiveorInactive = await contact.AnyAsync(x => x.ContactId == model.ContactId && x.TenantId == LoggedInTenantId && (x.IsActive == false || x.IsArchive == true));
+        //        if (IsContactArchiveorInactive)
+        //        {
+        //            responseVm.Message = "Contact is Archived or Inactive,You can not create Job.";
+        //            return responseVm;
+        //        }
+        //        if (IsjobNameExists)
+        //        {
+        //            responseVm.Message = "JobName" + AppConstant.AlreadyExists;
+        //            return responseVm;
+        //        }
 
-                if (model.GhlOpportunityId != null)
-                {
-                    IsAddressExist = true;
-                }
-                if (IsAddressExist)
-                {
-                    string arrayString = string.Join(", ", model.AttachmentsAny);
-                    TblJob job = new TblJob
-                    {
-                        AddressId = (model.AddressId != null && model.AddressId != Guid.Empty) ? model.AddressId : null,
-                        ContactId = model.ContactId,
-                        JobName = model.JobName?.Trim(),
-                        JobType = (model.JobType != null && model.JobType != Guid.Empty) ? model.JobType : null,
-                        AssignedPersonnel = model.AssignedPersonnel ?? Guid.Empty,
-                        ScheduledDate = model.ScheduledDate,
-                        JobStatus = jobStatus != Guid.Empty ? jobStatus : null,
-                        Notes = model.Notes ?? string.Empty,
-                        AttachmentAny = arrayString,
-                        JobUniqueId = generateUnique,
-                        GhlStageId = ((model.GHL_StageId != null && model.GHL_StageId != Guid.Empty) ? model.GHL_StageId : StageResponse?.Data?.StageId) ?? null,
-                        GhlStageName = ((model.GHL_StageName != null && model.GHL_StageName != string.Empty) ? model.GHL_StageName : stage?.GhlStageName?.Trim() ?? string.Empty) ?? string.Empty,
-                        GhlContactId = model.GHL_ContactId ?? string.Empty,
-                        TenantId = TenantId,
-                        IsActive = true,
-                        IsDelete = false,
-                        CreatedAt = DateTime.Now,
-                        CreatedBy = LoggedInTenantId ?? Guid.Empty,
-                        GhluserId = model.GHLUserId ?? string.Empty
-                    };
+        //        if (model.GhlOpportunityId != null)
+        //        {
+        //            IsAddressExist = true;
+        //        }
+        //        if (IsAddressExist)
+        //        {
+        //            string arrayString = string.Join(", ", model.AttachmentsAny);
+        //            TblJob job = new TblJob
+        //            {
+        //                AddressId = (model.AddressId != null && model.AddressId != Guid.Empty) ? model.AddressId : null,
+        //                ContactId = model.ContactId,
+        //                JobName = model.JobName?.Trim(),
+        //                JobType = (model.JobType != null && model.JobType != Guid.Empty) ? model.JobType : null,
+        //                AssignedPersonnel = model.AssignedPersonnel ?? Guid.Empty,
+        //                ScheduledDate = model.ScheduledDate,
+        //                JobStatus = jobStatus != Guid.Empty ? jobStatus : null,
+        //                Notes = model.Notes ?? string.Empty,
+        //                AttachmentAny = arrayString,
+        //                JobUniqueId = generateUnique,
+        //                GhlStageId = ((model.GHL_StageId != null && model.GHL_StageId != Guid.Empty) ? model.GHL_StageId : StageResponse?.Data?.StageId) ?? null,
+        //                GhlStageName = ((model.GHL_StageName != null && model.GHL_StageName != string.Empty) ? model.GHL_StageName : stage?.GhlStageName?.Trim() ?? string.Empty) ?? string.Empty,
+        //                GhlContactId = model.GHL_ContactId ?? string.Empty,
+        //                TenantId = LoggedInTenantId,
+        //                IsActive = true,
+        //                IsDelete = false,
+        //                CreatedAt = DateTime.Now,
+        //                CreatedBy = LoggedInTenantId ?? Guid.Empty,
+        //                GhluserId = model.GHLUserId ?? string.Empty
+        //            };
 
-                    var res = await Add(job);
-                    responseVm.IsSuccess = true;
-                    responseVm.Message = AppConstant.InsertSuccessMsg;
-                    if (responseVm.IsSuccess)
-                    {
-                        if (model.GhlOpportunityId == null)
-                        {
-                            var ghlconfigdetails =  await gHLConfiguration.GetGHLConfiguration(LoggedInTenantId.ToString());
-                            var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration(LoggedInTenantId);
-                            if (Checkghlresponse.IsSuccess)
-                            {
+        //            var res = await Add(job);
+        //            responseVm.IsSuccess = true;
+        //            responseVm.Message = AppConstant.InsertSuccessMsg;
+        //            if (responseVm.IsSuccess)
+        //            {
+        //                if (model.GhlOpportunityId == null)
+        //                {
+        //                    var ghlconfigdetails =  await gHLConfiguration.GetGHLConfiguration(LoggedInTenantId.ToString());
+        //                    var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration(LoggedInTenantId);
+        //                    if (Checkghlresponse.IsSuccess)
+        //                    {
 
-                                var responseghl = await gHLService_V2.CreateOpportunityInGhl(ghlconfigdetails?.Data,job);
-                                FileLogger.Log($"Start: Creating CreateOpportunityInGhl : {responseghl.Message}");
-                                FileLogger.Log($"Start: Creating CreateOpportunityInGhl : {responseghl.IsSuccess}");
-                                FileLogger.Log($"Start: Creating CreateOpportunityInGhl : {responseghl.Data}");
-                            }
-                        }
-                        else
-                        {
-                            res.GhlOpportunityId = model.GhlOpportunityId;
-                            res.ContactId = model.ContactId;
-                            res.LastAsync = DateTime.Now;
-                            await Update(res);
-                        }
-                        CreateNotification notification1 = new CreateNotification()
-                        {
-                            UserId = LoggedInTenantId,
-                            Subject = Enum.GetName(typeof(NotificationModule), NotificationModule.Job),
-                            Body = $"{job.JobName} {AppConstant.Create_Notification}",
-                            CreatedDate = DateTime.Now,
-                            Type = Enum.GetName(typeof(NotificationModule), NotificationModule.Job),
-                            TypeId = job.JobId,
-                        };
-                        var result = await notification.CreateNotification(notification1);
-                    }
-                }
-                else
-                {
-                    responseVm.Message = "Address " + AppConstant.NoDataFound;
-                }
-            }
-            catch (Exception ex)
-            {
-                responseVm.Message = AppConstant.ExceptionError + ex.Message;
-            }
-            return responseVm;
-        }
+        //                        var responseghl = await gHLService_V2.CreateOpportunityInGhl(ghlconfigdetails?.Data,job);
+        //                        FileLogger.Log($"Start: Creating CreateOpportunityInGhl : {responseghl.Message}");
+        //                        FileLogger.Log($"Start: Creating CreateOpportunityInGhl : {responseghl.IsSuccess}");
+        //                        FileLogger.Log($"Start: Creating CreateOpportunityInGhl : {responseghl.Data}");
+        //                    }
+        //                }
+        //                else
+        //                {
+        //                    res.GhlOpportunityId = model.GhlOpportunityId;
+        //                    res.ContactId = model.ContactId;
+        //                    res.LastAsync = DateTime.Now;
+        //                    await Update(res);
+        //                }
+        //                CreateNotification notification1 = new CreateNotification()
+        //                {
+        //                    UserId = LoggedInTenantId,
+        //                    Subject = Enum.GetName(typeof(NotificationModule), NotificationModule.Job),
+        //                    Body = $"{job.JobName} {AppConstant.Create_Notification}",
+        //                    CreatedDate = DateTime.Now,
+        //                    Type = Enum.GetName(typeof(NotificationModule), NotificationModule.Job),
+        //                    TypeId = job.JobId,
+        //                };
+        //                var result = await notification.CreateNotification(notification1);
+        //            }
+        //        }
+        //        else
+        //        {
+        //            responseVm.Message = "Address " + AppConstant.NoDataFound;
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        responseVm.Message = AppConstant.ExceptionError + ex.Message;
+        //    }
+        //    return responseVm;
+        //}
 
 
         public async Task<IResponseVm<string>> DeleteJob(string JobId)
@@ -1197,38 +1419,23 @@ namespace ShutterManagement.Business.Services
 
         }
 
-        public async Task<IResponseVm<string>> UpdateJob(UpdateJob model, Guid? loggedInTenantId = null, GetGHLConfiguration getGHLConfiguration)
+        public async Task<IResponseVm<string>> UpdateJob(UpdateJob model, Guid? loggedInTenantId = null)
         {
-            IResponseVm<string> responseVm = new ResponseVm<string>();
+            var responseVm = new ResponseVm<string>();
+
             try
             {
-                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : claimsProperty.GetTenantId());
-                bool IsAddressExist = false;
-                var TenantId = Guid.Empty;
-                var IsTenantValid = false;
-                TblGhlStage stage = new TblGhlStage();
-                var jobStatus = Guid.Empty;
-                if (model.locationId != null)
+                var tenantId = GetValidTenantId(loggedInTenantId);
+
+                if (!await IsTenantValid(tenantId))
+                    return Fail(responseVm, AppConstant.TenantNotFound);
+
+                var jobStatus = await ResolveJobStatus(model, tenantId);
+                var stage = await GetStage(model.GHL_StageId, tenantId);
+
+                if (model.GhlOpportunityId == null)
                 {
-                    //await gHLConfiguration.GetGHLConfiguration(model.locationId);
-                    TenantId = (Guid)claimsProperty.GetTenantId();
-
-                    if (TenantId != null)
-                    {
-                        IsTenantValid = true;
-
-                        stage.GhlStageName = model.GHL_StageName;
-                        jobStatus = Guid.Parse(model.GHL_jobstatus);
-                        //if (model.AddressId != null)
-                        //{
-                            IsAddressExist = true;
-                        //}
-                        //else
-                        //{
-                        //    responseVm.Message = "Contact is not synced in Application.";
-                        //    return responseVm;
-                        //}
-                    }
+                    return await HandleNonOpportunityJobUpdate(model, tenantId, jobStatus, stage);
                 }
                 else
                 {
@@ -1241,7 +1448,7 @@ namespace ShutterManagement.Business.Services
             }
         }
 
-        private async Task<IResponseVm<string>> HandleNonOpportunityJobUpdate(UpdateJob model, Guid? tenantId, Guid jobStatus, TblGhlStage stage, GetGHLConfiguration getGHLConfiguration)
+        private async Task<IResponseVm<string>> HandleNonOpportunityJobUpdate(UpdateJob model, Guid? tenantId, Guid jobStatus, TblGhlStage stage)
         {
             var responseVm = new ResponseVm<string>();
 
@@ -1263,90 +1470,134 @@ namespace ShutterManagement.Business.Services
             responseVm.IsSuccess = true;
             responseVm.Message = AppConstant.UpdateSuccessMsg;
 
-            if (existingJob.GhlOpportunityId != null && (getGHLConfiguration!= null))
+            if (existingJob.GhlOpportunityId != null && (await gHLConfiguration.CheckGHLConfiguration(tenantId)).IsSuccess)
             {
-                var ghlUpdateResponse = await UpdateOpportunityInGhl(getGHLConfiguration,existingJob, tenantId);
+                var ghlUpdateResponse = await UpdateOpportunityInGhl(existingJob);
                 FileLogger.Log($"GHL Sync: Job updated in GHL - {ghlUpdateResponse.Message}");
             }
 
-                }
-                else
-                {
-                    var IsJobExist = (await GetAll()).Where(x => x.GhlOpportunityId == model.GhlOpportunityId
-                    && x.TenantId == LoggedInTenantId && x.IsDelete == false).FirstOrDefault();
-                    bool IsjobNameExists = await AnyAsync(x => x.GhlOpportunityId != model.GhlOpportunityId && x.JobName.Trim() == model.JobName.Trim() &&
-                    x.IsDelete == false && x.TenantId == LoggedInTenantId && x.GhlContactId == model.GHL_ContactId);
-                    if (IsjobNameExists)
-                    {
-                        responseVm.Message = "Job Name " + AppConstant.AlreadyExists;
-                        return responseVm;
-                    }
-                    if (IsJobExist != null)
-                    {
-                        string arrayString = string.Join(", ", model.AttachmentsAny);
-                        IsJobExist.AddressId = model.AddressId ?? null;
-                        IsJobExist.JobName = model.JobName?.Trim();
-                        IsJobExist.JobType = model.JobType;
-                        IsJobExist.AssignedPersonnel = model.AssignedPersonnel;
-                        IsJobExist.ScheduledDate = model.ScheduledDate;
-                        IsJobExist.JobStatus = jobStatus;
-                        IsJobExist.Notes = model.Notes ?? "";
-                        IsJobExist.GhlStageId = model.GHL_StageId;
-                        IsJobExist.GhlStageName = stage?.GhlStageName?.Trim() ?? "";
-                        IsJobExist.AttachmentAny = arrayString;
-                        IsJobExist.AddressId = model.AddressId;
-                        IsJobExist.UpdatedAt = DateTime.Now;
-                        IsJobExist.ModifiedBy = AppConstant.LoggedInUserID ?? Guid.Empty;
-                        IsJobExist.GhluserId = model.GHLUserId ?? string.Empty;
-                        var res = await Update(IsJobExist);
-                        responseVm.IsSuccess = true;
-                        responseVm.Message = AppConstant.UpdateSuccessMsg;
-                    }
-                    else
-                    {
-                           var contact1 = contact.GetAllQuerable().Where(x => x.GhlcontactId == model.GHL_ContactId && x.IsDelete == false)
-                                 .Select(x => x.ContactId).FirstOrDefault();
-                           //var addressId = address.GetAllQuerable().Where(x => x.ContactId == contact1).Select(x => x.AddressId).FirstOrDefault();
-                        
-                        var Jobcreated = new CreateJob
-                        {
-                            JobName = model.JobName,
-                            JobType = model.JobType,
-                            AssignedPersonnel = model.AssignedPersonnel,
-                            AddressId = model.AddressId ?? null,
-                            GHL_ContactId = model.GHL_ContactId,
-                            GhlOpportunityId = model.GhlOpportunityId,
-                            GHL_StageId = model.GHL_StageId,
-                            GHL_StageName = model.GHL_StageName,
-                            GHL_jobstatus = jobStatus.ToString(),
-                            lastasync = DateTime.Now,
-                            locationId = model.locationId,
-                            ContactId = contact1,
-                            GHLUserId = model.GHLUserId,
+            return responseVm;
+        }
 
-                        };
-                        var CreateJob = await Create(Jobcreated, LoggedInTenantId);
-                        if(CreateJob != null)
-                        {
-                            responseVm.IsSuccess = true;
-                            responseVm.Message = "Job Created by GHL opportunity."; 
-                        }
-                    }
-                
-                    
-                    //else
-                    //{
-                    //    responseVm.IsSuccess = false;
-                    //    responseVm.Message = AppConstant.NoDataFound;
-                    //}
+        private async Task<IResponseVm<string>> HandleOpportunityJobUpdate(UpdateJob model, Guid? tenantId, Guid jobStatus, TblGhlStage stage)
+        {
+            var responseVm = new ResponseVm<string>();
 
-                }
-            }
-            catch (Exception ex)
+            var existingJob = (await GetAll())
+                .FirstOrDefault(x => x.GhlOpportunityId == model.GhlOpportunityId && x.TenantId == tenantId && x.IsDelete == false);
+
+            if (await IsJobNameDuplicateWithOpportunity(model.JobName, model.GHL_ContactId, tenantId, model.GhlOpportunityId))
+                return Fail(responseVm, "Job Name " + AppConstant.AlreadyExists);
+
+            if (existingJob != null)
             {
-                responseVm.IsSuccess = false;
-                responseVm.Message = AppConstant.ExceptionError + ex.Message;
+                model.AddressId = (existingJob.AddressId != null && existingJob.AddressId != Guid.Empty) ? existingJob.AddressId : model.AddressId;
+                model.JobType = (existingJob.JobType != null && existingJob.JobType != Guid.Empty) ? existingJob.JobType : model.JobType;
+                UpdateJobDetails(existingJob, model, jobStatus, stage);
+                await Update(existingJob);
+
+                responseVm.IsSuccess = true;
+                responseVm.Message = AppConstant.UpdateSuccessMsg;
+                return responseVm;
             }
+
+            var contactId = contact.GetAllQuerable().Where(x => x.GhlcontactId == model.GHL_ContactId && x.IsDelete == false)
+                              .Select(x => x.ContactId).FirstOrDefault();
+
+            var createModel = new CreateJob
+            {
+                JobName = model.JobName,
+                JobType = model.JobType,
+                AssignedPersonnel = model.AssignedPersonnel,
+                AddressId = model.AddressId,
+                GHL_ContactId = model.GHL_ContactId,
+                GhlOpportunityId = model.GhlOpportunityId,
+                GHL_StageId = model.GHL_StageId,
+                GHL_StageName = model.GHL_StageName,
+                GHL_jobstatus = jobStatus.ToString(),
+                lastasync = DateTime.Now,
+                locationId = model.locationId,
+                ContactId = contactId,
+                GHLUserId = model.GHLUserId
+            };
+
+            var createResponse = await Create(createModel, tenantId);
+            if (createResponse.IsSuccess)
+            {
+                responseVm.IsSuccess = true;
+                responseVm.Message = "Job Created by GHL opportunity.";
+            }
+
+            return responseVm;
+        }
+
+        private void UpdateJobDetails(TblJob job, UpdateJob model, Guid jobStatus, TblGhlStage stage)
+        {
+            string attachments = string.Join(", ", model.AttachmentsAny);
+
+            job.JobName = model.JobName?.Trim();
+            job.JobType = model.JobType;
+            job.AssignedPersonnel = model.AssignedPersonnel;
+            job.ScheduledDate = model.ScheduledDate;
+            job.JobStatus = jobStatus;
+            job.Notes = model.Notes?.Trim() ?? string.Empty;
+            job.GhlStageId = model.GHL_StageId;
+            job.GhlStageName = stage?.GhlStageName?.Trim() ?? string.Empty;
+            job.AddressId = model.AddressId != Guid.Empty ? model.AddressId : null;
+            job.AttachmentAny = attachments;
+            job.UpdatedAt = DateTime.Now;
+            job.ModifiedBy = AppConstant.LoggedInUserID;
+            job.GhluserId = model.GHLUserId ?? string.Empty;
+        }
+
+        private async Task<TblGhlStage> GetStage(Guid? stageId, Guid? tenantId)
+        {
+            if (stageId == null || stageId == Guid.Empty)
+                return null;
+
+            return await Task.FromResult(
+                _context.TblGhlStages
+                    .FirstOrDefault(x => x.TenantId == tenantId && x.GhlStageId == stageId.ToString())
+            );
+        }
+
+        private async Task<bool> IsJobNameDuplicate(string jobName, Guid contactId, Guid? tenantId, Guid jobId)
+        {
+            return await AnyAsync(x => x.JobId != jobId &&
+                                       x.JobName.Trim() == jobName.Trim() &&
+                                       x.IsDelete == false &&
+                                       x.TenantId == tenantId &&
+                                       x.ContactId == contactId);
+        }
+
+        private async Task<bool> IsJobNameDuplicateWithOpportunity(string jobName, string ghlContactId, Guid? tenantId, string ghlOpportunityId)
+        {
+            return await AnyAsync(x => x.GhlOpportunityId != ghlOpportunityId &&
+                                       x.JobName.Trim() == jobName.Trim() &&
+                                       x.IsDelete == false &&
+                                       x.TenantId == tenantId &&
+                                       x.GhlContactId == ghlContactId);
+        }
+
+        private async Task<Guid> ResolveJobStatus(UpdateJob model, Guid? tenantId)
+        {
+            if (model.GHL_StageId == null || model.GHL_StageId == Guid.Empty)
+                return (Guid)model.JobStatus;
+
+            var jobStatusName = dbContext.MstJobStatuses
+                .Where(x => x.JobStatusId == model.JobStatus && x.IsActive == true && x.IsDelete == false)
+                .Select(x => x.JobStatusName)
+                .FirstOrDefault();
+
+            var jobStatusResponse = await statusAndStageMapping.GetJobStatusByName(jobStatusName ?? string.Empty, model.GHL_StageId, tenantId);
+
+            return (Guid)(jobStatusResponse.IsSuccess ? jobStatusResponse.Data.JobStatusId ?? Guid.Empty : model.JobStatus);
+        }
+
+        private IResponseVm<string> Fail(IResponseVm<string> responseVm, string message)
+        {
+            responseVm.IsSuccess = false;
+            responseVm.Message = message;
             return responseVm;
         }
 
@@ -1546,50 +1797,46 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
+        //Update opportunity(Job) from GHL webhook trigger
         public async Task<IResponseVm<string>> OpportunityFromGHL(GHLOpportunityTrigger opportunitydata)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
             {
                 try
                 {
-                    var GHLUser = new TblGhlUser();
                     var contact1 = new TblContact();
-                    if (opportunitydata != null)
+                    var AssignedPersonnel = Guid.Empty;
+
+                    var tenantId = string.IsNullOrEmpty(opportunitydata.WebhookTenantId)
+             ? claimsProperty.GetTenantId().ToString()
+             : opportunitydata.WebhookTenantId;
+
+                    var (contact, ghlUser, stageId) = ResolveOpportunityDependencies(opportunitydata);
+                    if (ghlUser != null)
                     {
-                        contact1 = contact.GetAllQuerable().Where(x => x.GhlcontactId == opportunitydata.contact_id && x.IsDelete == false && x.IsActive == true)
-                             .FirstOrDefault();
+                        AssignedPersonnel = dbContext.TblUsers
+                            .Where(x => x.GhlUserId == ghlUser.GhlUserId && x.IsDelete == false && x.IsActive == true && x.TenantId.ToString() == tenantId)
+                            .Select(x => x.Id)
+                            .FirstOrDefault();
                     }
-                    if (opportunitydata.Users != null)
-                    {
-                        GHLUser = (dbContext.TblGhlUsers.Where(x => x.GhlEmail == opportunitydata.Users.email && x.TenantId.ToString() == (string.IsNullOrEmpty(opportunitydata.WebhookTenantId) ?
-                claimsProperty.GetTenantId().ToString() : opportunitydata.WebhookTenantId) && x.IsDelete == false && x.IsActive == true).FirstOrDefault());
-                    }
-                    //  Guid jobtype = Guid.Parse("34623376-9CE3-4C9B-A538-2D3129B1A6B2");
-                    // Get Stage ID
-                    var stageId = (dbContext.TblGhlStages
-                        .Where(x => x.GhlStageName.ToLower() == opportunitydata.pipleline_stage.ToLower())
-                        .Select(x => x.GhlStageId ?? "")
-                        .FirstOrDefault()) ?? string.Empty;
 
                     var job = new CreateJob
                     {
                         AddressId = contact1.PrimaryAddress ?? null,
                         ContactId = contact1.ContactId,
                         JobName = opportunitydata.opportunity_name,
-                        // JobType = jobtype,
-                        AssignedPersonnel = (GHLUser != null && GHLUser.Id != null) ? GHLUser.Id : Guid.Empty,
+                        AssignedPersonnel = (AssignedPersonnel != null && AssignedPersonnel != Guid.Empty) ? AssignedPersonnel : Guid.Empty,
                         GhlOpportunityId = opportunitydata.id,
                         GHL_StageId = stageId == "" ? null : Guid.Parse(stageId),
                         GHL_StageName = opportunitydata.pipleline_stage,
-                        // locationId = opportunitydata.location.id,
                         GHL_ContactId = opportunitydata.contact_id,
                         lastasync = DateTime.Now,
-                        GHLUserId = (GHLUser != null && GHLUser.GhlUserId != null) ? GHLUser.GhlUserId : string.Empty,
+                        GHLUserId = (ghlUser != null && ghlUser.GhlUserId != null) ? ghlUser.GhlUserId : string.Empty,
                     };
                     await gHLConfiguration.GetGHLConfiguration(opportunitydata.WebhookTenantId);
                     var res = await Create(job, Guid.Parse(opportunitydata.WebhookTenantId));
                     responseVm.IsSuccess = true;
-                    responseVm.Message = AppConstant.InsertSuccessMsg;
+                    responseVm.Message = res.Message;
                 }
                 catch (Exception ex)
                 {
@@ -1600,6 +1847,7 @@ namespace ShutterManagement.Business.Services
             }
         }
 
+        //Update opportunity(Job) from GHL webhook trigger
         public async Task<IResponseVm<string>> UpdateOpportunityFromGHL(GHLOpportunityTrigger opportunitydata)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
@@ -1608,40 +1856,32 @@ namespace ShutterManagement.Business.Services
                 {
                     var addressId = Guid.Empty;
                     var contact1 = new TblContact();
-                    var GHLUser = new TblGhlUser();
-                    if (opportunitydata != null)
+                    var assignedPersonnel = Guid.Empty;
+
+                    var tenantId = string.IsNullOrEmpty(opportunitydata.WebhookTenantId)
+             ? claimsProperty.GetTenantId().ToString()
+             : opportunitydata.WebhookTenantId;
+                    var (contact, ghlUser, stageId) = ResolveOpportunityDependencies(opportunitydata);
+                    if (ghlUser != null)
                     {
-                        contact1 = contact.GetAllQuerable().Where(x => x.GhlcontactId == opportunitydata.contact_id && x.IsDelete == false).
-                             FirstOrDefault();
-                    }
-                    if (opportunitydata.Users != null)
-                    {
-                        GHLUser = dbContext.TblGhlUsers.Where(x => x.GhlEmail == opportunitydata.Users.email && x.TenantId.ToString() == (string.IsNullOrEmpty(opportunitydata.WebhookTenantId) ?
-                       claimsProperty.GetTenantId().ToString() : opportunitydata.WebhookTenantId) && x.IsDelete == false && x.IsActive == true)
+                        assignedPersonnel = dbContext.TblUsers
+                            .Where(x => x.GhlUserId == ghlUser.GhlUserId && x.IsDelete == false && x.IsActive == true && x.TenantId.ToString() == tenantId)
+                            .Select(x => x.Id)
                             .FirstOrDefault();
                     }
-
-
-                    // Get Stage ID
-                    var stageId = (dbContext.TblGhlStages
-                        .Where(x => x.GhlStageName.ToLower() == opportunitydata.pipleline_stage.ToLower())
-                        .Select(x => x.GhlStageId ?? "")
-                        .FirstOrDefault()) ?? string.Empty;
-
-
 
                     var job = new UpdateJob
                     {
                         AddressId = contact1.PrimaryAddress ?? null,
                         ContactId = contact1.ContactId,
                         JobName = opportunitydata.opportunity_name,
-                        AssignedPersonnel = (GHLUser != null && GHLUser.Id != null) ? GHLUser.Id : Guid.Empty,
+                        AssignedPersonnel = (assignedPersonnel != null && assignedPersonnel != Guid.Empty) ? assignedPersonnel : Guid.Empty,
                         GhlOpportunityId = opportunitydata.id,
                         GHL_StageId = Guid.Parse(stageId),
                         GHL_StageName = opportunitydata.pipleline_stage,
                         GHL_ContactId = opportunitydata.contact_id,
                         lastasync = DateTime.Now,
-                        GHLUserId = (GHLUser != null && GHLUser.GhlUserId != null) ? GHLUser.GhlUserId : string.Empty,
+                        GHLUserId = (ghlUser != null && ghlUser.GhlUserId != null) ? ghlUser.GhlUserId : string.Empty,
                     };
                     await gHLConfiguration.GetGHLConfiguration(opportunitydata.WebhookTenantId);
                     var res = await UpdateJob(job, Guid.Parse(opportunitydata.WebhookTenantId));
@@ -1666,6 +1906,42 @@ namespace ShutterManagement.Business.Services
                 }
                 return responseVm;
             }
+        }
+
+        // Resolve dependencies for opportunity data(contactId,StageId,AssignedPersonnel)
+        private (TblContact contact, TblGhlUser ghlUser, string stageId) ResolveOpportunityDependencies(GHLOpportunityTrigger opportunitydata)
+        {
+            TblContact contacts = null;
+            TblGhlUser ghlUser = null;
+            Guid assignedPersonnel = Guid.Empty;
+            string stageId = string.Empty;
+
+            var tenantId = string.IsNullOrEmpty(opportunitydata.WebhookTenantId)
+                ? claimsProperty.GetTenantId().ToString()
+                : opportunitydata.WebhookTenantId;
+
+            if (opportunitydata != null)
+            {
+                contacts = contact.GetAllQuerable()
+                    .FirstOrDefault(x => x.GhlcontactId == opportunitydata.contact_id && x.IsDelete == false && x.IsActive == true);
+            }
+
+            if (opportunitydata.Users != null)
+            {
+                ghlUser = dbContext.TblGhlUsers
+                    .FirstOrDefault(x =>
+                        x.GhlEmail == opportunitydata.Users.email &&
+                        x.TenantId.ToString() == tenantId &&
+                        x.IsDelete == false &&
+                        x.IsActive == true);
+            }
+
+            stageId = dbContext.TblGhlStages
+                .Where(x => x.GhlStageName.ToLower() == opportunitydata.pipleline_stage.ToLower())
+                .Select(x => x.GhlStageId ?? "")
+                .FirstOrDefault() ?? string.Empty;
+
+            return (contacts, ghlUser, stageId);
         }
 
 
@@ -1840,5 +2116,8 @@ namespace ShutterManagement.Business.Services
             }
             return responseVm;
         }
+
+      
+
     }
 }

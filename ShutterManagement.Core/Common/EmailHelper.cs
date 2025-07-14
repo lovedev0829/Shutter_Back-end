@@ -29,7 +29,7 @@ namespace ShutterManagement.Core.Common
                 message.From.Add(MailboxAddress.Parse(request.FromEmail));
                 message.To.Add(MailboxAddress.Parse(request.ToEmail));
                 message.Subject = request.Subject;
-                message.ReplyTo.Add(new MailboxAddress("Reply", request.ReplyToEmail?? request.FromEmail));
+                message.ReplyTo.Add(MailboxAddress.Parse(request.ReplyToEmail ?? request.FromEmail));
 
                 var builder = new BodyBuilder { HtmlBody = request.Body };
 
