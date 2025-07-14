@@ -552,20 +552,20 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        public async Task<IResponseVm<string>> UpdateOpportunityInGHLfromApp()
+        public async Task<IResponseVm<string>> UpdateOpportunityInGHLfromApp(Guid? LoggedInTenantId = null)
         {
           
                 IResponseVm<string> responseVm = new ResponseVm<string>();
                 try
                 {
-                var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration();
-                var ghlconfigdetails = await gHLConfiguration.GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
+                var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration(LoggedInTenantId);
+                var ghlconfigdetails = await gHLConfiguration.GetGHLConfiguration(LoggedInTenantId.ToString());
                 if (Checkghlresponse.IsSuccess)
                 {
                     FileLogger.Log("Starting UpdateOpportunityInGHLfromApp process.");
 
                     var getAppOpportunities = GetAllQuerable()
-                        .Where(x => x.TenantId == claimsProperty.GetTenantId())
+                        .Where(x => x.TenantId == LoggedInTenantId)
                         .ToList();
 
                     var ghlOpportunitiesResponse = await gHLService_V2.GetOpportunitiesFromGhl(ghlconfigdetails?.Data);
@@ -600,7 +600,7 @@ namespace ShutterManagement.Business.Services
                                     GhlStageId = opportunity.GhlStageId
                                 };
 
-                                var responseghl = await UpdateOpportunityInGhl(job);
+                                var responseghl = await UpdateOpportunityInGhl(job,LoggedInTenantId);
                                 FileLogger.Log($"Updated Opportunity in GHL: {responseghl.Message}, Success: {responseghl.IsSuccess}");
                             }
                             else
@@ -748,7 +748,7 @@ namespace ShutterManagement.Business.Services
                     }
                 }
 
-                var updateResult = await UpdateOpportunityInGHLfromApp();
+                var updateResult = await UpdateOpportunityInGHLfromApp(LoggedInTenantId);
                 FileLogger.Log("All Jobs synced completed successfully.");
                 FileLogger.Log("Update GHL FromApp completed successfully.");
 
@@ -806,13 +806,14 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        public async Task<IResponseVm<string>> UpdateOpportunityInGhl(TblJob job)
+        public async Task<IResponseVm<string>> UpdateOpportunityInGhl(TblJob job, Guid? LoggedInTenantId = null)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
 
             try
             {
-                await gHLConfiguration.GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
+                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : claimsProperty.GetTenantId());
+                await gHLConfiguration.GetGHLConfiguration(LoggedInTenantId.ToString());
 
                 if (string.IsNullOrEmpty(job.GhlOpportunityId))
                 {
@@ -839,7 +840,7 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-                var configdetails = dbContext.TblGhlconfigurations.Where(s => s.TenantId == claimsProperty.GetTenantId() && s.IsDelete == false && s.IsActive == true).FirstOrDefault();
+                var configdetails = dbContext.TblGhlconfigurations.Where(s => s.TenantId == LoggedInTenantId && s.IsDelete == false && s.IsActive == true).FirstOrDefault();
                 if (configdetails == null)
                 {
                     responseVm.IsSuccess = false;
