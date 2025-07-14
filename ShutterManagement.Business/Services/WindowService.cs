@@ -778,8 +778,8 @@ namespace ShutterManagement.Business.Services
                                 if (decimal.TryParse(costItem.AdditionalCost, out decimal parsedCost))
                                 {
                                     optionType.AdditionalCost = parsedCost;
-                                    optionType.RequirePriceAtEstimatePreview = costItem.RequirePriceAtEstimatePreview;
                                     optionType.ModifiedAt = DateTime.Now;
+                                    optionType.RequirePriceAtEstimatePreview = true;
                                     optionType.ModifiedBy = AppConstant.LoggedInUserID;
 
                                     await optionsTypeService.Update(optionType);
