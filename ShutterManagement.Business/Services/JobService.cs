@@ -329,23 +329,24 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        public async Task<IResponseVm<string>> UpdateOpportunityInGHLfromApp()
+        public async Task<IResponseVm<string>> UpdateOpportunityInGHLfromApp(GetGHLConfiguration getGHLConfiguration, Guid? LoggedInTenantId = null)
         {
           
                 IResponseVm<string> responseVm = new ResponseVm<string>();
                 try
                 {
-                var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration();
-                var ghlconfigdetails = await gHLConfiguration.GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
-                if (Checkghlresponse.IsSuccess)
-                {
+                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : claimsProperty.GetTenantId());
+                //var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration();
+                //var ghlconfigdetails = await gHLConfiguration.GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
+              //  if (Checkghlresponse.IsSuccess)
+                //{
                     FileLogger.Log("Starting UpdateOpportunityInGHLfromApp process.");
 
                     var getAppOpportunities = GetAllQuerable()
-                        .Where(x => x.TenantId == claimsProperty.GetTenantId())
+                        .Where(x => x.TenantId == LoggedInTenantId)
                         .ToList();
 
-                    var ghlOpportunitiesResponse = await gHLService_V2.GetOpportunitiesFromGhl(ghlconfigdetails?.Data);
+                    var ghlOpportunitiesResponse = await gHLService_V2.GetOpportunitiesFromGhl(getGHLConfiguration);
                     var ghlOpportunities = ghlOpportunitiesResponse?.Data ?? new List<Opportunity>();
 
                     foreach (var opportunity in getAppOpportunities)
@@ -360,7 +361,7 @@ namespace ShutterManagement.Business.Services
                                 GhlStageId = opportunity.GhlStageId
                             };
 
-                            var responseghl = await gHLService_V2.CreateOpportunityInGhl(ghlconfigdetails.Data,job);
+                            var responseghl = await gHLService_V2.CreateOpportunityInGhl(getGHLConfiguration, job);
                             FileLogger.Log($"Created Opportunity in GHL: {responseghl.Message}, Success: {responseghl.IsSuccess}");
                         }
                         else
@@ -377,7 +378,7 @@ namespace ShutterManagement.Business.Services
                                     GhlStageId = opportunity.GhlStageId
                                 };
 
-                                var responseghl = await UpdateOpportunityInGhl(job);
+                                var responseghl = await UpdateOpportunityInGhl(getGHLConfiguration, job,LoggedInTenantId);
                                 FileLogger.Log($"Updated Opportunity in GHL: {responseghl.Message}, Success: {responseghl.IsSuccess}");
                             }
                             else
@@ -394,7 +395,7 @@ namespace ShutterManagement.Business.Services
                     responseVm.IsSuccess = true;
                     responseVm.Message = "Opportunities synced successfully with GHL.";
                 }
-                }
+                //}
             catch (Exception ex)
             {
                 FileLogger.Log($"Exception in UpdateOpportunityInGHLfromApp: {ex.Message}");
@@ -525,7 +526,7 @@ namespace ShutterManagement.Business.Services
                     }
                 }
 
-                var updateResult = await UpdateOpportunityInGHLfromApp();
+                var updateResult = await UpdateOpportunityInGHLfromApp(getGHLConfiguration, LoggedInTenantId);
                 FileLogger.Log("All Jobs synced completed successfully.");
                 FileLogger.Log("Update GHL FromApp completed successfully.");
 
@@ -583,13 +584,14 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        public async Task<IResponseVm<string>> UpdateOpportunityInGhl(TblJob job)
+        public async Task<IResponseVm<string>> UpdateOpportunityInGhl(GetGHLConfiguration getGHLConfiguration,TblJob job,Guid? LoggedInTenantId =  null)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
 
             try
             {
-                await gHLConfiguration.GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
+                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : claimsProperty.GetTenantId());
+                //await gHLConfiguration.GetGHLConfiguration(c);
 
                 if (string.IsNullOrEmpty(job.GhlOpportunityId))
                 {
@@ -616,7 +618,7 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-                var configdetails = dbContext.TblGhlconfigurations.Where(s => s.TenantId == claimsProperty.GetTenantId() && s.IsDelete == false && s.IsActive == true).FirstOrDefault();
+                var configdetails = dbContext.TblGhlconfigurations.Where(s => s.TenantId == LoggedInTenantId && s.IsDelete == false && s.IsActive == true).FirstOrDefault();
                 if (configdetails == null)
                 {
                     responseVm.IsSuccess = false;
@@ -1195,7 +1197,7 @@ namespace ShutterManagement.Business.Services
 
         }
 
-        public async Task<IResponseVm<string>> UpdateJob(UpdateJob model, Guid? LoggedInTenantId = null)
+        public async Task<IResponseVm<string>> UpdateJob(UpdateJob model, Guid? loggedInTenantId = null, GetGHLConfiguration getGHLConfiguration)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
@@ -1230,77 +1232,42 @@ namespace ShutterManagement.Business.Services
                 }
                 else
                 {
-                    IsTenantValid = await tenantService.AnyAsync(x => x.TenantId == LoggedInTenantId && x.IsActive == true && x.IsDelete == false);
-                    TenantId = (Guid)LoggedInTenantId;
-                    IsAddressExist = await address.AnyAsync(x => x.AddressId == model.AddressId && x.ContactId == model.ContactId
-                    && x.TenantId == LoggedInTenantId && x.IsDelete == false);
-                    if (model.GHL_StageId != null && model.GHL_StageId != Guid.Empty)
-                    {
-                        var Jobstatusname = dbContext.MstJobStatuses.Where(x => x.JobStatusId == model.JobStatus && x.IsActive == true && x.IsDelete == false)
-                            .Select(j => j.JobStatusName).FirstOrDefault();
-                        var JobStatusResponseWithStage = await statusAndStageMapping.GetJobStatusByName(Jobstatusname ?? "", model.GHL_StageId, LoggedInTenantId);
-                        if (JobStatusResponseWithStage.IsSuccess)
-                        {
-                            jobStatus = JobStatusResponseWithStage.Data.JobStatusId ?? Guid.Empty;
-                        }
-                    }
-                    stage = _context.TblGhlStages.Where(x => x.TenantId == LoggedInTenantId && x.GhlStageId == model.GHL_StageId.ToString()).FirstOrDefault();
+                    return await HandleOpportunityJobUpdate(model, tenantId, jobStatus, stage);
                 }
-                if (!IsTenantValid)
-                {
-                    responseVm.Message = AppConstant.TenantNotFound;
-                    return responseVm;
-                }
-                if (model.GhlOpportunityId == null)
-                {
-                    var IsJobExist = (await GetAll()).Where(x => x.JobId == model.JobId &&
-                    x.ContactId == model.ContactId && x.JobUniqueId == model.JobUniqueCode.Trim()
-                    && x.TenantId == LoggedInTenantId && x.IsDelete == false).FirstOrDefault();
-                    bool IsjobNameExists = await AnyAsync(x => x.JobId != model.JobId && x.JobName.Trim() == model.JobName.Trim() &&
-                    x.IsDelete == false && x.TenantId == LoggedInTenantId && x.ContactId == model.ContactId);
-                    if (IsjobNameExists)
-                    {
-                        responseVm.Message = "Job Name " + AppConstant.AlreadyExists;
-                        return responseVm;
-                    }
-                    if (IsJobExist != null)
-                    {
-                        string arrayString = string.Join(", ", model.AttachmentsAny);
-                        IsJobExist.JobName = model.JobName?.Trim();
-                        IsJobExist.JobType = model.JobType;
-                        IsJobExist.AssignedPersonnel = model.AssignedPersonnel;
-                        IsJobExist.ScheduledDate = model.ScheduledDate;
-                        IsJobExist.JobStatus = model.JobStatus;
-                        IsJobExist.Notes = model.Notes.Trim();
-                        IsJobExist.GhlStageId = model.GHL_StageId;
-                        IsJobExist.GhlStageName = stage?.GhlStageName?.Trim() ?? "";
-                        IsJobExist.AddressId = model?.AddressId;
-                        IsJobExist.AttachmentAny = arrayString;
-                        IsJobExist.UpdatedAt = DateTime.Now;
-                        IsJobExist.ModifiedBy = AppConstant.LoggedInUserID;
-                        var res = await Update(IsJobExist);
-                        responseVm.IsSuccess = true;
-                        responseVm.Message = AppConstant.UpdateSuccessMsg;
+            }
+            catch (Exception ex)
+            {
+                return Fail(responseVm, AppConstant.ExceptionError + ex.Message);
+            }
+        }
 
-                        if (responseVm.IsSuccess && IsJobExist?.GhlOpportunityId != null)
-                        {
-                            var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration(LoggedInTenantId);
-                            if (Checkghlresponse.IsSuccess)
-                            {  //authService.GetGHLConfiguration(model.locationId);
-                                var ghlUpdateResponse = await UpdateOpportunityInGhl(IsJobExist);
-                                FileLogger.Log($"GHL Sync: Job updated in GHL - {ghlUpdateResponse.Message}");
-                            }
-                            else
-                            {
-                                responseVm.Message = Checkghlresponse.Message;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        responseVm.IsSuccess = false;
-                        responseVm.Message = AppConstant.NoDataFound;
-                    }
+        private async Task<IResponseVm<string>> HandleNonOpportunityJobUpdate(UpdateJob model, Guid? tenantId, Guid jobStatus, TblGhlStage stage, GetGHLConfiguration getGHLConfiguration)
+        {
+            var responseVm = new ResponseVm<string>();
+
+            var existingJob = (await GetAll())
+                .FirstOrDefault(x => x.JobId == model.JobId && x.ContactId == model.ContactId &&
+                                     x.JobUniqueId == model.JobUniqueCode.Trim() &&
+                                     x.TenantId == tenantId && x.IsDelete == false);
+
+            if (await IsJobNameDuplicate(model.JobName, (Guid)model.ContactId, tenantId, (Guid)model.JobId))
+                return Fail(responseVm, "Job Name " + AppConstant.AlreadyExists);
+
+            if (existingJob == null)
+                return Fail(responseVm, AppConstant.NoDataFound);
+
+            UpdateJobDetails(existingJob, model, jobStatus, stage);
+
+            await Update(existingJob);
+
+            responseVm.IsSuccess = true;
+            responseVm.Message = AppConstant.UpdateSuccessMsg;
+
+            if (existingJob.GhlOpportunityId != null && (getGHLConfiguration!= null))
+            {
+                var ghlUpdateResponse = await UpdateOpportunityInGhl(getGHLConfiguration,existingJob, tenantId);
+                FileLogger.Log($"GHL Sync: Job updated in GHL - {ghlUpdateResponse.Message}");
+            }
 
                 }
                 else

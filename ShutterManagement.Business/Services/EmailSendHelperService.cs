@@ -1,4 +1,5 @@
 ﻿using Azure;
+using MailKit.Security;
 using Newtonsoft.Json.Linq;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core;
@@ -133,30 +134,35 @@ namespace ShutterManagement.Business.Services
                        .FirstOrDefault(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
                 var emailType = (await emailTypeService.GetAll())
                         .FirstOrDefault(s => s.Id == emailConfig?.EmailType)?.Name ?? "";
-
-
-                if (emailType.ToLower() == EnumValue.GetEnumValue(EmailSendType.Google).ToLower())
+                if (!Enum.TryParse<EmailSendType>(emailType, true, out var parsedEmailSendType))
                 {
-                    configResponse = await googleAuthService.ValidateAndRefreshGoogleEmailOauthAccessToken(emailConfig, emailType);
-                    configResponse.IsSuccess = true;
+                    FileLogger.Log(claimsProperty.GetTenantId().ToString() + " Invalid email type.");
+                    configResponse.Message = "Invalid email type.";
+                    return configResponse;
                 }
-                else if (emailType.ToLower() == EnumValue.GetEnumValue(EmailSendType.Microsoft365).ToLower())
+                switch (parsedEmailSendType)
                 {
-                    configResponse = await mS365Configuration.ValidateAndRefreshMSEmailOauthAccessToken(emailConfig, emailType);
-                    configResponse.IsSuccess = true;
+                    case EmailSendType.Google:
+                        configResponse = await googleAuthService.ValidateAndRefreshGoogleEmailOauthAccessToken(emailConfig, emailType);
+                        configResponse.IsSuccess = true;
+                        break;
 
-                }
-                else if (emailType.ToLower() == EnumValue.GetEnumValue(EmailSendType.SMTP))
-                {
-                    configResponse = EmailConfigurationVm.ConfigResponse(emailConfig, emailType);
-                    configResponse.IsSuccess = true;
+                    case EmailSendType.Microsoft365:
+                        configResponse = await mS365Configuration.ValidateAndRefreshMSEmailOauthAccessToken(emailConfig, emailType);
+                        configResponse.IsSuccess = true;
+                        break;
 
+                    case EmailSendType.SMTP:
+                        configResponse = EmailConfigurationVm.ConfigResponse(emailConfig, emailType);
+                        configResponse.IsSuccess = true;
+                        break;
+
+                    default:
+                        FileLogger.Log(claimsProperty.GetTenantId().ToString() + " Unsupported email type.");
+                        configResponse.Message = "Unsupported email type.";
+                        break;
                 }
-                else
-                {
-                    FileLogger.Log(claimsProperty.GetTenantId().ToString() + " Unsupported email type.");
-                    configResponse.Message = "Unsupported email type.";
-                }
+
             }
             catch (Exception ex) {
                 configResponse.Message = ex.Message;

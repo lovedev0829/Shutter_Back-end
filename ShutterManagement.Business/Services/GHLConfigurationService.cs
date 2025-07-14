@@ -372,15 +372,27 @@ namespace ShutterManagement.Business.Services
             try
             {
                 LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : claimsProperty.GetTenantId());
+               
+                // With this (move Select with index to client-side using AsEnumerable()):
+                var jobStatusList = dbContext.MstJobStatuses
+                     .OrderBy(js => js.JobStatusId)
+                     .AsEnumerable()
+                     .Select((js, index) => new { js.JobStatusId, SortOrder = index + 1 })
+                     .ToList();
 
-                var mappings =  dbContext.TblGhlStagesmappings
+                var mappings = dbContext.TblGhlStagesmappings
                     .Where(x => x.TenantId == LoggedInTenantId)
                     .Select(x => new StageMapping
                     {
-                        StageId = x.StageId??Guid.Empty,
-                        StatusId = x.StatusId ?? Guid.Empty,
-                        CreatedAt = x.CreatedAt
-                    }).OrderBy(x => x.CreatedAt)
+                        var jobStatus = jobStatusList.FirstOrDefault(js => js.JobStatusId == (x.StatusId ?? Guid.Empty));
+                        return new StageMapping
+                        {
+                            StageId = x.StageId ?? Guid.Empty,
+                            StatusId = x.StatusId ?? Guid.Empty,
+                            SortOrder = jobStatus?.SortOrder
+                        };
+                    })
+                    .OrderBy(x => x.SortOrder)
                     .ToList();
 
                 responseVm.IsSuccess = true;
