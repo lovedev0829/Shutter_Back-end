@@ -15,6 +15,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace ShutterManagement.Business.Services
 {
@@ -556,14 +557,16 @@ public async Task<IResponseVm<string>> Update_Option(UpdateOption model)
         var IsTenant = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
         if (IsTenant)
         {
-            var IsOptionExists = GetAllQuerable()
+             var IsOptionExists = GetAllQuerable()
                 .Where(c => c.OptionId == model.OptionId
                             && c.TenantId == claimsProperty.GetTenantId()
                             && c.IsDelete == false)
                 .FirstOrDefault();
-            var IsOptionNameExists = await AnyAsync(x => x.OptionName == model.OptionName.Trim()
-          && x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId()
-          && x.ProductId == model.ProductId && x.ProductTypeId == model.ProductTypeId && x.OptionId != model.OptionId);
+            
+             var IsOptionNameExists = await AnyAsync(x => x.OptionName == model.OptionName.Trim()
+                                        && x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId()
+                                        && x.ProductId == model.ProductId && x.ProductTypeId == model.ProductTypeId && x.OptionId != model.OptionId);
+
             if (IsOptionExists == null)
             {
                 responseVm.Message = AppConstant.NoDataFound;
@@ -575,21 +578,6 @@ public async Task<IResponseVm<string>> Update_Option(UpdateOption model)
                 return responseVm;
             }
 
-
-            //TblOption options = new TblOption
-            //{
-            //    OptionId = Guid.NewGuid(),
-            //    OptionName = model.OptionName,
-            //    ProductId = model.ProductId,
-            //    ProductTypeId = model.ProductTypeId,
-            //    CreatedAt = DateTime.Now,
-            //    CreatedBy = AppConstant.LoggedInUserID,
-            //    TenantId = claimsProperty.GetTenantId(),
-            //    IsTaxApplied = model.IsTaxAvailable,
-            //    TaxId = model.TaxId,
-            //    IsActive = true,
-            //    IsDelete = false
-            //};
 
             if (IsOptionExists != null)
             {
@@ -619,28 +607,33 @@ public async Task<IResponseVm<string>> Update_Option(UpdateOption model)
                     SortOrder = x.SortOrder,
                     RequirePriceAtEstimatePreview = x.RequirePriceAtEstimatePreview,
                     hidePreview = x.hidePreview,
-                    // Unit = x.Unit
                 }).ToArray();
-                //var Ismanageproductexist = await dbContext.TblManagePartnersProductsOptions.Where
-                //    (x => x.OptionId == IsOptionExists.OptionId && x.TenantId == claimsProperty.GetTenantId()
-                //    && x.IsActive == true && x.IsAvailable == true && x.IsDelete == false).FirstOrDefaultAsync();
-                //if(Ismanageproductexist != null)
-                //{ 
-                //    Ismanageproductexist.TaxId = claimsProperty.GetTenantId();
-                //}
 
 
-                var InsertRecords = model.Options.Where(a1 => !OptionsTypes.Any(a2 => a1.OptionType == a2.OptionType && a1.AdditionalCost == a2.AdditionalCost && a1.IsDefault == a2.IsDefault && a1.RequirePriceAtEstimatePreview == a2.RequirePriceAtEstimatePreview && a1.hidePreview == a2.hidePreview)).ToList();
-                var DeleteRecords = OptionsTypes.Where(a1 => !model.Options.Any(a2 => a1.OptionType == a2.OptionType && a1.AdditionalCost == a2.AdditionalCost && a1.IsDefault == a2.IsDefault && a1.RequirePriceAtEstimatePreview == a2.RequirePriceAtEstimatePreview && a1.hidePreview == a2.hidePreview)).ToList();
+                var InsertRecords = model.Options
+                            .Where(a1 => !OptionsTypes
+                                        .Any(a2 => a1.OptionType == a2.OptionType 
+                                        && a1.AdditionalCost == a2.AdditionalCost 
+                                        && a1.IsDefault == a2.IsDefault)).ToList();
 
+                var DeleteRecords = OptionsTypes
+                            .Where(a1 => !model.Options
+                                                .Any(a2 => a1.OptionType == a2.OptionType 
+                                                && a1.AdditionalCost == a2.AdditionalCost 
+                                                && a1.IsDefault == a2.IsDefault)).ToList();
+                
                 if (!AppConstant.IsTenant)
                 {
 
                     foreach (var item in DeleteRecords)
                     {
-                        var Ismanageproductexist = managePartnersProductsOptions.GetAllQuerable().Where
-                       (x => x.TenantId == claimsProperty.GetTenantId()
-                       && x.IsActive == true && x.IsAvailable == true && x.IsDelete == false && x.OptionTypeId == item.OptionTypeId).FirstOrDefault();
+                        var Ismanageproductexist = managePartnersProductsOptions.GetAllQuerable()
+                                    .Where(x => x.TenantId == claimsProperty.GetTenantId() 
+                                    && x.IsActive == true 
+                                    && x.IsAvailable == true 
+                                    && x.IsDelete == false 
+                                    && x.OptionTypeId == item.OptionTypeId).FirstOrDefault();
+
                         if (Ismanageproductexist != null)
                         {
                             Ismanageproductexist.IsActive = false;
@@ -648,17 +641,37 @@ public async Task<IResponseVm<string>> Update_Option(UpdateOption model)
                             Ismanageproductexist.IsAvailable = false;
 
                             await managePartnersProductsOptions.Update(Ismanageproductexist);
-                            //dbContext.Update(Ismanageproductexist);
-                            //await dbContext.SaveChangesAsync();
                         }
                     }
                 }
+                
+                if (InsertRecords.Count() == 0 && DeleteRecords.Count() == 0)
+                {
+                    var optionTypes = model.Options.ToArray();
+
+                    foreach (var item in optionTypes)
+                    {
+                        var data = optionsTypeService.GetAllQuerable()
+                                .Where(x => x.OptionTypeId == item.OptionTypeId).FirstOrDefault();
+                        
+                        data.RequirePriceAtEstimatePreview = item.RequirePriceAtEstimatePreview;
+                        data.hidePreview = item.hidePreview;
+                        await optionsTypeService.Update(data);
+                    }
+                }
+
                 foreach (var item in DeleteRecords)
                 {
-                    var data = optionsTypeService.GetAllQuerable().Where(x => x.OptionTypeId == item.OptionTypeId
-                     && x.IsDelete == false).FirstOrDefault();
+                    var data = optionsTypeService.GetAllQuerable()
+                                .Where(x => x.OptionTypeId == item.OptionTypeId
+                                        && x.IsDelete == false).FirstOrDefault();
+                    var updatedOption = model.Options.Where(x => x.OptionTypeId == item.OptionTypeId).FirstOrDefault();
+                    
                     data.IsDelete = true;
                     data.IsActive = false;
+                    data.RequirePriceAtEstimatePreview = updatedOption.RequirePriceAtEstimatePreview;
+                    data.hidePreview = updatedOption.hidePreview;
+
                     await optionsTypeService.Update(data);
                 }
 
@@ -671,9 +684,12 @@ public async Task<IResponseVm<string>> Update_Option(UpdateOption model)
                         return responseVm;
                     }
 
-                    var IsOptionTypeExists = await optionsTypeService.AnyAsync(x => x.IsActive == true
-                        && x.IsDelete == false && x.OptionId == IsOptionExists.OptionId && x.OptionType ==
-                        item.OptionType);
+                    var IsOptionTypeExists = await optionsTypeService
+                                .AnyAsync(x => x.IsActive == true
+                                        && x.IsDelete == false 
+                                        && x.OptionId == IsOptionExists.OptionId 
+                                        && x.OptionType == item.OptionType);
+
                     if (!IsOptionTypeExists)
                     {
                         TblOptionsType optionsType = new TblOptionsType
@@ -682,7 +698,6 @@ public async Task<IResponseVm<string>> Update_Option(UpdateOption model)
                             OptionTypeId = Guid.NewGuid(),
                             OptionType = item.OptionType,
                             AdditionalCost = item.AdditionalCost,
-                            //Unit = item.Unit,
                             IsDefault = item.IsDefault,
                             CreatedAt = DateTime.Now,
                             CreatedBy = AppConstant.LoggedInUserID,
@@ -690,15 +705,20 @@ public async Task<IResponseVm<string>> Update_Option(UpdateOption model)
                             RequirePriceAtEstimatePreview = item.RequirePriceAtEstimatePreview,
                             hidePreview = item.hidePreview,
                             IsActive = true,
-                            IsDelete = false
+                            IsDelete = false,
                         };
+
                         await optionsTypeService.Add(optionsType);
 
                         if (!AppConstant.IsTenant)
                         {
-                            var manageproduct = dbContext.TblManagePartnersProducts.Where(x => x.ProductId == IsOptionExists.ProductId
-                           && x.TenantId == claimsProperty.GetTenantId() && x.IsAvailable == true && x.IsActive == true && x.IsDelete == false)
-                    .FirstOrDefault();
+                            var manageproduct = dbContext.TblManagePartnersProducts
+                                                .Where(x => x.ProductId == IsOptionExists.ProductId
+                                                       && x.TenantId == claimsProperty.GetTenantId() 
+                                                       && x.IsAvailable == true 
+                                                       && x.IsActive == true 
+                                                       && x.IsDelete == false).FirstOrDefault();
+
                             if (manageproduct != null)
                             {
                                 TblManagePartnersProductsOption managePartnerProductOption = new TblManagePartnersProductsOption
@@ -716,12 +736,11 @@ public async Task<IResponseVm<string>> Update_Option(UpdateOption model)
                                     CreatedBy = AppConstant.LoggedInUserID,
                                 };
                                 await managePartnersProductsOptions.Add(managePartnerProductOption);
-                                //dbContext.TblManagePartnersProductsOptions.Add(managePartnerProductOption);
-                                //await dbContext.SaveChangesAsync();
                             }
                         }
                     }
                 }
+
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.UpdateSuccessMsg;
             }
