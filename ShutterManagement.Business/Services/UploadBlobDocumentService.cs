@@ -80,12 +80,22 @@ namespace ShutterManagement.Business.Services
                 {
                     responseVm.Message = "Document not found.";
                 }
-                if (ExistDocumentUploaded.BlobUrl != null)
-                {
-                    await _blobService.DeleteAsync(ExistDocumentUploaded.BlobUrl);
-                    var BlobDataAsync = await _blobService.UploadAsync(model.File,model.DocumentTitle, model.JobId,model.BlobUrl);
-                    model.BlobUrl = BlobDataAsync.Data ?? "";
+                //if (ExistDocumentUploaded.BlobUrl != null)
+                //{
+                //    await _blobService.DeleteAsync(ExistDocumentUploaded.BlobUrl);
+                //    var BlobDataAsync = await _blobService.UploadAsync(model.File,model.DocumentTitle, model.JobId,model.BlobUrl);
+                //    model.BlobUrl = BlobDataAsync.Data ?? "";
 
+                //}
+                if (model.File != null)
+                {
+                    if (!string.IsNullOrEmpty(ExistDocumentUploaded.BlobUrl))
+                    {
+                        await _blobService.DeleteAsync(ExistDocumentUploaded.BlobUrl);
+                    }
+                    var blobUploadResult = await _blobService.UploadAsync(model.File,model.DocumentTitle,model.JobId,model.BlobUrl);
+
+                    ExistDocumentUploaded.BlobUrl = blobUploadResult.Data ?? "";
                 }
 
                 ExistDocumentUploaded.Title = model.DocumentTitle;
