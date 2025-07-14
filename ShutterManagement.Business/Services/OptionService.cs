@@ -656,7 +656,7 @@ public async Task<IResponseVm<string>> Update_Option(UpdateOption model)
                                 .Where(x => x.OptionTypeId == item.OptionTypeId).FirstOrDefault();
                         
                         data.RequirePriceAtEstimatePreview = item.RequirePriceAtEstimatePreview;
-                        data.hidePreview = item.hidePreview;
+                        data.HidePreview = item.hidePreview;
                         await optionsTypeService.Update(data);
                     }
                 }
@@ -671,7 +671,7 @@ public async Task<IResponseVm<string>> Update_Option(UpdateOption model)
                     data.IsDelete = true;
                     data.IsActive = false;
                     data.RequirePriceAtEstimatePreview = updatedOption.RequirePriceAtEstimatePreview;
-                    data.hidePreview = updatedOption.hidePreview;
+                    data.HidePreview = updatedOption.hidePreview;
 
                     await optionsTypeService.Update(data);
                 }
