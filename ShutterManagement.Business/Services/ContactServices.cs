@@ -1039,6 +1039,7 @@ namespace ShutterManagement.Business.Services
 
         private async Task UpdateExistingContact(UpdateContact model, TblContact contact, Guid tenantId)
         {
+            
             contact.ContactType = model.ContactType ?? string.Empty;
             contact.FirstName = model.FirstName ?? string.Empty;
             contact.LastName = model.LastName ?? string.Empty;
