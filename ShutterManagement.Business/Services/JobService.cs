@@ -296,9 +296,9 @@ namespace ShutterManagement.Business.Services
             response.Data = (jobStatus, stageName);
             return response;
         }
-        private async Task<bool> IsGHLOpportunityExist(Guid contactId, Guid? tenantId,string GHLOpportunityId)
+        private async Task<bool> IsGHLOpportunityExist(Guid contactId, Guid? tenantId,string? GHLOpportunityId)
         {
-            return await AnyAsync(x => x.ContactId == contactId && x.TenantId == tenantId && x.IsActive == false && x.GhlOpportunityId == GHLOpportunityId);
+            return await AnyAsync(x => x.ContactId == contactId && x.TenantId == tenantId && x.IsActive == true && x.IsDelete == false && x.GhlOpportunityId == GHLOpportunityId);
         }
 
         private async Task<TblJob> BuildJobAsync(CreateJob model, Guid? tenantId, Guid jobStatus, string stageName)
@@ -334,9 +334,12 @@ namespace ShutterManagement.Business.Services
         private async Task<IResponseVm<string>> ProcessJobCreationAsync(TblJob job, CreateJob model, Guid? tenantId)
         {
             var response = new ResponseVm<string>();
+            var insertedJob = new TblJob();
+            if (!await IsGHLOpportunityExist((Guid)model.ContactId, tenantId, model.GhlOpportunityId))
+            {
+                insertedJob = await Add(job);
 
-            var insertedJob = await Add(job);
-
+            }
             response.IsSuccess = true;
             response.Message = AppConstant.InsertSuccessMsg;
 
@@ -350,12 +353,12 @@ namespace ShutterManagement.Business.Services
                 insertedJob.ContactId = model.ContactId;
                 insertedJob.LastAsync = DateTime.Now;
                 await Update(insertedJob);
-            }
+            } 
 
             await CreateJobNotificationAsync(insertedJob, tenantId);
             return response;
         }
-
+       
         private IResponseVm<T> BuildErrorResponse<T>(string message)
         {
             return new ResponseVm<T>
@@ -1937,11 +1940,13 @@ namespace ShutterManagement.Business.Services
                         x.IsDelete == false &&
                         x.IsActive == true);
             }
-
-            stageId = dbContext.TblGhlStages
-                .Where(x => x.GhlStageName.ToLower() == opportunitydata.pipleline_stage.ToLower())
-                .Select(x => x.GhlStageId ?? "")
-                .FirstOrDefault() ?? string.Empty;
+            if (opportunitydata.pipleline_stage != null)
+            {
+                stageId = dbContext.TblGhlStages
+                    .Where(x => x.GhlStageName.ToLower() == opportunitydata.pipleline_stage.ToLower())
+                    .Select(x => x.GhlStageId ?? "")
+                    .FirstOrDefault() ?? string.Empty;
+            }
 
             return (contacts, ghlUser, stageId);
         }
