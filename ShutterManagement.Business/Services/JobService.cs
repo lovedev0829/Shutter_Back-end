@@ -1824,8 +1824,8 @@ namespace ShutterManagement.Business.Services
 
                     var job = new CreateJob
                     {
-                        AddressId = contact1.PrimaryAddress ?? null,
-                        ContactId = contact1.ContactId,
+                        AddressId = contact.PrimaryAddress ?? null,
+                        ContactId = contact.ContactId,
                         JobName = opportunitydata.opportunity_name,
                         AssignedPersonnel = (AssignedPersonnel != null && AssignedPersonnel != Guid.Empty) ? AssignedPersonnel : Guid.Empty,
                         GhlOpportunityId = opportunitydata.id,
@@ -1857,13 +1857,13 @@ namespace ShutterManagement.Business.Services
                 try
                 {
                     var addressId = Guid.Empty;
-                    var contact1 = new TblContact();
+                  //  var contact1 = new TblContact();
                     var assignedPersonnel = Guid.Empty;
 
                     var tenantId = string.IsNullOrEmpty(opportunitydata.WebhookTenantId)
              ? claimsProperty.GetTenantId().ToString()
              : opportunitydata.WebhookTenantId;
-                    var (contact, ghlUser, stageId) = ResolveOpportunityDependencies(opportunitydata);
+                    var (contact1, ghlUser, stageId) = ResolveOpportunityDependencies(opportunitydata);
                     if (ghlUser != null)
                     {
                         assignedPersonnel = dbContext.TblUsers
