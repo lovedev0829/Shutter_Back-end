@@ -503,6 +503,11 @@ namespace ShutterManagement.Business.Services
         private async Task<dynamic> MapToSpContact(ImportContact record, bool isUpdate, Guid? contactId)
         {
             var stateId =  GetStateIdByCode(record.BillingAddressVm?.StateName);
+            bool isTaxExemption = false;
+            if (record.TaxExemptionVm?.EffectiveDate == null && record.TaxExemptionVm?.ExpiryDate == null)
+            {
+                isTaxExemption = true;
+            }
             if (isUpdate)
             {
                 return new UpdateContact
@@ -517,6 +522,7 @@ namespace ShutterManagement.Business.Services
                     Website = record.Website?.Trim(),
                     Notes = record.Notes?.Trim(),
                     Referral = record.Referral?.Trim(),
+                    IsTaxExemption = isTaxExemption,
                     BillingAddressVm = record.BillingAddressVm != null ? new BillingAddressVm
                     {
                         FirstName = record.BillingAddressVm.BillingFirstName?.Trim(),
@@ -536,19 +542,21 @@ namespace ShutterManagement.Business.Services
                     } : null
                 };
             }
+          
 
             return new Sp_Contact
             {
                 ContactType = record.ContactType?.Trim(),
                 FirstName = record.FirstName?.Trim(),
                 LastName = record.LastName?.Trim(),
-                Suffix=record.Suffix?.Trim(),
+                Suffix = record.Suffix?.Trim(),
                 PhoneNumber = record.PhoneNumber?.Trim(),
                 Email = record.Email?.Trim(),
                 Website = record.Website?.Trim(),
                 Notes = record.Notes?.Trim(),
                 Referral = record.Referral?.Trim(),
                 IsBillingAddressSameAsAddress = false,
+                IsTaxExemption = isTaxExemption,
                 BillingAddressVm = record.BillingAddressVm != null ? new BillingAddressVm
                 {
                     FirstName = record.BillingAddressVm.BillingFirstName?.Trim(),
@@ -559,7 +567,7 @@ namespace ShutterManagement.Business.Services
                     ZipCode = record.BillingAddressVm.ZipCode?.Trim(),
                     City = record.BillingAddressVm.City?.Trim(),
                     StateName = record.BillingAddressVm.StateName?.Trim(),
-                    StateId=stateId
+                    StateId = stateId
                 } : null,
                 TaxExemptionVm = record.TaxExemptionVm != null ? new TaxExemption
                 {
