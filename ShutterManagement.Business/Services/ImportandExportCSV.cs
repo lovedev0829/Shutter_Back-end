@@ -327,13 +327,14 @@ namespace ShutterManagement.Business.Services
                     }
                     else
                     {
+                        var LoggedInTenantId = claimsProperty.GetTenantId();
                         int successfulInserts = 0;
                         _ = Task.Run(async () =>
                         {
                             foreach (var validMaterial in validMaterials)
                             {
 
-                                var createMaterialResponse = await material.Create_Material(validMaterial);
+                                var createMaterialResponse = await material.Create_Material(validMaterial, LoggedInTenantId);
                                 if (createMaterialResponse.IsSuccess)
                                 {
                                     successfulInserts++;

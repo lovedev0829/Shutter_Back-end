@@ -2,6 +2,7 @@
 using Azure.Core;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using MimeKit;
 using Newtonsoft.Json;
 using Org.BouncyCastle.Asn1.X509.Qualified;
@@ -606,13 +607,8 @@ namespace ShutterManagement.GHL.Services
                     responseVm.Message = "No associated contact found for the job.";
                     return responseVm;
                 }
-
-                if (string.IsNullOrEmpty(stage.GhlPipelineId) || string.IsNullOrEmpty(contact.ContactId.ToString()) || string.IsNullOrEmpty(getGHLConfiguration.LocationId))
-                {
-                    responseVm.IsSuccess = false;
-                    responseVm.Message = "Missing required GHL identifiers.";
-                    return responseVm;
-                }
+                var GHUserId = dBContext.TblUsers.Where(x => x.Id == job.AssignedPersonnel && x.IsDelete == false && x.IsActive == true)
+                    .Select(y => y.GhlUserId).FirstOrDefault() ?? "";
 
                 var opportunityData = new
                 {
@@ -622,7 +618,7 @@ namespace ShutterManagement.GHL.Services
                     pipelineStageId = stageResponse?.Data?.StageId?.ToString()??"",
                     status = "open",
                     contactId = contact.GhlcontactId,
-                    assignedTo = job.GhluserId ?? "",
+                    assignedTo = GHUserId ?? "",
                 };
 
                 var requestUrl = $"{AppConstant.GHL_BaseAddress}/opportunities/";
