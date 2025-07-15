@@ -59,6 +59,14 @@ namespace ShutterManagement.Controllers
             var profileGetById = await _authService.ProfileGetById();
             return Ok(profileGetById);
         }
+        [HttpGet]
+        [Route("GetCompanyCodesByEmail")]
+        public async Task<IActionResult> GetCompanyCodesByEmail(string email = "")
+        {
+            var companyCodes = await _authService.GetCompanyCodesByEmail(email);
+            return Ok(companyCodes);
+        }
+
         [HttpPost]
         [Route("ForgetPassword")]
         public async Task<IActionResult> ForgetPassword(ForgetPassword forgetPassword)

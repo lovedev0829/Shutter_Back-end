@@ -932,6 +932,58 @@ namespace ShutterManagement.Services
                    code.EndsWith(prefix.Substring(prefix.Length - MIN_CODE_LENGTH, MIN_CODE_LENGTH));
         }
         #endregion
+
+        public async Task<IResponseVm<List<CompanyCodeResponse>>> GetCompanyCodesByEmail(string email)
+        {
+            var result = new ResponseVm<List<CompanyCodeResponse>>();
+
+            try
+            {
+                var companyCodes = new List<CompanyCodeResponse>();
+
+                if (!string.IsNullOrEmpty(email))
+                {
+                    // Get all users with this email and their company codes
+                    var users = await GetAllQuerable()
+                        .Where(u => u.Email.ToLower() == email.ToLower() && u.TenantId.HasValue)
+                        .Select(u => u.TenantId.Value)
+                        .Distinct()
+                        .ToListAsync();
+
+                    if (users.Any())
+                    {
+                        // Get tenants for these users
+                        var tenants = await _tenantService.GetAllQuerable()
+                            .Include(t => t.BrandingInfoNavigation)
+                            .Where(t => users.Contains(t.TenantId) && t.IsActive == true && t.IsDelete == false)
+                            .ToListAsync();
+
+                        companyCodes = tenants
+                            .Where(t => !string.IsNullOrEmpty(t.Code))
+                            .Select(t => new CompanyCodeResponse
+                            {
+                                Code = t.Code,
+                                Name = t.BrandingInfoNavigation?.CompanyName ?? t.Code,
+                                TenantId = t.TenantId.ToString()
+                            })
+                            .DistinctBy(c => c.Code)
+                            .ToList();
+                    }
+                }
+
+                result.IsSuccess = true;
+                result.Data = companyCodes;
+                result.Message = companyCodes.Any() 
+                    ? "Company codes retrieved successfully." 
+                    : "No company codes found for this email.";
+            }
+            catch (Exception ex)
+            {
+                result.Message = $"{AppConstant.ExceptionError} {ex.Message}";
+            }
+
+            return result;
+        }
     }
 }
 
