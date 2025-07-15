@@ -1,8 +1,7 @@
 ﻿//using System.Data.Entity;
-using System.Text;
-using System.Text.Json;
-using System.Text.RegularExpressions;
+using Azure;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core;
@@ -18,12 +17,14 @@ using ShutterManagement.GHL.Services;
 using ShutterManagement.Services;
 using ShutterManagment.GHL.ViewModel.Request;
 using ShutterManagment.GHL.ViewModel.Response;
-using System.Linq.Dynamic.Core;
-using System.Reflection;
-using System.Linq.Expressions;
-using Azure;
-using System.Globalization;
 using System.Diagnostics.Contracts;
+using System.Globalization;
+using System.Linq.Dynamic.Core;
+using System.Linq.Expressions;
+using System.Reflection;
+using System.Text;
+using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace ShutterManagement.Business.Services
 {
@@ -972,7 +973,7 @@ namespace ShutterManagement.Business.Services
                 if (!string.IsNullOrEmpty(model.PhoneNumber))
                     model.PhoneNumber = FormatPhoneNumber(model.PhoneNumber);
 
-                await gHLConfigurationService.GetGHLConfiguration(tenantId.ToString());
+                //await gHLConfigurationService.GetGHLConfiguration(tenantId.ToString());
 
                 if (!string.IsNullOrEmpty(model.GHLContactId))
                 {
@@ -1040,16 +1041,16 @@ namespace ShutterManagement.Business.Services
         private async Task UpdateExistingContact(UpdateContact model, TblContact contact, Guid tenantId)
         {
             
-            contact.ContactType = model.ContactType ?? string.Empty;
+            contact.ContactType = string.IsNullOrEmpty(contact.ContactType) ? (model.ContactType ?? string.Empty) : contact.ContactType;
             contact.FirstName = model.FirstName ?? string.Empty;
             contact.LastName = model.LastName ?? string.Empty;
-            contact.Suffix = model.Suffix ?? string.Empty;
+            contact.Suffix = string.IsNullOrEmpty(contact.Suffix) ? ( model.Suffix ?? string.Empty) : contact.Suffix;
             contact.PhoneNumber = model.PhoneNumber ?? string.Empty;
             contact.Email = model.Email ?? string.Empty;
-            contact.Website = model.Website ?? string.Empty;
-            contact.Notes = model.Notes ?? string.Empty;
-            contact.Referral = model.Referral ?? string.Empty;
-            contact.IsTaxExemption = model.IsTaxExemption;
+            contact.Website = string.IsNullOrEmpty(contact.Website) ? (model.Website ?? string.Empty) : contact.Website;
+            contact.Notes = string.IsNullOrEmpty(contact.Notes) ? (model.Notes ?? string.Empty) : contact.Notes;
+            contact.Referral = string.IsNullOrEmpty(contact.Referral) ? (model.Referral ?? string.Empty) : contact.Referral; 
+            contact.IsTaxExemption =  model.IsTaxExemption;
             contact.IsBillingAddressSameAsAddress = model.IsBillingAddressSameAsAddress;
             contact.ModifiedBy = tenantId;
             contact.UpdatedAt = DateTime.Now;
@@ -1072,12 +1073,12 @@ namespace ShutterManagement.Business.Services
 
             if (existingAddress != null)
             {
-                existingAddress.FirstName = billingVm?.FirstName;
-                existingAddress.LastName = billingVm?.LastName;
-                existingAddress.Phone = billingVm?.PhoneNumber;
-                existingAddress.Email = billingVm?.Email;
+                existingAddress.FirstName = string.IsNullOrEmpty(existingAddress.FirstName) ? billingVm?.FirstName : existingAddress.FirstName;
+                existingAddress.LastName = string.IsNullOrEmpty(existingAddress.LastName) ? billingVm?.LastName : existingAddress.LastName;
+                existingAddress.Phone = string.IsNullOrEmpty(existingAddress.Phone) ? billingVm?.PhoneNumber : existingAddress.Phone; 
+                existingAddress.Email = string.IsNullOrEmpty(existingAddress.Email) ? billingVm?.Email : existingAddress.Email;
                 existingAddress.City = billingVm?.City;
-                existingAddress.State = stateId;
+                existingAddress.State =  stateId;
                 existingAddress.ZipCode = billingVm?.ZipCode;
                 existingAddress.StreetAddress = billingVm?.StreetAddress;
                 existingAddress.UpdatedAt = DateTime.Now;
@@ -1566,19 +1567,22 @@ namespace ShutterManagement.Business.Services
                 {
                     var ghlconfigdetails =  await gHLConfigurationService.GetGHLConfiguration(LoggedInTenantId.ToString());
                     ghlResponse = await gHLService_V2.CreateContactAsync(ghlconfigdetails?.Data,ghlContactAdd);
-                    if (ghlResponse.IsSuccess)
-                    {
-                        var contactExist = (await GetById(contact.ContactId));
+                    //if (ghlResponse.IsSuccess)
+                    //{
+                    //    //var contactExist = (await GetById(contact.ContactId));
+                    //    var contactExist = contact;
 
-                        if (contactExist != null && contactExist.IsDelete == false)
-                        {
-                            contactExist.GhlcontactId = ghlResponse?.Data?.Contact?.id;
-                            contactExist.LastSync = DateTime.Now;
-                        }
-                        var res = await Update(contactExist);
-                        responseVm.IsSuccess = true;
-                        responseVm.Message = "Contact synced successfully with GHL.";
-                    }
+                    //    if (contactExist != null && contactExist.IsDelete == false)
+                    //    {
+                    //        contactExist.GhlcontactId = ghlResponse?.Data?.Contact?.id;
+                    //        contactExist.LastSync = DateTime.Now;
+                    //    }
+                    //    var res = await Update(contactExist);
+                    //    responseVm.IsSuccess = true;
+                    //    responseVm.Message = "Contact synced successfully with GHL.";
+                    //}
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = "Contact synced successfully with GHL.";
                     //responseVm.IsSuccess = true;
                     //responseVm.Message = AppConstant.InsertSuccessMsg;
                     return responseVm;
@@ -1588,8 +1592,22 @@ namespace ShutterManagement.Business.Services
                     var ghlconfigdetails =await gHLConfigurationService.GetGHLConfiguration(LoggedInTenantId.ToString());
                     ghlResponse = await gHLService_V2.UpdateContactAsync(ghlconfigdetails?.Data,contact.GhlcontactId, ghlContactAdd);
                 }
-                if (ghlResponse != null)
+                if (ghlResponse.IsSuccess)
                 {
+                    //var contactExist = (await GetById(contact.ContactId));
+                    var contactExist = contact;
+
+                    if (contactExist != null && contactExist.IsDelete == false)
+                    {
+                        contactExist.GhlcontactId = ghlResponse?.Data?.Contact?.id;
+                        contactExist.LastSync = DateTime.Now;
+                    }
+                    var res = await Update(contactExist);
+                //    responseVm.IsSuccess = true;
+                //    responseVm.Message = "Contact synced successfully with GHL.";
+                //}
+                //if (ghlResponse != null)
+                //{
                     responseVm.IsSuccess = true;
                     responseVm.Message = "Contact synced successfully with GHL.";
                 }
@@ -1702,7 +1720,7 @@ namespace ShutterManagement.Business.Services
                             StreetAddress = contactData.StreetAddress == null ? contactData.address1 : contactData.StreetAddress
                         };
                     }
-                        await gHLConfigurationService.GetGHLConfiguration(contactData.WebhookTenantId);
+                        //await gHLConfigurationService.GetGHLConfiguration(contactData.WebhookTenantId);
                     var res = await Update_Contact(contact, Guid.Parse(contactData.WebhookTenantId));
                     var AllSubetenants = tenantService.GetAllQuerable().Where(x => x.ParentTenantId.ToString() ==
                     contactData.WebhookTenantId && x.IsActive == true && x.IsDelete == false && x.IsGhlconfigSameAsTenant == true)
