@@ -862,11 +862,14 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
+                var GHUserId = dbContext.TblUsers.Where(x => x.Id == job.AssignedPersonnel && x.IsDelete == false && x.IsActive == true)
+                   .Select(y => y.GhlUserId).FirstOrDefault() ?? ""; 
+
                 var ghlOpportunityModel = new
                 {
                     name = job.JobName,
                     pipelineStageId = job.GhlStageId,
-                    assignedTo = job.GhluserId ?? null,
+                    assignedTo = GHUserId,
                 };
 
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", configdetails?.AccessToken ?? "");
