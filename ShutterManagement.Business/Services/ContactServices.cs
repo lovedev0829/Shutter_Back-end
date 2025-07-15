@@ -962,7 +962,7 @@ namespace ShutterManagement.Business.Services
                 var tenantId = (LoggedInTenantId != null && LoggedInTenantId != Guid.Empty)
                     ? LoggedInTenantId.Value
                     : claimsProperty.GetTenantId();
-
+                model.IsBillingAddressSameAsAddress = false;
                 if (!await tenantService.AnyAsync(x => x.TenantId == tenantId && x.IsActive == true))
                 {
                     responseVm.Message = AppConstant.TenantNotFound;
@@ -989,6 +989,7 @@ namespace ShutterManagement.Business.Services
 
                     if (contact != null)
                     {
+
                         await UpdateExistingContact(model, contact, tenantId);
                     }
                     else

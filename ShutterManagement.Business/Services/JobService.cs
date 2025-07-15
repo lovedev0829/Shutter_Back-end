@@ -565,7 +565,7 @@ namespace ShutterManagement.Business.Services
                     FileLogger.Log("Starting UpdateOpportunityInGHLfromApp process.");
 
                     var getAppOpportunities = GetAllQuerable()
-                        .Where(x => x.TenantId == LoggedInTenantId)
+                        .Where(x => x.TenantId == LoggedInTenantId && x.IsActive ==true && x.IsDelete ==false)
                         .ToList();
 
                     var ghlOpportunitiesResponse = await gHLService_V2.GetOpportunitiesFromGhl(ghlconfigdetails?.Data);
@@ -638,15 +638,15 @@ namespace ShutterManagement.Business.Services
 
                 FileLogger.Log($"Exception occurred GHLContact is null.{LoggedInTenantId}");
 
-                var ghlConfigdetails = await gHLConfiguration.GetGHLConfiguration(LoggedInTenantId.ToString());
-                var configCheck = await gHLConfiguration.CheckGHLConfiguration(LoggedInTenantId);
+                //var ghlConfigdetails = await gHLConfiguration.GetGHLConfiguration(LoggedInTenantId.ToString());
+                //var configCheck = await gHLConfiguration.CheckGHLConfiguration(LoggedInTenantId);
 
-                if (!configCheck.IsSuccess)
-                {
-                    responseVm.IsSuccess = false;
-                    responseVm.Message = "GHL configuration check failed.";
-                    return responseVm;
-                }
+                //if (!configCheck.IsSuccess)
+                //{
+                //    responseVm.IsSuccess = false;
+                //    responseVm.Message = "GHL configuration check failed.";
+                //    return responseVm;
+                //}
 
                 FileLogger.Log("Starting SyncOpportunitiesFromGhl process.");
 

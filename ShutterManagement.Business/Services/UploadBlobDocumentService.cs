@@ -95,6 +95,11 @@ namespace ShutterManagement.Business.Services
                     }
                     var sanitizedTitle = model.DocumentTitle?.Replace(" ", "_");
                     var blobUploadResult = await _blobService.UploadAsync(model.File, sanitizedTitle, model.JobId,model.BlobUrl);
+                    if (!blobUploadResult.IsSuccess)
+                    {
+                        responseVm.Message = blobUploadResult.Message;
+                        return responseVm;
+                    }
 
                     ExistDocumentUploaded.BlobUrl = blobUploadResult.Data ?? "";
                 }
