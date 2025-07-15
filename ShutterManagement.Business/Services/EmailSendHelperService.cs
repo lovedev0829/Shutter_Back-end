@@ -100,11 +100,11 @@ namespace ShutterManagement.Business.Services
 
             OAuthEmailRequest vm = new OAuthEmailRequest
             {
-                FromEmail = emailTypeconfiguration.Data?.Username ?? "",
+                FromEmail = emailTypeconfiguration.Data?.From ?? "",
                 ToEmail = ToEmail,
                 Subject = subject,
                 Body = emailContent,
-                ReplyToEmail = string.IsNullOrEmpty(replyTo) ? emailTypeconfiguration.Data?.Username ?? "" : replyTo,
+                ReplyToEmail = string.IsNullOrEmpty(replyTo) ? emailTypeconfiguration.Data?.From ?? "" : replyTo,
                 UserEmail = emailTypeconfiguration.Data?.Username ?? "",
                 Username = emailTypeconfiguration.Data?.Username ?? "",
                 SmtpServer = emailTypeconfiguration.Data?.SmtpServer ?? "",
