@@ -51,7 +51,7 @@ namespace ShutterManagement.Business.Services
                     { "redirect_uri", AppConstant.Microsoft365_RedirectUri },
                     { "response_mode", "query" },
                     { "scope", AppConstant.Microsoft365_Scopes },
-                    { "state", Guid.NewGuid().ToString() }
+                    { "state","12345" }
                 };
 
                 string authUrl = $"{AppConstant.Microsoft365_AuthUri}?" + 
@@ -233,7 +233,6 @@ namespace ShutterManagement.Business.Services
                 ["client_secret"] = AppConstant.Microsoft365_ClientSecret,
                 ["grant_type"] = _msOAuthGrantTypeRefresh,
                 ["refresh_token"] = refreshToken,
-                ["scope"] = AppConstant.Microsoft365_Scopes
             };
 
             using var client = new HttpClient();
