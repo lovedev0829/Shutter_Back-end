@@ -1904,17 +1904,20 @@ namespace ShutterManagement.Business.Services
                     var res = await UpdateJob(job, Guid.Parse(opportunitydata.WebhookTenantId));
                     var AllSubetenants = tenantService.GetAllQuerable().Where(x => x.ParentTenantId.ToString() ==
                     opportunitydata.WebhookTenantId && x.IsActive == true && x.IsDelete == false && x.IsGhlconfigSameAsTenant == true)
-                      .Select(x => x.TenantId).ToList();
+                      .ToList();
                     if (AllSubetenants != null && AllSubetenants.Count > 0)
                     {
                         foreach (var partner in AllSubetenants)
                         {
-                            await gHLConfiguration.GetGHLConfiguration(opportunitydata.WebhookTenantId);
-                            var res1 = await UpdateJob(job, Guid.Parse(opportunitydata.WebhookTenantId));
+                            if(!string.IsNullOrEmpty(partner.GhluserId) && partner.GhluserId.ToLower() == ghlUser.GhlUserId.ToLower())
+                            {
+                                await gHLConfiguration.GetGHLConfiguration(opportunitydata.WebhookTenantId);
+                                var res1 = await UpdateJob(job, Guid.Parse(opportunitydata.WebhookTenantId));
+                            }
                         }
                     }
                     responseVm.IsSuccess = true;
-                    responseVm.Message = AppConstant.InsertSuccessMsg;
+                    responseVm.Message = AppConstant.UpdateSuccessMsg;
                 }
                 catch (Exception ex)
                 {
@@ -2135,8 +2138,6 @@ namespace ShutterManagement.Business.Services
             }
             return responseVm;
         }
-
-      
 
     }
 }
