@@ -327,13 +327,14 @@ namespace ShutterManagement.Business.Services
                     }
                     else
                     {
+                        var LoggedInTenantId = claimsProperty.GetTenantId();
                         int successfulInserts = 0;
                         _ = Task.Run(async () =>
                         {
                             foreach (var validMaterial in validMaterials)
                             {
 
-                                var createMaterialResponse = await material.Create_Material(validMaterial);
+                                var createMaterialResponse = await material.Create_Material(validMaterial, LoggedInTenantId);
                                 if (createMaterialResponse.IsSuccess)
                                 {
                                     successfulInserts++;
@@ -503,6 +504,11 @@ namespace ShutterManagement.Business.Services
         private async Task<dynamic> MapToSpContact(ImportContact record, bool isUpdate, Guid? contactId)
         {
             var stateId =  GetStateIdByCode(record.BillingAddressVm?.StateName);
+            bool isTaxExemption = false;
+            if (record.TaxExemptionVm?.EffectiveDate == null && record.TaxExemptionVm?.ExpiryDate == null)
+            {
+                isTaxExemption = true;
+            }
             if (isUpdate)
             {
                 return new UpdateContact
@@ -517,6 +523,7 @@ namespace ShutterManagement.Business.Services
                     Website = record.Website?.Trim(),
                     Notes = record.Notes?.Trim(),
                     Referral = record.Referral?.Trim(),
+                    IsTaxExemption = isTaxExemption,
                     BillingAddressVm = record.BillingAddressVm != null ? new BillingAddressVm
                     {
                         FirstName = record.BillingAddressVm.BillingFirstName?.Trim(),
@@ -536,19 +543,21 @@ namespace ShutterManagement.Business.Services
                     } : null
                 };
             }
+          
 
             return new Sp_Contact
             {
                 ContactType = record.ContactType?.Trim(),
                 FirstName = record.FirstName?.Trim(),
                 LastName = record.LastName?.Trim(),
-                Suffix=record.Suffix?.Trim(),
+                Suffix = record.Suffix?.Trim(),
                 PhoneNumber = record.PhoneNumber?.Trim(),
                 Email = record.Email?.Trim(),
                 Website = record.Website?.Trim(),
                 Notes = record.Notes?.Trim(),
                 Referral = record.Referral?.Trim(),
                 IsBillingAddressSameAsAddress = false,
+                IsTaxExemption = isTaxExemption,
                 BillingAddressVm = record.BillingAddressVm != null ? new BillingAddressVm
                 {
                     FirstName = record.BillingAddressVm.BillingFirstName?.Trim(),
@@ -559,7 +568,7 @@ namespace ShutterManagement.Business.Services
                     ZipCode = record.BillingAddressVm.ZipCode?.Trim(),
                     City = record.BillingAddressVm.City?.Trim(),
                     StateName = record.BillingAddressVm.StateName?.Trim(),
-                    StateId=stateId
+                    StateId = stateId
                 } : null,
                 TaxExemptionVm = record.TaxExemptionVm != null ? new TaxExemption
                 {
@@ -990,7 +999,7 @@ namespace ShutterManagement.Business.Services
                     .ToList();
 
                 var jobsQuery = dbContext.TblJobs
-                    .Where(x => x.TenantId == claimsProperty.GetTenantId() || subTenantlist.Contains((Guid)x.TenantId));
+                    .Where(x => x.IsActive==true && x.IsDelete==false &&  (x.TenantId == claimsProperty.GetTenantId() || subTenantlist.Contains((Guid)x.TenantId)));
 
                 if (filter.Status == 0)
                 {
@@ -1032,21 +1041,30 @@ namespace ShutterManagement.Business.Services
                 }
 
                 var jobList = (from t2 in jobsQuery
-                               join t1 in dbContext.TblAddresses on t2.AddressId equals t1.AddressId
-                               join t3 in dbContext.MstJobTypes on t2.JobType equals t3.Id
-                               join t4 in dbContext.TblUsers on t2.AssignedPersonnel equals t4.Id
-                               join p1 in dbContext.TblUsers on t2.CreatedBy equals p1.Id
-                               join p2 in dbContext.TblTenants on t2.TenantId equals p2.TenantId
-                               join t5 in dbContext.MstJobStatuses on t2.JobStatus equals t5.JobStatusId
-                               join t6 in dbContext.TblContacts on t2.ContactId equals t6.ContactId
+                               join t1 in dbContext.TblAddresses on t2.AddressId equals t1.AddressId into addr
+                               from t1 in addr.DefaultIfEmpty()
+                               join t3 in dbContext.MstJobTypes on t2.JobType equals t3.Id into jobtype
+                               from t3 in jobtype.DefaultIfEmpty()
+                               join t4 in dbContext.TblUsers on t2.AssignedPersonnel equals t4.Id into personnel
+                               from t4 in personnel.DefaultIfEmpty()
+                               join p1 in dbContext.TblUsers on t2.CreatedBy equals p1.Id into createdBy
+                               from p1 in createdBy.DefaultIfEmpty()
+                               join p2 in dbContext.TblTenants on t2.TenantId equals p2.TenantId into subtenant
+                               from p2 in subtenant.DefaultIfEmpty()
+                               join t5 in dbContext.MstJobStatuses on t2.JobStatus equals t5.JobStatusId into jobStatus
+                               from t5 in jobStatus.DefaultIfEmpty()
+                               join t6 in dbContext.TblContacts on t2.ContactId equals t6.ContactId into contact
+                               from t6 in contact.DefaultIfEmpty()
+                               where t6.IsDelete == false && t6.IsActive == true && t2.IsActive == true && t2.IsDelete == false &&
+                                  (t2.TenantId == claimsProperty.GetTenantId() || subTenantlist.Contains((Guid)t2.TenantId))
                                select new ExportJobsVm
                                {
                                    ContactFirstName = t6.FirstName,
                                    ContactLastName = t6.LastName,
                                    ContactEmail = t6.Email,
                                    ContactPhone = t6.PhoneNumber,
-                                   SubtenantName = p2.FirstName + " " + p2.LastName,
-                                   CreatedbyUsername = p1.FirstName + " " + p1.LastName,
+                                   SubtenantName = (p2.FirstName + " " + p2.LastName) ,
+                                   CreatedbyUsername = (p1.FirstName + " " + p1.LastName) ?? (p2.FirstName + " " + p2.LastName),
                                    JobName = t2.JobName,
                                    JobStatusName = t5.JobStatusName,
                                    StreetAddress = t1.StreetAddress,
@@ -1054,6 +1072,10 @@ namespace ShutterManagement.Business.Services
                                    State = dbContext.MstStates.Where(s => s.Id == t1.State).Select(y => y.StateName ?? "").FirstOrDefault(),
                                    ZipCode = t1.ZipCode
                                }).ToList();
+                var filteredRecords = jobList.AsQueryable();
+
+                filteredRecords = Paginate.ApplyColumnFilters(filteredRecords, filter.ColumnFilters);
+                filteredRecords = Paginate.ApplySorting(filteredRecords, filter.SortColumn, filter.SortDirection);
 
                 var csvBuilder = new StringBuilder();
                 csvBuilder.AppendLine("ContactFirstName,ContactFirstName,ContactEmail,ContactPhone,Partner/Tenant,CreatedBy,JobName,Status,Address,City,State,ZipCode");
@@ -1422,7 +1444,7 @@ namespace ShutterManagement.Business.Services
             var invoicesQuery = (from i in dbContext.TblInvoices
                                  join j in dbContext.TblJobs on i.JobId equals j.JobId
                                  join c in dbContext.TblContacts on j.ContactId equals c.ContactId
-                                 where i.IsDelete == false
+                                 where i.IsDelete == false && i.IsActive ==true && i.TenantId == claimsProperty.GetTenantId()
                                  orderby i.CreatedAt descending
                                  select new InvoiceVM
                                  {
@@ -1506,8 +1528,8 @@ namespace ShutterManagement.Business.Services
                 csvBuilder.AppendLine("EstimateId,OrderNumber,ContactName,OrderDate,ConfirmedDate,TotalAmount");
                 foreach (var report in orderReportData.Data)
                 {
-                    var line = $"{report.EstimateCode??""},{report.OrderNumber??""},{report.jobDetails.ContactFirstName ?? ""},{report.jobDetails.ContactLastName ?? ""}," +
-                               $"{report.CreatedDate},{report.CreatedDate},{report.GrandTotal}";
+                    var line = $"{report.EstimateCode??""},{report.OrderNumber??""},{report.jobDetails.ContactFirstName ?? " " + report.jobDetails.ContactLastName ?? ""},{report.CreatedDate}," +
+                               $"{report.UpdatedAt},{report.GrandTotal}";
                     csvBuilder.AppendLine(line);
                 }
 

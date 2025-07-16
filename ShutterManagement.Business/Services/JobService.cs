@@ -296,9 +296,9 @@ namespace ShutterManagement.Business.Services
             response.Data = (jobStatus, stageName);
             return response;
         }
-        private async Task<bool> IsGHLOpportunityExist(Guid contactId, Guid? tenantId,string GHLOpportunityId)
+        private async Task<bool> IsGHLOpportunityExist(Guid contactId, Guid? tenantId,string? GHLOpportunityId)
         {
-            return await AnyAsync(x => x.ContactId == contactId && x.TenantId == tenantId && x.IsActive == false && x.GhlOpportunityId == GHLOpportunityId);
+            return await AnyAsync(x => x.ContactId == contactId && x.TenantId == tenantId && x.IsActive == true && x.IsDelete == false && x.GhlOpportunityId == GHLOpportunityId);
         }
 
         private async Task<TblJob> BuildJobAsync(CreateJob model, Guid? tenantId, Guid jobStatus, string stageName)
@@ -334,9 +334,12 @@ namespace ShutterManagement.Business.Services
         private async Task<IResponseVm<string>> ProcessJobCreationAsync(TblJob job, CreateJob model, Guid? tenantId)
         {
             var response = new ResponseVm<string>();
+            var insertedJob = new TblJob();
+            if (!await IsGHLOpportunityExist((Guid)model.ContactId, tenantId, model.GhlOpportunityId))
+            {
+                insertedJob = await Add(job);
 
-            var insertedJob = await Add(job);
-
+            }
             response.IsSuccess = true;
             response.Message = AppConstant.InsertSuccessMsg;
 
@@ -350,12 +353,12 @@ namespace ShutterManagement.Business.Services
                 insertedJob.ContactId = model.ContactId;
                 insertedJob.LastAsync = DateTime.Now;
                 await Update(insertedJob);
-            }
+            } 
 
             await CreateJobNotificationAsync(insertedJob, tenantId);
             return response;
         }
-
+       
         private IResponseVm<T> BuildErrorResponse<T>(string message)
         {
             return new ResponseVm<T>
@@ -565,7 +568,7 @@ namespace ShutterManagement.Business.Services
                     FileLogger.Log("Starting UpdateOpportunityInGHLfromApp process.");
 
                     var getAppOpportunities = GetAllQuerable()
-                        .Where(x => x.TenantId == LoggedInTenantId)
+                        .Where(x => x.TenantId == LoggedInTenantId && x.IsActive ==true && x.IsDelete ==false)
                         .ToList();
 
                     var ghlOpportunitiesResponse = await gHLService_V2.GetOpportunitiesFromGhl(ghlconfigdetails?.Data);
@@ -638,15 +641,15 @@ namespace ShutterManagement.Business.Services
 
                 FileLogger.Log($"Exception occurred GHLContact is null.{LoggedInTenantId}");
 
-                var ghlConfigdetails = await gHLConfiguration.GetGHLConfiguration(LoggedInTenantId.ToString());
-                var configCheck = await gHLConfiguration.CheckGHLConfiguration(LoggedInTenantId);
+                //var ghlConfigdetails = await gHLConfiguration.GetGHLConfiguration(LoggedInTenantId.ToString());
+                //var configCheck = await gHLConfiguration.CheckGHLConfiguration(LoggedInTenantId);
 
-                if (!configCheck.IsSuccess)
-                {
-                    responseVm.IsSuccess = false;
-                    responseVm.Message = "GHL configuration check failed.";
-                    return responseVm;
-                }
+                //if (!configCheck.IsSuccess)
+                //{
+                //    responseVm.IsSuccess = false;
+                //    responseVm.Message = "GHL configuration check failed.";
+                //    return responseVm;
+                //}
 
                 FileLogger.Log("Starting SyncOpportunitiesFromGhl process.");
 
@@ -813,7 +816,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : claimsProperty.GetTenantId());
-                await gHLConfiguration.GetGHLConfiguration(LoggedInTenantId.ToString());
+                //await gHLConfiguration.GetGHLConfiguration(LoggedInTenantId.ToString());
 
                 if (string.IsNullOrEmpty(job.GhlOpportunityId))
                 {
@@ -862,11 +865,14 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
+                var GHUserId = dbContext.TblUsers.Where(x => x.Id == job.AssignedPersonnel && x.IsDelete == false && x.IsActive == true)
+                   .Select(y => y.GhlUserId).FirstOrDefault() ?? ""; 
+
                 var ghlOpportunityModel = new
                 {
                     name = job.JobName,
                     pipelineStageId = job.GhlStageId,
-                    assignedTo = job.GhluserId ?? null,
+                    assignedTo = GHUserId,
                 };
 
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", configdetails?.AccessToken ?? "");
@@ -1811,6 +1817,12 @@ namespace ShutterManagement.Business.Services
              : opportunitydata.WebhookTenantId;
 
                     var (contact, ghlUser, stageId) = ResolveOpportunityDependencies(opportunitydata);
+                    if(contact == null)
+                    {
+                        responseVm.IsSuccess = false;
+                        responseVm.Message = "Contact Not found or Deleted in Application.";
+                        return responseVm;
+                    }
                     if (ghlUser != null)
                     {
                         AssignedPersonnel = dbContext.TblUsers
@@ -1821,9 +1833,9 @@ namespace ShutterManagement.Business.Services
 
                     var job = new CreateJob
                     {
-                        AddressId = contact1.PrimaryAddress ?? null,
-                        ContactId = contact1.ContactId,
-                        JobName = opportunitydata.opportunity_name,
+                        AddressId = contact.PrimaryAddress ?? null,
+                        ContactId = contact.ContactId ,
+                        JobName = opportunitydata.opportunity_name ??"",
                         AssignedPersonnel = (AssignedPersonnel != null && AssignedPersonnel != Guid.Empty) ? AssignedPersonnel : Guid.Empty,
                         GhlOpportunityId = opportunitydata.id,
                         GHL_StageId = stageId == "" ? null : Guid.Parse(stageId),
@@ -1854,13 +1866,19 @@ namespace ShutterManagement.Business.Services
                 try
                 {
                     var addressId = Guid.Empty;
-                    var contact1 = new TblContact();
+                  //  var contact1 = new TblContact();
                     var assignedPersonnel = Guid.Empty;
 
                     var tenantId = string.IsNullOrEmpty(opportunitydata.WebhookTenantId)
              ? claimsProperty.GetTenantId().ToString()
              : opportunitydata.WebhookTenantId;
-                    var (contact, ghlUser, stageId) = ResolveOpportunityDependencies(opportunitydata);
+                    var (contact1, ghlUser, stageId) = ResolveOpportunityDependencies(opportunitydata);
+                    if (contact1 == null)
+                    {
+                        responseVm.IsSuccess = false;
+                        responseVm.Message = "Contact Not found or Deleted in Application.";
+                        return responseVm;
+                    }
                     if (ghlUser != null)
                     {
                         assignedPersonnel = dbContext.TblUsers
@@ -1922,7 +1940,7 @@ namespace ShutterManagement.Business.Services
             if (opportunitydata != null)
             {
                 contacts = contact.GetAllQuerable()
-                    .FirstOrDefault(x => x.GhlcontactId == opportunitydata.contact_id && x.IsDelete == false && x.IsActive == true);
+                    .FirstOrDefault(x => x.GhlcontactId == opportunitydata.contact_id && x.IsDelete == false && x.IsActive == true && x.TenantId.ToString() ==tenantId);
             }
 
             if (opportunitydata.Users != null)
@@ -1934,11 +1952,13 @@ namespace ShutterManagement.Business.Services
                         x.IsDelete == false &&
                         x.IsActive == true);
             }
-
-            stageId = dbContext.TblGhlStages
-                .Where(x => x.GhlStageName.ToLower() == opportunitydata.pipleline_stage.ToLower())
-                .Select(x => x.GhlStageId ?? "")
-                .FirstOrDefault() ?? string.Empty;
+            if (opportunitydata.pipleline_stage != null)
+            {
+                stageId = dbContext.TblGhlStages
+                    .Where(x => x.GhlStageName.ToLower() == opportunitydata.pipleline_stage.ToLower())
+                    .Select(x => x.GhlStageId ?? "")
+                    .FirstOrDefault() ?? string.Empty;
+            }
 
             return (contacts, ghlUser, stageId);
         }

@@ -941,14 +941,13 @@ namespace ShutterManagement.Business.Services
                                 <td style='text-align: center; padding: 5px 5px;'>{product.Width ?? 0}</td>
                                 <td style='text-align: center; padding: 5px 5px;'>{product.Height ?? 0}</td>
                                 <td style='text-align: center; padding: 5px 5px;'>{unitprice ?? 0.0m:F2}</td>
-                                <td style='text-align: center; padding: 5px 5px;'>{optionprice ?? 0.0m:F2}</td>
                                 <td style='text-align: center; padding: 5px 5px;'>{subtotal ?? 0.0m:F2}</td>
                             </tr>");
             }
 
             return $"<tbody>{productListHtml}</tbody>";
         }
-
+        ////<td style='text-align: center; padding: 5px 5px;'>{optionprice ?? 0.0m:F2}</td>
         private string GenerateInvoicetListHtml(List<Core.ViewModels.Request.InvoicePayment> payments)
         {
             var paymentsListHtml = new StringBuilder();
