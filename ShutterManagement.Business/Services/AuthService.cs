@@ -304,7 +304,7 @@ namespace ShutterManagement.Services
 
                 await UpdateUserTokenAsync(user, token);
                 await SendPasswordResetEmailAsync(user.Email, forgetPassword.TenantId, token);
-                await CreateNotificationAsync(NotificationModule.Tenant, $"Tenant password {AppConstant.Update_Notification}");
+                await CreateNotificationAsync(NotificationModule.Tenant, $"Password {AppConstant.Update_Notification}",user.Id);
 
                 result.IsSuccess = true;
                 result.Message = AppConstant.ForgotPasswordSuccess;
@@ -694,20 +694,19 @@ namespace ShutterManagement.Services
             await Update(user);
         }
 
-        private async Task CreateNotificationAsync(NotificationModule module, string body)
+        private async Task CreateNotificationAsync(NotificationModule module, string body, Guid? userId = null)
         {
             var notification = new CreateNotification
             {
-                UserId = _claimsProperty.GetUserId(),
+                UserId = userId == Guid.Empty || userId == null ? _claimsProperty.GetUserId() : userId,
                 Subject = Enum.GetName(typeof(NotificationModule), module),
                 Body = body,
-                            CreatedDate = DateTime.Now,
-                            IsReaded = true
-                        };
-            
+                CreatedDate = DateTime.Now,
+                IsReaded = true
+            };
+
             await _notification.CreateNotification(notification);
         }
-
         private async Task<UserResponse> GetUserProfileAsync()
         {
             return await GetAllQuerable()
