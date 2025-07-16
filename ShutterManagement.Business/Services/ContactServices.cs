@@ -1014,6 +1014,12 @@ namespace ShutterManagement.Business.Services
                         return responseVm;
                     }
 
+                    if (!model.IsTaxExemption && (model.TaxExemptionVm?.EffectiveDate == null || model.TaxExemptionVm?.ExpiryDate == null))
+                    {
+                        responseVm.Message = "Please Fill TaxExemption Details.";
+                        return responseVm;
+                    }
+
                     if (model.TaxExemptionVm != null && model.TaxExemptionVm.ExpiryDate < model.TaxExemptionVm.EffectiveDate)
                     {
                         responseVm.Message = "ExpiryDate must be greater than EffectiveDate.";
@@ -1023,7 +1029,10 @@ namespace ShutterManagement.Business.Services
                     if (contact != null)
                     {
                         await UpdateExistingContact(model, contact, tenantId);
-                        await HandleTaxExemption(model, contact);
+                        if (!model.IsTaxExemption)
+                        {
+                            await HandleTaxExemption(model, contact);
+                        }
                         await SyncWithGHLIfConfigured(model, contact, tenantId);
                     }
                 }
