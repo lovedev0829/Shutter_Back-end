@@ -84,12 +84,12 @@ namespace ShutterManagement.Business.Services
             return response;
         }
 
-        public async Task<IResponseVm<string>> GetEmailConfigAndSendEmail(string ToEmail, string emailContent, string subject = "", string replyTo = "", List<EmailAttachments> emailAttachments = null)
+        public async Task<IResponseVm<string>> GetEmailConfigAndSendEmail(string ToEmail, string emailContent, string subject = "", string replyTo = "", List<EmailAttachments> emailAttachments = null,string TenantId = "")
         {
             IResponseVm<string> response = new ResponseVm<string>();
             try
             {
-                var emailTypeconfiguration = await GetEmailConfigurationByType();
+                var emailTypeconfiguration = await GetEmailConfigurationByType(TenantId);
 
             if (!emailTypeconfiguration.IsSuccess || emailTypeconfiguration.Data == null)
             {
@@ -124,13 +124,13 @@ namespace ShutterManagement.Business.Services
             }
             return response;
         }
-        public async Task<IResponseVm<EmailConfigurationVm>> GetEmailConfigurationByType()
+        public async Task<IResponseVm<EmailConfigurationVm>> GetEmailConfigurationByType(string TenantId = "")
         {
             IResponseVm<EmailConfigurationVm?> configResponse = new ResponseVm<EmailConfigurationVm?>();
             try
             {
                 var emailConfig = (await emailConfigurationService.GetAll())
-                       .FirstOrDefault(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
+                       .FirstOrDefault(x => x.TenantId.ToString() == (string.IsNullOrEmpty(TenantId) ? claimsProperty.GetTenantId().ToString() : TenantId )&& x.IsActive == true && x.IsDelete == false);
                 var emailType = (await emailTypeService.GetAll())
                         .FirstOrDefault(s => s.Id == emailConfig?.EmailType)?.Name ?? "";
                 if (!Enum.TryParse<EmailSendType>(emailType, true, out var parsedEmailSendType))

@@ -275,25 +275,25 @@ namespace ShutterManagement.Services
 
             try
             {
-                if (forgetPassword == null || string.IsNullOrWhiteSpace(forgetPassword.Email) || string.IsNullOrWhiteSpace(forgetPassword.Code))
+                if (forgetPassword == null || string.IsNullOrWhiteSpace(forgetPassword.Email) || string.IsNullOrWhiteSpace(forgetPassword.TenantId))
                 {
                     result.Message = "Email and code are required.";
                     return result;
                 }
 
-                var user = await GetUserByEmailAsync(forgetPassword.Email);
+                var user = await GetUserByEmailAsync(forgetPassword.Email, forgetPassword.TenantId);
                 if (user == null)
                 {
                     result.Message = AppConstant.UserNotExist;
                     return result;
                 }
 
-                var isValidCode = await ValidateCompanyCodeAsync(forgetPassword.Code, user.TenantId ?? Guid.Empty);
-                if (!isValidCode)
-                {
-                    result.Message = "Invalid company code.";
-                    return result;
-                }
+                //var isValidCode = await ValidateCompanyCodeAsync(forgetPassword.Code, user.TenantId ?? Guid.Empty);
+                //if (!isValidCode)
+                //{
+                //    result.Message = "Invalid company code.";
+                //    return result;
+                //}
 
                 var token = GeneratePasswordResetToken(user.Email, user.Id);
                 if (string.IsNullOrEmpty(token))
@@ -303,7 +303,7 @@ namespace ShutterManagement.Services
                 }
 
                 await UpdateUserTokenAsync(user, token);
-                await SendPasswordResetEmailAsync(user.Email, forgetPassword.Code, token);
+                await SendPasswordResetEmailAsync(user.Email, forgetPassword.TenantId, token);
                 await CreateNotificationAsync(NotificationModule.Tenant, $"Tenant password {AppConstant.Update_Notification}");
 
                 result.IsSuccess = true;
@@ -725,25 +725,11 @@ namespace ShutterManagement.Services
                     .FirstOrDefaultAsync();
         }
 
-        private async Task<TblUser> GetUserByEmailAsync(string email)
+        private async Task<TblUser> GetUserByEmailAsync(string email, string TenantId)
         {
             return await GetAllQuerable()
-                .Where(x => x.IsActive == true && x.IsDelete != true && x.Email == email)
+                .Where(x => x.IsActive == true && x.IsDelete != true && x.Email == email && x.TenantId.ToString() == TenantId)
                 .FirstOrDefaultAsync();
-        }
-
-        private async Task<bool> ValidateCompanyCodeAsync(string code, Guid userTenantId)
-        {
-            var tenant = await _tenantService.GetAllQuerable()
-                .Where(x => x.Code == code && x.IsActive == true && x.IsDelete != true)
-                .FirstOrDefaultAsync();
-
-            if (tenant == null)
-                return false;
-
-            return await _tenantService.AnyAsync(x => x.IsDelete != true && x.IsActive == true &&
-                                                     (x.TenantId == tenant.TenantId || x.ParentTenantId == tenant.TenantId) &&
-                                                     x.TenantId == userTenantId);
         }
 
         private string GeneratePasswordResetToken(string email, Guid userId)
@@ -776,11 +762,11 @@ namespace ShutterManagement.Services
             await Update(user);
         }
 
-        private async Task SendPasswordResetEmailAsync(string email, string companyCode, string token)
+        private async Task SendPasswordResetEmailAsync(string email, string TenantId, string token)
         {
-            var resetLink = $"{AppConstant.UIBaseURL}reset-password/{companyCode}/{token}";
+            var resetLink = $"{AppConstant.UIBaseURL}reset-password/{token}";
             var content = $"Please reset your password using the following link: <a href='{resetLink}'>Reset Password</a>";
-            await emailSendHelperService.GetEmailConfigAndSendEmail(email, content, AppConstant.Sub_ForgotPassword);
+            await emailSendHelperService.GetEmailConfigAndSendEmail(email, content, AppConstant.Sub_ForgotPassword,string.Empty,null,TenantId);
         }
 
         private async Task<TblUser> GetUserByTokenAsync(string token)
