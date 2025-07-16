@@ -16,19 +16,21 @@ namespace ShutterManagement.Business.Services
     public class GhlCustomFieldsService : BaseRepository<ShutterDBContext, TblGhlCustomField>, IGhlCustomFieldsService
     {
         private readonly GHLService_v2 gHLService_V2;
+        private readonly ClaimsProperty claimsProperty;
 
-        public GhlCustomFieldsService(GHLService_v2 gHLService_V2)
+        public GhlCustomFieldsService(GHLService_v2 gHLService_V2 ,ClaimsProperty claimsProperty)
         {
             this.gHLService_V2 = gHLService_V2;
+            this.claimsProperty = claimsProperty;
         }
 
-        public async Task<IResponseVm<string>> SaveGhlCustomFieldsAsync(Guid? tenantId = null)
+        public async Task<IResponseVm<string>> SaveGhlCustomFieldsAsync(GetGHLConfiguration getGHLConfiguration, Guid? tenantId = null)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
 
             try
             {
-                var getFieldsResponse = await gHLService_V2.GetGhlCustomFieldsAsync();
+                var getFieldsResponse = await gHLService_V2.GetGhlCustomFieldsAsync(getGHLConfiguration);
 
                 if (!getFieldsResponse.IsSuccess || getFieldsResponse.Data == null || !getFieldsResponse.Data.Any())
                 {
@@ -38,11 +40,11 @@ namespace ShutterManagement.Business.Services
                 }
 
                 var customFields = getFieldsResponse.Data;
-                var currentTenantId = (tenantId != null && tenantId != Guid.Empty) ? tenantId.Value : AppConstant.LoggedInTenantId;
+                var currentTenantId = (tenantId != null && tenantId != Guid.Empty) ? tenantId.Value : claimsProperty.GetTenantId();
 
                 foreach (var field in customFields)
                 {
-                    var existingField = GetAllQuerable().Where(x => x.TenantId == currentTenantId && x.FieldName == field.name).FirstOrDefault();
+                    var existingField = GetAllQuerable().Where(x => x.TenantId == currentTenantId && x.FieldKey == field.fieldKey).FirstOrDefault();
 
                     if (existingField != null)
                     {
@@ -51,7 +53,7 @@ namespace ShutterManagement.Business.Services
                         existingField.FieldKey = field.fieldKey;
                         existingField.Placeholder = field.placeholder;
                         existingField.DataType = field.dataType;
-                        existingField.Position = field.position;
+                        //existingField.Position = field.position;
                         existingField.DocumentType = field.documentType;
                         existingField.ParentId = field.parentId;
                         existingField.LocationId = field.locationId;
@@ -74,7 +76,7 @@ namespace ShutterManagement.Business.Services
                             FieldKey = field.fieldKey,
                             Placeholder = field.placeholder,
                             DataType = field.dataType,
-                            Position = field.position,
+                            //Position = field.position,
                             DocumentType = field.documentType,
                             ParentId = field.parentId,
                             LocationId = field.locationId,

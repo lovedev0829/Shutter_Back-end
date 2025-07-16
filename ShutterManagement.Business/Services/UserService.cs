@@ -17,6 +17,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Data;
+using System.Data.Entity;
 using System.Data.Entity.Core.Metadata.Edm;
 using System.Threading.Tasks;
 
@@ -31,11 +32,12 @@ namespace ShutterManagement.Services
         private readonly IMapper mapper;
         private readonly INotificationService notification;
         private readonly ITenantBrandingService tenantBrandingService;
-       // private readonly GoogleAuthService googleAuthService;
+        private readonly EmailSendHelperService emailSendHelperService;
 
         public UserService(DataServices dataServices, IRoleService roleService
             , ClaimsProperty claimsProperty, IUserRoleService userRoleService
-            , IMapper mapper,INotificationService notification,ITenantBrandingService tenantBrandingService/*,GoogleAuthService googleAuthService*/)
+            , IMapper mapper,INotificationService notification,ITenantBrandingService tenantBrandingService,
+            EmailSendHelperService emailSendHelperService)
         {
             _dataServices = dataServices;
             this.roleService = roleService;
@@ -44,7 +46,7 @@ namespace ShutterManagement.Services
             this.mapper = mapper;
             this.notification = notification;
             this.tenantBrandingService = tenantBrandingService;
-            //this.googleAuthService = googleAuthService;
+            this.emailSendHelperService = emailSendHelperService;
         }
 
         public async Task<IResponseVm<string>> Create(CreateUser UserDetails)
@@ -83,6 +85,13 @@ namespace ShutterManagement.Services
                 {
                     result.Message = "Email " + AppConstant.AlreadyExists;
                     return result;
+                }
+                bool IsGHLUserExists = dbContext.TblGhlUsers.Any(x => x.GhlUserId == UserDetails.GhlUserId && x.IsActive == true
+                && x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId());
+                if(IsGHLUserExists)
+                {
+                    result.Message = "GHL User " + AppConstant.AlreadyExists;
+                    return result;  
                 }
                 bool IsRoleExists = await roleService.AnyAsync(x => x.Id == UserDetails.RoleId
                 && x.IsShow == false && x.IsActive == true && x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId());
@@ -132,6 +141,7 @@ namespace ShutterManagement.Services
                             TypeId = AppConstant.LoggedInUserID,
                         };
                         var result3 = notification.CreateNotification(notification3);
+                        
                         TblUserRole userRole = new TblUserRole
                         {
                             UserId = res.Id,
@@ -143,26 +153,15 @@ namespace ShutterManagement.Services
                         };
                         await userRoleService.Add(userRole);
 
-                        var Tenantcode = dbContext.TblTenants.Where(x => x.IsDelete == false && x.TenantId==claimsProperty.GetTenantId()).FirstOrDefault();
-                        var tenantInfoDetails = tenantBrandingService.GetAllQuerable().Where(x => x.Id == Tenantcode.BrandingInfo && x.IsActive == true).FirstOrDefault();
-
-                        WelcomeEmailModel welcomemodel = new WelcomeEmailModel
-                        {
-                            Name = UserDetails.FirstName + " " + UserDetails.LastName ?? "" + UserDetails.Suffix ?? "",
-                            UserName = UserDetails.Email ?? "",
-                            Password = UserDetails.Password ?? "",
-                            CompanyName = tenantInfoDetails?.CompanyName ?? "",
-                            Logo = tenantInfoDetails?.Logo ?? "",
-                            loginUrl = $"{AppConstant.UIBaseURL}{Tenantcode?.Code ?? ""}" ??"",
-                            color = tenantInfoDetails?.PrimaryColor ?? ""
-                        };
-
-                        var WelcomeTemplate = dbContext.TblTemplates.Where(x => x.IsDelete == false && x.TemplateCategory.ToLower() == EnumValue.GetEnumValue(EmailTemplateType.WelcomeEmail)).FirstOrDefault();
-                        var emailContent = EmailHelper.ReplacePlaceholdersForlWelcomeEmail(WelcomeTemplate?.TemplateValue, welcomemodel);
-                        //await googleAuthService.WelcomeEmailWithOauth(UserDetails.Email, emailContent);
-
                         result.IsSuccess = true;
                         result.Message = AppConstant.InsertSuccessMsg;
+
+                        var Tenantcode = dbContext.TblTenants.Where(x => x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId()).FirstOrDefault();
+                        var tenantInfoDetails = tenantBrandingService.GetAllQuerable().Where(x => x.Id == Tenantcode.BrandingInfo && x.IsActive == true).FirstOrDefault();
+                        var mailResult = await SendWelcomeEmail(UserDetails, tenantInfoDetails);
+                        if (!mailResult.IsSuccess)
+                            result.Message += "; Email Status: " + mailResult.Message;
+
                     }
                     else
                     {
@@ -181,6 +180,7 @@ namespace ShutterManagement.Services
             return result;
         }
 
+        
         public async Task<IResponseVm<string>> Update(UpdateUser UserDetails)
         {
             IResponseVm<string> result = new ResponseVm<string>();
@@ -234,6 +234,12 @@ namespace ShutterManagement.Services
                     if (!IsRoleExists)
                     {
                         result.Message = "Role " + AppConstant.NoDataFound;
+                        return result;
+                    }
+                    bool IsGHLUserExists = dbContext.TblGhlUsers.Any(x => x.GhlUserId == UserDetails.GhlUserId && x.IsActive == true && x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId());
+                    if (IsGHLUserExists)
+                    {
+                        result.Message = "GHL User " + AppConstant.AlreadyExists;
                         return result;
                     }
                     var UpdateUserDetails = UserExistsDetails.FirstOrDefault();
@@ -409,9 +415,9 @@ namespace ShutterManagement.Services
                 }
                 else
                 {
-                    Users = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId() && x.IsTenantAdmin == false).OrderByDescending(x => x.CreatedAt).ToList();
+                    Users = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId() /*&& x.IsTenantAdmin == false*/).OrderByDescending(x => x.CreatedAt).ToList();
                 }
-                Users = Users.Where(x => x.Id != AppConstant.LoggedInUserID ).ToList();
+              //  Users = Users.Where(x => x.Id != AppConstant.LoggedInUserID ).ToList();
                 foreach (var user in Users)
                 {
                     UsersList users = new UsersList
@@ -427,7 +433,8 @@ namespace ShutterManagement.Services
                         Phone = user.Phone,
                         JobTitle = user.JobTitleId,
                         TenantId = user.TenantId,
-                        IsActive = user.IsActive
+                        IsActive = user.IsActive,
+                        IsTenantAdmin = user.IsTenantAdmin
                     };
                     users.JobTitleName = dbContext.MstJobTitles
                         .Where(x => x.Id == users.JobTitle
@@ -493,8 +500,6 @@ namespace ShutterManagement.Services
             return responseVm;
         }
 
-
-
         public async Task<IResponseVm<List<UsersList>>> GetAllUserList()
         {
             IResponseVm<List<UsersList>> responseVm = new ResponseVm<List<UsersList>>();
@@ -534,7 +539,6 @@ namespace ShutterManagement.Services
             return responseVm;
         }
 
-
         public async Task<string> GetTenantIdByUserEmailAndPwd(string Username, string Password)
         {
             var user = GetAllQuerable().Where(u => u.Username == Username && u.Pwd == Password 
@@ -561,6 +565,32 @@ namespace ShutterManagement.Services
                 await Update(user);
             }
         }
+
+        private async Task<IResponseVm<string>> SendWelcomeEmail(CreateUser model, TblTenantBrandingInfo tenantInfoDetails)
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+            try
+            {
+                WelcomeEmailModel welcomemodel = new WelcomeEmailModel
+                {
+                    Name = $"{model.FirstName} {model.LastName}" ?? "",
+                    UserName = model.Email ?? "",
+                    Password = model.Password ?? "",
+                    CompanyName = tenantInfoDetails.CompanyName ?? "",
+                    Logo = tenantInfoDetails.Logo ?? "",
+                    loginUrl = $"{AppConstant.UIBaseURL}",
+                    color = tenantInfoDetails.PrimaryColor ?? "",
+                    Email = model.Email
+                };
+                responseVm = await emailSendHelperService.SendEmailWithReplacedContent(EmailTemplateType.WelcomeEmail, welcomemodel);
+            }
+            catch (Exception ex)
+            {
+                responseVm.Message = ("Welcome email failed: " + ex.Message);
+            }
+            return responseVm;
+        }
+
 
     }
 }

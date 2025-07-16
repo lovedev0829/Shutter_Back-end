@@ -29,6 +29,10 @@ public partial class TblOptionsType
 
     public int? SortOrder { get; set; }
 
+    public bool? RequirePriceAtEstimatePreview { get; set; }
+
+    public bool? HidePreview { get; set; }
+
     public virtual TblOption? Option { get; set; }
 
     public virtual ICollection<TblManagePartnersProductsOption> TblManagePartnersProductsOptions { get; set; } = new List<TblManagePartnersProductsOption>();

@@ -105,17 +105,16 @@ namespace ShutterManagement.Business.Services
             {
                 var query =
                  (from estimate in dbContext.TblEstimates
-                  join estimatewindow in dbContext.TblEstimateWindows on estimate.EstimateId equals estimatewindow.EstimateId
+                  join estimatewindow in dbContext.TblEstimateWindows.Where(x => x.IsActive == true) on estimate.EstimateId equals estimatewindow.EstimateId
                   where estimatewindow.EstimateId.ToString() == EstimateID
-                  join estwindowProduct in dbContext.TblEstimateWindowProducts on estimatewindow.WindowId equals estwindowProduct.WindowId
+                  join estwindowProduct in dbContext.TblEstimateWindowProducts.Where(x => x.IsActive == true) on estimatewindow.WindowId equals estwindowProduct.WindowId
                   where estwindowProduct.EstimateId.ToString() == EstimateID
-                  join estwinprocomp in dbContext.TblEstimateWindowProductComponents.Where(x => x.IsActive == true) on estwindowProduct.ProductId equals estwinprocomp.ProductId into estwinprocomps
+                  join estwinprocomp in dbContext.TblEstimateWindowProductComponents.Where(x => x.IsActive == true) on estwindowProduct.EstimateWindowProductId equals estwinprocomp.EstimateWindowProductId into estwinprocomps
                   from estwinprocomp in estwinprocomps.DefaultIfEmpty()
                   where (string.IsNullOrEmpty(estwinprocomp.EstimateId.ToString()) || estwinprocomp.EstimateId.ToString() == EstimateID) &&
                   (string.IsNullOrEmpty(estwinprocomp.WindowId.ToString()) || estwindowProduct.WindowId == estwinprocomp.WindowId)
-                  join productComponentmat in dbContext.TblEstimateWindowProductComponentMaterials.Where(x => x.IsActive == true) on estwinprocomp.ComponentId equals
-                  productComponentmat.ComponentId
-                  into productComponentmats
+                  join productComponentmat in dbContext.TblEstimateWindowProductComponentMaterials.Where(x => x.IsActive == true) on estwinprocomp.EstimateWindowProductComponentId equals
+                  productComponentmat.EstimateWindowProductComponentId into productComponentmats
                   from productComponentmat in productComponentmats.DefaultIfEmpty()
                   where (string.IsNullOrEmpty(productComponentmat.EstimateId.ToString()) || productComponentmat.EstimateId.ToString() == EstimateID) &&
                   (string.IsNullOrEmpty(productComponentmat.WindowId.ToString()) || estwindowProduct.WindowId == productComponentmat.WindowId)
@@ -397,9 +396,9 @@ namespace ShutterManagement.Business.Services
                     return new List<OptionTaxVM>();
 
                 optionTaxDetails = (from windowOptions in dbContext.WindowOptions
-                                    join partnerOptions in dbContext.TblManagePartnersProductsOptions on windowOptions.OptionTypeId equals partnerOptions.OptionTypeId
-                                    join optionValues in dbContext.TblOptionsTypes on partnerOptions.OptionTypeId equals optionValues.OptionTypeId
-                                    join options in dbContext.TblOptions on optionValues.OptionId equals options.OptionId
+                                    join partnerOptions in dbContext.TblManagePartnersProductsOptions.Where(x => x.IsActive == true) on windowOptions.OptionTypeId equals partnerOptions.OptionTypeId
+                                    join optionValues in dbContext.TblOptionsTypes.Where(x => x.IsActive == true) on partnerOptions.OptionTypeId equals optionValues.OptionTypeId
+                                    join options in dbContext.TblOptions.Where(x => x.IsActive == true) on optionValues.OptionId equals options.OptionId
                                     join taxDetails in dbContext.TblTaxRates.Where(x => x.TenantId == claimsProperty.GetTenantId()) on
                                     (partnerOptions.TaxId == null || partnerOptions.TaxId == Guid.Empty ? manageProduct.TaxId : partnerOptions.TaxId)
                                     equals taxDetails.TaxRateId into taxJoin
@@ -427,8 +426,8 @@ namespace ShutterManagement.Business.Services
             else
             {
                 optionTaxDetails = (from windowOptions in dbContext.WindowOptions
-                                    join optionValues in dbContext.TblOptionsTypes on windowOptions.OptionTypeId equals optionValues.OptionTypeId
-                                    join options in dbContext.TblOptions on optionValues.OptionId equals options.OptionId
+                                    join optionValues in dbContext.TblOptionsTypes.Where(x => x.IsActive == true) on windowOptions.OptionTypeId equals optionValues.OptionTypeId
+                                    join options in dbContext.TblOptions.Where(x => x.IsActive == true) on optionValues.OptionId equals options.OptionId
                                     join taxDetails in dbContext.TblTaxRates.Where(x => x.TenantId == claimsProperty.GetTenantId()) on options.TaxId equals taxDetails.TaxRateId into taxJoin
                                     from tax in taxJoin.DefaultIfEmpty()
                                     where options.IsActive == true
@@ -452,7 +451,6 @@ namespace ShutterManagement.Business.Services
                                         OptionMarkup = options.Markup,
                                     }).ToList();
             }
-
             return optionTaxDetails;
         }
 

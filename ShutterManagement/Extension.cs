@@ -37,15 +37,27 @@ namespace ShutterManagement
             AppConstant.Microsoft365_ClientId = Configuration["Microsoft365Credentials:ClientId"] ?? "";
             AppConstant.Microsoft365_ClientSecret = Configuration["Microsoft365Credentials:ClientSecret"] ?? "";
             AppConstant.Microsoft365_RedirectUri = Configuration["Microsoft365Credentials:RedirectUri"] ?? "";
+            AppConstant.Microsoft365_AuthUri = Configuration["Microsoft365Credentials:AuthUri"] ?? "";
             AppConstant.Microsoft365_TenantId = Configuration["Microsoft365Credentials:tenantId"] ?? "";
-            AppConstant.Microsoft365_Scopes = string.Join(",", Configuration.GetSection("Microsoft365Credentials:scopes").Get<string[]>() ?? new string[0]);
-            
+            AppConstant.Microsoft365_Scopes = Configuration["Microsoft365Credentials:scopes"] ?? "";
+
+            //Google OAuth Configuration
+            AppConstant.Google_ClientId = Configuration["GoogleOAuth:ClientId"] ?? "";
+            AppConstant.Google_ClientSecret = Configuration["GoogleOAuth:ClientSecret"] ?? "";
+            AppConstant.Google_RedirectUri = Configuration["GoogleOAuth:RedirectUri"] ?? "";
+            AppConstant.Google_AuthUrl = Configuration["GoogleOAuth:AuthUrl"] ?? "";
+            AppConstant.Google_TokenUrl = Configuration["GoogleOAuth:TokenUrl"] ?? "";
+
             // Stripe Configuration
             AppConstant.Stripe_SecretKey = Configuration["Stripe:SecretKey"] ?? "";
             AppConstant.Stripe_PublishableKey = Configuration["Stripe:PublishableKey"] ?? "";
             AppConstant.Stripe_WebhookSecret = Configuration["Stripe:WebhookSecret"] ?? "";
             AppConstant.Stripe_CancelUrl = Configuration["Stripe:cancelUrl"] ?? "";
             AppConstant.Stripe_SuccessUrl = Configuration["Stripe:successUrl"] ?? "";
+
+            // Azure Blob Storage Configuration
+            AppConstant.AzureBlobStorage_ConnectionString = Configuration["AzureBlobStorage:ConnectionString"] ?? "";
+            AppConstant.AzureBlobStorage_ContainerName = Configuration["AzureBlobStorage:ContainerName"] ?? "";
         }
     }
 }

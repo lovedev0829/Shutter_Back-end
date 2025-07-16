@@ -66,7 +66,7 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.UpdateSuccessMsg;
                     if (responseVm.IsSuccess)
                     {
-                        await gHLConfiguration.GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
+                        var ghlconfigdetails =  await gHLConfiguration.GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
                         var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration(claimsProperty.GetTenantId());
                         if (Checkghlresponse.IsSuccess)
                         {
@@ -76,10 +76,10 @@ namespace ShutterManagement.Business.Services
                             {
                                 assignedUserId= IsExist.GhlUserId ?? "",
                                 startTime = formattedSchedule ?? "",
-                                locationId = AppConstant.GHL_LocationId ?? "",
+                                locationId = ghlconfigdetails?.Data?.LocationId ?? "",
                                 ignoreDateRange = true,
                             };
-                            var ghlResponse = await gHLService_V2.UpdateAppointmentAsync(IsExist?.GhlEventId, appointment);
+                            var ghlResponse = await gHLService_V2.UpdateAppointmentAsync(ghlconfigdetails?.Data,IsExist?.GhlEventId, appointment);
                         }
                         else
                         {
@@ -112,7 +112,7 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.InsertSuccessMsg;
                     if (responseVm.IsSuccess)
                     {
-                        await gHLConfiguration.GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
+                        var ghlconfigdetails =  await gHLConfiguration.GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
                         var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration(claimsProperty.GetTenantId());
                        if(Checkghlresponse.IsSuccess)
                         {
@@ -125,11 +125,11 @@ namespace ShutterManagement.Business.Services
                                 Title="Shutter Measurement Appointment",
                                 contactId = contactId,
                                 startTime = formattedSchedule ?? "",
-                                locationId = AppConstant.GHL_LocationId ?? "",
+                                locationId = ghlconfigdetails.Data.LocationId ?? "",
                                 assignedUserId = tblAppointmentSchedule?.GhlUserId ?? "",
                                 ignoreDateRange = true,
                             };
-                            var ghlResponse = await gHLService_V2.CreateAppointmentAsync(appointment);
+                            var ghlResponse = await gHLService_V2.CreateAppointmentAsync(ghlconfigdetails.Data,appointment);
                             if (ghlResponse != null)
                             {
                                 res.GhlEventId = ghlResponse?.Data?.id;

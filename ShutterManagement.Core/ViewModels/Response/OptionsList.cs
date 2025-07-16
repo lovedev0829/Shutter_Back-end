@@ -27,14 +27,20 @@ namespace ShutterManagement.Core.ViewModels.Response
         public Guid? TaxId { get; set; }
 
         public string? TaxName { get; set; }
+        public bool? BuildRequirement { get; set; }
+        public bool? UseInCutSheet { get; set; }
     }
     public class OptionsType
     {
         public Guid? OptionTypeId { get; set; }
         public string? OptionType { get; set; }
+
+        [DefaultValue("")]
         public decimal? AdditionalCost { get; set; }
         public bool? IsDefault { get; set; }
         public int? SortOrder { get; set; }
+        public bool? RequirePriceAtEstimatePreview { get; set; }
+        public bool hidePreview { get; set; }
 
     }
 }

@@ -27,13 +27,15 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? CreatedBy { get; set; }
         public string? EstimationSubtotal { get; set; }
         public string? EstimationGrandTotal { get; set; }
+        public string? EstimationCode { get; set; }
         public string? EstimationId { get; set; }
         public string? EmailAddress { get; set; }
-        public string? ProductListHtml { get; set; }
+        public string? ProductList { get; set; }
         public string? PaymentList { get; set; }
         public string? Terms { get; set; }
         public string? Note { get; set; }
         public string? OrderId { get; set; }
+        public string? OrderName { get; set; }
         public string? InvoiceNo { get; set; }
         public string? IssueDate { get; set; }
         public string? TotalAmount { get; set; }
@@ -41,5 +43,10 @@ namespace ShutterManagement.Core.ViewModels.Response
         public decimal? Taxes { get; set; }
         public string? Additionalcost { get; set; }
         public decimal? Discount { get; set; }
+        public string? InvoiceLink { get; set; }
+        public string? Message { get; set; }
+        public string? PaymentLink { get; set; }
+        public string? PowderCoatColor { get; set; }
+
     }
 }

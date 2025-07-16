@@ -12,6 +12,4 @@ public partial class TblRolesPermission
     public Guid Id { get; set; }
 
     public virtual MstModulePermission? ModulePermission { get; set; }
-
-    public virtual TblRole? Role { get; set; }
 }

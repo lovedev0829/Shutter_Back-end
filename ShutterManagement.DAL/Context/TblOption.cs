@@ -31,15 +31,19 @@ public partial class TblOption
 
     public Guid? ProductId { get; set; }
 
-    public bool? IsTaxApplied { get; set; }
-
     public Guid? TaxId { get; set; }
+
+    public bool? IsTaxApplied { get; set; }
 
     public decimal? Markup { get; set; }
 
     public Guid? OptionExpression { get; set; }
 
     public string? Unit { get; set; }
+
+    public bool? BuildRequirement { get; set; }
+
+    public bool? UseInCutSheet { get; set; }
 
     public virtual TblProduct? Product { get; set; }
 

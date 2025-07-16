@@ -33,10 +33,13 @@ namespace ShutterManagement.Business.Services
         private readonly IUserService userService;
         private readonly INotificationService notification;
         private readonly IGHLConfiguration ghlConfiguration;
-       // private readonly GoogleAuthService googleAuthService;
+        private readonly EmailSendHelperService emailSendHelperService;
+
+        // private readonly GoogleAuthService googleAuthService;
 
         public TenantServices(DataServices dataServices, IMapper mapper, ITenantBrandingService tenantBrandingService
-            , ClaimsProperty claimsProperty, IUserService userService,INotificationService notification, IGHLConfiguration ghlConfiguration/*,GoogleAuthService googleAuthService*/
+            , ClaimsProperty claimsProperty, IUserService userService,INotificationService notification,
+            IGHLConfiguration ghlConfiguration ,EmailSendHelperService emailSendHelperService /*,GoogleAuthService googleAuthService*/
             )
         {
             this.dataServices = dataServices;
@@ -46,6 +49,7 @@ namespace ShutterManagement.Business.Services
             this.userService = userService;
             this.notification = notification;
             this.ghlConfiguration = ghlConfiguration;
+            this.emailSendHelperService = emailSendHelperService;
             //this.googleAuthService = googleAuthService;
         }
 
@@ -179,8 +183,10 @@ namespace ShutterManagement.Business.Services
 
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.InsertSuccessMsg;
-                //  background email task
-               await Task.Run(() => SendWelcomeEmailAsync(model));
+
+                var mailResult = await SendWelcomeEmail(model);
+                if (!mailResult.IsSuccess)
+                    responseVm.Message += " " + mailResult.Message;
             }
             catch (Exception ex)
             {
@@ -189,36 +195,7 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        public async Task SendWelcomeEmailAsync(CreateTenant model)
-        {
-            try
-            {
-                WelcomeEmailModel welcomemodel = new WelcomeEmailModel
-                {
-                    Name = $"{model.FirstName} {model.LastName}" ?? "",
-                    UserName = model.Email ?? "",
-                    Password = model.Password ?? "",
-                    CompanyName = model.CompanyName ?? "",
-                    Logo = model.Logo ?? "",
-                    loginUrl = $"{AppConstant.UIBaseURL}{model.Code}",
-                    color = model.PrimaryColor ?? ""
-                };
-
-                var WelcomeTemplate =  dbContext.TblTemplates
-                    .FirstOrDefault(x => x.IsDelete==false &&
-                        x.TemplateName.ToLower() == EnumValue.GetEnumValue(EmailTemplateType.WelcomeEmail).ToLower());
-
-                if (WelcomeTemplate != null)
-                {
-                    var emailContent = EmailHelper.ReplacePlaceholdersForlWelcomeEmail(WelcomeTemplate.TemplateValue, welcomemodel);
-                   //await  googleAuthService.WelcomeEmailWithOauth(model.Email, emailContent);
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Welcome email failed: " + ex.Message);
-            }
-        }
+       
 
         public async Task<IResponseVm<string>> TenantUpdate(UpdateTenant model)
         {
@@ -679,6 +656,31 @@ namespace ShutterManagement.Business.Services
             loginDetails.IsTenant = string.IsNullOrEmpty(userDetail.ParentTenantId);
 
             return loginDetails;
+        }
+
+        private async Task<IResponseVm<string>> SendWelcomeEmail(CreateTenant model)
+        {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
+            try
+            {
+                WelcomeEmailModel welcomemodel = new WelcomeEmailModel
+                {
+                    Name = $"{model.FirstName} {model.LastName}" ?? "",
+                    UserName = model.Email ?? "",
+                    Password = model.Password ?? "",
+                    CompanyName = model.CompanyName ?? "",
+                    Logo = model.Logo ?? "",
+                    loginUrl = $"{AppConstant.UIBaseURL}",
+                    color = model.PrimaryColor ?? "",
+                    Email = model.Email
+                };
+                responseVm = await emailSendHelperService.SendEmailWithReplacedContent(EmailTemplateType.WelcomeEmail, welcomemodel);
+            }
+            catch (Exception ex)
+            {
+                responseVm.Message = ("Welcome email failed: " + ex.Message);
+            }
+            return responseVm;
         }
 
     }

@@ -75,6 +75,7 @@ namespace ShutterManagement.Core
         public const string ZipCodeError = "Invalid zip code format";
         public const string NumericError = "Only numerical values are allowed.";
         public const string SKUError = "Invalid SKU format.";
+        public const string AuthenticationExpiry = "Your authentication has expired. Please reconnect your email to continue sending emails.";
         #endregion
 
         #region Success Messages (Additional)
@@ -106,6 +107,8 @@ namespace ShutterManagement.Core
         public static string Sub_ResetPassword = "Password reset successfully";
         public static string Sub_ForgotPassword = "Forgot Password";
         public static string Sub_WelcomeEmail = "Welcome Email";
+        public static string Sub_EstimateApproval = "Estimate Approval Link and PDF";
+        public static string Sub_EstimateOrderApproval = "Estimate For Approval";
         public static string Con_ResetPassword = "Your password has been reset successfully";
         #endregion
 
@@ -119,11 +122,11 @@ namespace ShutterManagement.Core
         #region GHL Configuration
         public static string GHL_APIKey { get; set; } = string.Empty;
         public static string GHL_BaseAddress { get; set; } = string.Empty;
-        public static string GHL_PipelineId { get; set; } = string.Empty;
-        public static string GHL_LocationId { get; set; } = string.Empty; // Fixed typo: was "GHL_LocationId"
-        public static string GHL_RefreshToken { get; set; } = string.Empty;
-        public static string GHL_AccessToken { get; set; } = string.Empty;
-        public static string GHL_CalendarName { get; set; } = string.Empty;
+        //public static string GHL_PipelineId { get; set; } = string.Empty;
+        //public static string GHL_LocationId { get; set; } = string.Empty; // Fixed typo: was "GHL_LocationId"
+        //public static string GHL_RefreshToken { get; set; } = string.Empty;
+        //public static string GHL_AccessToken { get; set; } = string.Empty;
+        //public static string GHL_CalendarName { get; set; } = string.Empty;
         public static string GHL_ClientSecret { get; set; } = string.Empty;
         public static string GHL_ClientId { get; set; } = string.Empty;
         public static string GHL_RedirectUri { get; set; } = string.Empty;
@@ -141,8 +144,19 @@ namespace ShutterManagement.Core
         public static string Microsoft365_ClientId { get; set; } = string.Empty;
         public static string Microsoft365_ClientSecret { get; set; } = string.Empty;
         public static string Microsoft365_RedirectUri { get; set; } = string.Empty;
+        public static string Microsoft365_AuthUri { get; set; } = string.Empty;
         public static string Microsoft365_TenantId { get; set; } = string.Empty;
         public static string Microsoft365_Scopes { get; set; } = string.Empty;
+        #endregion
+
+        #region Google OAuth Configuration
+
+        public static string Google_ClientId { get; set; } = string.Empty;
+        public static string Google_ClientSecret { get; set; } = string.Empty;
+        public static string Google_RedirectUri { get; set; } = string.Empty;
+        public static string Google_AuthUrl { get; set; } = string.Empty;
+        public static string Google_TokenUrl { get; set; } = string.Empty;
+
         #endregion
 
         #region Stripe Configuration (URLs moved to config)
@@ -157,5 +171,11 @@ namespace ShutterManagement.Core
         public static string SmtpHost_Google { get; set; } = string.Empty;
         public static string SmtpHost_MSOffice365 { get; set; } = string.Empty;
         #endregion
+
+        #region Blob storedge config
+        public static string AzureBlobStorage_ConnectionString { get; set; } = string.Empty;
+        public static string AzureBlobStorage_ContainerName { get; set; } = string.Empty;
+
+        #endregion Blob storedge config
     }
 }

@@ -15,6 +15,7 @@ namespace ShutterManagement.Services
         Task<IResponseVm<UserResponse>> ProfileGetById();
         Task<IResponseVm<string>> ForgetPassword(ForgetPassword forgetPassword);
         Task<IResponseVm<string>> VerifyForgetPassword(VerifyPassword verifyPassword);
+        Task<IResponseVm<List<CompanyCodeResponse>>> GetCompanyCodesByEmail(string email);
         Task<IResponseVm<string>> GenerateToken();
         IResponseVm<string> ReadTokenDetails(string token);
 

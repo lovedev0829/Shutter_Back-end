@@ -24,17 +24,19 @@ namespace ShutterManagement.Business.Services
         private readonly IWindowOptionService windowOptionService;
         private readonly ClaimsProperty claimsProperty;
         private readonly IEstimateWindowService estimateWindowService;
+        private readonly IOptionsTypeService optionsTypeService;
   
 
         public WindowService(ITenantService tenantService, 
             IWindowProductService windowProductService, IWindowOptionService windowOptionService, ClaimsProperty claimsProperty,
-            IEstimateWindowService estimateWindowService)
+            IEstimateWindowService estimateWindowService, IOptionsTypeService optionsTypeService)
         {
             this.tenantService = tenantService;
             this.windowProductService = windowProductService;
             this.windowOptionService = windowOptionService;
             this.claimsProperty = claimsProperty;
             this.estimateWindowService = estimateWindowService;
+            this.optionsTypeService = optionsTypeService;
         
         }
 
@@ -238,6 +240,13 @@ namespace ShutterManagement.Business.Services
                             }
                         }
                     }
+                }
+
+                // Process additional costs for options without prices
+                if (model.AdditionalCosts != null && model.AdditionalCosts.Count > 0)
+                {
+                    FileLogger.Log("Processing additional costs for options without prices.");
+                    await ProcessAdditionalCosts(model.AdditionalCosts);
                 }
 
                 responseVm.IsSuccess = true;
@@ -471,6 +480,13 @@ namespace ShutterManagement.Business.Services
 
                 // Step 5: Update Window Products
                 await UpdateWindowProducts(model);
+
+                // Step 6: Process additional costs for options without prices
+                if (model.AdditionalCosts != null && model.AdditionalCosts.Count > 0)
+                {
+                    FileLogger.Log("Processing additional costs for options without prices in update.");
+                    await ProcessAdditionalCosts(model.AdditionalCosts);
+                }
 
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.UpdateSuccessMsg;
@@ -740,6 +756,53 @@ namespace ShutterManagement.Business.Services
                        (o.OptionTypeId?.ToLower().Contains(searchValue) ?? false) ||
                        (o.OptionName?.ToLower().Contains(searchValue) ?? false)
                    );
+        }
+
+        private async Task ProcessAdditionalCosts(List<AdditionalCostData> additionalCosts)
+        {
+            try
+            {
+                foreach (var costData in additionalCosts)
+                {
+                    foreach (var costItem in costData.Data.Values)
+                    {
+                        if (costItem.OptionTypeId.HasValue && !string.IsNullOrWhiteSpace(costItem.AdditionalCost))
+                        {
+                            // Find the existing OptionsType record
+                            var optionType = optionsTypeService.GetAllQuerable()
+                                .FirstOrDefault(x => x.OptionTypeId == costItem.OptionTypeId && x.IsDelete == false);
+
+                            if (optionType != null)
+                            {
+                                // Parse and update the additional cost
+                                if (decimal.TryParse(costItem.AdditionalCost, out decimal parsedCost))
+                                {
+                                    optionType.AdditionalCost = parsedCost;
+                                    optionType.ModifiedAt = DateTime.Now;
+                                    optionType.RequirePriceAtEstimatePreview = true;
+                                    optionType.ModifiedBy = AppConstant.LoggedInUserID;
+
+                                    await optionsTypeService.Update(optionType);
+                                    FileLogger.Log($"Updated OptionType {optionType.OptionTypeId} with additional cost: {parsedCost} and RequirePriceAtEstimatePreview: {costItem.RequirePriceAtEstimatePreview}");
+                                }
+                                else
+                                {
+                                    FileLogger.Log($"Failed to parse additional cost: {costItem.AdditionalCost} for OptionType: {costItem.OptionTypeId}");
+                                }
+                            }
+                            else
+                            {
+                                FileLogger.Log($"OptionType not found: {costItem.OptionTypeId}");
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Log("Exception occurred while processing additional costs.", ex);
+                throw; // Re-throw to ensure the main transaction fails if this fails
+            }
         }
 
         #endregion

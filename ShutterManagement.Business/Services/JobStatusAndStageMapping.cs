@@ -167,7 +167,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                await gHLConfiguration.GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
+                var ghlconfigdetails = await gHLConfiguration.GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
                 
                 if (stageId == Guid.Empty || stageId == null)
                 {
@@ -185,7 +185,7 @@ namespace ShutterManagement.Business.Services
                 var content = new StringContent(opportunityJson, Encoding.UTF8, "application/json");
 
                 using var httpClient = new HttpClient();
-                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AppConstant.GHL_AccessToken);
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", ghlconfigdetails?.Data?.Access_Token??"");
                 httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
                 httpClient.DefaultRequestHeaders.Add("Version", AppConstant.GHL_Version);
 

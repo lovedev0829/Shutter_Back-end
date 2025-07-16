@@ -17,7 +17,7 @@ namespace ShutterManagement.Business.Interfaces
 
         Task<IResponseVm<GetGHLConfiguration>> GetGHLConfigurations(string? code);
 
-        Task GetGHLConfiguration(string Id);
+        Task<IResponseVm<GetGHLConfiguration>> GetGHLConfiguration(string Id);
 
         Task<IResponseVm<string>> CheckGHLConfiguration(Guid? LoggedInTenantId = null);
         Task<IResponseVm<string>> CheckStageMapping(Guid? LoggedInTenantId = null);

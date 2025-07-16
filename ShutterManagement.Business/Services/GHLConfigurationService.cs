@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.IO.Compression;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 using Azure;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using ShutterManagement.Business.Interfaces;
@@ -43,26 +45,76 @@ namespace ShutterManagement.Business.Services
         }
 
         //This method to set the GHLConfiguration in AppConstant...
-        public async Task GetGHLConfiguration(string Id)
+        public async Task<IResponseVm<GetGHLConfiguration>> GetGHLConfiguration(string Id)
         {
+            IResponseVm<GetGHLConfiguration> responseVm = new ResponseVm<GetGHLConfiguration>();
             FileLogger.Log("details GHl ID: ", Id);
             var Checkghlresponse = await CheckGHLConfiguration(Guid.Parse(Id));
             var details = GetAllQuerable()
                    .Where(x => x.LocationId == Id || x.TenantId.ToString().ToLower() == Id.ToLower() && x.IsDelete == false)
                    .FirstOrDefault();
+            
+
             FileLogger.Log("details GHl: ", details);
             if (details != null)
             {
+                var DetailsGHL = new GetGHLConfiguration
+                {
+
+                    LocationId = details.LocationId ?? "",
+                    PipelineId = details.PipelineId ?? "",
+                    LastSync = details.LastSync ?? null,
+                    CalendarName = details.CalendarName ?? "",
+                    GeneratedToken = details.GeneratedToken ?? "",
+                    Refresh_Token = details.RefreshToken ?? "",
+                    Access_Token = details.AccessToken ?? "",
+                    RefreshExpirationtime = details.RefreshExpirationtime ?? null,
+                    AccessExpirationtime = details.AccessExpirationtime ?? null,
+
+                };
+
+                //await claimsProperty.SetGHLConfigurationinClaims(details);
                 AppConstant.GHL_BaseAddress = configuration["GoHighLevelOAuthSettings:BaseUrl"] ?? "";
-                AppConstant.GHL_PipelineId = details.PipelineId ?? "";
-                AppConstant.GHL_LocationId = details.LocationId??"";
-                AppConstant.LoggedInTenantId = details.TenantId;
-                AppConstant.GHL_AccessToken = details.AccessToken ?? "";
-                AppConstant.GHL_RefreshToken = details.RefreshToken ??"";
-                AppConstant.GHL_CalendarName = details.CalendarName ?? "";
+                //AppConstant.GHL_PipelineId = details.PipelineId ?? "";
+                //AppConstant.GHL_LocationId = details.LocationId??"";
+                //AppConstant.LoggedInTenantId = details.TenantId;
+                //AppConstant.GHL_AccessToken = details.AccessToken ?? "";
+                //AppConstant.GHL_RefreshToken = details.RefreshToken ??"";
+                //AppConstant.GHL_CalendarName = details.CalendarName ?? "";
                 // Fetch ClientId and ClientSecret from appsettings.json
+
+                responseVm.Message= "GHL Configuration fetched successfully.";
+                responseVm.IsSuccess = true;
+                responseVm.Data = DetailsGHL;
+            }
+            else
+            {
+                responseVm.Message = "GHL configuration not found.";
+
+            }
+            return responseVm;
+        }
+
+        public async Task GetAndSetGHLConfiguration(string id)
+        {
+            FileLogger.Log("details GHL ID: ", id);
+
+            var checkGhlResponse = await CheckGHLConfiguration(Guid.Parse(id));
+
+            var details = GetAllQuerable()
+                .Where(x =>(x.LocationId == id || x.TenantId.ToString().ToLower() == id.ToLower()) && x.IsDelete==false).FirstOrDefault();
+
+            FileLogger.Log("details GHL: ", details);
+
+            if (details != null)
+            {
+                await claimsProperty.SetGHLConfigurationinClaims(details);
             }
         }
+
+
+
+
 
         public async Task<IResponseVm<string>> GHLConfiguration(GHLConfiguration gHLConfiguration)
         {
@@ -200,7 +252,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                await GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
+                //await GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
                 var res = goHighLevelOAuthService.GetAuthorizationUrl();
                 if (res != null)
                 {
@@ -321,14 +373,25 @@ namespace ShutterManagement.Business.Services
             {
                 LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : claimsProperty.GetTenantId());
 
-                var mappings =  dbContext.TblGhlStagesmappings
+                var jobStatusList = dbContext.TblJobStatuses
+                     .OrderBy(js => js.StatusId)
+                     .Select((js, index) => new { js.StatusId, SortOrder = index + 1 })
+                     .ToList();
+
+                var mappings = dbContext.TblGhlStagesmappings
                     .Where(x => x.TenantId == LoggedInTenantId)
-                    .Select(x => new StageMapping
+                    .AsEnumerable()
+                    .Select(x =>
                     {
-                        StageId = x.StageId??Guid.Empty,
-                        StatusId = x.StatusId ?? Guid.Empty,
-                        CreatedAt = x.CreatedAt
-                    }).OrderBy(x => x.CreatedAt)
+                        var jobStatus = jobStatusList.FirstOrDefault(js => js.StatusId == (x.StatusId ?? Guid.Empty));
+                        return new StageMapping
+                        {
+                            StageId = x.StageId ?? Guid.Empty,
+                            StatusId = x.StatusId ?? Guid.Empty,
+                            SortOrder = jobStatus?.SortOrder
+                        };
+                    })
+                    .OrderBy(x => x.SortOrder)
                     .ToList();
 
                 responseVm.IsSuccess = true;
@@ -707,9 +770,9 @@ namespace ShutterManagement.Business.Services
 
                 if (subtenant?.IsGhlconfigSameAsTenant == true)
                 {
-                    await GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
+                    var ghlconfig = await GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
 
-                    var ghlContact = await gHLService_V2.GetOpportunityforPartner(subtenant.GhluserId);
+                    var ghlContact = await gHLService_V2.GetOpportunityforPartner(ghlconfig?.Data,subtenant.GhluserId);
 
                     foreach (var item in ghlContact.Data.opportunities)
                     {

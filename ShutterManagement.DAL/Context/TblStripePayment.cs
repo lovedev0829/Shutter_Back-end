@@ -23,9 +23,9 @@ public partial class TblStripePayment
 
     public DateTime? ModeifiedAt { get; set; }
 
-    public string? WebhookResponse { get; set; }
-
     public string? StripeEventType { get; set; }
+
+    public string? WebhookResponse { get; set; }
 
     public Guid? InvoiceId { get; set; }
 

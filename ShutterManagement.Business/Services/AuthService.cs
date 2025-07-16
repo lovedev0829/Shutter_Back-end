@@ -32,6 +32,7 @@ namespace ShutterManagement.Services
         private const int MAX_CODE_LENGTH = 10;
         private const int MAX_GENERATION_ATTEMPTS = 50;
         private const string LOGIN_COMPANY_CODE = "login";
+        private readonly EmailSendHelperService emailSendHelperService;
         #endregion
 
         #region Private Fields
@@ -49,6 +50,7 @@ namespace ShutterManagement.Services
 
         #region Constructor
         public AuthService(
+            EmailSendHelperService emailSendHelperService,
             DataServices dataServices, 
             IMapper mapper, 
             IConfiguration config,
@@ -60,6 +62,7 @@ namespace ShutterManagement.Services
             IStripeConfiguration stripeConfiguration, 
             IUserService userService)
         {
+            this.emailSendHelperService = emailSendHelperService;
             _dataServices = dataServices ?? throw new ArgumentNullException(nameof(dataServices));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _config = config ?? throw new ArgumentNullException(nameof(config));
@@ -341,7 +344,7 @@ namespace ShutterManagement.Services
                 }
 
                 await ResetUserPasswordAsync(user, verifyPassword.Password);
-                EmailHelper.ResetPassword(user.Email);
+                await emailSendHelperService.GetEmailConfigAndSendEmail(user.Email, AppConstant.Con_ResetPassword, AppConstant.Sub_ForgotPassword);
 
                 result.IsSuccess = true;
                 result.Message = AppConstant.PasswordChangeMessage;
@@ -777,8 +780,7 @@ namespace ShutterManagement.Services
         {
             var resetLink = $"{AppConstant.UIBaseURL}reset-password/{companyCode}/{token}";
             var content = $"Please reset your password using the following link: <a href='{resetLink}'>Reset Password</a>";
-            
-            EmailHelper.ForgotPassword(email, content);
+            await emailSendHelperService.GetEmailConfigAndSendEmail(email, content, AppConstant.Sub_ForgotPassword);
         }
 
         private async Task<TblUser> GetUserByTokenAsync(string token)
@@ -930,6 +932,58 @@ namespace ShutterManagement.Services
                    code.EndsWith(prefix.Substring(prefix.Length - MIN_CODE_LENGTH, MIN_CODE_LENGTH));
         }
         #endregion
+
+        public async Task<IResponseVm<List<CompanyCodeResponse>>> GetCompanyCodesByEmail(string email)
+        {
+            var result = new ResponseVm<List<CompanyCodeResponse>>();
+
+            try
+            {
+                var companyCodes = new List<CompanyCodeResponse>();
+
+                if (!string.IsNullOrEmpty(email))
+                {
+                    // Get all users with this email and their company codes
+                    var users = await GetAllQuerable()
+                        .Where(u => u.Email.ToLower() == email.ToLower() && u.TenantId.HasValue)
+                        .Select(u => u.TenantId.Value)
+                        .Distinct()
+                        .ToListAsync();
+
+                    if (users.Any())
+                    {
+                        // Get tenants for these users
+                        var tenants = await _tenantService.GetAllQuerable()
+                            .Include(t => t.BrandingInfoNavigation)
+                            .Where(t => users.Contains(t.TenantId) && t.IsActive == true && t.IsDelete == false)
+                            .ToListAsync();
+
+                        companyCodes = tenants
+                            .Where(t => !string.IsNullOrEmpty(t.Code))
+                            .Select(t => new CompanyCodeResponse
+                            {
+                                Code = t.Code,
+                                Name = t.BrandingInfoNavigation?.CompanyName ?? t.Code,
+                                TenantId = t.TenantId.ToString()
+                            })
+                            .DistinctBy(c => c.Code)
+                            .ToList();
+                    }
+                }
+
+                result.IsSuccess = true;
+                result.Data = companyCodes;
+                result.Message = companyCodes.Any() 
+                    ? "Company codes retrieved successfully." 
+                    : "No company codes found for this email.";
+            }
+            catch (Exception ex)
+            {
+                result.Message = $"{AppConstant.ExceptionError} {ex.Message}";
+            }
+
+            return result;
+        }
     }
 }
 

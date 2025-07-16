@@ -19,11 +19,12 @@ using System.Web;
 [Route("api/[controller]")]
 public class EmailOAuthController : ControllerBase
 {
-    private readonly GoogleAuthService _googleAuthService;
 
     private readonly IConfiguration _config;
     private readonly IEmailConfigurationService emailConfigurationService;
     private readonly MS365Configuration mS365Configuration;
+    private readonly GoogleAuthService _googleAuthService;
+
 
     public EmailOAuthController(GoogleAuthService authService, IConfiguration config,
         IEmailConfigurationService emailConfigurationService,MS365Configuration mS365Configuration)
@@ -36,16 +37,16 @@ public class EmailOAuthController : ControllerBase
 
     [HttpGet("LoginOauth")]
     [Authorize(Roles = "EmailConfigurationEdit")]
-    public IActionResult StartGoogleAuth(string OauthType)
+    public async Task<IActionResult> StartGoogleAuth(string OauthType)
     {
        if(OauthType==EnumValue.GetEnumValue(EmailSendType.Google))
         {
-            var Respose = _googleAuthService.GenerateGoogleOAuthUrl().Result;
+            var Respose = await _googleAuthService.GenerateGoogleOAuthUrl();
             return Ok(Respose);
         }
         else if (OauthType == EnumValue.GetEnumValue(EmailSendType.Microsoft365))
         {
-            var ResponseMS  = mS365Configuration.GetAuthorizationurl().Result;
+            var ResponseMS  = await mS365Configuration.GetAuthorizationurl();
             return Ok(ResponseMS);
         }
         return Ok(new { message = "Invalid OAuth Type" });

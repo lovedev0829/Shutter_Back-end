@@ -23,6 +23,7 @@ using System.Reflection;
 using System.Linq.Expressions;
 using Azure;
 using System.Globalization;
+using System.Diagnostics.Contracts;
 
 namespace ShutterManagement.Business.Services
 {
@@ -92,7 +93,6 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-
         public static string FormatPhoneNumber(string phoneNumber)
         {
             if (string.IsNullOrWhiteSpace(phoneNumber))
@@ -101,531 +101,1112 @@ namespace ShutterManagement.Business.Services
             var match = Regex.Match(phoneNumber, @"^\+?\d{1}");
             return match.Value == "+1" ? phoneNumber : "+1" + phoneNumber.TrimStart('+');
         }
+        //public async Task<IResponseVm<string>> Create_Contact(Sp_Contact model, Guid? LoggedInTenantId = null)
+        //{
+        //    IResponseVm<string> responseVm = new ResponseVm<string>();
+        //    try
+        //    {
+        //        LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : claimsProperty.GetTenantId());
+        //        var IsTenantExists = false;
+
+        //        //Change the format of phonenumber added with +1 
+        //        if (!string.IsNullOrEmpty(model.PhoneNumber))
+        //        {
+        //            model.PhoneNumber = FormatPhoneNumber(model.PhoneNumber);
+        //        }
+        //        FileLogger.Log($"Location id fetched {model.locationId}");
+        //        //if (model.locationId != null)
+        //        //{
+        //        //    // await gHLConfigurationService.GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
+        //        //    TenantId = (Guid)LoggedInTenantId;
+        //        //    FileLogger.Log($"Tenant id fetched {TenantId}");
+        //        //    if (TenantId != null)
+        //        //    {
+        //        //        IsTenantExists = true;
+        //        //        model.IsTaxExemption = true;
+        //        //    }
+        //        //}
+        //        //else
+        //        //{
+        //            IsTenantExists = await tenantService.AnyAsync(x => x.TenantId == LoggedInTenantId && x.IsActive == true);
+        //            FileLogger.Log($"Tenant Id id fetched {LoggedInTenantId}");
+        //            //model.IsTaxExemption = true;
+        //        //}
+        //        if (!model.IsTaxExemption)
+        //        {
+        //            if (model.TaxExemptionVm.EffectiveDate == null && model.TaxExemptionVm.ExpiryDate == null)
+        //            {
+        //                responseVm.Message = "Please Fill TaxExemption Details.";
+        //                return responseVm;
+        //            }
+        //        }
+
+        //        if (IsTenantExists)
+        //        {
+        //            //await gHLConfigurationService.GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
+        //            var IsContactExists = GetAllQuerable()
+        //                .Where(c => (c.Email == model.Email || c.PhoneNumber == model.PhoneNumber)
+        //                //.Where(c => (c.Email == model.Email && c.PhoneNumber == model.PhoneNumber)
+        //                && c.TenantId == LoggedInTenantId
+        //                && c.IsDelete == false).ToList();
+
+        //            if (IsContactExists.Count > 0)
+        //            {
+        //                //If Contact is already exists in Shutter DB then update the GHL Contact if GHLContactId is not null
+        //                if (!string.IsNullOrEmpty(model.GHLContactId))
+        //                {
+        //                    var ghlContactAdd = new UpdateContact
+        //                    {
+        //                        FirstName = model.FirstName ?? string.Empty,
+        //                        LastName = model.LastName ?? string.Empty,
+        //                        Suffix = model.Suffix ?? string.Empty,
+        //                        Email = model.Email ?? string.Empty,
+        //                        PhoneNumber = model.PhoneNumber ?? string.Empty,
+        //                        Notes = model.Notes ?? string.Empty,
+        //                        ContactType = model.ContactType ?? string.Empty,
+        //                        Website = model.Website ?? string.Empty,
+        //                        Referral = model.Referral ?? string.Empty,
+        //                        GHLContactId = model.GHLContactId ?? string.Empty,
+
+        //                    };
+        //                    if (!model.IsBillingAddressSameAsAddress)
+        //                    {
+        //                        var stateId = dbContext.MstStates.Where(x => x.StateCode.ToLower() == model.BillingAddressVm.StateCode.ToLower().Trim() ||
+        //                        x.StateName == model.BillingAddressVm.StateCode.ToLower().Trim()).Select(y => y.Id).FirstOrDefault();
+        //                        ghlContactAdd.BillingAddressVm = new BillingAddressVm
+        //                        {
+        //                            BillingFirstName = model.BillingAddressVm.FirstName ?? "",
+        //                            BillingLastName = model.BillingAddressVm.LastName ?? "",
+        //                            FirstName = model.BillingAddressVm.FirstName ?? "",
+        //                            LastName = model.BillingAddressVm.LastName ?? "",
+        //                            Email = model.BillingAddressVm.Email ?? "",
+        //                            PhoneNumber = model.BillingAddressVm.PhoneNumber ?? "",
+        //                            City = model.BillingAddressVm.City ?? "",
+        //                            StateId = stateId != Guid.Empty ? stateId : null,
+        //                            ZipCode = model.BillingAddressVm.ZipCode,
+        //                            StreetAddress = model.BillingAddressVm.StreetAddress ?? ""
+        //                        };
+        //                    }
+        //                    var result = await Update_Contact(ghlContactAdd, LoggedInTenantId);
+        //                    return result;
+        //                }
+        //                else
+        //                {
+        //                    responseVm.Message = $"Email {model.Email} or Phone {model.PhoneNumber} " + AppConstant.AlreadyExists;
+        //                    return responseVm;
+        //                }
+        //            }
+        //                //for Billing address
+        //                if (!model.IsBillingAddressSameAsAddress && model.BillingAddressVm == null)
+        //                {
+        //                    responseVm.Message = "Billing details required.";
+        //                    return responseVm;
+        //                }
+        //                //for Tax exemption
+        //                if (model.TaxExemptionVm != null && model.TaxExemptionVm.ExpiryDate < model.TaxExemptionVm.EffectiveDate)
+        //                {
+        //                    responseVm.Message = "ExpiryDate must be greater than EffectiveDate.";
+        //                    return responseVm;
+        //                }
+
+        //                //generate unique version
+        //                int Version = GetAllQuerable().Where(x => x.TenantId == LoggedInTenantId && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt)
+        //                    .Select(p => (p.ContactUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries).Length == 3 ? Convert.ToInt32(p.ContactUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries)[2]) : 0)).FirstOrDefault();
+        //                Version += 1;
+        //                var Companycode = tenantService.GetAllQuerable().Where(x => x.TenantId == LoggedInTenantId && x.IsActive == true && x.IsDelete == false).Select(x => x.Code).FirstOrDefault();
+        //                var contactUniqueId = GenerateUniqueId.GenerateUniqueIds(ModuleName.Contact, Companycode, Version);
+
+        //                TblContact CreateContact = new TblContact
+        //                {
+        //                    ContactId = Guid.NewGuid(),
+        //                    ContactType = model.ContactType ?? "",
+        //                    FirstName = model.FirstName ?? "",
+        //                    LastName = model.LastName ?? "",
+        //                    Suffix = model.Suffix ?? "",
+        //                    // Name = model.Name,
+        //                    PhoneNumber = model.PhoneNumber ?? "",
+        //                    Email = model.Email ?? "",
+        //                    Website = model.Website ?? "",
+        //                    Notes = model.Notes ?? "",
+        //                    Referral = model.Referral ?? "",
+        //                    ContactUniqueId = contactUniqueId ?? "",
+        //                    IsTaxExemption = model.IsTaxExemption,
+        //                    IsBillingAddressSameAsAddress = model.IsBillingAddressSameAsAddress,
+        //                    CreatedBy = LoggedInTenantId,
+        //                    CreatedAt = DateTime.Now,
+        //                    TenantId = LoggedInTenantId,
+        //                    IsActive = true,
+        //                    IsArchive = false,
+        //                    IsDelete = false
+        //                };
+        //                var res = await Add(CreateContact);
+        //                if (model.lastAsync != null && !string.IsNullOrEmpty(model.GHLContactId))
+        //                {
+        //                    res.LastSync = model.lastAsync;
+        //                    res.GhlcontactId = model.GHLContactId ?? "";
+        //                    await Update(res);
+        //                }
+        //                 // To add address of contact
+        //                if (res.ContactId != Guid.Empty)
+        //                {
+        //                    // Add Billing Address
+        //                    if (!model.IsBillingAddressSameAsAddress)
+        //                    {
+        //                        Guid? stateId = null;
+        //                        // Validate and assign StateId only if it exists in MstState
+        //                        if (model.BillingAddressVm?.StateId != null &&
+        //                            model.BillingAddressVm.StateId != Guid.Empty)
+        //                        {
+        //                            var isValidState = await dbContext.MstStates
+        //                                .AnyAsync(s => s.Id == model.BillingAddressVm.StateId);
+
+        //                            if (isValidState)
+        //                            {
+        //                                stateId = model.BillingAddressVm.StateId;
+        //                            }
+        //                        }
+        //                        TblAddress address = new TblAddress
+        //                        {
+        //                            AddressId = Guid.NewGuid(),
+        //                            ContactId = res.ContactId,
+        //                            Label = "Primary Address",
+        //                            FirstName = model.BillingAddressVm?.FirstName ?? "",
+        //                            LastName = model.BillingAddressVm?.LastName ?? "",
+        //                            Phone = model.BillingAddressVm?.PhoneNumber ?? "",
+        //                            Email = model.BillingAddressVm?.Email ?? "",
+        //                            City = model.BillingAddressVm?.City ?? "",
+        //                            State = stateId ?? null,
+        //                            ZipCode = model.BillingAddressVm?.ZipCode ?? "",
+        //                            StreetAddress = model.BillingAddressVm?.StreetAddress ?? "",
+        //                            CreatedAt = DateTime.Now,
+        //                            IsActive = true,
+        //                            IsDelete = false,
+        //                            TenantId = LoggedInTenantId,
+        //                            CreatedBy = AppConstant.LoggedInUserID
+        //                        };
+        //                        dbContext.TblAddresses.Add(address);
+        //                        await dbContext.SaveChangesAsync();
+
+        //                    // Update Primary Address in Contact
+        //                    res.PrimaryAddress = address.AddressId;
+        //                        await Update(res);
+        //                    }
+
+        //                    //Add Tax Exemption
+        //                    if (!model.IsTaxExemption)
+        //                    {
+        //                        string arrayString = string.Join(", ", model.TaxExemptionVm?.ExemptionCertificate);
+        //                        TblTaxExemption taxExemption1 = new TblTaxExemption
+        //                        {
+        //                            ContactId = res.ContactId,
+        //                            ExemptionCertificate = arrayString ?? "",
+        //                            EffectiveDate = model.TaxExemptionVm?.EffectiveDate,
+        //                            ExpiryDate = model.TaxExemptionVm?.ExpiryDate,
+        //                            CreatedAt = DateTime.Now,
+        //                            IsActive = true,
+        //                            IsDelete = false,
+        //                        };
+        //                        await taxExemptionService.Add(taxExemption1);
+        //                        responseVm.IsSuccess = true;
+        //                        responseVm.Message = AppConstant.InsertSuccessMsg;
+        //                    }
+
+        //                    //Add contct in GHL if contact added from Shutter software
+        //                    if (string.IsNullOrEmpty(model.GHLContactId))
+        //                    {
+        //                        var Checkghlresponse = await gHLConfigurationService.CheckGHLConfiguration(LoggedInTenantId);
+        //                        if (Checkghlresponse.IsSuccess)
+        //                        {
+        //                            var ghlResponse = await SyncWithGHL(res, model);
+        //                            if (ghlResponse.IsSuccess)
+        //                            {
+        //                                responseVm.IsSuccess = true;
+        //                                responseVm.Message = AppConstant.InsertSuccessMsg + ghlResponse.Message;
+        //                            }
+        //                            else
+        //                            {
+        //                                responseVm.IsSuccess = true;
+        //                                responseVm.Message = AppConstant.InsertSuccessMsg + ghlResponse.Message;
+        //                            }
+        //                        }
+        //                        if (!Checkghlresponse.IsSuccess)
+        //                        {
+        //                            responseVm.IsSuccess = true;
+        //                            responseVm.Message = AppConstant.InsertSuccessMsg;
+        //                            FileLogger.Log(Checkghlresponse.Message);
+        //                            //responseVm.IsSuccess = true;
+        //                            //responseVm.Message = Checkghlresponse.Message;
+        //                        }
+        //                    }
+        //                }
+        //                else
+        //                {
+        //                    responseVm.Message = AppConstant.NoDataFound;
+        //                }
+        //            }
+        //            else
+        //            {
+        //                responseVm.Message = AppConstant.TenantNotFound;
+        //            }
+        //        }
+
+
+        //    catch (Exception ex)
+        //    {
+        //        responseVm.Message = AppConstant.ExceptionError + ex.Message;
+        //    }
+        //    return responseVm;
+        //}
+        //public async Task<IResponseVm<string>> Update_Contact(UpdateContact model, Guid? LoggedInTenantId = null)
+        //{
+        //    IResponseVm<string> responseVm = new ResponseVm<string>();
+        //    try
+        //    {
+        //        LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : claimsProperty.GetTenantId());
+
+        //        var IsTenantExists = false;
+        //        if (model.PhoneNumber != null)
+        //        {
+        //            model.PhoneNumber = FormatPhoneNumber(model.PhoneNumber);
+        //        }
+        //        //if (model.locationId != null)
+        //        //{
+        //        //   // await gHLConfigurationService.GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
+        //        //    TenantId = (Guid)LoggedInTenantId;
+
+        //        //    if (TenantId != Guid.Empty)
+        //        //    {
+        //        //        IsTenantExists = true;
+        //        //        model.IsTaxExemption = true;
+        //        //    }
+        //        //}
+        //        //else
+        //        //{
+        //        IsTenantExists = await tenantService.AnyAsync(x => x.TenantId == LoggedInTenantId && x.IsActive == true);
+        //        //}
+
+        //        if (IsTenantExists)
+        //        {
+        //            await gHLConfigurationService.GetGHLConfiguration(LoggedInTenantId.ToString());
+        //            if (!string.IsNullOrEmpty(model.GHLContactId))
+        //            {
+        //                var contact = (await GetAll()).Where
+        //                    (c => c.GhlcontactId == model.GHLContactId && c.TenantId == LoggedInTenantId && c.IsDelete == false).FirstOrDefault();
+
+        //                var IsContactExists = GetAllQuerable()
+        //                    .Where(c => (c.Email == model.Email || c.PhoneNumber == model.PhoneNumber)
+        //                                && c.TenantId == LoggedInTenantId && c.IsDelete == false).OrderByDescending(x=>x.CreatedAt)
+        //                    .ToList();
+
+        //                if (contact == null && IsContactExists.Count > 0)
+        //                {
+        //                    contact = IsContactExists.FirstOrDefault();
+
+        //                    //responseVm.Message = "Email or Phone " + AppConstant.AlreadyExists;
+        //                    //return responseVm;
+        //                }
+
+        //                if (contact != null)
+        //                {
+        //                    contact.ContactType = model.ContactType??"";
+        //                    contact.FirstName = model.FirstName??"";
+        //                    contact.LastName = model.LastName??"";
+        //                    contact.Suffix = model.Suffix ??"";
+        //                    contact.PhoneNumber = model.PhoneNumber ??"";
+        //                    contact.Email = model.Email ??"";
+        //                    contact.Website = model.Website ??"";
+        //                    contact.Notes = model.Notes ??"";
+        //                    contact.Referral = model.Referral ?? "";
+        //                    contact.IsTaxExemption = model.IsTaxExemption ;
+        //                    contact.IsBillingAddressSameAsAddress = model.IsBillingAddressSameAsAddress;
+        //                    contact.ModifiedBy = LoggedInTenantId;
+        //                    contact.UpdatedAt = DateTime.Now;
+
+        //                    await Update(contact); responseVm.IsSuccess = true;
+        //                    responseVm.Message = AppConstant.UpdateSuccessMsg;
+        //                    if (!model.IsBillingAddressSameAsAddress)
+        //                    {
+        //                        var contactBillingAddress = dbContext.TblAddresses
+        //                        .Where(x => x.ContactId == contact.ContactId && x.AddressId == contact.PrimaryAddress && x.IsDelete == false && x.TenantId == LoggedInTenantId)
+        //                        .FirstOrDefault();
+
+        //                        if (contactBillingAddress != null)
+        //                        {
+        //                            Guid? stateId = null;
+
+        //                            // Validate and assign StateId only if it exists in MstState
+        //                            if (model.BillingAddressVm?.StateId != null &&
+        //                                model.BillingAddressVm.StateId != Guid.Empty)
+        //                            {
+        //                                var isValidState = await dbContext.MstStates
+        //                                    .AnyAsync(s => s.Id == model.BillingAddressVm.StateId);
+
+        //                                if (isValidState)
+        //                                {
+        //                                    stateId = model.BillingAddressVm.StateId;
+        //                                }
+        //                            }
+
+
+        //                            contactBillingAddress.FirstName = model.BillingAddressVm?.FirstName;
+        //                            contactBillingAddress.LastName = model.BillingAddressVm?.LastName;
+        //                            contactBillingAddress.Phone = model.BillingAddressVm?.PhoneNumber;
+        //                            contactBillingAddress.Email = model.BillingAddressVm?.Email;
+        //                            contactBillingAddress.City = model.BillingAddressVm?.City;
+        //                            contactBillingAddress.State = stateId;
+        //                            contactBillingAddress.ZipCode = model.BillingAddressVm?.ZipCode;
+        //                            contactBillingAddress.StreetAddress = model.BillingAddressVm?.StreetAddress;
+        //                            contactBillingAddress.UpdatedAt = DateTime.Now;
+
+        //                            dbContext.TblAddresses.Update(contactBillingAddress);
+        //                            await dbContext.SaveChangesAsync();
+        //                        }
+        //                        else
+        //                        {
+        //                            Guid? stateId = null;
+
+        //                            // Validate and assign StateId only if it exists in MstState
+        //                            if (model.BillingAddressVm?.StateId != null &&
+        //                                model.BillingAddressVm.StateId != Guid.Empty)
+        //                            {
+        //                                var isValidState = await dbContext.MstStates
+        //                                    .AnyAsync(s => s.Id == model.BillingAddressVm.StateId);
+
+        //                                if (isValidState)
+        //                                {
+        //                                    stateId = model.BillingAddressVm.StateId;
+        //                                }
+        //                            }
+        //                            TblAddress CreateContactBillingAddress = new TblAddress
+        //                            {
+        //                                AddressId = Guid.NewGuid(),
+        //                                ContactId = contact.ContactId,
+        //                                FirstName = model.BillingAddressVm?.FirstName,
+        //                                LastName = model.BillingAddressVm?.LastName,
+        //                                Phone = model.BillingAddressVm?.PhoneNumber,
+        //                                Email = model.BillingAddressVm?.Email,
+        //                                City = model.BillingAddressVm?.City,
+        //                                State = stateId,
+        //                                ZipCode = model.BillingAddressVm?.ZipCode,
+        //                                StreetAddress = model.BillingAddressVm?.StreetAddress,
+        //                                CreatedAt = DateTime.Now,
+        //                                IsActive = true,
+        //                                IsDelete = false,
+        //                                TenantId = LoggedInTenantId,
+        //                            };
+
+        //                            dbContext.TblAddresses.Add(CreateContactBillingAddress);
+        //                            await dbContext.SaveChangesAsync();
+
+        //                            contact.PrimaryAddress = CreateContactBillingAddress.AddressId;
+        //                            await Update(contact);
+        //                        }
+        //                    }
+        //                }
+        //                else
+        //                {
+        //                    var contactCreate = new Sp_Contact
+        //                    {
+        //                        ContactType = model.ContactType ?? "",
+        //                        FirstName = model.FirstName??"",
+        //                        LastName = model.LastName??"",
+        //                        Suffix=model.Suffix??"",
+        //                        Email = model.Email??"",
+        //                        PhoneNumber = model.PhoneNumber ?? "",
+        //                        lastAsync = model.lastAsync,
+        //                        GHLContactId = model.GHLContactId,
+        //                    };
+        //                    if (!model.IsBillingAddressSameAsAddress)
+        //                    {
+        //                       var stateId = dbContext.MstStates.Where(x => x.StateCode.ToLower() == model.BillingAddressVm.StateCode.ToLower().Trim() 
+        //                       || x.StateName.ToLower() == model.BillingAddressVm.StateCode.ToLower().Trim()).Select(y => y.Id).FirstOrDefault();
+        //                        model.BillingAddressVm = new BillingAddressVm
+        //                        {
+        //                            BillingFirstName = model.BillingAddressVm.FirstName,
+        //                            BillingLastName = model.BillingAddressVm.LastName,
+        //                            FirstName = model.BillingAddressVm.FirstName,
+        //                            LastName = model.BillingAddressVm.LastName,
+        //                            Email = model.BillingAddressVm.Email,
+        //                            PhoneNumber = model.BillingAddressVm.PhoneNumber,
+        //                            City = model.BillingAddressVm.City,
+        //                            StateId = stateId != Guid.Empty ? stateId : null,
+        //                            ZipCode = model.BillingAddressVm.ZipCode,
+        //                            StreetAddress = model.BillingAddressVm.StreetAddress
+        //                        };
+
+        //                    }
+
+        //                    var res = await Create_Contact(contactCreate,LoggedInTenantId);
+        //                }
+        //            }
+        //            else
+        //            {
+        //                var contact1 = GetAllQuerable().Where
+        //                    (c => c.ContactId == model.ContactId && c.TenantId == LoggedInTenantId && c.IsDelete == false).FirstOrDefault();
+
+        //                var IsContactExists1 = (await GetAll())
+        //                    .Where(c => (c.Email == model.Email || c.PhoneNumber == model.PhoneNumber)
+        //                                && c.TenantId == LoggedInTenantId && c.IsDelete == false && c.ContactId != model.ContactId)
+        //                    .ToList();
+
+        //                if (IsContactExists1.Count > 0)
+        //                {
+        //                    responseVm.Message = "Email or Phone " + AppConstant.AlreadyExists;
+        //                    return responseVm;
+        //                }
+        //                if (model.TaxExemptionVm != null)
+        //                {
+        //                    if (model.TaxExemptionVm.ExpiryDate < model.TaxExemptionVm.EffectiveDate)
+        //                    {
+        //                        responseVm.Message = "ExpiryDate must be greater than EffectiveDate.";
+        //                        return responseVm;
+        //                    }
+        //                }
+        //                if (contact1 != null)
+        //                {
+        //                    contact1.ContactType = model.ContactType;
+        //                    contact1.FirstName = model.FirstName;
+        //                    contact1.LastName = model.LastName;
+        //                    contact1.Suffix = model.Suffix;
+        //                    contact1.PhoneNumber = model.PhoneNumber;
+        //                    contact1.Email = model.Email;
+        //                    contact1.Website = model.Website;
+        //                    contact1.Notes = model.Notes;
+        //                    contact1.Referral = model.Referral;
+        //                    contact1.IsTaxExemption = model.IsTaxExemption;
+        //                    contact1.IsBillingAddressSameAsAddress = model.IsBillingAddressSameAsAddress;
+        //                    contact1.ModifiedBy = LoggedInTenantId;
+        //                    contact1.UpdatedAt = DateTime.Now;
+
+        //                    await Update(contact1);
+        //                    if(contact1.GhlcontactId !=null)
+        //                    {
+        //                        model.IsBillingAddressSameAsAddress = false;
+        //                    }
+        //                    if (!model.IsBillingAddressSameAsAddress)
+        //                    {
+        //                        var contactBillingAddress = dbContext.TblAddresses
+        //                            .Where(x => x.ContactId == contact1.ContactId && x.AddressId == contact1.PrimaryAddress && x.IsDelete == false && x.TenantId==LoggedInTenantId)
+        //                            .FirstOrDefault();
+
+        //                        if (contactBillingAddress != null)
+        //                        {
+        //                            Guid? stateId = null;
+
+        //                            // Validate and assign StateId only if it exists in MstState
+        //                            if (model.BillingAddressVm?.StateId != null &&
+        //                                model.BillingAddressVm.StateId != Guid.Empty)
+        //                            {
+        //                                var isValidState = await dbContext.MstStates
+        //                                    .AnyAsync(s => s.Id == model.BillingAddressVm.StateId);
+
+        //                                if (isValidState)
+        //                                {
+        //                                    stateId = model.BillingAddressVm.StateId;
+        //                                }
+        //                            }
+
+
+        //                            contactBillingAddress.FirstName = model.BillingAddressVm?.FirstName;
+        //                            contactBillingAddress.LastName = model.BillingAddressVm?.LastName;
+        //                            contactBillingAddress.Phone = model.BillingAddressVm?.PhoneNumber;
+        //                            contactBillingAddress.Email = model.BillingAddressVm?.Email;
+        //                            contactBillingAddress.City = model.BillingAddressVm?.City;
+        //                            contactBillingAddress.State = stateId;
+        //                            contactBillingAddress.ZipCode = model.BillingAddressVm?.ZipCode;
+        //                            contactBillingAddress.StreetAddress = model.BillingAddressVm?.StreetAddress;
+        //                            contactBillingAddress.UpdatedAt = DateTime.Now;
+
+        //                            dbContext.TblAddresses.Update(contactBillingAddress);
+        //                            await dbContext.SaveChangesAsync();
+        //                        }
+        //                        else
+        //                        {
+        //                            Guid? stateId = null;
+
+        //                            // Validate and assign StateId only if it exists in MstState
+        //                            if (model.BillingAddressVm?.StateId != null &&
+        //                                model.BillingAddressVm.StateId != Guid.Empty)
+        //                            {
+        //                                var isValidState = await dbContext.MstStates
+        //                                    .AnyAsync(s => s.Id == model.BillingAddressVm.StateId);
+
+        //                                if (isValidState)
+        //                                {
+        //                                    stateId = model.BillingAddressVm.StateId;
+        //                                }
+        //                            }
+        //                            TblAddress CreateContactBillingAddress = new TblAddress
+        //                            {
+        //                                AddressId = Guid.NewGuid(),
+        //                                ContactId = contact1.ContactId,
+        //                                FirstName = model.BillingAddressVm?.FirstName,
+        //                                LastName = model.BillingAddressVm?.LastName,
+        //                                Phone = model.BillingAddressVm?.PhoneNumber,
+        //                                Email = model.BillingAddressVm?.Email,
+        //                                City = model.BillingAddressVm?.City,
+        //                                State = stateId,
+        //                                ZipCode = model.BillingAddressVm?.ZipCode,
+        //                                StreetAddress = model.BillingAddressVm?.StreetAddress,
+        //                                CreatedAt = DateTime.Now,
+        //                                IsActive = true,
+        //                                IsDelete = false,
+        //                                TenantId = LoggedInTenantId,
+        //                            };
+
+        //                            dbContext.TblAddresses.Add(CreateContactBillingAddress);
+        //                            await dbContext.SaveChangesAsync();
+
+        //                            contact1.PrimaryAddress = CreateContactBillingAddress.AddressId;
+        //                            await Update(contact1);
+        //                        }
+        //                    }
+
+        //                    if (!model.IsTaxExemption)
+        //                    {
+        //                        var contactTaxExemption = taxExemptionService.GetAllQuerable()
+        //                            .Where(x => x.ContactId == contact1.ContactId && x.IsDelete == false ).FirstOrDefault();
+
+        //                        string arrayString = string.Join(", ", model.TaxExemptionVm?.ExemptionCertificate);
+
+        //                        if (contactTaxExemption != null)
+        //                        {
+        //                            contactTaxExemption.ExemptionCertificate = arrayString;
+        //                            contactTaxExemption.EffectiveDate = model.TaxExemptionVm?.EffectiveDate;
+        //                            contactTaxExemption.ExpiryDate = model.TaxExemptionVm?.ExpiryDate;
+        //                            contactTaxExemption.UpdatedAt = DateTime.Now;
+        //                            contactTaxExemption.IsActive = true;
+        //                            contactTaxExemption.IsDelete = false;
+        //                            await taxExemptionService.Update(contactTaxExemption);
+        //                        }
+        //                        else
+        //                        {
+        //                            TblTaxExemption taxExemption1 = new TblTaxExemption
+        //                            {
+        //                                ContactId = contact1.ContactId,
+        //                                ExemptionCertificate = arrayString,
+        //                                EffectiveDate = model.TaxExemptionVm?.EffectiveDate,
+        //                                ExpiryDate = model.TaxExemptionVm?.ExpiryDate,
+        //                                CreatedAt = DateTime.Now,
+        //                                IsActive = true,
+        //                                IsDelete = false
+        //                            };
+        //                            await taxExemptionService.Add(taxExemption1);
+        //                        }
+        //                    }
+        //                }
+        //                var ghlContactAdd = new Sp_Contact
+        //                {
+        //                    //Id = contact1.GhlcontactId.ToString() ?? string.Empty,
+        //                    FirstName = model.FirstName ?? string.Empty,
+        //                    LastName = model.LastName ?? string.Empty,
+        //                    Suffix = model.Suffix ?? string.Empty,
+        //                    Email = model.Email ?? string.Empty,
+        //                    PhoneNumber = model.PhoneNumber ?? string.Empty,
+        //                    Notes = model.Notes ?? string.Empty,
+        //                    ContactType = model.ContactType ?? string.Empty,
+        //                    Website = model.Website ?? string.Empty,
+        //                    Referral = model.Referral ?? string.Empty,
+        //                    GHLContactId = model.GHLContactId ?? string.Empty,
+        //                };
+        //                if(!model.IsBillingAddressSameAsAddress)
+        //                {
+        //                    ghlContactAdd.BillingAddressVm = model.BillingAddressVm;
+        //                }
+        //                var Checkghlresponse = await gHLConfigurationService.CheckGHLConfiguration(LoggedInTenantId);
+        //                if (Checkghlresponse.IsSuccess)
+        //                {
+        //                    var ghlResponse = await SyncWithGHL(contact1, ghlContactAdd);
+        //                    responseVm.IsSuccess = true;
+        //                    responseVm.Message = Checkghlresponse.Message;
+        //                }
+        //                else
+        //                 {
+        //                    responseVm.IsSuccess = true;
+        //                    FileLogger.Log(Checkghlresponse.Message);
+        //                  //  responseVm.Message = Checkghlresponse.Message;
+        //                 }
+        //                responseVm.IsSuccess = true;
+        //                responseVm.Message = AppConstant.UpdateSuccessMsg;
+        //            }
+        //        }
+        //        else
+        //        {
+        //            responseVm.Message = AppConstant.TenantNotFound;
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        responseVm.Message = AppConstant.ExceptionError + ex.Message;
+        //    }
+        //    return responseVm;
+        //}
         public async Task<IResponseVm<string>> Create_Contact(Sp_Contact model, Guid? LoggedInTenantId = null)
         {
-            IResponseVm<string> responseVm = new ResponseVm<string>();
+            var responseVm = new ResponseVm<string>();
             try
             {
-                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : claimsProperty.GetTenantId());
+                var tenantId = (LoggedInTenantId != null && LoggedInTenantId != Guid.Empty)
+                    ? LoggedInTenantId.Value
+                    : claimsProperty.GetTenantId();
 
-                var TenantId = Guid.Empty;
-                var IsTenantExists = false;
-                if (model.PhoneNumber != null)
+                if (!await tenantService.AnyAsync(x => x.TenantId == tenantId && x.IsActive == true))
                 {
+                    responseVm.Message = AppConstant.TenantNotFound;
+                    return responseVm;
+                }
+
+                if (!string.IsNullOrEmpty(model.PhoneNumber))
                     model.PhoneNumber = FormatPhoneNumber(model.PhoneNumber);
-                }
-                FileLogger.Log($"Location id fetched {model.locationId}");
-                if (model.locationId != null)
+
+                if (!model.IsTaxExemption &&
+                    (model.TaxExemptionVm?.EffectiveDate == null || model.TaxExemptionVm?.ExpiryDate == null))
                 {
-                   // await gHLConfigurationService.GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
-                    TenantId = (Guid)LoggedInTenantId;
-                    FileLogger.Log($"Tenant id fetched {TenantId}");
-                    if (TenantId != null)
-                    {
-                        IsTenantExists = true;
-                        model.IsTaxExemption = true;
-                        model.IsBillingAddressSameAsAddress = true;
-                    }
-                }
-                else
-                {
-                    IsTenantExists = await tenantService.AnyAsync(x => x.TenantId == LoggedInTenantId && x.IsActive == true);
-                    TenantId = (Guid)LoggedInTenantId;
-                    FileLogger.Log($"Tenant Id id fetched {TenantId}");
-                    //model.IsTaxExemption = true;
-                }
-                if(!model.IsTaxExemption)
-                {
-                    if(model.TaxExemptionVm.EffectiveDate == null && model.TaxExemptionVm.ExpiryDate == null)
-                    {
-                        responseVm.Message = "Please Fill TaxExemption Details.";
-                        return responseVm;
-                    }
+                    responseVm.Message = "Please Fill TaxExemption Details.";
+                    return responseVm;
                 }
 
-                if (IsTenantExists)
+                var existingContacts = GetAllQuerable().Where(c =>
+                    (c.Email == model.Email)
+                    && c.TenantId == tenantId && c.IsDelete == false).ToList();
+
+                if (existingContacts.Any())
                 {
-                    //await gHLConfigurationService.GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
-                    var IsContactExists = GetAllQuerable()
-                        .Where(c => (c.Email == model.Email || c.PhoneNumber == model.PhoneNumber)
-                        && c.TenantId == TenantId
-                        && c.IsDelete == false).ToList();
-
-                    if (IsContactExists.Count > 0)
+                    if (!string.IsNullOrEmpty(model.GHLContactId))
                     {
-                        //If Contact is already exists in Shutter DB then update the GHL Contact if GHLContactId is not null
-                        if (model.GHLContactId != null)
-                        {
-                            var ghlContactAdd = new UpdateContact
-                            {
-                                //Id = contact1.GhlcontactId.ToString() ?? string.Empty,
-                                FirstName = model.FirstName ?? string.Empty,
-                                LastName = model.LastName ?? string.Empty,
-                                Suffix = model.Suffix ?? string.Empty,
-                                Email = model.Email ?? string.Empty,
-                                PhoneNumber = model.PhoneNumber ?? string.Empty,
-                                Notes = model.Notes ?? string.Empty,
-                                ContactType = model.ContactType ?? string.Empty,
-                                Website = model.Website ?? string.Empty,
-                                Referral = model.Referral ?? string.Empty,
-                                GHLContactId = model.GHLContactId ?? string.Empty,
-                                //locationId = model.locationId ?? string.Empty,
-                            };
-                            var result = await Update_Contact(ghlContactAdd, LoggedInTenantId);
-                            return result;
-                        }
-                        else
-                        {
-                            responseVm.Message = $"Email {model.Email} or Phone {model.PhoneNumber} " + AppConstant.AlreadyExists;
-                            return responseVm;
-                        }
-                    }
-                    //for Billing address
-                    if (!model.IsBillingAddressSameAsAddress && model.BillingAddressVm == null)
-                    {
-                        responseVm.Message = "Billing details required.";
-                        return responseVm;
-                    }
-                    //for Tax exemption
-                    if (model.TaxExemptionVm != null && model.TaxExemptionVm.ExpiryDate < model.TaxExemptionVm.EffectiveDate)
-                    {
-                        responseVm.Message = "ExpiryDate must be greater than EffectiveDate.";
-                        return responseVm;
-                    }
-
-                    //generate unique version
-                    int Version = GetAllQuerable().Where(x => x.TenantId == LoggedInTenantId && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt)
-                        .Select(p => (p.ContactUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries).Length == 3 ? Convert.ToInt32(p.ContactUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries)[2]) : 0)).FirstOrDefault();
-                    Version += 1;
-                    var Companycode = tenantService.GetAllQuerable().Where(x => x.TenantId == TenantId && x.IsActive == true && x.IsDelete == false).Select(x => x.Code).FirstOrDefault();
-                    var contactUniqueId = GenerateUniqueId.GenerateUniqueIds(ModuleName.Contact, Companycode, Version);
-
-                    TblContact CreateContact = new TblContact
-                    {
-                        ContactId = Guid.NewGuid(),
-                        ContactType = model.ContactType??"",
-                        FirstName = model.FirstName??"",
-                        LastName = model.LastName ?? "",
-                        Suffix = model.Suffix??"",
-                        // Name = model.Name,
-                        PhoneNumber = model.PhoneNumber ?? "",
-                        Email = model.Email??"",
-                        Website = model.Website ?? "",
-                        Notes = model.Notes ??"",
-                        Referral = model.Referral ?? "",
-                        ContactUniqueId = contactUniqueId ??"",
-                        IsTaxExemption = model.IsTaxExemption,
-                        IsBillingAddressSameAsAddress = model.IsBillingAddressSameAsAddress,
-                        CreatedBy = LoggedInTenantId,
-                        CreatedAt = DateTime.Now,
-                        TenantId = TenantId,
-                        IsActive = true,
-                        IsArchive = false,
-                        IsDelete = false
-                    };
-                    var res = await Add(CreateContact);
-                    if (model.lastAsync != null && model.GHLContactId != null)
-                    {
-                        res.LastSync = model.lastAsync;
-                        res.GhlcontactId = model.GHLContactId??"";
-                        await Update(res);
-                    }
-
-                    if (res.ContactId != Guid.Empty)
-                    {
-                        // Add Billing Address
-                        if (!model.IsBillingAddressSameAsAddress)
-                        {
-
-                            Guid? stateId = null;
-
-                            // Validate and assign StateId only if it exists in MstState
-                            if (model.BillingAddressVm?.StateId != null &&
-                                model.BillingAddressVm.StateId != Guid.Empty)
-                            {
-                                var isValidState = await dbContext.MstStates
-                                    .AnyAsync(s => s.Id == model.BillingAddressVm.StateId);
-
-                                if (isValidState)
-                                {
-                                    stateId = model.BillingAddressVm.StateId;
-                                }
-                            }
-                            TblAddress address = new TblAddress
-                            {
-                                AddressId = Guid.NewGuid(),
-                                ContactId = res.ContactId,
-                                Label = "Primary Address",
-                                FirstName = model.BillingAddressVm?.FirstName ?? "",
-                                LastName = model.BillingAddressVm?.LastName ??"",
-                                Phone = model.BillingAddressVm?.PhoneNumber??"",
-                                Email = model.BillingAddressVm?.Email??"",
-                                City = model.BillingAddressVm?.City??"",
-                                State = stateId ?? Guid.Empty,
-                                ZipCode = model.BillingAddressVm?.ZipCode??"",
-                                StreetAddress = model.BillingAddressVm?.StreetAddress??"",
-                                CreatedAt = DateTime.Now,
-                                IsActive = true,
-                                IsDelete = false,
-                                TenantId = TenantId,
-                                CreatedBy = AppConstant.LoggedInUserID
-                            };
-                             dbContext.TblAddresses.Add(address);
-                            await dbContext.SaveChangesAsync();
-                            res.PrimaryAddress = address.AddressId;
-                            await Update(res);
-                        }
-
-                        //Add Tax Exemption
-                        if (!model.IsTaxExemption)
-                        {
-                            string arrayString = string.Join(", ", model.TaxExemptionVm?.ExemptionCertificate);
-                            TblTaxExemption taxExemption1 = new TblTaxExemption
-                            {
-                                ContactId = res.ContactId,
-                                ExemptionCertificate = arrayString ??"",
-                                EffectiveDate = model.TaxExemptionVm?.EffectiveDate,
-                                ExpiryDate = model.TaxExemptionVm?.ExpiryDate,
-                                CreatedAt = DateTime.Now,
-                                IsActive = true,
-                                IsDelete = false,
-                            };
-                            await taxExemptionService.Add(taxExemption1);
-                            responseVm.IsSuccess = true;
-                            responseVm.Message = AppConstant.InsertSuccessMsg;
-                        }
-                        if (model.GHLContactId == null)
-                        {
-                            var Checkghlresponse = await gHLConfigurationService.CheckGHLConfiguration(LoggedInTenantId);
-                            if (Checkghlresponse.IsSuccess)
-                            {
-                                var ghlResponse = await SyncWithGHL(res, model);
-                                if (ghlResponse.IsSuccess)
-                                {
-                                    responseVm.IsSuccess = true;
-                                    responseVm.Message = AppConstant.InsertSuccessMsg + ghlResponse.Message;
-                                }
-                                else
-                                {
-                                    responseVm.IsSuccess = true;
-                                    responseVm.Message = AppConstant.InsertSuccessMsg + ghlResponse.Message;
-                                }
-                            }
-                            if (!Checkghlresponse.IsSuccess)
-                            {
-                                responseVm.IsSuccess = true;
-                                responseVm.Message = AppConstant.InsertSuccessMsg;
-                                FileLogger.Log(Checkghlresponse.Message);
-                                //responseVm.IsSuccess = true;
-                                //responseVm.Message = Checkghlresponse.Message;
-                            }
-
-                        }
-                        
+                        var updateModel = PrepareUpdateModelFromSpContact(model);
+                        return await Update_Contact(updateModel, tenantId);
                     }
                     else
                     {
-                        responseVm.Message = AppConstant.NoDataFound;
+                        responseVm.Message = $"Email {model.Email} {AppConstant.AlreadyExists}";
+                        return responseVm;
                     }
+                }
+
+                if (!model.IsBillingAddressSameAsAddress && model.BillingAddressVm == null)
+                {
+                    responseVm.Message = "Billing details required.";
+                    return responseVm;
+                }
+
+                if (model.TaxExemptionVm != null && model.TaxExemptionVm.ExpiryDate < model.TaxExemptionVm.EffectiveDate)
+                {
+                    responseVm.Message = "ExpiryDate must be greater than EffectiveDate.";
+                    return responseVm;
+                }
+
+                var contact = await CreateNewContactRecord(model, tenantId);
+
+                if (contact == null || contact.ContactId == Guid.Empty)
+                {
+                    responseVm.Message = AppConstant.NoDataFound;
+                    return responseVm;
+                }
+
+                if (model.lastAsync != null && !string.IsNullOrEmpty(model.GHLContactId))
+                {
+                    contact.LastSync = model.lastAsync;
+                    contact.GhlcontactId = model.GHLContactId;
+                    await Update(contact);
+                }
+
+                if (!model.IsBillingAddressSameAsAddress)
+                    await AddBillingAddress(model.BillingAddressVm, contact, tenantId);
+
+                if (!model.IsTaxExemption)
+                    await AddTaxExemption(model.TaxExemptionVm, contact);
+
+                if (string.IsNullOrEmpty(model.GHLContactId))
+                {
+                    var ghlConfig = await gHLConfigurationService.CheckGHLConfiguration(tenantId);
+                    if (ghlConfig.IsSuccess)
+                    {
+                        var ghlResponse = await SyncWithGHL(contact, model);
+                        responseVm.Message = AppConstant.InsertSuccessMsg + ghlResponse.Message;
+                    }
+                    else
+                    {
+                        responseVm.Message = AppConstant.InsertSuccessMsg;
+                        FileLogger.Log(ghlConfig.Message);
+                    }
+                    responseVm.IsSuccess = true;
                 }
                 else
                 {
-                    responseVm.Message = AppConstant.TenantNotFound;
+                    responseVm.IsSuccess = true;
+                    responseVm.Message = AppConstant.InsertSuccessMsg;
                 }
             }
-
             catch (Exception ex)
             {
                 responseVm.Message = AppConstant.ExceptionError + ex.Message;
             }
             return responseVm;
         }
+
+        private UpdateContact PrepareUpdateModelFromSpContact(Sp_Contact model)
+        {
+            var updateModel = new UpdateContact
+            {
+                FirstName = model.FirstName ?? string.Empty,
+                LastName = model.LastName ?? string.Empty,
+                Suffix = model.Suffix ?? string.Empty,
+                Email = model.Email ?? string.Empty,
+                PhoneNumber = model.PhoneNumber ?? string.Empty,
+                Notes = model.Notes ?? string.Empty,
+                ContactType = model.ContactType ?? string.Empty,
+                Website = model.Website ?? string.Empty,
+                Referral = model.Referral ?? string.Empty,
+                GHLContactId = model.GHLContactId ?? string.Empty,
+                BillingAddressVm = model.BillingAddressVm
+            };
+            return updateModel;
+        }
+
+        private async Task<TblContact> CreateNewContactRecord(Sp_Contact model, Guid tenantId)
+        {
+            int Version = GetAllQuerable().Where(x => x.TenantId == tenantId && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt)
+                         .Select(p => (p.ContactUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries).Length == 3 ? Convert.ToInt32(p.ContactUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries)[2]) : 0)).FirstOrDefault();
+            Version++;
+
+            var companyCode = tenantService.GetAllQuerable()
+                .Where(x => x.TenantId == tenantId && x.IsActive == true && x.IsDelete == false)
+                .Select(x => x.Code).FirstOrDefault();
+
+            var uniqueId = GenerateUniqueId.GenerateUniqueIds(ModuleName.Contact, companyCode, Version);
+
+            var contact = new TblContact
+            {
+                ContactId = Guid.NewGuid(),
+                ContactType = model.ContactType ?? string.Empty,
+                FirstName = model.FirstName ?? string.Empty,
+                LastName = model.LastName ?? string.Empty,
+                Suffix = model.Suffix ?? string.Empty,
+                PhoneNumber = model.PhoneNumber ?? string.Empty,
+                Email = model.Email ?? string.Empty,
+                Website = model.Website ?? string.Empty,
+                Notes = model.Notes ?? string.Empty,
+                Referral = model.Referral ?? string.Empty,
+                ContactUniqueId = uniqueId ?? string.Empty,
+                IsTaxExemption = model.IsTaxExemption,
+                IsBillingAddressSameAsAddress = model.IsBillingAddressSameAsAddress,
+                CreatedBy = tenantId,
+                CreatedAt = DateTime.Now,
+                TenantId = tenantId,
+                IsActive = true,
+                IsArchive = false,
+                IsDelete = false
+            };
+
+            return await Add(contact);
+        }
+
+        private async Task AddBillingAddress(BillingAddressVm vm, TblContact contact, Guid tenantId)
+        {
+            Guid? stateId = null;
+            if (vm?.StateId != null && vm.StateId != Guid.Empty)
+            {
+                var isValid = await dbContext.MstStates.AnyAsync(s => s.Id == vm.StateId);
+                stateId = isValid ? vm.StateId : null;
+            }
+
+            var address = new TblAddress
+            {
+                AddressId = Guid.NewGuid(),
+                ContactId = contact.ContactId,
+                Label = "Primary Address",
+                FirstName = vm?.FirstName ?? string.Empty,
+                LastName = vm?.LastName ?? string.Empty,
+                Phone = vm?.PhoneNumber ?? string.Empty,
+                Email = vm?.Email ?? string.Empty,
+                City = vm?.City ?? string.Empty,
+                State = stateId,
+                ZipCode = vm?.ZipCode ?? string.Empty,
+                StreetAddress = vm?.StreetAddress ?? string.Empty,
+                CreatedAt = DateTime.Now,
+                IsActive = true,
+                IsDelete = false,
+                TenantId = tenantId,
+                CreatedBy = AppConstant.LoggedInUserID
+            };
+
+            dbContext.TblAddresses.Add(address);
+            await dbContext.SaveChangesAsync();
+
+            contact.PrimaryAddress = address.AddressId;
+            await Update(contact);
+        }
+
+        private async Task AddTaxExemption(TaxExemption vm, TblContact contact)
+        {
+            var taxExemption = new TblTaxExemption
+            {
+                ContactId = contact.ContactId,
+                ExemptionCertificate = string.Join(", ", vm?.ExemptionCertificate) ?? string.Empty,
+                EffectiveDate = vm?.EffectiveDate,
+                ExpiryDate = vm?.ExpiryDate,
+                CreatedAt = DateTime.Now,
+                IsActive = true,
+                IsDelete = false
+            };
+            await taxExemptionService.Add(taxExemption);
+        }
+
+        // Update_Contact method
         public async Task<IResponseVm<string>> Update_Contact(UpdateContact model, Guid? LoggedInTenantId = null)
         {
-            IResponseVm<string> responseVm = new ResponseVm<string>();
+            var responseVm = new ResponseVm<string>();
             try
             {
-                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : claimsProperty.GetTenantId());
+                var tenantId = (LoggedInTenantId != null && LoggedInTenantId != Guid.Empty)
+                    ? LoggedInTenantId.Value
+                    : claimsProperty.GetTenantId();
 
-                var TenantId = Guid.Empty;
-                var IsTenantExists = false;
-                if (model.PhoneNumber != null)
+                if (!await tenantService.AnyAsync(x => x.TenantId == tenantId && x.IsActive == true))
                 {
+                    responseVm.Message = AppConstant.TenantNotFound;
+                    return responseVm;
+                }
+
+                if (!string.IsNullOrEmpty(model.PhoneNumber))
                     model.PhoneNumber = FormatPhoneNumber(model.PhoneNumber);
-                }
-                if (model.locationId != null)
-                {
-                   // await gHLConfigurationService.GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
-                    TenantId = (Guid)LoggedInTenantId;
 
-                    if (TenantId != Guid.Empty)
+                await gHLConfigurationService.GetGHLConfiguration(tenantId.ToString());
+
+                if (!string.IsNullOrEmpty(model.GHLContactId))
+                {
+                    var contact = (await GetAll())
+                        .FirstOrDefault(c => c.GhlcontactId == model.GHLContactId && c.TenantId == tenantId && c.IsDelete == false);
+
+                    var existingContacts = GetAllQuerable()
+                        .Where(c => (c.Email == model.Email)
+                                    && c.TenantId == tenantId && c.IsDelete == false)
+                        .OrderByDescending(x => x.CreatedAt)
+                        .ToList();
+
+                    contact ??= existingContacts.FirstOrDefault();
+
+                    if (contact != null)
                     {
-                        IsTenantExists = true;
-                        model.IsTaxExemption = true;
-                        model.IsBillingAddressSameAsAddress = true;
-                    }
-                }
-                else
-                {
-                    IsTenantExists = await tenantService.AnyAsync(x => x.TenantId == LoggedInTenantId && x.IsActive == true);
-                    TenantId = (Guid)LoggedInTenantId;
-                }
-
-                if (IsTenantExists)
-                {
-                    await gHLConfigurationService.GetGHLConfiguration(LoggedInTenantId.ToString());
-                    if (!string.IsNullOrEmpty(model.GHLContactId))
-                    {
-                        var contact = (await GetAll()).Where
-                            (c => c.GhlcontactId == model.GHLContactId && c.TenantId == TenantId && c.IsDelete == false).FirstOrDefault();
-
-                        var IsContactExists = GetAllQuerable()
-                            .Where(c => (c.Email == model.Email || c.PhoneNumber == model.PhoneNumber)
-                                        && c.TenantId == TenantId && c.IsDelete == false).OrderByDescending(x=>x.CreatedAt)
-                            .ToList();
-
-                        if (contact == null && IsContactExists.Count > 0)
-                        {
-                            contact = IsContactExists.FirstOrDefault();
-
-                            //responseVm.Message = "Email or Phone " + AppConstant.AlreadyExists;
-                            //return responseVm;
-                        }
-
-                        if (contact != null)
-                        {
-                            contact.ContactType = model.ContactType??"";
-                            contact.FirstName = model.FirstName??"";
-                            contact.LastName = model.LastName??"";
-                            contact.Suffix = model.Suffix ??"";
-                            contact.PhoneNumber = model.PhoneNumber ??"";
-                            contact.Email = model.Email ??"";
-                            contact.Website = model.Website ??"";
-                            contact.Notes = model.Notes ??"";
-                            contact.Referral = model.Referral ?? "";
-                            contact.IsTaxExemption = model.IsTaxExemption ;
-                            contact.IsBillingAddressSameAsAddress = model.IsBillingAddressSameAsAddress;
-                            contact.ModifiedBy = TenantId;
-                            contact.UpdatedAt = DateTime.Now;
-
-                            await Update(contact); responseVm.IsSuccess = true;
-                            responseVm.Message = AppConstant.UpdateSuccessMsg;
-                        }
-                        else
-                        {
-                            var contactCreate = new Sp_Contact
-                            {
-                                ContactType = model.ContactType ?? "",
-                                FirstName = model.FirstName??"",
-                                LastName = model.LastName??"",
-                                Suffix=model.Suffix??"",
-                                Email = model.Email??"",
-                                PhoneNumber = model.PhoneNumber ?? "",
-                                lastAsync = model.lastAsync,
-                                GHLContactId = model.GHLContactId,
-                                locationId = model.locationId ?? ""
-                            };
-
-                            var res = await Create_Contact(contactCreate,LoggedInTenantId);
-                        }
+                        await UpdateExistingContact(model, contact, tenantId);
                     }
                     else
                     {
-                        var contact1 = GetAllQuerable().Where
-                            (c => c.ContactId == model.ContactId && c.TenantId == TenantId && c.IsDelete == false).FirstOrDefault();
-
-                        var IsContactExists1 = (await GetAll())
-                            .Where(c => (c.Email == model.Email || c.PhoneNumber == model.PhoneNumber)
-                                        && c.TenantId == TenantId && c.IsDelete == false && c.ContactId != model.ContactId)
-                            .ToList();
-
-                        if (IsContactExists1.Count > 0)
-                        {
-                            responseVm.Message = "Email or Phone " + AppConstant.AlreadyExists;
-                            return responseVm;
-                        }
-                        if (model.TaxExemptionVm != null)
-                        {
-                            if (model.TaxExemptionVm.ExpiryDate < model.TaxExemptionVm.EffectiveDate)
-                            {
-                                responseVm.Message = "ExpiryDate must be greater than EffectiveDate.";
-                                return responseVm;
-                            }
-                        }
-                        if (contact1 != null)
-                        {
-                            contact1.ContactType = model.ContactType;
-                            contact1.FirstName = model.FirstName;
-                            contact1.LastName = model.LastName;
-                            contact1.Suffix = model.Suffix;
-                            contact1.PhoneNumber = model.PhoneNumber;
-                            contact1.Email = model.Email;
-                            contact1.Website = model.Website;
-                            contact1.Notes = model.Notes;
-                            contact1.Referral = model.Referral;
-                            contact1.IsTaxExemption = model.IsTaxExemption;
-                            contact1.IsBillingAddressSameAsAddress = model.IsBillingAddressSameAsAddress;
-                            contact1.ModifiedBy = TenantId;
-                            contact1.UpdatedAt = DateTime.Now;
-
-                            await Update(contact1);
-                            if(contact1.GhlcontactId !=null)
-                            {
-                                model.IsBillingAddressSameAsAddress = false;
-                            }
-                            if (!model.IsBillingAddressSameAsAddress)
-                            {
-                                var contactBillingAddress = dbContext.TblAddresses
-                                    .Where(x => x.ContactId == contact1.ContactId && x.AddressId == contact1.PrimaryAddress && x.IsDelete == false && x.TenantId==LoggedInTenantId)
-                                    .FirstOrDefault();
-
-                                if (contactBillingAddress != null)
-                                {
-                                    Guid? stateId = null;
-
-                                    // Validate and assign StateId only if it exists in MstState
-                                    if (model.BillingAddressVm?.StateId != null &&
-                                        model.BillingAddressVm.StateId != Guid.Empty)
-                                    {
-                                        var isValidState = await dbContext.MstStates
-                                            .AnyAsync(s => s.Id == model.BillingAddressVm.StateId);
-
-                                        if (isValidState)
-                                        {
-                                            stateId = model.BillingAddressVm.StateId;
-                                        }
-                                    }
-
-
-                                    contactBillingAddress.FirstName = model.BillingAddressVm?.FirstName;
-                                    contactBillingAddress.LastName = model.BillingAddressVm?.LastName;
-                                    contactBillingAddress.Phone = model.BillingAddressVm?.PhoneNumber;
-                                    contactBillingAddress.Email = model.BillingAddressVm?.Email;
-                                    contactBillingAddress.City = model.BillingAddressVm?.City;
-                                    contactBillingAddress.State = stateId;
-                                    contactBillingAddress.ZipCode = model.BillingAddressVm?.ZipCode;
-                                    contactBillingAddress.StreetAddress = model.BillingAddressVm?.StreetAddress;
-                                    contactBillingAddress.UpdatedAt = DateTime.Now;
-
-                                    dbContext.TblAddresses.Update(contactBillingAddress);
-                                    await dbContext.SaveChangesAsync();
-                                }
-                                else
-                                {
-                                    Guid? stateId = null;
-
-                                    // Validate and assign StateId only if it exists in MstState
-                                    if (model.BillingAddressVm?.StateId != null &&
-                                        model.BillingAddressVm.StateId != Guid.Empty)
-                                    {
-                                        var isValidState = await dbContext.MstStates
-                                            .AnyAsync(s => s.Id == model.BillingAddressVm.StateId);
-
-                                        if (isValidState)
-                                        {
-                                            stateId = model.BillingAddressVm.StateId;
-                                        }
-                                    }
-                                    TblAddress CreateContactBillingAddress = new TblAddress
-                                    {
-                                        AddressId = Guid.NewGuid(),
-                                        ContactId = contact1.ContactId,
-                                        FirstName = model.BillingAddressVm?.FirstName,
-                                        LastName = model.BillingAddressVm?.LastName,
-                                        Phone = model.BillingAddressVm?.PhoneNumber,
-                                        Email = model.BillingAddressVm?.Email,
-                                        City = model.BillingAddressVm?.City,
-                                        State = stateId,
-                                        ZipCode = model.BillingAddressVm?.ZipCode,
-                                        StreetAddress = model.BillingAddressVm?.StreetAddress,
-                                        CreatedAt = DateTime.Now,
-                                        IsActive = true,
-                                        IsDelete = false,
-                                        TenantId = TenantId,
-                                    };
-
-                                    dbContext.TblAddresses.Add(CreateContactBillingAddress);
-                                    await dbContext.SaveChangesAsync();
-
-                                    contact1.PrimaryAddress = CreateContactBillingAddress.AddressId;
-                                    await Update(contact1);
-                                }
-                            }
-
-                            if (!model.IsTaxExemption)
-                            {
-                                var contactTaxExemption = taxExemptionService.GetAllQuerable()
-                                    .Where(x => x.ContactId == contact1.ContactId && x.IsDelete == false ).FirstOrDefault();
-
-                                string arrayString = string.Join(", ", model.TaxExemptionVm?.ExemptionCertificate);
-
-                                if (contactTaxExemption != null)
-                                {
-                                    contactTaxExemption.ExemptionCertificate = arrayString;
-                                    contactTaxExemption.EffectiveDate = model.TaxExemptionVm?.EffectiveDate;
-                                    contactTaxExemption.ExpiryDate = model.TaxExemptionVm?.ExpiryDate;
-                                    contactTaxExemption.UpdatedAt = DateTime.Now;
-                                    contactTaxExemption.IsActive = true;
-                                    contactTaxExemption.IsDelete = false;
-                                    await taxExemptionService.Update(contactTaxExemption);
-                                }
-                                else
-                                {
-                                    TblTaxExemption taxExemption1 = new TblTaxExemption
-                                    {
-                                        ContactId = contact1.ContactId,
-                                        ExemptionCertificate = arrayString,
-                                        EffectiveDate = model.TaxExemptionVm?.EffectiveDate,
-                                        ExpiryDate = model.TaxExemptionVm?.ExpiryDate,
-                                        CreatedAt = DateTime.Now,
-                                        IsActive = true,
-                                        IsDelete = false
-                                    };
-                                    await taxExemptionService.Add(taxExemption1);
-                                }
-                            }
-                        }
-                        var ghlContactAdd = new Sp_Contact
-                        {
-                            //Id = contact1.GhlcontactId.ToString() ?? string.Empty,
-                            FirstName = model.FirstName ?? string.Empty,
-                            LastName = model.LastName ?? string.Empty,
-                            Suffix = model.Suffix ?? string.Empty,
-                            Email = model.Email ?? string.Empty,
-                            PhoneNumber = model.PhoneNumber ?? string.Empty,
-                            Notes = model.Notes ?? string.Empty,
-                            ContactType = model.ContactType ?? string.Empty,
-                            Website = model.Website ?? string.Empty,
-                            Referral = model.Referral ?? string.Empty,
-                            GHLContactId = model.GHLContactId ?? string.Empty,
-                        };
-                        var Checkghlresponse = await gHLConfigurationService.CheckGHLConfiguration(LoggedInTenantId);
-                        if (Checkghlresponse.IsSuccess)
-                        {
-                            var ghlResponse = await SyncWithGHL(contact1, ghlContactAdd);
-                            responseVm.IsSuccess = true;
-                            responseVm.Message = Checkghlresponse.Message;
-                        }
-                        else
-                         {
-                            responseVm.IsSuccess = true;
-                            FileLogger.Log(Checkghlresponse.Message);
-                          //  responseVm.Message = Checkghlresponse.Message;
-                         }
-                        responseVm.IsSuccess = true;
-                        responseVm.Message = AppConstant.UpdateSuccessMsg;
+                        await CreateNewContact(model, tenantId);
                     }
                 }
                 else
                 {
-                    responseVm.Message = AppConstant.TenantNotFound;
+                    var contact = GetAllQuerable()
+                        .FirstOrDefault(c => c.ContactId == model.ContactId && c.TenantId == tenantId && c.IsDelete == false);
+
+                    var duplicateContacts = (await GetAll())
+                        .Where(c => (c.Email == model.Email)
+                                    && c.TenantId == tenantId && c.IsDelete == false && c.ContactId != model.ContactId)
+                        .ToList();
+
+                    if (duplicateContacts.Any())
+                    {
+                        responseVm.Message = "Email" + AppConstant.AlreadyExists;
+                        return responseVm;
+                    }
+
+                    if (model.TaxExemptionVm != null && model.TaxExemptionVm.ExpiryDate < model.TaxExemptionVm.EffectiveDate)
+                    {
+                        responseVm.Message = "ExpiryDate must be greater than EffectiveDate.";
+                        return responseVm;
+                    }
+
+                    if (contact != null)
+                    {
+                        await UpdateExistingContact(model, contact, tenantId);
+                        await HandleTaxExemption(model, contact);
+                        await SyncWithGHLIfConfigured(model, contact, tenantId);
+                    }
                 }
+
+                responseVm.IsSuccess = true;
+                responseVm.Message = AppConstant.UpdateSuccessMsg;
             }
             catch (Exception ex)
             {
                 responseVm.Message = AppConstant.ExceptionError + ex.Message;
             }
             return responseVm;
+        }
+
+        private async Task UpdateExistingContact(UpdateContact model, TblContact contact, Guid tenantId)
+        {
+            contact.ContactType = model.ContactType ?? string.Empty;
+            contact.FirstName = model.FirstName ?? string.Empty;
+            contact.LastName = model.LastName ?? string.Empty;
+            contact.Suffix = model.Suffix ?? string.Empty;
+            contact.PhoneNumber = model.PhoneNumber ?? string.Empty;
+            contact.Email = model.Email ?? string.Empty;
+            contact.Website = model.Website ?? string.Empty;
+            contact.Notes = model.Notes ?? string.Empty;
+            contact.Referral = model.Referral ?? string.Empty;
+            contact.IsTaxExemption = model.IsTaxExemption;
+            contact.IsBillingAddressSameAsAddress = model.IsBillingAddressSameAsAddress;
+            contact.ModifiedBy = tenantId;
+            contact.UpdatedAt = DateTime.Now;
+
+            await Update(contact);
+
+            if (!model.IsBillingAddressSameAsAddress)
+                await UpdateOrCreateBillingAddress(model.BillingAddressVm, contact, tenantId);
+        }
+
+        private async Task UpdateOrCreateBillingAddress(BillingAddressVm billingVm, TblContact contact, Guid tenantId)
+        {
+            var stateId = await GetValidStateId(billingVm);
+
+            var existingAddress = dbContext.TblAddresses.FirstOrDefault(x =>
+                x.ContactId == contact.ContactId &&
+                x.AddressId == contact.PrimaryAddress &&
+                x.IsDelete == false &&
+                x.TenantId == tenantId);
+
+            if (existingAddress != null)
+            {
+                existingAddress.FirstName = billingVm?.FirstName;
+                existingAddress.LastName = billingVm?.LastName;
+                existingAddress.Phone = billingVm?.PhoneNumber;
+                existingAddress.Email = billingVm?.Email;
+                existingAddress.City = billingVm?.City;
+                existingAddress.State = stateId;
+                existingAddress.ZipCode = billingVm?.ZipCode;
+                existingAddress.StreetAddress = billingVm?.StreetAddress;
+                existingAddress.UpdatedAt = DateTime.Now;
+
+                dbContext.TblAddresses.Update(existingAddress);
+            }
+            else
+            {
+                var newAddress = new TblAddress
+                {
+                    AddressId = Guid.NewGuid(),
+                    ContactId = contact.ContactId,
+                    FirstName = billingVm?.FirstName,
+                    LastName = billingVm?.LastName,
+                    Phone = billingVm?.PhoneNumber,
+                    Email = billingVm?.Email,
+                    City = billingVm?.City,
+                    State = stateId,
+                    ZipCode = billingVm?.ZipCode,
+                    StreetAddress = billingVm?.StreetAddress,
+                    CreatedAt = DateTime.Now,
+                    IsActive = true,
+                    IsDelete = false,
+                    TenantId = tenantId,
+                };
+
+                dbContext.TblAddresses.Add(newAddress);
+                contact.PrimaryAddress = newAddress.AddressId;
+                await Update(contact);
+            }
+            await dbContext.SaveChangesAsync();
+        }
+
+        private async Task<Guid?> GetValidStateId(BillingAddressVm billingVm)
+        {
+            if (billingVm?.StateId != null && billingVm.StateId != Guid.Empty)
+            {
+                var isValid = await dbContext.MstStates.AnyAsync(s => s.Id == billingVm.StateId);
+                return isValid ? billingVm.StateId : null;
+            }
+            return null;
+        }
+
+        private async Task HandleTaxExemption(UpdateContact model, TblContact contact)
+        {
+            if (model.IsTaxExemption || model.TaxExemptionVm == null)
+                return;
+
+            var taxExemption = taxExemptionService.GetAllQuerable()
+                .FirstOrDefault(x => x.ContactId == contact.ContactId && x.IsDelete == false);
+
+            var certificateString = string.Join(", ", model.TaxExemptionVm.ExemptionCertificate);
+
+            if (taxExemption != null)
+            {
+                taxExemption.ExemptionCertificate = certificateString;
+                taxExemption.EffectiveDate = model.TaxExemptionVm.EffectiveDate;
+                taxExemption.ExpiryDate = model.TaxExemptionVm.ExpiryDate;
+                taxExemption.UpdatedAt = DateTime.Now;
+                taxExemption.IsActive = true;
+                taxExemption.IsDelete = false;
+                await taxExemptionService.Update(taxExemption);
+            }
+            else
+            {
+                var newTaxExemption = new TblTaxExemption
+                {
+                    ContactId = contact.ContactId,
+                    ExemptionCertificate = certificateString,
+                    EffectiveDate = model.TaxExemptionVm.EffectiveDate,
+                    ExpiryDate = model.TaxExemptionVm.ExpiryDate,
+                    CreatedAt = DateTime.Now,
+                    IsActive = true,
+                    IsDelete = false
+                };
+                await taxExemptionService.Add(newTaxExemption);
+            }
+        }
+
+        private async Task SyncWithGHLIfConfigured(UpdateContact model, TblContact contact, Guid tenantId)
+        {
+            var ghlContact = new Sp_Contact
+            {
+                FirstName = model.FirstName ?? string.Empty,
+                LastName = model.LastName ?? string.Empty,
+                Suffix = model.Suffix ?? string.Empty,
+                Email = model.Email ?? string.Empty,
+                PhoneNumber = model.PhoneNumber ?? string.Empty,
+                Notes = model.Notes ?? string.Empty,
+                ContactType = model.ContactType ?? string.Empty,
+                Website = model.Website ?? string.Empty,
+                Referral = model.Referral ?? string.Empty,
+                GHLContactId = model.GHLContactId ?? string.Empty,
+                BillingAddressVm = !model.IsBillingAddressSameAsAddress ? model.BillingAddressVm : null
+            };
+
+            var ghlCheck = await gHLConfigurationService.CheckGHLConfiguration(tenantId);
+            if (ghlCheck.IsSuccess)
+            {
+                await SyncWithGHL(contact, ghlContact);
+            }
+            else
+            {
+                FileLogger.Log(ghlCheck.Message);
+            }
+        }
+
+        private async Task CreateNewContact(UpdateContact model, Guid tenantId)
+        {
+            var stateId = dbContext.MstStates
+                .Where(x => x.StateCode.ToLower() == model.BillingAddressVm.StateCode.ToLower().Trim()
+                         || x.StateName.ToLower() == model.BillingAddressVm.StateCode.ToLower().Trim())
+                .Select(y => y.Id)
+                .FirstOrDefault();
+
+            model.BillingAddressVm.StateId = stateId != Guid.Empty ? stateId : null;
+
+            var newContact = new Sp_Contact
+            {
+                ContactType = model.ContactType ?? string.Empty,
+                FirstName = model.FirstName ?? string.Empty,
+                LastName = model.LastName ?? string.Empty,
+                Suffix = model.Suffix ?? string.Empty,
+                Email = model.Email ?? string.Empty,
+                PhoneNumber = model.PhoneNumber ?? string.Empty,
+                lastAsync = model.lastAsync,
+                GHLContactId = model.GHLContactId,
+                BillingAddressVm = !model.IsBillingAddressSameAsAddress ? model.BillingAddressVm : null
+            };
+
+            await Create_Contact(newContact, tenantId);
         }
 
         public async Task<IResponseVm<string>> ActiveInActiveContact(Guid ContactId)
@@ -972,13 +1553,17 @@ namespace ShutterManagement.Business.Services
                     Notes = model.Notes ?? string.Empty,
                     ContactType = model.ContactType ?? string.Empty,
                     Website = model.Website ?? string.Empty,
-                    Referral = model.Referral ?? string.Empty
+                    Referral = model.Referral ?? string.Empty,
+                    StreetAddress = model?.BillingAddressVm?.StreetAddress ?? string.Empty,
+                    City = model?.BillingAddressVm?.City ?? string.Empty,
+                    State = dbContext.MstStates.Where(x=>x.Id== model.BillingAddressVm.StateId).Select(s=>s.StateName).FirstOrDefault() ,
+                    ZipCode = model?.BillingAddressVm?.ZipCode ?? string.Empty,
                 };
 
-                if (contact.GhlcontactId == null)
+                if (string.IsNullOrEmpty(contact.GhlcontactId))
                 {
-                    await gHLConfigurationService.GetGHLConfiguration(LoggedInTenantId.ToString());
-                    ghlResponse = await gHLService_V2.CreateContactAsync(ghlContactAdd);
+                    var ghlconfigdetails =  await gHLConfigurationService.GetGHLConfiguration(LoggedInTenantId.ToString());
+                    ghlResponse = await gHLService_V2.CreateContactAsync(ghlconfigdetails?.Data,ghlContactAdd);
                     if (ghlResponse.IsSuccess)
                     {
                         var contactExist = (await GetById(contact.ContactId));
@@ -998,8 +1583,8 @@ namespace ShutterManagement.Business.Services
                 }
                 else
                 {
-                    await gHLConfigurationService.GetGHLConfiguration(LoggedInTenantId.ToString());
-                    ghlResponse = await gHLService_V2.UpdateContactAsync(contact.GhlcontactId, ghlContactAdd);
+                    var ghlconfigdetails =await gHLConfigurationService.GetGHLConfiguration(LoggedInTenantId.ToString());
+                    ghlResponse = await gHLService_V2.UpdateContactAsync(ghlconfigdetails?.Data,contact.GhlcontactId, ghlContactAdd);
                 }
                 if (ghlResponse != null)
                 {
@@ -1024,38 +1609,48 @@ namespace ShutterManagement.Business.Services
             {
                 try
                 {
+                    bool IsbillingAddressSameAsAddress = true;
+                    if (!string.IsNullOrEmpty(contactData.full_address))
+                    {
+                        IsbillingAddressSameAsAddress = false;
+                    }
                     var contact = new Sp_Contact
                     {
-                        ContactType = contactData.contact_type??"",
-                        FirstName = contactData.first_name??"",
-                        LastName = contactData.last_name??"",
-                        Email = contactData.email??"",
+                        ContactType = contactData.contact_type ?? "",
+                        FirstName = contactData.first_name ?? "",
+                        LastName = contactData.last_name ?? "",
+                        Email = contactData.email ?? "",
                         PhoneNumber = contactData.phone ?? "",
-                        locationId = contactData?.location?.id??"",
-                        GHLContactId = contactData?.contact_id??"",
+                      //  locationId = contactData?.location?.id ?? "",
+                        GHLContactId = contactData?.contact_id ?? "",
                         lastAsync = DateTime.Now,
+                        IsBillingAddressSameAsAddress = IsbillingAddressSameAsAddress,
+                        IsTaxExemption = true,
                     };
-                    //if (contactData.location != null)
-                    //{
-                    //    contact.BillingAddressVm = new BillingAddressVm
-                    //    {
-                    //        BillingFirstName = contactData.first_name,
-                    //        BillingLastName = contactData.last_name,
-                    //        FirstName = contactData.first_name,
-                    //        LastName = contactData.last_name,
-                    //        Email = contactData.email,
-                    //        PhoneNumber = contactData.phone,
-                    //        City = contactData.location.city,
-                    //        //State = contactData.location.state,
-                    //        ZipCode = contactData.location.postalCode,
-                    //        StreetAddress = contactData.location.address
-                    //    };
-                    
-                    await gHLConfigurationService.GetGHLConfiguration(contactData.WebhookTenantId);
-                    var res = await Create_Contact(contact,Guid.Parse(contactData.WebhookTenantId));
-                    responseVm.IsSuccess = true;
-                    responseVm.Message = AppConstant.InsertSuccessMsg;
-                }
+                    if (!string.IsNullOrEmpty(contactData.full_address))
+                    {
+                        var stateId = dbContext.MstStates.Where(x => x.StateCode == contactData.state).FirstOrDefault();
+                        contact.BillingAddressVm = new BillingAddressVm
+                        {
+                            BillingFirstName = contactData.first_name,
+                            BillingLastName = contactData.last_name,
+                            FirstName = contactData.first_name,
+                            LastName = contactData.last_name,
+                            Email = contactData.email,
+                            PhoneNumber = contactData.phone,
+                            City = contactData.city,
+                            StateCode = contactData.state ?? "",
+                            ZipCode = contactData.postal_code,
+                            StreetAddress = contactData.StreetAddress == null ? contactData.address1 : contactData.StreetAddress
+                        };
+
+                    }
+                        await gHLConfigurationService.GetGHLConfiguration(contactData.WebhookTenantId);
+                        var res = await Create_Contact(contact, Guid.Parse(contactData.WebhookTenantId));
+                        responseVm.IsSuccess = true;
+                        responseVm.Message = AppConstant.InsertSuccessMsg;
+                    }
+                
                 catch (Exception ex)
                 {
                     FileLogger.Log("Error while creating contact: {ExceptionMessage}", ex.Message);
@@ -1070,6 +1665,11 @@ namespace ShutterManagement.Business.Services
             {
                 try
                 {
+                    bool IsbillingAddressSameAsAddress = true;
+                    if (!string.IsNullOrEmpty(contactData.full_address))
+                    {
+                        IsbillingAddressSameAsAddress = false;
+                    }
                     var contact = new UpdateContact
                     {
                         ContactType = contactData.contact_type,
@@ -1080,24 +1680,27 @@ namespace ShutterManagement.Business.Services
                         locationId = contactData.location.id,
                         GHLContactId = contactData.contact_id,
                         lastAsync = DateTime.Now,
+                        IsBillingAddressSameAsAddress = IsbillingAddressSameAsAddress,
+                        IsTaxExemption = true,
                     };
-                    //if (contactData.location != null)
-                    //{
-                    //    contact.BillingAddressVm = new BillingAddressVm
-                    //    {
-                    //        BillingFirstName = contactData.first_name,
-                    //        BillingLastName = contactData.last_name,
-                    //        FirstName = contactData.first_name,
-                    //        LastName = contactData.last_name,
-                    //        Email = contactData.email,
-                    //        PhoneNumber = contactData.phone,
-                    //        City = contactData.location.city,
-                    //        StateName = contactData.location.state,
-                    //        ZipCode = contactData.location.postalCode,
-                    //        StreetAddress = contactData.location.address
-                    //    };
-                    //}
-                    await gHLConfigurationService.GetGHLConfiguration(contactData.WebhookTenantId);
+                    if (!string.IsNullOrEmpty(contactData.full_address))
+                    {
+                        var stateId = dbContext.MstStates.Where(x => x.StateCode == contactData.state).FirstOrDefault();
+                        contact.BillingAddressVm = new BillingAddressVm
+                        {
+                            BillingFirstName = contactData.first_name,
+                            BillingLastName = contactData.last_name,
+                            FirstName = contactData.first_name,
+                            LastName = contactData.last_name,
+                            Email = contactData.email,
+                            PhoneNumber = contactData.phone,
+                            City = contactData.city,
+                            StateCode = contactData.state ?? "",
+                            ZipCode = contactData.postal_code,
+                            StreetAddress = contactData.StreetAddress == null ? contactData.address1 : contactData.StreetAddress
+                        };
+                    }
+                        await gHLConfigurationService.GetGHLConfiguration(contactData.WebhookTenantId);
                     var res = await Update_Contact(contact, Guid.Parse(contactData.WebhookTenantId));
                     var AllSubetenants = tenantService.GetAllQuerable().Where(x => x.ParentTenantId.ToString() ==
                     contactData.WebhookTenantId && x.IsActive == true && x.IsDelete == false && x.IsGhlconfigSameAsTenant == true)
@@ -1129,7 +1732,6 @@ namespace ShutterManagement.Business.Services
                 : CultureInfo.CurrentCulture.TextInfo.ToTitleCase(input);
         }
 
-
         public async Task<IResponseVm<string>> ContactSync(Guid? LoggedInTenantId = null)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
@@ -1138,10 +1740,11 @@ namespace ShutterManagement.Business.Services
                 LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : claimsProperty.GetTenantId());
 
                 TextInfo textInfo;
+                var configDetails = await gHLConfigurationService.GetGHLConfiguration(LoggedInTenantId.ToString());
                 var Checkghlresponse = await gHLConfigurationService.CheckGHLConfiguration(LoggedInTenantId);
                 if (Checkghlresponse.IsSuccess)
                 {
-                    var getGHLContacts = await gHLService_V2.GetContactsAsync();
+                    var getGHLContacts = await gHLService_V2.GetContactsAsync(configDetails.Data);
                     if (getGHLContacts != null)
                     {
                         FileLogger.Log("GHL", getGHLContacts.Count());
@@ -1203,7 +1806,7 @@ namespace ShutterManagement.Business.Services
                                     GHLContactId = existingContact.GhlcontactId ?? ""
                                 };
                                 FileLogger.Log("Updating Contact in application(GhlContactId).", existingContact.GhlcontactId);
-                                var res = await gHLService_V2.UpdateContactAsync(ghlUpdatecontact.GHLContactId, ghlUpdatecontact);
+                                var res = await gHLService_V2.UpdateContactAsync(configDetails?.Data,ghlUpdatecontact.GHLContactId, ghlUpdatecontact);
                                 if (res == null)
                                 {
                                     FileLogger.Log("Exception occurred: Response object is null.");
@@ -1321,7 +1924,7 @@ namespace ShutterManagement.Business.Services
                             {
 
                                 FileLogger.Log("Creating bulk Contact in GHL(GhlContactId).", contact);
-                                var res = await gHLService_V2.CreateContactAsync(contact);
+                                var res = await gHLService_V2.CreateContactAsync(configDetails?.Data,contact);
                                 if (res.IsSuccess)
                                 {
                                     var contactExist = (await GetAll()).Where(x => x.Email == contact.Email && x.TenantId==LoggedInTenantId).FirstOrDefault();
@@ -1339,7 +1942,7 @@ namespace ShutterManagement.Business.Services
                             else
                             {
                                 FileLogger.Log("Updating Contact in GHL.", contact.GHLContactId);
-                                var res = await gHLService_V2.UpdateContactAsync(contact.GHLContactId, contact);
+                                var res = await gHLService_V2.UpdateContactAsync(configDetails?.Data,contact.GHLContactId, contact);
                                 if (!res.IsSuccess)
                                 { FileLogger.Log("Updating Contact in GHL.", contact.GHLContactId); }
 

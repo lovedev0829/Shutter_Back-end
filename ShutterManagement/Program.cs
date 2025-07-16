@@ -195,7 +195,9 @@ builder.Services.AddScoped<IManagePartnersProductsOptions,ManagePartnersProducts
 builder.Services.AddScoped<IEmailConfigurationService, EmailConfigurationService>();
 builder.Services.AddScoped<IGhlCustomFieldsService, GhlCustomFieldsService>();
 builder.Services.AddScoped<IPowderCoatColorService, PowderCoatColorService>();
+builder.Services.AddScoped<IUploadBlobDocument, UploadBlobDocumentService>();
 builder.Services.AddScoped<MS365Configuration>();
+builder.Services.AddScoped<BlobStorageService>();
 // Add services to the DI container
 builder.Services.AddHttpClient<GHLService_v2>(); // Register HttpClient for GhlService
 builder.Services.AddScoped<GhlService>(); // Register GhlService as a scoped dependency
@@ -206,6 +208,7 @@ builder.Services.Configure<GoHighLevelOAuthSettings>(builder.Configuration.GetSe
 builder.Services.Configure<StripeSettings>(builder.Configuration.GetSection("Stripe"));
 builder.Services.Configure<GoogleOAuthSettings>(builder.Configuration.GetSection("GoogleOAuth"));
 builder.Services.AddScoped<GoogleAuthService>();
+builder.Services.AddScoped<EmailSendHelperService>();
 builder.Services.AddScoped<EmailTypeService>();
 
 

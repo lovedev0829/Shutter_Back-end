@@ -87,14 +87,6 @@ namespace ShutterManagement.Controllers
             return Ok(res);
         }
 
-        [HttpPost("SendForApproval")]
-        [Authorize(Roles = "EstimateEdit")]
-        public async Task<IActionResult> SendForApproval(Guid EstimateId)
-        {
-            var res = await _EstimateService.SendForApproval(EstimateId);
-            return Ok(res);
-        }
-
 
         [HttpPost("ViewEstimate")]
         //[Authorize(Roles = "EstimateView")]

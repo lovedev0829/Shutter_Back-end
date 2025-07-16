@@ -22,7 +22,6 @@ namespace ShutterManagement.Business.Interfaces
         Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> BuildEstimate(Guid[] windowProductIds, bool IsBreakDown,bool IsMaterialBreakdown = false
             , string EstimateId = "", bool IsView = false, List<ProductListing> products = null);
         Task<IResponseVm<List<EstimateList>>> GetAll_Estimate(Pagination filter, Guid? TenantId = null);
-        Task<IResponseVm<string>> SendForApproval(Guid EstimateId);
         Task<IResponseVm<List<EstimateList>>> ViewEachEstimation(Guid? EstimateId);
         Task<IResponseVm<string>> ChangeStatus(Guid EstimationId, Estimation NewEstimationStatus);
         Task<decimal?> CalculateGrandTotal(Guid? discountId, decimal subtotal, Guid? taxId);
