@@ -131,6 +131,16 @@ namespace ShutterManagement.Business.Services
             {
                 var emailConfig = (await emailConfigurationService.GetAll())
                        .FirstOrDefault(x => x.TenantId.ToString() == (string.IsNullOrEmpty(TenantId) ? claimsProperty.GetTenantId().ToString() : TenantId )&& x.IsActive == true && x.IsDelete == false);
+                
+                // Check if email configuration exists for the tenant
+                if (emailConfig == null)
+                {
+                    var tenantIdToLog = string.IsNullOrEmpty(TenantId) ? claimsProperty.GetTenantId().ToString() : TenantId;
+                    FileLogger.Log(tenantIdToLog + " No email configuration found for tenant.");
+                    configResponse.Message = "Email configuration not found for this tenant. Please contact administrator to set up email configuration.";
+                    return configResponse;
+                }
+                
                 var emailType = (await emailTypeService.GetAll())
                         .FirstOrDefault(s => s.Id == emailConfig?.EmailType)?.Name ?? "";
                 if (!Enum.TryParse<EmailSendType>(emailType, true, out var parsedEmailSendType))
