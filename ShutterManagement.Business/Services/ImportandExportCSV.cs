@@ -1055,7 +1055,8 @@ namespace ShutterManagement.Business.Services
                                from t5 in jobStatus.DefaultIfEmpty()
                                join t6 in dbContext.TblContacts on t2.ContactId equals t6.ContactId into contact
                                from t6 in contact.DefaultIfEmpty()
-                               where t2.IsActive == true && t2.IsDelete == false
+                               where t6.IsDelete == false && t6.IsActive == true && t2.IsActive == true && t2.IsDelete == false &&
+                                  (t2.TenantId == claimsProperty.GetTenantId() || subTenantlist.Contains((Guid)t2.TenantId))
                                select new ExportJobsVm
                                {
                                    ContactFirstName = t6.FirstName,
