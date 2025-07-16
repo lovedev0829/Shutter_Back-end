@@ -344,7 +344,7 @@ namespace ShutterManagement.Services
                 }
 
                 await ResetUserPasswordAsync(user, verifyPassword.Password);
-                await emailSendHelperService.GetEmailConfigAndSendEmail(user.Email, AppConstant.Con_ResetPassword, AppConstant.Sub_ForgotPassword);
+                //await emailSendHelperService.GetEmailConfigAndSendEmail(user.Email, AppConstant.Con_ResetPassword, AppConstant.Sub_ForgotPassword);
 
                 result.IsSuccess = true;
                 result.Message = AppConstant.PasswordChangeMessage;
