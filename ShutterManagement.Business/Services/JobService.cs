@@ -816,7 +816,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : claimsProperty.GetTenantId());
-                await gHLConfiguration.GetGHLConfiguration(LoggedInTenantId.ToString());
+                //await gHLConfiguration.GetGHLConfiguration(LoggedInTenantId.ToString());
 
                 if (string.IsNullOrEmpty(job.GhlOpportunityId))
                 {
@@ -1817,6 +1817,12 @@ namespace ShutterManagement.Business.Services
              : opportunitydata.WebhookTenantId;
 
                     var (contact, ghlUser, stageId) = ResolveOpportunityDependencies(opportunitydata);
+                    if(contact == null)
+                    {
+                        responseVm.IsSuccess = false;
+                        responseVm.Message = "Contact Not found or Deleted in Application.";
+                        return responseVm;
+                    }
                     if (ghlUser != null)
                     {
                         AssignedPersonnel = dbContext.TblUsers
@@ -1828,8 +1834,8 @@ namespace ShutterManagement.Business.Services
                     var job = new CreateJob
                     {
                         AddressId = contact.PrimaryAddress ?? null,
-                        ContactId = contact.ContactId,
-                        JobName = opportunitydata.opportunity_name,
+                        ContactId = contact.ContactId ,
+                        JobName = opportunitydata.opportunity_name ??"",
                         AssignedPersonnel = (AssignedPersonnel != null && AssignedPersonnel != Guid.Empty) ? AssignedPersonnel : Guid.Empty,
                         GhlOpportunityId = opportunitydata.id,
                         GHL_StageId = stageId == "" ? null : Guid.Parse(stageId),
@@ -1867,6 +1873,12 @@ namespace ShutterManagement.Business.Services
              ? claimsProperty.GetTenantId().ToString()
              : opportunitydata.WebhookTenantId;
                     var (contact1, ghlUser, stageId) = ResolveOpportunityDependencies(opportunitydata);
+                    if (contact1 == null)
+                    {
+                        responseVm.IsSuccess = false;
+                        responseVm.Message = "Contact Not found or Deleted in Application.";
+                        return responseVm;
+                    }
                     if (ghlUser != null)
                     {
                         assignedPersonnel = dbContext.TblUsers
@@ -1928,7 +1940,7 @@ namespace ShutterManagement.Business.Services
             if (opportunitydata != null)
             {
                 contacts = contact.GetAllQuerable()
-                    .FirstOrDefault(x => x.GhlcontactId == opportunitydata.contact_id && x.IsDelete == false && x.IsActive == true);
+                    .FirstOrDefault(x => x.GhlcontactId == opportunitydata.contact_id && x.IsDelete == false && x.IsActive == true && x.TenantId.ToString() ==tenantId);
             }
 
             if (opportunitydata.Users != null)
