@@ -303,7 +303,7 @@ namespace ShutterManagement.Services
                 }
 
                 await UpdateUserTokenAsync(user, token);
-                await SendPasswordResetEmailAsync(user.Email, forgetPassword.TenantId, token);
+                await SendPasswordResetEmailAsync(user.Email, forgetPassword.TenantId, token, forgetPassword.Code);
                 await CreateNotificationAsync(NotificationModule.Tenant, $"Password {AppConstant.Update_Notification}",user.Id);
 
                 result.IsSuccess = true;
@@ -761,9 +761,9 @@ namespace ShutterManagement.Services
             await Update(user);
         }
 
-        private async Task SendPasswordResetEmailAsync(string email, string TenantId, string token)
+        private async Task SendPasswordResetEmailAsync(string email, string TenantId, string token, string code = "")
         {
-            var resetLink = $"{AppConstant.UIBaseURL}reset-password/{token}";
+            var resetLink = $"{AppConstant.UIBaseURL}reset-password/{code}/{token}";
             var content = $"Please reset your password using the following link: <a href='{resetLink}'>Reset Password</a>";
             await emailSendHelperService.GetEmailConfigAndSendEmail(email, content, AppConstant.Sub_ForgotPassword,string.Empty,null,TenantId);
         }
