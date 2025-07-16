@@ -45,8 +45,8 @@ namespace ShutterManagement
             AppConstant.Google_ClientId = Configuration["GoogleOAuth:ClientId"] ?? "";
             AppConstant.Google_ClientSecret = Configuration["GoogleOAuth:ClientSecret"] ?? "";
             AppConstant.Google_RedirectUri = Configuration["GoogleOAuth:RedirectUri"] ?? "";
-            AppConstant.Google_AuthUrl = Configuration["GoogleOAuth:AuthUrl"] ?? "";
-            AppConstant.Google_TokenUrl = Configuration["GoogleOAuth:TokenUrl"] ?? "";
+            AppConstant.Google_AuthUrl = Configuration["GoogleOAuth:AuthUri"] ?? "";
+            AppConstant.Google_TokenUrl = Configuration["GoogleOAuth:TokenUri"] ?? "";
 
             // Stripe Configuration
             AppConstant.Stripe_SecretKey = Configuration["Stripe:SecretKey"] ?? "";
