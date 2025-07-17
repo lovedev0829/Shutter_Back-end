@@ -186,12 +186,14 @@ namespace ShutterManagement.Business.Services
         {
             try
             {
-                const string pattern = "{{.*?}}";
+                //const string pattern = "{{.*?}}"; this {{}} db working only
+                const string pattern = @"{(.*?)}"; // in c# working 
                 var matches = Regex.Matches(content ?? string.Empty, pattern);
                 foreach (Match match in matches)
                 {
                     var placeholder = match.Value;
-                    var property = placeholder.Replace("{{", "").Replace("}}", "");
+                    //var property = placeholder.Replace("{{", "").Replace("}}", "");
+                    var property = placeholder.Replace("{", "").Replace("}", "");
                     object val = GetProperty.GetColumnValue(dataObject, property);
 
                     if (val != null)

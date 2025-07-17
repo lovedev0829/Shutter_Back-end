@@ -22,7 +22,7 @@ namespace ShutterManagement.Core.Common
         </p>
 
         <p style='font-size: 15px;'>
-            You can approve your estimate - <strong>{{EstimateCode}}</strong> by clicking the link below:
+            You can approve your estimate - <strong>{{EstimationCode}}</strong> by clicking the link below:
         </p>
 
         <div style='text-align: center; margin: 25px 0;'>
