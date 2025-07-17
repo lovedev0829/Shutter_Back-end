@@ -177,5 +177,9 @@ namespace ShutterManagement.Core
         public static string AzureBlobStorage_ContainerName { get; set; } = string.Empty;
 
         #endregion Blob storedge config
+
+        #region URL Shortening Configuration
+        public static string BitlyApiToken { get; set; } = string.Empty;
+        #endregion URL Shortening Configuration
     }
 }
