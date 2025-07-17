@@ -47,13 +47,14 @@ namespace ShutterManagement.Business.Services
         private readonly JobStatusAndStageMapping statusAndStageMapping;
         private readonly ClaimsProperty claimsProperty;
         private readonly EmailSendHelperService emailSendHelperService;
+        private readonly IUrlShortenerService urlShortenerService;
 
         public InvoiceService(ITenantService tenantService, IInvoicePaymentService invoicePaymentService,
            IConverter converter, IContactService contactService
             , IEstimateService estimateService, ITenantBrandingService tenantBrandingService
             , IJobService jobService, IOrderService orderService, StripeService stripeService,
             IStripeConfiguration stripeConfiguration, JobStatusAndStageMapping statusAndStageMapping, ClaimsProperty claimsProperty,
-          EmailSendHelperService emailSendHelperService)
+          EmailSendHelperService emailSendHelperService, IUrlShortenerService urlShortenerService)
         {
             this.tenantService = tenantService;
             this.invoicePaymentService = invoicePaymentService;
@@ -68,6 +69,7 @@ namespace ShutterManagement.Business.Services
             this.statusAndStageMapping = statusAndStageMapping;
             this.claimsProperty = claimsProperty;
             this.emailSendHelperService = emailSendHelperService;
+            this.urlShortenerService = urlShortenerService;
         }
 
         #region Create  update ActiveInActive Delete Getall
@@ -683,7 +685,24 @@ namespace ShutterManagement.Business.Services
                         IsEstimateExists.UpdatedAt = DateTime.Now;
                         IsEstimateExists.ModifiedBy = AppConstant.LoggedInUserID;
                         await estimateService.Update(IsEstimateExists);
-                        invoiceData.InvoiceLink = $"{AppConstant.UIBaseURL}contacts/estimate/preview/{IsEstimateExists?.EstimateId}";
+                        
+                        // Generate the original estimate URL
+                        var originalEstimateUrl = $"{AppConstant.UIBaseURL}contacts/estimate/preview/{IsEstimateExists?.EstimateId}";
+                        
+                        // Attempt to shorten the URL using Bitly API
+                        var shortenResult = await urlShortenerService.ShortenUrlAsync(originalEstimateUrl);
+                        
+                        if (shortenResult.IsSuccess && !string.IsNullOrWhiteSpace(shortenResult.Data))
+                        {
+                            invoiceData.InvoiceLink = shortenResult.Data;
+                            FileLogger.Log($"EstimateService: Successfully shortened estimate URL from {originalEstimateUrl} to {shortenResult.Data}");
+                        }
+                        else
+                        {
+                            // Fallback to original URL if shortening fails
+                            invoiceData.InvoiceLink = originalEstimateUrl;
+                            FileLogger.Log($"EstimateService: URL shortening failed ({shortenResult.Message}), using original URL: {originalEstimateUrl}");
+                        }
 
 
                         var jobStatusName = EnumValue.GetEnumValue(JobStatus.Quote_Sent);
@@ -695,7 +714,6 @@ namespace ShutterManagement.Business.Services
                             responseVm.Message = updateResponse.Message;
                             return responseVm;
                         }
-
 
                         var jobDetails = await jobService.GetById(IsEstimateExists.JobId ?? Guid.Empty);
 

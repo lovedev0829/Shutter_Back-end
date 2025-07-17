@@ -201,6 +201,8 @@ builder.Services.AddScoped<BlobStorageService>();
 // Add services to the DI container
 builder.Services.AddHttpClient<GHLService_v2>(); // Register HttpClient for GhlService
 builder.Services.AddScoped<GhlService>(); // Register GhlService as a scoped dependency
+builder.Services.AddHttpClient<BitlyUrlShortenerService>(); // Register HttpClient for URL shortening
+builder.Services.AddScoped<IUrlShortenerService, BitlyUrlShortenerService>(); // Register URL shortening service
 builder.Services.AddSingleton(typeof(IConverter), new SynchronizedConverter(new PdfTools()));
 
 

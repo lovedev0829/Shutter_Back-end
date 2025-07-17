@@ -58,6 +58,9 @@ namespace ShutterManagement
             // Azure Blob Storage Configuration
             AppConstant.AzureBlobStorage_ConnectionString = Configuration["AzureBlobStorage:ConnectionString"] ?? "";
             AppConstant.AzureBlobStorage_ContainerName = Configuration["AzureBlobStorage:ContainerName"] ?? "";
+            
+            // URL Shortening Configuration
+            AppConstant.BitlyApiToken = Configuration["UrlShortening:BitlyApiToken"] ?? "";
         }
     }
 }
