@@ -55,9 +55,9 @@ namespace ShutterManagement.Controllers
 
 
         [HttpPost("DownloadBlobAsBase64")]
-        public async Task<IActionResult> DownloadBlobAsBase64(string blobUrl)
+        public async Task<IActionResult> DownloadBlobAsBase64(Guid? DocumentId)
         {
-            var result = await blobStorageService.DownloadBlobAsBase64AndSaveAsync(blobUrl);
+            var result = await uploadBlobDocument.DownloadDocument(DocumentId);
             return Ok(result);
         }
 

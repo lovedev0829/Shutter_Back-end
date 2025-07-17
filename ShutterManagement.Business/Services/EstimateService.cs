@@ -679,7 +679,7 @@ namespace ShutterManagement.Business.Services
                     productMarkup += productOwnMarkup;
                     item.Price = Math.Round(basePrice, 2);
 
-                   // TaxAppliedWithMarkup(item,item.Price ?? 0.0m, componentOwnMarkup, productOwnMarkup);
+                   TaxAppliedWithMarkup(item,item.Price ?? 0.0m, componentOwnMarkup, productOwnMarkup);
 
                     componentSubTotal += Math.Round(basePrice, 2);
                 }
@@ -791,11 +791,16 @@ namespace ShutterManagement.Business.Services
                     productMarkup += productOwnMarkup;
                     componentSubTotal += Math.Round(productPrice, 2);
 
-                  //  TaxAppliedWithMarkup(item, productPrice, componentOwnMarkup, productOwnMarkup);
+                   TaxAppliedWithMarkup(item, productPrice, componentOwnMarkup, productOwnMarkup);
 
                 }
+                else
+                {
+                    TaxAppliedWithMarkup(item, item.Price ?? 0.0m, 0, productOwnMarkup);
+                }
                //TaxAppliedWithMarkup(item, item.Price ?? 0.0m, componentOwnMarkup, productOwnMarkup);
-               TaxAppliedWithMarkup(item, item.Price ?? 0.0m, 0, productOwnMarkup);
+
+
                 
 
                 //Option price calculation
@@ -943,14 +948,22 @@ namespace ShutterManagement.Business.Services
                 string replacement = property switch
                 {
                     "Unit" => $"'{val}'",
-                    "OptionPrice" => Convert.ToDecimal(values.Optionprice).ToString("N2"),
-                    _ => Convert.ToDecimal(val).ToString("N2")
+                    "OptionPrice" => Convert.ToDecimal(values.Optionprice).ToString("F2", System.Globalization.CultureInfo.InvariantCulture),
+                    _ => Convert.ToDecimal(val).ToString("F2", System.Globalization.CultureInfo.InvariantCulture)
                 };
 
                 formula = formula?.Replace(placeholder, " " + replacement + " ");
             }
             //values.CalculateExpression = formula;
-             return new NCalc.Expression(formula);
+            try
+            {
+                return new NCalc.Expression(formula);
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Log($"Expression parsing error. Formula: '{formula}', Error: {ex.Message}");
+                throw new InvalidOperationException($"Invalid expression formula: '{formula}'. Error: {ex.Message}", ex);
+            }
         }
 
         public async Task<IResponseVm<string>> Update_Estimate(UpdatetEstimate model)
@@ -1784,7 +1797,7 @@ namespace ShutterManagement.Business.Services
             {
                 return 0m;
             }
-
+            decimal taxApplied = 0.0m;
             // Fetch the tax rate based on taxId
             var taxRate1 = taxRate.GetAllQuerable()
                 .Where(x => x.TaxRateId == taxId && x.IsDelete == false)
@@ -1796,8 +1809,15 @@ namespace ShutterManagement.Business.Services
                 return 0m;
             }
 
-            // Calculate tax based on subtotal, additional cost, and discount
-            decimal taxApplied = (decimal)((subtotal - discount) * taxRate1) / 100;
+            if ((subtotal - discount) > 0)
+            {
+                // Calculate tax based on subtotal, additional cost, and discount
+                taxApplied = (decimal)((subtotal - discount) * taxRate1) / 100;
+            }
+            else
+            {
+                taxApplied = 0m;
+            }
             return taxApplied;
         }
 

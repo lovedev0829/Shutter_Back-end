@@ -911,25 +911,43 @@ namespace ShutterManagement.Business.Services
                 decimal? optionprice = (product.additionalCost + product.OptionMarkup);
                 decimal? subtotal = (product.ProductPrice + product.ComponentMarkup + product.ProductMarkup + optionprice);
 
+                var hidePreviews = product.hidePreviews.ToList(); // 0 Coating-a, 1: installation-standard....
+                var options = product.Options.ToList(); // 0: true, 1: false....
+                List<string> optionStr = new List<string>(); // Initialize as a List
+
+                int j = 0;
+
+                foreach(var item in options)
+                {
+                    if(hidePreviews[j] && hidePreviews[j] == true)
+                    {
+                        j++;
+                        continue;
+                    } else
+                    {
+                        optionStr.Add(item); // Use Add instead of Append
+                    }
+
+                    j++;
+                }
 
                 productListHtml.Append($@"
-    <tr style='background-color: #efefef;'>
-        <td style='text-align: center; padding: 5px 5px;'>{++i}</td>
-        <td style='text-align: center; padding: 5px 5px;'>{product.ProductTypeName ?? ""}</td>
-        <td style='text-align: center; padding: 5px 5px;'>{product.ProductName ?? ""}</td>
-        <td style='text-align: center; padding: 5px 5px;'>{string.Join(", ", product.Options)}</td>
-        <td style='text-align: center; padding: 5px 5px;'>{product.WindowQty ?? 0}</td>
-        <td style='text-align: center; padding: 5px 5px;'>{product.Width ?? 0}</td>
-        <td style='text-align: center; padding: 5px 5px;'>{product.Height ?? 0}</td>
-        <td style='text-align: center; padding: 5px 5px;'>{unitprice ?? 0.0m:F2}</td>
-        <td style='text-align: center; padding: 5px 5px;'>{optionprice ?? 0.0m:F2}</td>
-        <td style='text-align: center; padding: 5px 5px;'>{subtotal ?? 0.0m:F2}</td>
-    </tr>");
+                            <tr style='background-color: #efefef;'>
+                                <td style='text-align: center; padding: 5px 5px;'>{++i}</td>
+                                <td style='text-align: center; padding: 5px 5px;'>{product.ProductTypeName ?? ""}</td>
+                                <td style='text-align: center; padding: 5px 5px;'>{product.ProductName ?? ""}</td>
+                                <td style='text-align: center; padding: 5px 5px;'>{string.Join(", ", optionStr)}</td>
+                                <td style='text-align: center; padding: 5px 5px;'>{product.WindowQty ?? 0}</td>
+                                <td style='text-align: center; padding: 5px 5px;'>{product.Width ?? 0}</td>
+                                <td style='text-align: center; padding: 5px 5px;'>{product.Height ?? 0}</td>
+                                <td style='text-align: center; padding: 5px 5px;'>{unitprice ?? 0.0m:F2}</td>
+                                <td style='text-align: center; padding: 5px 5px;'>{subtotal ?? 0.0m:F2}</td>
+                            </tr>");
             }
 
             return $"<tbody>{productListHtml}</tbody>";
         }
-
+        ////<td style='text-align: center; padding: 5px 5px;'>{optionprice ?? 0.0m:F2}</td>
         private string GenerateInvoicetListHtml(List<Core.ViewModels.Request.InvoicePayment> payments)
         {
             var paymentsListHtml = new StringBuilder();

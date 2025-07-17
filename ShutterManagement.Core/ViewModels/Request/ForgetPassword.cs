@@ -13,7 +13,11 @@ namespace ShutterManagement.Core.ViewModels.Request
     {
         [DefaultValue("")]
         [Required]
+        public string? TenantId { get; set; }
+        [DefaultValue("")]
+        [Required]
         public string? Code { get; set; }
+
         [DefaultValue("")]
         [Required]
         public string? Email { get; set; }

@@ -85,12 +85,12 @@ namespace ShutterManagement.Business.Services
             return response;
         }
 
-        public async Task<IResponseVm<string>> GetEmailConfigAndSendEmail(string ToEmail, string emailContent, string subject = "", string replyTo = "", List<EmailAttachments> emailAttachments = null)
+        public async Task<IResponseVm<string>> GetEmailConfigAndSendEmail(string ToEmail, string emailContent, string subject = "", string replyTo = "", List<EmailAttachments> emailAttachments = null,string TenantId = "")
         {
             IResponseVm<string> response = new ResponseVm<string>();
             try
             {
-                var emailTypeconfiguration = await GetEmailConfigurationByType();
+                var emailTypeconfiguration = await GetEmailConfigurationByType(TenantId);
 
             if (!emailTypeconfiguration.IsSuccess || emailTypeconfiguration.Data == null)
             {
@@ -101,11 +101,11 @@ namespace ShutterManagement.Business.Services
 
             OAuthEmailRequest vm = new OAuthEmailRequest
             {
-                FromEmail = emailTypeconfiguration.Data?.Username ?? "",
+                FromEmail = emailTypeconfiguration.Data?.From ?? "",
                 ToEmail = ToEmail,
                 Subject = subject,
                 Body = emailContent,
-                ReplyToEmail = string.IsNullOrEmpty(replyTo) ? emailTypeconfiguration.Data?.Username ?? "" : replyTo,
+                ReplyToEmail = string.IsNullOrEmpty(replyTo) ? emailTypeconfiguration.Data?.From ?? "" : replyTo,
                 UserEmail = emailTypeconfiguration.Data?.Username ?? "",
                 Username = emailTypeconfiguration.Data?.Username ?? "",
                 SmtpServer = emailTypeconfiguration.Data?.SmtpServer ?? "",
@@ -125,13 +125,23 @@ namespace ShutterManagement.Business.Services
             }
             return response;
         }
-        public async Task<IResponseVm<EmailConfigurationVm>> GetEmailConfigurationByType()
+        public async Task<IResponseVm<EmailConfigurationVm>> GetEmailConfigurationByType(string TenantId = "")
         {
             IResponseVm<EmailConfigurationVm?> configResponse = new ResponseVm<EmailConfigurationVm?>();
             try
             {
                 var emailConfig = (await emailConfigurationService.GetAll())
-                       .FirstOrDefault(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
+                       .FirstOrDefault(x => x.TenantId.ToString() == (string.IsNullOrEmpty(TenantId) ? claimsProperty.GetTenantId().ToString() : TenantId )&& x.IsActive == true && x.IsDelete == false);
+                
+                // Check if email configuration exists for the tenant
+                if (emailConfig == null)
+                {
+                    var tenantIdToLog = string.IsNullOrEmpty(TenantId) ? claimsProperty.GetTenantId().ToString() : TenantId;
+                    FileLogger.Log(tenantIdToLog + " No email configuration found for tenant.");
+                    configResponse.Message = "Email configuration not found for this tenant. Please contact administrator to set up email configuration.";
+                    return configResponse;
+                }
+                
                 var emailType = (await emailTypeService.GetAll())
                         .FirstOrDefault(s => s.Id == emailConfig?.EmailType)?.Name ?? "";
                 if (!Enum.TryParse<EmailSendType>(emailType, true, out var parsedEmailSendType))
@@ -164,12 +174,13 @@ namespace ShutterManagement.Business.Services
                 }
 
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 configResponse.Message = ex.Message;
                 FileLogger.Log(claimsProperty.GetTenantId().ToString() + " Error in Fetch Email Config: " + ex.Message);
             }
             return configResponse;
-        
+
         }
 
         public string PlaceholderReplace(string content, dynamic dataObject)

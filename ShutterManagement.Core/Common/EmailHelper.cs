@@ -51,16 +51,12 @@ namespace ShutterManagement.Core.Common
                     case "google":
                        
                         await client.ConnectAsync(AppConstant.SmtpHost_Google, 587, SecureSocketOptions.StartTls);
-                        await client.AuthenticateAsync(new SaslMechanismOAuth2(request.UserEmail, request.AccessToken));
-                        await client.SendAsync(message);
-                        await client.DisconnectAsync(true);
+                        await client.AuthenticateAsync(new SaslMechanismOAuth2(request.Username, request.AccessToken));
                         break;
 
                     case "microsoft365":
-                        await client.ConnectAsync(AppConstant.SmtpHost_MSOffice365, 587, SecureSocketOptions.StartTls);
-                        await client.AuthenticateAsync(new SaslMechanismOAuth2(request.UserEmail, request.AccessToken));
-                        await client.SendAsync(message);
-                        await client.DisconnectAsync(true);
+                        await client.ConnectAsync("smtp.office365.com", 587, SecureSocketOptions.StartTls);
+                        await client.AuthenticateAsync(new SaslMechanismOAuth2(request.Username, request.AccessToken));
                         break;
 
                     case "smtp":
