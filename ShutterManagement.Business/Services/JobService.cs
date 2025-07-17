@@ -571,7 +571,7 @@ namespace ShutterManagement.Business.Services
                         .Where(x => x.TenantId == LoggedInTenantId && x.IsActive ==true && x.IsDelete ==false)
                         .ToList();
 
-                    var ghlOpportunitiesResponse = await gHLService_V2.GetOpportunitiesFromGhl(getGHLConfiguration);
+                    var ghlOpportunitiesResponse = await gHLService_V2.GetOpportunitiesFromGhl(ghlconfigdetails.Data);
                     var ghlOpportunities = ghlOpportunitiesResponse?.Data ?? new List<Opportunity>();
 
                     foreach (var opportunity in getAppOpportunities)
@@ -586,7 +586,7 @@ namespace ShutterManagement.Business.Services
                                 GhlStageId = opportunity.GhlStageId
                             };
 
-                            var responseghl = await gHLService_V2.CreateOpportunityInGhl(getGHLConfiguration, job);
+                            var responseghl = await gHLService_V2.CreateOpportunityInGhl(ghlconfigdetails.Data, job);
                             FileLogger.Log($"Created Opportunity in GHL: {responseghl.Message}, Success: {responseghl.IsSuccess}");
                         }
                         else
@@ -620,7 +620,7 @@ namespace ShutterManagement.Business.Services
                     responseVm.IsSuccess = true;
                     responseVm.Message = "Opportunities synced successfully with GHL.";
                 }
-                //}
+                }
             catch (Exception ex)
             {
                 FileLogger.Log($"Exception in UpdateOpportunityInGHLfromApp: {ex.Message}");

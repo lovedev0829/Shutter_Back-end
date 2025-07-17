@@ -408,6 +408,8 @@ namespace ShutterManagement.Business.Services
         bool IsMaterialBreakdown = false,
         string EstimateId = "",
         bool IsView = false,
+        bool AfterbuildEstimate = false,
+        string? DiscountId = null,
         List<ProductListing> products = null)
         {
             var responseVm = new ResponseVm<List<WindowProdcutDetailsForEstimate>>();
@@ -466,6 +468,19 @@ namespace ShutterManagement.Business.Services
                     var itemsWithoutPricing = data.Where(x => x.ComponentId == null).ToList();
                     itemsWithoutPricing.ForEach(x => x.IsComponentAvailable = false);
 
+                    if(AfterbuildEstimate)
+                    {
+                        var DiscountValue = dbContext.TblDiscounts.Where(x => x.DiscountId.ToString() == DiscountId && x.IsDelete == false && x.IsActive == true)
+                            .FirstOrDefault();
+                        data.ForEach(x =>
+                        {
+                            x.DiscountId = DiscountId;
+                            x.DiscountType = DiscountValue.DiscountType;
+                            x.DiscountValue = DiscountValue.DiscountType == EnumValue.GetEnumValue(DiscountType.Percentage) ? 
+                                DiscountValue.PercentageDiscount : DiscountValue.FixedAmount;
+
+                        });
+                    }
                     var wholesale = await CalculateEstimate(data, true, products);
                     var componentPrice = await CalculateEstimate(data, false, products);
 
@@ -595,9 +610,14 @@ namespace ShutterManagement.Business.Services
         {
             if (GetIsTaxExemptByWindowId(item.WindowId) && item.IsTaxAvailable == true)
             {
-                item.MunicipalityTaxAmount = ((productPrice + componentOwnMarkup + productOwnMarkup) * (item.MunicipalityTax ?? 0.0m) / 100);
-                item.StateTaxAmount = ((productPrice + componentOwnMarkup + productOwnMarkup) * (item.StateTax ?? 0.0m) / 100);
-                item.CityTaxAmount = ((productPrice + componentOwnMarkup + productOwnMarkup) * (item.CityTax ?? 0.0m) / 100);
+                var subtotal = productPrice + componentOwnMarkup + productOwnMarkup;
+                item.DiscountValue = item.DiscountType == EnumValue.GetEnumValue(DiscountType.Percentage) 
+                    ? (subtotal * (item.DiscountValue ?? 0.0m) / 100) 
+                    : item.DiscountValue;
+                subtotal = subtotal - (item.DiscountValue ?? 0.0m);
+                item.MunicipalityTaxAmount = ((subtotal) * (item.MunicipalityTax ?? 0.0m) / 100);
+                item.StateTaxAmount = ((subtotal) * (item.StateTax ?? 0.0m) / 100);
+                item.CityTaxAmount = ((subtotal) * (item.CityTax ?? 0.0m) / 100);
                 item.TotalTaxAmount = item.MunicipalityTaxAmount + item.StateTaxAmount + item.CityTaxAmount;
             }
            
@@ -1019,7 +1039,7 @@ namespace ShutterManagement.Business.Services
                 Guid? taxRateId = null;
                 Guid? discountId = null;
                 var PricedProductsList = model.ProductsList.Where(x => x.ProductPrice != null && x.ProductPrice > 0).ToList();
-                var windowproductdetails = await BuildEstimate(model.ProductsList.Select(x => x.WindowProductId).ToArray(), false,false, "", false, model.ProductsList);
+                var windowproductdetails = await BuildEstimate(model.ProductsList.Select(x => x.WindowProductId).ToArray(), false,false, "", false, true,model.DiscountId.ToString(), model.ProductsList);
                 if (windowproductdetails.Data != null && windowproductdetails.Data.Any())
                 {
                     if (windowproductdetails.Data.Any(x => x.TotalPrice == null))
@@ -1661,7 +1681,7 @@ namespace ShutterManagement.Business.Services
             Guid? taxRateId = null;
             Guid? discountId = null;
             var PricedProductsList = model.ProductsList.Where(x => x.ProductPrice != null && x.ProductPrice > 0).ToList();
-            var windowproductdetails = await BuildEstimate(model.ProductsList.Select(x => x.WindowProductId).ToArray(), false, false,"", false, model.ProductsList);
+            var windowproductdetails = await BuildEstimate(model.ProductsList.Select(x => x.WindowProductId).ToArray(), false, false,"", false,true,model.DiscountId.ToString(), model.ProductsList);
 
 
             if (windowproductdetails.Data != null && windowproductdetails.Data.Any())
@@ -1843,6 +1863,7 @@ namespace ShutterManagement.Business.Services
                 var ComponentMarkup = windowProdcutDetailsForEstimates.Where(x => x.WindowProdcutId == product.WindowProductId).Select(x => x.ComponentMarkup).FirstOrDefault() ?? 0.0m;
                 var ProductMarkup = windowProdcutDetailsForEstimates.Where(x => x.WindowProdcutId == product.WindowProductId).Select(x => x.ProductMarkup).FirstOrDefault() ?? 0.0m;
                 var OptionMarkup = windowProdcutDetailsForEstimates.Where(x => x.WindowProdcutId == product.WindowProductId).Select(x => x.OptionMarkup).FirstOrDefault() ?? 0.0m;
+                var DiscountId = windowProdcutDetailsForEstimates.Where(x => x.WindowProdcutId == product.WindowProductId).Select(x => x.DiscountId).FirstOrDefault() ?? null;
                 var EstimateWindow = await AddWindowToEstimate(windowData, windowProductData, estimateId);
                 var EstimateWindowProduct = await AddProductToEstimate(windowProductData, estimateId, product.ProductPrice, EstimateWindow, wholesaleprice
                     , OptionMarkup, ProductMarkup, ComponentMarkup);
@@ -1856,7 +1877,7 @@ namespace ShutterManagement.Business.Services
                 if (isComponentAvailable)
                 {
                     Guid[] arr = { product.WindowProductId };
-                    var windowproductdetail1s = await BuildEstimate(arr, true, false, "", false, null);
+                    var windowproductdetail1s = await BuildEstimate(arr, true, false, "", false,true, DiscountId,null);
                     await AddComponentsToEstimate((Guid)windowProductData.ProductId, (Guid)windowProductData.WindowId, estimateId,
                         windowproductdetail1s.Data.Where(x => x.WindowProdcutId == product.WindowProductId).ToList(), EstimateWindowProduct);
                 }

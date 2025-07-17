@@ -91,6 +91,9 @@ namespace ShutterManagement.Core.ViewModels.Response
 
         //Total price
         public decimal? TotalPrice { get; set; }
+        public string? DiscountId { get; set; }
+        public string? DiscountType { get; set; }
+        public decimal? DiscountValue { get; set; }
 
         //Tax Excemption
         public bool? IsTaxApplied { get; set; } = false;
