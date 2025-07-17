@@ -61,6 +61,7 @@ namespace ShutterManagement
             
             // URL Shortening Configuration
             AppConstant.BitlyApiToken = Configuration["UrlShortening:BitlyApiToken"] ?? "";
+            AppConstant.BitlyDomain = Configuration["UrlShortening:BitlyDomain"] ?? "";
         }
     }
 }

@@ -53,7 +53,7 @@ namespace ShutterManagement.Business.Services
                 var requestPayload = new
                 {
                     long_url = longUrl,
-                    domain = "bit.ly" // Using the standard bit.ly domain
+                    domain = !string.IsNullOrWhiteSpace(AppConstant.BitlyDomain) ? AppConstant.BitlyDomain : "bit.ly" // Use custom domain if configured, fallback to bit.ly
                 };
 
                 var jsonContent = JsonSerializer.Serialize(requestPayload);
