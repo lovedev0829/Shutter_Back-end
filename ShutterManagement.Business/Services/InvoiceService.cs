@@ -596,8 +596,8 @@ namespace ShutterManagement.Business.Services
         
                 var invoiceData = new InvoiceDataModel
                 {
-                    CustomerName = customerDetails?.FirstName ?? "" + customerDetails?.LastName ?? "",
-                    PreparedBy = dbContext.TblUsers.Where(s => s.Id == estimationDetails.PreparedBy).Select(n => n.FirstName ?? "" + " " + n.LastName ?? "").FirstOrDefault() ?? "",
+                    CustomerName = (customerDetails?.FirstName ??"")+ " " + (customerDetails?.LastName ??""),
+                    PreparedBy = dbContext.TblUsers.Where(s => s.Id == estimationDetails.PreparedBy).Select(n => (n.FirstName ?? "") + " " + (n.LastName ?? "")).FirstOrDefault() ?? "",
                     CustomerId = customerDetails?.ContactUniqueId ?? "",
                     CustomerCity = customerDetails?.billingAddressVm?.City ?? "",
                     CustomerState = customerState ?? "",
@@ -608,14 +608,15 @@ namespace ShutterManagement.Business.Services
                     CompanyCountry = tenantInfoDetails?.Country ?? "",
                     CompanyZipCode = tenantInfoDetails?.ZipCode ?? "",
                     CustomerStreetAddress = customerDetails?.billingAddressVm?.StreetAddress ?? "",
+                    StreetAddress = customerDetails?.billingAddressVm?.StreetAddress ?? "",
                     MobilePhone = customerDetails?.PhoneNumber ?? "",
                     TenantCompanyName = tenantInfoDetails?.CompanyName ?? "",
                     Logo = tenantInfoDetails?.Logo ?? "",
                     EstimationDate = Convert.ToDateTime(estimationDetails?.CreatedAt).ToString("MM-dd-yyyy") ?? "",
-                    CreatedBy = estimationDetails?.CreatedBy.ToString() ?? "",
+                    CreatedBy = dbContext.TblUsers.Where(s => s.Id == estimationDetails.PreparedBy).Select(n => (n.FirstName ?? "") + " " + (n.LastName ?? "")).FirstOrDefault() ?? "",
                     EstimationSubtotal = estimationDetails?.TotalPrice.ToString() ?? "",
                     EstimationGrandTotal = estimationDetails?.GrandTotal.ToString() ?? "",
-                    EstimationId = estimationDetails?.EstimateId.ToString() ?? "",
+                    EstimationId = estimationDetails?.EstimateCode?.ToString() ?? "",
                     EstimationCode = estimationDetails?.EstimateCode ?? "",
                     EmailAddress = customerDetails?.Email ?? "",
                     Terms = estimationDetails?.TermsCondition ?? "",
