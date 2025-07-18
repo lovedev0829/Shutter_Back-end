@@ -180,6 +180,7 @@ namespace ShutterManagement.Core
 
         #region URL Shortening Configuration
         public static string BitlyApiToken { get; set; } = string.Empty;
+        public static string BitlyDomain { get; set; } = string.Empty;
         #endregion URL Shortening Configuration
     }
 }
