@@ -14,6 +14,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? MaterialUniqueId { get; set; }
 
         public decimal? UnitCost { get; set; }
+        public decimal? TotalCost { get; set; }
 
         public string? UnitOfMeasurement { get; set; }
         public decimal? Non_Rated_UnitCost { get; set; }

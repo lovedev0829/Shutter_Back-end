@@ -117,13 +117,12 @@ namespace ShutterManagement.Core.Common
         {
             var (length, width) = UnitOfMeasurementHelper.CalculateDimensions(unitOfMeasurement, inputLength, inputWidth);
 
-            decimal len = inputLength ?? 0;
-            decimal wid = inputWidth ?? 0;
+            decimal len = length ?? 1;
+            decimal wid = width ?? 1;
+            decimal TotalPrice =  0.0m;
             decimal totalPrice = totalCost ?? 0;
-            return (len > 0 && wid > 0) ? totalPrice / (len * wid)
-                 : (len > 0) ? totalPrice / len
-                 : (wid > 0) ? totalPrice / wid
-                 : totalPrice; 
+            totalPrice =(len > 0 && wid > 0) ? totalPrice / (len * wid): Math.Round(totalPrice,2); 
+            return Math.Round(totalPrice, 2);
         }
 
     }
