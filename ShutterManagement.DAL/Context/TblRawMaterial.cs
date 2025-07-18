@@ -49,6 +49,8 @@ public partial class TblRawMaterial
 
     public string? MaterialUniqueId { get; set; }
 
+    public decimal? TotalCost { get; set; }
+
     public virtual MstProductType? ProductTypeNavigation { get; set; }
 
     public virtual ICollection<TblComponentMaterial> TblComponentMaterials { get; set; } = new List<TblComponentMaterial>();

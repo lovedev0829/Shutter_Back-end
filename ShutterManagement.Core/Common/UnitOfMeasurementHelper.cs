@@ -112,5 +112,19 @@ namespace ShutterManagement.Core.Common
         {
             return GetUnitType(unitOfMeasurement) != UnitType.Unknown;
         }
+
+        public static decimal? CalculateUnitPrice(string unitOfMeasurement, decimal? inputLength, decimal? inputWidth, decimal? totalCost)
+        {
+            var (length, width) = UnitOfMeasurementHelper.CalculateDimensions(unitOfMeasurement, inputLength, inputWidth);
+
+            decimal len = inputLength ?? 0;
+            decimal wid = inputWidth ?? 0;
+            decimal totalPrice = totalCost ?? 0;
+            return (len > 0 && wid > 0) ? totalPrice / (len * wid)
+                 : (len > 0) ? totalPrice / len
+                 : (wid > 0) ? totalPrice / wid
+                 : totalPrice; 
+        }
+
     }
 } 
