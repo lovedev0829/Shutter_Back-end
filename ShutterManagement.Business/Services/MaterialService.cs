@@ -260,7 +260,7 @@ namespace ShutterManagement.Business.Services
                     {
                        
 
-                        decimal? unitPrice = UnitOfMeasurementHelper.CalculateUnitPrice(model.UnitOfMeasurement,model.Lenght,model.Width,model.UnitCost);
+                        decimal? unitPrice = UnitOfMeasurementHelper.CalculateUnitPrice(model.UnitOfMeasurement,model.Lenght,model.Width,model.TotalCost);
 
                         TblRawMaterial material = new TblRawMaterial
                         {
