@@ -265,10 +265,10 @@ namespace ShutterManagement.Business.Services
                         TblRawMaterial material = new TblRawMaterial
                         {
                             MaterialName = model.MaterialName.Trim(),
-                            UnitCost = model.UnitCost,
+                            UnitCost = unitPrice??0.0m,
                             Length=model.Lenght?? null,
                             Width=model.Width?? null,
-                            NonRatedUnitCost = model.UnitCost,
+                            NonRatedUnitCost = unitPrice ??0.0m,
                             UnitOfMeasurement = model.UnitOfMeasurement,
                             StockQuantity = model.StockQuantity,
                             ReorderLevel = model.ReorderLevel,
@@ -283,7 +283,7 @@ namespace ShutterManagement.Business.Services
                             IsDelete = false,
                             TenantId = tenantId,
                             MaterialUniqueId = generateUnique,
-                            TotalCost = unitPrice ?? 0.0m,
+                            TotalCost = model.TotalCost ?? 0.0m,
                         };
                         if (material != null)
                         {
@@ -542,7 +542,7 @@ namespace ShutterManagement.Business.Services
                             IsMaterialExists.UnitCost = unitPrice??0.0m;
                             IsMaterialExists.Length = length;
                             IsMaterialExists.Width = width;
-                            // IsMaterialExists.NonRatedUnitCost = model.NonRatedUnitCost;
+                            // IsMaterialExists.NonRatedUnitCost = model.NonRatedUnitCost;286
                             IsMaterialExists.Sku = model.SKU;
                             IsMaterialExists.ProductType = Guid.Parse(model.ProductType);
                             IsMaterialExists.UnitOfMeasurement = model.UnitOfMeasurement;
