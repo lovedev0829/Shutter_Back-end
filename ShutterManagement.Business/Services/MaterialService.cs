@@ -168,6 +168,7 @@ namespace ShutterManagement.Business.Services
                                 ReorderLevel = model.ReorderLevel,
                                 VendorId = model.VendorId,
                                 Notes = model.Notes,
+                                TotalCost = model.TotalCost,
                                 IsCutSheet = model.IsCutSheet,
                                 MaterialUniqueId = model.MaterialUniqueId
                             };
@@ -192,14 +193,14 @@ namespace ShutterManagement.Business.Services
                                 }
                                 Version1 += 1;
                                 var generateUniqueId = GenerateUniqueId.GenerateUniqueIds(ModuleName.Material, tenantId.ToString(), Version1);
-                                decimal? unitPrice = UnitOfMeasurementHelper.CalculateUnitPrice(model.UnitOfMeasurement, model.Lenght, model.Width, model.UnitCost);
+                                decimal? unitPrice = UnitOfMeasurementHelper.CalculateUnitPrice(model.UnitOfMeasurement, model.Lenght, model.Width, model.TotalCost);
                                 TblRawMaterial material = new TblRawMaterial
                                 {
                                     MaterialName = model.MaterialName.Trim(),
-                                    UnitCost = model.UnitCost,
+                                    UnitCost = unitPrice??0.0m,
                                     Length = model.Lenght ?? null,
                                     Width = model.Width ?? null,
-                                    NonRatedUnitCost = model.UnitCost,
+                                    NonRatedUnitCost =unitPrice??0.0m,
                                     UnitOfMeasurement = model.UnitOfMeasurement,
                                     StockQuantity = model.StockQuantity,
                                     ReorderLevel = model.ReorderLevel,
@@ -214,7 +215,7 @@ namespace ShutterManagement.Business.Services
                                     IsDelete = false,
                                     TenantId = tenantId,
                                     MaterialUniqueId = generateUniqueId,
-                                    TotalCost=unitPrice ?? 0.0m,
+                                    TotalCost=model.TotalCost ?? 0.0m,
                                 };
                                 if (material != null)
                                 {
@@ -532,13 +533,13 @@ namespace ShutterManagement.Business.Services
                                 model.UnitOfMeasurement, 
                                 model.Lenght, 
                                 model.Width);
-                        decimal? unitPrice = UnitOfMeasurementHelper.CalculateUnitPrice(model.UnitOfMeasurement, model.Lenght, model.Width, model.UnitCost);
+                        decimal? unitPrice = UnitOfMeasurementHelper.CalculateUnitPrice(model.UnitOfMeasurement, model.Lenght, model.Width, model.TotalCost);
 
                         if (IsMaterialExists != null)
                         {
                             IsMaterialExists.IsCutSheet = model.IsCutSheet;
                             IsMaterialExists.MaterialName = model.MaterialName;
-                            IsMaterialExists.UnitCost = model.UnitCost;
+                            IsMaterialExists.UnitCost = unitPrice??0.0m;
                             IsMaterialExists.Length = length;
                             IsMaterialExists.Width = width;
                             // IsMaterialExists.NonRatedUnitCost = model.NonRatedUnitCost;
@@ -551,7 +552,7 @@ namespace ShutterManagement.Business.Services
                             IsMaterialExists.Notes = model.Notes;
                             IsMaterialExists.ModifiedBy = AppConstant.LoggedInUserID;
                             IsMaterialExists.UpdatedAt = DateTime.Now;
-                            IsMaterialExists.TotalCost = unitPrice??0.0m;
+                            IsMaterialExists.TotalCost = model.TotalCost??0.0m;
                             
 
                             var res = Update(IsMaterialExists);
