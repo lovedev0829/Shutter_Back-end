@@ -105,7 +105,7 @@ namespace ShutterManagement.Business.Services
                 {
                     using (var writer = new StreamWriter(filePathWithName))
                     {
-                        await writer.WriteLineAsync("MaterialUniqueId,MaterialName*,UnitCost*,UnitOfMeasurement*,Lenght,Width,StockQuantity,ReorderLevel,Vendor*,Notes,ProductType*,SKU,IsCutSheet*");
+                        await writer.WriteLineAsync("MaterialUniqueId,MaterialName*,TotalCost*,UnitOfMeasurement*,Lenght,Width,StockQuantity,ReorderLevel,Vendor*,Notes,ProductType*,SKU,IsCutSheet*");
                     }
                 }
 
@@ -201,7 +201,7 @@ namespace ShutterManagement.Business.Services
                     //var records = csv.GetRecords<ImportMaterial>().ToList();
                     var expectedHeaders = new[]
                     {
-                   "MaterialUniqueId","MaterialName", "UnitCost", "UnitOfMeasurement","Lenght","Width", "StockQuantity", "ReorderLevel",
+                   "MaterialUniqueId","MaterialName","TotalCost", "UnitOfMeasurement","Lenght","Width", "StockQuantity", "ReorderLevel",
                    "Vendor", "Notes", "ProductType", "SKU", "IsCutSheet"
                     };
 
@@ -285,13 +285,15 @@ namespace ShutterManagement.Business.Services
                             continue;
 
                         }
+                        decimal? unitPrice = UnitOfMeasurementHelper.CalculateUnitPrice(record.UnitOfMeasurement, record.Lenght, record.Width, record.TotalCost);
+
                         var materialModel = new CreateMaterial
                         {
                             SKU = record.SKU?.Trim(),
                             MaterialName = record.MaterialName?.Trim(),
                             Lenght = record.Lenght ?? null,
                             Width = record.Width ?? null,
-                            UnitCost = record.UnitCost,
+                            UnitCost = unitPrice??0.0m,
                             //NonRatedUnitCost=record.NonRatedUnitCost,
                             // NonRatedUnitCost=record.UnitCost,
                             UnitOfMeasurement = record.UnitOfMeasurement,
@@ -301,7 +303,8 @@ namespace ShutterManagement.Business.Services
                             VendorId = vendor.VendorId,
                             Notes = record.Notes,
                             ProductType = productType.ProductId.ToString(),
-                            MaterialUniqueId = record.MaterialUniqueId ?? ""
+                            MaterialUniqueId = record.MaterialUniqueId ?? "",
+                            TotalCost = record.TotalCost ?? 0.0m
                         };
 
                         var existingMaterialdata = await material.Validate_MaterialExcell(record);
@@ -926,6 +929,7 @@ namespace ShutterManagement.Business.Services
                                         Width = t2.Width ?? null,
                                         StockQuantity = t2.StockQuantity,
                                         UnitCost = t2.UnitCost,
+                                        TotalCost = t2.TotalCost,
                                         ProductTypeName = t3.ProductName,
                                         UnitOfMeasurement = t2.UnitOfMeasurement,
                                         // Non_Rated_UnitCost = t2.NonRatedUnitCost,
@@ -938,11 +942,11 @@ namespace ShutterManagement.Business.Services
                                     }).ToList();
 
                 var csvBuilder = new StringBuilder();
-                csvBuilder.AppendLine("MaterialUniqueId,MaterialName*,UnitCost*,UnitOfMeasurement*,Lenght,Width,StockQuantity,ReorderLevel,Vendor*,Notes,ProductType*,SKU,IsCutSheet*");
+                csvBuilder.AppendLine("MaterialUniqueId,MaterialName*,UnitCost,TotalCost*,UnitOfMeasurement*,Lenght,Width,StockQuantity,ReorderLevel,Vendor*,Notes,ProductType*,SKU,IsCutSheet*");
 
                 foreach (var material in materialList)
                 {
-                    var line = $"{material.MaterialUniqueId},{EscapeCsv(material.MaterialName ?? "")},{material.UnitCost},{material.UnitOfMeasurement}," +
+                    var line = $"{material.MaterialUniqueId},{EscapeCsv(material.MaterialName ?? "")},{material.UnitCost},{material.TotalCost},{material.UnitOfMeasurement}," +
             $"{material.Lenght},{material.Width},{material.StockQuantity},{material.ReorderLevel},{EscapeCsv(material.VendorCode ?? "")}," +
             $"{EscapeCsv(material.Notes ?? "")},{EscapeCsv(material.ProductTypeName ?? "")},{EscapeCsv(material.SKU ?? "")},{material.IsCutSheet}";
                     csvBuilder.AppendLine(line);

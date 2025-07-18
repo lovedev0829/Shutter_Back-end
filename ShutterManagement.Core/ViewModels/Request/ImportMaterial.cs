@@ -29,6 +29,12 @@ namespace ShutterManagement.Core.ViewModels.Request
 
         [DefaultValue("")]
         [Required]
+        //[OnError(AppConstant.NumericError)]
+        [Name("TotalCost*")]
+        public decimal? TotalCost { get; set; }
+
+        [DefaultValue("")]
+        [Required]
         [Name("UnitOfMeasurement*")]
         public string? UnitOfMeasurement { get; set; }
 
