@@ -9,7 +9,7 @@ namespace ShutterManagement.Core.Common
 {
     public static class Templates
     {
-        public static string Estimate { get; set; } = $@"
+        public static string Estimate { get; set; } = @"
 <div style='font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px; margin: auto; background: #f9f9f9; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);'>
     <div style='background: white; padding: 20px; border-radius: 10px;'>
 
@@ -22,7 +22,7 @@ namespace ShutterManagement.Core.Common
         </p>
 
         <p style='font-size: 15px;'>
-            You can approve your estimate - <strong>{{EstimateCode}}</strong> by clicking the link below:
+            You can approve your estimate - <strong>{{EstimationCode}}</strong> by clicking the link below:
         </p>
 
         <div style='text-align: center; margin: 25px 0;'>
@@ -48,7 +48,7 @@ namespace ShutterManagement.Core.Common
     </div>
 </div>";
 
-        public static string Order { get; set; } = $@"
+        public static string Order { get; set; } = @"
      <div style='font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px;'>
         <p><strong>Dear {{CustomerName}},</strong></p>
 
@@ -76,7 +76,7 @@ namespace ShutterManagement.Core.Common
         <p>Shutter Management and Estimation System</p>
     </div>";
 
-        public static string Invoice { get; set; } = $@"
+        public static string Invoice { get; set; } = @"
 <div style='max-width: 600px; margin: auto; background: #fff; border-radius: 8px; box-shadow: 0px 0px 10px rgba(0,0,0,0.1); padding: 20px; font-family: Arial, sans-serif; color: #333;'>
 
     <div style='background: #007bff; color: #fff; text-align: center; padding: 15px; border-radius: 8px 8px 0 0;'>
@@ -111,12 +111,12 @@ namespace ShutterManagement.Core.Common
     </div>
 </div>";
 
-        public static string InvoicePaymentLink { get; set; } = $@"
+        public static string InvoicePaymentLink { get; set; } = @"
         <div style='text-align: center; margin: 20px 0;'>
             <a href='{{paymentLink}}' style='background: #28a745; color: #fff; padding: 12px 20px; text-decoration: none; font-size: 14px; border-radius: 5px; display: inline-block;'>Pay Now</a>
         </div>";
 
-        public static string PaymentLink { get; set; } = $@"
+        public static string PaymentLink { get; set; } = @"
 <div style='max-width: 600px; margin: auto; background: #fff; border-radius: 8px; 
             box-shadow: 0px 0px 10px rgba(0,0,0,0.1); padding: 20px; 
             font-family: Arial, sans-serif; color: #333;'>

@@ -1846,6 +1846,20 @@ namespace ShutterManagement.Business.Services
                     };
                     await gHLConfiguration.GetGHLConfiguration(opportunitydata.WebhookTenantId);
                     var res = await Create(job, Guid.Parse(opportunitydata.WebhookTenantId));
+                    var AllSubetenants = tenantService.GetAllQuerable().Where(x => x.ParentTenantId.ToString() ==
+                   opportunitydata.WebhookTenantId && x.IsActive == true && x.IsDelete == false && x.IsGhlconfigSameAsTenant == true)
+                     .ToList();
+                    if (AllSubetenants != null && AllSubetenants.Count > 0)
+                    {
+                        foreach (var partner in AllSubetenants)
+                        {
+                            if (!string.IsNullOrEmpty(partner.GhluserId) && partner.GhluserId.ToLower() == ghlUser.GhlUserId.ToLower())
+                            {
+                                await gHLConfiguration.GetGHLConfiguration(opportunitydata.WebhookTenantId);
+                                var res1 = await Create(job, Guid.Parse(opportunitydata.WebhookTenantId));
+                            }
+                        }
+                    }
                     responseVm.IsSuccess = true;
                     responseVm.Message = res.Message;
                 }

@@ -127,9 +127,10 @@ namespace ShutterManagement.Business.Services
 
                 var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration();
                 var ghlconfigDetails =  await gHLConfiguration.GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
-                if (Checkghlresponse.IsSuccess)
+                var contactId = dbContext.TblJobs.Where(x => x.JobId.ToString().ToLower() == res.JobId.ToString().ToLower() && x.IsDelete == false).Select(x => x.GhlContactId).FirstOrDefault();
+                if (Checkghlresponse.IsSuccess && !string.IsNullOrEmpty(contactId))
                 {
-                    var contactId = dbContext.TblJobs.Where(x => x.JobId.ToString().ToLower() == res.JobId.ToString().ToLower() && x.IsDelete == false).Select(x => x.GhlContactId).FirstOrDefault();
+                   // var contactId = dbContext.TblJobs.Where(x => x.JobId.ToString().ToLower() == res.JobId.ToString().ToLower() && x.IsDelete == false).Select(x => x.GhlContactId).FirstOrDefault();
 
                     string formattedstartDate = FormatDateTimeWithOffset(res.StartDate,res.DayStartTime);
                     string formattedstartDateend = FormatDateTimeWithOffset(res.EndDate, res.DayEndDateTime); 
@@ -145,7 +146,7 @@ namespace ShutterManagement.Business.Services
                         ignoreDateRange = true,
                     };
                     var ghlResponse = await gHLService_V2.CreateAppointmentAsync(ghlconfigDetails.Data,appointment);
-                    if(ghlResponse != null)
+                    if(ghlResponse.IsSuccess)
                     {
                         res.GhlEventId = ghlResponse.Data.id;
                         res.LasSync = DateTime.Now;

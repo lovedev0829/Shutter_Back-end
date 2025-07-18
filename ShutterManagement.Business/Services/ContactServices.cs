@@ -1731,17 +1731,20 @@ namespace ShutterManagement.Business.Services
                     }
                         //await gHLConfigurationService.GetGHLConfiguration(contactData.WebhookTenantId);
                     var res = await Update_Contact(contact, Guid.Parse(contactData.WebhookTenantId));
-                    var AllSubetenants = tenantService.GetAllQuerable().Where(x => x.ParentTenantId.ToString() ==
-                    contactData.WebhookTenantId && x.IsActive == true && x.IsDelete == false && x.IsGhlconfigSameAsTenant == true)
-                        .Select(x => x.TenantId).ToList();
-                    if (AllSubetenants != null && AllSubetenants.Count > 0)
-                    {
-                        foreach (var partner in AllSubetenants)
-                        {
-                            await gHLConfigurationService.GetGHLConfiguration(contactData.WebhookTenantId);
-                            var res1 = await Update_Contact(contact, Guid.Parse(contactData.WebhookTenantId));
-                        }
-                    }
+                    //var AllSubetenants = tenantService.GetAllQuerable().Where(x => x.ParentTenantId.ToString() ==
+                    //contactData.WebhookTenantId && x.IsActive == true && x.IsDelete == false && x.IsGhlconfigSameAsTenant == true)
+                    //    .ToList();
+                    //if (AllSubetenants != null && AllSubetenants.Count > 0)
+                    //{
+                    //    foreach (var partner in AllSubetenants)
+                    //    {
+                    //        if (!string.IsNullOrEmpty(partner.GhluserId) && partner.GhluserId.ToLower() == ghlUser.GhlUserId.ToLower())
+                    //        {
+                    //            await gHLConfigurationService.GetGHLConfiguration(contactData.WebhookTenantId);
+                    //            var res1 = await Update_Contact(contact, Guid.Parse(contactData.WebhookTenantId));
+                    //        }
+                    //    }
+                    //}
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.InsertSuccessMsg;
                 }
