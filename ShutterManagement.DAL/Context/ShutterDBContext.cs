@@ -1799,6 +1799,7 @@ public partial class ShutterDBContext : DbContext
                 .HasMaxLength(50)
                 .HasColumnName("SKU");
             entity.Property(e => e.StockQuantity).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.TotalCost).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.UnitCost).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.UnitOfMeasurement)
                 .HasMaxLength(50)

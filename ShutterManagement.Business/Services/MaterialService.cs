@@ -154,7 +154,7 @@ namespace ShutterManagement.Business.Services
                             decimal? width = null;
                             
                             (length, width) = UnitOfMeasurementHelper.CalculateDimensions(model.UnitOfMeasurement, model.Lenght, model.Width);
-                            
+
                             var res = new UpdateMaterial
                             {
                                 MaterialName = model.MaterialName,
@@ -192,6 +192,7 @@ namespace ShutterManagement.Business.Services
                                 }
                                 Version1 += 1;
                                 var generateUniqueId = GenerateUniqueId.GenerateUniqueIds(ModuleName.Material, tenantId.ToString(), Version1);
+                                decimal? unitPrice = UnitOfMeasurementHelper.CalculateUnitPrice(model.UnitOfMeasurement, model.Lenght, model.Width, model.UnitCost);
                                 TblRawMaterial material = new TblRawMaterial
                                 {
                                     MaterialName = model.MaterialName.Trim(),
@@ -213,6 +214,7 @@ namespace ShutterManagement.Business.Services
                                     IsDelete = false,
                                     TenantId = tenantId,
                                     MaterialUniqueId = generateUniqueId,
+                                    TotalCost=unitPrice ?? 0.0m,
                                 };
                                 if (material != null)
                                 {
@@ -255,6 +257,10 @@ namespace ShutterManagement.Business.Services
                     var generateUnique = GenerateUniqueId.GenerateUniqueIds(ModuleName.Material, claimsProperty.GetCompanyCode(), Version);
                     if (IsVendorExist)
                     {
+                       
+
+                        decimal? unitPrice = UnitOfMeasurementHelper.CalculateUnitPrice(model.UnitOfMeasurement,model.Lenght,model.Width,model.UnitCost);
+
                         TblRawMaterial material = new TblRawMaterial
                         {
                             MaterialName = model.MaterialName.Trim(),
@@ -276,6 +282,7 @@ namespace ShutterManagement.Business.Services
                             IsDelete = false,
                             TenantId = tenantId,
                             MaterialUniqueId = generateUnique,
+                            TotalCost = unitPrice ?? 0.0m,
                         };
                         if (material != null)
                         {
@@ -405,6 +412,7 @@ namespace ShutterManagement.Business.Services
                                             CompanyName=t1.CompanyName,
                                             IsCutSheet = t2.IsCutSheet,
                                             MaterialUniqueId = t2.MaterialUniqueId,
+                                            TotalCost = t2.TotalCost??0.0m,
                                         }).ToList();
 
                     FileLogger.Log($"This is Material List {MaterialList}");
@@ -524,6 +532,7 @@ namespace ShutterManagement.Business.Services
                                 model.UnitOfMeasurement, 
                                 model.Lenght, 
                                 model.Width);
+                        decimal? unitPrice = UnitOfMeasurementHelper.CalculateUnitPrice(model.UnitOfMeasurement, model.Lenght, model.Width, model.UnitCost);
 
                         if (IsMaterialExists != null)
                         {
@@ -542,6 +551,8 @@ namespace ShutterManagement.Business.Services
                             IsMaterialExists.Notes = model.Notes;
                             IsMaterialExists.ModifiedBy = AppConstant.LoggedInUserID;
                             IsMaterialExists.UpdatedAt = DateTime.Now;
+                            IsMaterialExists.TotalCost = unitPrice??0.0m;
+                            
 
                             var res = Update(IsMaterialExists);
                             responseVm.IsSuccess = true;
