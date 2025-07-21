@@ -681,12 +681,13 @@ namespace ShutterManagement.Business.Services
                             responseVm.Message = "Estimate " + AppConstant.NoDataFound;
                             return responseVm;
                         }
-
-                        IsEstimateExists.Status = EnumValue.GetEnumValue(Estimation.PendingForApproval);
-                        IsEstimateExists.UpdatedAt = DateTime.Now;
-                        IsEstimateExists.ModifiedBy = AppConstant.LoggedInUserID;
-                        await estimateService.Update(IsEstimateExists);
-                        
+                        if (!(bool)model.IsResend)
+                        {
+                            IsEstimateExists.Status = EnumValue.GetEnumValue(Estimation.PendingForApproval);
+                            IsEstimateExists.UpdatedAt = DateTime.Now;
+                            IsEstimateExists.ModifiedBy = AppConstant.LoggedInUserID;
+                            await estimateService.Update(IsEstimateExists);
+                        }
                         // Generate the original estimate URL
                         var originalEstimateUrl = $"{AppConstant.UIBaseURL}contacts/estimate/preview/{IsEstimateExists?.EstimateId}";
                         
@@ -705,27 +706,30 @@ namespace ShutterManagement.Business.Services
                             FileLogger.Log($"EstimateService: URL shortening failed ({shortenResult.Message}), using original URL: {originalEstimateUrl}");
                         }
 
-
-                        var jobStatusName = EnumValue.GetEnumValue(JobStatus.Quote_Sent);
-                        var updateResponse = await statusAndStageMapping.UpdateOpportunityAndJobStatus(IsEstimateExists?.JobId ?? Guid.Empty, jobStatusName);
-
-                        if (!updateResponse.IsSuccess)
+                        if (!(bool)model.IsResend)
                         {
-                            responseVm.IsSuccess = false;
-                            responseVm.Message = updateResponse.Message;
-                            return responseVm;
-                        }
+                            var jobStatusName = EnumValue.GetEnumValue(JobStatus.Quote_Sent);
+                            var updateResponse = await statusAndStageMapping.UpdateOpportunityAndJobStatus(IsEstimateExists?.JobId ?? Guid.Empty, jobStatusName);
 
-                        var jobDetails = await jobService.GetById(IsEstimateExists.JobId ?? Guid.Empty);
-
-                        if (jobDetails != null)
-                        {
-                            var ghlUrlResponse = await jobService.UpdateEstimateUrlInGhlOnly(jobDetails, invoiceData.InvoiceLink, IsEstimateExists.GrandTotal ?? 0.0m);
-
-                            if (!ghlUrlResponse.IsSuccess)
+                            if (!updateResponse.IsSuccess)
                             {
-                                // Optional: log or return a warning, depending on your use case
-                                FileLogger.Log($"GHL URL Update failed: {ghlUrlResponse.Message}");
+                                responseVm.IsSuccess = false;
+                                responseVm.Message = updateResponse.Message;
+                                return responseVm;
+                            }
+
+
+                            var jobDetails = await jobService.GetById(IsEstimateExists.JobId ?? Guid.Empty);
+
+                            if (jobDetails != null)
+                            {
+                                var ghlUrlResponse = await jobService.UpdateEstimateUrlInGhlOnly(jobDetails, invoiceData.InvoiceLink, IsEstimateExists.GrandTotal ?? 0.0m);
+
+                                if (!ghlUrlResponse.IsSuccess)
+                                {
+                                    // Optional: log or return a warning, depending on your use case
+                                    FileLogger.Log($"GHL URL Update failed: {ghlUrlResponse.Message}");
+                                }
                             }
                         }
 
