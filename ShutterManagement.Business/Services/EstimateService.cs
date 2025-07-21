@@ -506,18 +506,18 @@ namespace ShutterManagement.Business.Services
                 // To get the calculated discounted value of all products
                 decimal subTotalOfAllProduct = allProductData.DistinctBy(x => x.ComponentId).Sum(x => (x.TotalPrice ?? 0m) + (x.ProductMarkup ?? 0m));
                 var disconutDetails = allProductData.Select(x => new { x.DiscountType, x.DiscountValue, x.DiscountId }).Distinct().Where(x => x.DiscountId != null).FirstOrDefault();
-                var discountedvalue = disconutDetails != null ? ApplyDiscount(subTotalOfAllProduct, disconutDetails.DiscountType, disconutDetails.DiscountValue) : subTotalOfAllProduct;
+                var discountedvalue = disconutDetails != null ? GetDiscountValue(subTotalOfAllProduct, disconutDetails.DiscountType, disconutDetails.DiscountValue) : 0.0m;
                 // Calculate the subtotal of all products by summing ProductPrice and ProductMarkup for each item
                 var AllProductTotalTaxAmount = 0.0m;
                 foreach (var item in allProductData.DistinctBy(y => y.ProductId))
                 {
                     decimal subTotalOfProduct = allProductData.DistinctBy(x => x.ComponentId).Select(x => (x.TotalPrice ?? 0m) + (x.ProductMarkup ?? 0m)).FirstOrDefault();
-                    var discountedSubTotal = subTotalOfProduct - discountedvalue;
-                    discountedSubTotal = discountedSubTotal > 0 ? discountedSubTotal : 0.0m;
+                    var discountedSubTotal = disconutDetails != null ? ApplyDiscount(subTotalOfProduct, discountedvalue) : 0.0m;
+                    subTotalOfProduct = subTotalOfProduct - discountedSubTotal;
                     var isTaxExempt = GetIsTaxExemptByWindowId(item.WindowId);
                     var isJobTaxable = item.JobId != null && jobTaxStatus.ContainsKey((Guid)item.JobId) && jobTaxStatus[(Guid)item.JobId];
                     var productTaxAmount =  item.IsTaxAvailable == true && isTaxExempt
-                        ? CalculateTotalTaxAmount(discountedSubTotal, item.MunicipalityTax, item.CityTax, item.StateTax)
+                        ? CalculateTotalTaxAmount(subTotalOfProduct, item.MunicipalityTax, item.CityTax, item.StateTax)
                         : 0.0m;
                     var OptionTaxAmount = item.OptionTaxDetails.Sum(x => x.TotalTaxAmount);
                     item.TotalTaxAmount = productTaxAmount + OptionTaxAmount;
@@ -565,14 +565,20 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
-        private decimal ApplyDiscount(decimal? totalPrice,string? discountType, decimal? discountValue)
+        private decimal ApplyDiscount(decimal? totalPrice, decimal? discountValue)
+        {
+            decimal basePrice = totalPrice ?? 0.0m;
+            decimal discount = ((discountValue * 100) / totalPrice ) ?? 0.0m;
+            return Math.Round(discount,2);
+        }
+        private decimal GetDiscountValue(decimal? totalPrice, string? discountType, decimal? discountValue)
         {
             decimal basePrice = totalPrice ?? 0.0m;
             decimal discount = discountType == EnumValue.GetEnumValue(DiscountType.Percentage)
-                  ? (basePrice * (discountValue ?? 0.0m) / 100)
-                  : ((discountValue * 100) / totalPrice ) ?? 0.0m;
-         
-            return Math.Round(discount,2);
+                  ? discountValue ?? 0.0m
+                  : discountValue < totalPrice ? ((discountValue * 100) / totalPrice) ?? 0.0m : 100;
+
+            return Math.Round(discount, 2);
         }
         private decimal CalculateTotalTaxAmount(decimal? totalPrice, decimal? municipality, decimal? city, decimal? state)
         {
