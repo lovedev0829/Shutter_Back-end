@@ -21,10 +21,10 @@ namespace ShutterManagement
             AppConstant.SMTPPort = Configuration["SMTPDetails:SMTPPort"] ?? "";
             AppConstant.SMTPPassword = Configuration["SMTPDetails:SMTPPassword"] ?? "";
             AppConstant.SMTPUsername = Configuration["SMTPDetails:SMTPUsername"] ?? "";
-            
+
             // SMTP Host Configuration
-            AppConstant.SmtpHost_Google =  "smtp.gmail.com";
-            AppConstant.SmtpHost_MSOffice365 =  "smtp.office365.com";
+            AppConstant.SmtpHost_Google = Configuration["SMTPHosts:Google"] ?? "smtp.gmail.com";
+            AppConstant.SmtpHost_MSOffice365 = Configuration["SMTPHosts:MSOffice365"] ?? "smtp.office365.com";
             
             // GHL Marketplace Configuration
             AppConstant.GHL_Marketplace_ClientId = Configuration["GoHighLevelOAuthSettings:ClientId"] ?? "";

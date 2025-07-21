@@ -44,12 +44,11 @@ namespace ShutterManagement.Core.Common
 
                 message.Body = builder.ToMessageBody();
 
-
                 using var client = new MailKit.Net.Smtp.SmtpClient();
+
                 switch (request?.EmailType?.Trim().ToLower())
                 {
                     case "google":
-                       
                         await client.ConnectAsync(AppConstant.SmtpHost_Google, 587, SecureSocketOptions.StartTls);
                         await client.AuthenticateAsync(new SaslMechanismOAuth2(request.Username, request.AccessToken));
                         break;
@@ -60,41 +59,16 @@ namespace ShutterManagement.Core.Common
                         break;
 
                     case "smtp":
-                        var smtpCLient = new System.Net.Mail.SmtpClient(request.SmtpServer)
-                        {
-                            Port = request.Port,
-                            Credentials = new NetworkCredential(request.Username, request.Password),
-                            
-                            EnableSsl = request.UseSsl
-
-                        };
-
-                        var mailMessage = new MailMessage
-                        {
-                            From = new MailAddress(request.FromEmail),
-                            Subject = request.Subject,
-                            Body = request.Body, // Use the string body directly
-                            IsBodyHtml = true,
-                        };
-                        mailMessage.To.Add(new MailAddress(request.ToEmail));
-                        mailMessage.ReplyToList.Add(new MailAddress(request.ReplyToEmail ?? request.FromEmail));
-                        // Add attachments if any
-                        if (request.Attachments != null && request.Attachments.Any())
-                        {
-                            foreach (var attachment in request.Attachments)
-                            {
-                                mailMessage.Attachments.Add(new System.Net.Mail.Attachment(attachment.Stream, attachment.FileName, attachment.MediaType ?? "application/octet-stream"));
-                            }
-                        }
-
-                        smtpCLient.Send(mailMessage);
+                        await client.ConnectAsync(request.SmtpServer, request.Port, request.UseSsl ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.StartTls);
+                        await client.AuthenticateAsync(request.Username, request.Password);
                         break;
 
                     default:
                         throw new InvalidOperationException("Unsupported email type.");
                 }
 
-               
+                await client.SendAsync(message);
+                await client.DisconnectAsync(true);
 
                 responseVm.IsSuccess = true;
                 responseVm.Message = "Email sent successfully.";
