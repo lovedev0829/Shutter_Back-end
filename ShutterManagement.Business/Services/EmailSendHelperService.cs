@@ -1,4 +1,5 @@
 ﻿using Azure;
+using MailKit.Security;
 using Newtonsoft.Json.Linq;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core;

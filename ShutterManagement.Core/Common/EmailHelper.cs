@@ -59,7 +59,7 @@ namespace ShutterManagement.Core.Common
                         break;
 
                     case "smtp":
-                        await client.ConnectAsync(request.SmtpServer,request.Port,request.UseSsl ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.StartTls);
+                        await client.ConnectAsync(request.SmtpServer, request.Port, request.UseSsl ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.StartTls);
                         await client.AuthenticateAsync(request.Username, request.Password);
                         break;
 
