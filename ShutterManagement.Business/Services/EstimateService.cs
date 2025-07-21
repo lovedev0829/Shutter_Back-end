@@ -840,12 +840,12 @@ namespace ShutterManagement.Business.Services
                     productMarkup += productOwnMarkup;
                     componentSubTotal += Math.Round(productPrice, 2);
 
-                   //TaxAppliedWithMarkup(item, productPrice, componentOwnMarkup, productOwnMarkup);
+                   TaxAppliedWithMarkup(item, productPrice, componentOwnMarkup, productOwnMarkup);
 
                 }
                 else
                 {
-                   // TaxAppliedWithMarkup(item, item.Price ?? 0.0m, 0, productOwnMarkup);
+                   TaxAppliedWithMarkup(item, item.Price ?? 0.0m, 0, productOwnMarkup);
                 }
                //TaxAppliedWithMarkup(item, item.Price ?? 0.0m, componentOwnMarkup, productOwnMarkup);
 
