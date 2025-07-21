@@ -681,7 +681,7 @@ namespace ShutterManagement.Business.Services
                             responseVm.Message = "Estimate " + AppConstant.NoDataFound;
                             return responseVm;
                         }
-                        if (!(bool)model.IsResend)
+                        if (model.IsResend == null || !(bool)model.IsResend)
                         {
                             IsEstimateExists.Status = EnumValue.GetEnumValue(Estimation.PendingForApproval);
                             IsEstimateExists.UpdatedAt = DateTime.Now;
@@ -706,7 +706,7 @@ namespace ShutterManagement.Business.Services
                             FileLogger.Log($"EstimateService: URL shortening failed ({shortenResult.Message}), using original URL: {originalEstimateUrl}");
                         }
 
-                        if (!(bool)model.IsResend)
+                        if (model.IsResend == null || !(bool)model.IsResend)
                         {
                             var jobStatusName = EnumValue.GetEnumValue(JobStatus.Quote_Sent);
                             var updateResponse = await statusAndStageMapping.UpdateOpportunityAndJobStatus(IsEstimateExists?.JobId ?? Guid.Empty, jobStatusName);
