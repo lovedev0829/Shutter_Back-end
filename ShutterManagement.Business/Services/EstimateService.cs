@@ -506,18 +506,18 @@ namespace ShutterManagement.Business.Services
                 // To get the calculated discounted value of all products
                 decimal subTotalOfAllProduct = allProductData.DistinctBy(x => x.ComponentId).Sum(x => (x.TotalPrice ?? 0m) + (x.ProductMarkup ?? 0m));
                 var disconutDetails = allProductData.Select(x => new { x.DiscountType, x.DiscountValue, x.DiscountId }).Distinct().Where(x => x.DiscountId != null).FirstOrDefault();
-                var discountedvalue = disconutDetails != null ? GetDiscountValue(subTotalOfAllProduct, disconutDetails.DiscountType, disconutDetails.DiscountValue) : 0.0m;
+                var discountedPercentage = disconutDetails != null ? GetDiscountValue(subTotalOfAllProduct, disconutDetails.DiscountType, disconutDetails.DiscountValue) : 0.0m;
                 // Calculate the subtotal of all products by summing ProductPrice and ProductMarkup for each item
                 var AllProductTotalTaxAmount = 0.0m;
                 foreach (var item in allProductData.DistinctBy(y => y.ProductId))
                 {
                     decimal subTotalOfProduct = allProductData.DistinctBy(x => x.ComponentId).Select(x => (x.TotalPrice ?? 0m) + (x.ProductMarkup ?? 0m)).FirstOrDefault();
-                    var discountedSubTotal = disconutDetails != null ? ApplyDiscount(subTotalOfProduct, discountedvalue) : 0.0m;
-                    subTotalOfProduct = subTotalOfProduct - discountedSubTotal;
+                    var discountedValue = disconutDetails != null ? ApplyDiscount(subTotalOfProduct, discountedPercentage) : 0.0m;
+                    var discountedsubTotalOfProduct = subTotalOfProduct - discountedValue;
                     var isTaxExempt = GetIsTaxExemptByWindowId(item.WindowId);
                     var isJobTaxable = item.JobId != null && jobTaxStatus.ContainsKey((Guid)item.JobId) && jobTaxStatus[(Guid)item.JobId];
                     var productTaxAmount =  item.IsTaxAvailable == true && isTaxExempt
-                        ? CalculateTotalTaxAmount(subTotalOfProduct, item.MunicipalityTax, item.CityTax, item.StateTax)
+                        ? CalculateTotalTaxAmount(discountedsubTotalOfProduct, item.MunicipalityTax, item.CityTax, item.StateTax)
                         : 0.0m;
                     var OptionTaxAmount = item.OptionTaxDetails.Sum(x => x.TotalTaxAmount);
                     item.TotalTaxAmount = productTaxAmount + OptionTaxAmount;
