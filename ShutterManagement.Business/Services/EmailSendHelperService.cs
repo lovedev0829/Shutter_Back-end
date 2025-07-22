@@ -85,7 +85,7 @@ namespace ShutterManagement.Business.Services
             return response;
         }
 
-        public async Task<IResponseVm<string>> GetEmailConfigAndSendEmail(string ToEmail, string emailContent, string subject = "", string replyTo = "", List<EmailAttachments> emailAttachments = null,string TenantId = "")
+        public async Task<IResponseVm<string>> GetEmailConfigAndSendEmail(string ToEmail, string emailContent, string subject = "", string replyTo = "", List<EmailAttachments> emailAttachments = null,string TenantId = "", string? LoggedInUser= "")
         {
             IResponseVm<string> response = new ResponseVm<string>();
             try
@@ -103,6 +103,7 @@ namespace ShutterManagement.Business.Services
             {
                 FromEmail = emailTypeconfiguration.Data?.From ?? "",
                 ToEmail = ToEmail,
+                CC = LoggedInUser ?? "",
                 Subject = subject,
                 Body = emailContent,
                 ReplyToEmail = string.IsNullOrEmpty(replyTo) ? emailTypeconfiguration.Data?.From ?? "" : replyTo,

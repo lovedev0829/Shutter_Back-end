@@ -90,6 +90,11 @@ namespace ShutterManagement.Core.ViewModels.Request
         public Dictionary<string, decimal> OptionMSRP { get; set; } = new Dictionary<string, decimal>();
     }
 
-
+    public class BuildEstimateAfterDiscount
+    {
+        public string? DiscountId { get; set; }
+        public List<ProductListing> Products { get; set; } = new List<ProductListing>();
+      
+    }
 
 }
