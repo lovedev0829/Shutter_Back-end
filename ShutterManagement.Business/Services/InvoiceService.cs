@@ -668,9 +668,7 @@ namespace ShutterManagement.Business.Services
                 string emailBody = string.Empty;
                 List<EmailAttachments> emailAttachments = new List<EmailAttachments>();
                 IResponseVm<string> EmailSendResult = new ResponseVm<string>();
-                var LoggedInUser = dbContext.TblUsers.Where(u => u.Id == claimsProperty.GetUserId() && u.TenantId == claimsProperty.GetTenantId())
-                           .Select(s => s.Email)
-                           .FirstOrDefault() ?? string.Empty;
+                var LoggedInUser = claimsProperty.GetEmail() ?? string.Empty;
                 switch (model.DocumentType)
                 {
 
