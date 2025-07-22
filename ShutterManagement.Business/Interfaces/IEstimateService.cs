@@ -35,7 +35,7 @@ namespace ShutterManagement.Business.Interfaces
                  decimal? height,
                  decimal? width,
                  bool? IsManageProduct);
-        //Task<IResponseVm<List<EstimationBreakdown>>> EstimationBreakdown(Guid windowProductId);
-
+        Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> BuildEstimateAfterDiscountApplied(string? DiscountId = null,
+          List<ProductListing> products = null);
     }
 }
