@@ -668,8 +668,10 @@ namespace ShutterManagement.Business.Services
                 string emailBody = string.Empty;
                 List<EmailAttachments> emailAttachments = new List<EmailAttachments>();
                 IResponseVm<string> EmailSendResult = new ResponseVm<string>();
+                var LoggedInUser = claimsProperty.GetEmail() ?? string.Empty;
                 switch (model.DocumentType)
                 {
+
                     case EstimateDocumentType.ForEmail:
                         var IsEstimateExists = dbContext.TblEstimates
                         .Where(x => x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId() && x.EstimateId == model.EstimationId)
@@ -740,7 +742,7 @@ namespace ShutterManagement.Business.Services
                             Stream = new MemoryStream(pdfBytes.Data),
                             MediaType = "application/pdf"
                         });
-                        EmailSendResult = await emailSendHelperService.GetEmailConfigAndSendEmail(customerDetails?.Email, emailBody, AppConstant.Sub_EstimateApproval, PreparedByEmail, emailAttachments);
+                        EmailSendResult = await emailSendHelperService.GetEmailConfigAndSendEmail(customerDetails?.Email, emailBody, AppConstant.Sub_EstimateApproval, PreparedByEmail, emailAttachments,string.Empty,LoggedInUser);
 
                         responseVm.IsSuccess = true;
                         responseVm.Message = EmailSendResult.Message;
@@ -774,7 +776,8 @@ namespace ShutterManagement.Business.Services
                             Stream = new MemoryStream(pdfBytes.Data),
                             MediaType = "application/pdf"
                         });
-                        EmailSendResult = await emailSendHelperService.GetEmailConfigAndSendEmail(customerDetails?.Email, emailBody, AppConstant.Sub_EstimateOrderApproval, PreparedByEmail, emailAttachments);
+                        
+                        EmailSendResult = await emailSendHelperService.GetEmailConfigAndSendEmail(customerDetails?.Email, emailBody, AppConstant.Sub_EstimateOrderApproval, PreparedByEmail, emailAttachments,string.Empty, LoggedInUser);
                         responseVm.IsSuccess = true;
                         responseVm.Message = EmailSendResult.Message;
                         System.IO.File.Delete(savePath);
@@ -892,7 +895,7 @@ namespace ShutterManagement.Business.Services
                             Stream = new MemoryStream(pdfBytesInvoice.Data),
                             MediaType = "application/pdf"
                         });
-                        EmailSendResult = await emailSendHelperService.GetEmailConfigAndSendEmail(customerDetails?.Email, emailBody, AppConstant.InvoicePaymentLinkandPDF, PreparedByEmail, emailAttachments);
+                        EmailSendResult = await emailSendHelperService.GetEmailConfigAndSendEmail(customerDetails?.Email, emailBody, AppConstant.InvoicePaymentLinkandPDF, PreparedByEmail, emailAttachments,string.Empty, LoggedInUser);
 
                         responseVm.IsSuccess = true;
                         responseVm.Message = isStripeConfigured && EmailSendResult.IsSuccess

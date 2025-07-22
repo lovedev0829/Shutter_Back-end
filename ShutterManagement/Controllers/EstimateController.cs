@@ -109,10 +109,9 @@ namespace ShutterManagement.Controllers
 
         [HttpPost("BuildEstimateAfterDiscount")]
         [Authorize(Roles = "EstimateView")]
-        public async Task<IActionResult> BuildEstimateAfterDiscount(string? DiscountId = null,
-                          List<ProductListing> products = null)
+        public async Task<IActionResult> BuildEstimateAfterDiscount(BuildEstimateAfterDiscount model)
         {
-            var res = await _EstimateService.BuildEstimateAfterDiscountApplied(DiscountId,products);
+            var res = await _EstimateService.BuildEstimateAfterDiscountApplied(model.DiscountId,model.Products);
             return Ok(res);
 
         }

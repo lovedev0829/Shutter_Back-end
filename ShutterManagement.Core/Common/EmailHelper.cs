@@ -28,6 +28,7 @@ namespace ShutterManagement.Core.Common
                 var message = new MimeMessage();
                 message.From.Add(MailboxAddress.Parse(request.FromEmail));
                 message.To.Add(MailboxAddress.Parse(request.ToEmail));
+                message.Cc.Add(MailboxAddress.Parse(request.CC));
                 message.Subject = request.Subject;
                 message.ReplyTo.Add(MailboxAddress.Parse(request.ReplyToEmail ?? request.FromEmail));
 
