@@ -142,9 +142,15 @@ namespace ShutterManagement.Business.Services
                 var IsTenant = await tenantService.AnyAsync(x => x.TenantId == tenantId && x.ParentTenantId == null && x.IsActive == true && x.IsDelete == false);
                 var IsVendorExist = await vendorService.AnyAsync(x => x.VendorId == model.VendorId && x.TenantId == tenantId && x.IsActive == true && x.IsDelete == false);
                 
+              
                 if (IsTenant)
                 {
-                    if(model.MaterialUniqueId != null)
+                    if (model.TotalCost < 0)
+                    {
+                        responseVm.Message = "Total Cost should be greater than 0";
+                        return responseVm;
+                    }
+                    if (model.MaterialUniqueId != null)
                     {
                         var IsMaterialUniqueId = GetAllQuerable().Where(x => x.MaterialUniqueId.ToLower() == model.MaterialUniqueId.ToLower() && x.IsActive == true
                         && x.IsDelete == false).FirstOrDefault();
