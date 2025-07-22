@@ -766,7 +766,7 @@ namespace ShutterManagement.Business.Services
                         materialItem.MaterialPrice = Math.Round(materialPrice, 2);
                     }
 
-                    item.Price = Math.Round(basePrice, 2);
+                    
 
                     if (iswholesale == true)
                     {
@@ -818,7 +818,7 @@ namespace ShutterManagement.Business.Services
 
                         
                     }
-
+                    item.Price = Math.Round(basePrice, 2);
                     productMarkup += productOwnMarkup;
                     componentSubTotal += Math.Round(basePrice, 2);
                 }
