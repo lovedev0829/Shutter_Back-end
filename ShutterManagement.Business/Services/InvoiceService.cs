@@ -895,7 +895,7 @@ namespace ShutterManagement.Business.Services
                             Stream = new MemoryStream(pdfBytesInvoice.Data),
                             MediaType = "application/pdf"
                         });
-                        EmailSendResult = await emailSendHelperService.GetEmailConfigAndSendEmail(customerDetails?.Email, emailBody, AppConstant.InvoicePaymentLinkandPDF, PreparedByEmail, emailAttachments,null, LoggedInUser);
+                        EmailSendResult = await emailSendHelperService.GetEmailConfigAndSendEmail(customerDetails?.Email, emailBody, AppConstant.InvoicePaymentLinkandPDF, PreparedByEmail, emailAttachments,string.Empty, LoggedInUser);
 
                         responseVm.IsSuccess = true;
                         responseVm.Message = isStripeConfigured && EmailSendResult.IsSuccess
