@@ -521,7 +521,11 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = "SKU" + " " + AppConstant.AlreadyExists;
                     return responseVm;
                 }
-
+                if (model.TotalCost < 0)
+                {
+                    responseVm.Message = "Total Cost should be greater than 0";
+                    return responseVm;
+                }
                 if (IsTenant)
                 {
                     if (IsVendorExist != null)

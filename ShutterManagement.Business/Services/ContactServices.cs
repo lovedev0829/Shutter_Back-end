@@ -760,11 +760,14 @@ namespace ShutterManagement.Business.Services
                 if (!string.IsNullOrEmpty(model.PhoneNumber))
                     model.PhoneNumber = FormatPhoneNumber(model.PhoneNumber);
 
-                if (!model.IsTaxExemption &&
-                    (model.TaxExemptionVm?.EffectiveDate == null || model.TaxExemptionVm?.ExpiryDate == null))
+                if (!model.IsTaxExemption)
                 {
-                    responseVm.Message = "Please Fill TaxExemption Details.";
-                    return responseVm;
+                    if
+                    (model.TaxExemptionVm?.EffectiveDate == null || model.TaxExemptionVm?.ExpiryDate == null)
+                    {
+                        responseVm.Message = "Please Fill TaxExemption Details.";
+                        return responseVm;
+                    }
                 }
 
                 var existingContacts = GetAllQuerable().Where(c =>
@@ -1215,7 +1218,8 @@ namespace ShutterManagement.Business.Services
                 PhoneNumber = model.PhoneNumber ?? string.Empty,
                 lastAsync = model.lastAsync,
                 GHLContactId = model.GHLContactId,
-                BillingAddressVm = !model.IsBillingAddressSameAsAddress ? model.BillingAddressVm : null
+                BillingAddressVm = !model.IsBillingAddressSameAsAddress ? model.BillingAddressVm : null,
+                IsTaxExemption = model.IsTaxExemption,
             };
 
             await Create_Contact(newContact, tenantId);
@@ -1745,8 +1749,11 @@ namespace ShutterManagement.Business.Services
                     //        }
                     //    }
                     //}
-                    responseVm.IsSuccess = true;
-                    responseVm.Message = AppConstant.InsertSuccessMsg;
+                  
+                        responseVm.IsSuccess = res.IsSuccess;
+                        responseVm.Message = res.Message;
+                        return responseVm;
+                    
                 }
                 catch (Exception ex)
                 {
