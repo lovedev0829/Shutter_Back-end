@@ -511,7 +511,7 @@ namespace ShutterManagement.Business.Services
                 var AllProductTotalTaxAmount = 0.0m;
                 foreach (var item in allProductData.DistinctBy(y => y.ProductId))
                 {
-                    decimal subTotalOfProduct = allProductData.DistinctBy(x => x.ComponentId).Select(x => (x.TotalPrice ?? 0m) + (x.ProductMarkup ?? 0m)).FirstOrDefault();
+                    decimal subTotalOfProduct = (item.TotalPrice ?? 0m) + (item.ProductMarkup ?? 0m);
                     var discountedValue = disconutDetails != null ? ApplyDiscount(subTotalOfProduct, discountedPercentage) : 0.0m;
                     var discountedsubTotalOfProduct = subTotalOfProduct - discountedValue;
                     var isTaxExempt = GetIsTaxExemptByWindowId(item.WindowId);
@@ -568,7 +568,7 @@ namespace ShutterManagement.Business.Services
         private decimal ApplyDiscount(decimal? totalPrice, decimal? discountValue)
         {
             decimal basePrice = totalPrice ?? 0.0m;
-            decimal discount = ((discountValue * 100) / totalPrice ) ?? 0.0m;
+            decimal discount = (basePrice * (discountValue ?? 0.0m) / 100);
             return Math.Round(discount,2);
         }
         private decimal GetDiscountValue(decimal? totalPrice, string? discountType, decimal? discountValue)
@@ -1715,8 +1715,13 @@ namespace ShutterManagement.Business.Services
             decimal totalTaxAmount = 0.0m;
             Guid? taxRateId = null;
             Guid? discountId = null;
+            bool IsAfterCreateEstimate = false;
+            if(!string.IsNullOrEmpty(model.DiscountId.ToString()))
+            {
+                IsAfterCreateEstimate = true;
+            }
             var PricedProductsList = model.ProductsList.Where(x => x.ProductPrice != null && x.ProductPrice > 0).ToList();
-            var windowproductdetails = await BuildEstimate(model.ProductsList.Select(x => x.WindowProductId).ToArray(), false, false,"", false,true,model.DiscountId.ToString(), model.ProductsList);
+            var windowproductdetails = await BuildEstimate(model.ProductsList.Select(x => x.WindowProductId).ToArray(), false, false,"", false, IsAfterCreateEstimate, model.DiscountId.ToString(), model.ProductsList);
 
 
             if (windowproductdetails.Data != null && windowproductdetails.Data.Any())
@@ -1758,7 +1763,7 @@ namespace ShutterManagement.Business.Services
             bool isTaxExemptionInContact = GetIsTaxExemptByWindowId(windowproductdetails.Data.Select(s => s.WindowId).FirstOrDefault());
             if (model.IsTaxApplicable == true && isTaxExemptionInContact)
             {
-               totalTaxAmount = windowproductdetails.Data.DistinctBy(x => x.WindowProdcutId).Sum(x => x.TotalTaxAmount) ?? 0.0m;
+               totalTaxAmount = windowproductdetails.Data.DistinctBy(x => x.WindowProdcutId).DistinctBy(x => x.ProductId).Sum(x => x.TotalTaxAmount) ?? 0.0m;
               //  //var optionTaxAmount = windowproductdetails.Data.SelectMany(x => x.OptionTaxDetails).Sum(x => x.TotalTaxAmount) ?? 0.0m;
               ////  totalTaxAmount = optionTaxAmount + productTaxAmount;
               //  totalTaxAmount =  productTaxAmount;
@@ -1911,7 +1916,7 @@ namespace ShutterManagement.Business.Services
                 if (isComponentAvailable)
                 {
                     Guid[] arr = { product.WindowProductId };
-                    var windowproductdetail1s = await BuildEstimate(arr, true, false, "", false,true, DiscountId,null);
+                    var windowproductdetail1s = await BuildEstimate(arr, true, false, "", false,false, DiscountId,null);
                     await AddComponentsToEstimate((Guid)windowProductData.ProductId, (Guid)windowProductData.WindowId, estimateId,
                         windowproductdetail1s.Data.Where(x => x.WindowProdcutId == product.WindowProductId).ToList(), EstimateWindowProduct);
                 }
@@ -2459,6 +2464,28 @@ namespace ShutterManagement.Business.Services
                 }
             }
             return taxAmount;
+        }
+
+        public async Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> BuildEstimateAfterDiscountApplied(string? DiscountId = null,
+        List<ProductListing> products = null)
+        {
+            IResponseVm<List<WindowProdcutDetailsForEstimate>> response = new ResponseVm<List<WindowProdcutDetailsForEstimate>>();
+            try
+            {
+                var windowproductdetails = await BuildEstimate(products.Select(x => x.WindowProductId).ToArray(), false, false, "", false, true, DiscountId, products);
+                if (windowproductdetails.IsSuccess)
+                {
+                    response.IsSuccess = true;
+                    response.Message = windowproductdetails.Message;
+                    response.Data = windowproductdetails.Data;
+                }
+            }
+            catch(Exception ex)
+            {
+                response.Message = ex.Message;
+            }
+            return response;
+
         }
 
     }

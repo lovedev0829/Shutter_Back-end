@@ -107,14 +107,15 @@ namespace ShutterManagement.Controllers
 
         }
 
-        //[HttpPost("EstimationBreakdown")]
-        //[Authorize(Roles = "EstimateView")]
-        //public async Task<IActionResult> EstiamtionBreakdown(Guid WndowProductId)
-        //{
-        //    var res = await _EstimateService.EstimationBreakdown(WndowProductId);
-        //    return Ok(res);
+        [HttpPost("BuildEstimateAfterDiscount")]
+        [Authorize(Roles = "EstimateView")]
+        public async Task<IActionResult> BuildEstimateAfterDiscount(string? DiscountId = null,
+                          List<ProductListing> products = null)
+        {
+            var res = await _EstimateService.BuildEstimateAfterDiscountApplied(DiscountId,products);
+            return Ok(res);
 
-        //}
+        }
 
     }
 }
