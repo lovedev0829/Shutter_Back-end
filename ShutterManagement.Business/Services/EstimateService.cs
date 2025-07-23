@@ -846,12 +846,12 @@ namespace ShutterManagement.Business.Services
                     productMarkup += productOwnMarkup;
                     componentSubTotal += Math.Round(productPrice, 2);
 
-                   TaxAppliedWithMarkup(item, productPrice, componentOwnMarkup, productOwnMarkup);
+                   //TaxAppliedWithMarkup(item, productPrice, componentOwnMarkup, productOwnMarkup);
 
                 }
                 else
                 {
-                   TaxAppliedWithMarkup(item, item.Price ?? 0.0m, 0, productOwnMarkup);
+                   //TaxAppliedWithMarkup(item, item.Price ?? 0.0m, 0, productOwnMarkup);
                 }
                //TaxAppliedWithMarkup(item, item.Price ?? 0.0m, componentOwnMarkup, productOwnMarkup);
 
@@ -859,7 +859,7 @@ namespace ShutterManagement.Business.Services
                 
 
                 //Option price calculation
-                var optionMSRP = await CalculateOptionPrice(item.OptionsTypeIds, item.Quantity ?? 0, item.Height ?? 0, item.Width ?? 0, false);
+                var optionMSRP = await CalculateOptionPrice(item.OptionsTypeIds, item.Quantity ?? 0, item.BuildHeight ?? 0, item.BuildWidth ?? 0, false);
                 item.AdditionalCost = optionMSRP.TotalCost;
                 item.OptionMarkup = optionMSRP.OptionMarkup;
 
