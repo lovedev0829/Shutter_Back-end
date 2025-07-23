@@ -365,6 +365,47 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
+        //public async Task<IResponseVm<List<StageMapping>>> GetGHLStagesMappings(Guid? LoggedInTenantId = null)
+        //{
+        //    IResponseVm<List<StageMapping>> responseVm = new ResponseVm<List<StageMapping>>();
+
+        //    try
+        //    {
+        //        LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : claimsProperty.GetTenantId());
+
+        //        var jobStatusList = dbContext.MstJobStatuses
+        //             .OrderBy(js => js.JobStatusId)
+        //             .Select((js, index) => new { js.JobStatusId, SortOrder = index + 1 })
+        //             .ToList();
+
+        //        var mappings = dbContext.TblGhlStagesmappings
+        //            .Where(x => x.TenantId == LoggedInTenantId)
+        //            .AsEnumerable()
+        //            .Select(x =>
+        //            {
+        //                var jobStatus = jobStatusList.FirstOrDefault(js => js.JobStatusId == (x.StatusId ?? Guid.Empty));
+        //                return new StageMapping
+        //                {
+        //                    StageId = x.StageId ?? Guid.Empty,
+        //                    StatusId = x.StatusId ?? Guid.Empty,
+        //                    SortOrder = jobStatus?.SortOrder
+        //                };
+        //            })
+        //            .OrderBy(x => x.SortOrder)
+        //            .ToList();
+
+        //        responseVm.IsSuccess = true;
+        //        responseVm.Message = "Mappings fetched successfully.";
+        //        responseVm.Data = mappings;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        responseVm.IsSuccess = false;
+        //        responseVm.Message = $"Error: {ex.Message}";
+        //    }
+
+        //    return responseVm;
+        //}
         public async Task<IResponseVm<List<StageMapping>>> GetGHLStagesMappings(Guid? LoggedInTenantId = null)
         {
             IResponseVm<List<StageMapping>> responseVm = new ResponseVm<List<StageMapping>>();
@@ -374,13 +415,14 @@ namespace ShutterManagement.Business.Services
                 LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : claimsProperty.GetTenantId());
 
                 var jobStatusList = dbContext.MstJobStatuses
-                     .OrderBy(js => js.JobStatusId)
-                     .Select((js, index) => new { js.JobStatusId, SortOrder = index + 1 })
-                     .ToList();
+     .OrderBy(js => js.JobStatusId)
+     .ToList() // Materialize into memory before using index
+     .Select((js, index) => new { js.JobStatusId, SortOrder = index + 1 })
+     .ToList();
 
                 var mappings = dbContext.TblGhlStagesmappings
                     .Where(x => x.TenantId == LoggedInTenantId)
-                    .AsEnumerable()
+                    .AsEnumerable() // Bring data to memory so we can join with in-memory jobStatusList
                     .Select(x =>
                     {
                         var jobStatus = jobStatusList.FirstOrDefault(js => js.JobStatusId == (x.StatusId ?? Guid.Empty));
@@ -393,6 +435,7 @@ namespace ShutterManagement.Business.Services
                     })
                     .OrderBy(x => x.SortOrder)
                     .ToList();
+
 
                 responseVm.IsSuccess = true;
                 responseVm.Message = "Mappings fetched successfully.";

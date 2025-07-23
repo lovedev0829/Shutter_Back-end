@@ -509,7 +509,7 @@ namespace ShutterManagement.Business.Services
                 var discountedPercentage = disconutDetails != null ? GetDiscountValue(subTotalOfAllProduct, disconutDetails.DiscountType, disconutDetails.DiscountValue) : 0.0m;
                 // Calculate the subtotal of all products by summing ProductPrice and ProductMarkup for each item
                 var AllProductTotalTaxAmount = 0.0m;
-                foreach (var item in allProductData.DistinctBy(y => y.ProductId))
+                foreach (var item in allProductData.DistinctBy(y => y.WindowProdcutId))
                 {
                     decimal subTotalOfProduct = (item.TotalPrice ?? 0m) + (item.ProductMarkup ?? 0m);
                     var discountedValue = disconutDetails != null ? ApplyDiscount(subTotalOfProduct, discountedPercentage) : 0.0m;
@@ -520,7 +520,7 @@ namespace ShutterManagement.Business.Services
                         ? CalculateTotalTaxAmount(discountedsubTotalOfProduct, item.MunicipalityTax, item.CityTax, item.StateTax)
                         : 0.0m;
                     var OptionTaxAmount = item.OptionTaxDetails.Sum(x => x.TotalTaxAmount);
-                    item.TotalTaxAmount = productTaxAmount + OptionTaxAmount;
+                    item.TotalTaxAmount = Math.Round((decimal)(productTaxAmount + OptionTaxAmount),2);
                 }
 
 
