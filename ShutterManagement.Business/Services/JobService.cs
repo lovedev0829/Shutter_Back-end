@@ -350,7 +350,7 @@ namespace ShutterManagement.Business.Services
             else
             {
                 insertedJob.GhlOpportunityId = model.GhlOpportunityId;
-                insertedJob.ContactId = model.ContactId;
+                insertedJob.GhlContactId = model.GHL_ContactId;
                 insertedJob.LastAsync = DateTime.Now;
                 await Update(insertedJob);
             } 
@@ -1589,11 +1589,16 @@ namespace ShutterManagement.Business.Services
             if (model.GHL_StageId == null || model.GHL_StageId == Guid.Empty)
                 return (Guid)model.JobStatus;
 
+            var statusId = dbContext.TblGhlStagesmappings.Where(x => x.StageId == model.GHL_StageId && x.TenantId == tenantId).Select(x => x.StatusId).FirstOrDefault();
+
             var jobStatusName = dbContext.MstJobStatuses
-                .Where(x => x.JobStatusId == model.JobStatus && x.IsActive == true && x.IsDelete == false)
+                .Where(x => x.JobStatusId == (model.JobStatus != null && model.JobStatus != Guid.Empty ? model.JobStatus : statusId) && x.IsActive == true && x.IsDelete == false)
                 .Select(x => x.JobStatusName)
                 .FirstOrDefault();
-
+            if(jobStatusName == null)
+            {
+                jobStatusName = EnumValue.GetEnumValue(JobStatus.New);
+            }
             var jobStatusResponse = await statusAndStageMapping.GetJobStatusByName(jobStatusName ?? string.Empty, model.GHL_StageId, tenantId);
 
             return (Guid)(jobStatusResponse.IsSuccess ? jobStatusResponse.Data.JobStatusId ?? Guid.Empty : model.JobStatus);
