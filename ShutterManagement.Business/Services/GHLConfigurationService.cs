@@ -328,6 +328,10 @@ namespace ShutterManagement.Business.Services
 
             try
             {
+                var AllSubtenant = dbContext.TblTenants
+                    .Where(x => x.ParentTenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false && x.IsGhlconfigSameAsTenant == true)
+                    .Select(x => x.TenantId)
+                    .ToList();
                 foreach (var stagemapping in request.Mappings)
                 {
                     var existingMapping = dbContext.TblGhlStagesmappings
@@ -348,8 +352,31 @@ namespace ShutterManagement.Business.Services
                         CreatedAt = DateTime.Now,
                         TenantId = claimsProperty.GetTenantId()
                     };
+                    // Check for existing mapping for subtenant  
+                    foreach (var item in AllSubtenant)
+                    {
+                        var existingMappingForSubtenant = dbContext.TblGhlStagesmappings
+                     .FirstOrDefault(x =>
+                         x.TenantId == item &&
+                         x.StatusId == stagemapping.StatusId);
 
-                    await dbContext.TblGhlStagesmappings.AddAsync(newMapping);
+                        if (existingMappingForSubtenant != null)
+                            dbContext.TblGhlStagesmappings.Remove(existingMappingForSubtenant);
+
+                        TblGhlStagesmapping newMapping1 = new TblGhlStagesmapping()
+                        {
+                            Id = Guid.NewGuid(),
+                            StageId = stagemapping.StageId ?? Guid.Empty,
+                            StatusId = stagemapping.StatusId ?? Guid.Empty,
+                            CreatedAt = DateTime.Now,
+                            TenantId = item
+                        };
+
+                        dbContext.TblGhlStagesmappings.Add(newMapping1);
+                    }
+                    dbContext.TblGhlStagesmappings.Add(newMapping);
+
+
                 }
 
                 await dbContext.SaveChangesAsync();
