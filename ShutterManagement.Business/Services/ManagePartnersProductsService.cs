@@ -411,7 +411,7 @@ namespace ShutterManagement.Business.Services
                                         IsAvailable = p1.IsAvailable ?? false,
                                         PriceType = p1.PriceType ?? EnumValue.GetEnumValue(PriceType.Fixed),
                                         TaxRateId = (p1 != null ? p1.TaxId : Guid.Empty) ?? Guid.Empty,
-
+                                        IsTenantProductTaxAvailable = p2.IsTaxApplied ?? false
                                     }).ToList();
 
                     var productIds = products.Select(p => p.ProductId).ToList();
@@ -430,6 +430,7 @@ namespace ShutterManagement.Business.Services
                                           ProductId = o2.ProductId,
                                           OptionName = o2.OptionName,
                                           TaxRateId = o1.TaxId,
+                                          IsTenantOptionTaxAvailable = o2.IsTaxApplied ?? false
                                       }).Distinct().ToList();
 
 
