@@ -41,9 +41,9 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? IssueDate { get; set; }
         public string? TotalAmount { get; set; }
         public string? DueAmount { get; set; }
-        public decimal? Taxes { get; set; }
+        public string? Taxes { get; set; }
         public string? Additionalcost { get; set; }
-        public decimal? Discount { get; set; }
+        public string? Discount { get; set; }
         public string? InvoiceLink { get; set; }
         public string? Message { get; set; }
         public string? PaymentLink { get; set; }
