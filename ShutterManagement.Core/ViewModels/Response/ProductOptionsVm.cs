@@ -19,6 +19,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? MarkupType { get; set; }
         public string? PriceType { get; set; }
         public bool? IsComponentAvailable { get; set; }
+        public bool? IsTenantProductTaxAvailable { get; set; }
 
 
         public decimal? MaxSellingPrice { get; set; }
@@ -33,7 +34,7 @@ namespace ShutterManagement.Core.ViewModels.Response
     {
         public Guid? OptionId { get; set; }
         public Guid? ProductId { get; set; }
-
+        public bool? IsTenantOptionTaxAvailable { get; set; }
         public string? OptionName { get; set; }
        public Guid? TaxRateId { get; set; }
 
@@ -49,7 +50,6 @@ namespace ShutterManagement.Core.ViewModels.Response
 
         public string? OptionTypeName { get; set; }
         public Guid? OptionId { get; set; }
-        
         public decimal? Price { get; set; }
         public decimal? WholeSalePrice { get; set; }
         public decimal? MaxPrice { get; set; }

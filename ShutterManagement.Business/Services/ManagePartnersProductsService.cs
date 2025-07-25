@@ -584,6 +584,7 @@ namespace ShutterManagement.Business.Services
                                 ManageProductId = (p2 != null && p2.TenantId.ToString() == filter.TenantId) ? p2.ManageProductId.ToString() : null,
                                 TenantId = ((p2 != null && p2.TenantId.ToString() == filter.TenantId) ? p2.TenantId.ToString() : null) ?? "",
                                 TaxRateId = (p2 != null  ? p2.TaxId : Guid.Empty) ??Guid.Empty,
+                                IsTenantProductTaxAvailable = p1.IsTaxApplied ?? false,
                             }).ToList();
 
             var productIds = products.Select(p => p.ProductId).ToList();
@@ -596,6 +597,7 @@ namespace ShutterManagement.Business.Services
                     ProductId = o.ProductId,
                     OptionName = o.OptionName,
                     TaxRateId = o.TaxId,
+                    IsTenantOptionTaxAvailable = o.IsTaxApplied ?? false
                 }).ToList();
 
             var optionIds = options.Select(o => o.OptionId).ToList();
