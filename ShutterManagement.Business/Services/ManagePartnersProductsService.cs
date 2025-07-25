@@ -480,12 +480,14 @@ namespace ShutterManagement.Business.Services
                             MarkupType = product.MarkupType,
                             TaxRateId = product.TaxRateId,
                             IsComponentAvailable = product.IsComponentAvailable,
+                            IsTenantProductTaxAvailable = product.IsTenantProductTaxAvailable,
                             Options = allOptions
                                 .Where(opt => opt.ProductId == product.ProductId)
                                 .Select(opt => new ProductOptionsList
                                 {
                                     OptionId = opt.OptionId,
                                     OptionName = opt.OptionName,
+                                    IsTenantOptionTaxAvailable = opt.IsTenantOptionTaxAvailable,
                                     TaxRateId = allOptionTypes.Where(x => x.OptionId == opt.OptionId).Select(x => x.TaxRateId).Distinct().Count() == 1
                                     ? allOptionTypes.First(x => x.OptionId == opt.OptionId).TaxRateId
                                     : Guid.Empty,

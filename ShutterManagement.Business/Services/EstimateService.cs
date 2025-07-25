@@ -1057,8 +1057,13 @@ namespace ShutterManagement.Business.Services
                 decimal totalTaxAmount = 0.0m;
                 decimal discountedValue = 0.0m;
                 Guid? taxRateId = null;
+                bool? IsAfterCreateEstimate = false;
+                if (!string.IsNullOrEmpty(model.DiscountId.ToString()))
+                {
+                    IsAfterCreateEstimate = true;
+                }
                 var PricedProductsList = model.ProductsList.Where(x => x.ProductPrice != null && x.ProductPrice > 0).ToList();
-                var windowproductdetails = await BuildEstimate(model.ProductsList.Select(x => x.WindowProductId).ToArray(), false,false, "", false, true,model.DiscountId.ToString(), model.ProductsList);
+                var windowproductdetails = await BuildEstimate(model.ProductsList.Select(x => x.WindowProductId).ToArray(), false,false, "", false, (bool)IsAfterCreateEstimate, model.DiscountId.ToString(), model.ProductsList);
                 if (windowproductdetails.Data != null && windowproductdetails.Data.Any())
                 {
                     if (windowproductdetails.Data.Any(x => x.TotalPrice == null))
