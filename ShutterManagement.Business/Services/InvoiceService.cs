@@ -625,8 +625,18 @@ namespace ShutterManagement.Business.Services
                     Note = estimationDetails?.Notes ?? "",
                     OrderId = orderDetails?.OrderId.ToString() ?? "",
                     OrderName = orderDetails?.OrderName ?? "",
-                    Taxes = estimationDetails?.TotaltaxAmount ?? 0.0m,
-                    Discount = estimationDetails?.DiscountAmount ?? 0.0m,
+                    Taxes = (estimationDetails?.TotaltaxAmount > 0
+    ? $@"<tr>
+<td style=""padding: 5px 5px; font-weight: 700; font-size: 14px;"">Taxes :</td>
+<td style=""text-align: end; padding: 5px 20px; font-weight: 700; font-size: 14px;"">${estimationDetails?.TotaltaxAmount}</td>
+</tr>"
+    : ""),
+                    Discount = (estimationDetails.DiscountAmount > 0
+    ? $@"<tr>
+<td style=""padding: 5px 5px; font-weight: 700; font-size: 14px;"">Discount :</td>
+<td style=""text-align: end; padding: 5px 20px; font-weight: 700; font-size: 14px;"">${estimationDetails.DiscountAmount}</td>
+</tr>"
+    : ""),
                     Additionalcost = estimationDetails?.AdditionalCost.ToString() ?? "",
                     ProductList = GenerateProductListHtml(productList),
                     PowderCoatColor = powderCoatColor
