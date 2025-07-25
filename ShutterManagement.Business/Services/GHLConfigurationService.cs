@@ -113,9 +113,6 @@ namespace ShutterManagement.Business.Services
         }
 
 
-
-
-
         public async Task<IResponseVm<string>> GHLConfiguration(GHLConfiguration gHLConfiguration)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();

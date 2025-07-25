@@ -471,7 +471,7 @@ namespace ShutterManagement.Business.Services
 
                     if(AfterbuildEstimate)
                     {
-                        var DiscountValue = dbContext.TblDiscounts.Where(x => x.DiscountId.ToString() == DiscountId && x.IsDelete == false && x.IsActive == true)
+                        var DiscountValue = dbContext.TblDiscounts.Where(x => x.DiscountId.ToString() == DiscountId && x.IsDelete == false && x.IsActive == true && x.TenantId == claimsProperty.GetTenantId())
                             .FirstOrDefault();
                         data.ForEach(x =>
                         {
@@ -1052,7 +1052,6 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
                 decimal additionalCostAsOptionPrice = 0.0M;
-                decimal SumofSubtotalandAdditionalCost = 0.0M;
                 decimal subtotal = 0.0M;
                 decimal grandtotal = 0.0M;
                 decimal totalTaxAmount = 0.0m;
@@ -1096,7 +1095,7 @@ namespace ShutterManagement.Business.Services
                 if (model.IsTaxApplicable == true && isTaxExemptionInContact)
                 {
                     totalTaxAmount = windowproductdetails.Data.DistinctBy(x => x.WindowProdcutId).DistinctBy(x => x.ProductId).Sum(x => x.TotalTaxAmount) ?? 0.0m;
-                    grandtotal = !string.IsNullOrEmpty(model.DiscountId.ToString()) ? discountedValue : subtotal + totalTaxAmount;
+                    grandtotal = (!string.IsNullOrEmpty(model.DiscountId.ToString()) ? discountedValue : subtotal) + totalTaxAmount;
                 }
 
                 // Update the estimate details
@@ -1108,7 +1107,7 @@ namespace ShutterManagement.Business.Services
                 estimate.JobId = model.JobId;
                 estimate.TaxId = model.taxRateId;
                 estimate.TaxAmount = model.Tax;
-                estimate.TotalPrice = SumofSubtotalandAdditionalCost;
+                estimate.TotalPrice = subtotal;
                 estimate.AdditionalCost = additionalCostAsOptionPrice;
                 estimate.TermsCondition = model.TermsCondition;
                 estimate.ModifiedBy = AppConstant.LoggedInUserID;
@@ -1714,7 +1713,7 @@ namespace ShutterManagement.Business.Services
             if (model.IsTaxApplicable == true && isTaxExemptionInContact)
             {
                totalTaxAmount = windowproductdetails.Data.DistinctBy(x => x.WindowProdcutId).DistinctBy(x => x.ProductId).Sum(x => x.TotalTaxAmount) ?? 0.0m;
-                grandtotal = !string.IsNullOrEmpty(model.DiscountId.ToString()) ? discountedValue : subtotal + totalTaxAmount;
+                grandtotal = (!string.IsNullOrEmpty(model.DiscountId.ToString()) ? discountedValue : subtotal) + totalTaxAmount;
             }
 
             string EstimationCode = EstimationUniqueName().Result.Data;
