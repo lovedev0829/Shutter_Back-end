@@ -1085,7 +1085,7 @@ namespace ShutterManagement.Business.Services
                 subtotal += (ProductMarkup);
                 if (!string.IsNullOrEmpty(model.DiscountId.ToString()))
                 {
-                    discountAmount = windowproductdetails.Data.Select(x => x.DiscountAmount ?? 0.0m).FirstOrDefault();
+                    discountAmount = windowproductdetails.Data.Sum(x => x.DiscountAmount ?? 0.0m);
                     discountedValue = subtotal - discountAmount;
                 }
 
@@ -1701,7 +1701,7 @@ namespace ShutterManagement.Business.Services
             subtotal += (ProductMarkup);
             if (!string.IsNullOrEmpty(model.DiscountId.ToString()))
             {
-                 discountAmount = windowproductdetails.Data.Select(x => x.DiscountAmount ?? 0.0m).FirstOrDefault();
+                 discountAmount = windowproductdetails.Data.Sum(x => x.DiscountAmount ?? 0.0m);
                 discountedValue = subtotal - discountAmount;
             }
            
