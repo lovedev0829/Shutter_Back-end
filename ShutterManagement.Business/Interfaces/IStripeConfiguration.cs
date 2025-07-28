@@ -20,8 +20,9 @@ namespace ShutterManagement.Business.Interfaces
         //Task<IResponseVm<string>> ActiveInActive(Guid? ProductId);
         //Task<IResponseVm<string>> DeleteStripeConfiguration(Guid? id);
 
-        Task GetStripeConfiguration(string Id);
+        //Task GetStripeConfiguration(string Id);
 
+        Task<StripeConfig> GetStripeConfigurationAsync(Guid? tenantId);
         Task<IResponseVm<string>> DeleteStripeConfiguration(Guid? configurationid);
     }
 }

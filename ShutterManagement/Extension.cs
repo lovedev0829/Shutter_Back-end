@@ -49,9 +49,9 @@ namespace ShutterManagement
             AppConstant.Google_TokenUrl = Configuration["GoogleOAuth:TokenUri"] ?? "";
 
             // Stripe Configuration
-            AppConstant.Stripe_SecretKey = Configuration["Stripe:SecretKey"] ?? "";
-            AppConstant.Stripe_PublishableKey = Configuration["Stripe:PublishableKey"] ?? "";
-            AppConstant.Stripe_WebhookSecret = Configuration["Stripe:WebhookSecret"] ?? "";
+            //AppConstant.Stripe_SecretKey = Configuration["Stripe:SecretKey"] ?? "";
+            //AppConstant.Stripe_PublishableKey = Configuration["Stripe:PublishableKey"] ?? "";
+            //AppConstant.Stripe_WebhookSecret = Configuration["Stripe:WebhookSecret"] ?? "";
             AppConstant.Stripe_CancelUrl = Configuration["Stripe:cancelUrl"] ?? "";
             AppConstant.Stripe_SuccessUrl = Configuration["Stripe:successUrl"] ?? "";
 

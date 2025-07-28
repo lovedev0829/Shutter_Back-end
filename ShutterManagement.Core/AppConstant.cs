@@ -160,9 +160,9 @@ namespace ShutterManagement.Core
         #endregion
 
         #region Stripe Configuration (URLs moved to config)
-        public static string Stripe_SecretKey { get; set; } = string.Empty;
-        public static string Stripe_PublishableKey { get; set; } = string.Empty;
-        public static string Stripe_WebhookSecret { get; set; } = string.Empty;
+        //public static string Stripe_SecretKey { get; set; } = string.Empty;
+        //public static string Stripe_PublishableKey { get; set; } = string.Empty;
+        //public static string Stripe_WebhookSecret { get; set; } = string.Empty;
         public static string Stripe_CancelUrl { get; set; } = string.Empty;
         public static string Stripe_SuccessUrl { get; set; } = string.Empty;
         #endregion

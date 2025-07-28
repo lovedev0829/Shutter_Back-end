@@ -106,32 +106,57 @@ namespace ShutterManagement.Business.Services
         }
 
 
-        public async Task GetStripeConfiguration(string tenantId)
+        //public async Task GetStripeConfiguration(string tenantId)
+        //{
+        //    FileLogger.Log("Fetching Stripe configuration for Tenant ID:", tenantId);
+
+        //    var details = GetAllQuerable()
+        //           .Where(x => x.TenantId.ToString().ToLower() == tenantId.ToLower())
+        //           .FirstOrDefault();
+
+        //    if (details != null)
+        //    {
+        //        AppConstant.Stripe_SecretKey = details.SecretKey ?? "";
+        //        AppConstant.Stripe_PublishableKey = details.PublishableKey ?? "";
+        //        AppConstant.Stripe_WebhookSecret = details.WebhookSecret ?? "";
+        //        //StripeConfiguration.ApiKey = AppConstant.Stripe_SecretKey;
+
+        //        //FileLogger.Log("Stripe configuration updated successfully.", tenantId);
+        //        //FileLogger.Log("Stripe configuration updated successfully AppConstant.Stripe_SecretKey .", AppConstant.Stripe_SecretKey);
+        //        //FileLogger.Log("Stripe configuration updated successfully AppConstant.Stripe_PublishableKey.", AppConstant.Stripe_PublishableKey);
+        //        //FileLogger.Log("Stripe configuration updated successfully AppConstant.Stripe_WebhookSecret .", AppConstant.Stripe_WebhookSecret);
+        //    }
+        //    else
+        //    {
+        //        FileLogger.Log("No Stripe configuration found for Tenant ID:", tenantId);
+        //    }
+        //}
+
+        public async Task<StripeConfig> GetStripeConfigurationAsync(Guid? tenantId)
         {
             FileLogger.Log("Fetching Stripe configuration for Tenant ID:", tenantId);
 
-            var details = GetAllQuerable()
-                   .Where(x => x.TenantId.ToString().ToLower() == tenantId.ToLower())
-                   .FirstOrDefault();
+            var details = GetAllQuerable().Where(x => x.TenantId == tenantId && x.IsDelete==false).FirstOrDefault();
 
             if (details != null)
             {
-                AppConstant.Stripe_SecretKey = details.SecretKey ?? "";
-                AppConstant.Stripe_PublishableKey = details.PublishableKey ?? "";
-                AppConstant.Stripe_WebhookSecret = details.WebhookSecret ?? "";
-                StripeConfiguration.ApiKey = AppConstant.Stripe_SecretKey;
+                var config = new StripeConfig
+                {
+                    StripeSecretKey = details.SecretKey ?? "",
+                    StripePublishableKey = details.PublishableKey ?? "",
+                    StripeWebhookSecret = details.WebhookSecret ?? "",
+                };
+                StripeConfiguration.ApiKey = details.SecretKey;
 
-                //FileLogger.Log("Stripe configuration updated successfully.", tenantId);
-                //FileLogger.Log("Stripe configuration updated successfully AppConstant.Stripe_SecretKey .", AppConstant.Stripe_SecretKey);
-                //FileLogger.Log("Stripe configuration updated successfully AppConstant.Stripe_PublishableKey.", AppConstant.Stripe_PublishableKey);
-                //FileLogger.Log("Stripe configuration updated successfully AppConstant.Stripe_WebhookSecret .", AppConstant.Stripe_WebhookSecret);
+                FileLogger.Log("Stripe configuration loaded successfully for Tenant ID:", tenantId);
+                return config;
             }
             else
             {
                 FileLogger.Log("No Stripe configuration found for Tenant ID:", tenantId);
+                return null;
             }
         }
-
 
         public async Task<IResponseVm<string>> DeleteStripeConfiguration(Guid? configurationid)
         {
