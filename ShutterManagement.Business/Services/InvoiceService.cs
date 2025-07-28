@@ -943,8 +943,8 @@ namespace ShutterManagement.Business.Services
                 //decimal? unitprice = product.TotalPrice / product.WindowQty;
 
                 decimal? effectiveTotalPrice = product.ProductPrice > 0 ? product.ProductPrice.Value : product.ProductPrice;
-                decimal? unitprice = (product.ProductPrice + product.ComponentMarkup + product.ProductMarkup) / product.WindowQty;
                 decimal? optionprice = (product.additionalCost + product.OptionMarkup);
+                decimal? unitprice = (product.ProductPrice + product.ComponentMarkup + product.ProductMarkup + optionprice) / product.WindowQty;
                 decimal? subtotal = (product.ProductPrice + product.ComponentMarkup + product.ProductMarkup + optionprice);
 
                 var hidePreviews = product.hidePreviews.ToList(); // 0 Coating-a, 1: installation-standard....
