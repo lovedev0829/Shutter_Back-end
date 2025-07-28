@@ -958,7 +958,7 @@ namespace ShutterManagement.Business.Services
         }
 
         // Update_Contact method
-        public async Task<IResponseVm<string>> Update_Contact(UpdateContact model, Guid? LoggedInTenantId = null)
+        public async Task<IResponseVm<string>> Update_Contact(UpdateContact model, Guid? LoggedInTenantId = null,bool? IsGHLContact= false)
         {
             var responseVm = new ResponseVm<string>();
             try
@@ -994,7 +994,7 @@ namespace ShutterManagement.Business.Services
                     if (contact != null)
                     {
 
-                        await UpdateExistingContact(model, contact, tenantId);
+                        await UpdateExistingContact(model, contact, tenantId,true);
                     }
                     else
                     {
@@ -1031,7 +1031,7 @@ namespace ShutterManagement.Business.Services
 
                     if (contact != null)
                     {
-                        await UpdateExistingContact(model, contact, tenantId);
+                        await UpdateExistingContact(model, contact, tenantId,IsGHLContact);
                         if (!model.IsTaxExemption)
                         {
                             await HandleTaxExemption(model, contact);
@@ -1050,30 +1050,49 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        private async Task UpdateExistingContact(UpdateContact model, TblContact contact, Guid tenantId)
+        private async Task UpdateExistingContact(UpdateContact model, TblContact contact, Guid tenantId, bool? IsGHLContact)
         {
-            
-            contact.ContactType = string.IsNullOrEmpty(contact.ContactType) ? (model.ContactType ?? string.Empty) : contact.ContactType;
-            contact.FirstName = model.FirstName ?? string.Empty;
-            contact.LastName = model.LastName ?? string.Empty;
-            contact.Suffix = string.IsNullOrEmpty(contact.Suffix) ? ( model.Suffix ?? string.Empty) : contact.Suffix;
-            contact.PhoneNumber = model.PhoneNumber ?? string.Empty;
-            contact.Email = model.Email ?? string.Empty;
-            contact.Website = string.IsNullOrEmpty(contact.Website) ? (model.Website ?? string.Empty) : contact.Website;
-            contact.Notes = string.IsNullOrEmpty(contact.Notes) ? (model.Notes ?? string.Empty) : contact.Notes;
-            contact.Referral = string.IsNullOrEmpty(contact.Referral) ? (model.Referral ?? string.Empty) : contact.Referral; 
-            contact.IsTaxExemption =  model.IsTaxExemption;
-            contact.IsBillingAddressSameAsAddress = model.IsBillingAddressSameAsAddress;
-            contact.ModifiedBy = tenantId;
-            contact.UpdatedAt = DateTime.Now;
+            if ((bool)!IsGHLContact)
+            {
+                contact.ContactType = model.ContactType ?? string.Empty;
+                contact.FirstName = model.FirstName ?? string.Empty;
+                contact.LastName = model.LastName ?? string.Empty;
+                contact.Suffix = model.Suffix ?? string.Empty;
+                contact.PhoneNumber = model.PhoneNumber ?? string.Empty;
+                contact.Email = model.Email ?? string.Empty;
+                contact.Website = model.Website ?? string.Empty;
+                contact.Notes = model.Notes ?? string.Empty;
+                contact.Referral = model.Referral ?? string.Empty;
+                contact.IsBillingAddressSameAsAddress = model.IsBillingAddressSameAsAddress;
+                contact.ModifiedBy = tenantId;
+                contact.UpdatedAt = DateTime.Now;
 
-            await Update(contact);
+                await Update(contact);
+            }
+            else
+            {
+                contact.ContactType = string.IsNullOrEmpty(contact.ContactType) ? (model.ContactType ?? string.Empty) : contact.ContactType;
+                contact.FirstName = model.FirstName ?? string.Empty;
+                contact.LastName = model.LastName ?? string.Empty;
+                contact.Suffix = string.IsNullOrEmpty(contact.Suffix) ? (model.Suffix ?? string.Empty) : contact.Suffix;
+                contact.PhoneNumber = model.PhoneNumber ?? string.Empty;
+                contact.Email = model.Email ?? string.Empty;
+                contact.Website = string.IsNullOrEmpty(contact.Website) ? (model.Website ?? string.Empty) : contact.Website;
+                contact.Notes = string.IsNullOrEmpty(contact.Notes) ? (model.Notes ?? string.Empty) : contact.Notes;
+                contact.Referral = string.IsNullOrEmpty(contact.Referral) ? (model.Referral ?? string.Empty) : contact.Referral;
+                contact.IsTaxExemption = model.IsTaxExemption;
+                contact.IsBillingAddressSameAsAddress = model.IsBillingAddressSameAsAddress;
+                contact.ModifiedBy = tenantId;
+                contact.UpdatedAt = DateTime.Now;
+
+                await Update(contact);
+            }
 
             if (!model.IsBillingAddressSameAsAddress)
-                await UpdateOrCreateBillingAddress(model.BillingAddressVm, contact, tenantId);
+                await UpdateOrCreateBillingAddress(model.BillingAddressVm, contact, tenantId, IsGHLContact);
         }
 
-        private async Task UpdateOrCreateBillingAddress(BillingAddressVm billingVm, TblContact contact, Guid tenantId)
+        private async Task UpdateOrCreateBillingAddress(BillingAddressVm billingVm, TblContact contact, Guid tenantId,bool? IsGHLContact)
         {
             var stateId = await GetValidStateId(billingVm);
 
@@ -1083,43 +1102,87 @@ namespace ShutterManagement.Business.Services
                 x.IsDelete == false &&
                 x.TenantId == tenantId);
 
-            if (existingAddress != null)
+            if ((bool)!IsGHLContact)
             {
-                existingAddress.FirstName = string.IsNullOrEmpty(existingAddress.FirstName) ? billingVm?.FirstName : existingAddress.FirstName;
-                existingAddress.LastName = string.IsNullOrEmpty(existingAddress.LastName) ? billingVm?.LastName : existingAddress.LastName;
-                existingAddress.Phone = string.IsNullOrEmpty(existingAddress.Phone) ? billingVm?.PhoneNumber : existingAddress.Phone; 
-                existingAddress.Email = string.IsNullOrEmpty(existingAddress.Email) ? billingVm?.Email : existingAddress.Email;
-                existingAddress.City = billingVm?.City;
-                existingAddress.State =  stateId;
-                existingAddress.ZipCode = billingVm?.ZipCode;
-                existingAddress.StreetAddress = billingVm?.StreetAddress;
-                existingAddress.UpdatedAt = DateTime.Now;
+                if (existingAddress != null)
+                {
+                    existingAddress.FirstName = billingVm?.FirstName;
+                    existingAddress.LastName =  billingVm?.LastName;
+                    existingAddress.Phone =  billingVm?.PhoneNumber;
+                    existingAddress.Email = billingVm?.Email;
+                    existingAddress.City = billingVm?.City;
+                    existingAddress.State = stateId;
+                    existingAddress.ZipCode = billingVm?.ZipCode;
+                    existingAddress.StreetAddress = billingVm?.StreetAddress;
+                    existingAddress.UpdatedAt = DateTime.Now;
 
-                dbContext.TblAddresses.Update(existingAddress);
+                    dbContext.TblAddresses.Update(existingAddress);
+                }
+                else
+                {
+                    var newAddress = new TblAddress
+                    {
+                        AddressId = Guid.NewGuid(),
+                        ContactId = contact.ContactId,
+                        FirstName = billingVm?.FirstName,
+                        LastName = billingVm?.LastName,
+                        Phone = billingVm?.PhoneNumber,
+                        Email = billingVm?.Email,
+                        City = billingVm?.City,
+                        State = stateId,
+                        ZipCode = billingVm?.ZipCode,
+                        StreetAddress = billingVm?.StreetAddress,
+                        CreatedAt = DateTime.Now,
+                        IsActive = true,
+                        IsDelete = false,
+                        TenantId = tenantId,
+                    };
+
+                    dbContext.TblAddresses.Add(newAddress);
+                    contact.PrimaryAddress = newAddress.AddressId;
+                    await Update(contact);
+                }
             }
             else
             {
-                var newAddress = new TblAddress
+                if (existingAddress != null)
                 {
-                    AddressId = Guid.NewGuid(),
-                    ContactId = contact.ContactId,
-                    FirstName = billingVm?.FirstName,
-                    LastName = billingVm?.LastName,
-                    Phone = billingVm?.PhoneNumber,
-                    Email = billingVm?.Email,
-                    City = billingVm?.City,
-                    State = stateId,
-                    ZipCode = billingVm?.ZipCode,
-                    StreetAddress = billingVm?.StreetAddress,
-                    CreatedAt = DateTime.Now,
-                    IsActive = true,
-                    IsDelete = false,
-                    TenantId = tenantId,
-                };
+                    existingAddress.FirstName = string.IsNullOrEmpty(existingAddress.FirstName) ? billingVm?.FirstName : existingAddress.FirstName;
+                    existingAddress.LastName = string.IsNullOrEmpty(existingAddress.LastName) ? billingVm?.LastName : existingAddress.LastName;
+                    existingAddress.Phone = string.IsNullOrEmpty(existingAddress.Phone) ? billingVm?.PhoneNumber : existingAddress.Phone;
+                    existingAddress.Email = string.IsNullOrEmpty(existingAddress.Email) ? billingVm?.Email : existingAddress.Email;
+                    existingAddress.City = billingVm?.City;
+                    existingAddress.State = stateId;
+                    existingAddress.ZipCode = billingVm?.ZipCode;
+                    existingAddress.StreetAddress = billingVm?.StreetAddress;
+                    existingAddress.UpdatedAt = DateTime.Now;
 
-                dbContext.TblAddresses.Add(newAddress);
-                contact.PrimaryAddress = newAddress.AddressId;
-                await Update(contact);
+                    dbContext.TblAddresses.Update(existingAddress);
+                }
+                else
+                {
+                    var newAddress = new TblAddress
+                    {
+                        AddressId = Guid.NewGuid(),
+                        ContactId = contact.ContactId,
+                        FirstName = billingVm?.FirstName,
+                        LastName = billingVm?.LastName,
+                        Phone = billingVm?.PhoneNumber,
+                        Email = billingVm?.Email,
+                        City = billingVm?.City,
+                        State = stateId,
+                        ZipCode = billingVm?.ZipCode,
+                        StreetAddress = billingVm?.StreetAddress,
+                        CreatedAt = DateTime.Now,
+                        IsActive = true,
+                        IsDelete = false,
+                        TenantId = tenantId,
+                    };
+
+                    dbContext.TblAddresses.Add(newAddress);
+                    contact.PrimaryAddress = newAddress.AddressId;
+                    await Update(contact);
+                }
             }
             await dbContext.SaveChangesAsync();
         }
@@ -1734,7 +1797,7 @@ namespace ShutterManagement.Business.Services
                         };
                     }
                         //await gHLConfigurationService.GetGHLConfiguration(contactData.WebhookTenantId);
-                    var res = await Update_Contact(contact, Guid.Parse(contactData.WebhookTenantId));
+                    var res = await Update_Contact(contact, Guid.Parse(contactData.WebhookTenantId),true);
                     //var AllSubetenants = tenantService.GetAllQuerable().Where(x => x.ParentTenantId.ToString() ==
                     //contactData.WebhookTenantId && x.IsActive == true && x.IsDelete == false && x.IsGhlconfigSameAsTenant == true)
                     //    .ToList();
