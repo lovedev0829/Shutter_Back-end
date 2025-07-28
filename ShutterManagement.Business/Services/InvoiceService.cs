@@ -856,7 +856,7 @@ namespace ShutterManagement.Business.Services
                         var InvoicepdfBase64 = Convert.ToBase64String(pdfBytesInvoice.Data);
 
                         string paymentLink = string.Empty;
-                        bool isStripeConfigured = !string.IsNullOrEmpty(_stripeConfig.StripeSecretKey) && IsStripeApiKeyValid();
+                        bool isStripeConfigured = !string.IsNullOrEmpty(_stripeConfig?.StripeSecretKey??"") && IsStripeApiKeyValid();
                         bool isPaymentLinkGenerated = false;
 
                         if (invoiceDetails?.BalanceDue > 0 && IsStripeApiKeyValid())
@@ -1218,13 +1218,13 @@ namespace ShutterManagement.Business.Services
         {
             try
             {
-                if (string.IsNullOrEmpty(_stripeConfig.StripeSecretKey))
+                if (string.IsNullOrEmpty(_stripeConfig?.StripeSecretKey??""))
                 {
                     FileLogger.Log("Stripe API Key is missing.");
                     return false;
                 }
 
-                StripeConfiguration.ApiKey = _stripeConfig.StripeSecretKey;
+                StripeConfiguration.ApiKey = _stripeConfig?.StripeSecretKey??"";
 
                 var service = new BalanceService();
                 var balance = service.Get();
