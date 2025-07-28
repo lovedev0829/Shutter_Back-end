@@ -522,6 +522,7 @@ namespace ShutterManagement.Business.Services
                         : 0.0m;
                     var OptionTaxAmount = item.OptionTaxDetails.Sum(x => x.TotalTaxAmount);
                     item.TotalTaxAmount = Math.Round((decimal)(productTaxAmount + OptionTaxAmount),2);
+                    item.DiscountAmount = item.DiscountAmount ?? 0.0m + discountedValue;
                 }
 
                 if ((bool)IsMaterialBreakdown && IsBreakdown)
@@ -1056,6 +1057,7 @@ namespace ShutterManagement.Business.Services
                 decimal grandtotal = 0.0M;
                 decimal totalTaxAmount = 0.0m;
                 decimal discountedValue = 0.0m;
+                decimal discountAmount = 0.0m;
                 Guid? taxRateId = null;
                 bool? IsAfterCreateEstimate = false;
                 if (!string.IsNullOrEmpty(model.DiscountId.ToString()))
@@ -1083,11 +1085,8 @@ namespace ShutterManagement.Business.Services
                 subtotal += (ProductMarkup);
                 if (!string.IsNullOrEmpty(model.DiscountId.ToString()))
                 {
-                    var discountType = windowproductdetails.Data.Select(x => x.DiscountType).FirstOrDefault();
-                    var discountValue = (decimal)windowproductdetails.Data.Select(x => x.DiscountValue).FirstOrDefault();
-                    var discountPer = GetDiscountValue(subtotal, discountType, discountValue);
-                    discountedValue = ApplyDiscount(subtotal, discountPer);
-                    discountedValue = subtotal - discountedValue;
+                    discountAmount = windowproductdetails.Data.Select(x => x.DiscountAmount ?? 0.0m).FirstOrDefault();
+                    discountedValue = subtotal - discountAmount;
                 }
 
                 subtotal += (OptionMarkup);
@@ -1106,7 +1105,7 @@ namespace ShutterManagement.Business.Services
                 // Update the estimate details
                 estimate.EstimateName = model.EstimateName;
                 estimate.Notes = model.Notes;
-                estimate.DiscountAmount = model.Discount;
+                estimate.DiscountAmount = discountAmount;
                 estimate.DiscountCoupon = model.DiscountCoupon;
                 estimate.GrandTotal = grandtotal;
                 estimate.JobId = model.JobId;
@@ -1672,6 +1671,7 @@ namespace ShutterManagement.Business.Services
             decimal additionalCostAsOptionPrice = 0m;
             decimal totalTaxAmount = 0.0m;
             decimal discountedValue = 0.0m;
+            decimal discountAmount = 0.0m;
             Guid? taxRateId = null;
             Guid? discountId = null;
             bool IsAfterCreateEstimate = false;
@@ -1701,11 +1701,8 @@ namespace ShutterManagement.Business.Services
             subtotal += (ProductMarkup);
             if (!string.IsNullOrEmpty(model.DiscountId.ToString()))
             {
-                var discountType = windowproductdetails.Data.Select(x => x.DiscountType).FirstOrDefault();
-                var discountValue = (decimal)windowproductdetails.Data.Select(x => x.DiscountValue).FirstOrDefault();
-                var discountPer = GetDiscountValue(subtotal, discountType, discountValue);
-                discountedValue = ApplyDiscount(subtotal, discountPer);
-                discountedValue = subtotal - discountedValue;
+                 discountAmount = windowproductdetails.Data.Select(x => x.DiscountAmount ?? 0.0m).FirstOrDefault();
+                discountedValue = subtotal - discountAmount;
             }
            
             subtotal += (OptionMarkup);
@@ -1728,7 +1725,7 @@ namespace ShutterManagement.Business.Services
                 EstimateName = model.EstimateName.Trim(),
                 EstimateCode = EstimationCode,
                 Notes = model.Notes,
-                DiscountAmount = model.Discount,
+                DiscountAmount = discountAmount,
                 DiscountCoupon = model.DiscountCoupon,
                 GrandTotal = grandtotal,
                 JobId = model.JobId,
