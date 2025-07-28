@@ -28,6 +28,7 @@ using ShutterManagement.Stripe;
 using Microsoft.Extensions.Logging;
 using Stripe;
 using System.Linq.Dynamic.Core;
+using Microsoft.IdentityModel.Tokens;
 
 namespace ShutterManagement.Business.Services
 {
@@ -48,7 +49,7 @@ namespace ShutterManagement.Business.Services
         private readonly ClaimsProperty claimsProperty;
         private readonly EmailSendHelperService emailSendHelperService;
         private readonly IUrlShortenerService urlShortenerService;
-
+        private readonly StripeConfig _stripeConfig;
         public InvoiceService(ITenantService tenantService, IInvoicePaymentService invoicePaymentService,
            IConverter converter, IContactService contactService
             , IEstimateService estimateService, ITenantBrandingService tenantBrandingService
@@ -70,6 +71,7 @@ namespace ShutterManagement.Business.Services
             this.claimsProperty = claimsProperty;
             this.emailSendHelperService = emailSendHelperService;
             this.urlShortenerService = urlShortenerService;
+            _stripeConfig = stripeConfiguration.GetStripeConfigurationAsync(claimsProperty.GetTenantId()).Result;
         }
 
         #region Create  update ActiveInActive Delete Getall
@@ -541,7 +543,7 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-                await stripeConfiguration.GetStripeConfiguration(claimsProperty.GetTenantId().ToString());
+               // await stripeConfiguration.GetStripeConfiguration(claimsProperty.GetTenantId().ToString());
 
                 filter.RecordPerPage = 1000;
                 filter.CustomerId = model.ContactId.ToString();
@@ -825,6 +827,7 @@ namespace ShutterManagement.Business.Services
 
                         invoiceData.TotalAmount = invoiceDetails?.TotalAmount.ToString() ?? "";
                         invoiceData.DueAmount = invoiceDetails?.BalanceDue.ToString() ?? "";
+                        invoiceData.Balancedue = invoiceDetails?.BalanceDue.ToString() ?? "";
                         invoiceData.InvoiceNo = invoiceDetails?.InvoiceNumber?.ToString() ?? "";
                         invoiceData.IssueDate = Convert.ToDateTime(invoiceDetails?.IssueDate).ToString("MM-dd-yyyy") ?? "";
                         invoiceData.PaymentList = GenerateInvoicetListHtml(paymentList);
@@ -853,7 +856,7 @@ namespace ShutterManagement.Business.Services
                         var InvoicepdfBase64 = Convert.ToBase64String(pdfBytesInvoice.Data);
 
                         string paymentLink = string.Empty;
-                        bool isStripeConfigured = !string.IsNullOrEmpty(AppConstant.Stripe_SecretKey) && IsStripeApiKeyValid();
+                        bool isStripeConfigured = !string.IsNullOrEmpty(_stripeConfig.StripeSecretKey) && IsStripeApiKeyValid();
                         bool isPaymentLinkGenerated = false;
 
                         if (invoiceDetails?.BalanceDue > 0 && IsStripeApiKeyValid())
@@ -896,7 +899,7 @@ namespace ShutterManagement.Business.Services
                             ? $"You can make the payment for your invoice <strong>{invoiceDetails?.InvoiceNumber}</strong> by clicking the link below:"
                             : $"<strong>Note:</strong> Online payment is currently unavailable . Please contact support {tenantInfoDetails?.Email ?? ""}";
 
-                        invoiceData.PaymentLink = isPaymentLinkGenerated ? emailSendHelperService.PlaceholderReplace(Templates.InvoicePaymentLink, paymentLink) : string.Empty;
+                        invoiceData.PaymentLink = isPaymentLinkGenerated ? emailSendHelperService.PlaceholderReplace(Templates.InvoicePaymentLink,new { paymentLink }) : string.Empty;
 
                         emailBody = emailSendHelperService.PlaceholderReplace(Templates.Invoice, invoiceData);
                         emailAttachments.Add(new EmailAttachments
@@ -1211,17 +1214,17 @@ namespace ShutterManagement.Business.Services
         #endregion Invoice_Generate_Methods
 
         #region Validate Stripe API Key 
-        public static bool IsStripeApiKeyValid()
+        public bool IsStripeApiKeyValid()
         {
             try
             {
-                if (string.IsNullOrEmpty(AppConstant.Stripe_SecretKey))
+                if (string.IsNullOrEmpty(_stripeConfig.StripeSecretKey))
                 {
                     FileLogger.Log("Stripe API Key is missing.");
                     return false;
                 }
 
-                StripeConfiguration.ApiKey = AppConstant.Stripe_SecretKey;
+                StripeConfiguration.ApiKey = _stripeConfig.StripeSecretKey;
 
                 var service = new BalanceService();
                 var balance = service.Get();
