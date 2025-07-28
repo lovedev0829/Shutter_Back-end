@@ -522,6 +522,7 @@ namespace ShutterManagement.Business.Services
                         : 0.0m;
                     var OptionTaxAmount = item.OptionTaxDetails.Sum(x => x.TotalTaxAmount);
                     item.TotalTaxAmount = Math.Round((decimal)(productTaxAmount + OptionTaxAmount),2);
+                    item.DiscountAmount = item.DiscountAmount ?? 0.0m + discountedValue;
                 }
 
                 if ((bool)IsMaterialBreakdown && IsBreakdown)
@@ -1083,11 +1084,8 @@ namespace ShutterManagement.Business.Services
                 subtotal += (ProductMarkup);
                 if (!string.IsNullOrEmpty(model.DiscountId.ToString()))
                 {
-                    var discountType = windowproductdetails.Data.Select(x => x.DiscountType).FirstOrDefault();
-                    var discountValue = (decimal)windowproductdetails.Data.Select(x => x.DiscountValue).FirstOrDefault();
-                    var discountPer = GetDiscountValue(subtotal, discountType, discountValue);
-                    discountedValue = ApplyDiscount(subtotal, discountPer);
-                    discountedValue = subtotal - discountedValue;
+                    var discountAmount = windowproductdetails.Data.Select(x => x.DiscountAmount ?? 0.0m).FirstOrDefault();
+                    discountedValue = subtotal - discountAmount;
                 }
 
                 subtotal += (OptionMarkup);
@@ -1701,11 +1699,8 @@ namespace ShutterManagement.Business.Services
             subtotal += (ProductMarkup);
             if (!string.IsNullOrEmpty(model.DiscountId.ToString()))
             {
-                var discountType = windowproductdetails.Data.Select(x => x.DiscountType).FirstOrDefault();
-                var discountValue = (decimal)windowproductdetails.Data.Select(x => x.DiscountValue).FirstOrDefault();
-                var discountPer = GetDiscountValue(subtotal, discountType, discountValue);
-                discountedValue = ApplyDiscount(subtotal, discountPer);
-                discountedValue = subtotal - discountedValue;
+                var discountAmount = windowproductdetails.Data.Select(x => x.DiscountAmount ?? 0.0m).FirstOrDefault();
+                discountedValue = subtotal - discountAmount;
             }
            
             subtotal += (OptionMarkup);
