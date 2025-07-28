@@ -22,5 +22,7 @@ namespace ShutterManagement.Business.Interfaces
         Task<IResponseVm<List<InvoiceVM>>> GetAllInvoice(Pagination filter);
         Task<IResponseVm<List<InvoiceVM>>> InvoiceReport(Pagination filter, ReportFilterType Type);
 
+        bool IsStripeApiKeyValid();
+
     }
 }

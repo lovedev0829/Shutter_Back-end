@@ -181,7 +181,7 @@ namespace ShutterManagement.Business.Services
                     await transaction.RollbackAsync();
                     return responseVm;
                 }
-                bool isValidStripe = IsStripeApiKeyValid();
+                bool isValidStripe = invoiceService.IsStripeApiKeyValid();
                 List<EmailAttachment> emailAttachments = new List<EmailAttachment>();
                 if (isValidStripe)
                 {
@@ -764,45 +764,45 @@ namespace ShutterManagement.Business.Services
 
         #endregion SendPaymentConfirmationEmail
 
-        #region Validate Stripe API Key 
-        public static bool IsStripeApiKeyValid()
-        {
-            try
-            {
-                if (string.IsNullOrEmpty(AppConstant.Stripe_SecretKey))
-                {
-                    FileLogger.Log("Stripe API Key is missing.");
-                    return false;
-                }
+        //#region Validate Stripe API Key 
+        //public static bool IsStripeApiKeyValid()
+        //{
+        //    try
+        //    {
+        //        if (string.IsNullOrEmpty(AppConstant.Stripe_SecretKey))
+        //        {
+        //            FileLogger.Log("Stripe API Key is missing.");
+        //            return false;
+        //        }
 
-                StripeConfiguration.ApiKey = AppConstant.Stripe_SecretKey;
+        //        StripeConfiguration.ApiKey = AppConstant.Stripe_SecretKey;
 
-                var service = new BalanceService();
-                var balance = service.Get();
+        //        var service = new BalanceService();
+        //        var balance = service.Get();
 
-                FileLogger.Log("Stripe API Key validation successful.");
-                return true;
-            }
-            catch (StripeException stripeEx)
-            {
-                if (stripeEx.StripeError != null)
-                {
-                    FileLogger.Log($"Stripe API Key Validation Failed: {stripeEx.StripeError.Message} (Code: {stripeEx.StripeError.Code})");
-                }
-                else
-                {
-                    FileLogger.Log($"Stripe API Key Validation Failed: {stripeEx.Message}");
-                }
-                return false;
-            }
-            catch (Exception ex)
-            {
-                FileLogger.Log($"Unexpected Error During Stripe API Key Validation: {ex.Message}");
-                return false;
-            }
-        }
+        //        FileLogger.Log("Stripe API Key validation successful.");
+        //        return true;
+        //    }
+        //    catch (StripeException stripeEx)
+        //    {
+        //        if (stripeEx.StripeError != null)
+        //        {
+        //            FileLogger.Log($"Stripe API Key Validation Failed: {stripeEx.StripeError.Message} (Code: {stripeEx.StripeError.Code})");
+        //        }
+        //        else
+        //        {
+        //            FileLogger.Log($"Stripe API Key Validation Failed: {stripeEx.Message}");
+        //        }
+        //        return false;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        FileLogger.Log($"Unexpected Error During Stripe API Key Validation: {ex.Message}");
+        //        return false;
+        //    }
+        //}
 
-        #endregion Validate Stripe API Key 
+        //#endregion Validate Stripe API Key 
 
     }
 

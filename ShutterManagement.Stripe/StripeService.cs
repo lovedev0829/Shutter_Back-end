@@ -37,7 +37,7 @@ namespace ShutterManagement.Stripe
         public StripeService( IOptions<StripeSettings> stripeSettings)
         {
             //_stripeSettings = stripeSettings.Value;
-            StripeConfiguration.ApiKey = AppConstant.Stripe_SecretKey;
+            //StripeConfiguration.ApiKey = AppConstant.Stripe_SecretKey;
         }
 
 
