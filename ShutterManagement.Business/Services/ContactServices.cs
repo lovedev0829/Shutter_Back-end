@@ -742,7 +742,7 @@ namespace ShutterManagement.Business.Services
         //    }
         //    return responseVm;
         //}
-        public async Task<IResponseVm<string>> Create_Contact(Sp_Contact model, Guid? LoggedInTenantId = null)
+        public async Task<IResponseVm<string>> Create_Contact(Sp_Contact model, Guid? LoggedInTenantId = null,bool? IsGHLContact = false)
         {
             var responseVm = new ResponseVm<string>();
             try
@@ -779,7 +779,7 @@ namespace ShutterManagement.Business.Services
                     if (!string.IsNullOrEmpty(model.GHLContactId))
                     {
                         var updateModel = PrepareUpdateModelFromSpContact(model);
-                        return await Update_Contact(updateModel, tenantId);
+                        return await Update_Contact(updateModel, tenantId,IsGHLContact);
                     }
                     else
                     {
@@ -1742,7 +1742,7 @@ namespace ShutterManagement.Business.Services
 
                     }
                         await gHLConfigurationService.GetGHLConfiguration(contactData.WebhookTenantId);
-                        var res = await Create_Contact(contact, Guid.Parse(contactData.WebhookTenantId));
+                        var res = await Create_Contact(contact, Guid.Parse(contactData.WebhookTenantId),true);
                         responseVm.IsSuccess = true;
                         responseVm.Message = AppConstant.InsertSuccessMsg;
                     }
