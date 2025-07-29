@@ -14,11 +14,11 @@ namespace ShutterManagement.Core.Common
     <div style='background: white; padding: 20px; border-radius: 10px;'>
 
         <p style='font-size: 16px; margin-bottom: 10px;'>
-            <strong>Dear {{CustomerName}},</strong>
+            <strong>Hello {{CustomerName}},</strong>
         </p>
 
         <p style='font-size: 15px;'>
-            Please review the attached <strong>estimate</strong> prepared for your consideration.
+            Please review your <strong>estimate</strong> prepared for your consideration.
         </p>
 
         <p style='font-size: 15px;'>
@@ -50,7 +50,7 @@ namespace ShutterManagement.Core.Common
 
         public static string Order { get; set; } = $@"
      <div style='font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px;'>
-        <p><strong>Dear {{CustomerName}},</strong></p>
+        <p><strong>Hello {{CustomerName}},</strong></p>
 
         <p>Please find your invoice attached for your reference.</p>
 
@@ -127,7 +127,7 @@ namespace ShutterManagement.Core.Common
     </div>
 
     <div style='padding: 20px;'>
-        <p style='font-size: 16px; margin: 10px 0;'><strong>Dear {{CustomerName}},</strong></p>
+        <p style='font-size: 16px; margin: 10px 0;'><strong>Hello {{CustomerName}},</strong></p>
         <p style='font-size: 14px; margin: 10px 0;'>We are requesting a payment for your invoice <strong>{{InvoiceNumber}}</strong>.</p>
 
         <!-- Invoice Details -->
