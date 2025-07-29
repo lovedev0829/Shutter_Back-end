@@ -364,7 +364,7 @@ namespace ShutterManagement.Controllers
         [Route("ContactEstimatioBreakdown")]
         public async Task<IActionResult> ContactEstimatioBreakdown(Guid JobId)
         {
-            filter.SearchValue = JobId.ToString().ToLower();
+            filter.JobId = JobId.ToString().ToLower();
             var res = await estimationBreakdownService.GetContactEstimationsBreakdown(filter);
             return Ok(res);
         }
