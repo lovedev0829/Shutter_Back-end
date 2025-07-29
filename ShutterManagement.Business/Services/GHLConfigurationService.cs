@@ -516,7 +516,7 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        public async Task<IResponseVm<string>> DeleteGHLConfiguration(Guid? configurationid,Guid? tenantId)
+        public async Task<IResponseVm<string>> DeleteGHLConfiguration(Guid? configurationid,Guid? tenantId = null)
         {
             IResponseVm<string> result = new ResponseVm<string>();
             try
