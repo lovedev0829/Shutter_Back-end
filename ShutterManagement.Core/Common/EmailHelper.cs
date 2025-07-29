@@ -26,12 +26,21 @@ namespace ShutterManagement.Core.Common
             try
             {
                 var message = new MimeMessage();
-                message.From.Add(MailboxAddress.Parse(request.FromEmail));
-                message.To.Add(MailboxAddress.Parse(request.ToEmail));
-                message.Cc.Add(MailboxAddress.Parse(request.CC));
-                message.Subject = request.Subject;
-                message.ReplyTo.Add(MailboxAddress.Parse(request.ReplyToEmail ?? request.FromEmail));
-
+                if (!string.IsNullOrEmpty(request.CC))
+                {
+                    message.From.Add(MailboxAddress.Parse(request.FromEmail));
+                    message.To.Add(MailboxAddress.Parse(request.ToEmail));
+                    message.Cc.Add(MailboxAddress.Parse(request.CC));
+                    message.Subject = request.Subject;
+                    message.ReplyTo.Add(MailboxAddress.Parse(request.ReplyToEmail ?? request.FromEmail));
+                }
+                else
+                {
+                    message.From.Add(MailboxAddress.Parse(request.FromEmail));
+                    message.To.Add(MailboxAddress.Parse(request.ToEmail));
+                    message.Subject = request.Subject;
+                    message.ReplyTo.Add(MailboxAddress.Parse(request.ReplyToEmail ?? request.FromEmail));
+                }
                 var builder = new BodyBuilder { HtmlBody = request.Body };
 
                 if (request.Attachments != null && request.Attachments.Any())

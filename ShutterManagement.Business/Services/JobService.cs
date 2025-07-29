@@ -1731,7 +1731,7 @@ namespace ShutterManagement.Business.Services
                     //var TakenRecords = Paginate.Pagination(FilterRecords, filter);
 
                     responseVm.Data = TakenRecords;
-                    responseVm.TotalRecords = FilterRecords.Count();
+                    responseVm.TotalRecords = TakenRecords.Count();
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.FetchSuccessMsg;
                 }
