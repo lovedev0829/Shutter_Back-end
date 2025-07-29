@@ -67,7 +67,7 @@ namespace ShutterManagement.Business.Services
                     {
                         responseVm.Data = TakenRecords.ToList();
                         responseVm.Message = AppConstant.FetchSuccessMsg;
-                        responseVm.TotalRecords = FilterRecords.Count;
+                        responseVm.TotalRecords = TakenRecords.Count;
                     }
                     else
                     {
