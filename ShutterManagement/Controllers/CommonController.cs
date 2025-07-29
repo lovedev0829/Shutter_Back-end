@@ -1033,7 +1033,13 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> GetAllGHL_Users()
         {
             var LoggedInTenantId = claimsProperty.GetTenantId();
+            var LoggedInParrentId = claimsProperty.GetParentTenantId();
+            //bool IsGHLSameAsTenant = claimsProperty.Ge
+            if (!string.IsNullOrEmpty(LoggedInParrentId))
+                LoggedInTenantId = Guid.Parse(claimsProperty.GetParentTenantId());
             var ghlconfigdetails =  await gHLConfiguration.GetGHLConfiguration(LoggedInTenantId.ToString());
+            if ((bool)ghlconfigdetails.Data.IsGHLConfigurationSameAsTenant)
+                LoggedInTenantId = Guid.Parse(claimsProperty.GetParentTenantId());
             var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration(LoggedInTenantId);
             if (Checkghlresponse.IsSuccess)
             {

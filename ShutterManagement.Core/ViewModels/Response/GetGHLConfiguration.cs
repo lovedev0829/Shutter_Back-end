@@ -24,6 +24,8 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? Access_Token { get; set; }
         public DateTime? AccessExpirationtime { get; set; }
         public bool? IsConnected { get; set; }
-    
+
+        public bool? IsGHLConfigurationSameAsTenant { get; set; }
+
     }
 }
