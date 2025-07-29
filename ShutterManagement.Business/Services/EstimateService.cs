@@ -1099,8 +1099,8 @@ namespace ShutterManagement.Business.Services
                 if (model.IsTaxApplicable == true && isTaxExemptionInContact)
                 {
                     totalTaxAmount = windowproductdetails.Data.DistinctBy(x => x.WindowProdcutId).DistinctBy(x => x.ProductId).Sum(x => x.TotalTaxAmount) ?? 0.0m;
-                    grandtotal = (!string.IsNullOrEmpty(model.DiscountId.ToString()) ? discountedValue : subtotal) + totalTaxAmount;
                 }
+                grandtotal = (!string.IsNullOrEmpty(model.DiscountId.ToString()) ? discountedValue : subtotal) + totalTaxAmount;
 
                 // Update the estimate details
                 estimate.EstimateName = model.EstimateName;
@@ -1715,8 +1715,9 @@ namespace ShutterManagement.Business.Services
             if (model.IsTaxApplicable == true && isTaxExemptionInContact)
             {
                totalTaxAmount = windowproductdetails.Data.DistinctBy(x => x.WindowProdcutId).DistinctBy(x => x.ProductId).Sum(x => x.TotalTaxAmount) ?? 0.0m;
-                grandtotal = (!string.IsNullOrEmpty(model.DiscountId.ToString()) ? discountedValue : subtotal) + totalTaxAmount;
             }
+
+            grandtotal = (!string.IsNullOrEmpty(model.DiscountId.ToString()) ? discountedValue : subtotal) + totalTaxAmount;
 
             string EstimationCode = EstimationUniqueName().Result.Data;
             TblEstimate createEstimate = new TblEstimate
