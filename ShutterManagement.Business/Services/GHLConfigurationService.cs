@@ -49,12 +49,18 @@ namespace ShutterManagement.Business.Services
         {
             IResponseVm<GetGHLConfiguration> responseVm = new ResponseVm<GetGHLConfiguration>();
             FileLogger.Log("details GHl ID: ", Id);
+            var IsGHLConfigurationTenantExist = dbContext.TblTenants.Where(x => x.TenantId == claimsProperty.GetTenantId() && x.IsDelete == false && x.IsActive == true).FirstOrDefault();
+            // Check if the GHL configuration exists for the given tenant ID
+            if (Id != claimsProperty.GetTenantId().ToString() && !string.IsNullOrEmpty(claimsProperty.GetParentTenantId().ToString()))
+            {
+                Id = claimsProperty.GetTenantId().ToString();
+            }
             var Checkghlresponse = await CheckGHLConfiguration(Guid.Parse(Id));
             var details = GetAllQuerable()
-                   .Where(x => x.LocationId == Id || x.TenantId.ToString().ToLower() == Id.ToLower() && x.IsDelete == false)
+                   .Where(x => x.TenantId.ToString().ToLower() == Id.ToLower() && x.IsDelete == false)
                    .FirstOrDefault();
             
-
+            
             FileLogger.Log("details GHl: ", details);
             if (details != null)
             {
@@ -70,7 +76,7 @@ namespace ShutterManagement.Business.Services
                     Access_Token = details.AccessToken ?? "",
                     RefreshExpirationtime = details.RefreshExpirationtime ?? null,
                     AccessExpirationtime = details.AccessExpirationtime ?? null,
-
+                    IsGHLConfigurationSameAsTenant = IsGHLConfigurationTenantExist.IsGhlconfigSameAsTenant,
                 };
 
                 //await claimsProperty.SetGHLConfigurationinClaims(details);
@@ -585,6 +591,14 @@ namespace ShutterManagement.Business.Services
 
                     response.IsSuccess = true;
                     response.Message = "GHL User added successfully.";
+
+                    if(response.IsSuccess)
+                    {
+                        var IsGHLConfigurationExist = GetAllQuerable().Where(x => x.TenantId.ToString() == model.PartnerId && x.IsDelete == false && x.IsActive == true)
+                            .Select(x => x.Id).FirstOrDefault();
+                        if(!string.IsNullOrEmpty(IsGHLConfigurationExist.ToString()))
+                            DeleteGHLConfiguration(IsGHLConfigurationExist);
+                    }
                 }
                 else
                 {

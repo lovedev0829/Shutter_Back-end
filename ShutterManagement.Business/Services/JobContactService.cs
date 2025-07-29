@@ -174,10 +174,12 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-                var jobContactsQuery = from x in dbContext.TblJobContacts.Where(x => x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId())
+                var jobContactsQuery = from x in dbContext.TblJobContacts
                                        join c in dbContext.MstContactTypes
                                        on x.ContactTypeId equals c.MstContactId
                                        join d in dbContext.TblContacts on x.ContactId equals d.ContactId
+                                       join j in dbContext.TblJobs on x.JobId equals j.JobId
+                                       where x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId()
                                        orderby x.CreatedAt
                 select new JobContactVm
                 {
@@ -202,7 +204,7 @@ namespace ShutterManagement.Business.Services
                             (x.ContactFirstname.ToLower() ?? "").Contains(filter.SearchValue.Trim().ToLower()) ||
                             ((x.ContactFirstname.ToLower() ?? "") + " " + (x.ContactLastname.ToLower() ?? "")).Contains(filter.SearchValue.Trim().ToLower()) ||
                             (x.ContactLastname.ToLower() ?? "").Contains(filter.SearchValue.Trim().ToLower()) ||
-                            (x.JobId.ToString().ToLower() == filter.SearchValue.Trim()) ||
+                            (x.JobId.ToString().ToLower() == filter.SearchValue) ||
                             (x.ContactTypeId.ToString() == filter.SearchValue.Trim()))).ToList();
 
                 
