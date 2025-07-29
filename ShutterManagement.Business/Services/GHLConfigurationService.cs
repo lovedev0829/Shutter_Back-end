@@ -516,13 +516,13 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        public async Task<IResponseVm<string>> DeleteGHLConfiguration(Guid? configurationid)
+        public async Task<IResponseVm<string>> DeleteGHLConfiguration(Guid? configurationid,Guid? tenantId)
         {
             IResponseVm<string> result = new ResponseVm<string>();
             try
             {
                 var IsStripeConfiExists = GetAllQuerable().Where(x => x.IsDelete == false && x.Id == configurationid &&
-                x.TenantId == claimsProperty.GetTenantId()
+                x.TenantId == (string.IsNullOrEmpty(tenantId.ToString()) ? claimsProperty.GetTenantId() : tenantId)
                 ).FirstOrDefault();
                 if (IsStripeConfiExists != null)
                 {
@@ -595,9 +595,9 @@ namespace ShutterManagement.Business.Services
                     if(response.IsSuccess)
                     {
                         var IsGHLConfigurationExist = GetAllQuerable().Where(x => x.TenantId.ToString() == model.PartnerId && x.IsDelete == false && x.IsActive == true)
-                            .Select(x => x.Id).FirstOrDefault();
+                            .FirstOrDefault();
                         if(!string.IsNullOrEmpty(IsGHLConfigurationExist.ToString()))
-                            DeleteGHLConfiguration(IsGHLConfigurationExist);
+                            DeleteGHLConfiguration(IsGHLConfigurationExist.Id,IsGHLConfigurationExist.TenantId);
                     }
                 }
                 else
