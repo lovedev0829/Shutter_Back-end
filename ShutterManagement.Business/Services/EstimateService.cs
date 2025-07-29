@@ -462,7 +462,7 @@ namespace ShutterManagement.Business.Services
                     if (!result.IsSuccess || result.Data == null) continue;
 
                     var data = result.Data;
-
+                    // Filter out products that not have component pricing exprission
                     var itemsWithoutComponentPricing = data.Where(x => x.PricingExpression == null).ToList();
                     itemsWithoutComponentPricing.ForEach(x => x.IsMaterialBreakdown = true);
 

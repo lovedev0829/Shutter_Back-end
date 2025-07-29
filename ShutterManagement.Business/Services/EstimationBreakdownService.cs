@@ -241,7 +241,7 @@ namespace ShutterManagement.Business.Services
                     ? estimateData
                     : estimateData.Where(x => x.WindowProdcutId.HasValue && filterIds.Contains(x.WindowProdcutId.Value)).ToList();
 
-                foreach (var item in itemsToBind.DistinctBy(x => x.WindowProdcutId))
+                foreach (var item in itemsToBind.DistinctBy(x=> new {x.WindowProdcutId,x.ComponentId}))
                 {
                     filteredList.Add(new WindowProdcutDetailsForEstimate
                     {
