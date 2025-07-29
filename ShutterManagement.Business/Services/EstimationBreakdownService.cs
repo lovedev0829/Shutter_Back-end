@@ -160,7 +160,7 @@ namespace ShutterManagement.Business.Services
                     var activeEstimates = res.Data.Where(x => x.IsActive == true).ToList();
                     responseVm.IsSuccess = true;
                     responseVm.Data = activeEstimates;
-                    responseVm.TotalRecords -= activeEstimates.Count;
+                    responseVm.TotalRecords = activeEstimates.Count;
                 }
             }
             catch (Exception ex)
@@ -241,7 +241,7 @@ namespace ShutterManagement.Business.Services
                     ? estimateData
                     : estimateData.Where(x => x.WindowProdcutId.HasValue && filterIds.Contains(x.WindowProdcutId.Value)).ToList();
 
-                foreach (var item in itemsToBind.DistinctBy(x => x.ComponentId))
+                foreach (var item in itemsToBind.DistinctBy(x => x.WindowProdcutId))
                 {
                     filteredList.Add(new WindowProdcutDetailsForEstimate
                     {
