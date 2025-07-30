@@ -36,16 +36,17 @@ namespace ShutterManagement.Core.SPModel
         [DefaultValue("")]
         public string? LastName { get; set; }
         public string? Suffix { get; set; }
-        [Required]
-        [RegularExpression(@"^\+?1?\d{10}$", ErrorMessage = "Phone number must be 10 digits.")]
+
+        //[Required]
+       // [RegularExpression(@"^\+?1?\d{10}$", ErrorMessage = "Phone number must be 10 digits.")]
         //[RegularExpression(@"^(\+1)?\d{10}$", ErrorMessage = "Phone number must be 10 digits, optionally prefixed by +1.")]
         [DefaultValue("")]
         public string? PhoneNumber { get; set; }
 
 
-        [Required, MaxLength(100)]
-        [RegularExpression(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", ErrorMessage = "Invalid email address.")]
-        [EmailAddress]
+        [MaxLength(100)]
+     //   [RegularExpression(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", ErrorMessage = "Invalid email address.")]
+       // [EmailAddress]
         [DefaultValue("")]
         public string Email { get; set; }
 

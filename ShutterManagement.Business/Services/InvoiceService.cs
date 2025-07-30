@@ -29,6 +29,10 @@ using Microsoft.Extensions.Logging;
 using Stripe;
 using System.Linq.Dynamic.Core;
 using Microsoft.IdentityModel.Tokens;
+using System.Linq.Dynamic.Core;
+using QRCoder;
+using System.IO;
+using System.Drawing;
 
 namespace ShutterManagement.Business.Services
 {
@@ -606,14 +610,14 @@ namespace ShutterManagement.Business.Services
                     CustomerCity = customerDetails?.billingAddressVm?.City ?? "",
                     CustomerState = customerState ?? "",
                     CustomerZipCode = customerDetails?.billingAddressVm?.ZipCode ?? "",
-                    HomePhone = customerDetails?.billingAddressVm?.PhoneNumber ?? "",
+                    HomePhone = PhoneHelper.FormatPhoneNumber(customerDetails?.billingAddressVm?.PhoneNumber??"")??"",
                     CompanyStreetAddress = tenantInfoDetails?.StreetAddress ?? "",
                     CompanyCity = tenantInfoDetails?.City ?? "",
                     CompanyCountry = tenantInfoDetails?.Country ?? "",
                     CompanyZipCode = tenantInfoDetails?.ZipCode ?? "",
                     CustomerStreetAddress = customerDetails?.billingAddressVm?.StreetAddress ?? "",
                     StreetAddress = customerDetails?.billingAddressVm?.StreetAddress ?? "",
-                    MobilePhone = customerDetails?.PhoneNumber ?? "",
+                    MobilePhone = PhoneHelper.FormatPhoneNumber(customerDetails?.billingAddressVm?.PhoneNumber ?? "") ?? "" ?? "",
                     TenantCompanyName = tenantInfoDetails?.CompanyName ?? "",
                     Logo = tenantInfoDetails?.Logo ?? "",
                     EstimationDate = Convert.ToDateTime(estimationDetails?.CreatedAt).ToString("MM-dd-yyyy") ?? "",
@@ -627,6 +631,8 @@ namespace ShutterManagement.Business.Services
                     Note = estimationDetails?.Notes ?? "",
                     OrderId = orderDetails?.OrderId.ToString() ?? "",
                     OrderName = orderDetails?.OrderName ?? "",
+                    CompanyEmail = tenantInfoDetails?.Email ?? "",
+                    CompanyPhone = PhoneHelper.FormatPhoneNumber(tenantInfoDetails?.PhoneNumber ?? "") ?? "",
                     Taxes = (estimationDetails?.TotaltaxAmount > 0
     ? $@"<tr>
 <td style=""padding: 5px 5px; font-weight: 700; font-size: 14px;"">Taxes :</td>
@@ -644,6 +650,8 @@ namespace ShutterManagement.Business.Services
                     PowderCoatColor = powderCoatColor
                 };
 
+                var originalEstimateUrltoQR = $"{AppConstant.UIBaseURL}contacts/estimate/preview/{estimationDetails?.EstimateId}";
+                invoiceData.EstimateQRCode = GenerateQRCodeBase64(originalEstimateUrltoQR) ?? "";
                 // Generate the Estimate HTML
                 var htmlContent = await emailSendHelperService.GetTemplateContent(EmailTemplateType.EstimatePDF, invoiceData);
 
@@ -789,7 +797,7 @@ namespace ShutterManagement.Business.Services
                             MediaType = "application/pdf"
                         });
                         
-                        EmailSendResult = await emailSendHelperService.GetEmailConfigAndSendEmail(customerDetails?.Email, emailBody, AppConstant.Sub_EstimateOrderApproval, PreparedByEmail, emailAttachments,string.Empty, LoggedInUser);
+                        EmailSendResult = await emailSendHelperService.GetEmailConfigAndSendEmail(customerDetails?.Email, orderEmailContent, AppConstant.Sub_EstimateOrderApproval, PreparedByEmail, emailAttachments,string.Empty, LoggedInUser);
                         responseVm.IsSuccess = true;
                         responseVm.Message = EmailSendResult.Message;
                         System.IO.File.Delete(savePath);
@@ -937,6 +945,25 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
+       
+
+        public string GenerateQRCodeBase64(string content)
+        {
+            if (string.IsNullOrWhiteSpace(content)) return string.Empty;
+            try
+            {
+                var generator = new QRCodeGenerator();
+                QRCodeData qrCodeData = generator.CreateQrCode(content, QRCodeGenerator.ECCLevel.Q);
+                var qrCode = new PngByteQRCode(qrCodeData);
+                byte[] qrBytes = qrCode.GetGraphic(pixelsPerModule: 20);
+                return "data:image/png;base64," + Convert.ToBase64String(qrBytes);
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Log($"Error generating QR code: {ex.Message}");
+                return string.Empty;
+            }
+        }
         private string GenerateProductListHtml(List<EstimateProductList> productList)
         {
             var productListHtml = new StringBuilder();

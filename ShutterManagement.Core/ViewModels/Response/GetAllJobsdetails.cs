@@ -42,6 +42,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? JobUniqueCode { get; set; }
         public Guid? GHL_StageId { get; set; }
         public string? GHL_StageName { get; set; }
+        public Guid? TenantId { get; set; }
 
 
     }
