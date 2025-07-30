@@ -49,6 +49,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? PaymentLink { get; set; }
         public string? PowderCoatColor { get; set; }
         public string? Balancedue { get; set; }
+        public string? EstimateQRCode { get; set; }
 
     }
 }

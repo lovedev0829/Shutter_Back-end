@@ -1361,6 +1361,7 @@ namespace ShutterManagement.Business.Services
                                        JobUniqueCode = t2.JobUniqueId ?? "",
                                        GHL_StageId = t2.GhlStageId != null ? t2.GhlStageId : Guid.Empty,
                                        GHL_StageName = (!string.IsNullOrWhiteSpace(t2.GhlStageName) || t2.GhlStageName != null) ? t2.GhlStageName : "",
+                                       TenantId = t2.TenantId,
                                    }).ToList();
                                    filter.SearchValue = filter.SearchValue?.Trim().ToLower();
                                    var FilterRecords = JobList

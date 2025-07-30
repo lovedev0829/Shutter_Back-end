@@ -756,6 +756,11 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.TenantNotFound;
                     return responseVm;
                 }
+                var phoneNumber = string.IsNullOrWhiteSpace(model.PhoneNumber) ? null : model.PhoneNumber.Trim();
+                if (phoneNumber == "+1")
+                {
+                    model.PhoneNumber = null; // Treat "+1" alone as no valid phone number
+                }
 
                 if (!string.IsNullOrEmpty(model.PhoneNumber))
                     model.PhoneNumber = FormatPhoneNumber(model.PhoneNumber);
@@ -771,20 +776,36 @@ namespace ShutterManagement.Business.Services
                 }
 
                 var existingContacts = GetAllQuerable().Where(c =>
-                    (c.Email == model.Email)
-                    && c.TenantId == tenantId && c.IsDelete == false).ToList();
+                 //(c.Email == model.Email || c.PhoneNumber==model.PhoneNumber) && model.GHLContactId != null
+                c.TenantId == tenantId && c.IsDelete == false).ToList();
 
-                if (existingContacts.Any())
+                // Validate at least one contact field
+                if (string.IsNullOrEmpty(model.Email) && string.IsNullOrEmpty(model.PhoneNumber))
                 {
-                    if (!string.IsNullOrEmpty(model.GHLContactId))
+                    responseVm.Message = "Email or Phone Number — please fill at least one";
+                    return responseVm;
+                }
+
+                // Validate duplicates based on available fields
+                if (!string.IsNullOrEmpty(model.Email) && existingContacts.Any(c => c.Email == model.Email))
+                {
+                    responseVm.Message = $"Email {model.Email} {AppConstant.AlreadyExists}";
+                    return responseVm;
+                }
+
+                if (!string.IsNullOrEmpty(model.PhoneNumber) && existingContacts.Any(c => c.PhoneNumber == model.PhoneNumber))
+                {
+                    responseVm.Message = $"Phone {model.PhoneNumber} {AppConstant.AlreadyExists}";
+                    return responseVm;
+                }
+
+                if (!string.IsNullOrEmpty(model.GHLContactId))
+                {
+                    if (existingContacts.Any(x => x.GhlcontactId == model.GHLContactId))
                     {
+
                         var updateModel = PrepareUpdateModelFromSpContact(model);
-                        return await Update_Contact(updateModel, tenantId,IsGHLContact);
-                    }
-                    else
-                    {
-                        responseVm.Message = $"Email {model.Email} {AppConstant.AlreadyExists}";
-                        return responseVm;
+                        return await Update_Contact(updateModel, tenantId, IsGHLContact);
                     }
                 }
 
@@ -972,10 +993,14 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.TenantNotFound;
                     return responseVm;
                 }
+                var phoneNumber = string.IsNullOrWhiteSpace(model.PhoneNumber) ? null : model.PhoneNumber.Trim();
+                if (phoneNumber == "+1")
+                {
+                    model.PhoneNumber = null; // Treat "+1" alone as no valid phone number
+                }
 
                 if (!string.IsNullOrEmpty(model.PhoneNumber))
                     model.PhoneNumber = FormatPhoneNumber(model.PhoneNumber);
-
                 //await gHLConfigurationService.GetGHLConfiguration(tenantId.ToString());
 
                 if (!string.IsNullOrEmpty(model.GHLContactId))
@@ -988,6 +1013,7 @@ namespace ShutterManagement.Business.Services
                                     && c.TenantId == tenantId && c.IsDelete == false)
                         .OrderByDescending(x => x.CreatedAt)
                         .ToList();
+
 
                     contact ??= existingContacts.FirstOrDefault();
 
@@ -1007,15 +1033,35 @@ namespace ShutterManagement.Business.Services
                         .FirstOrDefault(c => c.ContactId == model.ContactId && c.TenantId == tenantId && c.IsDelete == false);
 
                     var duplicateContacts = (await GetAll())
-                        .Where(c => (c.Email == model.Email)
-                                    && c.TenantId == tenantId && c.IsDelete == false && c.ContactId != model.ContactId)
+                        .Where(c => c.TenantId == tenantId && c.IsDelete == false && c.ContactId != model.ContactId)
                         .ToList();
+  
 
-                    if (duplicateContacts.Any())
+                    // Validate at least one contact field
+                    if (string.IsNullOrEmpty(model.Email) && string.IsNullOrEmpty(model.PhoneNumber))
                     {
-                        responseVm.Message = "Email" + AppConstant.AlreadyExists;
+                        responseVm.Message = "Email or Phone Number — please fill at least one";
                         return responseVm;
                     }
+
+                    // Validate duplicates based on available fields
+                    if (!string.IsNullOrEmpty(model.Email) && duplicateContacts.Any(c => c.Email == model.Email))
+                    {
+                        responseVm.Message = $"Email {model.Email} {AppConstant.AlreadyExists}";
+                        return responseVm;
+                    }
+
+                    if (!string.IsNullOrEmpty(model.PhoneNumber) && duplicateContacts.Any(c => c.PhoneNumber == model.PhoneNumber))
+                    {
+                        responseVm.Message = $"Phone {model.PhoneNumber} {AppConstant.AlreadyExists}";
+                        return responseVm;
+                    }
+
+                    //if (duplicateContacts.Any())
+                    //{
+                    //    responseVm.Message = "Email" + AppConstant.AlreadyExists;
+                    //    return responseVm;
+                    //}
 
                     if (!model.IsTaxExemption && (model.TaxExemptionVm?.EffectiveDate == null || model.TaxExemptionVm?.ExpiryDate == null))
                     {
