@@ -701,7 +701,7 @@ namespace ShutterManagement.Business.Services
                         productOwnMarkup += partnerMarkup?.MarkupType switch
                         {
                             "Percentage" => (basePrice + productOwnMarkup) * (partnerMarkup.PartnerSellingPrice ?? 0) / 100,
-                            "Fixed" => (basePrice + productOwnMarkup + (partnerMarkup.PartnerSellingPrice ?? 0)),
+                            "Fixed" => partnerMarkup.PartnerSellingPrice ?? 0,
                             _ => 0.0m
                         };
                         //productOwnMarkup += partnerMarkup?.MarkupType switch
@@ -786,7 +786,7 @@ namespace ShutterManagement.Business.Services
                         productOwnMarkup += partnerMarkup?.MarkupType switch
                         {
                             "Percentage" => (basePrice + productOwnMarkup) * (partnerMarkup.PartnerSellingPrice ?? 0) / 100,
-                            "Fixed" => (basePrice + productOwnMarkup + (partnerMarkup.PartnerSellingPrice ?? 0)),
+                            "Fixed" => partnerMarkup.PartnerSellingPrice ?? 0,
                             _ => 0.0m
                         };
                         //productOwnMarkup += partnerMarkup?.MarkupType switch
@@ -824,7 +824,7 @@ namespace ShutterManagement.Business.Services
                         productOwnMarkup += markup?.MarkupType switch
                         {
                             "Percentage" => (productPrice + productOwnMarkup) * (markup.PartnerSellingPrice ?? 0) / 100,
-                            "Fixed" => (productPrice + productOwnMarkup + (markup.PartnerSellingPrice ?? 0)),
+                            "Fixed" => markup.PartnerSellingPrice ?? 0,
                             _ => 0.0m
                         };
                     }
