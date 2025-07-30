@@ -610,18 +610,14 @@ namespace ShutterManagement.Business.Services
                     CustomerCity = customerDetails?.billingAddressVm?.City ?? "",
                     CustomerState = customerState ?? "",
                     CustomerZipCode = customerDetails?.billingAddressVm?.ZipCode ?? "",
-                    HomePhone =!string.IsNullOrEmpty(customerDetails?.billingAddressVm?.PhoneNumber) && customerDetails?.billingAddressVm?.PhoneNumber.Length >= 10
-    ? $"{customerDetails?.billingAddressVm?.PhoneNumber[^10..^7]}-{customerDetails?.billingAddressVm?.PhoneNumber[^7..^4]}-{customerDetails?.billingAddressVm?.PhoneNumber[^4..]}"
-    : customerDetails?.billingAddressVm?.PhoneNumber ?? "",
+                    HomePhone = PhoneHelper.FormatPhoneNumber(customerDetails?.billingAddressVm?.PhoneNumber??"")??"",
                     CompanyStreetAddress = tenantInfoDetails?.StreetAddress ?? "",
                     CompanyCity = tenantInfoDetails?.City ?? "",
                     CompanyCountry = tenantInfoDetails?.Country ?? "",
                     CompanyZipCode = tenantInfoDetails?.ZipCode ?? "",
                     CustomerStreetAddress = customerDetails?.billingAddressVm?.StreetAddress ?? "",
                     StreetAddress = customerDetails?.billingAddressVm?.StreetAddress ?? "",
-                    MobilePhone = !string.IsNullOrEmpty(customerDetails?.billingAddressVm?.PhoneNumber) && customerDetails?.billingAddressVm?.PhoneNumber.Length >= 10
-    ? $"{customerDetails?.billingAddressVm?.PhoneNumber[^10..^7]}-{customerDetails?.billingAddressVm?.PhoneNumber[^7..^4]}-{customerDetails?.billingAddressVm?.PhoneNumber[^4..]}"
-    : customerDetails?.billingAddressVm?.PhoneNumber ?? "",
+                    MobilePhone = PhoneHelper.FormatPhoneNumber(customerDetails?.billingAddressVm?.PhoneNumber ?? "") ?? "" ?? "",
                     TenantCompanyName = tenantInfoDetails?.CompanyName ?? "",
                     Logo = tenantInfoDetails?.Logo ?? "",
                     EstimationDate = Convert.ToDateTime(estimationDetails?.CreatedAt).ToString("MM-dd-yyyy") ?? "",
@@ -636,9 +632,7 @@ namespace ShutterManagement.Business.Services
                     OrderId = orderDetails?.OrderId.ToString() ?? "",
                     OrderName = orderDetails?.OrderName ?? "",
                     CompanyEmail = tenantInfoDetails?.Email ?? "",
-                    CompanyPhone = !string.IsNullOrEmpty(tenantInfoDetails?.PhoneNumber) && tenantInfoDetails.PhoneNumber.Length >= 10
-    ? $"{tenantInfoDetails.PhoneNumber[^10..^7]}-{tenantInfoDetails.PhoneNumber[^7..^4]}-{tenantInfoDetails.PhoneNumber[^4..]}"
-    : tenantInfoDetails?.PhoneNumber ?? "",
+                    CompanyPhone = PhoneHelper.FormatPhoneNumber(tenantInfoDetails?.PhoneNumber ?? "") ?? "",
                     Taxes = (estimationDetails?.TotaltaxAmount > 0
     ? $@"<tr>
 <td style=""padding: 5px 5px; font-weight: 700; font-size: 14px;"">Taxes :</td>
@@ -950,6 +944,8 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
+
+       
 
         public string GenerateQRCodeBase64(string content)
         {
