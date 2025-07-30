@@ -789,7 +789,7 @@ namespace ShutterManagement.Business.Services
                             MediaType = "application/pdf"
                         });
                         
-                        EmailSendResult = await emailSendHelperService.GetEmailConfigAndSendEmail(customerDetails?.Email, emailBody, AppConstant.Sub_EstimateOrderApproval, PreparedByEmail, emailAttachments,string.Empty, LoggedInUser);
+                        EmailSendResult = await emailSendHelperService.GetEmailConfigAndSendEmail(customerDetails?.Email, orderEmailContent, AppConstant.Sub_EstimateOrderApproval, PreparedByEmail, emailAttachments,string.Empty, LoggedInUser);
                         responseVm.IsSuccess = true;
                         responseVm.Message = EmailSendResult.Message;
                         System.IO.File.Delete(savePath);
