@@ -1,4 +1,5 @@
-﻿using System.Data.Entity;
+﻿using System;
+using System.Data.Entity;
 using System.Text.RegularExpressions;
 using Antlr.Runtime;
 using Microsoft.AspNetCore.Http;
@@ -463,11 +464,11 @@ namespace ShutterManagement.Business.Services
 
                     var data = result.Data;
                     // Filter out products that not have component pricing exprission
-                    var itemsWithoutComponentPricing = data.Where(x => x.PricingExpression == null).ToList();
-                    itemsWithoutComponentPricing.ForEach(x => x.IsMaterialBreakdown = true);
+                    var productWithoutComponentExpressiom = data.Where(x => x.PricingExpression == null).ToList();
+                    productWithoutComponentExpressiom.ForEach(x => x.IsMaterialBreakdown = true);
 
-                    var itemsWithoutPricing = data.Where(x => x.ComponentId == null).ToList();
-                    itemsWithoutPricing.ForEach(x => x.IsComponentAvailable = false);
+                    var productWithoutComponent = data.Where(x => x.ComponentId == null).ToList();
+                    productWithoutComponent.ForEach(x => x.IsComponentAvailable = false);
 
                     if(AfterbuildEstimate)
                     {
@@ -651,6 +652,7 @@ namespace ShutterManagement.Business.Services
             decimal componentMarkup = 0.0m;
             decimal productMarkup = 0.0m;
             decimal wholesale = 0.0m;
+            var pricewithwholesale = 0.0m;
 
             var isSubtenant = (await tenantService.GetAll())
                 .Any(t => (t.TenantId == claimsProperty.GetTenantId() && t.ParentTenantId != null) && t.IsActive == true && t.IsDelete == false);
@@ -673,49 +675,57 @@ namespace ShutterManagement.Business.Services
                     {
                         if (isSubtenant)
                         {
-                            var markup = dbContext.TblManagePartnersProducts
-                                .FirstOrDefault(x => x.ProductId == item.ProductId && x.TenantId == claimsProperty.GetTenantId() && x.IsAvailable == true);
-                            basePrice = markup?.MarkupType switch
-                            {
-                                "Percentage" => basePrice * (1 + (markup.WholeSalePrice ?? 0) / 100),
-                                "Fixed" => basePrice + (markup.WholeSalePrice ?? 0),
-                                _ => basePrice
-                            };
+                            pricewithwholesale = await ManageProductPartnerDetail(item.ProductId, basePrice, 0.0m, true);
+                            //wholesale += Math.Round(pricewithwholesale, 2);
+                            //continue;
+                            //    var markup = dbContext.TblManagePartnersProducts
+                            //        .FirstOrDefault(x => x.ProductId == item.ProductId && x.TenantId == claimsProperty.GetTenantId() && x.IsAvailable == true);
+                            //    basePrice = markup?.MarkupType switch
+                            //    {
+                            //        "Percentage" => basePrice * (1 + (markup.WholeSalePrice ?? 0) / 100),
+                            //        "Fixed" => basePrice + (markup.WholeSalePrice ?? 0),
+                            //        _ => basePrice
+                            //    };
+                            //}
+                            //wholesale += Math.Round(basePrice, 2);
+                            //continue;
                         }
-                        wholesale += Math.Round(basePrice, 2);
+                        wholesale += Math.Round(pricewithwholesale, 2);
                         continue;
                     }
 
+                   
                     componentOwnMarkup = ((basePrice * item.MarkupPercentage) / 100) ?? 0.0m;
                     basePrice += componentOwnMarkup;
-                    //componentMarkup += componentOwnMarkup;
-
-                    //productOwnMarkup = (((basePrice + componentOwnMarkup) * item.Markup) / 100) ?? 0.0m;
+                 
                     productOwnMarkup = ((basePrice * item.Markup) / 100) ?? 0.0m;
 
                     if (isSubtenant)
                     {
-                        var partnerMarkup = dbContext.TblManagePartnersProducts
-                            .FirstOrDefault(x => x.ProductId == item.ProductId && x.TenantId == claimsProperty.GetTenantId());
+                        var pricewithPartnerMarkup = await ManageProductPartnerDetail(item.ProductId, basePrice, productOwnMarkup, false);
+                        productOwnMarkup += pricewithPartnerMarkup;
 
-                        productOwnMarkup += partnerMarkup?.MarkupType switch
-                        {
-                            "Percentage" => (basePrice + productOwnMarkup) * (partnerMarkup.PartnerSellingPrice ?? 0) / 100,
-                            "Fixed" => (basePrice + productOwnMarkup + (partnerMarkup.PartnerSellingPrice ?? 0)),
-                            _ => 0.0m
-                        };
-                        //productOwnMarkup += partnerMarkup?.MarkupType switch
-                        //{
-                        //    "Percentage" => (basePrice + componentOwnMarkup + productOwnMarkup) * (partnerMarkup.PartnerSellingPrice ?? 0) / 100,
-                        //    "Fixed" => (basePrice + componentOwnMarkup + productOwnMarkup + (partnerMarkup.PartnerSellingPrice ?? 0)),
-                        //    _ => 0.0m
-                        //};
-
-                        var taxId = partnerMarkup?.TaxId;
+                        var PartnerManageProductDetails = GetManageProductDetails(item.ProductId);
+                        var taxId = PartnerManageProductDetails?.TaxId;
                         var taxDetails = dbContext.TblTaxRates
                             .FirstOrDefault(x => x.TaxRateId == taxId && x.TenantId == claimsProperty.GetTenantId());
 
                         TaxDetailsApplied(item, taxDetails);
+
+                        //var partnerMarkup = dbContext.TblManagePartnersProducts
+                        //    .FirstOrDefault(x => x.ProductId == item.ProductId && x.TenantId == claimsProperty.GetTenantId());
+
+                        //productOwnMarkup += partnerMarkup?.MarkupType switch
+                        //{
+                        //    "Percentage" => (basePrice + productOwnMarkup) * (partnerMarkup.PartnerSellingPrice ?? 0) / 100,
+                        //    "Fixed" => partnerMarkup.PartnerSellingPrice ?? 0,
+                        //    _ => 0.0m
+                        //};
+                        //var taxId = partnerMarkup?.TaxId;
+                        //var taxDetails = dbContext.TblTaxRates
+                        //    .FirstOrDefault(x => x.TaxRateId == taxId && x.TenantId == claimsProperty.GetTenantId());
+
+                        //TaxDetailsApplied(item, taxDetails);
                     }
 
                     productMarkup += productOwnMarkup;
@@ -758,17 +768,18 @@ namespace ShutterManagement.Business.Services
                     {
                         if (isSubtenant)
                         {
-                            var markup = dbContext.TblManagePartnersProducts
-                                .FirstOrDefault(x => x.ProductId == item.ProductId && x.TenantId == claimsProperty.GetTenantId() && x.IsAvailable == true);
-                            basePrice = markup?.MarkupType switch
-                            {
-                                "Percentage" => basePrice * (1 + (markup.WholeSalePrice ?? 0) / 100),
-                                "Fixed" => basePrice + (markup.WholeSalePrice ?? 0),
-                                _ => basePrice
-                            };
+                         pricewithwholesale = await ManageProductPartnerDetail(item.ProductId, basePrice, 0.0m, true);
+                        //    var markup = dbContext.TblManagePartnersProducts
+                        //        .FirstOrDefault(x => x.ProductId == item.ProductId && x.TenantId == claimsProperty.GetTenantId() && x.IsAvailable == true);
+                        //    basePrice = markup?.MarkupType switch
+                        //    {
+                        //        "Percentage" => basePrice * (1 + (markup.WholeSalePrice ?? 0) / 100),
+                        //        "Fixed" => basePrice + (markup.WholeSalePrice ?? 0),
+                        //        _ => basePrice
+                        //    };
                         }
 
-                        wholesale += Math.Round(basePrice, 2);
+                        wholesale += Math.Round(pricewithwholesale, 2);
                         continue;
                     }
 
@@ -780,23 +791,20 @@ namespace ShutterManagement.Business.Services
                     productOwnMarkup = ((basePrice * item.Markup) / 100) ?? 0.0m;
                     if (isSubtenant)
                     {
-                        var partnerMarkup = dbContext.TblManagePartnersProducts
-                            .FirstOrDefault(x => x.ProductId == item.ProductId && x.TenantId == claimsProperty.GetTenantId() && x.IsAvailable == true);
+                       var pricewithPartnerMarkup = await ManageProductPartnerDetail(item.ProductId, basePrice, productOwnMarkup, false);
+                       productOwnMarkup += pricewithPartnerMarkup;
 
-                        productOwnMarkup += partnerMarkup?.MarkupType switch
-                        {
-                            "Percentage" => (basePrice + productOwnMarkup) * (partnerMarkup.PartnerSellingPrice ?? 0) / 100,
-                            "Fixed" => (basePrice + productOwnMarkup + (partnerMarkup.PartnerSellingPrice ?? 0)),
-                            _ => 0.0m
-                        };
-                        //productOwnMarkup += partnerMarkup?.MarkupType switch
-                        //{
-                        //    "Percentage" => (basePrice + componentOwnMarkup + productOwnMarkup) * (partnerMarkup.PartnerSellingPrice ?? 0) / 100,
-                        //    "Fixed" => (basePrice + componentOwnMarkup + productOwnMarkup + (partnerMarkup.PartnerSellingPrice ?? 0)),
-                        //    _ => 0.0m
-                        //};
+                            //var partnerMarkup = dbContext.TblManagePartnersProducts
+                            //      .FirstOrDefault(x => x.ProductId == item.ProductId && x.TenantId == claimsProperty.GetTenantId() && x.IsAvailable == true);
 
-                        var taxId = partnerMarkup?.TaxId;
+                            //  productOwnMarkup += partnerMarkup?.MarkupType switch
+                            //  {
+                            //      "Percentage" => (basePrice + productOwnMarkup) * (partnerMarkup.PartnerSellingPrice ?? 0) / 100,
+                            //      "Fixed" => (basePrice + productOwnMarkup + (partnerMarkup.PartnerSellingPrice ?? 0)),
+                            //      _ => 0.0m
+                            //  };
+                        var PartnerManageProductDetails =  GetManageProductDetails(item.ProductId);
+                        var taxId = PartnerManageProductDetails?.TaxId;
                         var taxDetails = dbContext.TblTaxRates
                             .FirstOrDefault(x => x.TaxRateId == taxId && x.TenantId == claimsProperty.GetTenantId());
 
@@ -818,31 +826,23 @@ namespace ShutterManagement.Business.Services
 
                     if (isSubtenant)
                     {
-                        var markup = dbContext.TblManagePartnersProducts
-                            .FirstOrDefault(x => x.ProductId == item.ProductId && x.TenantId == claimsProperty.GetTenantId());
+                        var pricewithPartnerMarkup = await ManageProductPartnerDetail(item.ProductId, basePrice, productOwnMarkup, false);
+                        productOwnMarkup += pricewithPartnerMarkup;
+                        //    var markup = dbContext.TblManagePartnersProducts
+                        //    .FirstOrDefault(x => x.ProductId == item.ProductId && x.TenantId == claimsProperty.GetTenantId());
 
-                        productOwnMarkup += markup?.MarkupType switch
-                        {
-                            "Percentage" => (productPrice + productOwnMarkup) * (markup.PartnerSellingPrice ?? 0) / 100,
-                            "Fixed" => (productPrice + productOwnMarkup + (markup.PartnerSellingPrice ?? 0)),
-                            _ => 0.0m
-                        };
+                        //productOwnMarkup += markup?.MarkupType switch
+                        //{
+                        //    "Percentage" => ((productPrice + productOwnMarkup) * (markup.PartnerSellingPrice ?? 0)) / 100,
+                        //    "Fixed" => markup.PartnerSellingPrice ?? 0,
+                        //    _ => 0.0m
+                        //};
                     }
 
                     productMarkup += productOwnMarkup;
                     componentSubTotal += Math.Round(productPrice, 2);
 
-                   //TaxAppliedWithMarkup(item, productPrice, componentOwnMarkup, productOwnMarkup);
-
                 }
-                else
-                {
-                  // TaxAppliedWithMarkup(item, item.Price ?? 0.0m, 0, productOwnMarkup);
-                }
-               //TaxAppliedWithMarkup(item, item.Price ?? 0.0m, componentOwnMarkup, productOwnMarkup);
-
-
-                
 
                 //Option price calculation
                 var optionMSRP = await CalculateOptionPrice(item.OptionsTypeIds, item.Quantity ?? 0, item.BuildHeight ?? 0, item.BuildWidth ?? 0, false);
@@ -904,6 +904,52 @@ namespace ShutterManagement.Business.Services
 
             return iswholesale == true ? wholesale : componentSubTotal;
         }
+
+        private async Task<decimal> ManageProductPartnerDetail(Guid? productId, decimal? productPrice, decimal? productOwnMarkup, bool? isWholesale)
+        {
+            decimal productPartnerMarkup = 0.0m;
+            decimal basePrice = 0.0m;
+
+            var markup = GetManageProductDetails(productId);
+
+            if (!(bool)isWholesale && markup != null)
+            {
+                basePrice = (productPrice ?? 0.0m) + (productOwnMarkup ?? 0.0m);
+
+                productPartnerMarkup = markup.MarkupType switch
+                {
+                    "Percentage" => (basePrice * (markup.PartnerSellingPrice ?? 0.0m)) / 100,
+                    "Fixed" => markup.PartnerSellingPrice ?? 0.0m,
+                    _ => 0.0m
+                };
+            }
+            else
+            {
+                basePrice = productPrice ?? 0.0m;
+                basePrice = markup?.MarkupType switch
+                {
+                    "Percentage" => basePrice * (1 + (markup.WholeSalePrice ?? 0) / 100),
+                    "Fixed" => basePrice + (markup.WholeSalePrice ?? 0),
+                    _ => basePrice
+                };
+
+                productPartnerMarkup = basePrice;
+            }
+            return productPartnerMarkup;
+        }
+
+        //Fetech ManageProductDetails
+        private TblManagePartnersProduct GetManageProductDetails(Guid? productId)
+        {
+            if (productId == Guid.Empty)
+            {
+                return new TblManagePartnersProduct();
+            }
+            var tenantId = claimsProperty.GetTenantId();
+            return dbContext.TblManagePartnersProducts
+                .FirstOrDefault(x => x.ProductId == productId && x.TenantId == tenantId) ?? new TblManagePartnersProduct();
+        }
+
 
 
         public NCalc.Expression CalculateExpression(string formula, dynamic values)
