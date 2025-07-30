@@ -29,6 +29,10 @@ using Microsoft.Extensions.Logging;
 using Stripe;
 using System.Linq.Dynamic.Core;
 using Microsoft.IdentityModel.Tokens;
+using System.Linq.Dynamic.Core;
+using QRCoder;
+using System.IO;
+using System.Drawing;
 
 namespace ShutterManagement.Business.Services
 {
@@ -644,6 +648,8 @@ namespace ShutterManagement.Business.Services
                     PowderCoatColor = powderCoatColor
                 };
 
+                var originalEstimateUrltoQR = $"{AppConstant.UIBaseURL}contacts/estimate/preview/{estimationDetails?.EstimateId}";
+                invoiceData.EstimateQRCode = GenerateQRCodeBase64(originalEstimateUrltoQR) ?? "";
                 // Generate the Estimate HTML
                 var htmlContent = await emailSendHelperService.GetTemplateContent(EmailTemplateType.EstimatePDF, invoiceData);
 
@@ -937,6 +943,23 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
+        public string GenerateQRCodeBase64(string content)
+        {
+            if (string.IsNullOrWhiteSpace(content)) return string.Empty;
+            try
+            {
+                var generator = new QRCodeGenerator();
+                QRCodeData qrCodeData = generator.CreateQrCode(content, QRCodeGenerator.ECCLevel.Q);
+                var qrCode = new PngByteQRCode(qrCodeData);
+                byte[] qrBytes = qrCode.GetGraphic(pixelsPerModule: 20);
+                return "data:image/png;base64," + Convert.ToBase64String(qrBytes);
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Log($"Error generating QR code: {ex.Message}");
+                return string.Empty;
+            }
+        }
         private string GenerateProductListHtml(List<EstimateProductList> productList)
         {
             var productListHtml = new StringBuilder();

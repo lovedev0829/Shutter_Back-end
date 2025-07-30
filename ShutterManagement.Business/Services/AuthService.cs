@@ -122,7 +122,7 @@ namespace ShutterManagement.Services
                 responseVm.TotalRecords = 1;
 
                 // Initialize configurations
-                //await _ghlConfiguration.GetGHLConfiguration(loginDetail.TenantId.ToString());
+              //  await _ghlConfiguration.GetGHLConfiguration(loginDetail.TenantId.ToString());
             }
             catch (Exception ex)
             {
