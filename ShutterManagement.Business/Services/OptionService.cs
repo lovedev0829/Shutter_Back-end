@@ -102,7 +102,7 @@ namespace ShutterManagement.Business.Services
                     bool alloptiontypeadded = true;
                     var IsOptionNameExists = await AnyAsync(x => x.OptionName == model.OptionName.Trim()
                     && x.IsActive == true && x.IsDelete == false && (x.TenantId == claimsProperty.GetTenantId() || x.TenantId.ToString() == claimsProperty.GetParentTenantId())
-                    && x.ProductId == model.ProductId && x.ProductTypeId == model.ProductTypeId);
+                    && x.ProductId == model.ProductId);
                     if(IsOptionNameExists)
                     {
                        if(!AppConstant.IsTenant)
@@ -549,7 +549,7 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-public async Task<IResponseVm<string>> Update_Option(UpdateOption model)
+        public async Task<IResponseVm<string>> Update_Option(UpdateOption model)
 {
     IResponseVm<string> responseVm = new ResponseVm<string>();
     try
@@ -562,12 +562,12 @@ public async Task<IResponseVm<string>> Update_Option(UpdateOption model)
                             && c.TenantId == claimsProperty.GetTenantId()
                             && c.IsDelete == false)
                 .FirstOrDefault();
-            
-             var IsOptionNameExists = await AnyAsync(x => x.OptionName == model.OptionName.Trim()
-                                        && x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId()
-                                        && x.ProductId == model.ProductId && x.ProductTypeId == model.ProductTypeId && x.OptionId != model.OptionId);
+          
+                var IsOptionNameExists = await AnyAsync(x => x.OptionName == model.OptionName.Trim()
+                 && x.IsActive == true && x.IsDelete == false && (x.TenantId == claimsProperty.GetTenantId() || x.TenantId.ToString() == claimsProperty.GetParentTenantId())
+                 && x.ProductId == model.ProductId && x.OptionId != model.OptionId);
 
-            if (IsOptionExists == null)
+                    if (IsOptionExists == null)
             {
                 responseVm.Message = AppConstant.NoDataFound;
                 return responseVm;
