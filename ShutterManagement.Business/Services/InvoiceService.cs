@@ -601,11 +601,16 @@ namespace ShutterManagement.Business.Services
 
                 var powderCoatColor = estimationRecord.Data
                      .FirstOrDefault(x => x.IsActive == true).jobDetails.PowderCoatColor;
+
+                var PreparedBy = dbContext.TblUsers
+                    .Where(s => s.Id == (estimationDetails.PreparedBy == Guid.Empty || estimationDetails.PreparedBy == null ? estimationDetails.CreatedBy : estimationDetails.PreparedBy))
+                    .Select(n => (n.FirstName ?? "") + " " + (n.LastName ?? ""))
+                    .FirstOrDefault() ?? "";
         
                 var invoiceData = new InvoiceDataModel
                 {
                     CustomerName = (customerDetails?.FirstName ??"")+ " " + (customerDetails?.LastName ??""),
-                    PreparedBy = dbContext.TblUsers.Where(s => s.Id == estimationDetails.PreparedBy).Select(n => (n.FirstName ?? "") + " " + (n.LastName ?? "")).FirstOrDefault() ?? "",
+                    PreparedBy = PreparedBy ?? "",
                     CustomerId = customerDetails?.ContactUniqueId ?? "",
                     CustomerCity = customerDetails?.billingAddressVm?.City ?? "",
                     CustomerState = customerState ?? "",
@@ -629,8 +634,11 @@ namespace ShutterManagement.Business.Services
                     EmailAddress = customerDetails?.Email ?? "",
                     Terms = estimationDetails?.TermsCondition ?? "",
                     Note = estimationDetails?.Notes ?? "",
-                    OrderId = orderDetails?.OrderName.ToString() ?? "",
-                    OrderName = orderDetails?.OrderName ?? "",
+                    OrderName = (!string.IsNullOrEmpty(orderDetails?.OrderName)
+    ? $@"  <p style='font-size: 16px;margin: 0;margin-top: 17px;margin-bottom: 0;'> <span
+                                    style='font-weight: 700; color: #ff0000;'>Order ID : {orderDetails?.OrderName}</span> </p>"
+    : ""),
+                    
                     CompanyEmail = tenantInfoDetails?.Email ?? "",
                     CompanyPhone = PhoneHelper.FormatPhoneNumber(tenantInfoDetails?.PhoneNumber ?? "") ?? "",
                     Taxes = (estimationDetails?.TotaltaxAmount > 0
@@ -648,9 +656,9 @@ namespace ShutterManagement.Business.Services
                     Additionalcost = estimationDetails?.AdditionalCost.ToString() ?? "",
                     ProductList = GenerateProductListHtml(productList),
                     PowderCoatColor = (!string.IsNullOrEmpty(powderCoatColor)
-    ? $@" <p style=""font-size: 14px;margin: 0;margin-top: 0px;margin-bottom: 10px;""> <span
-                                    style=""font-weight: 700;"">Powder Coat Color : </span> <span
-                                    style=""font-weight: 700;display: inline-block;"">{powderCoatColor}</span> </p>"
+    ? $@" <p style='font-size: 14px;margin: 0;margin-top: 10px;margin-bottom: 10px;'> <span
+                                    style='font-weight: 700;display: inline-block;'>Powder Coat Color : </span> <span
+                                    style='font-weight: 700;display: inline-block;'>{powderCoatColor}</span> </p>"
     : ""),
                     
                 };
