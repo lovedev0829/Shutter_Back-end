@@ -25,6 +25,6 @@ namespace ShutterManagement.Core.Common
             return GenerateUniqueName;
         }
 
-        // insteed of date generate randome number 
+        
     }
 }
