@@ -775,9 +775,20 @@ namespace ShutterManagement.Business.Services
                     }
                 }
 
+                if (!string.IsNullOrEmpty(model.GHLContactId))
+                {
+                    if ((bool)IsGHLContact)
+                    {
+                        var updateModel = PrepareUpdateModelFromSpContact(model);
+                        return await Update_Contact(updateModel, tenantId, IsGHLContact);
+                    }
+                }
+
                 var existingContacts = GetAllQuerable().Where(c =>
                  //(c.Email == model.Email || c.PhoneNumber==model.PhoneNumber) && model.GHLContactId != null
                 c.TenantId == tenantId && c.IsDelete == false).ToList();
+
+              
 
                 // Validate at least one contact field
                 if (string.IsNullOrEmpty(model.Email) && string.IsNullOrEmpty(model.PhoneNumber))
@@ -797,16 +808,6 @@ namespace ShutterManagement.Business.Services
                 {
                     responseVm.Message = $"Phone {model.PhoneNumber} {AppConstant.AlreadyExists}";
                     return responseVm;
-                }
-
-                if (!string.IsNullOrEmpty(model.GHLContactId))
-                {
-                    if (existingContacts.Any(x => x.GhlcontactId == model.GHLContactId))
-                    {
-
-                        var updateModel = PrepareUpdateModelFromSpContact(model);
-                        return await Update_Contact(updateModel, tenantId, IsGHLContact);
-                    }
                 }
 
                 if (!model.IsBillingAddressSameAsAddress && model.BillingAddressVm == null)
@@ -884,7 +885,9 @@ namespace ShutterManagement.Business.Services
                 Website = model.Website ?? string.Empty,
                 Referral = model.Referral ?? string.Empty,
                 GHLContactId = model.GHLContactId ?? string.Empty,
-                BillingAddressVm = model.BillingAddressVm
+                IsBillingAddressSameAsAddress = model.IsBillingAddressSameAsAddress,
+                BillingAddressVm = model.BillingAddressVm,
+                IsTaxExemption = model.IsTaxExemption
             };
             return updateModel;
         }
@@ -987,7 +990,7 @@ namespace ShutterManagement.Business.Services
                 var tenantId = (LoggedInTenantId != null && LoggedInTenantId != Guid.Empty)
                     ? LoggedInTenantId.Value
                     : claimsProperty.GetTenantId();
-                model.IsBillingAddressSameAsAddress = false;
+               // model.IsBillingAddressSameAsAddress = false;
                 if (!await tenantService.AnyAsync(x => x.TenantId == tenantId && x.IsActive == true))
                 {
                     responseVm.Message = AppConstant.TenantNotFound;
@@ -1005,17 +1008,43 @@ namespace ShutterManagement.Business.Services
 
                 if (!string.IsNullOrEmpty(model.GHLContactId))
                 {
+                    if(string.IsNullOrEmpty(model.PhoneNumber) && string.IsNullOrEmpty(model.Email))
+                    {
+                        responseVm.Message = "Email or Phone Number — please fill at least one";
+                        return responseVm;
+                    }
+
                     var contact = (await GetAll())
                         .FirstOrDefault(c => c.GhlcontactId == model.GHLContactId && c.TenantId == tenantId && c.IsDelete == false);
 
-                    var existingContacts = GetAllQuerable()
-                        .Where(c => (c.Email == model.Email)
-                                    && c.TenantId == tenantId && c.IsDelete == false)
-                        .OrderByDescending(x => x.CreatedAt)
-                        .ToList();
+                   
+                    if (contact == null && (bool)IsGHLContact)
+                    {
+                        if (!string.IsNullOrEmpty(model.Email))
+                        {
+                            contact = (await GetAll())
+                            .FirstOrDefault(c => c.Email == model.Email && c.TenantId == tenantId && c.IsDelete == false);
+                        }
+                    }
+                    if (contact == null && (bool)IsGHLContact)
+                    {
+                        if (!string.IsNullOrEmpty(model.PhoneNumber))
+                        {
+                        contact = (await GetAll())
+                            .FirstOrDefault(c => c.PhoneNumber == model.PhoneNumber && c.TenantId == tenantId && c.IsDelete == false);
+                    }
+                    }
+                    //contact = (await GetAll())
+                    //    .FirstOrDefault(c => c.GhlcontactId == model.GHLContactId && c.TenantId == tenantId && c.IsDelete == false);
+
+                    //var existingContacts = GetAllQuerable()
+                    //    .Where(c => (c.Email == model.Email)
+                    //                && c.TenantId == tenantId && c.IsDelete == false)
+                    //    .OrderByDescending(x => x.CreatedAt)
+                    //    .ToList();
 
 
-                    contact ??= existingContacts.FirstOrDefault();
+                    // contact ??= existingContacts.FirstOrDefault();
 
                     if (contact != null)
                     {
@@ -1130,6 +1159,8 @@ namespace ShutterManagement.Business.Services
                 contact.IsBillingAddressSameAsAddress = model.IsBillingAddressSameAsAddress;
                 contact.ModifiedBy = tenantId;
                 contact.UpdatedAt = DateTime.Now;
+                contact.LastSync = DateTime.Now;
+                contact.GhlcontactId = model.GHLContactId ?? string.Empty;
 
                 await Update(contact);
             }
@@ -1309,14 +1340,21 @@ namespace ShutterManagement.Business.Services
 
         private async Task CreateNewContact(UpdateContact model, Guid tenantId)
         {
-            var stateId = dbContext.MstStates
-                .Where(x => x.StateCode.ToLower() == model.BillingAddressVm.StateCode.ToLower().Trim()
-                         || x.StateName.ToLower() == model.BillingAddressVm.StateCode.ToLower().Trim())
-                .Select(y => y.Id)
-                .FirstOrDefault();
+            var stateId = Guid.Empty;
+            if (model.BillingAddressVm != null)
+            {
+                stateId = dbContext.MstStates
+                 .Where(x => x.StateCode.ToLower() == model.BillingAddressVm.StateCode.ToLower().Trim()
+                          || x.StateName.ToLower() == model.BillingAddressVm.StateCode.ToLower().Trim())
+                 .Select(y => y.Id)
+                 .FirstOrDefault();
 
-            model.BillingAddressVm.StateId = stateId != Guid.Empty ? stateId : null;
+                // If stateId is not found, it will be Guid.Empty
+                model.BillingAddressVm.StateId = stateId != Guid.Empty ? stateId : Guid.Empty;
 
+            }
+
+           
             var newContact = new Sp_Contact
             {
                 ContactType = model.ContactType ?? string.Empty,
@@ -1325,10 +1363,12 @@ namespace ShutterManagement.Business.Services
                 Suffix = model.Suffix ?? string.Empty,
                 Email = model.Email ?? string.Empty,
                 PhoneNumber = model.PhoneNumber ?? string.Empty,
-                lastAsync = model.lastAsync,
+                lastAsync = DateTime.Now,
                 GHLContactId = model.GHLContactId,
+                IsBillingAddressSameAsAddress = model.IsBillingAddressSameAsAddress,
                 BillingAddressVm = !model.IsBillingAddressSameAsAddress ? model.BillingAddressVm : null,
                 IsTaxExemption = model.IsTaxExemption,
+             //   TaxExemptionVm = !model.IsTaxExemption ? model.TaxExemptionVm : null,
             };
 
             await Create_Contact(newContact, tenantId);
@@ -1639,10 +1679,11 @@ namespace ShutterManagement.Business.Services
                 filteredRecords = Paginate.ApplySorting(filteredRecords, filter.SortColumn, filter.SortDirection);
 
                 var TakenRecords = Paginate.Pagination(filteredRecords, filter);
-                responseVm.IsSuccess = true;
+                
 
                 if (TakenRecords != null && TakenRecords.Count > 0)
                 {
+                    responseVm.IsSuccess = true;
                     responseVm.Data = TakenRecords.ToList();
                     responseVm.Message = AppConstant.FetchSuccessMsg;
                     responseVm.TotalRecords = filteredRecords.Count();
@@ -1787,10 +1828,10 @@ namespace ShutterManagement.Business.Services
                         };
 
                     }
-                        await gHLConfigurationService.GetGHLConfiguration(contactData.WebhookTenantId);
+                       await gHLConfigurationService.GetGHLConfiguration(contactData.WebhookTenantId);
                         var res = await Create_Contact(contact, Guid.Parse(contactData.WebhookTenantId),true);
-                        responseVm.IsSuccess = true;
-                        responseVm.Message = AppConstant.InsertSuccessMsg;
+                        responseVm.IsSuccess = res.IsSuccess;
+                        responseVm.Message = res.Message;
                     }
                 
                 catch (Exception ex)

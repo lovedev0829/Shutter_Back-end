@@ -105,7 +105,7 @@ namespace ShutterManagement.Business.Services
                 {
                     using (var writer = new StreamWriter(filePathWithName))
                     {
-                        await writer.WriteLineAsync("MaterialUniqueId,MaterialName*,TotalCost*,UnitOfMeasurement*,Lenght,Width,StockQuantity,ReorderLevel,Vendor*,Notes,ProductType*,SKU,IsCutSheet*");
+                        await writer.WriteLineAsync("MaterialUniqueId,MaterialName*,TotalCost*,UnitOfMeasurement*,Length,Width,StockQuantity,ReorderLevel,Vendor*,Notes,ProductType*,SKU,IsCutSheet*");
                     }
                 }
 
@@ -152,7 +152,7 @@ namespace ShutterManagement.Business.Services
                     using (var writer = new StreamWriter(filePathWithName))
                     {
                       
-                        await writer.WriteLineAsync("ContactType*,FirstName*,LastName*,Suffix*,PhoneNumber*,Email*,Website,Notes,Referral,BillingFirstName*,BillingLastName*,PhoneNumber*,Email*,City*,StateName*,ZipCode*,StreetAddress*,EffectiveDate,ExpiryDate");
+                        await writer.WriteLineAsync("ContactType*,FirstName*,LastName*,Suffix*,PhoneNumber,Email,Website,Notes,Referral,BillingFirstName*,BillingLastName*,BillingPhoneNumber,BillingEmail,City*,StateName*,ZipCode*,StreetAddress*,EffectiveDate,ExpiryDate");
                     }
                 }
 
@@ -201,7 +201,7 @@ namespace ShutterManagement.Business.Services
                     //var records = csv.GetRecords<ImportMaterial>().ToList();
                     var expectedHeaders = new[]
                     {
-                   "MaterialUniqueId","MaterialName","TotalCost", "UnitOfMeasurement","Lenght","Width", "StockQuantity", "ReorderLevel",
+                   "MaterialUniqueId","MaterialName","TotalCost", "UnitOfMeasurement","Length","Width", "StockQuantity", "ReorderLevel",
                    "Vendor", "Notes", "ProductType", "SKU", "IsCutSheet"
                     };
 
@@ -400,10 +400,10 @@ namespace ShutterManagement.Business.Services
                 {
                     var expectedHeaders = new[]
                     {
-                "ContactType", "FirstName", "LastName","Suffix", "PhoneNumber", "Email", "Website",
-                "Notes", "Referral", "BillingFirstName", "BillingLastName", "PhoneNumber",
-                "Email", "City", "StateName", "ZipCode", "StreetAddress", "EffectiveDate", "ExpiryDate"
-            };
+                       "ContactType", "FirstName", "LastName","Suffix", "PhoneNumber", "Email", "Website",
+                       "Notes", "Referral", "BillingFirstName", "BillingLastName", "BillingPhoneNumber",
+                       "BillingEmail", "City", "StateName", "ZipCode", "StreetAddress", "EffectiveDate", "ExpiryDate"
+                    };
 
                     csv.Read();
                     csv.ReadHeader();
@@ -425,21 +425,38 @@ namespace ShutterManagement.Business.Services
 
                     foreach (var record in records)
                     {
-                        var filter = new Pagination { SearchValue = record.Email };
+                        var filter = new Pagination();
                         bool role = true;
+                        IResponseVm<List<ContactsList>> existingContactResponse = new ResponseVm<List<ContactsList>>();
 
-                        var existingContactResponse = await contactService.GetAll_Contact(filter, role,false);
-                        var existingContact = existingContactResponse.Data?.FirstOrDefault();
+                        if (string.IsNullOrEmpty(record.Email) && string.IsNullOrEmpty(record.PhoneNumber))
+                        {
+                            validationErrors.Add($"Error in row {rowNumber}: Email or PhoneNumber alteast one required.");
+                            rowNumber++;
+                            continue;
+                        }
+                        filter.RecordPerPage = 10000;
+                        if (!string.IsNullOrEmpty(record.Email))
+                        {
+                            filter.SearchValue = record.Email;
+                            existingContactResponse = await contactService.GetAll_Contact(filter, role, false);
+                        }
+                        if((!existingContactResponse.IsSuccess || (existingContactResponse.Data == null || existingContactResponse.Data.Count < 0) && !string.IsNullOrEmpty(record.PhoneNumber)))
+                        {
+                            filter.SearchValue = record.PhoneNumber;
+                            existingContactResponse = await contactService.GetAll_Contact(filter, role, false);
+                        }
+                        var existingContact = existingContactResponse.Data.FirstOrDefault();
 
                         bool isUpdate =  false;
-                        if(existingContact!=null)
+                        if(existingContact != null)
                         {
                             isUpdate = true;
                         }
 
                         var contactModel =  await MapToSpContact(record, isUpdate, existingContact?.ContactId);
 
-                        if (existingContact != null)
+                        if (existingContact != null && existingContact.ContactId != Guid.Empty)
                         {
                             contactModel.ContactId = existingContact.ContactId;
 
@@ -827,7 +844,7 @@ namespace ShutterManagement.Business.Services
                 }
 
                 var csvBuilder = new StringBuilder();
-                csvBuilder.AppendLine("ContactType*,FirstName*,LastName*,Suffix*,PhoneNumber*,Email*,Website,Notes,Referral,BillingFirstName*,BillingLastName*,PhoneNumber*,Email*,City*,StateName*,ZipCode*,StreetAddress*,EffectiveDate,ExpiryDate");
+                csvBuilder.AppendLine("ContactType*,FirstName*,LastName*,Suffix*,PhoneNumber,Email,Website,Notes,Referral,BillingFirstName*,BillingLastName*,BillingPhoneNumber,BillingEmail,City*,StateName*,ZipCode*,StreetAddress*,EffectiveDate,ExpiryDate");
 
                 foreach (var contact in detailedContactList)
                 {
