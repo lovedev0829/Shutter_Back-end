@@ -222,7 +222,7 @@ namespace ShutterManagement.Business.Services
 
         private async Task<string> GenerateJobUniqueId(Guid? tenantId)
         {
-            int Version = GetAllQuerable().Where(x => x.TenantId == tenantId && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt)
+            int Version = GetAllQuerable().Where(x => x.TenantId == tenantId).OrderByDescending(p => p.CreatedAt)
                       .Select(p => (p.JobUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries).Length == 3 ? Convert.ToInt32(p.JobUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries)[2]) : 0)).FirstOrDefault();
             Version += 1;
 

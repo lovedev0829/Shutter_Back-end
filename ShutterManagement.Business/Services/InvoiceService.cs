@@ -164,7 +164,7 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-                int Version = GetAllQuerable().Where(x => x.TenantId == claimsProperty.GetTenantId() && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt)
+                int Version = GetAllQuerable().Where(x => x.TenantId == claimsProperty.GetTenantId()).OrderByDescending(p => p.CreatedAt)
                .Select(p => (p.InvoiceNumber.Split("-", StringSplitOptions.RemoveEmptyEntries).Length == 3 ? Convert.ToInt32(p.InvoiceNumber.Split("-", StringSplitOptions.RemoveEmptyEntries)[2]) : 0)).FirstOrDefault();
                 Version += 1;
                 var InvoiceNumberUniquNumber = GenerateUniqueId.GenerateUniqueIds(ModuleName.Invoice, claimsProperty.GetCompanyCode(), Version);     //   var InvoiceNumberUniquNumber = GenerateUniqueId.GenerateUniqueIds(ModuleName.Invoice, claimsProperty.GetCompanyCode());
