@@ -434,6 +434,7 @@ namespace ShutterManagement.Business.Services
                                         || (x.ProductType.ToString() == filter.SearchValue)
                                         || (x.MaterialName ?? "").ToLower().Contains(filter.SearchValue)
                                         || (x.UnitCost.ToString() ?? "").ToLower().Contains(filter.SearchValue)
+                                        || (x.TotalCost.ToString() ?? "").ToLower().Contains(filter.SearchValue)
                                         //|| (x.NonRatedUnitCost.ToString() ?? "").ToLower().Contains(filter.SearchValue)
                                         || (x.ReorderLevel.ToString() ?? "").ToLower().Contains(filter.SearchValue)
                                         || (x.StockQuantity.ToString() ?? "").ToLower().Contains(filter.SearchValue)
