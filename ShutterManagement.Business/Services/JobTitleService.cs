@@ -28,7 +28,14 @@ namespace ShutterManagement.Business.Services
             IResponseVm<List<JobTitlesList>> responseVm = new ResponseVm<List<JobTitlesList>>();
             try
             {
-                var JobTitleList = (await GetAll()).Where(x => x.IsDelete == false && x.TenantId ==claimsProperty.GetTenantId()).OrderByDescending(x => x.CreatedAt).ToList();
+                var TenantId = claimsProperty.GetTenantId();
+                var subTenantIds = new List<Guid>();
+                if (string.IsNullOrEmpty(claimsProperty.GetParentTenantId()))
+                {
+                    subTenantIds = tenantService.GetAccessibleTenantIds(TenantId);
+                }
+
+                var JobTitleList = (await GetAll()).Where(x => x.IsDelete == false && (x.TenantId == TenantId || subTenantIds.Contains(x.TenantId ?? Guid.Empty))).OrderByDescending(x => x.CreatedAt).ToList();
 
                 filter.SearchValue = (filter.SearchValue?.Trim() ?? "").ToLower();
                 var FilterRecords = JobTitleList

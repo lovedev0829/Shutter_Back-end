@@ -364,12 +364,18 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
+                var subTenantIds = new List<Guid>();
+                if (string.IsNullOrEmpty(claimsProperty.GetParentTenantId()))
+                {
+                    subTenantIds = tenantService.GetAccessibleTenantIds(claimsProperty.GetTenantId());
+                }
+
                 var invoicesQuery = (from i in GetAllQuerable().OrderByDescending(x => x.CreatedAt)
                                      join j in dbContext.TblJobs on i.JobId equals j.JobId
                                      join c in dbContext.TblContacts on j.ContactId equals c.ContactId
                                      join d in dbContext.TblEstimates on i.EstimateId equals d.EstimateId
                                      let hasActiveOrder = dbContext.TblOrders.Any(o => o.EstimateId == i.EstimateId && o.IsActive == true)
-                                     where i.IsDelete == false && hasActiveOrder && j.IsActive == true
+                                     where (i.TenantId == claimsProperty.GetTenantId() || subTenantIds.Contains(i.TenantId ?? Guid.Empty)) && i.IsDelete == false && hasActiveOrder && j.IsActive == true
                                      orderby i.CreatedAt descending
                                      select new InvoiceVM
                                      {
