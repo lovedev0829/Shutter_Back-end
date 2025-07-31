@@ -615,6 +615,8 @@ namespace ShutterManagement.Business.Services
                     CompanyCity = tenantInfoDetails?.City ?? "",
                     CompanyCountry = tenantInfoDetails?.Country ?? "",
                     CompanyZipCode = tenantInfoDetails?.ZipCode ?? "",
+                    CompanyEmail = tenantInfoDetails?.Email ?? "",
+                    CompanyPhone = tenantInfoDetails?.PhoneNumber ?? "",
                     CustomerStreetAddress = customerDetails?.billingAddressVm?.StreetAddress ?? "",
                     StreetAddress = customerDetails?.billingAddressVm?.StreetAddress ?? "",
                     MobilePhone = customerDetails?.PhoneNumber ?? "",

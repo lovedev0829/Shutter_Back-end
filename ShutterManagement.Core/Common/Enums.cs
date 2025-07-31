@@ -75,7 +75,8 @@ namespace ShutterManagement.Core.Common
         [EnumMember(Value = "InvoicePaymentForEmail")]
         InvoicePaymentForEmail,
         [EnumMember(Value = "OrderSheet")]
-        OrderSheet
+        OrderSheet,
+        
     }
 
     public enum EmailSendType
@@ -166,7 +167,11 @@ namespace ShutterManagement.Core.Common
         [EnumMember(Value = "PaymentConfirmation")]
         PaymentConfirmation,
         ForgotPassword,
-       
+        [EnumMember(Value = "EstimateApproved")]
+        EstimateApproved,
+        [EnumMember(Value = "EstimateRejected")]
+        EstimateRejected
+
     }
 
 

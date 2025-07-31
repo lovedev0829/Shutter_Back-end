@@ -107,6 +107,10 @@ namespace ShutterManagement.Core
         public static string Sub_ResetPassword = "Password reset successfully";
         public static string Sub_ForgotPassword = "Forgot Password";
         public static string Sub_WelcomeEmail = "Welcome Email";
+        public static string Sub_PaymentConfirmation = "Payment Confirmation";
+        public static string Sub_EstimateApprovedEmail = "Your Estimate Has Been Approved";
+        public static string Sub_EstimateRejectedEmail = "Your Estimate Has Been Rejected";
+
         public static string Sub_EstimateApproval = "Estimate Approval Link and PDF";
         public static string Sub_EstimateOrderApproval = "Estimate For Approval";
         public static string Con_ResetPassword = "Your password has been reset successfully";

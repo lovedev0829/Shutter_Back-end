@@ -65,7 +65,7 @@ namespace ShutterManagement.Business.Services
             }
             return response;
         }
-        public async Task<IResponseVm<string>> SendEmailWithReplacedContent(EmailTemplateType emailTemplateType, dynamic dataObject)
+        public async Task<IResponseVm<string>> SendEmailWithReplacedContent(EmailTemplateType emailTemplateType, dynamic dataObject,string SubjecteEmail="")
         {
             IResponseVm<string> response = new ResponseVm<string>();
             try
@@ -75,7 +75,9 @@ namespace ShutterManagement.Business.Services
                 {
                     return emailContent;
                 }
-                response = await GetEmailConfigAndSendEmail(dataObject.Email, emailContent.Data ,AppConstant.Sub_WelcomeEmail );
+                // if emailtemplate type is rejected or approved 
+               
+                response = await GetEmailConfigAndSendEmail(dataObject.Email, emailContent.Data , SubjecteEmail);
             }
             catch (Exception ex)
             {

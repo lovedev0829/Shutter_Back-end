@@ -754,7 +754,7 @@ namespace ShutterManagement.Business.Services
                     CompanyLogo = tenantInfoDetails?.Logo ?? ""
                 };
 
-                var res = await emailSendHelperService.SendEmailWithReplacedContent(EmailTemplateType.PaymentConfirmation, invoiceDataModel);
+                var res = await emailSendHelperService.SendEmailWithReplacedContent(EmailTemplateType.PaymentConfirmation, invoiceDataModel,AppConstant.Sub_PaymentConfirmation);
             }
             catch (Exception ex)
             {

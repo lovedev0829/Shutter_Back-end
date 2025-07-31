@@ -55,6 +55,8 @@ namespace ShutterManagement.Business.Services
         private readonly IMstProductType mstProductType;
         private readonly JobStatusAndStageMapping statusAndStageMapping;
         private readonly IGHLConfiguration gHLConfiguration;
+        private readonly EmailSendHelperService emailSendHelperService;
+
         //private readonly IManagePartnersProducts managePartnersProducts;
         List<Guid> expressionList = new List<Guid>();
 
@@ -85,7 +87,8 @@ namespace ShutterManagement.Business.Services
             ISubtenantProductMarkup subtenantProductMarkup, ITenantBrandingService tenantBrandingService,
             INotificationService notification
             , IMstProductType mstProductType,
-            JobStatusAndStageMapping statusAndStageMapping, IGHLConfiguration gHLConfiguration
+            JobStatusAndStageMapping statusAndStageMapping, IGHLConfiguration gHLConfiguration,
+            EmailSendHelperService emailSendHelperService
             //IManagePartnersProducts managePartnersProducts
             )
         {
@@ -122,6 +125,7 @@ namespace ShutterManagement.Business.Services
             this.mstProductType = mstProductType;
             this.statusAndStageMapping = statusAndStageMapping;
             this.gHLConfiguration = gHLConfiguration;
+            this.emailSendHelperService = emailSendHelperService;
             // this.managePartnersProducts = managePartnersProducts;
         }
 
@@ -1290,8 +1294,17 @@ namespace ShutterManagement.Business.Services
 
                         if (responseVm.IsSuccess)
                         {
+                            if(NewEstimationStatus == Estimation.Approved || NewEstimationStatus ==Estimation.Rejected)
+                            {
+                                // call the method 
+
+                                var respose = SendStatusNotificationEmail(EstimationStatus);
+
+                            }
+
                             if (NewEstimationStatus == Estimation.Approved)
                             {
+                                
                                 var jobStatusName = EnumValue.GetEnumValue(JobStatus.Won);
                                 var updateResponse = await statusAndStageMapping.UpdateOpportunityAndJobStatus(EstimationStatus?.JobId ?? Guid.Empty, jobStatusName);
 
@@ -2483,6 +2496,91 @@ namespace ShutterManagement.Business.Services
             return response;
 
         }
+
+
+        private async Task<IResponseVm<string>> SendStatusNotificationEmail(TblEstimate model)
+        {
+            var responseVm = new ResponseVm<string>();
+
+            try
+            {
+
+                var job = jobService.GetAllQuerable().FirstOrDefault(j => j.JobId == model.JobId && j.IsActive==true && j.IsDelete==false);
+                if (job == null)
+                {
+                    responseVm.Message = "Job details not found.";
+                    return responseVm;
+                }
+
+
+                var contact = contactService.GetAllQuerable().FirstOrDefault(c => c.ContactId == job.ContactId && c.IsDelete==false);
+                if (contact == null)
+                {
+                    responseVm.Message = "Customer contact not found.";
+                    return responseVm;
+                }
+
+                var tenant = dbContext.TblTenants.FirstOrDefault(t => t.TenantId == model.TenantId && t.IsDelete==false);
+                if (tenant == null)
+                {
+                    responseVm.Message = "Tenant information not found.";
+                    return responseVm;
+                }
+
+                var branding = tenantBrandingService.GetAllQuerable().FirstOrDefault(b => b.Id == tenant.BrandingInfo);
+
+                var preparedBy = dbContext.TblUsers
+                    .Where(u => u.Id == model.PreparedBy)
+                    .Select(u => (u.FirstName ?? "") + " " + (u.LastName ?? ""))
+                    .FirstOrDefault();
+
+
+                var emailVm = new EstimateStatusNotificationVm
+                {
+                    CustomerName = $"{contact.FirstName} {contact.LastName}".Trim(),
+                    EmailAddress = contact.Email ?? "",
+                    EstimationCode = model.EstimateCode,
+                    EstimationDate = model.CreatedAt?.ToString("MM-dd-yyyy"),
+                    PreparedBy = preparedBy,
+                    EstimationGrandTotal = model.GrandTotal?.ToString("F2"),
+                    TenantCompanyName = branding?.CompanyName,
+                    CompanyPhone = branding?.PhoneNumber,
+                    CompanyEmail = branding?.Email,
+                    TenantId = model.TenantId
+                };
+
+                string subject;
+                EmailTemplateType templateType;
+
+                switch (model.Status)
+                {
+                    case nameof(Estimation.Approved):
+                        subject = AppConstant.Sub_EstimateApprovedEmail;
+                        templateType = EmailTemplateType.EstimateApproved;
+                        break;
+
+                    case nameof(Estimation.Rejected):
+                        subject = AppConstant.Sub_EstimateRejectedEmail;
+                        templateType = EmailTemplateType.EstimateRejected;
+                        break;
+
+                    default:
+                        responseVm.Message = "Email not sent. Invalid estimation status.";
+                        return responseVm;
+                }
+
+                var res =  emailSendHelperService.SendEmailWithReplacedContent(templateType, emailVm, subject);
+            }
+            catch (Exception ex)
+            {
+                responseVm.IsSuccess = false;
+                responseVm.Message = "Estimate status notification failed: " + ex.Message;
+            }
+
+            return responseVm;
+        }
+
+
 
     }
 }

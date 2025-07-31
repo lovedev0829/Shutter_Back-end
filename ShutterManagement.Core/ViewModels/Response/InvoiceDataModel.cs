@@ -50,6 +50,9 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? PowderCoatColor { get; set; }
         public string? Balancedue { get; set; }
         public string? EstimateQRCode { get; set; }
+        public string? CompanyPhone { get; set; }
+        public string? CompanyEmail { get; set; }
+
 
     }
 }
