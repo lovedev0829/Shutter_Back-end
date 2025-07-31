@@ -629,7 +629,7 @@ namespace ShutterManagement.Business.Services
                     EmailAddress = customerDetails?.Email ?? "",
                     Terms = estimationDetails?.TermsCondition ?? "",
                     Note = estimationDetails?.Notes ?? "",
-                    OrderId = orderDetails?.OrderId.ToString() ?? "",
+                    OrderId = orderDetails?.OrderName.ToString() ?? "",
                     OrderName = orderDetails?.OrderName ?? "",
                     CompanyEmail = tenantInfoDetails?.Email ?? "",
                     CompanyPhone = PhoneHelper.FormatPhoneNumber(tenantInfoDetails?.PhoneNumber ?? "") ?? "",
@@ -647,7 +647,12 @@ namespace ShutterManagement.Business.Services
     : ""),
                     Additionalcost = estimationDetails?.AdditionalCost.ToString() ?? "",
                     ProductList = GenerateProductListHtml(productList),
-                    PowderCoatColor = powderCoatColor
+                    PowderCoatColor = (!string.IsNullOrEmpty(powderCoatColor)
+    ? $@" <p style=""font-size: 14px;margin: 0;margin-top: 0px;margin-bottom: 10px;""> <span
+                                    style=""font-weight: 700;"">Powder Coat Color : </span> <span
+                                    style=""font-weight: 700;display: inline-block;"">{powderCoatColor}</span> </p>"
+    : ""),
+                    
                 };
 
                 var originalEstimateUrltoQR = $"{AppConstant.UIBaseURL}contacts/estimate/preview/{estimationDetails?.EstimateId}";
