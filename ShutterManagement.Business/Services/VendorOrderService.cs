@@ -112,6 +112,7 @@ namespace ShutterManagement.Business.Services
                 }
                 var isOrderNumberExist = await AnyAsync(x =>
                     x.IsDelete == false &&
+                    x.IsActive == true &&
                     x.OrderNumber == model.OrderNumber.Trim() &&
                     x.TenentId == claimsProperty.GetTenantId());
 

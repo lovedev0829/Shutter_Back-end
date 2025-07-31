@@ -48,7 +48,7 @@ namespace ShutterManagement.Business.Services
                 var ProductTypeExistInProduct = dbContext.TblRawMaterials.Where(x => x.ProductType == IsProductTypeExists.ProductId).FirstOrDefault();
                 if (ProductTypeExistInProduct != null)
                 {
-                    responseVm.Message = "It can't be deleted. ProductType Exist in Product.";
+                    responseVm.Message = "It can't be deactivate. ProductType Exist in Product.";
                     return responseVm;
                 }
                 if (IsProductTypeExists != null)

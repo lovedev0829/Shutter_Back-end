@@ -143,7 +143,7 @@ namespace ShutterManagement.Business.Services
 
                 if (existingProductType != null)
                 {
-                    responseVm.Message = $"ProductTypeName {AppConstant.AlreadyExists}";
+                    responseVm.Message = $"JobType Name {AppConstant.AlreadyExists}";
                     responseVm.IsSuccess = false;
                     return responseVm;
                 }
@@ -230,20 +230,29 @@ namespace ShutterManagement.Business.Services
                     responseVm.IsSuccess = false;
                     return responseVm;
                 }
+                var existingJobType = GetAllQuerable()
+                .FirstOrDefault(x => x.JobTypeName == model.JobTypeName && x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId() && x.Id != model.JobTypeId);
 
-                var IsProductTypeExists = GetAllQuerable()
+                if (existingJobType != null)
+                {
+                    responseVm.Message = $"JobType Name {AppConstant.AlreadyExists}";
+                    responseVm.IsSuccess = false;
+                    return responseVm;
+                }
+
+                var IsJobTypeExists = GetAllQuerable()
                       .Where(c => c.Id == model.JobTypeId
                                   && c.IsDelete == false && c.TenantId == claimsProperty.GetTenantId())
                       .FirstOrDefault();
 
                
 
-                if (IsProductTypeExists != null)
+                if (IsJobTypeExists != null)
                 {
-                    IsProductTypeExists.JobTypeName = model.JobTypeName;
-                    IsProductTypeExists.UpdatedAt = DateTime.Now;
-                    IsProductTypeExists.ModifiedBy = AppConstant.LoggedInUserID;
-                    var res = Update(IsProductTypeExists);
+                    IsJobTypeExists.JobTypeName = model.JobTypeName;
+                    IsJobTypeExists.UpdatedAt = DateTime.Now;
+                    IsJobTypeExists.ModifiedBy = AppConstant.LoggedInUserID;
+                    var res = Update(IsJobTypeExists);
 
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.UpdateSuccessMsg;
