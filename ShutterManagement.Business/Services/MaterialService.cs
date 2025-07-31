@@ -191,7 +191,7 @@ namespace ShutterManagement.Business.Services
                             if (IsVendorExist)
                             {
                                 int Version1 = 0;
-                                var MaterialUniqueId1 = GetAllQuerable().Where(x => x.TenantId == tenantId && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt).
+                                var MaterialUniqueId1 = GetAllQuerable().Where(x => x.TenantId == tenantId).OrderByDescending(p => p.CreatedAt).
                                     Select(x => x.MaterialUniqueId).FirstOrDefault();
                                 if (MaterialUniqueId1 != null)
                                 {
@@ -254,7 +254,7 @@ namespace ShutterManagement.Business.Services
                         return responseVm;
                     }
                     int Version = 0;
-                    var MaterialUniqueId = GetAllQuerable().Where(x => x.TenantId == tenantId && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt).
+                    var MaterialUniqueId = GetAllQuerable().Where(x => x.TenantId == tenantId).OrderByDescending(p => p.CreatedAt).
                         Select(x => x.MaterialUniqueId).FirstOrDefault();
                     if (MaterialUniqueId != null)
                     {

@@ -913,7 +913,7 @@ namespace ShutterManagement.Business.Services
             else
             {
                 int version = dbContext.TblContacts
-                    .Where(x => x.TenantId == claimsProperty.GetTenantId() && x.CreatedAt.Value.Date == DateTime.Today)
+                    .Where(x => x.TenantId == claimsProperty.GetTenantId())
                     .AsEnumerable()
                     .OrderByDescending(p => p.CreatedAt)
                     .Select(p => (p.ContactUniqueId.Split("-").Length == 3 ? Convert.ToInt32(p.ContactUniqueId.Split("-")[2]) : 0))
@@ -981,7 +981,7 @@ namespace ShutterManagement.Business.Services
             else
             {
                 int version = dbContext.TblJobs
-                    .Where(x => x.TenantId == claimsProperty.GetTenantId() && x.CreatedAt.Value.Date == DateTime.Today)
+                    .Where(x => x.TenantId == claimsProperty.GetTenantId())
                     .AsEnumerable()
                     .OrderByDescending(p => p.CreatedAt)
                     .Select(p => (p.JobUniqueId.Split("-").Length == 3 ? Convert.ToInt32(p.JobUniqueId.Split("-")[2]) : 0))

@@ -91,19 +91,19 @@ namespace ShutterManagement.Core.Common
 
     public enum ModuleName
     {
-        [EnumMember(Value = "CUST")]
+        [EnumMember(Value = "CUSTID")]
         Contact,
-        [EnumMember(Value = "JOB")]
+        [EnumMember(Value = "JOBID")]
         Job,
-        [EnumMember(Value = "EST")]
+        [EnumMember(Value = "ESTID")]
         Estimation,
-        [EnumMember(Value = "ORD")]
+        [EnumMember(Value = "ORDID")]
         Order,
-        [EnumMember(Value = "INV")]
+        [EnumMember(Value = "INVID")]
         Invoice,
-        [EnumMember(Value = "VEN")]
+        [EnumMember(Value = "VENID")]
         Vendor,
-        [EnumMember(Value = "MAT")]
+        [EnumMember(Value = "MATID")]
         Material
     }
 

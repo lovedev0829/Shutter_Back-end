@@ -14,13 +14,17 @@ namespace ShutterManagement.Core.Common
    
         public static string GenerateUniqueIds(ModuleName moduleName, string Code, int Version)
         {
-            var Tenantcode = Code;
+
             var GenerateUniqueName = "";
-            if (Tenantcode != null)
+            Code = Code.Substring(0, 3);
+            var res = Version.ToString("00000");
+            if (Code != null)
             {
-                GenerateUniqueName = $"{EnumValue.GetEnumValue(moduleName)}-{Tenantcode.ToUpper()}{DateTime.Now:yyyyMMdd}-{Version}";
+                GenerateUniqueName = $"{Code.ToUpper()}-{EnumValue.GetEnumValue(moduleName).ToUpper()}-{res}";
             }
             return GenerateUniqueName;
         }
+
+        // insteed of date generate randome number 
     }
 }

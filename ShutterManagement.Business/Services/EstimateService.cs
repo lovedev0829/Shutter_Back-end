@@ -2318,7 +2318,7 @@ namespace ShutterManagement.Business.Services
             {
 
                 var EstimationCount = GetAllQuerable().OrderByDescending(p => p.CreatedAt)
-                   .Where(c => c.TenantId == claimsProperty.GetTenantId() && c.CreatedAt.Value.Date == DateTime.Today.Date)
+                   .Where(c => c.TenantId == claimsProperty.GetTenantId())
                    .ToList().Count();
                 EstimationCount += 1;
 
