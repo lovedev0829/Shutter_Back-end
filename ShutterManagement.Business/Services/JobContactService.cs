@@ -174,12 +174,20 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
+                var TenantId = claimsProperty.GetTenantId();
+
+                var subTenantIds = new List<Guid>();
+                if (string.IsNullOrEmpty(claimsProperty.GetParentTenantId()))
+                {
+                    subTenantIds = tenantService.GetAccessibleTenantIds(TenantId);
+                }
+
                 var jobContactsQuery = from x in dbContext.TblJobContacts
                                        join c in dbContext.MstContactTypes
                                        on x.ContactTypeId equals c.MstContactId
                                        join d in dbContext.TblContacts on x.ContactId equals d.ContactId
                                        join j in dbContext.TblJobs on x.JobId equals j.JobId
-                                       where x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId()
+                                       where (x.TenantId == TenantId || subTenantIds.Contains(x.TenantId ?? Guid.Empty)) && x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId()
                                        orderby x.CreatedAt
                 select new JobContactVm
                 {

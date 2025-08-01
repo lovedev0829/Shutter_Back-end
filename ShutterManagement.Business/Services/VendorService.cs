@@ -93,7 +93,7 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-                int Version1 = GetAllQuerable().Where(x => x.TenantId == claimsProperty.GetTenantId() && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt)
+                int Version1 = GetAllQuerable().Where(x => x.TenantId == claimsProperty.GetTenantId()).OrderByDescending(p => p.CreatedAt)
                 .Select(p => (p.VendorCode.Split("-", StringSplitOptions.RemoveEmptyEntries).Length == 3 ? Convert.ToInt32(p.VendorCode.Split("-", StringSplitOptions.RemoveEmptyEntries)[2]) : 0)).FirstOrDefault();
                 Version1 += 1;
                 var generateUnique = GenerateUniqueId.GenerateUniqueIds(ModuleName.Vendor, claimsProperty.GetCompanyCode(), Version1);

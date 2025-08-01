@@ -894,9 +894,11 @@ namespace ShutterManagement.Business.Services
 
         private async Task<TblContact> CreateNewContactRecord(Sp_Contact model, Guid tenantId)
         {
-            int Version = GetAllQuerable().Where(x => x.TenantId == tenantId && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt)
+            
+            int Version = GetAllQuerable().Where(x => x.TenantId == tenantId).OrderByDescending(p => p.CreatedAt)
                          .Select(p => (p.ContactUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries).Length == 3 ? Convert.ToInt32(p.ContactUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries)[2]) : 0)).FirstOrDefault();
             Version++;
+
 
             var companyCode = tenantService.GetAllQuerable()
                 .Where(x => x.TenantId == tenantId && x.IsActive == true && x.IsDelete == false)

@@ -64,7 +64,7 @@ namespace ShutterManagement.Business.Services
         }
         
 
-        public Task<IResponseVm<string>> CreateTax(CreateTax model)
+        public async Task<IResponseVm<string>> CreateTax(CreateTax model)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
@@ -72,6 +72,16 @@ namespace ShutterManagement.Business.Services
                 var IsTenantExist = tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
                 if (IsTenantExist != null)
                 {
+                    var IsTaxExist = GetAllQuerable()
+                    .FirstOrDefault(x => x.TaxName.Trim() == model.TaxName.Trim() && x.IsDelete == false && x.IsActive == true && x.TenantId == claimsProperty.GetTenantId());
+
+                    if(IsTaxExist != null)
+                    {
+                        responseVm.Message = "TaxName" + AppConstant.AlreadyExists;
+                        return responseVm;
+                    }
+
+                  
                     var tax = new TblTaxRate
                     {
                         TaxName = model.TaxName,
@@ -102,7 +112,7 @@ namespace ShutterManagement.Business.Services
                 responseVm.Message = AppConstant.ExceptionError + ex.Message;
             }
 
-            return Task.FromResult(responseVm);
+            return responseVm;
         }
 
         public Task<IResponseVm<string>> DeleteTax(Guid Id)
@@ -205,7 +215,7 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        public Task<IResponseVm<string>> UpdateTax(UpdateTax model)
+        public async Task<IResponseVm<string>> UpdateTax(UpdateTax model)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
@@ -214,19 +224,30 @@ namespace ShutterManagement.Business.Services
                 if (IsTenantExist == null)
                 {
                     responseVm.Message = AppConstant.TenantNotFound;
-                    return Task.FromResult(responseVm);
+                    return responseVm;
                 }
-                var IsTaxExist = GetAllQuerable().Where(x => x.TaxRateId == model.TaxRateId && x.IsDelete == false).FirstOrDefault();
-            
+
+                var IsTaxExist = GetAllQuerable()
+                 .FirstOrDefault(x => x.TaxName.Trim() == model.TaxName.Trim() && x.IsDelete == false && x.IsActive == true && x.TenantId == claimsProperty.GetTenantId()
+                 && x.TaxRateId != model.TaxRateId);
+
                 if (IsTaxExist != null)
                 {
-                    IsTaxExist.TaxName = model.TaxName;
-                    IsTaxExist.Municipality = model.Municipality;
-                    IsTaxExist.State = model.State;
-                    IsTaxExist.City = model.City;
-                    IsTaxExist.UpdatedAt = DateTime.Now;
-                    IsTaxExist.ModifiedBy = AppConstant.LoggedInUserID;
-                    var res = Update(IsTaxExist);
+                    responseVm.Message = "TaxName" + AppConstant.AlreadyExists;
+                    return responseVm;
+                }
+
+                var TaxExist = GetAllQuerable().Where(x => x.TaxRateId == model.TaxRateId && x.IsDelete == false).FirstOrDefault();
+            
+                if (TaxExist != null)
+                {
+                    TaxExist.TaxName = model.TaxName;
+                    TaxExist.Municipality = model.Municipality;
+                    TaxExist.State = model.State;
+                    TaxExist.City = model.City;
+                    TaxExist.UpdatedAt = DateTime.Now;
+                    TaxExist.ModifiedBy = AppConstant.LoggedInUserID;
+                    var res = Update(TaxExist);
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.UpdateSuccessMsg;
                 }
@@ -241,7 +262,7 @@ namespace ShutterManagement.Business.Services
             {
                 responseVm.Message = AppConstant.ExceptionError + ex.Message;
             }
-            return Task.FromResult(responseVm);
+            return responseVm;
         }
     }
 }

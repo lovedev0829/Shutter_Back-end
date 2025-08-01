@@ -23,5 +23,6 @@ namespace ShutterManagement.Business.Interfaces
         Task<IResponseVm<List<GetAllTenant>>> TenantGetAll(Pagination filter);
         Task<IResponseVm<List<TenantList>>> GetTenantsListByUsername(string UserName);
         Task<IResponseVm<UserLoginDetails>> GetUserDataForTenantSwitch(string UserName, string TenantId);
+        public List<Guid> GetAccessibleTenantIds(Guid? loggedInTenantId);
     }
 }

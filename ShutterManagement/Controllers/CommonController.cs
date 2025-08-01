@@ -614,7 +614,7 @@ namespace ShutterManagement.Controllers
         {
             filter.RecordPerPage = this.filter.RecordPerPage;
             var res = await expression.Get_AllExpression(filter);
-            
+            res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
             return Ok(res);
         }
 

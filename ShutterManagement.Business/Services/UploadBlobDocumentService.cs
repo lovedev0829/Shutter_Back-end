@@ -23,11 +23,13 @@ namespace ShutterManagement.Business.Services
     {
         private readonly BlobStorageService _blobService;
         private readonly ClaimsProperty claimsProperty;
+        private readonly ITenantService tenantService;
 
-        public UploadBlobDocumentService(BlobStorageService blobService ,ClaimsProperty claimsProperty)
+        public UploadBlobDocumentService(BlobStorageService blobService ,ClaimsProperty claimsProperty ,ITenantService tenantService)
         {
             _blobService = blobService;
             this.claimsProperty = claimsProperty;
+            this.tenantService = tenantService;
         }
 
         public async Task<IResponseVm<string>> UploadDocument(CreateBlobDocument model)
@@ -190,8 +192,13 @@ namespace ShutterManagement.Business.Services
 
             try
             {
-                
-                var BlobDocumentlist = GetAllQuerable().Where(x => x.IsDelete == false && filter.JobId.ToString().ToLower()== x.JobId.ToString().ToLower() && x.TenantId == claimsProperty.GetTenantId()).OrderByDescending(x => x.CreatedAt).
+                var TenantId = claimsProperty.GetTenantId();
+                var subTenantIds = new List<Guid>();
+                if (string.IsNullOrEmpty(claimsProperty.GetParentTenantId()))
+                {
+                    subTenantIds = tenantService.GetAccessibleTenantIds(TenantId);
+                }
+                var BlobDocumentlist = GetAllQuerable().Where(x => x.IsDelete == false && filter.JobId.ToString().ToLower()== x.JobId.ToString().ToLower() && (x.TenantId == TenantId || subTenantIds.Contains(x.TenantId ?? Guid.Empty))).OrderByDescending(x => x.CreatedAt).
                                     Select(i => new GetAllBlobDocument
                                     {
                                         DocumentId = i.DocumentId,
