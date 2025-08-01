@@ -32,6 +32,7 @@ namespace ShutterManagement
             AppConstant.GHL_Marketplace_RedirectUri = Configuration["GoHighLevelOAuthSettings:RedirectUri"] ?? "";
             AppConstant.GHL_Marketplace_TokenURL = Configuration["GoHighLevelOAuthSettings:TokenUrl"] ?? "";
             AppConstant.GHL_Version = Configuration["GoHighLevelOAuthSettings:Version"] ?? "";
+            AppConstant.GHL_BaseAddress = Configuration["GoHighLevelOAuthSettings:BaseUrl"] ?? "";
             
             // Microsoft365 Configuration (Fixed typo)
             AppConstant.Microsoft365_ClientId = Configuration["Microsoft365Credentials:ClientId"] ?? "";

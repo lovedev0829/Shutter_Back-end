@@ -1292,8 +1292,9 @@ namespace ShutterManagement.Business.Services
                         {
                             if (NewEstimationStatus == Estimation.Approved)
                             {
+                                var tenantId = EstimationStatus.TenantId;
                                 var jobStatusName = EnumValue.GetEnumValue(JobStatus.Won);
-                                var updateResponse = await statusAndStageMapping.UpdateOpportunityAndJobStatus(EstimationStatus?.JobId ?? Guid.Empty, jobStatusName);
+                                var updateResponse = await statusAndStageMapping.UpdateOpportunityAndJobStatus(EstimationStatus?.JobId ?? Guid.Empty, jobStatusName, tenantId);
 
                                 if (!updateResponse.IsSuccess)
                                 {

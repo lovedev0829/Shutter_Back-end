@@ -20,12 +20,14 @@ namespace ShutterManagement.Business.Services
         {
             this.claimsProperty = claimsProperty;
         }
-        public async Task<IResponseVm<string>> SaveHistory(TblJob job)
+        public async Task<IResponseVm<string>> SaveHistory(TblJob job , Guid? LoggedInTenantId=null)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
 
             try
             {
+                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : claimsProperty.GetTenantId());
+
                 if (job == null)
                 {
                     responseVm.IsSuccess = false;
@@ -37,9 +39,9 @@ namespace ShutterManagement.Business.Services
                 {
                     HistoryId = Guid.NewGuid(),
                     JobJson = JsonConvert.SerializeObject(job)??"",
-                    ChangedBy = claimsProperty.GetTenantId(),
+                    ChangedBy = LoggedInTenantId,
                     ChangedAt = DateTime.Now,
-                    TenantId = claimsProperty.GetTenantId()
+                    TenantId = LoggedInTenantId
                 };
 
                 var res = Add(history);
