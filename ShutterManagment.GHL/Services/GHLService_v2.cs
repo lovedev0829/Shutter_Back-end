@@ -432,21 +432,24 @@ namespace ShutterManagement.GHL.Services
                     return responseVm;
                 }
 
-                var contactData = new
+                var contactData = new Dictionary<string, object>
                 {
-                    firstName = contact.FirstName,
-                    lastName = contact.LastName,
-                    email = contact.Email,
-                    phone = contact.Phone,
-                    locationId = getGHLConfiguration.LocationId,
-                    address1= contact.StreetAddress??"",
-                    city= contact.City??"",
-                    state= contact.State??"",
-                    postalCode= contact.ZipCode??"",
-
+                    ["firstName"] = contact.FirstName,
+                    ["lastName"] = contact.LastName,
+                    ["locationId"] = getGHLConfiguration.LocationId,
+                    ["address1"] = contact.StreetAddress ?? "",
+                    ["city"] = contact.City ?? "",
+                    ["state"] = contact.State ?? "",
+                    ["postalCode"] = contact.ZipCode ?? ""
                 };
 
+                // Only include email if valid
+                if (!string.IsNullOrWhiteSpace(contact.Email))
+                    contactData["email"] = contact.Email;
 
+                // Only include phone if valid
+                if (!string.IsNullOrWhiteSpace(contact.Phone))
+                    contactData["phone"] = contact.Phone;
 
                 var requestUrl = $"{AppConstant.GHL_BaseAddress}/contacts";
                 var contactJson = JsonConvert.SerializeObject(contactData);
@@ -522,22 +525,24 @@ namespace ShutterManagement.GHL.Services
                     return responseVm;
                 }
 
-             
-
-
-                var contactData = new
+                var contactData = new Dictionary<string, object>
                 {
-                    firstName = contact.FirstName,
-                    lastName = contact.LastName,
-                    email = contact.Email,
-                    phone = contact.Phone,
-                    //locationId = AppConstant.GHL_LocationId,
-                    address1 = contact.StreetAddress ?? "",
-                    city = contact.City ?? "",
-                    state = contact.State ?? "",
-                    postalCode = contact.ZipCode ?? "",
-
+                    ["firstName"] = contact.FirstName,
+                    ["lastName"] = contact.LastName,
+                    ["locationId"] = getGHLConfiguration.LocationId,
+                    ["address1"] = contact.StreetAddress ?? "",
+                    ["city"] = contact.City ?? "",
+                    ["state"] = contact.State ?? "",
+                    ["postalCode"] = contact.ZipCode ?? ""
                 };
+
+                // Only include email if valid
+                if (!string.IsNullOrWhiteSpace(contact.Email))
+                    contactData["email"] = contact.Email;
+
+                // Only include phone if valid
+                if (!string.IsNullOrWhiteSpace(contact.Phone))
+                    contactData["phone"] = contact.Phone;
 
                 var requestUrl = $"{AppConstant.GHL_BaseAddress}/contacts/{contactId}";
                 var contactJson = JsonConvert.SerializeObject(contactData);

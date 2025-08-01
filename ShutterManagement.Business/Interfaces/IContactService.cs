@@ -28,6 +28,5 @@ namespace ShutterManagement.Business.Interfaces
         Task<IResponseVm<string>> ContactSync(Guid? LoggedInTenantId = null);
         //  Task<IResponseVm<string>> SyncContactandJobforPartner(string TenantId);
 
-        string FormatPhoneNumber(string phoneNumber);
     }
 }

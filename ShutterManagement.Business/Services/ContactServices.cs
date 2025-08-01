@@ -94,14 +94,6 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        public static string FormatPhoneNumber(string phoneNumber)
-        {
-            if (string.IsNullOrWhiteSpace(phoneNumber))
-                return string.Empty;
-
-            var match = Regex.Match(phoneNumber, @"^\+?\d{1}");
-            return match.Value == "+1" ? phoneNumber : "+1" + phoneNumber.TrimStart('+');
-        }
         //public async Task<IResponseVm<string>> Create_Contact(Sp_Contact model, Guid? LoggedInTenantId = null)
         //{
         //    IResponseVm<string> responseVm = new ResponseVm<string>();
@@ -763,7 +755,7 @@ namespace ShutterManagement.Business.Services
                 }
 
                 if (!string.IsNullOrEmpty(model.PhoneNumber))
-                    model.PhoneNumber = FormatPhoneNumber(model.PhoneNumber);
+                    model.PhoneNumber = PhoneHelper.FormatPhoneNumberforGHL(model.PhoneNumber);
 
                 if (!model.IsTaxExemption)
                 {
@@ -1005,7 +997,7 @@ namespace ShutterManagement.Business.Services
                 }
 
                 if (!string.IsNullOrEmpty(model.PhoneNumber))
-                    model.PhoneNumber = FormatPhoneNumber(model.PhoneNumber);
+                    model.PhoneNumber = PhoneHelper.FormatPhoneNumberforGHL(model.PhoneNumber);
                 //await gHLConfigurationService.GetGHLConfiguration(tenantId.ToString());
 
                 if (!string.IsNullOrEmpty(model.GHLContactId))

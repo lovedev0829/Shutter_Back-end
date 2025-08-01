@@ -444,9 +444,10 @@ namespace ShutterManagement.Business.Services
                         }
                         if (!string.IsNullOrEmpty(record.PhoneNumber))
                         {
-                            record.PhoneNumber = contactService.FormatPhoneNumber(record.PhoneNumber);
+                            record.PhoneNumber = PhoneHelper.FormatPhoneNumberforGHL(record.PhoneNumber);
                         }
-                        if((!existingContactResponse.IsSuccess || (existingContactResponse.Data == null || existingContactResponse.Data.Count < 0) && !string.IsNullOrEmpty(record.PhoneNumber)))
+                        if((!existingContactResponse.IsSuccess || (existingContactResponse.Data == null || existingContactResponse.Data.Count < 0))
+                            && (!string.IsNullOrEmpty(record.PhoneNumber) || record.PhoneNumber != ""))
                         {
                             filter.SearchValue = record.PhoneNumber;
                             existingContactResponse = await contactService.GetAll_Contact(filter, role, false);
