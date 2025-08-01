@@ -162,12 +162,13 @@ namespace ShutterManagement.Business.Services
         }
 
         #region Update Opportunity Status
-        public async Task<IResponseVm<string>> UpdateOpportunityStage(string opportunityId, Guid? stageId)
+        public async Task<IResponseVm<string>> UpdateOpportunityStage(string opportunityId, Guid? stageId ,Guid? LoggedInTenantId=null)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var ghlconfigdetails = await gHLConfiguration.GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
+                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : claimsProperty.GetTenantId());
+                var ghlconfigdetails = await gHLConfiguration.GetGHLConfiguration(LoggedInTenantId?.ToString());
                 
                 if (stageId == Guid.Empty || stageId == null)
                 {
@@ -258,7 +259,7 @@ namespace ShutterManagement.Business.Services
 
                 // if ghlstageid is not null then fetch id using getstagemapping id and then continue the process 
 
-                var stageResponse = await GetGHLStagesMappingsById(jobStatus.JobStatusId);
+                var stageResponse = await GetGHLStagesMappingsById(jobStatus.JobStatusId, LoggedInTenantId);
                 var stageMapping = stageResponse?.Data;
                 Guid? stageId = stageMapping?.StageId;
 
@@ -268,7 +269,7 @@ namespace ShutterManagement.Business.Services
 
                 if (isOpportunityAvailable && stageId != null && stageId != Guid.Empty)
                 {
-                    var updateGhlResponse = await UpdateOpportunityStage(opportunityId, stageId);
+                    var updateGhlResponse = await UpdateOpportunityStage(opportunityId, stageId, LoggedInTenantId);
                     if (!updateGhlResponse.IsSuccess)
                     {
 
@@ -283,7 +284,7 @@ namespace ShutterManagement.Business.Services
                 var job = dBContext.TblJobs.FirstOrDefault(x => x.JobId == jobId && x.IsActive == true);
                 if (job != null)
                 {
-                    var res = await automAtionHistory.SaveHistory(job);
+                    var res = await automAtionHistory.SaveHistory(job, LoggedInTenantId);
                 }
 
                 responseVm.IsSuccess = true;
