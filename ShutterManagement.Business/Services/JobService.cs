@@ -286,10 +286,11 @@ namespace ShutterManagement.Business.Services
 
             if (model.GhlOpportunityId == null && !await ValidateAddress(model, tenantId))
                 return BuildErrorResponse<(Guid, string)>("Address " + AppConstant.NoDataFound);
-
+           
             var jobStatus = await ResolveJobStatus(model, tenantId);
             var stageResponse = await statusAndStageMapping.GetGHLStagesMappingsById(jobStatus, tenantId);
-            var stage = _context.TblGhlStages.Where(x => x.TenantId == tenantId && x.GhlStageId == model.GHL_StageId.ToString()).FirstOrDefault();
+            var globalStageId = string.IsNullOrEmpty(model.GHL_StageId.ToString()) ? stageResponse.Data.StageId : model.GHL_StageId ?? Guid.Empty;
+            var stage = _context.TblGhlStages.Where(x => x.TenantId == tenantId && x.GhlStageId == globalStageId.ToString()).FirstOrDefault();
             string stageName = model.GHL_StageName ?? stage?.GhlStageName ?? string.Empty;
 
             response.IsSuccess = true;
