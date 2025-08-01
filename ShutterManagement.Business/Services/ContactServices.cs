@@ -848,7 +848,7 @@ namespace ShutterManagement.Business.Services
                     if (ghlConfig.IsSuccess)
                     {
                         var ghlResponse = await SyncWithGHL(contact, model);
-                        responseVm.Message = AppConstant.InsertSuccessMsg + ghlResponse.Message;
+                        responseVm.Message = AppConstant.InsertSuccessMsg + "."+ ghlResponse.Message;
                     }
                     else
                     {
@@ -1691,25 +1691,9 @@ namespace ShutterManagement.Business.Services
                 {
                     var ghlconfigdetails =  await gHLConfigurationService.GetGHLConfiguration(LoggedInTenantId.ToString());
                     ghlResponse = await gHLService_V2.CreateContactAsync(ghlconfigdetails?.Data,ghlContactAdd);
-                    //if (ghlResponse.IsSuccess)
-                    //{
-                    //    //var contactExist = (await GetById(contact.ContactId));
-                    //    var contactExist = contact;
-
-                    //    if (contactExist != null && contactExist.IsDelete == false)
-                    //    {
-                    //        contactExist.GhlcontactId = ghlResponse?.Data?.Contact?.id;
-                    //        contactExist.LastSync = DateTime.Now;
-                    //    }
-                    //    var res = await Update(contactExist);
-                    //    responseVm.IsSuccess = true;
-                    //    responseVm.Message = "Contact synced successfully with GHL.";
-                    //}
+                   
                     responseVm.IsSuccess = true;
                     responseVm.Message = "Contact synced successfully with GHL.";
-                    //responseVm.IsSuccess = true;
-                    //responseVm.Message = AppConstant.InsertSuccessMsg;
-                    return responseVm;
                 }
                 else
                 {
