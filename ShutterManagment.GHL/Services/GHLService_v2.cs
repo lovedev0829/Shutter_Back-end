@@ -409,11 +409,7 @@ namespace ShutterManagement.GHL.Services
         }
 
 
-
-
-
-
-        public async Task<IResponseVm<GhlContactSingleResponse>> CreateContactAsync(GetGHLConfiguration getGHLConfiguration, GhlContactAdd contact)
+       public async Task<IResponseVm<GhlContactSingleResponse>> CreateContactAsync(GetGHLConfiguration getGHLConfiguration, GhlContactAdd contact)
         {
             IResponseVm<GhlContactSingleResponse> responseVm = new ResponseVm<GhlContactSingleResponse>();
             try
