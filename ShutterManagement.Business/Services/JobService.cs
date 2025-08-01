@@ -290,7 +290,17 @@ namespace ShutterManagement.Business.Services
            
             var jobStatus = await ResolveJobStatus(model, tenantId);
             var stageResponse = await statusAndStageMapping.GetGHLStagesMappingsById(jobStatus, tenantId);
-            var globalStageId = string.IsNullOrEmpty(model.GHL_StageId.ToString()) ? stageResponse.Data.StageId : model.GHL_StageId ?? Guid.Empty;
+            if (!stageResponse.IsSuccess)
+            {
+                var res = await gHLConfiguration.GetGHLConfiguration(tenantId.ToString());
+                if(res.IsSuccess)
+                {
+                    response.IsSuccess = stageResponse.IsSuccess;
+                    response.Message = stageResponse.Message;
+                    return response;
+                }
+            }
+            var globalStageId = string.IsNullOrEmpty(model.GHL_StageId.ToString()) ? stageResponse.Data.StageId ?? Guid.Empty : model.GHL_StageId ?? Guid.Empty;
             var stage = _context.TblGhlStages.Where(x => x.TenantId == tenantId && x.GhlStageId == globalStageId.ToString()).FirstOrDefault();
             string stageName = model.GHL_StageName ?? stage?.GhlStageName ?? string.Empty;
 

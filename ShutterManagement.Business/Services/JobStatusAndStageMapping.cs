@@ -243,14 +243,14 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        public async Task<IResponseVm<string>> UpdateOpportunityAndJobStatus(Guid? jobId, string? jobStatusName)
+        public async Task<IResponseVm<string>> UpdateOpportunityAndJobStatus(Guid? jobId, string? jobStatusName,Guid? LoggedInTenantId = null)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
 
             try
             {
 
-                var statusResponse = await GetJobStatusByName(jobStatusName);
+                var statusResponse = await GetJobStatusByName(jobStatusName,null,LoggedInTenantId);
                 if (!statusResponse.IsSuccess)
                     return new ResponseVm<string> { IsSuccess = false, Message = "Job status not found." };
 
