@@ -11,7 +11,7 @@ namespace ShutterManagement.Core.ViewModels
 
         // Customer info
         public string? CustomerName { get; set; }
-        public string? EmailAddress { get; set; }
+        public string? Email { get; set; }
 
         // Estimate details
         public string? EstimationCode { get; set; }
@@ -23,7 +23,7 @@ namespace ShutterManagement.Core.ViewModels
         public string? TenantCompanyName { get; set; }
         public string? CompanyPhone { get; set; }
         public string? CompanyEmail { get; set; }
-        public Guid? TenantId { get; set; }
+        public string? TenantId { get; set; }
 
         
     }

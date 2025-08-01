@@ -2554,7 +2554,7 @@ namespace ShutterManagement.Business.Services
                 var emailVm = new EstimateStatusNotificationVm
                 {
                     CustomerName = $"{contact.FirstName} {contact.LastName}".Trim(),
-                    EmailAddress = contact.Email ?? "",
+                    Email = contact.Email ?? "",
                     EstimationCode = model.EstimateCode,
                     EstimationDate = model.CreatedAt?.ToString("MM-dd-yyyy"),
                     PreparedBy = preparedBy,
@@ -2562,7 +2562,7 @@ namespace ShutterManagement.Business.Services
                     TenantCompanyName = branding?.CompanyName,
                     CompanyPhone = branding?.PhoneNumber,
                     CompanyEmail = branding?.Email,
-                    TenantId = model.TenantId
+                    TenantId = model.TenantId.ToString()
                 };
 
                 string subject;

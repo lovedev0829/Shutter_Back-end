@@ -987,7 +987,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var tenantId = (LoggedInTenantId != null && LoggedInTenantId != Guid.Empty)
-                    ? LoggedInTenantId.Value
+? LoggedInTenantId.Value
                     : claimsProperty.GetTenantId();
                 model.IsBillingAddressSameAsAddress = false;
                 if (!await tenantService.AnyAsync(x => x.TenantId == tenantId && x.IsActive == true))
