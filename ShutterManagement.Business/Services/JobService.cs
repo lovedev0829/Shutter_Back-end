@@ -222,7 +222,7 @@ namespace ShutterManagement.Business.Services
 
         private async Task<string> GenerateJobUniqueId(Guid? tenantId)
         {
-            int Version = GetAllQuerable().Where(x => x.TenantId == tenantId && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt)
+            int Version = GetAllQuerable().Where(x => x.TenantId == tenantId).OrderByDescending(p => p.CreatedAt)
                       .Select(p => (p.JobUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries).Length == 3 ? Convert.ToInt32(p.JobUniqueId.Split("-", StringSplitOptions.RemoveEmptyEntries)[2]) : 0)).FirstOrDefault();
             Version += 1;
 
@@ -1312,6 +1312,14 @@ namespace ShutterManagement.Business.Services
             {
                 var IsTenant = await tenantService.AnyAsync(x => x.TenantId == claimsProperty.GetTenantId() && x.IsDelete == false && x.IsActive == true);
 
+                var logdinTenantId = claimsProperty.GetTenantId();
+
+                var subTenantIds = new List<Guid>();
+                if (string.IsNullOrEmpty(claimsProperty.GetParentTenantId()))
+                {
+                    subTenantIds = tenantService.GetAccessibleTenantIds(logdinTenantId);
+                }
+
                 if (IsTenant)
                 {
                     var JobList = (from t2 in _context.TblJobs.OrderByDescending(x => x.CreatedAt)
@@ -1332,7 +1340,7 @@ namespace ShutterManagement.Business.Services
                                    from t6 in contact.DefaultIfEmpty()
                                    join t7 in _context.MstPowderCoatColors on t2.PowderCoatColorId equals t7.Id into PowderCoatColor
                                    from t7 in PowderCoatColor.DefaultIfEmpty()
-                                   where t2.TenantId == claimsProperty.GetTenantId() && t2.IsDelete == false
+                                   where (t2.TenantId == logdinTenantId || subTenantIds.Contains(t2.TenantId ?? Guid.Empty) || p2.ParentTenantId == logdinTenantId) && t2.IsDelete == false
                                    select new GetAllJobsdetails
                                    {
                                        IsActive = t2.IsActive,

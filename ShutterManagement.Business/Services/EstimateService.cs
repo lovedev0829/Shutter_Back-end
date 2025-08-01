@@ -1357,7 +1357,23 @@ namespace ShutterManagement.Business.Services
             var isFilteringByEstimationId = !string.IsNullOrEmpty(filter.EstimationId);
             var estimationId = filter.EstimationId;
 
-            IQueryable<TblEstimate> query = GetAllQuerable().Where(x => !x.IsDelete == true);
+            var subTenantIds = new List<Guid>();
+
+            var tenant = tenantService.GetAllQuerable().FirstOrDefault(x => x.TenantId == TenantId);
+
+            if (tenant?.ParentTenantId != null && tenant.ParentTenantId != Guid.Empty)
+            {
+
+                subTenantIds.Add((Guid)TenantId);
+            }
+            else
+            {
+
+                subTenantIds = tenantService.GetAccessibleTenantIds(TenantId);
+            }
+
+
+            IQueryable<TblEstimate> query = GetAllQuerable().Where(x => (x.TenantId == TenantId || subTenantIds.Contains((Guid)x.TenantId)) && !x.IsDelete == true);
             // Apply estimation ID filter if provided
             if (isFilteringByEstimationId)
             {
@@ -1368,7 +1384,7 @@ namespace ShutterManagement.Business.Services
             {
                 // Default to logged-in tenant
                 FileLogger.Log("No TenantId provided, fetching for the logged-in tenant.");
-                query = query.Where(x => x.TenantId == TenantId);
+                query = query.Where(x => (x.TenantId == TenantId || subTenantIds.Contains((Guid)x.TenantId)));
             }
             else if (string.IsNullOrEmpty(filter.TenantId))
             {
@@ -2331,7 +2347,7 @@ namespace ShutterManagement.Business.Services
             {
 
                 var EstimationCount = GetAllQuerable().OrderByDescending(p => p.CreatedAt)
-                   .Where(c => c.TenantId == claimsProperty.GetTenantId() && c.CreatedAt.Value.Date == DateTime.Today.Date)
+                   .Where(c => c.TenantId == claimsProperty.GetTenantId())
                    .ToList().Count();
                 EstimationCount += 1;
 

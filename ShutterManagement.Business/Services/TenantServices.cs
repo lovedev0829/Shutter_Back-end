@@ -683,5 +683,18 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
+        public List<Guid> GetAccessibleTenantIds(Guid? loggedInTenantId)
+        {
+            if (loggedInTenantId!=Guid.Empty)
+            {
+                return GetAllQuerable()
+                    .Where(t => t.ParentTenantId == loggedInTenantId || t.TenantId == loggedInTenantId)
+                    .Select(t => t.TenantId)
+                    .ToList();
+            }
+
+            return new List<Guid> { loggedInTenantId?? Guid.Empty };
+        }
+
     }
 }

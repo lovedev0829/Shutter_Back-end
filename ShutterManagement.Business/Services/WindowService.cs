@@ -505,8 +505,15 @@ namespace ShutterManagement.Business.Services
         #region private methods
         private List<WindowsList> FetchWindowsData()
         {
+            var logdinTenantId = claimsProperty.GetTenantId();
+
+            var subTenantIds = new List<Guid>();
+            if (string.IsNullOrEmpty(claimsProperty.GetParentTenantId()))
+            {
+                subTenantIds = tenantService.GetAccessibleTenantIds(logdinTenantId);
+            }
             return dbContext.TblWindows
-                .Where(w => w.IsDelete == false && w.TenantId == claimsProperty.GetTenantId())
+                .Where(w => w.IsDelete == false && (w.TenantId == claimsProperty.GetTenantId() || subTenantIds.Contains(w.TenantId ?? Guid.Empty)))
                 .GroupJoin(dbContext.TblWindowProducts,
                     w => w.WindowId,
                     wp => wp.WindowId,

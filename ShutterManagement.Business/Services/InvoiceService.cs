@@ -164,7 +164,7 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-                int Version = GetAllQuerable().Where(x => x.TenantId == claimsProperty.GetTenantId() && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt)
+                int Version = GetAllQuerable().Where(x => x.TenantId == claimsProperty.GetTenantId()).OrderByDescending(p => p.CreatedAt)
                .Select(p => (p.InvoiceNumber.Split("-", StringSplitOptions.RemoveEmptyEntries).Length == 3 ? Convert.ToInt32(p.InvoiceNumber.Split("-", StringSplitOptions.RemoveEmptyEntries)[2]) : 0)).FirstOrDefault();
                 Version += 1;
                 var InvoiceNumberUniquNumber = GenerateUniqueId.GenerateUniqueIds(ModuleName.Invoice, claimsProperty.GetCompanyCode(), Version);     //   var InvoiceNumberUniquNumber = GenerateUniqueId.GenerateUniqueIds(ModuleName.Invoice, claimsProperty.GetCompanyCode());
@@ -364,12 +364,18 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
+                var subTenantIds = new List<Guid>();
+                if (string.IsNullOrEmpty(claimsProperty.GetParentTenantId()))
+                {
+                    subTenantIds = tenantService.GetAccessibleTenantIds(claimsProperty.GetTenantId());
+                }
+
                 var invoicesQuery = (from i in GetAllQuerable().OrderByDescending(x => x.CreatedAt)
                                      join j in dbContext.TblJobs on i.JobId equals j.JobId
                                      join c in dbContext.TblContacts on j.ContactId equals c.ContactId
                                      join d in dbContext.TblEstimates on i.EstimateId equals d.EstimateId
                                      let hasActiveOrder = dbContext.TblOrders.Any(o => o.EstimateId == i.EstimateId && o.IsActive == true)
-                                     where i.IsDelete == false && hasActiveOrder && j.IsActive == true
+                                     where (i.TenantId == claimsProperty.GetTenantId() || subTenantIds.Contains(i.TenantId ?? Guid.Empty)) && i.IsDelete == false && hasActiveOrder && j.IsActive == true
                                      orderby i.CreatedAt descending
                                      select new InvoiceVM
                                      {
@@ -601,16 +607,21 @@ namespace ShutterManagement.Business.Services
 
                 var powderCoatColor = estimationRecord.Data
                      .FirstOrDefault(x => x.IsActive == true).jobDetails.PowderCoatColor;
+
+                var PreparedBy = dbContext.TblUsers
+                    .Where(s => s.Id == (estimationDetails.PreparedBy == Guid.Empty || estimationDetails.PreparedBy == null ? estimationDetails.CreatedBy : estimationDetails.PreparedBy))
+                    .Select(n => (n.FirstName ?? "") + " " + (n.LastName ?? ""))
+                    .FirstOrDefault() ?? "";
         
                 var invoiceData = new InvoiceDataModel
                 {
                     CustomerName = (customerDetails?.FirstName ??"")+ " " + (customerDetails?.LastName ??""),
-                    PreparedBy = dbContext.TblUsers.Where(s => s.Id == estimationDetails.PreparedBy).Select(n => (n.FirstName ?? "") + " " + (n.LastName ?? "")).FirstOrDefault() ?? "",
+                    PreparedBy = PreparedBy ?? "",
                     CustomerId = customerDetails?.ContactUniqueId ?? "",
                     CustomerCity = customerDetails?.billingAddressVm?.City ?? "",
                     CustomerState = customerState ?? "",
                     CustomerZipCode = customerDetails?.billingAddressVm?.ZipCode ?? "",
-                    HomePhone = customerDetails?.billingAddressVm?.PhoneNumber ?? "",
+                    HomePhone = PhoneHelper.FormatPhoneNumber(customerDetails?.billingAddressVm?.PhoneNumber??"")??"",
                     CompanyStreetAddress = tenantInfoDetails?.StreetAddress ?? "",
                     CompanyCity = tenantInfoDetails?.City ?? "",
                     CompanyCountry = tenantInfoDetails?.Country ?? "",
@@ -619,7 +630,7 @@ namespace ShutterManagement.Business.Services
                     CompanyPhone = tenantInfoDetails?.PhoneNumber ?? "",
                     CustomerStreetAddress = customerDetails?.billingAddressVm?.StreetAddress ?? "",
                     StreetAddress = customerDetails?.billingAddressVm?.StreetAddress ?? "",
-                    MobilePhone = customerDetails?.PhoneNumber ?? "",
+                    MobilePhone = PhoneHelper.FormatPhoneNumber(customerDetails?.billingAddressVm?.PhoneNumber ?? "") ?? "" ?? "",
                     TenantCompanyName = tenantInfoDetails?.CompanyName ?? "",
                     Logo = tenantInfoDetails?.Logo ?? "",
                     EstimationDate = Convert.ToDateTime(estimationDetails?.CreatedAt).ToString("MM-dd-yyyy") ?? "",
@@ -631,8 +642,13 @@ namespace ShutterManagement.Business.Services
                     EmailAddress = customerDetails?.Email ?? "",
                     Terms = estimationDetails?.TermsCondition ?? "",
                     Note = estimationDetails?.Notes ?? "",
-                    OrderId = orderDetails?.OrderId.ToString() ?? "",
-                    OrderName = orderDetails?.OrderName ?? "",
+                    OrderName = (!string.IsNullOrEmpty(orderDetails?.OrderName)
+    ? $@"  <p style='font-size: 16px;margin: 0;margin-top: 17px;margin-bottom: 0;'> <span
+                                    style='font-weight: 700; color: #ff0000;'>Order ID : {orderDetails?.OrderName}</span> </p>"
+    : ""),
+
+                    CompanyEmail = tenantInfoDetails?.Email ?? "",
+                    CompanyPhone = PhoneHelper.FormatPhoneNumber(tenantInfoDetails?.PhoneNumber ?? "") ?? "",
                     Taxes = (estimationDetails?.TotaltaxAmount > 0
     ? $@"<tr>
 <td style=""padding: 5px 5px; font-weight: 700; font-size: 14px;"">Taxes :</td>
@@ -647,7 +663,12 @@ namespace ShutterManagement.Business.Services
     : ""),
                     Additionalcost = estimationDetails?.AdditionalCost.ToString() ?? "",
                     ProductList = GenerateProductListHtml(productList),
-                    PowderCoatColor = powderCoatColor
+                    PowderCoatColor = (!string.IsNullOrEmpty(powderCoatColor)
+    ? $@" <p style='font-size: 14px;margin: 0;margin-top: 10px;margin-bottom: 10px;'> <span
+                                    style='font-weight: 700;display: inline-block;'>Powder Coat Color : </span> <span
+                                    style='font-weight: 700;display: inline-block;'>{powderCoatColor}</span> </p>"
+    : ""),
+                    
                 };
 
                 var originalEstimateUrltoQR = $"{AppConstant.UIBaseURL}contacts/estimate/preview/{estimationDetails?.EstimateId}";
@@ -944,6 +965,8 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
+
+       
 
         public string GenerateQRCodeBase64(string content)
         {

@@ -77,7 +77,7 @@ namespace ShutterManagement.Business.Services
                 }
                 // if emailtemplate type is rejected or approved 
                
-                response = await GetEmailConfigAndSendEmail(dataObject.Email, emailContent.Data , SubjecteEmail);
+                response = await GetEmailConfigAndSendEmail(dataObject.Email, emailContent.Data , SubjecteEmail,"",null, dataObject.TenantId);
             }
             catch (Exception ex)
             {

@@ -117,7 +117,7 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-                int Version = GetAllQuerable().Where(x => x.TenantId == claimsProperty.GetTenantId() && x.CreatedAt.Value.Date == DateTime.Today.Date).OrderByDescending(p => p.CreatedAt)
+                int Version = GetAllQuerable().Where(x => x.TenantId == claimsProperty.GetTenantId()).OrderByDescending(p => p.CreatedAt)
                      .Select(p => (p.OrderName.Split("-", StringSplitOptions.RemoveEmptyEntries).Length == 3 ? Convert.ToInt32(p.OrderName.Split("-", StringSplitOptions.RemoveEmptyEntries)[2]) : 0)).FirstOrDefault();
                 Version += 1;
                 var OrderNumber = GenerateUniqueId.GenerateUniqueIds(ModuleName.Order, claimsProperty.GetCompanyCode(), Version);
@@ -847,9 +847,23 @@ namespace ShutterManagement.Business.Services
         {
             if (!string.IsNullOrEmpty(TenantId.ToString()) && TenantId != Guid.Empty)
             {
+                var subTenantIds = new List<Guid>();
+
+                var tenant = tenantService.GetAllQuerable().FirstOrDefault(x => x.TenantId == TenantId);
+
+                if (tenant?.ParentTenantId != null && tenant.ParentTenantId != Guid.Empty)
+                {
+
+                    subTenantIds.Add((Guid)TenantId);
+                }
+                else
+                {
+
+                    subTenantIds = tenantService.GetAccessibleTenantIds(TenantId);
+                }
                 // Log and fetch estimates for the logged-in tenant
                 FileLogger.Log("No TenantId provided, fetching for the logged-in tenant.");
-                return (await GetAll()).Where(x => x.IsDelete == false && x.TenantId == TenantId)
+                return (await GetAll()).Where(x => x.IsDelete == false && (x.TenantId == TenantId || subTenantIds.Contains(x.TenantId ?? Guid.Empty)))
                                        .OrderByDescending(x => x.CreatedAt)
                                        .ToList();
             }

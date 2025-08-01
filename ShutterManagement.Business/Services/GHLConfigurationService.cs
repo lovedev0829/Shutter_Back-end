@@ -49,12 +49,22 @@ namespace ShutterManagement.Business.Services
         {
             IResponseVm<GetGHLConfiguration> responseVm = new ResponseVm<GetGHLConfiguration>();
             FileLogger.Log("details GHl ID: ", Id);
-            var IsGHLConfigurationTenantExist = dbContext.TblTenants.Where(x => x.TenantId == claimsProperty.GetTenantId() && x.IsDelete == false && x.IsActive == true).FirstOrDefault();
-            // Check if the GHL configuration exists for the given tenant ID
-            if (Id != claimsProperty.GetTenantId().ToString() && !string.IsNullOrEmpty(claimsProperty.GetParentTenantId().ToString()))
+            bool IsGhlconfigSameAsTenant = false;
+            var IsGHLConfigurationTenantExist = dbContext.TblTenants.Where(x => x.TenantId.ToString() == Id && !string.IsNullOrEmpty(x.ParentTenantId.ToString()) && x.IsDelete == false && x.IsActive == true).FirstOrDefault();
+            if(IsGHLConfigurationTenantExist?.IsGhlconfigSameAsTenant ?? false)
             {
-                Id = claimsProperty.GetTenantId().ToString();
+                IsGhlconfigSameAsTenant = true;
             }
+
+            // Check if the GHL configuration exists for the given tenant ID
+            //if ((bool)IsGHLConfig)
+            //{
+            //    if (Id != claimsProperty.GetTenantId().ToString() && !string.IsNullOrEmpty(claimsProperty.GetParentTenantId().ToString()))
+            //    {
+            //        Id = claimsProperty.GetTenantId().ToString();
+            //    }
+            //}
+            Id = IsGhlconfigSameAsTenant ? IsGHLConfigurationTenantExist.ParentTenantId.ToString() : Id;
             var Checkghlresponse = await CheckGHLConfiguration(Guid.Parse(Id));
             var details = GetAllQuerable()
                    .Where(x => x.TenantId.ToString().ToLower() == Id.ToLower() && x.IsDelete == false)
@@ -76,7 +86,7 @@ namespace ShutterManagement.Business.Services
                     Access_Token = details.AccessToken ?? "",
                     RefreshExpirationtime = details.RefreshExpirationtime ?? null,
                     AccessExpirationtime = details.AccessExpirationtime ?? null,
-                    IsGHLConfigurationSameAsTenant = IsGHLConfigurationTenantExist.IsGhlconfigSameAsTenant,
+                    IsGHLConfigurationSameAsTenant = IsGhlconfigSameAsTenant,
                 };
 
                 //await claimsProperty.SetGHLConfigurationinClaims(details);
@@ -903,7 +913,7 @@ namespace ShutterManagement.Business.Services
             else
             {
                 int version = dbContext.TblContacts
-                    .Where(x => x.TenantId == claimsProperty.GetTenantId() && x.CreatedAt.Value.Date == DateTime.Today)
+                    .Where(x => x.TenantId == claimsProperty.GetTenantId())
                     .AsEnumerable()
                     .OrderByDescending(p => p.CreatedAt)
                     .Select(p => (p.ContactUniqueId.Split("-").Length == 3 ? Convert.ToInt32(p.ContactUniqueId.Split("-")[2]) : 0))
@@ -971,7 +981,7 @@ namespace ShutterManagement.Business.Services
             else
             {
                 int version = dbContext.TblJobs
-                    .Where(x => x.TenantId == claimsProperty.GetTenantId() && x.CreatedAt.Value.Date == DateTime.Today)
+                    .Where(x => x.TenantId == claimsProperty.GetTenantId())
                     .AsEnumerable()
                     .OrderByDescending(p => p.CreatedAt)
                     .Select(p => (p.JobUniqueId.Split("-").Length == 3 ? Convert.ToInt32(p.JobUniqueId.Split("-")[2]) : 0))

@@ -107,10 +107,10 @@ namespace ShutterManagement.Business.Services
                     {
                        if(!AppConstant.IsTenant)
                         {
-                            responseVm.Message = $"OptionName {AppConstant.AlreadyExists}.Please contact to administrator.";
+                            responseVm.Message = $"Group Name {AppConstant.AlreadyExists}.Please contact to administrator.";
                             return responseVm;
                         }
-                        responseVm.Message = $"OptionName {AppConstant.AlreadyExists}.";
+                        responseVm.Message = $"Group Name {AppConstant.AlreadyExists}.";
                         return responseVm;
                     }
                     if (!IsOptionNameExists)
@@ -197,7 +197,7 @@ namespace ShutterManagement.Business.Services
                                 else
                                 {
                                     alloptiontypeadded = false;
-                                    message += $"{item.OptionType} OptionType " + AppConstant.AlreadyExists;
+                                    message += $"{item.OptionType} Option Name " + AppConstant.AlreadyExists;
                                 }
                             }
                             if (!alloptiontypeadded)
@@ -218,7 +218,7 @@ namespace ShutterManagement.Business.Services
                     }
                     else
                     {
-                        responseVm.Message = "Option Name" + " " + AppConstant.AlreadyExists;
+                        responseVm.Message = "Group Name" + " " + AppConstant.AlreadyExists;
                     }
                 }
                 else
@@ -441,26 +441,13 @@ namespace ShutterManagement.Business.Services
                     }
                     if (isSubTenant)
                     {
-                        //var assignedProductIds = dbContext.TblManagePartnersProducts
-                        //    .Where(m => m.TenantId == claimsProperty.GetTenantId()
-                        //                && m.IsAvailable == true
-                        //                && m.IsDelete == false
-                        //                && m.IsActive == true)
-                        //    .Select(m => m.ProductId)
-                        //    .ToList();
-
-
                         allOptions = (await GetAll())
                         .Where(x => x.IsDelete == false && assignedProductIds.Contains(x.ProductId) &&
                                     (x.TenantId == claimsProperty.GetTenantId()))
                         .OrderByDescending(x => x.CreatedAt)
                         .ToList();
-                        //var managedOptions = allOptions
-                        //  .Where(x => assignedProductIds.Contains(x.ProductId))
-                        //  //.DistinctBy(x=> x.OptionName)
-                        //  .ToList();
+               
                         finalOptions = allOptions
-                          //.Union(tenantOptions)
                           .OrderByDescending(o => o.OptionId)
                          .ToList();
                     }
@@ -498,7 +485,6 @@ namespace ShutterManagement.Business.Services
                                 SortOrder = x.SortOrder,
                                 RequirePriceAtEstimatePreview = x.RequirePriceAtEstimatePreview,
                                  hidePreview = x.HidePreview ?? false
-                                //Unit = x.Unit
                             })
                             .ToList();
                         item.Options = optionsType;
@@ -574,7 +560,7 @@ namespace ShutterManagement.Business.Services
             }
             if (IsOptionNameExists)
             {
-                responseVm.Message = "Option Name " + AppConstant.AlreadyExists;
+                responseVm.Message = "GroupName " + AppConstant.AlreadyExists;
                 return responseVm;
             }
 
