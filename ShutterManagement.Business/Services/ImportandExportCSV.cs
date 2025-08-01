@@ -1,30 +1,31 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Data.Entity;
+using System.Diagnostics.Metrics;
 using System.Globalization;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using CsvHelper.Configuration;
-using CsvHelper;
-using ShutterManagement.Business.Interfaces;
-using ShutterManagement.Core.ViewModels.Request;
-using ShutterManagement.DAL.Context;
-using Microsoft.EntityFrameworkCore;
-using ShutterManagement.Core;
-using ShutterManagement.Core.SPModel;
-using ShutterManagement.Core.ViewModels;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-using Microsoft.AspNetCore.Mvc;
-using ShutterManagement.Core.SPModel.SP_Responses;
-using static Microsoft.AspNetCore.Hosting.Internal.HostingApplication;
-using Azure;
-using ShutterManagement.Core.ViewModels.Response;
-using System.Data.Entity;
-using System.Diagnostics.Metrics;
-using ShutterManagement.Core.Common;
-using System.ComponentModel.DataAnnotations;
 using AutoMapper.Internal;
+using Azure;
+using CsvHelper;
+using CsvHelper.Configuration;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using ShutterManagement.Business.Interfaces;
+using ShutterManagement.Core;
+using ShutterManagement.Core.Common;
+using ShutterManagement.Core.SPModel;
+using ShutterManagement.Core.SPModel.SP_Responses;
+using ShutterManagement.Core.ViewModels;
+using ShutterManagement.Core.ViewModels.Request;
+using ShutterManagement.Core.ViewModels.Response;
+using ShutterManagement.DAL.Context;
 using Stripe;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+using static Microsoft.AspNetCore.Hosting.Internal.HostingApplication;
 
 namespace ShutterManagement.Business.Services
 {
@@ -440,6 +441,10 @@ namespace ShutterManagement.Business.Services
                         {
                             filter.SearchValue = record.Email;
                             existingContactResponse = await contactService.GetAll_Contact(filter, role, false);
+                        }
+                        if (!string.IsNullOrEmpty(record.PhoneNumber))
+                        {
+                            record.PhoneNumber = contactService.FormatPhoneNumber(record.PhoneNumber);
                         }
                         if((!existingContactResponse.IsSuccess || (existingContactResponse.Data == null || existingContactResponse.Data.Count < 0) && !string.IsNullOrEmpty(record.PhoneNumber)))
                         {
