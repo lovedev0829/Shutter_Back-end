@@ -36,19 +36,19 @@ namespace ShutterManagement.Core.ViewModels.Request
         [Name("LastName*")]
         public string? LastName { get; set; }
 
-        [Required]
+        //[Required]
         [MaxLength(10)]
-        [RegularExpression(@"^\d{10}$", ErrorMessage = "Phone number must be exactly 10 digits.")]
+        //[RegularExpression(@"^\d{10}$", ErrorMessage = "Phone number must be exactly 10 digits.")]
         [DefaultValue("")]
-        [Name("PhoneNumber*")]
+        [Name("PhoneNumber")]
         public string? PhoneNumber { get; set; }
 
 
-        [Required, MaxLength(100)]
-        [RegularExpression(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", ErrorMessage = "Invalid email address.")]
-        [EmailAddress]
+        //[Required, MaxLength(100)]
+        //[RegularExpression(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", ErrorMessage = "Invalid email address.")]
+        //[EmailAddress]
         [DefaultValue("")]
-        [Name("Email*")]
+        [Name("Email")]
         public string Email { get; set; }
 
         [DefaultValue("")]
