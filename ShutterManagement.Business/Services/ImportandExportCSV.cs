@@ -446,7 +446,7 @@ namespace ShutterManagement.Business.Services
                             filter.SearchValue = record.PhoneNumber;
                             existingContactResponse = await contactService.GetAll_Contact(filter, role, false);
                         }
-                        var existingContact = existingContactResponse.Data.FirstOrDefault();
+                        var existingContact = (!existingContactResponse.IsSuccess || (existingContactResponse.Data == null || existingContactResponse.Data.Count < 0)) ? null : existingContactResponse.Data.FirstOrDefault();
 
                         bool isUpdate =  false;
                         if(existingContact != null)
