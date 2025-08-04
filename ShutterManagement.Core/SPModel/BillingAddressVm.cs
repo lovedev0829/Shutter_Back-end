@@ -32,13 +32,13 @@ namespace ShutterManagement.Core.SPModel
 
         [DefaultValue("")]
         //[RegularExpression(@"^\+?1?\d{10}$", ErrorMessage = "Phone number must be 10 digits.")]
-        //[Name("PhoneNumber*")]
+        [Name("BillingPhoneNumber")]
         public string? PhoneNumber { get; set; } = string.Empty ;
 
         [MaxLength(100)]
         //[RegularExpression(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")]
         //[DefaultValue("")]
-        //[Name("Email*")]
+        [Name("BillingEmail")]
         public string? Email { get; set; } = string.Empty;
 
         [Required]

@@ -86,13 +86,18 @@ namespace ShutterManagement.Services
                     result.Message = "Email " + AppConstant.AlreadyExists;
                     return result;
                 }
-                bool IsGHLUserExists = dbContext.TblUsers.Any(x => x.GhlUserId == UserDetails.GhlUserId && x.IsActive == true
-                && x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId());
-                if(IsGHLUserExists)
+                if (!string.IsNullOrEmpty(UserDetails.GhlUserId))
                 {
-                    result.Message = "GHL User " + AppConstant.AlreadyExists;
-                    return result;  
+
+                    bool IsGHLUserExists = dbContext.TblUsers.Any(x => x.GhlUserId == UserDetails.GhlUserId && x.IsActive == true
+                    && x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId());
+                    if (IsGHLUserExists)
+                    {
+                        result.Message = "GHL User " + AppConstant.AlreadyExists;
+                        return result;
+                    }
                 }
+
                 bool IsRoleExists = await roleService.AnyAsync(x => x.Id == UserDetails.RoleId
                 && x.IsShow == false && x.IsActive == true && x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId());
                 if (IsRoleExists)
@@ -236,12 +241,18 @@ namespace ShutterManagement.Services
                         result.Message = "Role " + AppConstant.NoDataFound;
                         return result;
                     }
-                    bool IsGHLUserExists = dbContext.TblUsers.Any(x => x.GhlUserId == UserDetails.GhlUserId && x.IsActive == true && x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId());
-                    if (IsGHLUserExists)
+                    if (!string.IsNullOrEmpty(UserDetails.GhlUserId))
                     {
-                        result.Message = "GHL User " + AppConstant.AlreadyExists;
-                        return result;
+
+                        bool IsGHLUserExists = dbContext.TblUsers.Any(x => x.GhlUserId == UserDetails.GhlUserId && x.IsActive == true
+                        && x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId() && x.Id.ToString() != UserDetails.UserId);
+                        if (IsGHLUserExists)
+                        {
+                            result.Message = "GHL User " + AppConstant.AlreadyExists;
+                            return result;
+                        }
                     }
+
                     var UpdateUserDetails = UserExistsDetails.FirstOrDefault();
                     if (UpdateUserDetails != null)
                     {

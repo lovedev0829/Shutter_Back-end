@@ -12,6 +12,6 @@ namespace ShutterManagement.Business.Interfaces
 {
     public interface IjobStageStatusAutomAtionHistory : IGenericRepository<TblJobStageStatusAutomAtionHistory>
     {
-        Task<IResponseVm<string>> SaveHistory(TblJob model);
+        Task<IResponseVm<string>> SaveHistory(TblJob model ,Guid? LoggedInTenantId);
     }
 }

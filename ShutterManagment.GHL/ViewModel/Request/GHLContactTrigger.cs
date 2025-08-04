@@ -48,7 +48,7 @@ namespace ShutterManagment.GHL.ViewModel.Request
         public string first_name { get; set; }
         public string last_name { get; set; }
         public string? full_name { get; set; }
-        public string email { get; set; }
+        public string? email { get; set; }
         public string? phone { get; set; }
         public string? tags { get; set; }
         public DateTime? date_created { get; set; }

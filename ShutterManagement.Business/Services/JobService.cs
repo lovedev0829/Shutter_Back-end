@@ -1,28 +1,29 @@
-﻿using System.Linq;
+﻿using System.Data.Entity;
+using System.Diagnostics.Contracts;
+using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Security.Cryptography.X509Certificates;
+using System.Text;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
+using Org.BouncyCastle.Asn1.X509.Qualified;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core;
 using ShutterManagement.Core.Common;
+using ShutterManagement.Core.SPModel;
 using ShutterManagement.Core.ViewModels;
 using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.Core.ViewModels.Response;
 using ShutterManagement.DAL.Context;
-using ShutterManagement.Services;
-using Microsoft.EntityFrameworkCore;
-using static ShutterManagement.Core.ViewModels.Response.GetAllJobsSubtenant_tenant;
-using System.Security.Cryptography.X509Certificates;
 using ShutterManagement.GHL.Services;
-using ShutterManagment.GHL.ViewModel.Response;
-using System.Data.Entity;
-using Newtonsoft.Json;
-using System.Net.Http.Headers;
-using static Microsoft.AspNetCore.Hosting.Internal.HostingApplication;
-using System.Text;
-using System.Net.Http;
-using Microsoft.AspNetCore.Mvc;
+using ShutterManagement.Services;
 using ShutterManagment.GHL.ViewModel.Request;
-using System.Diagnostics.Contracts;
-using Org.BouncyCastle.Asn1.X509.Qualified;
-using ShutterManagement.Core.SPModel;
+using ShutterManagment.GHL.ViewModel.Response;
+using static Microsoft.AspNetCore.Hosting.Internal.HostingApplication;
+using static QRCoder.PayloadGenerator.SwissQrCode;
+using static ShutterManagement.Core.ViewModels.Response.GetAllJobsSubtenant_tenant;
 
 namespace ShutterManagement.Business.Services
 {
@@ -242,25 +243,25 @@ namespace ShutterManagement.Business.Services
             if (!validationResult.IsSuccess)
                 return BuildErrorResponse(validationResult.Message);
 
-            var job = await BuildJobAsync(model, tenantId, validationResult.Data.JobStatus, validationResult.Data.StageName);
+            var job = await BuildJobAsync(model, tenantId, validationResult.Data.JobStatus, validationResult.Data.StageName,validationResult.Data.StageId);
 
             var result = await ProcessJobCreationAsync(job, model, tenantId);
             return result;
         }
 
-        private async Task<IResponseVm<(Guid JobStatus, string StageName)>> ValidateJobRequestAsync(CreateJob model, Guid? tenantId)
+        private async Task<IResponseVm<(Guid JobStatus, string StageName,string StageId)>> ValidateJobRequestAsync(CreateJob model, Guid? tenantId)
         {
-            var response = new ResponseVm<(Guid, string)>();
+            var response = new ResponseVm<(Guid, string,string)>();
 
             if (!await IsTenantValid(tenantId))
-                return BuildErrorResponse<(Guid, string)>(AppConstant.TenantNotFound);
+                return BuildErrorResponse<(Guid, string,string)>(AppConstant.TenantNotFound);
 
             if (await IsContactInactiveOrArchived((Guid)model.ContactId, tenantId))
-                return BuildErrorResponse<(Guid, string)>("Contact is Archived or Inactive, You cannot create Job.");
+                return BuildErrorResponse<(Guid, string,string)>("Contact is Archived or Inactive, You cannot create Job.");
             if (string.IsNullOrEmpty(model.GhlOpportunityId))
             {
                 if (await IsJobNameDuplicate(model.JobName, (Guid)model.ContactId, tenantId))
-                    return BuildErrorResponse<(Guid, string)>("JobName " + AppConstant.AlreadyExists);
+                    return BuildErrorResponse<(Guid, string,string)>("JobName " + AppConstant.AlreadyExists);
             }
             else
             {
@@ -285,15 +286,26 @@ namespace ShutterManagement.Business.Services
             }
 
             if (model.GhlOpportunityId == null && !await ValidateAddress(model, tenantId))
-                return BuildErrorResponse<(Guid, string)>("Address " + AppConstant.NoDataFound);
-
+                return BuildErrorResponse<(Guid, string,string)>("Address " + AppConstant.NoDataFound);
+           
             var jobStatus = await ResolveJobStatus(model, tenantId);
             var stageResponse = await statusAndStageMapping.GetGHLStagesMappingsById(jobStatus, tenantId);
-            var stage = _context.TblGhlStages.Where(x => x.TenantId == tenantId && x.GhlStageId == model.GHL_StageId.ToString()).FirstOrDefault();
+            if (!stageResponse.IsSuccess)
+            {
+                var res = await gHLConfiguration.GetGHLConfiguration(tenantId.ToString());
+                if(res.IsSuccess)
+                {
+                    response.IsSuccess = stageResponse.IsSuccess;
+                    response.Message = stageResponse.Message;
+                    return response;
+                }
+            }
+            var globalStageId = string.IsNullOrEmpty(model.GHL_StageId.ToString()) ? stageResponse.Data.StageId ?? Guid.Empty : model.GHL_StageId ?? Guid.Empty;
+            var stage = _context.TblGhlStages.Where(x => x.TenantId == tenantId && x.GhlStageId == globalStageId.ToString()).FirstOrDefault();
             string stageName = model.GHL_StageName ?? stage?.GhlStageName ?? string.Empty;
 
             response.IsSuccess = true;
-            response.Data = (jobStatus, stageName);
+            response.Data = (jobStatus, stageName, globalStageId.ToString());
             return response;
         }
         private async Task<bool> IsGHLOpportunityExist(Guid contactId, Guid? tenantId,string? GHLOpportunityId)
@@ -301,11 +313,15 @@ namespace ShutterManagement.Business.Services
             return await AnyAsync(x => x.ContactId == contactId && x.TenantId == tenantId && x.IsActive == true && x.IsDelete == false && x.GhlOpportunityId == GHLOpportunityId);
         }
 
-        private async Task<TblJob> BuildJobAsync(CreateJob model, Guid? tenantId, Guid jobStatus, string stageName)
+        private async Task<TblJob> BuildJobAsync(CreateJob model, Guid? tenantId, Guid jobStatus, string stageName,string StageId)
         {
             string jobUniqueId = await GenerateJobUniqueId(tenantId);
             string arrayString = string.Join(", ", model.AttachmentsAny);
-
+            var GHLUserId = string.Empty;
+            if (!string.IsNullOrEmpty(model.AssignedPersonnel.ToString()))
+            {
+                GHLUserId = dbContext.TblUsers.Where(x => x.Id == model.AssignedPersonnel && x.IsDelete == false && x.IsActive == true).Select(u => u.GhlUserId ?? string.Empty).FirstOrDefault();
+            }
             return new TblJob
             {
                 AddressId = model.AddressId != Guid.Empty ? model.AddressId : null,
@@ -318,16 +334,16 @@ namespace ShutterManagement.Business.Services
                 Notes = model.Notes ?? string.Empty,
                 AttachmentAny = arrayString ?? null,
                 JobUniqueId = jobUniqueId,
-                GhlStageId = model.GHL_StageId != Guid.Empty ? model.GHL_StageId : null,
+                GhlStageId = (!string.IsNullOrEmpty(model.GHL_StageId.ToString()) && model.GHL_StageId != Guid.Empty) ? model.GHL_StageId : Guid.Parse(StageId),
                 GhlStageName = stageName.Trim(),
                 GhlContactId = model.GHL_ContactId ?? string.Empty,
                 GhlOpportunityId = model.GhlOpportunityId ?? string.Empty,
+                GhluserId = (string.IsNullOrEmpty(model.GHLUserId)) ? GHLUserId : model.GHLUserId,
                 TenantId = tenantId,
                 IsActive = true,
                 IsDelete = false,
                 CreatedAt = DateTime.Now,
                 CreatedBy = tenantId ?? Guid.Empty,
-                GhluserId = model.GHLUserId ?? string.Empty
             };
         }
 
@@ -815,6 +831,8 @@ namespace ShutterManagement.Business.Services
 
             try
             {
+                var httpClient = new HttpClient();
+                httpClient.Timeout = TimeSpan.FromSeconds(30);
                 LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : claimsProperty.GetTenantId());
                 //await gHLConfiguration.GetGHLConfiguration(LoggedInTenantId.ToString());
 
@@ -1468,7 +1486,6 @@ namespace ShutterManagement.Business.Services
 
             var existingJob = (await GetAll())
                 .FirstOrDefault(x => x.JobId == model.JobId && x.ContactId == model.ContactId &&
-                                     x.JobUniqueId == model.JobUniqueCode.Trim() &&
                                      x.TenantId == tenantId && x.IsDelete == false);
 
             if (await IsJobNameDuplicate(model.JobName, (Guid)model.ContactId, tenantId, (Guid)model.JobId))
