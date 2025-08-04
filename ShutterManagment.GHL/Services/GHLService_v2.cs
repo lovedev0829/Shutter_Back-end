@@ -525,7 +525,6 @@ namespace ShutterManagement.GHL.Services
                 {
                     ["firstName"] = contact.FirstName,
                     ["lastName"] = contact.LastName,
-                    ["locationId"] = getGHLConfiguration.LocationId,
                     ["address1"] = contact.StreetAddress ?? "",
                     ["city"] = contact.City ?? "",
                     ["state"] = contact.State ?? "",
