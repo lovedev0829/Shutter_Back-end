@@ -303,7 +303,7 @@ namespace ShutterManagement.Business.Services
                     return response;
                 }
             }
-            var globalStageId = string.IsNullOrEmpty(model.GHL_StageId.ToString()) ? stageResponse.Data.StageId ?? Guid.Empty : model.GHL_StageId ?? Guid.Empty;
+            var globalStageId = string.IsNullOrEmpty(model.GHL_StageId.ToString()) ? stageResponse?.Data?.StageId ?? Guid.Empty : model?.GHL_StageId ?? Guid.Empty;
             var stage = _context.TblGhlStages.Where(x => x.TenantId == tenantId && x.GhlStageId == globalStageId.ToString()).FirstOrDefault();
             string stageName = model.GHL_StageName ?? stage?.GhlStageName ?? string.Empty;
 
@@ -313,7 +313,8 @@ namespace ShutterManagement.Business.Services
         }
         private async Task<bool> IsGHLOpportunityExist(Guid contactId, Guid? tenantId,string? GHLOpportunityId)
         {
-            return await AnyAsync(x => x.ContactId == contactId && x.TenantId == tenantId && x.IsActive == true && x.IsDelete == false && x.GhlOpportunityId == GHLOpportunityId);
+            return await AnyAsync(x => x.ContactId == contactId && x.TenantId == tenantId && x.IsActive == true && x.IsDelete == false && 
+            ((string.IsNullOrEmpty(GHLOpportunityId) ? false : x.GhlOpportunityId == GHLOpportunityId)));
         }
 
         private async Task<TblJob> BuildJobAsync(CreateJob model, Guid? tenantId, Guid jobStatus, string stageName,string StageId)
@@ -354,7 +355,7 @@ namespace ShutterManagement.Business.Services
         {
             var response = new ResponseVm<string>();
             var insertedJob = new TblJob();
-            if (!await IsGHLOpportunityExist((Guid)model.ContactId, tenantId, model.GhlOpportunityId))
+            if (string.IsNullOrEmpty(model.GhlOpportunityId) && !await IsGHLOpportunityExist((Guid)model.ContactId, tenantId, model.GhlOpportunityId))
             {
                 insertedJob = await Add(job);
 
