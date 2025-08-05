@@ -203,6 +203,8 @@ namespace ShutterManagement.Core.Common
 
     public enum NotificationModule
     {
+        [EnumMember(Value = "Default")]
+        Default,
         [EnumMember(Value = "Job")]
         Job,
         [EnumMember(Value = "Contact")]
