@@ -639,6 +639,7 @@ namespace ShutterManagement.Business.Services
                     EstimationGrandTotal = estimationDetails?.GrandTotal.ToString() ?? "",
                     EstimationId = estimationDetails?.EstimateCode?.ToString() ?? "",
                     EstimationCode = estimationDetails?.EstimateCode ?? "",
+                    TenantId = claimsProperty.GetTenantId().ToString() ?? "",
                     EmailAddress = customerDetails?.Email ?? "",
                     Terms = estimationDetails?.TermsCondition ?? "",
                     Note = estimationDetails?.Notes ?? "",
@@ -775,15 +776,16 @@ namespace ShutterManagement.Business.Services
                                 }
                             }
                         }
-
-                        emailBody = emailSendHelperService.PlaceholderReplace(Templates.Estimate,invoiceData);
+                         var  estimateEmailBodyContent =  emailSendHelperService.GetTemplateContent(EmailTemplateType.EstimateBody, invoiceData).Result;
+                        emailBody= estimateEmailBodyContent.Data?.Body ?? string.Empty;
+                        //emailBody = emailSendHelperService.PlaceholderReplace(Templates.Estimate,invoiceData);
                         emailAttachments.Add(new EmailAttachments
                         {
                             FileName = $"{invoiceData.EstimationCode}.pdf",
                             Stream = new MemoryStream(pdfBytes.Data),
                             MediaType = "application/pdf"
                         });
-                        EmailSendResult = await emailSendHelperService.GetEmailConfigAndSendEmail(customerDetails?.Email, emailBody, AppConstant.Sub_EstimateApproval, PreparedByEmail, emailAttachments,string.Empty,LoggedInUser);
+                        EmailSendResult = await emailSendHelperService.GetEmailConfigAndSendEmail(customerDetails?.Email, emailBody, estimateEmailBodyContent?.Data?.Subject?? string.Empty, PreparedByEmail, emailAttachments,string.Empty,LoggedInUser);
 
                         responseVm.IsSuccess = true;
                         responseVm.Message = EmailSendResult.Message;
@@ -808,8 +810,9 @@ namespace ShutterManagement.Business.Services
 
                         invoiceData.InvoiceLink = $"{AppConstant.UIBaseURL}contacts/order/preview/{IsOrderExists?.OrderId}";
 
-                        emailBody = Templates.Order;
-                        string orderEmailContent = emailSendHelperService.PlaceholderReplace(emailBody, invoiceData);
+                        var orderEmailBodyContent = emailSendHelperService.GetTemplateContent(EmailTemplateType.OrderBody, invoiceData).Result;
+                        emailBody = orderEmailBodyContent.Data?.Body ?? string.Empty;
+                       // string orderEmailContent = emailSendHelperService.PlaceholderReplace(emailBody, invoiceData);
 
                         emailAttachments.Add(new EmailAttachments
                         {
@@ -818,7 +821,7 @@ namespace ShutterManagement.Business.Services
                             MediaType = "application/pdf"
                         });
                         
-                        EmailSendResult = await emailSendHelperService.GetEmailConfigAndSendEmail(customerDetails?.Email, orderEmailContent, AppConstant.Sub_EstimateOrderApproval, PreparedByEmail, emailAttachments,string.Empty, LoggedInUser);
+                        EmailSendResult = await emailSendHelperService.GetEmailConfigAndSendEmail(customerDetails?.Email, emailBody, orderEmailBodyContent?.Data?.Subject ?? string.Empty, PreparedByEmail, emailAttachments,string.Empty, LoggedInUser);
                         responseVm.IsSuccess = true;
                         responseVm.Message = EmailSendResult.Message;
                         System.IO.File.Delete(savePath);

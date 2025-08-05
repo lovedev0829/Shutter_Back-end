@@ -584,9 +584,10 @@ namespace ShutterManagement.Business.Services
 
                     // send notification and email 
 
-                    var statusVm = BuildOrderStatusVm(OrderStatus, jobdetails, customerDetails, estimatedetails);
+                   var statusVm = BuildOrderStatusVm(OrderStatus, jobdetails, customerDetails, estimatedetails);
                     await estimateService.SendStatusNotificationEmail(statusVm);
-                    await SendInAppNotification(statusVm, Estimation.OrderApproved, OrderStatus.OrderId);
+                    var templatetype = estimateService.GetTemplateType(statusVm).Value;
+                    await SendInAppNotification(statusVm, templatetype, OrderStatus.OrderId);
                 }
                 else
                 {
@@ -624,7 +625,7 @@ namespace ShutterManagement.Business.Services
             };
         }
 
-        private async Task SendInAppNotification(EstimateOrOrderBaseVm vm, Estimation estimationType, Guid orderId)
+        public async Task SendInAppNotification(EstimateOrOrderBaseVm vm, EmailTemplateType estimationType, Guid orderId)
         {
             var templateType = EnumValue.GetEnumValue(estimationType).ToString();
             var notificationTemplate = dbContext.TblNotificationTemplates
