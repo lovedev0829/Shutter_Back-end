@@ -101,7 +101,7 @@ namespace ShutterManagement.Business.Services
                     var message = "";
                     bool alloptiontypeadded = true;
                     var IsOptionNameExists = await AnyAsync(x => x.OptionName == model.OptionName.Trim()
-                    && x.IsActive == true && x.IsDelete == false && (x.TenantId == claimsProperty.GetTenantId() || x.TenantId.ToString() == claimsProperty.GetParentTenantId())
+                    && x.IsActive == true && x.IsDelete == false && (x.TenantId == claimsProperty.GetTenantId())
                     && x.ProductId == model.ProductId);
                     if(IsOptionNameExists)
                     {
@@ -318,9 +318,7 @@ namespace ShutterManagement.Business.Services
                     if (IsManageProductOption)
                     {
                         var assignedOptionId = dbContext.TblManagePartnersProductsOptions
-                          //.Include(x => x.ManageProduct)
-                          //.Include(x => x.OptionType)
-                          //.Include(x => x.Option)
+                       
                              .Where(m => m.TenantId == claimsProperty.GetTenantId()
                               && m.IsAvailable == true
                               && m.IsDelete == false
@@ -335,6 +333,7 @@ namespace ShutterManagement.Business.Services
                               .Select(y => y.OptionId)
                               .Distinct()
                               .ToList();
+
                         IsOptionExists = GetAllQuerable()
                             .Where(x => optionIds.Contains(x.OptionId)) 
                             .Select(x => new OptionsList
@@ -352,37 +351,6 @@ namespace ShutterManagement.Business.Services
                                 UseInCutSheet = x.UseInCutSheet ?? false
                             })
                             .ToList();
-
-
-                        //IsOptionExists = assignedOptionId.DistinctBy(x => x.OptionId)
-                        //    .Select(x => new OptionsList
-                        //    {
-
-
-                        //        TaxId = x.TaxId,
-                        //        TaxName = x.TaxId != null
-                        //            ? dbContext.TblTaxRates
-                        //                .Where(y => y.TaxRateId == x.TaxId)
-                        //                .Select(z => z.TaxName)
-                        //                .FirstOrDefault() ?? ""
-                        //            : "",
-
-                        //        ProductName = x.ManageProduct?.ProductId != null
-                        //            ? dbContext.TblProducts
-                        //                .Where(y => y.ProductId == x.Option.ProductId)
-                        //                .Select(z => z.ProductName)
-                        //                .FirstOrDefault() ?? ""
-                        //            : "",
-
-                        //        ProductTypeName = x.Option?.ProductTypeId != null
-                        //            ? dbContext.MstProductTypes
-                        //                .Where(y => y.ProductId == x.Option.ProductTypeId)
-                        //                .Select(z => z.ProductName)
-                        //                .FirstOrDefault() ?? ""
-                        //            : "",
-
-                        //    })
-                        //    .ToList();
 
                         // Fetch related OptionsType and assign to each item
                         foreach (var item in IsOptionExists)
@@ -550,7 +518,7 @@ namespace ShutterManagement.Business.Services
                 .FirstOrDefault();
           
                 var IsOptionNameExists = await AnyAsync(x => x.OptionName == model.OptionName.Trim()
-                 && x.IsActive == true && x.IsDelete == false && (x.TenantId == claimsProperty.GetTenantId() || x.TenantId.ToString() == claimsProperty.GetParentTenantId())
+                 && x.IsActive == true && x.IsDelete == false && (x.TenantId == claimsProperty.GetTenantId())
                  && x.ProductId == model.ProductId && x.OptionId != model.OptionId);
 
                     if (IsOptionExists == null)
@@ -598,18 +566,36 @@ namespace ShutterManagement.Business.Services
 
 
                 var InsertRecords = model.Options
-                            .Where(a1 => !OptionsTypes
-                                        .Any(a2 => a1.OptionType == a2.OptionType 
-                                        && a1.AdditionalCost == a2.AdditionalCost 
-                                        && a1.IsDefault == a2.IsDefault)).ToList();
+                            .Where(a1 => string.IsNullOrEmpty(a1.OptionTypeId.ToString())).ToList();
+
+                var UpdateRecords = model.Options
+                             .Where(a1 => !string.IsNullOrEmpty(a1.OptionTypeId.ToString()) && !OptionsTypes
+                             .Any(a2 => a1.OptionTypeId == a2.OptionTypeId && a1.OptionType != a2.OptionType
+                                  && a1.AdditionalCost != a2.AdditionalCost
+                                  && a1.IsDefault != a2.IsDefault)).ToList();
 
                 var DeleteRecords = OptionsTypes
-                            .Where(a1 => !model.Options
-                                                .Any(a2 => a1.OptionType == a2.OptionType 
-                                                && a1.AdditionalCost == a2.AdditionalCost 
-                                                && a1.IsDefault == a2.IsDefault)).ToList();
-                
-                if (!AppConstant.IsTenant)
+                            .Where(a1 =>  !model.Options
+                            .Any(a2 => a1.OptionTypeId == a2.OptionTypeId)).ToList();
+
+            foreach (var item in UpdateRecords)
+            {
+                 var data = optionsTypeService.GetAllQuerable()
+                                        .Where(x => x.OptionTypeId == item.OptionTypeId
+                                                && x.IsDelete == false).FirstOrDefault();
+                 var updatedOption = model.Options.Where(x => x.OptionTypeId == item.OptionTypeId).FirstOrDefault();
+
+                            data.OptionType = updatedOption.OptionType;
+                            data.AdditionalCost = updatedOption.AdditionalCost;
+                            data.IsDefault = updatedOption.IsDefault;
+                            data.HidePreview = updatedOption.hidePreview;
+                            data.RequirePriceAtEstimatePreview = updatedOption.RequirePriceAtEstimatePreview;
+                            data.ModifiedAt = DateTime.Now;
+                            data.ModifiedBy = claimsProperty.GetUserId();
+
+                            await optionsTypeService.Update(data);
+             }
+               if (!AppConstant.IsTenant)
                 {
 
                     foreach (var item in DeleteRecords)

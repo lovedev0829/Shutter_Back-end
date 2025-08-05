@@ -28,7 +28,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         [DefaultValue("")]
         public string? LastName { get; set; }
         [Required]
-        [StringLength(10, MinimumLength = 3)]
+        [StringLength(50, MinimumLength = 3)]
         [DefaultValue("")]
         public string? Code { get; set; }
         public string? Suffix { get; set; }
