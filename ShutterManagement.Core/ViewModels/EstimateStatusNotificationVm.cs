@@ -24,8 +24,17 @@ namespace ShutterManagement.Core.ViewModels
         public string? CompanyPhone { get; set; }
         public string? CompanyEmail { get; set; }
         public string? TenantId { get; set; }
+        public string? EstimationStatus { get; set; }
 
-        
+        // Order Details 
+
+        // Estimate details
+        public string? OrderName { get; set; }
+        public string? OrderDate { get; set; }
+        public string? OrderStatus { get; set; }
+        public string? OrderGrandTotal { get; set; }
+
+
     }
 
     

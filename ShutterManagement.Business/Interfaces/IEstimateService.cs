@@ -37,5 +37,9 @@ namespace ShutterManagement.Business.Interfaces
                  bool? IsManageProduct);
         Task<IResponseVm<List<WindowProdcutDetailsForEstimate>>> BuildEstimateAfterDiscountApplied(string? DiscountId = null,
           List<ProductListing> products = null);
+
+        Task<IResponseVm<string>> SendStatusNotificationEmail(EstimateOrOrderBaseVm model);
+
+        EmailTemplateType? GetTemplateType(EstimateOrOrderBaseVm model);
     }
 }

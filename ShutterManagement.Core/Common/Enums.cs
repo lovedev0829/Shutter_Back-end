@@ -140,7 +140,11 @@ namespace ShutterManagement.Core.Common
         [EnumMember(Value = "Rejected")]
         Rejected,
         [EnumMember(Value = "GenerateOrder")]
-        GenerateOrder
+        GenerateOrder,
+        [EnumMember(Value = "OrderApproved")]
+        OrderApproved,
+        [EnumMember(Value = "OrderRejected")]
+        OrderRejected
     }
 
     public enum PaymentStatus
@@ -170,7 +174,11 @@ namespace ShutterManagement.Core.Common
         [EnumMember(Value = "EstimateApproved")]
         EstimateApproved,
         [EnumMember(Value = "EstimateRejected")]
-        EstimateRejected
+        EstimateRejected,
+        [EnumMember(Value = "OrderApproved")]
+        OrderApproved,
+        [EnumMember(Value = "OrderRejected")]
+        OrderRejected
 
     }
 
@@ -198,7 +206,9 @@ namespace ShutterManagement.Core.Common
         [EnumMember(Value = "Partner")]
         SubTenant,   
         [EnumMember(Value = "User")]
-        User
+        User,
+        [EnumMember(Value = "Order")]
+        Order
     }
 
 

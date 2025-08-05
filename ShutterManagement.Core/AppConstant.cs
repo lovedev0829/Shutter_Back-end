@@ -118,7 +118,7 @@ namespace ShutterManagement.Core
 
         #region Notification Messages
         public static string Create_Notification = "Created.";
-        public static string UpdateStatus_Notification = "Status changed.";
+        public static string UpdateStatus_Notification = "Status changed. To";
         public static string Update_Notification = "Updated.";
         public static string Welcome_Notification = "Welcome";
         #endregion

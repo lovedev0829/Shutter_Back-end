@@ -1291,21 +1291,14 @@ namespace ShutterManagement.Business.Services
                         var JobId = GetAllQuerable().Where(x => x.EstimateId == EstimationId && x.IsDelete == false).Select(x => x.JobId).FirstOrDefault();
 
                         // update job status and stage 
-
+                        string jobStatusName = string.Empty;
                         if (responseVm.IsSuccess)
                         {
-                            if(NewEstimationStatus == Estimation.Approved || NewEstimationStatus ==Estimation.Rejected)
-                            {
-                                // call the method 
-
-                                var respose = SendStatusNotificationEmail(EstimationStatus);
-
-                            }
-
+                            
                             if (NewEstimationStatus == Estimation.Approved)
                             {
                                 var tenantId = EstimationStatus.TenantId;
-                                var jobStatusName = EnumValue.GetEnumValue(JobStatus.Won);
+                                jobStatusName = EnumValue.GetEnumValue(JobStatus.Won);
                                 var updateResponse = await statusAndStageMapping.UpdateOpportunityAndJobStatus(EstimationStatus?.JobId ?? Guid.Empty, jobStatusName, tenantId);
 
                                 if (!updateResponse.IsSuccess)
@@ -1315,21 +1308,19 @@ namespace ShutterManagement.Business.Services
                                     //responseVm.Message = updateResponse.Message;
                                     //return responseVm;
                                 }
+                                
                             }
+
+                            var estimationVm = BuildEstimateStatusVm(EstimationStatus);
+
+                            await SendStatusNotificationEmail(estimationVm);
+                            await SendEstimateNotificationFromTemplateAsync(estimationVm, NewEstimationStatus, EstimationStatus.EstimateId);
+
                         }
 
-                        CreateNotification notification1 = new CreateNotification()
-                        {
-                            UserId = AppConstant.LoggedInUserID,
-                            Subject = Enum.GetName(typeof(NotificationModule), NotificationModule.Estimate),
-                            Body = $"{EstimateName} {AppConstant.UpdateStatus_Notification}",
-                            CreatedDate = DateTime.Now,
-                            Type = Enum.GetName(typeof(NotificationModule), NotificationModule.Estimate),
-                            TypeId = EstimationId
-                        };
 
-                        var result = await notification.CreateNotification(notification1);
                     }
+
                     // Log and record the status change in history
                     await EstimationChangeHistory(EstimationId, NewEstimationStatus);
                     FileLogger.Log($"Estimation status changed successfully to {NewEstimationStatus} for EstimationId: {EstimationId}");
@@ -1350,6 +1341,53 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
+
+        private EstimateOrOrderBaseVm BuildEstimateStatusVm(TblEstimate estimation)
+        {
+            var jobDetails = dbContext.TblJobs.FirstOrDefault(j => j.JobId == estimation.JobId);
+            var contact = dbContext.TblContacts.FirstOrDefault(c => c.ContactId == jobDetails.ContactId);
+
+            return new EstimateOrOrderBaseVm
+            {
+                JobId = estimation.JobId,
+                JobCode = jobDetails?.JobUniqueId ?? "",
+                CustomerName = $"{contact?.FirstName ?? ""} {contact?.LastName ?? ""}".Trim(),
+                TenantId = estimation.TenantId,
+                EstimateCode = estimation.EstimateCode,
+                CreatedAt = estimation.CreatedAt,
+                PreparedBy = estimation.PreparedBy,
+                GrandTotal = estimation.GrandTotal,
+                Status = estimation.Status
+            };
+        }
+
+
+
+        private async Task SendEstimateNotificationFromTemplateAsync(EstimateOrOrderBaseVm estimationVm, Estimation statusEnum, Guid estimateId)
+        {
+            var templateType = EnumValue.GetEnumValue(statusEnum).ToString();
+
+            var notificationTemplate = dbContext.TblNotificationTemplates
+                .FirstOrDefault(t => t.Type == templateType);
+
+            if (notificationTemplate == null)
+                return;
+
+            var replacedContent = emailSendHelperService.PlaceholderReplace(notificationTemplate.Body, estimationVm);
+
+            var notificationVm = new CreateNotification
+            {
+                UserId = estimationVm.TenantId,
+                Subject = notificationTemplate.Subject ?? "",
+                Body = replacedContent ?? "",
+                CreatedDate = DateTime.Now,
+                Type = nameof(NotificationModule.Estimate),
+                TypeId = estimateId
+            };
+
+            await notification.CreateNotification(notificationVm);
+        }
+
 
 
         private async Task<List<TblEstimate>> FetchEstimates(Pagination filter, Guid? TenantId = null)
@@ -2514,7 +2552,7 @@ namespace ShutterManagement.Business.Services
         }
 
 
-        private async Task<IResponseVm<string>> SendStatusNotificationEmail(TblEstimate model)
+        public async Task<IResponseVm<string>> SendStatusNotificationEmail(EstimateOrOrderBaseVm model)
         {
             var responseVm = new ResponseVm<string>();
 
@@ -2551,41 +2589,9 @@ namespace ShutterManagement.Business.Services
                     .FirstOrDefault();
 
 
-                var emailVm = new EstimateStatusNotificationVm
-                {
-                    CustomerName = $"{contact.FirstName} {contact.LastName}".Trim(),
-                    Email = contact.Email ?? "",
-                    EstimationCode = model.EstimateCode,
-                    EstimationDate = model.CreatedAt?.ToString("MM-dd-yyyy"),
-                    PreparedBy = preparedBy,
-                    EstimationGrandTotal = model.GrandTotal?.ToString("F2"),
-                    TenantCompanyName = branding?.CompanyName,
-                    CompanyPhone = branding?.PhoneNumber,
-                    CompanyEmail = branding?.Email,
-                    TenantId = model.TenantId.ToString()
-                };
-
-                string subject;
-                EmailTemplateType templateType;
-
-                switch (model.Status)
-                {
-                    case nameof(Estimation.Approved):
-                        subject = AppConstant.Sub_EstimateApprovedEmail;
-                        templateType = EmailTemplateType.EstimateApproved;
-                        break;
-
-                    case nameof(Estimation.Rejected):
-                        subject = AppConstant.Sub_EstimateRejectedEmail;
-                        templateType = EmailTemplateType.EstimateRejected;
-                        break;
-
-                    default:
-                        responseVm.Message = "Email not sent. Invalid estimation status.";
-                        return responseVm;
-                }
-
-                var res =  emailSendHelperService.SendEmailWithReplacedContent(templateType, emailVm, subject);
+                var emailVm = BuildStatusNotificationVm(model, contact, branding, preparedBy);
+                var templateType =  GetTemplateType(model).Value;
+                var res = await emailSendHelperService.SendEmailWithReplacedContent(templateType, emailVm);
             }
             catch (Exception ex)
             {
@@ -2595,6 +2601,55 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
+
+        public EmailTemplateType? GetTemplateType(EstimateOrOrderBaseVm model)
+        {
+            if (!string.IsNullOrEmpty(model.EstimateCode))
+            {
+                return model.Status switch
+                {
+                    nameof(Estimation.Approved) => EmailTemplateType.EstimateApproved,
+                    nameof(Estimation.Rejected) => EmailTemplateType.EstimateRejected,
+                    _ => null
+                };
+            }
+            else if (!string.IsNullOrEmpty(model.OrderName))
+            {
+                return model.OrderStatus switch
+                {
+                    nameof(Estimation.Approved) => EmailTemplateType.OrderApproved,
+                    nameof(Estimation.Rejected) => EmailTemplateType.OrderRejected,
+                    _ => null
+                };
+            }
+
+            return null;
+        }
+
+        private EstimateStatusNotificationVm BuildStatusNotificationVm( EstimateOrOrderBaseVm model, TblContact contact, TblTenantBrandingInfo branding,string preparedBy)
+        {
+            return new EstimateStatusNotificationVm
+            {
+                CustomerName = $"{contact.FirstName} {contact.LastName}".Trim(),
+                Email = contact.Email ?? "",
+                EstimationCode = model.EstimateCode??"",
+                EstimationDate = model.CreatedAt?.ToString("MM-dd-yyyy"),
+                PreparedBy = preparedBy??"",
+                EstimationGrandTotal = model.GrandTotal?.ToString("F2"),
+                TenantCompanyName = branding?.CompanyName??"",
+                CompanyPhone = branding?.PhoneNumber??"",
+                CompanyEmail = branding?.Email??"",
+                TenantId = model.TenantId.ToString()??"",
+                EstimationStatus = model?.Status?.ToUpper()??"",
+
+                // Order Related Fields
+                OrderName = model?.OrderName??"",
+                OrderGrandTotal = model?.OrderGrandTotal?.ToString("F2"),
+                OrderDate = model?.OrderDate?.ToString("MM-dd-yyyy"),
+                OrderStatus = model?.OrderStatus?.ToUpper()??"",
+            };
+        }
+
 
 
 

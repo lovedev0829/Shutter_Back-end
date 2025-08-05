@@ -41,9 +41,9 @@ namespace ShutterManagement.Business.Services
         }
 
 
-        public async Task<IResponseVm<string>> GetTemplateContent(EmailTemplateType emailTemplateType, dynamic dataObject)
+        public async Task<IResponseVm<EmailTemplateContentVm>> GetTemplateContent(EmailTemplateType emailTemplateType, dynamic dataObject)
         {
-            IResponseVm<string> response = new ResponseVm<string>();
+            IResponseVm<EmailTemplateContentVm> response = new ResponseVm<EmailTemplateContentVm>();
             try
             {
                 var Template = (await templatesService.GetAll()).FirstOrDefault(
@@ -55,8 +55,14 @@ namespace ShutterManagement.Business.Services
                     return response;
                 }
                 var emailContent = PlaceholderReplace(Template.TemplateValue, dataObject);
+               
+
+                response.Data = new EmailTemplateContentVm
+                {
+                    Subject = Template.Subject ?? "",
+                    Body = emailContent ?? ""
+                };
                 response.IsSuccess = true;
-                response.Data = emailContent ?? "";
             }
             catch (Exception ex)
             {
@@ -71,13 +77,15 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var emailContent = await GetTemplateContent(emailTemplateType,dataObject);
-                if(!emailContent.IsSuccess || string.IsNullOrEmpty(emailContent.Data))
+                if(!emailContent.IsSuccess || string.IsNullOrEmpty(emailContent.Data.Body))
                 {
                     return emailContent;
                 }
                 // if emailtemplate type is rejected or approved 
-               
-                response = await GetEmailConfigAndSendEmail(dataObject.Email, emailContent.Data , SubjecteEmail,"",null, dataObject.TenantId);
+
+                var Subject = string.IsNullOrEmpty(SubjecteEmail) ? emailContent.Data.Subject  : SubjecteEmail; 
+
+                response = await GetEmailConfigAndSendEmail(dataObject.Email, emailContent.Data.Body, Subject, "",null, dataObject.TenantId);
             }
             catch (Exception ex)
             {

@@ -53,6 +53,8 @@ namespace ShutterManagement.Business.Services
         private readonly IConverter converter;
         private readonly IEstimateWindowProductComponentService estimateWindowProductComponentService;
         private readonly IEstimateWindowProductComponentMaterialService estimateWindowProductComponentMaterialService;
+        private readonly INotificationService notificationService;
+        private readonly EmailSendHelperService emailSendHelperService;
         public Pagination filter = new Pagination();
         private string Message = "";
         public OrderService(ITenantService tenantService, IWindowProductService windowProductService, ClaimsProperty claimsProperty,
@@ -67,7 +69,7 @@ namespace ShutterManagement.Business.Services
              IJobService jobService, IContactService contactService, IEstimateWindowProductService estimateWindowProduct, ITaxRate taxRate,
             IRegion region,ITenantBrandingService tenantBrandingService, IConverter converter,
             IEstimateWindowProductComponentService estimateWindowProductComponentService
-            ,IEstimateWindowProductComponentMaterialService estimateWindowProductComponentMaterialService)
+            ,IEstimateWindowProductComponentMaterialService estimateWindowProductComponentMaterialService,INotificationService notificationService, EmailSendHelperService emailSendHelperService)
         {
             this.tenantService = tenantService;
             this.windowProductService = windowProductService;
@@ -96,6 +98,8 @@ namespace ShutterManagement.Business.Services
             this.converter = converter;
             this.estimateWindowProductComponentService = estimateWindowProductComponentService;
             this.estimateWindowProductComponentMaterialService = estimateWindowProductComponentMaterialService;
+            this.notificationService = notificationService;
+            this.emailSendHelperService = emailSendHelperService;
         }
 
 
@@ -557,6 +561,18 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
+                var estimatedetails = estimateService.GetAllQuerable()
+                    .Where(e => e.EstimateId == OrderStatus.EstimateId && e.IsDelete == false)
+                    .FirstOrDefault();
+                var jobdetails  = jobService.GetAllQuerable()
+                 .Where(e => e.JobId == OrderStatus.JobId && e.IsDelete == false)
+                 .FirstOrDefault();
+
+                var customerDetails = contactService.GetAllQuerable()
+               .Where(e => e.ContactId == jobdetails.ContactId && e.IsDelete == false)
+               .FirstOrDefault();
+
+
                 // Check if status change is allowed
                 if (CanChangeStatus(currentStatus, NewOrderStatus))
                 {
@@ -566,6 +582,11 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.UpdateSuccessMsg;
                     responseVm.Data = EnumValue.GetEnumValue(NewOrderStatus);
 
+                    // send notification and email 
+
+                    var statusVm = BuildOrderStatusVm(OrderStatus, jobdetails, customerDetails, estimatedetails);
+                    await estimateService.SendStatusNotificationEmail(statusVm);
+                    await SendInAppNotification(statusVm, Estimation.OrderApproved, OrderStatus.OrderId);
                 }
                 else
                 {
@@ -582,6 +603,50 @@ namespace ShutterManagement.Business.Services
 
             return responseVm;
         }
+
+        private EstimateOrOrderBaseVm BuildOrderStatusVm(
+        TblOrder orderStatus,
+        TblJob jobdetails,
+        TblContact customerDetails,
+        TblEstimate estimatedetails)
+        {
+            return new EstimateOrOrderBaseVm
+            {
+                JobId = jobdetails?.JobId,
+                JobCode = jobdetails?.JobUniqueId,
+                CustomerName = $"{customerDetails?.FirstName ?? ""} {customerDetails?.LastName ?? ""}".Trim(),
+                TenantId = orderStatus.TenantId,
+                OrderName = orderStatus.OrderName,
+                OrderDate = orderStatus.CreatedAt,
+                PreparedBy = estimatedetails?.PreparedBy,
+                OrderGrandTotal = orderStatus.GrandTotal,
+                OrderStatus = orderStatus.Status
+            };
+        }
+
+        private async Task SendInAppNotification(EstimateOrOrderBaseVm vm, Estimation estimationType, Guid orderId)
+        {
+            var templateType = EnumValue.GetEnumValue(estimationType).ToString();
+            var notificationTemplate = dbContext.TblNotificationTemplates
+                .FirstOrDefault(t => t.Type == templateType);
+
+            if (notificationTemplate == null) return;
+
+            var replacedContent = emailSendHelperService.PlaceholderReplace(notificationTemplate.Body, vm);
+
+            var notification = new CreateNotification
+            {
+                UserId = vm.TenantId,
+                Subject = notificationTemplate.Subject ?? "",
+                Body = replacedContent ?? "",
+                CreatedDate = DateTime.Now,
+                Type = nameof(NotificationModule.Order),
+                TypeId = orderId
+            };
+
+            await notificationService.CreateNotification(notification);
+        }
+
 
         public async Task<IResponseVm<string>> ActiveInActiveOrder(Guid OrderId)
         {

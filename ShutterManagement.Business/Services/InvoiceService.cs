@@ -677,7 +677,7 @@ namespace ShutterManagement.Business.Services
                 var htmlContent = await emailSendHelperService.GetTemplateContent(EmailTemplateType.EstimatePDF, invoiceData);
 
                 //Generate the Estimate Invoice PDF
-                var pdfBytes = GeneratePdf(htmlContent.Data);
+                var pdfBytes = GeneratePdf(htmlContent?.Data?.Body??"");
 
                 if (!pdfBytes.IsSuccess)
                 {
@@ -865,7 +865,7 @@ namespace ShutterManagement.Business.Services
                         var invoiceEmailContent = await emailSendHelperService.GetTemplateContent(EmailTemplateType.InvoicePDF, invoiceData);
 
                         // Generate Invoice PDF
-                        var pdfBytesInvoice = GeneratePdf(invoiceEmailContent.Data);
+                        var pdfBytesInvoice = GeneratePdf(invoiceEmailContent?.Data?.Body??"");
 
                         // Save the invoice PDF
                         var rootPathInvoice = Path.Combine(AppConstant.FileUploadPath, claimsProperty.GetTenantId().ToString());
