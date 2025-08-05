@@ -474,7 +474,7 @@ namespace ShutterManagement.Business.Services
                     var estimateDetails = dbContext.TblEstimates.FirstOrDefault(x => x.JobId == invoivedetail.JobId && x.IsActive == true && x.IsDelete == false);
                     // send notification in application
                     var statusVm = BuildPaymentVm(job, customerDetails, estimateDetails);
-                    var appmsg = notificationService.SendInAppNotification(statusVm, EnumValue.GetEnumValue(Estimation.PaymentReceived).ToString(), invoice.InvoiceId);
+                    var appmsg = notificationService.SendInAppNotification(statusVm, EnumValue.GetEnumValue(Estimation.PaymentReceived).ToString(), invoice.InvoiceId,NotificationModule.Payment);
                 }
 
                 await transaction.CommitAsync();

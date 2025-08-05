@@ -587,7 +587,7 @@ namespace ShutterManagement.Business.Services
                    var statusVm = BuildOrderStatusVm(OrderStatus, jobdetails, customerDetails, estimatedetails);
                     await estimateService.SendStatusNotificationEmail(statusVm);
                     var templatetype = Helper.GetTemplateType(statusVm).Value;
-                    await notificationService.SendInAppNotification(statusVm, EnumValue.GetEnumValue(templatetype).ToString() , OrderStatus.OrderId);
+                    await notificationService.SendInAppNotification(statusVm, EnumValue.GetEnumValue(templatetype).ToString() , OrderStatus.OrderId,NotificationModule.Order);
                 }
                 else
                 {

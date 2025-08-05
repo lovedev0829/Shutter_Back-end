@@ -119,7 +119,7 @@ namespace ShutterManagement.Business.Services
         }
 
 
-        public async Task SendInAppNotification(EstimateOrOrderBaseVm vm, string type, Guid? TypeId)
+        public async Task SendInAppNotification(EstimateOrOrderBaseVm vm, string type, Guid? TypeId, NotificationModule notificationModule = NotificationModule.Default)
         {
             var notificationTemplate = dbContext.TblNotificationTemplates
                 .FirstOrDefault(t => t.Type == type);
@@ -134,7 +134,7 @@ namespace ShutterManagement.Business.Services
                 Subject = notificationTemplate.Subject ?? "",
                 Body = replacedContent ?? "",
                 CreatedDate = DateTime.Now,
-                Type = nameof(NotificationModule.Payment),
+                Type = nameof(notificationModule),
                 TypeId = TypeId
             };
 

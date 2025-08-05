@@ -19,7 +19,7 @@ namespace ShutterManagement.Business.Interfaces
         Task<IResponseVm<string>> UpdateNotification(Guid Id);
         Task<IResponseVm<string>> CreateNotification(CreateNotification model);
 
-        Task SendInAppNotification(EstimateOrOrderBaseVm vm, string type, Guid? TypeId);
+        Task SendInAppNotification(EstimateOrOrderBaseVm vm, string type, Guid? TypeId ,NotificationModule notificationModule = NotificationModule.Default);
 
     }
 }
