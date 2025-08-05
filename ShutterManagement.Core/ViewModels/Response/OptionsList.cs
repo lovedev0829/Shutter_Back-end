@@ -37,7 +37,7 @@ namespace ShutterManagement.Core.ViewModels.Response
 
         [DefaultValue("")]
         public decimal? AdditionalCost { get; set; }
-        public bool? IsDefault { get; set; }
+        public bool? IsDefault { get; set; } = false;
         public int? SortOrder { get; set; }
         public bool? RequirePriceAtEstimatePreview { get; set; }
         public bool hidePreview { get; set; }
