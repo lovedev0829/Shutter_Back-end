@@ -9,72 +9,72 @@ namespace ShutterManagement.Core.Common
 {
     public static class Templates
     {
-        public static string Estimate { get; set; } = @"
-<div style='font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px; margin: auto; background: #f9f9f9; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);'>
-    <div style='background: white; padding: 20px; border-radius: 10px;'>
+//        public static string Estimate { get; set; } = @"
+//<div style='font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px; margin: auto; background: #f9f9f9; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);'>
+//    <div style='background: white; padding: 20px; border-radius: 10px;'>
 
-        <p style='font-size: 16px; margin-bottom: 10px;'>
-            <strong>Dear {{CustomerName}},</strong>
-        </p>
+//        <p style='font-size: 16px; margin-bottom: 10px;'>
+//            <strong>Dear {{CustomerName}},</strong>
+//        </p>
 
-        <p style='font-size: 15px;'>
-            Please review the attached <strong>estimate</strong> prepared for your consideration.
-        </p>
+//        <p style='font-size: 15px;'>
+//            Please review the attached <strong>estimate</strong> prepared for your consideration.
+//        </p>
 
-        <p style='font-size: 15px;'>
-            You can approve your estimate - <strong>{{EstimationCode}}</strong> by clicking the link below:
-        </p>
+//        <p style='font-size: 15px;'>
+//            You can approve your estimate - <strong>{{EstimationCode}}</strong> by clicking the link below:
+//        </p>
 
-        <div style='text-align: center; margin: 25px 0;'>
-            <a href='{{InvoiceLink}}' 
-               style='background-color: #0066cc; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold;'>
-                View Estimate
-            </a>
-        </div>
+//        <div style='text-align: center; margin: 25px 0;'>
+//            <a href='{{InvoiceLink}}' 
+//               style='background-color: #0066cc; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold;'>
+//                View Estimate
+//            </a>
+//        </div>
 
-        <p style='font-size: 15px;'>
-            Once approved, an invoice will be automatically created for you to pay online or visit us to complete the payment.
-        </p>
+//        <p style='font-size: 15px;'>
+//            Once approved, an invoice will be automatically created for you to pay online or visit us to complete the payment.
+//        </p>
 
-        <p style='font-size: 15px; margin-top: 30px;'>
-            Thank you for your business!
-        </p>
+//        <p style='font-size: 15px; margin-top: 30px;'>
+//            Thank you for your business!
+//        </p>
 
-        <img src='{{Logo}}' alt='Company Logo' height='50' style='margin-top: 20px; display: block;' />
+//        <img src='{{Logo}}' alt='Company Logo' height='50' style='margin-top: 20px; display: block;' />
 
-        <p style='font-size: 15px; margin-top: 20px;'>Best regards,</p>
-        <p style='font-size: 15px; font-weight: bold;'>{{TenantCompanyName}}</p>
-        <p style='font-size: 14px;'>Shutter Management and Estimation System</p>
-    </div>
-</div>";
+//        <p style='font-size: 15px; margin-top: 20px;'>Best regards,</p>
+//        <p style='font-size: 15px; font-weight: bold;'>{{TenantCompanyName}}</p>
+//        <p style='font-size: 14px;'>Shutter Management and Estimation System</p>
+//    </div>
+//</div>";
 
-        public static string Order { get; set; } = @"
-     <div style='font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px;'>
-        <p><strong>Dear {{CustomerName}},</strong></p>
+//        public static string Order { get; set; } = @"
+//     <div style='font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px;'>
+//        <p><strong>Dear {{CustomerName}},</strong></p>
 
-        <p>Please find your invoice attached for your reference.</p>
+//        <p>Please find your invoice attached for your reference.</p>
 
-        <p>You can approve  your Order - {{OrderName}} by clicking the link below:</p>
+//        <p>You can approve  your Order - {{OrderName}} by clicking the link below:</p>
 
-        <p>
-            <a href='{{InvoiceLink}}'>
-               Order Approval link. 
-            </a>
-        </p>
+//        <p>
+//            <a href='{{InvoiceLink}}'>
+//               Order Approval link. 
+//            </a>
+//        </p>
 
-        <p><strong>Thank you for your business!</strong></p>
+//        <p><strong>Thank you for your business!</strong></p>
 
        
         
 
-        <p>
-            <img src='{{Logo}}' alt='Company Logo' height='100px' 
-                 style='margin-top: 10px; display: block;'>
-        </p>
-        <p>Best regards,</p>
-        <p><strong>{{TenantCompanyName}}</strong></p>
-        <p>Shutter Management and Estimation System</p>
-    </div>";
+//        <p>
+//            <img src='{{Logo}}' alt='Company Logo' height='100px' 
+//                 style='margin-top: 10px; display: block;'>
+//        </p>
+//        <p>Best regards,</p>
+//        <p><strong>{{TenantCompanyName}}</strong></p>
+//        <p>Shutter Management and Estimation System</p>
+//    </div>";
 
         public static string Invoice { get; set; } = @"
 <div style='max-width: 600px; margin: auto; background: #fff; border-radius: 8px; box-shadow: 0px 0px 10px rgba(0,0,0,0.1); padding: 20px; font-family: Arial, sans-serif; color: #333;'>

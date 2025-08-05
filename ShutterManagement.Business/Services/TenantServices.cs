@@ -674,7 +674,7 @@ namespace ShutterManagement.Business.Services
                     color = model.PrimaryColor ?? "",
                     Email = model.Email
                 };
-                responseVm = await emailSendHelperService.SendEmailWithReplacedContent(EmailTemplateType.WelcomeEmail, welcomemodel);
+                responseVm = await emailSendHelperService.SendEmailWithReplacedContent(EmailTemplateType.WelcomeEmail, welcomemodel,AppConstant.Sub_WelcomeEmail);
             }
             catch (Exception ex)
             {

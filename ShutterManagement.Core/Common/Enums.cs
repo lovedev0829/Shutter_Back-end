@@ -75,7 +75,8 @@ namespace ShutterManagement.Core.Common
         [EnumMember(Value = "InvoicePaymentForEmail")]
         InvoicePaymentForEmail,
         [EnumMember(Value = "OrderSheet")]
-        OrderSheet
+        OrderSheet,
+        
     }
 
     public enum EmailSendType
@@ -139,7 +140,13 @@ namespace ShutterManagement.Core.Common
         [EnumMember(Value = "Rejected")]
         Rejected,
         [EnumMember(Value = "GenerateOrder")]
-        GenerateOrder
+        GenerateOrder,
+        [EnumMember(Value = "OrderApproved")]
+        OrderApproved,
+        [EnumMember(Value = "OrderRejected")]
+        OrderRejected,
+        [EnumMember(Value = "PaymentReceived")]
+        PaymentReceived
     }
 
     public enum PaymentStatus
@@ -157,6 +164,8 @@ namespace ShutterManagement.Core.Common
 
     public enum EmailTemplateType
     {
+        [EnumMember(Value = "Default")]
+        Default,
         [EnumMember(Value = "WelcomeEmail")]
         WelcomeEmail,
         [EnumMember(Value = "EstimatePDF")]
@@ -166,7 +175,19 @@ namespace ShutterManagement.Core.Common
         [EnumMember(Value = "PaymentConfirmation")]
         PaymentConfirmation,
         ForgotPassword,
-       
+        [EnumMember(Value = "EstimateApproved")]
+        EstimateApproved,
+        [EnumMember(Value = "EstimateRejected")]
+        EstimateRejected,
+        [EnumMember(Value = "OrderApproved")]
+        OrderApproved,
+        [EnumMember(Value = "OrderRejected")]
+        OrderRejected,
+        [EnumMember(Value = "EstimateBody")]
+        EstimateBody,
+        [EnumMember(Value = "OrderBody")]
+        OrderBody
+
     }
 
 
@@ -193,7 +214,11 @@ namespace ShutterManagement.Core.Common
         [EnumMember(Value = "Partner")]
         SubTenant,   
         [EnumMember(Value = "User")]
-        User
+        User,
+        [EnumMember(Value = "Order")]
+        Order,
+        [EnumMember(Value = "Payment")]
+        Payment
     }
 
 

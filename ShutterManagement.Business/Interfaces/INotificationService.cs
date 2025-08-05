@@ -8,6 +8,7 @@ using ShutterManagement.Core.ViewModels;
 using ShutterManagement.DAL.Context;
 using ShutterManagement.Interfaces;
 using ShutterManagement.Core.ViewModels.Request;
+using ShutterManagement.Core.Common;
 
 namespace ShutterManagement.Business.Interfaces
 {
@@ -17,5 +18,8 @@ namespace ShutterManagement.Business.Interfaces
         Task<IResponseVm<List<GetAllNotification>>> GetAllNotifications();
         Task<IResponseVm<string>> UpdateNotification(Guid Id);
         Task<IResponseVm<string>> CreateNotification(CreateNotification model);
+
+        Task SendInAppNotification(EstimateOrOrderBaseVm vm, string type, Guid? TypeId);
+
     }
 }

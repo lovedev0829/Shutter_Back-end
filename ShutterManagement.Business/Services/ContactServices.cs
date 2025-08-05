@@ -982,7 +982,7 @@ namespace ShutterManagement.Business.Services
             try
             {
                 var tenantId = (LoggedInTenantId != null && LoggedInTenantId != Guid.Empty)
-                    ? LoggedInTenantId.Value
+? LoggedInTenantId.Value
                     : claimsProperty.GetTenantId();
                 if (model.BillingAddressVm != null)
                 {

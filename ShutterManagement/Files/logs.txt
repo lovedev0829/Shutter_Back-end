@@ -1,4 +1,12 @@
-﻿2025-07-11 13:01:00 : [OAuthEmail] AuthException: MailKit.Security.AuthenticationException: 535: 5.7.3 Authentication unsuccessful [MA0PR01CA0107.INDPRD01.PROD.OUTLOOK.COM 2025-07-11T07:30:48.419Z 08DDC005A0C0B809]
+﻿2025-07-30 19:41:38 : Job status not found.
+
+for EstimationId: cd329813-8983-452b-8ccd-ce17b32472a5...
+
+b-8ccd-ce17b32472a5
+
+
+
+0PR01CA0107.INDPRD01.PROD.OUTLOOK.COM 2025-07-11T07:30:48.419Z 08DDC005A0C0B809]
    at MailKit.Net.Smtp.SmtpClient.AuthenticateAsync(SaslMechanism mechanism, CancellationToken cancellationToken)
    at ShutterManagement.Core.Common.EmailHelper.SendEmail(OAuthEmailRequest request)
 
