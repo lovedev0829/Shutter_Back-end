@@ -17,6 +17,7 @@ using Stripe;
 using System.Xml.Linq;
 using Azure;
 using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace ShutterManagement.Business.Services
 {
@@ -30,10 +31,11 @@ namespace ShutterManagement.Business.Services
         private readonly StripeService stripeService;
         private readonly IOrderService orderService;
         private readonly EmailSendHelperService emailSendHelperService;
+        private readonly INotificationService notificationService;
         public Pagination filter = new Pagination();
         #endregion Private Fields
         public PaymentsService(ITenantService tenantService ,IInvoiceService invoiceService ,ClaimsProperty claimsProperty
-            ,StripeService stripeService ,IOrderService orderService,EmailSendHelperService emailSendHelperService)
+            ,StripeService stripeService ,IOrderService orderService,EmailSendHelperService emailSendHelperService,INotificationService notificationService)
         {
             this.tenantService = tenantService;
             this.invoiceService = invoiceService;
@@ -41,6 +43,7 @@ namespace ShutterManagement.Business.Services
             this.stripeService = stripeService;
             this.orderService = orderService;
             this.emailSendHelperService = emailSendHelperService;
+            this.notificationService = notificationService;
         }
 
         #region Active_InActive_Payment
@@ -239,17 +242,13 @@ namespace ShutterManagement.Business.Services
                     var invoivedetail = dbContext.TblInvoices.Where(x => x.InvoiceId == model.InvoiceId).FirstOrDefault();
                     var job = dbContext.TblJobs.Where(x => x.JobId == invoivedetail.JobId).FirstOrDefault();
                     var customerDetails = dbContext.TblContacts.Where(x => x.ContactId == job.ContactId).FirstOrDefault();
+                    var estimateDetails = dbContext.TblEstimates.FirstOrDefault(x => x.JobId == invoivedetail.JobId && x.IsActive==true && x.IsDelete==false);
 
+                    await SendPaymentConfirmationEmail(customerDetails?.Email, customerDetails?.FirstName ?? "", customerDetails?.LastName ?? "",invoice?.InvoiceNumber ?? "", model.Amount ?? 0, invoice.BalanceDue);
 
-                    SendPaymentConfirmationEmail(
-                        customerDetails?.Email,
-                        customerDetails?.FirstName ?? "",
-                        customerDetails?.LastName ?? "",
-                        invoice?.InvoiceNumber ?? "",
-                        model.Amount ?? 0,
-                        invoice.BalanceDue
-                        );
-
+                    // send notification in application
+                    var statusVm = BuildPaymentVm(job, customerDetails, estimateDetails);
+                    var appmsg = notificationService.SendInAppNotification(statusVm, EnumValue.GetEnumValue(Estimation.PaymentReceived).ToString() , invoice.InvoiceId);
 
                 }
                 await transaction.CommitAsync();
@@ -268,6 +267,41 @@ namespace ShutterManagement.Business.Services
         }
 
         #endregion CreatePayment
+
+        private EstimateOrOrderBaseVm BuildPaymentVm(TblJob jobdetails, TblContact customerDetails, TblEstimate estimatedetails)
+        {
+            return new EstimateOrOrderBaseVm
+            {
+                JobId = jobdetails?.JobId,
+                JobCode = jobdetails?.JobUniqueId,
+                CustomerName = $"{customerDetails?.FirstName ?? ""} {customerDetails?.LastName ?? ""}".Trim(),
+                TenantId = estimatedetails.TenantId,
+                PreparedBy = estimatedetails?.PreparedBy,
+            };
+        }
+
+        //private async Task SendInAppNotification(EstimateOrOrderBaseVm vm, Estimation estimationType,Guid? TypeId)
+        //{
+        //    var templateType = EnumValue.GetEnumValue(estimationType).ToString();
+        //    var notificationTemplate = dbContext.TblNotificationTemplates
+        //        .FirstOrDefault(t => t.Type == templateType);
+
+        //    if (notificationTemplate == null) return;
+
+        //    var replacedContent = emailSendHelperService.PlaceholderReplace(notificationTemplate.Body, vm);
+
+        //    var notificationVm = new CreateNotification
+        //    {
+        //        UserId = vm.TenantId,
+        //        Subject = notificationTemplate.Subject ?? "",
+        //        Body = replacedContent ?? "",
+        //        CreatedDate = DateTime.Now,
+        //        Type = nameof(NotificationModule.Payment),
+        //        TypeId = TypeId
+        //    };
+
+        //    await notificationService.CreateNotification(notificationVm);
+        //}
 
         #region DeletePayment
         public async Task<IResponseVm<string>> DeletePayment(Guid PaymentId)
@@ -435,6 +469,12 @@ namespace ShutterManagement.Business.Services
                         updatePayment.Amount ?? 0,
                         invoice.BalanceDue
                     );
+                    var invoivedetail = dbContext.TblInvoices.Where(x => x.InvoiceId == updatePayment.InvoiceId).FirstOrDefault();
+                    var job = dbContext.TblJobs.Where(x => x.JobId == invoivedetail.JobId).FirstOrDefault();
+                    var estimateDetails = dbContext.TblEstimates.FirstOrDefault(x => x.JobId == invoivedetail.JobId && x.IsActive == true && x.IsDelete == false);
+                    // send notification in application
+                    var statusVm = BuildPaymentVm(job, customerDetails, estimateDetails);
+                    var appmsg = notificationService.SendInAppNotification(statusVm, EnumValue.GetEnumValue(Estimation.PaymentReceived).ToString(), invoice.InvoiceId);
                 }
 
                 await transaction.CommitAsync();
@@ -735,6 +775,8 @@ namespace ShutterManagement.Business.Services
         {
             try
             {
+
+
                 var tenantDetails = tenantService.GetAllQuerable()
                     .FirstOrDefault(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive==true);
 
@@ -743,7 +785,7 @@ namespace ShutterManagement.Business.Services
 
                 var invoiceDataModel = new PaymentConfirmationModel
                 {
-                    CustomerEmail = customerEmail,
+                    Email = customerEmail,
                     FirstName = firstName,
                     LastName = lastName,
                     InvoiceNumber = invoiceNumber,
@@ -751,10 +793,11 @@ namespace ShutterManagement.Business.Services
                     RemainingBalance = remainingBalance,
                     CompanyName = tenantInfoDetails?.CompanyName ?? "",
                     TenantEmail = tenantInfoDetails?.Email ?? "",
-                    CompanyLogo = tenantInfoDetails?.Logo ?? ""
+                    CompanyLogo = tenantInfoDetails?.Logo ?? "",
+                    TenantId = claimsProperty.GetTenantId().ToString()
                 };
 
-                var res = await emailSendHelperService.SendEmailWithReplacedContent(EmailTemplateType.PaymentConfirmation, invoiceDataModel);
+                var res = await emailSendHelperService.SendEmailWithReplacedContent(EmailTemplateType.PaymentConfirmation, invoiceDataModel,AppConstant.Sub_PaymentConfirmation);
             }
             catch (Exception ex)
             {

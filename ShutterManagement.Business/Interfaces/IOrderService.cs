@@ -27,5 +27,9 @@ namespace ShutterManagement.Business.Interfaces
 
         Task<IResponseVm<string>> GenerateOrderSheet(Guid? orderId);
 
+        
+
+
+
     }
 }

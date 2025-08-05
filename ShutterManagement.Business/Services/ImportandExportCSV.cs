@@ -457,12 +457,16 @@ namespace ShutterManagement.Business.Services
                             filter.SearchValue = record.PhoneNumber;
                             existingContactResponse = await contactService.GetAll_Contact(filter, role, false);
                         }
-
-                        if (string.IsNullOrEmpty(record.BillingAddressVm.BillingFirstName) || string.IsNullOrEmpty(record.BillingAddressVm.BillingLastName) 
-                            || string.IsNullOrEmpty(record.BillingAddressVm.City) || string.IsNullOrEmpty(record.BillingAddressVm.StateName) 
-                            || string.IsNullOrEmpty(record.BillingAddressVm.StreetAddress) && string.IsNullOrEmpty(record.BillingAddressVm.ZipCode))
+                        if (string.IsNullOrEmpty(record.ContactType))
                         {
-                            validationErrors.Add($"Error in row {rowNumber}: Billing Address details is required.");
+                            validationErrors.Add($"Error in row {rowNumber}: ContactType is required.");
+                            rowNumber++;
+                            continue;
+                        }
+                        var (isValid, message) = await ValidateBillingAddress(record.BillingAddressVm);
+                        if(isValid)
+                        {
+                            validationErrors.Add($"Error in row {rowNumber}:{message}");
                             rowNumber++;
                             continue;
                         }
@@ -725,6 +729,34 @@ namespace ShutterManagement.Business.Services
             }
             return null;
         }
+        private async Task<(bool isValid, string message)> ValidateBillingAddress(BillingAddressVm contactModel)
+        {
+            var missingFields = new List<string>();
+
+            if (string.IsNullOrWhiteSpace(contactModel.BillingFirstName))
+                missingFields.Add(nameof(contactModel.BillingFirstName));
+
+            if (string.IsNullOrWhiteSpace(contactModel.BillingLastName))
+                missingFields.Add(nameof(contactModel.BillingLastName));
+
+            if (string.IsNullOrWhiteSpace(contactModel.City))
+                missingFields.Add(nameof(contactModel.City));
+
+            if (string.IsNullOrWhiteSpace(contactModel.StateName))
+                missingFields.Add(nameof(contactModel.StateName));
+
+            if (string.IsNullOrWhiteSpace(contactModel.StreetAddress))
+                missingFields.Add(nameof(contactModel.StreetAddress));
+
+            if (string.IsNullOrWhiteSpace(contactModel.ZipCode))
+                missingFields.Add(nameof(contactModel.ZipCode));
+
+            bool isValid = missingFields.Count != 0;
+            string message = !isValid ? string.Empty : $"Missing fields: {string.Join(", ", missingFields)}";
+
+            return (isValid, message);
+        }
+
 
         private async Task<int> InsertValidContacts(List<Sp_Contact> validContacts, List<string> validationErrors)
         {

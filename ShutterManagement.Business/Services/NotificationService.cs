@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Core;
+using ShutterManagement.Core.Common;
 using ShutterManagement.Core.ViewModels;
 using ShutterManagement.Core.ViewModels.Request;
 using ShutterManagement.Core.ViewModels.Response;
@@ -15,9 +16,13 @@ namespace ShutterManagement.Business.Services
 {
     public class NotificationService : BaseRepository<ShutterDBContext, TblNotification>, INotificationService
     {
-        public NotificationService()
+        private readonly ClaimsProperty claimsProperty;
+        private readonly EmailSendHelperService emailSendHelperService;
+
+        public NotificationService(ClaimsProperty claimsProperty,EmailSendHelperService emailSendHelperService)
         {
-            
+            this.claimsProperty = claimsProperty;
+            this.emailSendHelperService = emailSendHelperService;
         }
 
         public async Task<IResponseVm<string>> CreateNotification(CreateNotification model)
@@ -52,7 +57,15 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
             {
-                var notification = GetAllQuerable().Where(x => x.Id == Id && x.UserId == AppConstant.LoggedInUserID).FirstOrDefault();
+                var logdinTenantId = claimsProperty.GetTenantId();
+
+                var subTenantIds = new List<Guid>();
+                if (string.IsNullOrEmpty(claimsProperty.GetParentTenantId()))
+                {
+                    subTenantIds = dbContext.TblTenants.Where(t => t.ParentTenantId == logdinTenantId || t.TenantId == logdinTenantId).Select(t => t.TenantId).ToList();
+                }
+
+                var notification = GetAllQuerable().Where(x => x.Id == Id && (x.UserId == logdinTenantId || subTenantIds.Contains(x.UserId ?? Guid.Empty))).FirstOrDefault();
                 if (notification != null)
                 {
                     notification.IsReaded = true;
@@ -73,7 +86,15 @@ namespace ShutterManagement.Business.Services
             IResponseVm<List<GetAllNotification>> responseVm = new ResponseVm<List<GetAllNotification>>(); 
             try
             {
-                var  notification = GetAllQuerable().Where(x => x.UserId == AppConstant.LoggedInUserID).OrderByDescending(pt=> pt.Createdate).Select(pt => new GetAllNotification
+                var logdinTenantId = claimsProperty.GetTenantId();
+
+                var subTenantIds = new List<Guid>();
+                if (string.IsNullOrEmpty(claimsProperty.GetParentTenantId()))
+                {
+                    subTenantIds = dbContext.TblTenants.Where(t => t.ParentTenantId == logdinTenantId || t.TenantId == logdinTenantId).Select(t => t.TenantId).ToList();
+                }
+
+                var notification = GetAllQuerable().Where(x => (x.UserId == logdinTenantId || subTenantIds.Contains(x.UserId ?? Guid.Empty))).OrderByDescending(pt=> pt.Createdate).Select(pt => new GetAllNotification
                 {
                     Id = pt.Id,
                     Subject = pt.Subject,
@@ -95,6 +116,29 @@ namespace ShutterManagement.Business.Services
                 responseVm.Message = ex.Message;
             }
             return responseVm;
+        }
+
+
+        public async Task SendInAppNotification(EstimateOrOrderBaseVm vm, string type, Guid? TypeId)
+        {
+            var notificationTemplate = dbContext.TblNotificationTemplates
+                .FirstOrDefault(t => t.Type == type);
+
+            if (notificationTemplate == null) return;
+
+            var replacedContent = emailSendHelperService.PlaceholderReplace(notificationTemplate.Body, vm);
+
+            var notificationVm = new CreateNotification
+            {
+                UserId = vm.TenantId,
+                Subject = notificationTemplate.Subject ?? "",
+                Body = replacedContent ?? "",
+                CreatedDate = DateTime.Now,
+                Type = nameof(NotificationModule.Payment),
+                TypeId = TypeId
+            };
+
+            await CreateNotification(notificationVm);
         }
     }
 

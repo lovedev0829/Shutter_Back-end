@@ -115,6 +115,8 @@ public partial class ShutterDBContext : DbContext
 
     public virtual DbSet<TblNotification> TblNotifications { get; set; }
 
+    public virtual DbSet<TblNotificationTemplate> TblNotificationTemplates { get; set; }
+
     public virtual DbSet<TblOption> TblOptions { get; set; }
 
     public virtual DbSet<TblOptionsType> TblOptionsTypes { get; set; }
@@ -1451,6 +1453,15 @@ public partial class ShutterDBContext : DbContext
             entity.Property(e => e.Createdate).HasColumnType("datetime");
         });
 
+        modelBuilder.Entity<TblNotificationTemplate>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__TblNotif__3214EC07CF12646C");
+
+            entity.ToTable("TblNotificationTemplate", "dbo");
+
+            entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+        });
+
         modelBuilder.Entity<TblOption>(entity =>
         {
             entity.HasKey(e => e.OptionId).HasName("PK__TblOptio__92C7A1FF8D319BC4");
@@ -1961,6 +1972,7 @@ public partial class ShutterDBContext : DbContext
 
             entity.Property(e => e.TemplateId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.Subject).HasMaxLength(200);
             entity.Property(e => e.TemplateCategory)
                 .HasMaxLength(100)
                 .IsUnicode(false);
@@ -2160,8 +2172,6 @@ public partial class ShutterDBContext : DbContext
             entity.HasIndex(e => e.JobId, "IX_TblVendorOrder_JobId");
 
             entity.HasIndex(e => e.TenentId, "IX_TblVendorOrder_TenentId");
-
-            entity.HasIndex(e => e.OrderNumber, "UQ__TblVendo__CAC5E743AC44CEB3").IsUnique();
 
             entity.Property(e => e.VendorOrderId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.ActualDeliveryDate).HasColumnType("datetime");
