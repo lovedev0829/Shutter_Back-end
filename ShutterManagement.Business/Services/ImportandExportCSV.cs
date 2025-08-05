@@ -206,12 +206,16 @@ namespace ShutterManagement.Business.Services
                    "Vendor", "Notes", "ProductType", "SKU", "IsCutSheet"
                     };
 
-
-
                     csv.Read();
                     csv.ReadHeader();
                     var actualHeaders = csv.HeaderRecord.Select(h => h.Trim().TrimEnd('*').ToLower()).ToArray();
 
+                    // Check if "UnitCost" is in the headers
+                    if (actualHeaders.Contains("unitcost"))
+                    {
+                        responseVm.Message = "'UnitCost' column is not allowed in the import file.";
+                        return responseVm;
+                    }
                     var normalizedExpectedHeaders = expectedHeaders
                         .Select(h => h.Trim().ToLower())
                         .ToArray();
@@ -294,7 +298,7 @@ namespace ShutterManagement.Business.Services
                             MaterialName = record.MaterialName?.Trim(),
                             Lenght = record.Lenght ?? null,
                             Width = record.Width ?? null,
-                            UnitCost = unitPrice??0.0m,
+                           // UnitCost = unitPrice??0.0m,
                             //NonRatedUnitCost=record.NonRatedUnitCost,
                             // NonRatedUnitCost=record.UnitCost,
                             UnitOfMeasurement = record.UnitOfMeasurement,
@@ -430,6 +434,7 @@ namespace ShutterManagement.Business.Services
                         bool role = true;
                         IResponseVm<List<ContactsList>> existingContactResponse = new ResponseVm<List<ContactsList>>();
 
+
                         if (string.IsNullOrEmpty(record.Email) && string.IsNullOrEmpty(record.PhoneNumber))
                         {
                             validationErrors.Add($"Error in row {rowNumber}: Email or PhoneNumber alteast one required.");
@@ -452,6 +457,16 @@ namespace ShutterManagement.Business.Services
                             filter.SearchValue = record.PhoneNumber;
                             existingContactResponse = await contactService.GetAll_Contact(filter, role, false);
                         }
+
+                        if (string.IsNullOrEmpty(record.BillingAddressVm.BillingFirstName) || string.IsNullOrEmpty(record.BillingAddressVm.BillingLastName) 
+                            || string.IsNullOrEmpty(record.BillingAddressVm.City) || string.IsNullOrEmpty(record.BillingAddressVm.StateName) 
+                            || string.IsNullOrEmpty(record.BillingAddressVm.StreetAddress) && string.IsNullOrEmpty(record.BillingAddressVm.ZipCode))
+                        {
+                            validationErrors.Add($"Error in row {rowNumber}: Billing Address details is required.");
+                            rowNumber++;
+                            continue;
+                        }
+
                         var existingContact = (!existingContactResponse.IsSuccess || (existingContactResponse.Data == null || existingContactResponse.Data.Count < 0)) ? null : existingContactResponse.Data.FirstOrDefault();
 
                         bool isUpdate =  false;
@@ -530,7 +545,12 @@ namespace ShutterManagement.Business.Services
         private async Task<dynamic> MapToSpContact(ImportContact record, bool isUpdate, Guid? contactId)
         {
             var stateId =  GetStateIdByCode(record.BillingAddressVm?.StateName);
+            bool IsbillingSameAsAddress = true;
             bool isTaxExemption = false;
+            if(record.BillingAddressVm == null)
+            {
+                IsbillingSameAsAddress = true;
+            }
             if (record.TaxExemptionVm?.EffectiveDate == null && record.TaxExemptionVm?.ExpiryDate == null)
             {
                 isTaxExemption = true;
@@ -549,6 +569,7 @@ namespace ShutterManagement.Business.Services
                     Website = record.Website?.Trim(),
                     Notes = record.Notes?.Trim(),
                     Referral = record.Referral?.Trim(),
+                    IsBillingAddressSameAsAddress = IsbillingSameAsAddress,
                     IsTaxExemption = isTaxExemption,
                     BillingAddressVm = record.BillingAddressVm != null ? new BillingAddressVm
                     {
@@ -582,7 +603,7 @@ namespace ShutterManagement.Business.Services
                 Website = record.Website?.Trim(),
                 Notes = record.Notes?.Trim(),
                 Referral = record.Referral?.Trim(),
-                IsBillingAddressSameAsAddress = false,
+                IsBillingAddressSameAsAddress = IsbillingSameAsAddress,
                 IsTaxExemption = isTaxExemption,
                 BillingAddressVm = record.BillingAddressVm != null ? new BillingAddressVm
                 {
@@ -965,7 +986,7 @@ namespace ShutterManagement.Business.Services
                                     }).ToList();
 
                 var csvBuilder = new StringBuilder();
-                csvBuilder.AppendLine("MaterialUniqueId,MaterialName*,UnitCost,TotalCost*,UnitOfMeasurement*,Lenght,Width,StockQuantity,ReorderLevel,Vendor*,Notes,ProductType*,SKU,IsCutSheet*");
+                csvBuilder.AppendLine("MaterialUniqueId,MaterialName*,UnitCost,TotalCost*,UnitOfMeasurement*,Length,Width,StockQuantity,ReorderLevel,Vendor*,Notes,ProductType*,SKU,IsCutSheet*");
 
                 foreach (var material in materialList)
                 {

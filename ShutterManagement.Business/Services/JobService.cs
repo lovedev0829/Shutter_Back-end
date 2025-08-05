@@ -282,6 +282,9 @@ namespace ShutterManagement.Business.Services
                     };
                     await gHLConfiguration.GetGHLConfiguration(tenantId.ToString());
                     var res = await UpdateJob(job, tenantId);
+                    response.IsSuccess = res.IsSuccess;
+                    response.Message = res.Message;
+                    return response;
                 }
             }
 
@@ -330,12 +333,12 @@ namespace ShutterManagement.Business.Services
                 JobType = model.JobType != Guid.Empty ? model.JobType : null,
                 AssignedPersonnel = model.AssignedPersonnel ?? Guid.Empty,
                 ScheduledDate = model.ScheduledDate,
-                JobStatus = jobStatus != Guid.Empty ? jobStatus : null,
+                JobStatus = (!string.IsNullOrEmpty(jobStatus.ToString()) && jobStatus != Guid.Empty) ? jobStatus : Guid.Empty,
                 Notes = model.Notes ?? string.Empty,
                 AttachmentAny = arrayString ?? null,
                 JobUniqueId = jobUniqueId,
                 GhlStageId = (!string.IsNullOrEmpty(model.GHL_StageId.ToString()) && model.GHL_StageId != Guid.Empty) ? model.GHL_StageId : Guid.Parse(StageId),
-                GhlStageName = stageName.Trim(),
+                GhlStageName = (!string.IsNullOrEmpty(stageName)) ? stageName.Trim() : string.Empty,
                 GhlContactId = model.GHL_ContactId ?? string.Empty,
                 GhlOpportunityId = model.GhlOpportunityId ?? string.Empty,
                 GhluserId = (string.IsNullOrEmpty(model.GHLUserId)) ? GHLUserId : model.GHLUserId,
@@ -1607,7 +1610,7 @@ namespace ShutterManagement.Business.Services
                                        x.JobName.Trim() == jobName.Trim() &&
                                        x.IsDelete == false &&
                                        x.TenantId == tenantId &&
-                                       x.GhlContactId == ghlContactId);
+                                       x.GhlContactId != ghlContactId);
         }
 
         private async Task<Guid> ResolveJobStatus(UpdateJob model, Guid? tenantId)
