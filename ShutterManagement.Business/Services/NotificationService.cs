@@ -134,7 +134,7 @@ namespace ShutterManagement.Business.Services
                 Subject = notificationTemplate.Subject ?? "",
                 Body = replacedContent ?? "",
                 CreatedDate = DateTime.Now,
-                Type = nameof(notificationModule),
+                Type = EnumValue.GetEnumValue(notificationModule),
                 TypeId = TypeId
             };
 
