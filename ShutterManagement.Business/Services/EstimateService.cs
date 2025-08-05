@@ -2590,7 +2590,7 @@ namespace ShutterManagement.Business.Services
 
 
                 var emailVm = BuildStatusNotificationVm(model, contact, branding, preparedBy);
-                var templateType =  GetTemplateType(model).Value;
+                var templateType = Helper.GetTemplateType(model).Value;
                 var res = await emailSendHelperService.SendEmailWithReplacedContent(templateType, emailVm);
             }
             catch (Exception ex)
@@ -2602,29 +2602,7 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        public EmailTemplateType? GetTemplateType(EstimateOrOrderBaseVm model)
-        {
-            if (!string.IsNullOrEmpty(model.EstimateCode))
-            {
-                return model.Status switch
-                {
-                    nameof(Estimation.Approved) => EmailTemplateType.EstimateApproved,
-                    nameof(Estimation.Rejected) => EmailTemplateType.EstimateRejected,
-                    _ => null
-                };
-            }
-            else if (!string.IsNullOrEmpty(model.OrderName))
-            {
-                return model.OrderStatus switch
-                {
-                    nameof(Estimation.Approved) => EmailTemplateType.OrderApproved,
-                    nameof(Estimation.Rejected) => EmailTemplateType.OrderRejected,
-                    _ => null
-                };
-            }
-
-            return null;
-        }
+       
 
         private EstimateStatusNotificationVm BuildStatusNotificationVm( EstimateOrOrderBaseVm model, TblContact contact, TblTenantBrandingInfo branding,string preparedBy)
         {

@@ -586,8 +586,8 @@ namespace ShutterManagement.Business.Services
 
                    var statusVm = BuildOrderStatusVm(OrderStatus, jobdetails, customerDetails, estimatedetails);
                     await estimateService.SendStatusNotificationEmail(statusVm);
-                    var templatetype = estimateService.GetTemplateType(statusVm).Value;
-                    await SendInAppNotification(statusVm, templatetype, OrderStatus.OrderId);
+                    var templatetype = Helper.GetTemplateType(statusVm).Value;
+                    await notificationService.SendInAppNotification(statusVm, EnumValue.GetEnumValue(templatetype).ToString() , OrderStatus.OrderId);
                 }
                 else
                 {
@@ -625,28 +625,28 @@ namespace ShutterManagement.Business.Services
             };
         }
 
-        public async Task SendInAppNotification(EstimateOrOrderBaseVm vm, EmailTemplateType estimationType, Guid orderId)
-        {
-            var templateType = EnumValue.GetEnumValue(estimationType).ToString();
-            var notificationTemplate = dbContext.TblNotificationTemplates
-                .FirstOrDefault(t => t.Type == templateType);
+        //public async Task SendInAppNotification(EstimateOrOrderBaseVm vm, EmailTemplateType estimationType, Guid orderId)
+        //{
+        //    var templateType = EnumValue.GetEnumValue(estimationType).ToString();
+        //    var notificationTemplate = dbContext.TblNotificationTemplates
+        //        .FirstOrDefault(t => t.Type == templateType);
 
-            if (notificationTemplate == null) return;
+        //    if (notificationTemplate == null) return;
 
-            var replacedContent = emailSendHelperService.PlaceholderReplace(notificationTemplate.Body, vm);
+        //    var replacedContent = emailSendHelperService.PlaceholderReplace(notificationTemplate.Body, vm);
 
-            var notification = new CreateNotification
-            {
-                UserId = vm.TenantId,
-                Subject = notificationTemplate.Subject ?? "",
-                Body = replacedContent ?? "",
-                CreatedDate = DateTime.Now,
-                Type = nameof(NotificationModule.Order),
-                TypeId = orderId
-            };
+        //    var notification = new CreateNotification
+        //    {
+        //        UserId = vm.TenantId,
+        //        Subject = notificationTemplate.Subject ?? "",
+        //        Body = replacedContent ?? "",
+        //        CreatedDate = DateTime.Now,
+        //        Type = nameof(NotificationModule.Order),
+        //        TypeId = orderId
+        //    };
 
-            await notificationService.CreateNotification(notification);
-        }
+        //    await notificationService.CreateNotification(notification);
+        //}
 
 
         public async Task<IResponseVm<string>> ActiveInActiveOrder(Guid OrderId)

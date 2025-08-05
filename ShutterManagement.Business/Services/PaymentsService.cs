@@ -248,7 +248,7 @@ namespace ShutterManagement.Business.Services
 
                     // send notification in application
                     var statusVm = BuildPaymentVm(job, customerDetails, estimateDetails);
-                    var appmsg = SendInAppNotification(statusVm,Estimation.PaymentReceived, invoice.InvoiceId);
+                    var appmsg = notificationService.SendInAppNotification(statusVm, EnumValue.GetEnumValue(Estimation.PaymentReceived).ToString() , invoice.InvoiceId);
 
                 }
                 await transaction.CommitAsync();
@@ -280,28 +280,28 @@ namespace ShutterManagement.Business.Services
             };
         }
 
-        private async Task SendInAppNotification(EstimateOrOrderBaseVm vm, Estimation estimationType,Guid? invoiceId)
-        {
-            var templateType = EnumValue.GetEnumValue(estimationType).ToString();
-            var notificationTemplate = dbContext.TblNotificationTemplates
-                .FirstOrDefault(t => t.Type == templateType);
+        //private async Task SendInAppNotification(EstimateOrOrderBaseVm vm, Estimation estimationType,Guid? TypeId)
+        //{
+        //    var templateType = EnumValue.GetEnumValue(estimationType).ToString();
+        //    var notificationTemplate = dbContext.TblNotificationTemplates
+        //        .FirstOrDefault(t => t.Type == templateType);
 
-            if (notificationTemplate == null) return;
+        //    if (notificationTemplate == null) return;
 
-            var replacedContent = emailSendHelperService.PlaceholderReplace(notificationTemplate.Body, vm);
+        //    var replacedContent = emailSendHelperService.PlaceholderReplace(notificationTemplate.Body, vm);
 
-            var notificationVm = new CreateNotification
-            {
-                UserId = vm.TenantId,
-                Subject = notificationTemplate.Subject ?? "",
-                Body = replacedContent ?? "",
-                CreatedDate = DateTime.Now,
-                Type = nameof(NotificationModule.Payment),
-                TypeId = invoiceId
-            };
+        //    var notificationVm = new CreateNotification
+        //    {
+        //        UserId = vm.TenantId,
+        //        Subject = notificationTemplate.Subject ?? "",
+        //        Body = replacedContent ?? "",
+        //        CreatedDate = DateTime.Now,
+        //        Type = nameof(NotificationModule.Payment),
+        //        TypeId = TypeId
+        //    };
 
-            await notificationService.CreateNotification(notificationVm);
-        }
+        //    await notificationService.CreateNotification(notificationVm);
+        //}
 
         #region DeletePayment
         public async Task<IResponseVm<string>> DeletePayment(Guid PaymentId)
@@ -474,7 +474,7 @@ namespace ShutterManagement.Business.Services
                     var estimateDetails = dbContext.TblEstimates.FirstOrDefault(x => x.JobId == invoivedetail.JobId && x.IsActive == true && x.IsDelete == false);
                     // send notification in application
                     var statusVm = BuildPaymentVm(job, customerDetails, estimateDetails);
-                    var appmsg = SendInAppNotification(statusVm, Estimation.PaymentReceived, invoice.InvoiceId);
+                    var appmsg = notificationService.SendInAppNotification(statusVm, EnumValue.GetEnumValue(Estimation.PaymentReceived).ToString(), invoice.InvoiceId);
                 }
 
                 await transaction.CommitAsync();

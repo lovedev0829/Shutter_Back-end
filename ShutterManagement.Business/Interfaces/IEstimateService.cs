@@ -40,6 +40,6 @@ namespace ShutterManagement.Business.Interfaces
 
         Task<IResponseVm<string>> SendStatusNotificationEmail(EstimateOrOrderBaseVm model);
 
-        EmailTemplateType? GetTemplateType(EstimateOrOrderBaseVm model);
+       
     }
 }

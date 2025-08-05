@@ -164,6 +164,8 @@ namespace ShutterManagement.Core.Common
 
     public enum EmailTemplateType
     {
+        [EnumMember(Value = "Default")]
+        Default,
         [EnumMember(Value = "WelcomeEmail")]
         WelcomeEmail,
         [EnumMember(Value = "EstimatePDF")]
