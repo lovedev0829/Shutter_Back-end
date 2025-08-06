@@ -146,7 +146,19 @@ namespace ShutterManagement.Core.Common
         [EnumMember(Value = "OrderRejected")]
         OrderRejected,
         [EnumMember(Value = "PaymentReceived")]
-        PaymentReceived
+        PaymentReceived,
+        [EnumMember(Value = "JobCreate")]
+        JobCreate,
+        [EnumMember(Value = "JobUpdate")]
+        JobUpdate,
+        [EnumMember(Value = "ContactCreate")]
+        ContactCreate,
+        [EnumMember(Value = "ContactUpdate")]
+        ContactUpdate,
+        [EnumMember(Value = "InvoiceCreate")]
+        InvoiceCreate,
+        [EnumMember(Value = "InvoiceUpdate")]
+        InvoiceUpdate
     }
 
     public enum PaymentStatus

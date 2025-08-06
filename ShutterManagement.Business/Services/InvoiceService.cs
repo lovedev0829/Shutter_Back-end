@@ -181,7 +181,7 @@ namespace ShutterManagement.Business.Services
                     PaidAmount = 0,
                     CreatedAt = DateTime.Now,
                     TenantId = claimsProperty.GetTenantId(),
-                    CreatedBy = AppConstant.LoggedInUserID,
+                    CreatedBy = claimsProperty.GetUserId(),
                     Status = EnumValue.GetEnumValue(PaymentStatus.Unpaid),
                     IsActive = true,
                     IsDelete = false
@@ -204,7 +204,7 @@ namespace ShutterManagement.Business.Services
                         Notes = invoicePayment.Notes,
                         InvoiceAmount = invoicePayment.InvoiceAmount,
                         CreatedAt = DateTime.Now,
-                        CreatedBy = AppConstant.LoggedInUserID,
+                        CreatedBy = claimsProperty.GetTenantId(),
                         IsActive = true,
                         IsDelete = false
                     };
@@ -232,7 +232,7 @@ namespace ShutterManagement.Business.Services
                     PaymentTypeStatus = EnumValue.GetEnumValue(PaymentStatus.Draft),
                     CreatedAt = DateTime.Now,
                     TenantId = claimsProperty.GetTenantId(),
-                    CreatedBy = AppConstant.LoggedInUserID,
+                    CreatedBy = claimsProperty.GetUserId(),
                     IsActive = true,
                     IsDelete = false
                 };

@@ -38,11 +38,12 @@ namespace ShutterManagement.Business.Services
         private readonly IGHLConfiguration gHLConfigurationService;
         private readonly ITenantBrandingService tenantBranding;
         private readonly GHLService_v2 gHLService_V2;
+        private readonly INotificationService notificationService;
 
         public ContactServices(ShutterDBContext context, IContactBillingService billingService,
             ITenantService tenantService, ITaxExemption taxExemptionService,
             ClaimsProperty claimsProperty,IGHLConfiguration gHLConfigurationService,
-            ITenantBrandingService tenantBranding,GHLService_v2 gHLService_V2)
+            ITenantBrandingService tenantBranding,GHLService_v2 gHLService_V2,INotificationService notificationService)
         {
             _context = context;
             this.billingService = billingService;
@@ -52,6 +53,7 @@ namespace ShutterManagement.Business.Services
             this.gHLConfigurationService = gHLConfigurationService;
             this.tenantBranding = tenantBranding;
             this.gHLService_V2 = gHLService_V2;
+            this.notificationService = notificationService;
         }
 
         public async Task<IResponseVm<string>> GetContactByEmailOrPhone(string email, string phone)
@@ -920,8 +922,24 @@ namespace ShutterManagement.Business.Services
                 IsArchive = false,
                 IsDelete = false
             };
+            var contactvm = BuildContactVm(contact, tenantId);
+            var appmsg = notificationService.SendInAppNotification(contactvm, EnumValue.GetEnumValue(Estimation.ContactCreate).ToString(), contact.ContactId, NotificationModule.Contact);
 
             return await Add(contact);
+
+
+        }
+
+        private EstimateOrOrderBaseVm BuildContactVm(TblContact contactdetails, Guid? tenantId)
+        {
+            return new EstimateOrOrderBaseVm
+            {
+                ContactId = contactdetails?.ContactId,
+                JobCode = contactdetails?.ContactUniqueId,
+                CustomerEmail= contactdetails?.Email ?? string.Empty,
+                CustomerName = $"{contactdetails?.FirstName ?? ""} {contactdetails?.LastName ?? ""}".Trim(),
+                TenantId = tenantId,
+            };
         }
 
         private async Task AddBillingAddress(BillingAddressVm vm, TblContact contact, Guid tenantId)
@@ -981,9 +999,7 @@ namespace ShutterManagement.Business.Services
             var responseVm = new ResponseVm<string>();
             try
             {
-                var tenantId = (LoggedInTenantId != null && LoggedInTenantId != Guid.Empty)
-? LoggedInTenantId.Value
-                    : claimsProperty.GetTenantId();
+                var tenantId = (LoggedInTenantId != null && LoggedInTenantId != Guid.Empty) ? LoggedInTenantId.Value : claimsProperty.GetTenantId();
                 if (model.BillingAddressVm != null)
                 {
                     model.IsBillingAddressSameAsAddress = false;
@@ -1161,6 +1177,8 @@ namespace ShutterManagement.Business.Services
 
                 await Update(contact);
             }
+            var contactvm = BuildContactVm(contact, tenantId);
+            var appmsg = notificationService.SendInAppNotification(contactvm, EnumValue.GetEnumValue(Estimation.ContactUpdate).ToString(), contact.ContactId, NotificationModule.Contact);
 
             if (!model.IsBillingAddressSameAsAddress)
                 await UpdateOrCreateBillingAddress(model.BillingAddressVm, contact, tenantId, IsGHLContact);

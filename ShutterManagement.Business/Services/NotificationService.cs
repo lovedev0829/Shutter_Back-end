@@ -86,15 +86,9 @@ namespace ShutterManagement.Business.Services
             IResponseVm<List<GetAllNotification>> responseVm = new ResponseVm<List<GetAllNotification>>(); 
             try
             {
-                var logdinTenantId = claimsProperty.GetTenantId();
+               
 
-                var subTenantIds = new List<Guid>();
-                if (string.IsNullOrEmpty(claimsProperty.GetParentTenantId()))
-                {
-                    subTenantIds = dbContext.TblTenants.Where(t => t.ParentTenantId == logdinTenantId || t.TenantId == logdinTenantId).Select(t => t.TenantId).ToList();
-                }
-
-                var notification = GetAllQuerable().Where(x => (x.UserId == logdinTenantId || subTenantIds.Contains(x.UserId ?? Guid.Empty))).OrderByDescending(pt=> pt.Createdate).Select(pt => new GetAllNotification
+                var notification = GetAllQuerable().Where(x => x.UserId==claimsProperty.GetTenantId()).OrderByDescending(pt=> pt.Createdate).Select(pt => new GetAllNotification
                 {
                     Id = pt.Id,
                     Subject = pt.Subject,
@@ -128,17 +122,32 @@ namespace ShutterManagement.Business.Services
 
             var replacedContent = emailSendHelperService.PlaceholderReplace(notificationTemplate.Body, vm);
 
-            var notificationVm = new CreateNotification
-            {
-                UserId = vm.TenantId,
-                Subject = notificationTemplate.Subject ?? "",
-                Body = replacedContent ?? "",
-                CreatedDate = DateTime.Now,
-                Type = EnumValue.GetEnumValue(notificationModule),
-                TypeId = TypeId
-            };
+            var tenantIds = new List<Guid>();
 
-            await CreateNotification(notificationVm);
+            var ParentTenantId = dbContext.TblTenants.Where(s => s.TenantId == vm.TenantId).Select(t => t.ParentTenantId).FirstOrDefault();
+            if (ParentTenantId != Guid.Empty && ParentTenantId != null)
+            {
+                tenantIds.Add(ParentTenantId.Value);
+            }
+            tenantIds.Add((Guid)vm.TenantId);
+            if (tenantIds.Count > 0)
+            {
+                foreach (var tenantid in tenantIds)
+                {
+                    var notificationVm = new CreateNotification
+                    {
+                        UserId = tenantid,
+                        Subject = notificationTemplate.Subject ?? "",
+                        Body = replacedContent ?? "",
+                        CreatedDate = DateTime.Now,
+                        Type = EnumValue.GetEnumValue(notificationModule),
+                        TypeId = TypeId
+                    };
+
+                    await CreateNotification(notificationVm);
+                }
+            }
+            
         }
     }
 
