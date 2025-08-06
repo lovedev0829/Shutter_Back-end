@@ -9,8 +9,10 @@ namespace ShutterManagement.Core.ViewModels.Response
     public class EstimateOrOrderBaseVm
     {
         public Guid? JobId { get; set; }
+        public Guid? ContactId { get; set; }
         public string? JobCode { get; set; }
         public string? CustomerName { get; set; }
+        public string? CustomerEmail { get; set; }
         public Guid? TenantId { get; set; }
         public string? EstimateCode { get; set; }
         public string? OrderName { get; set; }

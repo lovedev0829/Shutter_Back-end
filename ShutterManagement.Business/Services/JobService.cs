@@ -21,6 +21,7 @@ using ShutterManagement.GHL.Services;
 using ShutterManagement.Services;
 using ShutterManagment.GHL.ViewModel.Request;
 using ShutterManagment.GHL.ViewModel.Response;
+using Stripe;
 using static Microsoft.AspNetCore.Hosting.Internal.HostingApplication;
 using static QRCoder.PayloadGenerator.SwissQrCode;
 using static ShutterManagement.Core.ViewModels.Response.GetAllJobsSubtenant_tenant;
@@ -373,12 +374,28 @@ namespace ShutterManagement.Business.Services
                 insertedJob.GhlContactId = model.GHL_ContactId;
                 insertedJob.LastAsync = DateTime.Now;
                 await Update(insertedJob);
-            } 
+            }
 
-            await CreateJobNotificationAsync(insertedJob, tenantId);
+            var customerDetails = dbContext.TblContacts.Where(x => x.ContactId == job.ContactId).FirstOrDefault();
+
+            var jobvm = BuildJobVm(job, customerDetails, tenantId);
+            var appmsg = notification.SendInAppNotification(jobvm, EnumValue.GetEnumValue(Estimation.JobCreate).ToString(),jobvm.JobId,NotificationModule.Job);
+
+
             return response;
         }
-       
+
+        private EstimateOrOrderBaseVm BuildJobVm(TblJob jobdetails , TblContact tblContact, Guid? tenantId)
+        {
+            return new EstimateOrOrderBaseVm
+            {
+                JobId = jobdetails?.JobId,
+                JobCode = jobdetails?.JobUniqueId,
+                CustomerName = $"{tblContact?.FirstName ?? ""} {tblContact?.LastName ?? ""}".Trim(),
+                TenantId = tenantId,
+            };
+        }
+
         private IResponseVm<T> BuildErrorResponse<T>(string message)
         {
             return new ResponseVm<T>
@@ -400,20 +417,20 @@ namespace ShutterManagement.Business.Services
             }
         }
 
-        private async Task CreateJobNotificationAsync(TblJob job, Guid? tenantId)
-        {
-            var notificationData = new CreateNotification
-            {
-                UserId = tenantId,
-                Subject = nameof(NotificationModule.Job),
-                Body = $"{job.JobName} {AppConstant.Create_Notification}",
-                CreatedDate = DateTime.Now,
-                Type = nameof(NotificationModule.Job),
-                TypeId = job.JobId
-            };
+        //private async Task CreateJobNotificationAsync(TblJob job, Guid? tenantId)
+        //{
+        //    var notificationData = new CreateNotification
+        //    {
+        //        UserId = tenantId,
+        //        Subject = nameof(NotificationModule.Job),
+        //        Body = $"{job.JobName} {AppConstant.Create_Notification}",
+        //        CreatedDate = DateTime.Now,
+        //        Type = nameof(NotificationModule.Job),
+        //        TypeId = job.JobId
+        //    };
 
-            await notification.CreateNotification(notificationData);
-        }
+        //    await notification.CreateNotification(notificationData);
+        //}
 
 
         private IResponseVm<string> BuildErrorResponse(string message)
@@ -1811,17 +1828,11 @@ namespace ShutterManagement.Business.Services
                         var ghlUpdateResponse = await UpdateOpportunityInGhl(IsJobExist);
                         FileLogger.Log($"GHL Sync: Job updated in GHL - {ghlUpdateResponse.Message}");
                     }
-                    CreateNotification notification1 = new CreateNotification()
-                    {
-                        UserId = AppConstant.LoggedInUserID,
-                        Subject = Enum.GetName(typeof(NotificationModule), NotificationModule.Job),
-                        Body = $"{IsJobExist.JobName} {AppConstant.UpdateStatus_Notification}",
-                        CreatedDate = DateTime.Now,
-                        Type = Enum.GetName(typeof(NotificationModule), NotificationModule.Job),
-                        TypeId = IsJobExist.JobId,
-                    };
 
-                    var result = await notification.CreateNotification(notification1);
+                    var customerDetails = dbContext.TblContacts.Where(x => x.ContactId == IsJobExist.ContactId).FirstOrDefault();
+
+                    var jobvm = BuildJobVm(IsJobExist, customerDetails, claimsProperty.GetTenantId());
+                    var appmsg = notification.SendInAppNotification(jobvm, EnumValue.GetEnumValue(Estimation.JobUpdate).ToString(), jobvm.JobId, NotificationModule.Job);
                 }
 
                 //else

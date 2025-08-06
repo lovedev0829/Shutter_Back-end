@@ -330,19 +330,7 @@ namespace ShutterManagement.Business.Services
                     //var TotalPrice = await CalculateEstimate(createEstimate.EstimateId);
                     //createEstimate.TotalPrice = TotalPrice;
                     //await Update(createEstimate);
-
-                    CreateNotification notification1 = new CreateNotification()
-                    {
-                        UserId = AppConstant.LoggedInUserID,
-                        Subject = Enum.GetName(typeof(NotificationModule), NotificationModule.Estimate),
-                        Body = "Estimate " + AppConstant.Create_Notification,
-                        CreatedDate = DateTime.Now,
-                        Type = NotificationModule.Estimate.ToString(),
-                        TypeId = createEstimate.EstimateId
-
-                    };
-
-                    var result = await notification.CreateNotification(notification1);
+                    
                     responseVm.IsSuccess = true;
                     responseVm.Message = AppConstant.InsertSuccessMsg;
                     responseVm.Data = createEstimate?.EstimateId?.ToString() ?? "";
@@ -1367,14 +1355,27 @@ namespace ShutterManagement.Business.Services
         {
             var templateType = EnumValue.GetEnumValue(statusEnum).ToString();
 
-            var notificationTemplate = dbContext.TblNotificationTemplates
-                .FirstOrDefault(t => t.Type == templateType);
+            var notificationTemplate = dbContext.TblNotificationTemplates.FirstOrDefault(t => t.Type == templateType);
 
             if (notificationTemplate == null)
                 return;
 
             var replacedContent = emailSendHelperService.PlaceholderReplace(notificationTemplate.Body, estimationVm);
+            var ParentTenantId = tenantService.GetAllQuerable().Where(s => s.TenantId == estimationVm.TenantId).Select(t => t.ParentTenantId).FirstOrDefault();
+            if (ParentTenantId != Guid.Empty && ParentTenantId != null)
+            {
+                var notificationVm1 = new CreateNotification
+                {
+                    UserId = ParentTenantId,
+                    Subject = notificationTemplate.Subject ?? "",
+                    Body = replacedContent ?? "",
+                    CreatedDate = DateTime.Now,
+                    Type = nameof(NotificationModule.Estimate),
+                    TypeId = estimateId
+                };
 
+                await notification.CreateNotification(notificationVm1);
+            }
             var notificationVm = new CreateNotification
             {
                 UserId = estimationVm.TenantId,
