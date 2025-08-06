@@ -33,68 +33,105 @@ namespace ShutterManagement.Business
             }
             
         }
-        public Guid GetUserId()
+        public Guid? GetUserId()
         {
-            var claim = httpContext.HttpContext.User.Claims.First(c => c.Type == "UserId");
-            var value = Guid.Parse(claim?.Value ?? "");
-            AppConstant.LoggedInUserID = value;
-            return value;
+            if (httpContext.HttpContext.User.Identity.IsAuthenticated)
+            {
+                var claim = httpContext?.HttpContext?.User?.Claims?.First(c => c.Type == "UserId");
+                var value = Guid.Parse(claim?.Value ?? "");
+                AppConstant.LoggedInUserID = value;
+                return value;
+            }
+            return null;
         }
 
-        public Guid GetTenantId()
+        public Guid? GetTenantId()
         {
-            var claim = httpContext.HttpContext.User.Claims.First(c => c.Type == "TenantId");
-            var value = Guid.Parse(claim?.Value ?? "");
-            AppConstant.LoggedInTenantId = value;
-            return value;
+            if (httpContext.HttpContext.User.Identity.IsAuthenticated)
+            {
+                var claim = httpContext.HttpContext.User.Claims.First(c => c.Type == "TenantId");
+                var value = Guid.Parse(claim?.Value ?? "");
+                AppConstant.LoggedInTenantId = value;
+                return value;
+            }
+            return null;
         }
 
-        public string GetParentTenantId()
+        public string? GetParentTenantId()
         {
-            var claim = httpContext.HttpContext.User.Claims.First(c => c.Type == "ParentTenantId");
-            var value = claim?.Value ?? "";
-            AppConstant.LoggedInParentTenantId = value.ToString();
-            return value.ToString();
+            if (httpContext.HttpContext.User.Identity.IsAuthenticated)
+            {
+                var claim = httpContext.HttpContext.User.Claims.First(c => c.Type == "ParentTenantId");
+                var value = claim?.Value ?? "";
+                AppConstant.LoggedInParentTenantId = value.ToString();
+                return value.ToString();
+            }
+            return null;
         }
-        public bool GetIsAdminRolesShow()
+        public bool? GetIsAdminRolesShow()
         {
-            var value = Convert.ToBoolean(configuration["IsAdminRolesShow"] ?? "false");
-            return value;
+            if (httpContext.HttpContext.User.Identity.IsAuthenticated)
+            {
+                var value = Convert.ToBoolean(configuration["IsAdminRolesShow"] ?? "false");
+                return value;
+            }
+            return null;
         }
-        public string GetUsername()
+        public string? GetUsername()
         {
-            var claim = httpContext.HttpContext.User.Claims.First(c => c.Type == "Username");
-            var value = claim?.Value ?? "";
-            AppConstant.LoggedInUserName = value;
-            return value;
+            if (httpContext.HttpContext.User.Identity.IsAuthenticated)
+            {
+                var claim = httpContext.HttpContext.User.Claims.First(c => c.Type == "Username");
+                var value = claim?.Value ?? "";
+                AppConstant.LoggedInUserName = value;
+                return value;
+            }
+            return null;
+            
         }
-        public string GetEmail()
+        public string? GetEmail()
         {
-            var claim = httpContext.HttpContext.User.Claims.First(c => c.Type == ClaimTypes.Email);
-            var value = claim?.Value ?? "";
-            AppConstant.LoggedInEmail = value;
-            return value;
+            if (httpContext.HttpContext.User.Identity.IsAuthenticated)
+            {
+                var claim = httpContext.HttpContext.User.Claims.First(c => c.Type == ClaimTypes.Email);
+                var value = claim?.Value ?? "";
+                AppConstant.LoggedInEmail = value;
+                return value;
+            }
+            return null;
         }
-        public string GetPhone()
+        public string? GetPhone()
         {
-            var claim = httpContext.HttpContext.User.Claims.First(c => c.Type == "Phone");
-            var value = claim?.Value ?? "";
-            AppConstant.LoggedInPhone = value;
-            return value;
+            if (httpContext.HttpContext.User.Identity.IsAuthenticated)
+            {
+                var claim = httpContext.HttpContext.User.Claims.First(c => c.Type == "Phone");
+                var value = claim?.Value ?? "";
+                AppConstant.LoggedInPhone = value;
+                return value;
+            }
+            return null;
         }
-        public string GetName()
+        public string? GetName()
         {
-            var claim = httpContext.HttpContext.User.Claims.First(c => c.Type == ClaimTypes.Name);
-            var value = claim?.Value ?? "";
-            AppConstant.LoggedInName = value;
-            return value;
+            if (httpContext.HttpContext.User.Identity.IsAuthenticated)
+            {
+                var claim = httpContext.HttpContext.User.Claims.First(c => c.Type == ClaimTypes.Name);
+                var value = claim?.Value ?? "";
+                AppConstant.LoggedInName = value;
+                return value;
+            }
+            return null;
         }
-        public string GetCompanyCode()
+        public string? GetCompanyCode()
         {
-            var claim = httpContext.HttpContext.User.Claims.First(c => c.Type == "CompanyCode");
-            var value = claim?.Value ?? "";
-            AppConstant.LoggedInCompanyCode = value;
-            return value;
+            if (httpContext.HttpContext.User.Identity.IsAuthenticated)
+            {
+                var claim = httpContext.HttpContext.User.Claims.First(c => c.Type == "CompanyCode");
+                var value = claim?.Value ?? "";
+                AppConstant.LoggedInCompanyCode = value;
+                return value;
+            }
+            return null;
         }
 
 

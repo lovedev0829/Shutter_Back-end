@@ -886,7 +886,7 @@ namespace ShutterManagement.Business.Services
             return updateModel;
         }
 
-        private async Task<TblContact> CreateNewContactRecord(Sp_Contact model, Guid tenantId)
+        private async Task<TblContact> CreateNewContactRecord(Sp_Contact model, Guid? tenantId)
         {
             
             int Version = GetAllQuerable().Where(x => x.TenantId == tenantId).OrderByDescending(p => p.CreatedAt)
@@ -942,7 +942,7 @@ namespace ShutterManagement.Business.Services
             };
         }
 
-        private async Task AddBillingAddress(BillingAddressVm vm, TblContact contact, Guid tenantId)
+        private async Task AddBillingAddress(BillingAddressVm vm, TblContact contact, Guid? tenantId)
         {
             Guid? stateId = null;
             if (vm?.StateId != null && vm.StateId != Guid.Empty)
@@ -1138,7 +1138,7 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        private async Task UpdateExistingContact(UpdateContact model, TblContact contact, Guid tenantId, bool? IsGHLContact)
+        private async Task UpdateExistingContact(UpdateContact model, TblContact contact, Guid? tenantId, bool? IsGHLContact)
         {
             if ((bool)!IsGHLContact)
             {
@@ -1184,7 +1184,7 @@ namespace ShutterManagement.Business.Services
                 await UpdateOrCreateBillingAddress(model.BillingAddressVm, contact, tenantId, IsGHLContact);
         }
 
-        private async Task UpdateOrCreateBillingAddress(BillingAddressVm billingVm, TblContact contact, Guid tenantId,bool? IsGHLContact)
+        private async Task UpdateOrCreateBillingAddress(BillingAddressVm billingVm, TblContact contact, Guid? tenantId,bool? IsGHLContact)
         {
             var stateId = await GetValidStateId(billingVm);
 
@@ -1325,7 +1325,7 @@ namespace ShutterManagement.Business.Services
             }
         }
 
-        private async Task SyncWithGHLIfConfigured(UpdateContact model, TblContact contact, Guid tenantId)
+        private async Task SyncWithGHLIfConfigured(UpdateContact model, TblContact contact, Guid? tenantId)
         {
             var ghlContact = new Sp_Contact
             {
@@ -1353,7 +1353,7 @@ namespace ShutterManagement.Business.Services
             }
         }
 
-        private async Task CreateNewContact(UpdateContact model, Guid tenantId)
+        private async Task CreateNewContact(UpdateContact model, Guid? tenantId)
         {
             var stateId = Guid.Empty;
             if (model.BillingAddressVm != null)

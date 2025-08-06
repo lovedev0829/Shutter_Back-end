@@ -14,4 +14,6 @@ public partial class TblEstimateApproved
     public string? Ipaddress { get; set; }
 
     public string? Status { get; set; }
+
+    public Guid? UpdatedBy { get; set; }
 }
