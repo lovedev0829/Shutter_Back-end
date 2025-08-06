@@ -1242,11 +1242,15 @@ namespace ShutterManagement.Business.Services
             FileLogger.Log($"Processing status change for EstimationId: {EstimationId}...");
 
             IResponseVm<string> responseVm = new ResponseVm<string>();
-
+            
             try
             {
+                
                 // Retrieve the EstimationStatus
                 var EstimationStatus = GetEstimationStatusById(EstimationId);
+                Guid? UpdatedBy = (claimsProperty.GetUserId() != null && claimsProperty.GetUserId() != Guid.Empty)? claimsProperty.GetUserId(): null;
+
+
 
                 if (EstimationStatus == null)
                 {
@@ -1310,7 +1314,7 @@ namespace ShutterManagement.Business.Services
                     }
 
                     // Log and record the status change in history
-                    await EstimationChangeHistory(EstimationId, NewEstimationStatus);
+                    await EstimationChangeHistory(EstimationId, NewEstimationStatus, UpdatedBy);
                     FileLogger.Log($"Estimation status changed successfully to {NewEstimationStatus} for EstimationId: {EstimationId}");
                 }
                 else
@@ -2338,7 +2342,7 @@ namespace ShutterManagement.Business.Services
             return false;
         }
 
-        private async Task<IResponseVm<string>> EstimationChangeHistory(Guid EstimationId, Estimation Status)
+        private async Task<IResponseVm<string>> EstimationChangeHistory(Guid EstimationId, Estimation Status ,Guid? UpdatedBy)
         {
             IResponseVm<string> responseVm = new ResponseVm<string>();
             try
@@ -2349,6 +2353,7 @@ namespace ShutterManagement.Business.Services
                     CurrentDatetime = DateTime.Now,
                     Ipaddress = GetClientIpAddress(),
                     Status = EnumValue.GetEnumValue(Status),
+                    UpdatedBy = UpdatedBy,
                 };
 
                 await dbContext.TblEstimateApproveds.AddAsync(approved);

@@ -69,7 +69,7 @@ namespace ShutterManagement.Business.Services
                     IsActive = true,
                     IsDelete = false,
                     CreatedAt = DateTime.Now,
-                    TenantId = claimsProperty.GetTenantId(),
+                    TenantId = claimsProperty.GetTenantId()??Guid.Empty,
                     CreatedBy = claimsProperty.GetUserId()
                 };
 
@@ -123,7 +123,7 @@ namespace ShutterManagement.Business.Services
                 var currentTenantId = claimsProperty.GetTenantId();
                 
                 // Get current tenant and parent tenant IDs for sharing colors
-                var tenantIds = new List<Guid> { currentTenantId };
+                var tenantIds = new List<Guid?> { currentTenantId };
                 var parentTenantId = claimsProperty.GetParentTenantId();
                 if (!string.IsNullOrEmpty(parentTenantId) && Guid.TryParse(parentTenantId, out var parentId))
                 {
@@ -247,7 +247,7 @@ namespace ShutterManagement.Business.Services
                 var currentTenantId = claimsProperty.GetTenantId();
                 
                 // Get current tenant and parent tenant IDs for sharing colors
-                var tenantIds = new List<Guid> { currentTenantId };
+                var tenantIds = new List<Guid?> { currentTenantId };
                 var parentTenantId = claimsProperty.GetParentTenantId();
                 if (!string.IsNullOrEmpty(parentTenantId) && Guid.TryParse(parentTenantId, out var parentId))
                 {
