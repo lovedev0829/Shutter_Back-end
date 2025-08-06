@@ -377,8 +377,13 @@ namespace ShutterManagement.Business.Services
                     responseVm.Message = AppConstant.TenantNotFound;
                     return responseVm;
                 }
+                var subTenantIds = new List<Guid>();
+                if (string.IsNullOrEmpty(claimsProperty.GetParentTenantId()))
+                {
+                    subTenantIds = tenantService.GetAccessibleTenantIds(claimsProperty.GetTenantId());
+                }
 
-                var PaymentsQuery = GetAllQuerable().Where(x=>x.IsDelete == false && x.TenantId == claimsProperty.GetTenantId()).OrderByDescending(x=>x.CreatedAt).
+                var PaymentsQuery = GetAllQuerable().Where(x=>x.IsDelete == false && (x.TenantId == claimsProperty.GetTenantId() || subTenantIds.Contains(x.TenantId ?? Guid.Empty))).OrderByDescending(x=>x.CreatedAt).
                                     Select(i=>  new PaymentsVM
                                     {
                                         PaymentId = i.PaymentId,
