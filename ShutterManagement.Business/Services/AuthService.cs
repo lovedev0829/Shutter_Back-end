@@ -77,7 +77,7 @@ namespace ShutterManagement.Services
         #endregion
 
         #region Public Methods
-        public async Task<IResponseVm<UserLoginDetails>> LoginAsync(LoginDetailVM user)
+        public async Task<IResponseVm<UserLoginDetails>> LoginAsync(LoginDetailVM user, bool? IsImpersonate = false)
         {
             var responseVm = new ResponseVm<UserLoginDetails>();
 
@@ -100,7 +100,7 @@ namespace ShutterManagement.Services
                 }
 
                 // Get user details
-                var userDetails = await GetUserLoginDetailsAsync(user.Username, user.Password, companyCode);
+                var userDetails = await GetUserLoginDetailsAsync(user.Username, user.Password, companyCode, IsImpersonate);
                 if (!userDetails.Any())
                 {
                     responseVm.Message = AppConstant.InvalidCred;
@@ -500,10 +500,11 @@ namespace ShutterManagement.Services
             return tenant?.Code;
         }
 
-        private async Task<List<LoginDetails>> GetUserLoginDetailsAsync(string username, string password, string companyCode)
+        private async Task<List<LoginDetails>> GetUserLoginDetailsAsync(string username, string password, string companyCode, bool? IsImpersonate = false)
         {
-            var hashPassword = AesEncryptionHelper.Encrypt(password);
-            
+            var hashPassword = "";
+            hashPassword = IsImpersonate == true ? password : AesEncryptionHelper.Encrypt(password);
+
             return await _dataServices.CallSPtoRead<LoginDetails>("Sp_GetUserDetailsOnLogin", reader =>
             {
                 return new LoginDetails
@@ -977,6 +978,59 @@ namespace ShutterManagement.Services
             }
 
             return result;
+        }
+
+        public async Task<IResponseVm<UserLoginDetails>> ImpersonateTenant(string SubTenantId)
+        {
+            var responseVm = new ResponseVm<UserLoginDetails>();
+
+            try
+            {
+                if (string.IsNullOrWhiteSpace(SubTenantId))
+                {
+                    responseVm.Message = "Tenant ID and Parent Tenant ID are required.";
+                    return responseVm;
+                }
+
+                var ValidPartner = _tenantService.GetAllQuerable().Where(u => u.ParentTenantId == _claimsProperty.GetTenantId() && u.TenantId.ToString().ToLower() == SubTenantId.ToLower() && u.IsActive == true && u.IsDelete == false).FirstOrDefault();
+
+                if (ValidPartner == null)
+                {
+                    responseVm.Message = $"Invalid or {AppConstant.TenantNotFound}";
+                    return responseVm;
+                }
+
+                var PartnerTenantAdmin = GetAllQuerable()
+                    .Where(t => t.TenantId.ToString().ToLower() == SubTenantId.ToLower() && t.IsTenantAdmin == true && t.IsActive == true && t.IsDelete == false).FirstOrDefault();
+                if (PartnerTenantAdmin == null)
+                {
+                    responseVm.Message = "No tenant admin found for the specified tenant.";
+                    return responseVm;
+                }
+
+                var loginDetail = new LoginDetailVM
+                {
+                    Username = PartnerTenantAdmin.Username,
+                    Password = PartnerTenantAdmin.Pwd,
+                    CompanyCode = ValidPartner.Code
+                };
+                var userLoginResponse = await LoginAsync(loginDetail, true);
+                if (!userLoginResponse.IsSuccess)
+                {
+                    responseVm.Message = userLoginResponse.Message;
+                    return responseVm;
+                }
+
+                responseVm.IsSuccess = userLoginResponse.IsSuccess;
+                responseVm.Data = userLoginResponse.Data;
+                responseVm.Message = userLoginResponse.Message;
+            }
+            catch (Exception ex)
+            {
+                responseVm.Message = $"{AppConstant.ExceptionError} {ex.Message}";
+            }
+
+            return responseVm;
         }
     }
 }
