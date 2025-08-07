@@ -666,14 +666,22 @@ public async Task<IResponseVm<string>> Update_Option(UpdateOption model)
                     var data = optionsTypeService.GetAllQuerable()
                                 .Where(x => x.OptionTypeId == item.OptionTypeId
                                         && x.IsDelete == false).FirstOrDefault();
-                    var updatedOption = model.Options.Where(x => x.OptionTypeId == item.OptionTypeId).FirstOrDefault();
                     
-                    data.IsDelete = true;
-                    data.IsActive = false;
-                    data.RequirePriceAtEstimatePreview = updatedOption.RequirePriceAtEstimatePreview;
-                    data.HidePreview = updatedOption.hidePreview;
+                    if (data != null)
+                    {
+                        data.IsDelete = true;
+                        data.IsActive = false;
 
-                    await optionsTypeService.Update(data);
+                        var updatedOption = model.Options.Where(x => x.OptionType == item.OptionType).FirstOrDefault();
+                        
+                        if (updatedOption != null)
+                        {
+                            data.RequirePriceAtEstimatePreview = updatedOption.RequirePriceAtEstimatePreview;
+                            data.HidePreview = updatedOption.hidePreview;
+                        }
+                        
+                        await optionsTypeService.Update(data);
+                    }
                 }
 
                 foreach (var item in InsertRecords)

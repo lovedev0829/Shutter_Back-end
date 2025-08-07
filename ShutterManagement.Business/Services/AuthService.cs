@@ -772,7 +772,9 @@ namespace ShutterManagement.Services
         {
             var resetLink = $"{AppConstant.UIBaseURL}reset-password/{code}/{token}";
             var content = $"Please reset your password using the following link: <a href='{resetLink}'>Reset Password</a>";
-            await emailSendHelperService.GetEmailConfigAndSendEmail(email, content, AppConstant.Sub_ForgotPassword);
+            var emailResult = await emailSendHelperService.GetEmailConfigAndSendEmail(email, content, AppConstant.Sub_ForgotPassword);
+            return (emailResult.IsSuccess, emailResult.Message ?? "Email sending failed");
+
         }
 
         private async Task<TblUser> GetUserByTokenAsync(string token)
