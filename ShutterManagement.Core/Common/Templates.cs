@@ -127,7 +127,7 @@ namespace ShutterManagement.Core.Common
     </div>
 
     <div style='padding: 20px;'>
-        <p style='font-size: 16px; margin: 10px 0;'><strong>Dear {{CustomerName}},</strong></p>
+        <p style='font-size: 16px; margin: 10px 0;'><strong>Hello {{CustomerName}},</strong></p>
         <p style='font-size: 14px; margin: 10px 0;'>We are requesting a payment for your invoice <strong>{{InvoiceNumber}}</strong>.</p>
 
         <!-- Invoice Details -->

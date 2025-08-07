@@ -100,7 +100,7 @@ namespace ShutterManagement.Business.Services
             IResponseVm<string> response = new ResponseVm<string>();
             try
             {
-                var emailTypeconfiguration = await GetEmailConfigurationByType(TenantId);
+                var emailTypeconfiguration = await GetEmailConfigurationByType();
 
             if (!emailTypeconfiguration.IsSuccess || emailTypeconfiguration.Data == null)
             {
@@ -136,23 +136,13 @@ namespace ShutterManagement.Business.Services
             }
             return response;
         }
-        public async Task<IResponseVm<EmailConfigurationVm>> GetEmailConfigurationByType(string TenantId = "")
+        public async Task<IResponseVm<EmailConfigurationVm>> GetEmailConfigurationByType()
         {
             IResponseVm<EmailConfigurationVm?> configResponse = new ResponseVm<EmailConfigurationVm?>();
             try
             {
                 var emailConfig = (await emailConfigurationService.GetAll())
-                       .FirstOrDefault(x => x.TenantId.ToString() == (string.IsNullOrEmpty(TenantId) ? claimsProperty.GetTenantId().ToString() : TenantId )&& x.IsActive == true && x.IsDelete == false);
-                
-                // Check if email configuration exists for the tenant
-                if (emailConfig == null)
-                {
-                    var tenantIdToLog = string.IsNullOrEmpty(TenantId) ? claimsProperty.GetTenantId().ToString() : TenantId;
-                    FileLogger.Log(tenantIdToLog + " No email configuration found for tenant.");
-                    configResponse.Message = "Email configuration not found for this tenant. Please contact administrator to set up email configuration.";
-                    return configResponse;
-                }
-                
+                       .FirstOrDefault(x => x.TenantId == claimsProperty.GetTenantId() && x.IsActive == true && x.IsDelete == false);
                 var emailType = (await emailTypeService.GetAll())
                         .FirstOrDefault(s => s.Id == emailConfig?.EmailType)?.Name ?? "";
                 if (!Enum.TryParse<EmailSendType>(emailType, true, out var parsedEmailSendType))

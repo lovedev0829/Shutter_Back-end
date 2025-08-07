@@ -1384,6 +1384,7 @@ namespace ShutterManagement.Business.Services
                                    {
                                        IsActive = t2.IsActive,
                                        JobId = t2.JobId,
+                                       TenantId = t2.TenantId,
                                        JobName = t2.JobName ?? "",
                                        ContactId = t2.ContactId,
                                        ContactFirstName = t6.FirstName ?? "",
