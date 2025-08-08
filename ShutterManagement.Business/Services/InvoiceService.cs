@@ -59,7 +59,7 @@ namespace ShutterManagement.Business.Services
             , IEstimateService estimateService, ITenantBrandingService tenantBrandingService
             , IJobService jobService, IOrderService orderService, StripeService stripeService,
             IStripeConfiguration stripeConfiguration, JobStatusAndStageMapping statusAndStageMapping, ClaimsProperty claimsProperty,
-          EmailSendHelperService emailSendHelperService, IUrlShortenerService urlShortenerService)
+          EmailSendHelperService emailSendHelperService)
         {
             this.tenantService = tenantService;
             this.invoicePaymentService = invoicePaymentService;

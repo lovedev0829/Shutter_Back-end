@@ -572,6 +572,7 @@ namespace ShutterManagement.Business.Services
                .Where(e => e.ContactId == jobdetails.ContactId && e.IsDelete == false)
                .FirstOrDefault();
 
+              
 
                 // Check if status change is allowed
                 if (CanChangeStatus(currentStatus, NewOrderStatus))
