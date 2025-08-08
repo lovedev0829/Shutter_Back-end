@@ -17,6 +17,7 @@ namespace ShutterManagement.Core.ViewModels
         public string? EstimationCode { get; set; }
         public string? EstimationDate { get; set; }
         public string? PreparedBy { get; set; }
+        public string? PreparedByEmail { get; set; }
         public string? EstimationGrandTotal { get; set; }
 
         // Company info
