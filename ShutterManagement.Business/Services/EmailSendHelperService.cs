@@ -81,11 +81,10 @@ namespace ShutterManagement.Business.Services
                 {
                     return emailContent;
                 }
-                // if emailtemplate type is rejected or approved 
 
                 var Subject = string.IsNullOrEmpty(SubjecteEmail) ? emailContent.Data.Subject  : SubjecteEmail; 
 
-                response = await GetEmailConfigAndSendEmail(dataObject.Email, emailContent.Data.Body, Subject, "",null, dataObject.TenantId);
+                response = await GetEmailConfigAndSendEmail(dataObject.Email, emailContent.Data.Body, Subject, "",null, dataObject.TenantId,dataObject.PreparedByEmail);
             }
             catch (Exception ex)
             {

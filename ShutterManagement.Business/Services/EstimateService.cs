@@ -2589,13 +2589,13 @@ namespace ShutterManagement.Business.Services
 
                 var branding = tenantBrandingService.GetAllQuerable().FirstOrDefault(b => b.Id == tenant.BrandingInfo);
 
+
                 var preparedBy = dbContext.TblUsers
                     .Where(u => u.Id == model.PreparedBy)
-                    .Select(u => (u.FirstName ?? "") + " " + (u.LastName ?? ""))
                     .FirstOrDefault();
+                
 
-
-                var emailVm = BuildStatusNotificationVm(model, contact, branding, preparedBy);
+                var emailVm = BuildStatusNotificationVm(model, contact, branding, (preparedBy?.FirstName + " " + preparedBy?.LastName),preparedBy?.Email??"");
                 var templateType = Helper.GetTemplateType(model).Value;
                 var res = await emailSendHelperService.SendEmailWithReplacedContent(templateType, emailVm);
             }
@@ -2610,7 +2610,7 @@ namespace ShutterManagement.Business.Services
 
        
 
-        private EstimateStatusNotificationVm BuildStatusNotificationVm( EstimateOrOrderBaseVm model, TblContact contact, TblTenantBrandingInfo branding,string preparedBy)
+        private EstimateStatusNotificationVm BuildStatusNotificationVm( EstimateOrOrderBaseVm model, TblContact contact, TblTenantBrandingInfo branding,string preparedByName , string preparedByEmail)
         {
             return new EstimateStatusNotificationVm
             {
@@ -2618,7 +2618,8 @@ namespace ShutterManagement.Business.Services
                 Email = contact.Email ?? "",
                 EstimationCode = model.EstimateCode??"",
                 EstimationDate = model.CreatedAt?.ToString("MM-dd-yyyy"),
-                PreparedBy = preparedBy??"",
+                PreparedBy = preparedByName??"",
+                PreparedByEmail= preparedByName??"",
                 EstimationGrandTotal = model.GrandTotal?.ToString("F2"),
                 TenantCompanyName = branding?.CompanyName??"",
                 CompanyPhone = branding?.PhoneNumber??"",
