@@ -1423,7 +1423,7 @@ namespace ShutterManagement.Business.Services
         {
             var isFilteringByEstimationId = !string.IsNullOrEmpty(filter.EstimationId);
             var estimationId = filter.EstimationId;
-
+            TenantId = TenantId != null && TenantId != Guid.Empty ? TenantId : claimsProperty.GetTenantId();
             var subTenantIds = new List<Guid>();
 
             var tenant = tenantService.GetAllQuerable().FirstOrDefault(x => x.TenantId == TenantId);
