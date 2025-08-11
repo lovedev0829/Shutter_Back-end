@@ -110,7 +110,7 @@ namespace ShutterManagement.Business.Services
 
             OAuthEmailRequest vm = new OAuthEmailRequest
             {
-                FromEmail = emailTypeconfiguration.Data?.From ?? "",
+                FromEmail = emailTypeconfiguration.Data?.From ?? emailTypeconfiguration.Data?.Username,
                 ToEmail = ToEmail,
                 CC = LoggedInUser ?? "",
                 Subject = subject,
