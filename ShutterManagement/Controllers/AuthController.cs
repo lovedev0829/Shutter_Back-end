@@ -82,5 +82,14 @@ namespace ShutterManagement.Controllers
             var ForgetPassword = await _authService.VerifyForgetPassword(model);
             return Ok(ForgetPassword);
         }
+
+        [Authorize]
+        [HttpPost]
+        [Route("ImpersonateTenant")]
+        public async Task<IActionResult> ImpersonateTenant(string SubTenantId)
+        {
+            var result = await _authService.ImpersonateTenant(SubTenantId);
+            return Ok(result);
+        }
     }
 }
