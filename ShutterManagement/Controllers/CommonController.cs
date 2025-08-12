@@ -168,7 +168,7 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> GetAllJobTitle()
         {
             var res = await jobTitleService.GetAll(filter);
-            res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
+            res.Data = res.Data?.Where(x => x.IsActive == true).OrderBy(x => x.JobTitleName).ToList();
             return Ok(res);
         }
 
@@ -192,14 +192,14 @@ namespace ShutterManagement.Controllers
             if (Checkghlresponse.IsSuccess)
             {
                 var UserGHLs = await userService.GetAll(filter);
-                UserGHLs.Data = UserGHLs?.Data?.Where(x => x.IsActive == true && !string.IsNullOrEmpty(x.GhlUserId)).ToList();
+                UserGHLs.Data = UserGHLs?.Data?.Where(x => x.IsActive == true && !string.IsNullOrEmpty(x.GhlUserId)).OrderBy(x => x.FirstName).ToList();
                 UserGHLs.TotalRecords = UserGHLs.Data.Count;
                 return Ok(UserGHLs);
             }
             else
             {
                 var res = await userService.GetAll(filter);
-                res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
+                res.Data = res.Data?.Where(x => x.IsActive == true).OrderBy(x => x.FirstName).ToList();
                 return Ok(res);
             }
         }
@@ -208,7 +208,7 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> GetAllJobStatus()
         {
             var res = await jobStatusService.GetAll(filter);
-            res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
+            res.Data = res.Data?.Where(x => x.IsActive == true).OrderBy(x => x.JobStatusName).ToList();
             return Ok(res);
         }
 
@@ -217,7 +217,7 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> GetAllJobType()
         {
             var res = await jobTypeService.GetAllJobType(filter);
-            res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
+            res.Data = res.Data?.Where(x => x.IsActive == true).OrderBy(x => x.JobTypeName).ToList();
             return Ok(res);
         }
         [HttpGet]
@@ -226,7 +226,7 @@ namespace ShutterManagement.Controllers
         {
             filter.SearchValue = ProductType;
             var res = await material.GetAll_Material(filter);
-            res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
+            res.Data = res.Data?.Where(x => x.IsActive == true).OrderBy(x => x.MaterialName).ToList();
             return Ok(res);
         }
 
@@ -235,7 +235,7 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> GetAllVendor()
         {
             var res = await vendorService.GetAll_Vendor(filter);
-            res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
+            res.Data = res.Data?.Where(x => x.IsActive == true).OrderBy(x => x.CompanyName).ToList();
             return Ok(res);
         }
 
@@ -245,7 +245,7 @@ namespace ShutterManagement.Controllers
         {
             filter.SearchValue = ProductType;
             var res = await componentService.GetAll_Component(filter);
-            res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
+            res.Data = res.Data?.Where(x => x.IsActive == true).OrderBy(x => x.ComponentName).ToList();
             return Ok(res);
         }
         [HttpGet]
@@ -263,7 +263,7 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> GetAllProductType()
         {
             var res = await mstProductType.GetAll_ProductType(filter);
-            res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
+            res.Data = res.Data?.Where(x => x.IsActive == true).OrderBy(x => x.ProductName).ToList();
             return Ok(res);
         }
 
@@ -272,7 +272,7 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> GetAllRegion()
         {
             var res = await region.GetAll(filter);
-            res.Data = res.Data.Where(x => x.IsActive == true).ToList();
+            res.Data = res.Data.Where(x => x.IsActive == true).OrderBy(x => x.RegionName).ToList();
             return Ok(res);
         }
 
@@ -320,7 +320,7 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> GetAllContact()
         {
             var res = await contactService.GetAll_Contact(filter,false,false);
-            res.Data = res.Data?.Where(x => x.IsActive == true /*&& x.IsArchive==false*/).ToList();
+            res.Data = res.Data?.Where(x => x.IsActive == true /*&& x.IsArchive==false*/).OrderBy(x => x.FirstName).ToList();
             return Ok(res);
         }
 
@@ -586,7 +586,8 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> GetAllProduct(string? ProductTypeId)
         {
            var res = await productService.GetAll_Product(filter);
-           res.Data = res.Data?.Where(x => x.IsActive == true && x.ProductType == ProductTypeId).ToList();
+           res.Data = res.Data?.Where(x => x.IsActive == true && x.ProductType == ProductTypeId).
+                OrderBy(x => x.ProductName).ToList();
            return Ok(res);
         }
 
@@ -614,7 +615,7 @@ namespace ShutterManagement.Controllers
         {
             filter.RecordPerPage = this.filter.RecordPerPage;
             var res = await expression.Get_AllExpression(filter);
-            res.Data = res.Data?.Where(x => x.IsActive == true).ToList();
+            res.Data = res.Data?.Where(x => x.IsActive == true).OrderBy(x => x.ExpressionName).ToList();
             return Ok(res);
         }
 
@@ -696,7 +697,7 @@ namespace ShutterManagement.Controllers
             var res = await taxService.GetAll_Tax(filter);
             DateTime current = Convert.ToDateTime(DateTime.Now.ToShortDateString());
             var d = res.Data
-        .Where(x => x.IsActive == true/* && x.EffectiveDate <= current && x.ExpiryDate >= current*/)
+        .Where(x => x.IsActive == true/* && x.EffectiveDate <= current && x.ExpiryDate >= current*/).OrderBy(x => x.TaxName)
         .ToList();
             res.Data = d;
             return Ok(res);
@@ -821,13 +822,13 @@ namespace ShutterManagement.Controllers
         }
 
 
-        [HttpGet]
-        [Route("GetOpportunity")]
-        public async Task<IActionResult> GetOpportunity()
-        {
-            //var result = await ghlService.GetOpportunitiesFromGhl();
-            return Ok();
-        }
+        //[HttpGet]
+        //[Route("GetOpportunity")]
+        //public async Task<IActionResult> GetOpportunity()
+        //{
+        //    //var result = await ghlService.GetOpportunitiesFromGhl();
+        //    return Ok();
+        //}
 
 
         [HttpGet]
@@ -902,12 +903,6 @@ namespace ShutterManagement.Controllers
             }
 
         }
-
-
-
-
-
-
 
         [HttpGet]
         [Route("EstimateAmmount")]
@@ -988,7 +983,7 @@ namespace ShutterManagement.Controllers
         public async Task<IActionResult> GetAllState()
         {
             var res = await stateService.GetAll(filter);
-            res.Data = res.Data.Where(x => x.IsActive == true).ToList();
+            res.Data = res.Data.Where(x => x.IsActive == true).OrderBy(x => x.StateName).ToList();
             return Ok(res);
         }
 

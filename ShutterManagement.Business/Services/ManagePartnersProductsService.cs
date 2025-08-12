@@ -410,7 +410,7 @@ namespace ShutterManagement.Business.Services
                                         MaxPartnerPrice = p1.MaxPartnerPrice ?? 0.0m,
                                         IsAvailable = p1.IsAvailable ?? false,
                                         PriceType = p1.PriceType ?? EnumValue.GetEnumValue(PriceType.Fixed),
-                                        TaxRateId = (p1 != null ? p1.TaxId : Guid.Empty) ?? Guid.Empty,
+                                        TaxRateId = (p1 != null ? p1.TaxId : Guid.Empty) ?? null,
                                         IsTenantProductTaxAvailable = p2.IsTaxApplied ?? false
                                     }).ToList();
 
@@ -453,7 +453,7 @@ namespace ShutterManagement.Business.Services
                                               PartnerSellingPrice = o1.PartnerSellingPrice ?? 0.0m,
                                               WholeSalePrice = o1.WholeSalePrice ?? 0.0m,
                                               MarkupOptionType = o1.MarkupOptionType ?? EnumValue.GetEnumValue(PriceType.Fixed),
-                                              TaxRateId = (o1 != null ? o1.TaxId : Guid.Empty) ?? Guid.Empty,
+                                              TaxRateId = (o1 != null ? o1.TaxId : Guid.Empty) ?? null,
 
                                           }).Distinct().ToList();
 
