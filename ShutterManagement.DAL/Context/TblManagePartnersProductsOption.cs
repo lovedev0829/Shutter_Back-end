@@ -43,6 +43,8 @@ public partial class TblManagePartnersProductsOption
 
     public bool? IsPartnerOption { get; set; }
 
+    public bool? IsWholeSaleAppliedOption { get; set; }
+
     public virtual TblManagePartnersProduct? ManageProduct { get; set; }
 
     public virtual TblOption? Option { get; set; }

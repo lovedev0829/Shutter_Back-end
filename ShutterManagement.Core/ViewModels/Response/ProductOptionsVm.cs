@@ -59,6 +59,7 @@ namespace ShutterManagement.Core.ViewModels.Response
         public string? MarkupOptionType { get; set; }
         public decimal? MaxSellingPrice { get; set; }
         public decimal? MinSellingPrice { get; set; }
+        public bool? IsWholeSaleAppliedOption { get; set; }
     }
 
     public class MSRPVm
