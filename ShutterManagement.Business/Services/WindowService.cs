@@ -707,7 +707,7 @@ namespace ShutterManagement.Business.Services
             }
         }
 
-        private async Task InsertProductWithOptions(Guid windowId, Core.ViewModels.Request.WindowProductVm product, Core.ViewModels.Request.AdditionalCosts additionalCosts= null)
+        private async Task InsertProductWithOptions(Guid windowId, Core.ViewModels.Request.WindowProductVm product, Core.ViewModels.Request.AdditionalCostData additionalCosts = null)
         {
             FileLogger.Log("Inserting new product...");
 
@@ -737,7 +737,7 @@ namespace ShutterManagement.Business.Services
                     {
                         decimal additionalCost = 0;
                         
-                        if (additionalCosts != null && additionalCosts.Any() )
+                        if (additionalCosts != null )
                         {                                
                             if (additionalCosts?.Data != null && additionalCosts.Data.Any())
                             {
