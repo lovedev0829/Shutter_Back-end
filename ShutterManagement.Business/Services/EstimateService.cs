@@ -694,10 +694,7 @@ namespace ShutterManagement.Business.Services
                                         var optionPrice = optionsData.OptionMSRP.Where(x => x.Key == optionTypeId)?.FirstOrDefault().Value;
                                         if (optionPrice != null && optionPrice > 0.0m)
                                         {
-                                            if (markup == null)
-                                                optionWholesale += optionPrice ?? 0.0m;
-
-                                            else if (markup.MarkupOptionType == EnumValue.GetEnumValue(PriceType.Percentage))
+                                           if (markup.MarkupOptionType == EnumValue.GetEnumValue(PriceType.Percentage))
                                             {
                                                 optionWholesale += (optionPrice * (1 + (markup.WholeSalePrice ?? 0.0m) / 100)) ?? 0.0m;
                                             }
@@ -817,10 +814,7 @@ namespace ShutterManagement.Business.Services
                                         var optionPrice = optionsData.OptionMSRP.Where(x => x.Key == optionTypeId)?.FirstOrDefault().Value;
                                         if (optionPrice != null && optionPrice > 0.0m)
                                         {
-                                            if (markup == null)
-                                                optionWholesale += optionPrice ?? 0.0m;
-
-                                            else if (markup.MarkupOptionType == EnumValue.GetEnumValue(PriceType.Percentage))
+                                             if (markup.MarkupOptionType == EnumValue.GetEnumValue(PriceType.Percentage))
                                             {
                                                 optionWholesale += (optionPrice * (1 + (markup.WholeSalePrice ?? 0.0m) / 100)) ?? 0.0m;
                                             }
