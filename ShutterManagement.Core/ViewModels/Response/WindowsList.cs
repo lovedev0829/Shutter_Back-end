@@ -39,6 +39,7 @@ namespace ShutterManagement.Core.ViewModels.Response
 
     public class WindowOptions
     {
+        public string WindowoptionId { get; set; } // Primary identifier for window options
         public Guid WindowProductId { get; set; }
         public string OptionTypeId { get; set; }
         public string OptionName { get; set; }

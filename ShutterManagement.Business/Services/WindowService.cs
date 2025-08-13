@@ -183,7 +183,7 @@ namespace ShutterManagement.Business.Services
 
                 await Add(window);
                 FileLogger.Log($"New window created with ID: {window.WindowId}");
-
+                var i = 0;
                 foreach (var items in model.WindowProducts)
                 {
                     var isWindowProductExists = await windowProductService.AnyAsync(x =>
@@ -214,6 +214,9 @@ namespace ShutterManagement.Business.Services
                         await windowProductService.Add(windowProduct);
                         FileLogger.Log($"New window product added with ID: {windowProduct.WindowProductId}");
 
+                        var productDetails = model.ProductDetails;
+
+
                         if (items.OptionTypeId != null && items.OptionTypeId.Count > 0)
                         {
                             foreach (var optionId in items.OptionTypeId)
@@ -221,6 +224,24 @@ namespace ShutterManagement.Business.Services
                                 Guid.TryParse(optionId, out var optionTypeId);
                                 if (optionTypeId != Guid.Empty)
                                 {
+                                    decimal additionalCost =  0;
+                                    
+                                    // Check if there's an additional cost override in the model
+                                    if (model.AdditionalCosts != null && model.AdditionalCosts.Any())
+                                    {
+                                      
+                                        if (model.AdditionalCosts[i].Data != null && model.AdditionalCosts[i].Data.Any())
+                                        {
+                                            var matchingCost = model.AdditionalCosts[i].Data
+                                                .FirstOrDefault(x => x.OptionTypeId == optionTypeId);
+                                                
+                                            if (matchingCost != null && matchingCost.AdditionalCost > 0)
+                                            {
+                                                additionalCost = matchingCost.AdditionalCost;
+                                            }
+                                        }
+                                    }
+
                                     WindowOption windowOption = new WindowOption
                                     {
                                         WindowoptionId = Guid.NewGuid(),
@@ -231,22 +252,16 @@ namespace ShutterManagement.Business.Services
                                         IsDelete = false,
                                         CreatedBy = AppConstant.LoggedInUserID,
                                         TenantId = claimsProperty.GetTenantId(),
-                                        AdditionalCost = items.AdditionalCost
+                                        AdditionalCost = additionalCost
                                     };
 
                                     await windowOptionService.Add(windowOption);
-                                    FileLogger.Log($"New window option added with ID: {windowOption.WindowoptionId}");
+
                                 }
                             }
                         }
                     }
-                }
-
-                // Process additional costs for options without prices
-                if (model.AdditionalCosts != null && model.AdditionalCosts.Count > 0)
-                {
-                    FileLogger.Log("Processing additional costs for options without prices.");
-                    await ProcessAdditionalCosts(model.AdditionalCosts);
+                    i++;
                 }
 
                 responseVm.IsSuccess = true;
@@ -474,19 +489,11 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
-                // Step 4: Update Window
                 UpdateWindowData(existingWindow, model);
+
                 await Update(existingWindow);
 
-                // Step 5: Update Window Products
                 await UpdateWindowProducts(model);
-
-                // Step 6: Process additional costs for options without prices
-                if (model.AdditionalCosts != null && model.AdditionalCosts.Count > 0)
-                {
-                    FileLogger.Log("Processing additional costs for options without prices in update.");
-                    await ProcessAdditionalCosts(model.AdditionalCosts);
-                }
 
                 responseVm.IsSuccess = true;
                 responseVm.Message = AppConstant.UpdateSuccessMsg;
@@ -528,10 +535,13 @@ namespace ShutterManagement.Business.Services
                 .SelectMany(
                     x => x.windowOptions.Where(x=>x.IsDelete == false).DefaultIfEmpty(),
                     (x, wop) => new { x.w, x.wp, wop })
-                //.Join(dbContext.TblOptionsTypes,
-                //    x => x.wop.OptionTypeId,
-                //    op => op.OptionTypeId,
-                //    (x, op) => new { x.w, x.wp, x.wop, op })
+                .GroupJoin(dbContext.TblOptionsTypes,
+                    x => x.wop.OptionTypeId,
+                    op => op.OptionTypeId,
+                    (x, optionTypes) => new { x.w, x.wp, x.wop, optionTypes })
+                .SelectMany(
+                    x => x.optionTypes.DefaultIfEmpty(),
+                    (x, op) => new { x.w, x.wp, x.wop, op })
                 .GroupBy(x => x.w.WindowId)
                 .Select(g => new WindowsList
                 {
@@ -562,12 +572,13 @@ namespace ShutterManagement.Business.Services
                             SortOrder=p.FirstOrDefault().wp.SortOrder,
                             
                             
-                            WindowOptions = p.Select(o => new WindowOptions
+                            WindowOptions = p.Where(o => o.wop != null).Select(o => new WindowOptions
                             {
+                                WindowoptionId = o.wop.WindowoptionId.ToString(), // Include WindowoptionId
                                 WindowProductId = o.wp.WindowProductId,
                                 OptionTypeId = o.wop.OptionTypeId.ToString(),
-                                //OptionName = o.op.OptionType,
-                                //AdditionalCost = o.op.AdditionalCost.GetValueOrDefault(),
+                                OptionName = o.op.OptionType !="" ? o.op.OptionType : "",
+                                AdditionalCost = o.wop.AdditionalCost.GetValueOrDefault(),
                             }).ToList()
                         }).ToList()
                 }).OrderByDescending(s=>s.CreatedAt)
@@ -650,7 +661,7 @@ namespace ShutterManagement.Business.Services
 
             // Determine products to insert and delete
             var productsToInsert = model.WindowProducts;
-              
+            var productDetails = model.ProductDetails;
 
             var productsToDelete = existingProducts
                 .Where(e => e.WindowId == model.WindowId && e.IsDelete == false)
@@ -663,9 +674,12 @@ namespace ShutterManagement.Business.Services
             }
 
             // Insert new products
-            foreach (var product in productsToInsert)
+            for (int i = 0; i < productsToInsert.Count; i++)
             {
-                await InsertProductWithOptions(model.WindowId, product);
+                var product = productsToInsert[i];
+                // Find the matching product detail for this product
+                var matchingProductDetail = productDetails?.FirstOrDefault(pd => pd.ProductId == product.ProductId);
+                await InsertProductWithOptions(model.WindowId, product, matchingProductDetail, model, i);
             }
 
             FileLogger.Log("Window products updated successfully.");
@@ -695,7 +709,7 @@ namespace ShutterManagement.Business.Services
             }
         }
 
-        private async Task InsertProductWithOptions(Guid windowId, Core.ViewModels.Request.WindowProductVm product)
+        private async Task InsertProductWithOptions(Guid windowId, Core.ViewModels.Request.WindowProductVm product, Core.ViewModels.Request.ProductDetail productDetails = null, UpdateWindow model = null, int productIndex = -1)
         {
             FileLogger.Log("Inserting new product...");
 
@@ -723,6 +737,30 @@ namespace ShutterManagement.Business.Services
                     Guid.TryParse(optionId, out var optionTypeId);
                     if (optionTypeId != Guid.Empty)
                     {
+                        var optionCost = productDetails?.WindowOptions?.FirstOrDefault(x => !string.IsNullOrEmpty(x.OptionTypeId) && Guid.Parse(x.OptionTypeId) == optionTypeId);
+
+                        // Get additional cost from productDetails if available
+                        decimal additionalCost = optionCost?.AdditionalCost ?? 0;
+                        
+                        // Check if there's an additional cost override in the model using productIndex
+                        if (model?.AdditionalCosts != null && model.AdditionalCosts.Any() && productIndex >= 0)
+                        {
+                            // Find the additional cost data for this specific product index
+                            var productAdditionalCostData = model.AdditionalCosts
+                                .FirstOrDefault(x => x.IndexId == productIndex);
+                                
+                            if (productAdditionalCostData?.Data != null && productAdditionalCostData.Data.Any())
+                            {
+                                var matchingCost = productAdditionalCostData.Data
+                                    .FirstOrDefault(x => x.OptionTypeId == optionTypeId);
+                                
+                                if (matchingCost != null && matchingCost.AdditionalCost > 0)
+                                {
+                                    additionalCost = matchingCost.AdditionalCost;
+                                }
+                            }
+                        }
+
                         var newOption = new WindowOption
                         {
                             WindowoptionId = Guid.NewGuid(),
@@ -733,7 +771,7 @@ namespace ShutterManagement.Business.Services
                             TenantId = claimsProperty.GetTenantId(),
                             IsActive = true,
                             IsDelete = false,
-                            AdditionalCost = product.AdditionalCost
+                            AdditionalCost = additionalCost
                         };
 
                         await windowOptionService.Add(newOption);
@@ -764,54 +802,6 @@ namespace ShutterManagement.Business.Services
                        (o.OptionName?.ToLower().Contains(searchValue) ?? false)
                    );
         }
-
-        private async Task ProcessAdditionalCosts(List<AdditionalCostData> additionalCosts)
-        {
-            try
-            {
-                foreach (var costData in additionalCosts)
-                {
-                    foreach (var costItem in costData.Data.Values)
-                    {
-                        if (costItem.OptionTypeId.HasValue && !string.IsNullOrWhiteSpace(costItem.AdditionalCost))
-                        {
-                            // Find the existing OptionsType record
-                            var optionType = optionsTypeService.GetAllQuerable()
-                                .FirstOrDefault(x => x.OptionTypeId == costItem.OptionTypeId && x.IsDelete == false);
-
-                            if (optionType != null)
-                            {
-                                // Parse and update the additional cost
-                                if (decimal.TryParse(costItem.AdditionalCost, out decimal parsedCost))
-                                {
-                                    optionType.AdditionalCost = parsedCost;
-                                    optionType.ModifiedAt = DateTime.Now;
-                                    optionType.RequirePriceAtEstimatePreview = true;
-                                    optionType.ModifiedBy = AppConstant.LoggedInUserID;
-
-                                    await optionsTypeService.Update(optionType);
-                                    FileLogger.Log($"Updated OptionType {optionType.OptionTypeId} with additional cost: {parsedCost} and RequirePriceAtEstimatePreview: {costItem.RequirePriceAtEstimatePreview}");
-                                }
-                                else
-                                {
-                                    FileLogger.Log($"Failed to parse additional cost: {costItem.AdditionalCost} for OptionType: {costItem.OptionTypeId}");
-                                }
-                            }
-                            else
-                            {
-                                FileLogger.Log($"OptionType not found: {costItem.OptionTypeId}");
-                            }
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                FileLogger.Log("Exception occurred while processing additional costs.", ex);
-                throw; // Re-throw to ensure the main transaction fails if this fails
-            }
-        }
-
         #endregion
     }
 }

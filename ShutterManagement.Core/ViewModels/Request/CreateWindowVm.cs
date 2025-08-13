@@ -5,6 +5,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Text.Json.Serialization;
 
 namespace ShutterManagement.Core.ViewModels.Request
 {
@@ -28,6 +29,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         public Guid? JobId { get; set; }
         public List<WindowProductVm> WindowProducts { get; set; } = new List<WindowProductVm>();
         public List<AdditionalCostData>? AdditionalCosts { get; set; } = new List<AdditionalCostData>();
+        public List<ProductDetail>? ProductDetails { get; set; } = new List<ProductDetail>();
     }
     public class WindowProductVm
     {
@@ -48,17 +50,50 @@ namespace ShutterManagement.Core.ViewModels.Request
 
     public class AdditionalCostData
     {
+        [JsonPropertyName("indexId")]
         public int IndexId { get; set; }
-        public Dictionary<string, AdditionalCostItem> Data { get; set; } = new Dictionary<string, AdditionalCostItem>();
+        
+        [JsonPropertyName("data")]
+        public List<AdditionalCostItem> Data { get; set; } = new List<AdditionalCostItem>();
     }
 
     public class AdditionalCostItem
     {
+        [JsonPropertyName("optionTypeId")]
         public Guid? OptionTypeId { get; set; }
+        
+        [JsonPropertyName("optionGroupName")]
         public string? OptionGroupName { get; set; }
+        
+        [JsonPropertyName("optionType")]
         public string? OptionType { get; set; }
-        public string? AdditionalCost { get; set; }
+        
+        [JsonPropertyName("additionalCost")]
+        public decimal AdditionalCost { get; set; }
+        
+        [JsonPropertyName("requirePriceAtEstimatePreview")]
         public bool RequirePriceAtEstimatePreview { get; set; }
+    }
+
+    public class ProductDetail
+    {
+        public Guid WindowProductId { get; set; }
+        public Guid ProductId { get; set; }
+        public string? ProductName { get; set; }
+        public Guid ProductTypeId { get; set; }
+        public string? ProductTypeName { get; set; }
+        public decimal BuildWidth { get; set; }
+        public decimal BuildHeight { get; set; }
+        public List<WindowOptionDetail>? WindowOptions { get; set; } = new List<WindowOptionDetail>();
+    }
+
+    public class WindowOptionDetail
+    {
+        public string? WindowoptionId { get; set; } // Primary identifier for existing window options
+        public Guid WindowProductId { get; set; }
+        public string? OptionTypeId { get; set; }
+        public string? OptionName { get; set; }
+        public decimal AdditionalCost { get; set; }
     }
 }
 
