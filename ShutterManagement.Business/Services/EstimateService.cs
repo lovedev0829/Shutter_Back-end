@@ -689,7 +689,7 @@ namespace ShutterManagement.Business.Services
                                          x.IsActive == true &&
                                          x.IsAvailable == true);
 
-                                    if (!string.IsNullOrEmpty(markup.IsWholeSaleAppliedOption.ToString()) && (bool)markup.IsWholeSaleAppliedOption)
+                                    if (markup != null && !string.IsNullOrEmpty(markup.IsWholeSaleAppliedOption.ToString()) && (bool)markup.IsWholeSaleAppliedOption)
                                     {
                                         var optionPrice = optionsData.OptionMSRP.Where(x => x.Key == optionTypeId)?.FirstOrDefault().Value;
                                         if (optionPrice != null && optionPrice > 0.0m)
@@ -812,7 +812,7 @@ namespace ShutterManagement.Business.Services
                                          x.IsActive == true &&
                                          x.IsAvailable == true);
 
-                                    if (!string.IsNullOrEmpty(markup.IsWholeSaleAppliedOption.ToString()) && (bool)markup.IsWholeSaleAppliedOption)
+                                    if (markup != null && !string.IsNullOrEmpty(markup.IsWholeSaleAppliedOption.ToString()) && (bool)markup.IsWholeSaleAppliedOption)
                                     {
                                         var optionPrice = optionsData.OptionMSRP.Where(x => x.Key == optionTypeId)?.FirstOrDefault().Value;
                                         if (optionPrice != null && optionPrice > 0.0m)
