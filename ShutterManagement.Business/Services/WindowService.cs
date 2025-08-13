@@ -520,7 +520,7 @@ namespace ShutterManagement.Business.Services
                 subTenantIds = tenantService.GetAccessibleTenantIds(logdinTenantId);
             }
             return dbContext.TblWindows
-                .Where(w => w.IsDelete == false && (w.TenantId == claimsProperty.GetTenantId() || subTenantIds.Contains(w.TenantId ?? Guid.Empty)))
+                .Where(w => w.IsDelete == false && (w.TenantId == claimsProperty.GetTenantId() || subTenantIds.Contains(w.TenantId ?? Guid.Empty))).OrderByDescending(x => x.CreatedAt)
                 .GroupJoin(dbContext.TblWindowProducts,
                     w => w.WindowId,
                     wp => wp.WindowId,
@@ -571,8 +571,7 @@ namespace ShutterManagement.Business.Services
                             BuildWidth = p.FirstOrDefault().wp.BuildWidth,
                             SortOrder=p.FirstOrDefault().wp.SortOrder,
                             
-                            
-                            WindowOptions = p.Where(o => o.wop != null).Select(o => new WindowOptions
+                            WindowOptions = p.Select(o => new WindowOptions
                             {
                                 WindowoptionId = o.wop.WindowoptionId.ToString(), // Include WindowoptionId
                                 WindowProductId = o.wp.WindowProductId,

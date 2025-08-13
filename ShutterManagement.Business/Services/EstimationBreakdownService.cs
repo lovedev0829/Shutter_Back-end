@@ -46,6 +46,7 @@ namespace ShutterManagement.Business.Services
                     var distinctContacts = activeContacts
                         .GroupBy(x => (x.FirstName + x.LastName))
                         .Select(group => group.First())
+                        .OrderBy(x => x.FirstName)
                         .ToList();
                     responseVm.IsSuccess = true;
                     responseVm.Data = distinctContacts;
@@ -96,12 +97,12 @@ namespace ShutterManagement.Business.Services
             return responseVm;
         }
 
-        public async Task<IResponseVm<List<GetAllJobsSubtenant_tenant>>> GetContactJobsBreakdown(Pagination filter)
+        public async Task<IResponseVm<List<GetAllJobsdetails>>> GetContactJobsBreakdown(Pagination filter)
         {
-            IResponseVm<List< GetAllJobsSubtenant_tenant>> responseVm = new ResponseVm<List<GetAllJobsSubtenant_tenant>>();
+            IResponseVm<List<GetAllJobsdetails>> responseVm = new ResponseVm<List<GetAllJobsdetails>>();
             try
             {
-                var res = await jobService.GetAllJobsTenant_SubTenant(filter);
+                var res = await jobService.GetAll(filter);
                 if (res?.Data != null)
                 {
                     var activeContacts = res.Data.Where(x => x.IsActive == true).ToList();

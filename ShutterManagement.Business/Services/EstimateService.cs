@@ -645,6 +645,7 @@ namespace ShutterManagement.Business.Services
             decimal productMarkup = 0.0m;
             decimal wholesale = 0.0m;
             var pricewithwholesale = 0.0m;
+            List<string> optionTypesId = new List<string>();
 
             var isSubtenant = (await tenantService.GetAll())
                 .Any(t => (t.TenantId == claimsProperty.GetTenantId() && t.ParentTenantId != null) && t.IsActive == true && t.IsDelete == false);
@@ -667,26 +668,54 @@ namespace ShutterManagement.Business.Services
                     {
                         if (isSubtenant)
                         {
+                            if (string.IsNullOrEmpty(item.ComponentId.ToString()))
+                            {
+                                var productPrice = products?.FirstOrDefault(x => x.WindowProductId == item.WindowProdcutId)?.ProductPrice ?? 0.0m;
+                                basePrice = productPrice;
+                            }
                             pricewithwholesale = await ManageProductPartnerDetail(item.ProductId, basePrice, 0.0m, true);
-                            //wholesale += Math.Round(pricewithwholesale, 2);
-                            //continue;
-                            //    var markup = dbContext.TblManagePartnersProducts
-                            //        .FirstOrDefault(x => x.ProductId == item.ProductId && x.TenantId == claimsProperty.GetTenantId() && x.IsAvailable == true);
-                            //    basePrice = markup?.MarkupType switch
-                            //    {
-                            //        "Percentage" => basePrice * (1 + (markup.WholeSalePrice ?? 0) / 100),
-                            //        "Fixed" => basePrice + (markup.WholeSalePrice ?? 0),
-                            //        _ => basePrice
-                            //    };
-                            //}
-                            //wholesale += Math.Round(basePrice, 2);
-                            //continue;
+
+                            var optionsData = await CalculateOptionPrice(item.OptionsTypeIds, item.Quantity ?? 0, item.BuildHeight ?? 0, item.BuildWidth ?? 0, false);
+                            foreach(var optionTypeId in item.OptionsTypeIds)
+                            {
+                                decimal optionWholesale = 0.0m;
+
+                                if (optionTypesId.Count == 0 || !optionTypesId.Contains(optionTypeId))
+                                {
+                                    var markup = dbContext.TblManagePartnersProductsOptions
+                                            .FirstOrDefault(x => x.OptionTypeId.ToString() == optionTypeId &&
+                                                                 x.TenantId == claimsProperty.GetTenantId() &&
+                                         x.IsDelete == false &&
+                                         x.IsActive == true &&
+                                         x.IsAvailable == true);
+
+                                    var optionPrice = optionsData.OptionMSRP.Where(x => x.Key == optionTypeId)?.FirstOrDefault().Value;
+                                    if (optionPrice != null && optionPrice > 0.0m)
+                                    {
+                                        if (markup == null)
+                                            optionWholesale += optionPrice ?? 0.0m;
+
+                                        else if (markup.MarkupOptionType == EnumValue.GetEnumValue(PriceType.Percentage))
+                                        {
+                                            optionWholesale += (optionPrice * (1 + (markup.WholeSalePrice ?? 0.0m) / 100)) ?? 0.0m;
+                                        }
+                                        else if (markup.MarkupOptionType == EnumValue.GetEnumValue(PriceType.Fixed))
+                                        {
+                                            optionWholesale += (optionPrice + (markup.WholeSalePrice ?? 0.0m)) ?? 0.0m;
+                                        }
+                                    }
+                                    optionTypesId.Add(optionTypeId);
+                                    wholesale += Math.Round(optionWholesale, 2);
+
+                                }
+                            }
+                            
                         }
                         wholesale += Math.Round(pricewithwholesale, 2);
                         continue;
                     }
 
-                   
+
                     componentOwnMarkup = ((basePrice * item.MarkupPercentage) / 100) ?? 0.0m;
                     basePrice += componentOwnMarkup;
                  
@@ -758,17 +787,56 @@ namespace ShutterManagement.Business.Services
 
                     if (iswholesale == true)
                     {
+                        if(string.IsNullOrEmpty(item.ComponentId.ToString()))
+                        {
+                            var productPrice = products?.FirstOrDefault(x => x.WindowProductId == item.WindowProdcutId)?.ProductPrice ?? 0.0m;
+                            basePrice = productPrice;
+                        }
                         if (isSubtenant)
                         {
                          pricewithwholesale = await ManageProductPartnerDetail(item.ProductId, basePrice, 0.0m, true);
-                        //    var markup = dbContext.TblManagePartnersProducts
-                        //        .FirstOrDefault(x => x.ProductId == item.ProductId && x.TenantId == claimsProperty.GetTenantId() && x.IsAvailable == true);
-                        //    basePrice = markup?.MarkupType switch
-                        //    {
-                        //        "Percentage" => basePrice * (1 + (markup.WholeSalePrice ?? 0) / 100),
-                        //        "Fixed" => basePrice + (markup.WholeSalePrice ?? 0),
-                        //        _ => basePrice
-                        //    };
+                            var optionsData = await CalculateOptionPrice(item.OptionsTypeIds, item.Quantity ?? 0, item.BuildHeight ?? 0, item.BuildWidth ?? 0, false);
+                            foreach (var optionTypeId in item.OptionsTypeIds)
+                            {
+                                decimal optionWholesale = 0.0m;
+
+                                if (optionTypesId.Count == 0 || !optionTypesId.Contains(optionTypeId))
+                                {
+                                    var markup = dbContext.TblManagePartnersProductsOptions
+                                            .FirstOrDefault(x => x.OptionTypeId.ToString() == optionTypeId &&
+                                                                 x.TenantId == claimsProperty.GetTenantId() &&
+                                         x.IsDelete == false &&
+                                         x.IsActive == true &&
+                                         x.IsAvailable == true);
+
+                                    var optionPrice = optionsData.OptionMSRP.Where(x => x.Key == optionTypeId)?.FirstOrDefault().Value;
+                                    if (optionPrice != null && optionPrice > 0.0m)
+                                    {
+                                        if (markup == null)
+                                            optionWholesale += optionPrice ?? 0.0m;
+
+                                        else if (markup.MarkupOptionType == EnumValue.GetEnumValue(PriceType.Percentage))
+                                        {
+                                            optionWholesale += (optionPrice * (1 + (markup.WholeSalePrice ?? 0.0m) / 100)) ?? 0.0m;
+                                        }
+                                        else if (markup.MarkupOptionType == EnumValue.GetEnumValue(PriceType.Fixed))
+                                        {
+                                            optionWholesale += (optionPrice + (markup.WholeSalePrice ?? 0.0m)) ?? 0.0m;
+                                        }
+                                    }
+                                    optionTypesId.Add(optionTypeId);
+                                    wholesale += Math.Round(optionWholesale, 2);
+
+                                }
+                            }
+                            //    var markup = dbContext.TblManagePartnersProducts
+                            //        .FirstOrDefault(x => x.ProductId == item.ProductId && x.TenantId == claimsProperty.GetTenantId() && x.IsAvailable == true);
+                            //    basePrice = markup?.MarkupType switch
+                            //    {
+                            //        "Percentage" => basePrice * (1 + (markup.WholeSalePrice ?? 0) / 100),
+                            //        "Fixed" => basePrice + (markup.WholeSalePrice ?? 0),
+                            //        _ => basePrice
+                            //    };
                         }
 
                         wholesale += Math.Round(pricewithwholesale, 2);
@@ -818,7 +886,7 @@ namespace ShutterManagement.Business.Services
 
                     if (isSubtenant)
                     {
-                        var pricewithPartnerMarkup = await ManageProductPartnerDetail(item.ProductId, basePrice, productOwnMarkup, false);
+                        var pricewithPartnerMarkup = await ManageProductPartnerDetail(item.ProductId, item.Price, productOwnMarkup, false);
                         productOwnMarkup += pricewithPartnerMarkup;
                         //    var markup = dbContext.TblManagePartnersProducts
                         //    .FirstOrDefault(x => x.ProductId == item.ProductId && x.TenantId == claimsProperty.GetTenantId());
@@ -1399,7 +1467,7 @@ namespace ShutterManagement.Business.Services
         {
             var isFilteringByEstimationId = !string.IsNullOrEmpty(filter.EstimationId);
             var estimationId = filter.EstimationId;
-
+            TenantId = TenantId != null && TenantId != Guid.Empty ? TenantId : claimsProperty.GetTenantId();
             var subTenantIds = new List<Guid>();
 
             var tenant = tenantService.GetAllQuerable().FirstOrDefault(x => x.TenantId == TenantId);
@@ -2541,7 +2609,12 @@ namespace ShutterManagement.Business.Services
             IResponseVm<List<WindowProdcutDetailsForEstimate>> response = new ResponseVm<List<WindowProdcutDetailsForEstimate>>();
             try
             {
-                var windowproductdetails = await BuildEstimate(products.Select(x => x.WindowProductId).ToArray(), false, false, "", false, true, DiscountId, products);
+                bool IsAfterDiscount = false;
+                if(DiscountId != null)
+                {
+                    IsAfterDiscount = true;
+                }
+                var windowproductdetails = await BuildEstimate(products.Select(x => x.WindowProductId).ToArray(), false, false, "", false, IsAfterDiscount, DiscountId, products);
                 if (windowproductdetails.IsSuccess)
                 {
                     response.IsSuccess = true;
@@ -2589,13 +2662,13 @@ namespace ShutterManagement.Business.Services
 
                 var branding = tenantBrandingService.GetAllQuerable().FirstOrDefault(b => b.Id == tenant.BrandingInfo);
 
+
                 var preparedBy = dbContext.TblUsers
                     .Where(u => u.Id == model.PreparedBy)
-                    .Select(u => (u.FirstName ?? "") + " " + (u.LastName ?? ""))
                     .FirstOrDefault();
+                
 
-
-                var emailVm = BuildStatusNotificationVm(model, contact, branding, preparedBy);
+                var emailVm = BuildStatusNotificationVm(model, contact, branding, (preparedBy?.FirstName + " " + preparedBy?.LastName),preparedBy?.Email??"");
                 var templateType = Helper.GetTemplateType(model).Value;
                 var res = await emailSendHelperService.SendEmailWithReplacedContent(templateType, emailVm);
             }
@@ -2610,7 +2683,7 @@ namespace ShutterManagement.Business.Services
 
        
 
-        private EstimateStatusNotificationVm BuildStatusNotificationVm( EstimateOrOrderBaseVm model, TblContact contact, TblTenantBrandingInfo branding,string preparedBy)
+        private EstimateStatusNotificationVm BuildStatusNotificationVm( EstimateOrOrderBaseVm model, TblContact contact, TblTenantBrandingInfo branding,string preparedByName , string preparedByEmail)
         {
             return new EstimateStatusNotificationVm
             {
@@ -2618,7 +2691,8 @@ namespace ShutterManagement.Business.Services
                 Email = contact.Email ?? "",
                 EstimationCode = model.EstimateCode??"",
                 EstimationDate = model.CreatedAt?.ToString("MM-dd-yyyy"),
-                PreparedBy = preparedBy??"",
+                PreparedBy = preparedByName??"",
+                PreparedByEmail= preparedByName??"",
                 EstimationGrandTotal = model.GrandTotal?.ToString("F2"),
                 TenantCompanyName = branding?.CompanyName??"",
                 CompanyPhone = branding?.PhoneNumber??"",

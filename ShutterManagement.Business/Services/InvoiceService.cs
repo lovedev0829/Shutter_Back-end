@@ -55,7 +55,7 @@ namespace ShutterManagement.Business.Services
         private readonly IUrlShortenerService urlShortenerService;
         private readonly StripeConfig _stripeConfig;
         public InvoiceService(ITenantService tenantService, IInvoicePaymentService invoicePaymentService,
-           IConverter converter, IContactService contactService
+           IConverter converter, IContactService contactService, IUrlShortenerService urlShortenerService
             , IEstimateService estimateService, ITenantBrandingService tenantBrandingService
             , IJobService jobService, IOrderService orderService, StripeService stripeService,
             IStripeConfiguration stripeConfiguration, JobStatusAndStageMapping statusAndStageMapping, ClaimsProperty claimsProperty,
@@ -733,7 +733,7 @@ namespace ShutterManagement.Business.Services
                             await estimateService.Update(IsEstimateExists);
                         }
                         // Generate the original estimate URL
-                        var originalEstimateUrl = $"{AppConstant.UIBaseURL}contacts/estimate/preview/{IsEstimateExists?.EstimateId}";
+                        string originalEstimateUrl = $"{AppConstant.UIBaseURL}contacts/estimate/preview/{IsEstimateExists?.EstimateId}";
                         
                         // Attempt to shorten the URL using Bitly API
                         var shortenResult = await urlShortenerService.ShortenUrlAsync(originalEstimateUrl);

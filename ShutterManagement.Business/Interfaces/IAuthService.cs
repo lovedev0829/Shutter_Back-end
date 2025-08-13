@@ -8,7 +8,7 @@ namespace ShutterManagement.Services
 {
     public interface IAuthService
     {
-        Task<IResponseVm<UserLoginDetails>> LoginAsync(LoginDetailVM user);
+        Task<IResponseVm<UserLoginDetails>> LoginAsync(LoginDetailVM user, bool? IsImpersonate = false);
         Task<IResponseVm<HomePageContent>> HomePageContent(string CompanyCode);
         Task<IResponseVm<PasswordChangeVm>> ResetPassWord(PasswordChangeVm passwordChangeVm);
         Task<IResponseVm<string>> ProfileUpdate(ProfileUpdateVm vm);
@@ -20,5 +20,7 @@ namespace ShutterManagement.Services
         IResponseVm<string> ReadTokenDetails(string token);
 
         Task<IResponseVm<Dictionary<string, string>>> GenerateLetterOnlyUniqueCodeAsync(string code);
+
+        Task<IResponseVm<UserLoginDetails>> ImpersonateTenant(string SubTenantId);
     }
 }

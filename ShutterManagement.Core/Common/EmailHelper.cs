@@ -89,6 +89,13 @@ namespace ShutterManagement.Core.Common
 
                 FileLogger.Log($"[OAuthEmail] AuthException: {authEx}");
             }
+            catch (SmtpCommandException smtpEx) when (smtpEx.StatusCode == MailKit.Net.Smtp.SmtpStatusCode.MailboxUnavailable)
+            {
+                responseVm.IsSuccess = false;
+                responseVm.Message = $"Recipient email address not found: {smtpEx.Message}";
+
+                FileLogger.Log($"[OAuthEmail] SMTP MailboxUnavailable: {smtpEx}");
+            }
             catch (SmtpCommandException smtpEx)
             {
                 responseVm.IsSuccess = false;
