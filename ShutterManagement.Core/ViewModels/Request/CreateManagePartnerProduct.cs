@@ -59,6 +59,8 @@ namespace ShutterManagement.Core.ViewModels.Request
         [DefaultValue("")]
         public Guid? OptionTypeId { get; set; }
         public bool? IsAvailable { get; set; } = false;
+        public bool? IsWholeSaleAppliedOption { get; set; } = false;
+
         [DefaultValue("")]
         public decimal? WholeSalePrice { get; set; }
         [DefaultValue("")]

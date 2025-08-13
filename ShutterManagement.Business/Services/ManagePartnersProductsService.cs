@@ -210,6 +210,7 @@ namespace ShutterManagement.Business.Services
             {
                 IsManagePartnerProductExist.PriceType = items.PriceType;
                 IsManagePartnerProductExist.IsAvailable = items.IsAvailable;
+                IsManagePartnerProductExist.IsAvailable = items.IsAvailable;
                 IsManagePartnerProductExist.WholeSalePrice = items.WholeSalePrice;
                 IsManagePartnerProductExist.MaxPartnerPrice = items.MaxPartnerPrice;
                 IsManagePartnerProductExist.MarkupType = items.PriceType;
@@ -325,6 +326,7 @@ namespace ShutterManagement.Business.Services
                 IsAvailable = model.IsAvailable,
                 IsPartnerOption = false,
                 WholeSalePrice = model.WholeSalePrice,
+                IsWholeSaleAppliedOption = model.IsWholeSaleAppliedOption,
                 MaxPrice = model.MaxPrice,
                 CreatedAt = DateTime.Now,
                 CreatedBy = AppConstant.LoggedInUserID,
@@ -626,6 +628,7 @@ namespace ShutterManagement.Business.Services
                                    MaxPrice = (o2 != null && o2.TenantId.ToString() == filter.TenantId) ? o2.MaxPrice ?? 0.0m : 0.0m,
                                    IsAvailable = (o2 != null && o2.TenantId.ToString() == filter.TenantId) ? o2.IsAvailable : false,
                                    TaxRateId = (o2 != null ? o2.TaxId : Guid.Empty) ?? Guid.Empty,
+                                   IsWholeSaleAppliedOption = (o2 != null && o2.TenantId.ToString() == filter.TenantId) ? o2.IsWholeSaleAppliedOption ?? false : false,
                                }).Distinct().ToList();
 
             foreach (var product in products)
