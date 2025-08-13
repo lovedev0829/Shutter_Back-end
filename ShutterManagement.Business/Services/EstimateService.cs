@@ -689,22 +689,25 @@ namespace ShutterManagement.Business.Services
                                          x.IsActive == true &&
                                          x.IsAvailable == true);
 
-                                    var optionPrice = optionsData.OptionMSRP.Where(x => x.Key == optionTypeId)?.FirstOrDefault().Value;
-                                    if (optionPrice != null && optionPrice > 0.0m)
+                                    if (!string.IsNullOrEmpty(markup.IsWholeSaleAppliedOption.ToString()) && (bool)markup.IsWholeSaleAppliedOption)
                                     {
-                                        if (markup == null)
-                                            optionWholesale += optionPrice ?? 0.0m;
+                                        var optionPrice = optionsData.OptionMSRP.Where(x => x.Key == optionTypeId)?.FirstOrDefault().Value;
+                                        if (optionPrice != null && optionPrice > 0.0m)
+                                        {
+                                            if (markup == null)
+                                                optionWholesale += optionPrice ?? 0.0m;
 
-                                        else if (markup.MarkupOptionType == EnumValue.GetEnumValue(PriceType.Percentage))
-                                        {
-                                            optionWholesale += (optionPrice * (1 + (markup.WholeSalePrice ?? 0.0m) / 100)) ?? 0.0m;
+                                            else if (markup.MarkupOptionType == EnumValue.GetEnumValue(PriceType.Percentage))
+                                            {
+                                                optionWholesale += (optionPrice * (1 + (markup.WholeSalePrice ?? 0.0m) / 100)) ?? 0.0m;
+                                            }
+                                            else if (markup.MarkupOptionType == EnumValue.GetEnumValue(PriceType.Fixed))
+                                            {
+                                                optionWholesale += (optionPrice + (markup.WholeSalePrice ?? 0.0m)) ?? 0.0m;
+                                            }
                                         }
-                                        else if (markup.MarkupOptionType == EnumValue.GetEnumValue(PriceType.Fixed))
-                                        {
-                                            optionWholesale += (optionPrice + (markup.WholeSalePrice ?? 0.0m)) ?? 0.0m;
-                                        }
+                                        optionTypesId.Add(optionTypeId);
                                     }
-                                    optionTypesId.Add(optionTypeId);
                                     wholesale += Math.Round(optionWholesale, 2);
 
                                 }
@@ -809,22 +812,25 @@ namespace ShutterManagement.Business.Services
                                          x.IsActive == true &&
                                          x.IsAvailable == true);
 
-                                    var optionPrice = optionsData.OptionMSRP.Where(x => x.Key == optionTypeId)?.FirstOrDefault().Value;
-                                    if (optionPrice != null && optionPrice > 0.0m)
+                                    if (!string.IsNullOrEmpty(markup.IsWholeSaleAppliedOption.ToString()) && (bool)markup.IsWholeSaleAppliedOption)
                                     {
-                                        if (markup == null)
-                                            optionWholesale += optionPrice ?? 0.0m;
+                                        var optionPrice = optionsData.OptionMSRP.Where(x => x.Key == optionTypeId)?.FirstOrDefault().Value;
+                                        if (optionPrice != null && optionPrice > 0.0m)
+                                        {
+                                            if (markup == null)
+                                                optionWholesale += optionPrice ?? 0.0m;
 
-                                        else if (markup.MarkupOptionType == EnumValue.GetEnumValue(PriceType.Percentage))
-                                        {
-                                            optionWholesale += (optionPrice * (1 + (markup.WholeSalePrice ?? 0.0m) / 100)) ?? 0.0m;
+                                            else if (markup.MarkupOptionType == EnumValue.GetEnumValue(PriceType.Percentage))
+                                            {
+                                                optionWholesale += (optionPrice * (1 + (markup.WholeSalePrice ?? 0.0m) / 100)) ?? 0.0m;
+                                            }
+                                            else if (markup.MarkupOptionType == EnumValue.GetEnumValue(PriceType.Fixed))
+                                            {
+                                                optionWholesale += (optionPrice + (markup.WholeSalePrice ?? 0.0m)) ?? 0.0m;
+                                            }
                                         }
-                                        else if (markup.MarkupOptionType == EnumValue.GetEnumValue(PriceType.Fixed))
-                                        {
-                                            optionWholesale += (optionPrice + (markup.WholeSalePrice ?? 0.0m)) ?? 0.0m;
-                                        }
+                                        optionTypesId.Add(optionTypeId);
                                     }
-                                    optionTypesId.Add(optionTypeId);
                                     wholesale += Math.Round(optionWholesale, 2);
 
                                 }
