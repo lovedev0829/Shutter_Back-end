@@ -678,8 +678,7 @@ namespace ShutterManagement.Business.Services
             {
                 var product = productsToInsert[i];
                 // Find the matching product detail for this product
-                var matchingProductDetail = productDetails?.FirstOrDefault(pd => pd.ProductId == product.ProductId);
-                await InsertProductWithOptions(model.WindowId, product, matchingProductDetail, model, i);
+                await InsertProductWithOptions(model.WindowId, product, model.AdditionalCosts[i]);
             }
 
             FileLogger.Log("Window products updated successfully.");
@@ -709,7 +708,7 @@ namespace ShutterManagement.Business.Services
             }
         }
 
-        private async Task InsertProductWithOptions(Guid windowId, Core.ViewModels.Request.WindowProductVm product, Core.ViewModels.Request.ProductDetail productDetails = null, UpdateWindow model = null, int productIndex = -1)
+        private async Task InsertProductWithOptions(Guid windowId, Core.ViewModels.Request.WindowProductVm product, Core.ViewModels.Request.AdditionalCosts additionalCosts= null)
         {
             FileLogger.Log("Inserting new product...");
 
@@ -737,21 +736,13 @@ namespace ShutterManagement.Business.Services
                     Guid.TryParse(optionId, out var optionTypeId);
                     if (optionTypeId != Guid.Empty)
                     {
-                        var optionCost = productDetails?.WindowOptions?.FirstOrDefault(x => !string.IsNullOrEmpty(x.OptionTypeId) && Guid.Parse(x.OptionTypeId) == optionTypeId);
-
-                        // Get additional cost from productDetails if available
-                        decimal additionalCost = optionCost?.AdditionalCost ?? 0;
+                        decimal additionalCost = 0;
                         
-                        // Check if there's an additional cost override in the model using productIndex
-                        if (model?.AdditionalCosts != null && model.AdditionalCosts.Any() && productIndex >= 0)
-                        {
-                            // Find the additional cost data for this specific product index
-                            var productAdditionalCostData = model.AdditionalCosts
-                                .FirstOrDefault(x => x.IndexId == productIndex);
-                                
-                            if (productAdditionalCostData?.Data != null && productAdditionalCostData.Data.Any())
+                        if (additionalCosts != null && additionalCosts.Any() )
+                        {                                
+                            if (additionalCosts?.Data != null && additionalCosts.Data.Any())
                             {
-                                var matchingCost = productAdditionalCostData.Data
+                                var matchingCost = additionalCosts.Data
                                     .FirstOrDefault(x => x.OptionTypeId == optionTypeId);
                                 
                                 if (matchingCost != null && matchingCost.AdditionalCost > 0)
