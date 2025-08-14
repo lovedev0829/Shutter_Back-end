@@ -783,8 +783,6 @@ namespace ShutterManagement.Business.Services
                         materialItem.MaterialPrice = Math.Round(materialPrice, 2);
                     }
 
-                    
-
                     if (iswholesale == true)
                     {
                         if(string.IsNullOrEmpty(item.ComponentId.ToString()))
@@ -794,7 +792,12 @@ namespace ShutterManagement.Business.Services
                         }
                         if (isSubtenant)
                         {
-                         pricewithwholesale = await ManageProductPartnerDetail(item.ProductId, basePrice, 0.0m, true);
+                              pricewithwholesale = await ManageProductPartnerDetail(item.ProductId, basePrice, 0.0m, true);
+                              if (string.IsNullOrEmpty(item.ComponentId.ToString()))
+                              {
+                                 var productPrice = products?.FirstOrDefault(x => x.WindowProductId == item.WindowProdcutId)?.ProductPrice ?? 0.0m;
+                                 pricewithwholesale = productPrice;
+                              }
                             var optionsData = await CalculateOptionPrice(item.OptionsTypeIds, item.Quantity ?? 0, item.BuildHeight ?? 0, item.BuildWidth ?? 0, false);
                             foreach (var optionTypeId in item.OptionsTypeIds)
                             {
@@ -825,6 +828,7 @@ namespace ShutterManagement.Business.Services
                                         }
                                         optionTypesId.Add(optionTypeId);
                                     }
+                                  
                                     wholesale += Math.Round(optionWholesale, 2);
 
                                 }
@@ -886,6 +890,7 @@ namespace ShutterManagement.Business.Services
 
                     if (isSubtenant)
                     {
+                        productOwnMarkup = 0.0m;
                         var pricewithPartnerMarkup = await ManageProductPartnerDetail(item.ProductId, item.Price, productOwnMarkup, false);
                         productOwnMarkup += pricewithPartnerMarkup;
                         //    var markup = dbContext.TblManagePartnersProducts
@@ -975,7 +980,6 @@ namespace ShutterManagement.Business.Services
             if (!(bool)isWholesale && markup != null)
             {
                 basePrice = (productPrice ?? 0.0m) + (productOwnMarkup ?? 0.0m);
-
                 productPartnerMarkup = markup.MarkupType switch
                 {
                     "Percentage" => (basePrice * (markup.PartnerSellingPrice ?? 0.0m)) / 100,
@@ -992,7 +996,6 @@ namespace ShutterManagement.Business.Services
                     "Fixed" => basePrice + (markup.WholeSalePrice ?? 0),
                     _ => basePrice
                 };
-
                 productPartnerMarkup = basePrice;
             }
             return productPartnerMarkup;
