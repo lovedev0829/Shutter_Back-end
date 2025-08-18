@@ -227,7 +227,7 @@ namespace ShutterManagement.Business.Services
                                     decimal additionalCost =  0;
                                     
                                     // Check if there's an additional cost override in the model
-                                    if (model.AdditionalCosts != null && model.AdditionalCosts.Any())
+                                    if (model.AdditionalCosts.Count() > 0 && model.AdditionalCosts.Any())
                                     {
                                       
                                         if (model.AdditionalCosts[i].Data != null && model.AdditionalCosts[i].Data.Any())
