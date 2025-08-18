@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Text.Json.Serialization;
+using System.Text.Json;
 
 namespace ShutterManagement.Core.ViewModels.Request
 {
@@ -27,7 +28,7 @@ namespace ShutterManagement.Core.ViewModels.Request
         [Required]
         public decimal Quantity { get; set; }
         public Guid? JobId { get; set; }
-        public List<WindowProductVm> WindowProducts { get; set; } = new List<WindowProductVm>();
+        public List<WindowProductVm>? WindowProducts { get; set; } = new List<WindowProductVm>();
         public List<AdditionalCostData>? AdditionalCosts { get; set; } = new List<AdditionalCostData>();
         public List<ProductDetail>? ProductDetails { get; set; } = new List<ProductDetail>();
     }
@@ -54,25 +55,16 @@ namespace ShutterManagement.Core.ViewModels.Request
         public int IndexId { get; set; }
         
         [JsonPropertyName("data")]
-        public List<AdditionalCostItem> Data { get; set; } = new List<AdditionalCostItem>();
+        public List<AdditionalCostItem>? Data { get; set; } = new List<AdditionalCostItem>();
     }
 
     public class AdditionalCostItem
     {
         [JsonPropertyName("optionTypeId")]
         public Guid? OptionTypeId { get; set; }
-        
-        [JsonPropertyName("optionGroupName")]
-        public string? OptionGroupName { get; set; }
-        
-        [JsonPropertyName("optionType")]
-        public string? OptionType { get; set; }
-        
+
         [JsonPropertyName("additionalCost")]
         public decimal AdditionalCost { get; set; }
-        
-        [JsonPropertyName("requirePriceAtEstimatePreview")]
-        public bool RequirePriceAtEstimatePreview { get; set; }
     }
 
     public class ProductDetail
