@@ -225,8 +225,9 @@ namespace ShutterManagement.Business.Services
             }
         }
 
-        public async Task<string> RefreshMicrosoft365AccessToken(string refreshToken)
+        public async Task<IResponseVm<string>> RefreshMicrosoft365AccessToken(string refreshToken)
         {
+            IResponseVm<string> responseVm = new ResponseVm<string>();
             var values = new Dictionary<string, string>
             {
                 ["client_id"] = AppConstant.Microsoft365_ClientId,
@@ -242,11 +243,18 @@ namespace ShutterManagement.Business.Services
                 content);
 
             var json = await response.Content.ReadAsStringAsync();
-            dynamic tokenResult = JsonConvert.DeserializeObject<OAuthRefereshTokenResponse>(json);
-            if(tokenResult != null && !string.IsNullOrEmpty(tokenResult.access_token))
-            return tokenResult?.access_token;
-
-            return string.Empty;
+            var tokenResult = JsonConvert.DeserializeObject<OAuthRefereshTokenResponse>(json);
+            if(tokenResult != null && !string.IsNullOrEmpty(tokenResult?.access_token))
+            {
+                responseVm.IsSuccess = true;
+                responseVm.Message = "Token fetched successfully";
+                responseVm.Data = tokenResult.access_token;
+            }
+            else
+            {
+                responseVm.Message = tokenResult?.error_description ?? "Unknown error occurred.";
+            }
+            return responseVm;
         }
 
 
@@ -272,13 +280,13 @@ namespace ShutterManagement.Business.Services
                 {
                     var newAccessToken = await RefreshMicrosoft365AccessToken(emailConfig.RefreshToken ?? "");
 
-                    if (string.IsNullOrEmpty(newAccessToken))
+                    if (!newAccessToken.IsSuccess)
                     {
-                        responseVm.Message = "Failed to refresh Google access token.";
+                        responseVm.Message = "Please reconfig Email configuration. " + newAccessToken.Message;
                         return responseVm;
                     }
 
-                    emailConfig.AccessToken = newAccessToken;
+                    emailConfig.AccessToken = newAccessToken.Data;
                     emailConfig.AccessExpirationtime = DateTime.Now.AddHours(1);
                     await emailConfigurationService.Update(emailConfig);
 
