@@ -18,6 +18,13 @@ namespace ShutterManagement.Core.ViewModels
         public string id_token { get; set; }
 
         public int refresh_token_expires_in { get; set; }
+        public string error { get; set; }
+        public string error_description { get; set; }
+        public List<int> error_codes { get; set; }
+        public string timestamp { get; set; }
+        public string trace_id { get; set; }
+        public string correlation_id { get; set; }
+        public string error_uri { get; set; }
 
     }
 }
