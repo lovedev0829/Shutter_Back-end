@@ -2574,7 +2574,7 @@ namespace ShutterManagement.Business.Services
                        Where(x => x.OptionTypeId.ToString() == optionTypeId && x.IsActive == true && x.IsDelete == false && x.TenantId
                        == claimsProperty.GetTenantId())
                        .FirstOrDefault();
-            if(!string.IsNullOrEmpty(windowOptionPrice.AdditionalCost.ToString()))
+            if(windowOptionPrice != null && !string.IsNullOrEmpty(windowOptionPrice.AdditionalCost.ToString()))
             {
                 OptionMarkup = 0.0m;
             }
