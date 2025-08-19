@@ -2486,6 +2486,7 @@ namespace ShutterManagement.Business.Services
                  bool? IsManageProduct)
         {
             var result = new OptionPriceResult();
+            decimal windowOptionPrice = 0.0m;
 
             bool isTenant = await tenantService.AnyAsync(t =>
                 t.TenantId == claimsProperty.GetTenantId() &&
@@ -2499,12 +2500,10 @@ namespace ShutterManagement.Business.Services
 
                 if (string.IsNullOrEmpty(option.AdditionalCost.ToString()))
                 {
-                    var windowOption = windowOptionService.GetAllQuerable().
+                      windowOptionPrice = windowOptionService.GetAllQuerable().
                         Where(x => x.OptionTypeId.ToString() == optionTypeId && x.IsActive == true && x.IsDelete == false && x.TenantId 
                         == claimsProperty.GetTenantId())
-                        .Select(x => x.AdditionalCost).FirstOrDefault();
-
-                    option.AdditionalCost = windowOption;
+                        .Select(x => x.AdditionalCost ?? 0.0m).FirstOrDefault();
                 }
 
                 if (option == null) continue;
@@ -2539,17 +2538,17 @@ namespace ShutterManagement.Business.Services
                 }
 
                 decimal OptionWholesale = Math.Round(baseCost, 2);
-                decimal OptionMSRP = OptionWholesale;
+                decimal OptionMSRP = !string.IsNullOrEmpty(option.AdditionalCost.ToString()) ? OptionWholesale : windowOptionPrice;
 
                 // Apply markup
-                if (optionexp.Markup > 0)
+                if (!string.IsNullOrEmpty(option.AdditionalCost.ToString()) && optionexp.Markup > 0)
                 {
                     result.OptionMarkup += Math.Round((decimal)(OptionWholesale * optionexp.Markup / 100), 2);
                 }
                 //if (IsManageProduct == true)
                 //{
                 result.OptionWholesale[optionTypeId] = OptionWholesale;
-                result.OptionMSRP[optionTypeId] = OptionMSRP;
+                result.OptionMSRP[optionTypeId] = !string.IsNullOrEmpty(option.AdditionalCost.ToString()) ? OptionMSRP : windowOptionPrice;
                 //}
                 // Apply tenant-specific logic
                 //if (!isTenant)
@@ -2570,7 +2569,16 @@ namespace ShutterManagement.Business.Services
                                      x.IsDelete == false &&
                                      x.IsActive == true &&
                                      x.IsAvailable == true);
-         
+
+            var windowOptionPrice = windowOptionService.GetAllQuerable().
+                       Where(x => x.OptionTypeId.ToString() == optionTypeId && x.IsActive == true && x.IsDelete == false && x.TenantId
+                       == claimsProperty.GetTenantId())
+                       .FirstOrDefault();
+            if(!string.IsNullOrEmpty(windowOptionPrice.AdditionalCost.ToString()))
+            {
+                OptionMarkup = 0.0m;
+            }
+
             if (OptionMarkup > 0)
             {
                 baseCost = baseCost * (1 + (OptionMarkup) / 100);
