@@ -2497,6 +2497,16 @@ namespace ShutterManagement.Business.Services
                 var option = optionsTypeService.GetAllQuerable()
                     .FirstOrDefault(x => x.OptionTypeId.ToString() == optionTypeId && x.IsDelete == false && x.IsActive == true);
 
+                if (string.IsNullOrEmpty(option.AdditionalCost.ToString()))
+                {
+                    var windowOption = windowOptionService.GetAllQuerable().
+                        Where(x => x.OptionTypeId.ToString() == optionTypeId && x.IsActive == true && x.IsDelete == false && x.TenantId 
+                        == claimsProperty.GetTenantId())
+                        .Select(x => x.AdditionalCost).FirstOrDefault();
+
+                    option.AdditionalCost = windowOption;
+                }
+
                 if (option == null) continue;
 
                 var optionexp = optionService.GetAllQuerable()
