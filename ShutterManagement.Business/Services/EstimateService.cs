@@ -1010,7 +1010,7 @@ namespace ShutterManagement.Business.Services
             }
             var tenantId = claimsProperty.GetTenantId();
             return dbContext.TblManagePartnersProducts
-                .FirstOrDefault(x => x.ProductId == productId && x.TenantId == tenantId) ?? new TblManagePartnersProduct();
+                .FirstOrDefault(x => x.ProductId == productId && x.TenantId == tenantId && x.IsActive == true && x.IsDelete == false && x.IsAvailable == true) ?? new TblManagePartnersProduct();
         }
 
 
