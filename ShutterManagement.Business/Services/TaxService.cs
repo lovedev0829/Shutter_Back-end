@@ -84,7 +84,7 @@ namespace ShutterManagement.Business.Services
                   
                     var tax = new TblTaxRate
                     {
-                        TaxName = model.TaxName,
+                        TaxName = model.TaxName.Trim(),
                         Municipality = model.Municipality,
                         State = model.State,
                         City = model.City,
@@ -241,7 +241,7 @@ namespace ShutterManagement.Business.Services
             
                 if (TaxExist != null)
                 {
-                    TaxExist.TaxName = model.TaxName;
+                    TaxExist.TaxName = model.TaxName.Trim();
                     TaxExist.Municipality = model.Municipality;
                     TaxExist.State = model.State;
                     TaxExist.City = model.City;
