@@ -207,5 +207,14 @@ namespace ShutterManagement.Controllers
             var res = await jobService.UpdateJobPowderCoatColor(JobId, powderCoatColorId);
             return Ok(res);
         }
+
+        [HttpPost]
+        [Route("AddOrUpdateOpportunityInGHL")]
+        //[Authorize(Roles = "JobEdit")]
+        public async Task<IActionResult> AddOrUpdateOpportunityInGHL(CreateJob model, bool? IsforUpdate)
+        {
+            var res = await jobService.AddOrUpdateOpportunityInGHL(model, (bool)IsforUpdate);
+            return Ok(res);
+        }
     }
 }

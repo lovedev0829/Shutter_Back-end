@@ -1390,17 +1390,24 @@ namespace ShutterManagement.GHL.Services
             public string ContactId { get; set; }
         }
 
-        public async Task<IResponseVm<GHLJobAssignedtoPartner>> GetOpportunityforPartner(GetGHLConfiguration getGHLConfiguration, string GHLUserId)
+        public async Task<IResponseVm<GHLJobAssignedtoPartner>> GetOpportunityforPartner(GetGHLConfiguration getGHLConfiguration, string? GHLUserId,string? ContactId = null)
         {
             var responseVm = new ResponseVm<GHLJobAssignedtoPartner>();
 
             try
             {
                 FileLogger.Log("Fetching Opportunities...");
-
+                var requestUrl = "";
                 var PipelineId = dBContext.TblGhlStages.Where(x => x.GhlPipelineName.ToLower() == getGHLConfiguration.PipelineId.ToLower() && x.IsActive == true).
                     Select(x => x.GhlPipelineId).FirstOrDefault();
-                var requestUrl = $"{AppConstant.GHL_BaseAddress}/opportunities/search?location_id={getGHLConfiguration.LocationId}&pipeline_id={PipelineId}&assigned_to={GHLUserId}";
+                if (!string.IsNullOrEmpty(ContactId))
+                {
+                    requestUrl = $"{AppConstant.GHL_BaseAddress}/opportunities/search?location_id={getGHLConfiguration.LocationId}&pipeline_id={PipelineId}&contact_id={ContactId}";
+                }
+                if (!string.IsNullOrEmpty(GHLUserId))
+                {
+                    requestUrl = $"{AppConstant.GHL_BaseAddress}/opportunities/search?location_id={getGHLConfiguration.LocationId}&pipeline_id={PipelineId}&assigned_to={GHLUserId}";
+                }
 
                 using var requestMessage = new HttpRequestMessage(HttpMethod.Get, requestUrl);
 

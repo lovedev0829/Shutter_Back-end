@@ -348,7 +348,7 @@ namespace ShutterManagement.Business.Services
                 IsActive = true,
                 IsDelete = false,
                 CreatedAt = DateTime.Now,
-                CreatedBy = tenantId ?? Guid.Empty,
+                CreatedBy = claimsProperty.GetUserId() ?? Guid.Empty,
             };
         }
 
@@ -1522,7 +1522,7 @@ namespace ShutterManagement.Business.Services
             responseVm.IsSuccess = true;
             responseVm.Message = AppConstant.UpdateSuccessMsg;
 
-            if (existingJob.GhlOpportunityId != null && (await gHLConfiguration.CheckGHLConfiguration(tenantId)).IsSuccess)
+            if (!string.IsNullOrEmpty(existingJob.GhlOpportunityId) && (await gHLConfiguration.CheckGHLConfiguration(tenantId)).IsSuccess)
             {
                 var ghlUpdateResponse = await UpdateOpportunityInGhl(existingJob);
                 FileLogger.Log($"GHL Sync: Job updated in GHL - {ghlUpdateResponse.Message}");
@@ -1598,7 +1598,7 @@ namespace ShutterManagement.Business.Services
             job.AddressId = model.AddressId != Guid.Empty ? model.AddressId : null;
             job.AttachmentAny = attachments;
             job.UpdatedAt = DateTime.Now;
-            job.ModifiedBy = AppConstant.LoggedInUserID;
+            job.ModifiedBy = claimsProperty.GetUserId() ?? Guid.Empty;
             job.GhluserId = model.GHLUserId ?? string.Empty;
         }
 
@@ -2197,6 +2197,37 @@ namespace ShutterManagement.Business.Services
                 responseVm.Message = ex.Message;
             }
             return responseVm;
+        }
+
+
+        public async Task<IResponseVm<GHLJobAssignedtoPartner>> AddOrUpdateOpportunityInGHL(CreateJob model,bool IsforUpdate = false)
+        {
+            IResponseVm<GHLJobAssignedtoPartner> response = new ResponseVm<GHLJobAssignedtoPartner>();
+            try
+            {
+                var IsGHLContact = contact.GetAllQuerable().Where(x => x.ContactId == model.ContactId && x.IsActive == true && x.TenantId == claimsProperty.GetTenantId() 
+                && x.IsArchive == false && x.IsDelete == false).Select(x => x.GhlcontactId).FirstOrDefault();
+                if (!string.IsNullOrEmpty(IsGHLContact))
+                {
+                    var GetGHLCongig =  await gHLConfiguration.GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
+                    var GetOpportunity = await gHLService_V2.GetOpportunityforPartner(GetGHLCongig.Data,null, IsGHLContact);
+                    if(GetOpportunity.IsSuccess && GetOpportunity.Data != null && GetOpportunity.Data.opportunities.Count > 1)
+                    {
+                        var res = GetOpportunity.Data;
+                        response.IsSuccess = true;
+                        response.Data = res;
+                    }
+                }
+                else
+                {
+                    var res = Create(model);
+                }
+            }
+            catch(Exception ex)
+            {
+                response.Message = ex.Message;
+            }
+            return response;
         }
 
     }
