@@ -1,4 +1,5 @@
-﻿using System.Data.Entity;
+﻿using System;
+using System.Data.Entity;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Net.Http;
@@ -21,6 +22,7 @@ using ShutterManagement.GHL.Services;
 using ShutterManagement.Services;
 using ShutterManagment.GHL.ViewModel.Request;
 using ShutterManagment.GHL.ViewModel.Response;
+using ShutterManagement.Core.Common;
 using Stripe;
 using static Microsoft.AspNetCore.Hosting.Internal.HostingApplication;
 using static QRCoder.PayloadGenerator.SwissQrCode;
@@ -238,16 +240,34 @@ namespace ShutterManagement.Business.Services
 
         public async Task<IResponseVm<string>> Create(CreateJob model, Guid? loggedInTenantId = null)
         {
-            var tenantId = GetValidTenantId(loggedInTenantId);
+            IResponseVm<string> res = new ResponseVm<string>();
+            try
+            {
+                var tenantId = GetValidTenantId(loggedInTenantId);
+                var configDetails = await gHLConfiguration.GetGHLConfiguration(loggedInTenantId.ToString());
+                var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration(loggedInTenantId);
+                if (Checkghlresponse.IsSuccess)
+                {
+                    var IsMultipleOpportunityExist = await AddOrUpdateOpportunityInGHL(model, loggedInTenantId);
+                    res.IsSuccess = IsMultipleOpportunityExist.IsSuccess;
+                    res.Message = IsMultipleOpportunityExist.Message;
+                    res.Data = IsMultipleOpportunityExist.Data.ToString();
+                    return res;
+                }
 
-            var validationResult = await ValidateJobRequestAsync(model, tenantId);
-            if (!validationResult.IsSuccess)
-                return BuildErrorResponse(validationResult.Message);
+                var validationResult = await ValidateJobRequestAsync(model, tenantId);
+                if (!validationResult.IsSuccess)
+                    return BuildErrorResponse(validationResult.Message);
 
-            var job = await BuildJobAsync(model, tenantId, validationResult.Data.JobStatus, validationResult.Data.StageName,validationResult.Data.StageId);
+                var job = await BuildJobAsync(model, tenantId, validationResult.Data.JobStatus, validationResult.Data.StageName, validationResult.Data.StageId);
 
-            var result = await ProcessJobCreationAsync(job, model, tenantId);
-            return result;
+                var result = await ProcessJobCreationAsync(job, model, tenantId);
+            }
+            catch(Exception ex)
+            {
+                res.Message = ex.Message;
+            }
+            return res;
         }
 
         private async Task<IResponseVm<(Guid JobStatus, string StageName,string StageId)>> ValidateJobRequestAsync(CreateJob model, Guid? tenantId)
@@ -2200,27 +2220,118 @@ namespace ShutterManagement.Business.Services
         }
 
 
-        public async Task<IResponseVm<GHLJobAssignedtoPartner>> AddOrUpdateOpportunityInGHL(CreateJob model,bool IsforUpdate = false)
+        public async Task<IResponseVm<GHLJobAssignedtoPartner>> AddOrUpdateOpportunityInGHL(CreateJob model,Guid? LoggedInTenantId = null)
         {
             IResponseVm<GHLJobAssignedtoPartner> response = new ResponseVm<GHLJobAssignedtoPartner>();
             try
             {
+                LoggedInTenantId = (LoggedInTenantId != null && LoggedInTenantId != Guid.Empty)
+                    ? LoggedInTenantId.Value
+                    : claimsProperty.GetTenantId();
                 var IsGHLContact = contact.GetAllQuerable().Where(x => x.ContactId == model.ContactId && x.IsActive == true && x.TenantId == claimsProperty.GetTenantId() 
-                && x.IsArchive == false && x.IsDelete == false).Select(x => x.GhlcontactId).FirstOrDefault();
-                if (!string.IsNullOrEmpty(IsGHLContact))
+                && x.IsArchive == false && x.IsDelete == false).FirstOrDefault();
+                if (!string.IsNullOrEmpty(IsGHLContact.GhlcontactId))
                 {
                     var GetGHLCongig =  await gHLConfiguration.GetGHLConfiguration(claimsProperty.GetTenantId().ToString());
-                    var GetOpportunity = await gHLService_V2.GetOpportunityforPartner(GetGHLCongig.Data,null, IsGHLContact);
+                    var GetOpportunity = await gHLService_V2.GetOpportunityforPartner(GetGHLCongig.Data,null, IsGHLContact.GhlcontactId);
                     if(GetOpportunity.IsSuccess && GetOpportunity.Data != null && GetOpportunity.Data.opportunities.Count > 1)
                     {
                         var res = GetOpportunity.Data;
                         response.IsSuccess = true;
                         response.Data = res;
                     }
+                    return response;
                 }
                 else
                 {
-                    var res = Create(model);
+                    var configDetails = await gHLConfiguration.GetGHLConfiguration(LoggedInTenantId.ToString());
+                    var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration(LoggedInTenantId);
+                    if (Checkghlresponse.IsSuccess)
+                    {
+                        var getGHLContacts = await gHLService_V2.GetContactsAsync(configDetails.Data);
+                        if (getGHLContacts != null)
+                        {
+                            FileLogger.Log("GHL", getGHLContacts.Count());
+                        }
+                        var existingGHLContact = getGHLContacts.FirstOrDefault(x => x.email.ToLower() == IsGHLContact.Email.ToLower());
+                        if(existingGHLContact != null)
+                        {
+                            IsGHLContact.GhlcontactId = existingGHLContact.id;
+                            IsGHLContact.LastSync = DateTime.Now;
+                            IsGHLContact.UpdatedAt = DateTime.Now;
+                            IsGHLContact.ModifiedBy = LoggedInTenantId;
+
+                            await contact.Update(IsGHLContact);
+                        }
+                       
+                        if (existingGHLContact == null && !string.IsNullOrEmpty(existingGHLContact.phone))
+                        {
+                            existingGHLContact = getGHLContacts.FirstOrDefault(x => x.phone == IsGHLContact.PhoneNumber);
+                            if (existingGHLContact != null)
+                            {
+                                IsGHLContact.GhlcontactId = existingGHLContact.id;
+                                IsGHLContact.LastSync = DateTime.Now;
+                                IsGHLContact.UpdatedAt = DateTime.Now;
+                                IsGHLContact.ModifiedBy = LoggedInTenantId;
+
+                                await contact.Update(IsGHLContact);
+                            }
+                            else
+                            {
+                                var newContactToAddToGHL = new GhlContactAdd
+                                {
+                                    FirstName = IsGHLContact.FirstName,
+                                    LastName = IsGHLContact.LastName,
+                                    Email = IsGHLContact.Email,
+                                    Phone = IsGHLContact.PhoneNumber,
+                                    ContactType = IsGHLContact.ContactType,
+                                };
+                                var res1 = await gHLService_V2.CreateContactAsync(configDetails.Data, newContactToAddToGHL);
+                                if (res1.IsSuccess)
+                                {
+                                    //var contactExist = (await GetById(contact.ContactId));
+                                    var contactExist = IsGHLContact;
+
+                                    if (contactExist != null && contactExist.IsDelete == false)
+                                    {
+                                        contactExist.GhlcontactId = res1?.Data?.Contact?.id;
+                                        contactExist.LastSync = DateTime.Now;
+                                    }
+                                    await contact.Update(contactExist);
+                                }
+                            }
+                        }
+                        var res = await Create(model);
+                        if (res.IsSuccess)
+                        {
+                            TblJob job = new TblJob
+                            {
+                                AddressId = model.AddressId != Guid.Empty ? model.AddressId : null,
+                                ContactId = model.ContactId,
+                                JobName = model.JobName?.Trim(),
+                                JobType = model.JobType != Guid.Empty ? model.JobType : null,
+                                AssignedPersonnel = model.AssignedPersonnel ?? Guid.Empty,
+                                ScheduledDate = model.ScheduledDate,
+                                //JobStatus = (!string.IsNullOrEmpty(jobStatus.ToString()) && jobStatus != Guid.Empty) ? jobStatus : Guid.Empty,
+                                Notes = model.Notes ?? string.Empty,
+                                //AttachmentAny = arrayString ?? null,
+                                //JobUniqueId = jobUniqueId,
+                                //GhlStageId = (!string.IsNullOrEmpty(model.GHL_StageId.ToString()) && model.GHL_StageId != Guid.Empty) ? model.GHL_StageId : Guid.Parse(StageId),
+                                //GhlStageName = (!string.IsNullOrEmpty(stageName)) ? stageName.Trim() : string.Empty,
+                                GhlContactId = model.GHL_ContactId ?? string.Empty,
+                                GhlOpportunityId = model.GhlOpportunityId ?? string.Empty,
+                                //GhluserId = (string.IsNullOrEmpty(model.GHLUserId)) ? GHLUserId : model.GHLUserId,
+                                TenantId = LoggedInTenantId,
+                                IsActive = true,
+                                IsDelete = false,
+                                CreatedAt = DateTime.Now,
+                                CreatedBy = claimsProperty.GetUserId() ?? Guid.Empty,
+
+                            };
+
+                            await HandleGhlOpportunityCreationAsync(job, LoggedInTenantId);
+                        }
+                    }
                 }
             }
             catch(Exception ex)

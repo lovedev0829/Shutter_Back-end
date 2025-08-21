@@ -1913,12 +1913,12 @@ namespace ShutterManagement.Business.Services
             }
         }
 
-        private string ToTitleCaseSafe(string input)
-        {
-            return string.IsNullOrWhiteSpace(input)
-                ? string.Empty
-                : CultureInfo.CurrentCulture.TextInfo.ToTitleCase(input);
-        }
+        //private string ToTitleCaseSafe(string input)
+        //{
+        //    return string.IsNullOrWhiteSpace(input)
+        //        ? string.Empty
+        //        : CultureInfo.CurrentCulture.TextInfo.ToTitleCase(input);
+        //}
 
         public async Task<IResponseVm<string>> ContactSync(Guid? LoggedInTenantId = null)
         {
@@ -1966,9 +1966,9 @@ namespace ShutterManagement.Business.Services
                             {
                                 
 
-                                existingContact.FirstName = ToTitleCaseSafe(ghlcontact.firstNameLowerCase);
+                                existingContact.FirstName = Helper.ToTitleCaseSafe(ghlcontact.firstNameLowerCase);
 
-                                existingContact.LastName = ToTitleCaseSafe(ghlcontact.firstNameLowerCase);
+                                existingContact.LastName = Helper.ToTitleCaseSafe(ghlcontact.firstNameLowerCase);
 
                                 existingContact.Email = ghlcontact.email??"";
                                 existingContact.PhoneNumber = ghlcontact.phone??"";
@@ -2019,8 +2019,8 @@ namespace ShutterManagement.Business.Services
                             var newContact = new Sp_Contact
                             {
                                 ContactType = ghlcontact?.type??"",
-                                FirstName = ToTitleCaseSafe(ghlcontact?.firstNameLowerCase??"")??"",
-                                LastName = ToTitleCaseSafe(ghlcontact?.lastNameLowerCase ?? "")??"",
+                                FirstName = Helper.ToTitleCaseSafe(ghlcontact?.firstNameLowerCase??"")??"",
+                                LastName = Helper.ToTitleCaseSafe(ghlcontact?.lastNameLowerCase ?? "")??"",
                                 Email = ghlcontact?.email??"",
                                 PhoneNumber = ghlcontact?.phone??"",
                                 //locationId = ghlcontact.locationId,
@@ -2070,8 +2070,8 @@ namespace ShutterManagement.Business.Services
                                 {
                                     var newContactToAddToGHL = new GhlContactAdd
                                     {
-                                        FirstName = ToTitleCaseSafe(existingGHLContact.firstNameLowerCase),
-                                        LastName = ToTitleCaseSafe(existingGHLContact.lastNameLowerCase),
+                                        FirstName = Helper.ToTitleCaseSafe(existingGHLContact.firstNameLowerCase),
+                                        LastName = Helper.ToTitleCaseSafe(existingGHLContact.lastNameLowerCase),
                                         Email = existingGHLContact.email,
                                         Phone = existingGHLContact.phone,
                                         ContactType = existingGHLContact.type,
@@ -2083,8 +2083,8 @@ namespace ShutterManagement.Business.Services
                                 {
                                     var updatecontact = new UpdateContact
                                     {
-                                        FirstName = ToTitleCaseSafe(existingGHLContact.firstNameLowerCase),
-                                        LastName = ToTitleCaseSafe(existingGHLContact.lastNameLowerCase),
+                                        FirstName = Helper.ToTitleCaseSafe(existingGHLContact.firstNameLowerCase),
+                                        LastName = Helper.ToTitleCaseSafe(existingGHLContact.lastNameLowerCase),
                                         Email = existingGHLContact.email,
                                         PhoneNumber = existingGHLContact.phone,
                                         ContactType = existingGHLContact.type,

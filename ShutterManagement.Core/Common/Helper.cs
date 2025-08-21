@@ -1,9 +1,10 @@
-﻿using ShutterManagement.Core.ViewModels.Response;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ShutterManagement.Core.ViewModels.Response;
 
 namespace ShutterManagement.Core.Common
 {
@@ -33,6 +34,12 @@ namespace ShutterManagement.Core.Common
             return null;
         }
 
+        public static string ToTitleCaseSafe(string input)
+        {
+            return string.IsNullOrWhiteSpace(input)
+                ? string.Empty
+                : CultureInfo.CurrentCulture.TextInfo.ToTitleCase(input);
+        }
 
         //public static string GetTemplateType(EstimateOrOrderBaseVm model)
         //{

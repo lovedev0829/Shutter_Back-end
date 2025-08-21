@@ -211,9 +211,9 @@ namespace ShutterManagement.Controllers
         [HttpPost]
         [Route("AddOrUpdateOpportunityInGHL")]
         //[Authorize(Roles = "JobEdit")]
-        public async Task<IActionResult> AddOrUpdateOpportunityInGHL(CreateJob model, bool? IsforUpdate)
+        public async Task<IActionResult> AddOrUpdateOpportunityInGHL(CreateJob model)
         {
-            var res = await jobService.AddOrUpdateOpportunityInGHL(model, (bool)IsforUpdate);
+            var res = await jobService.AddOrUpdateOpportunityInGHL(model);
             return Ok(res);
         }
     }
