@@ -12,7 +12,11 @@ namespace ShutterManagment.GHL.ViewModel.Response
         public string? name { get; set; }
         public int? monetaryValue { get; set; }
         public string? pipelineId { get; set; }
+        public string? pipelineName { get; set; }
         public string? pipelineStageId { get; set; }
+        public string? pipelineStageName { get; set; }
+        public string? JobId { get; set; }
+        public string? JobName { get; set; }
         public string? pipelineStageUId { get; set; }
         public string? assignedTo { get; set; }
         public string? status { get; set; }

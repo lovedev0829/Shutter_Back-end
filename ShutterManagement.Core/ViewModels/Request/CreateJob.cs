@@ -53,5 +53,10 @@ namespace ShutterManagement.Core.ViewModels.Request
         public DateTime? lastasync { get; set; }
         public string? GHLUserId { get; set; }
 
+        public bool? IsJobCreate { get; set; }
+
+        public string? ExistingOpportunityId { get; set; }
+        public string? ExistingJobId { get; set; }
+
     }
 }
