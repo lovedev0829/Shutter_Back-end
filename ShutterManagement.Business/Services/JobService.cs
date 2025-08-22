@@ -150,8 +150,8 @@ namespace ShutterManagement.Business.Services
         private async Task<Guid> ResolveJobStatus(CreateJob model, Guid? tenantId)
         {
             var jobStatusName = string.Empty;
-            if(model.GHL_StageId == null && model.GHL_StageId == Guid.Empty)
-                  jobStatusName = EnumValue.GetEnumValue(JobStatus.New);
+            if (model.GHL_StageId == null && string.IsNullOrEmpty(model.GHL_StageId.ToString()))
+            { jobStatusName = EnumValue.GetEnumValue(JobStatus.New); }
 
           
             if (model.GHL_StageId != null && model.GHL_StageId != Guid.Empty)
