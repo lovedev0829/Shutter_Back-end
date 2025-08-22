@@ -1,8 +1,12 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using System.Net;
+using System.Text.Json;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 using ShutterManagement.Business.Interfaces;
 using ShutterManagement.Business.Services;
+using ShutterManagement.Core;
 using ShutterManagement.Core.Common;
 using ShutterManagement.Core.SPModel;
 using ShutterManagement.Core.ViewModels;
@@ -11,7 +15,6 @@ using ShutterManagement.Core.ViewModels.Response;
 using ShutterManagement.Services;
 using ShutterManagment.GHL.ViewModel.Request;
 using ShutterManagment.GHL.ViewModel.Response;
-using System.Net;
 
 namespace ShutterManagement.Controllers
 {
@@ -39,11 +42,46 @@ namespace ShutterManagement.Controllers
         [HttpPost]
         [Route("Create")]
         [Authorize(Roles = "JobAdd")]
-        public async Task<IActionResult> Create([FromBody] CreateJob model)
+        public async Task<IActionResult> Create(CreateJob model)
         {
             var result = await jobService.Create(model);
+            if(result.Message == AppConstant.InsertSuccessMsg)
+            {
+                return Ok(result);
+            }    
+            if (!string.IsNullOrEmpty(result.Data))
+            {
+                try
+                {
+                    // If Data is an array, wrap it inside an object
+                    string jsonToDeserialize;
+                    if (result.Data.TrimStart().StartsWith("["))
+                    {
+                        jsonToDeserialize = $"{{\"opportunities\": {result.Data}, \"traceId\": null}}";
+                    }
+                    else
+                    {
+                        jsonToDeserialize = result.Data;
+                    }
+
+                    var parsedData = JsonSerializer.Deserialize<GHLJobAssignedtoPartner>(jsonToDeserialize);
+                    return Ok(new
+                    {
+                        isSuccess = result.IsSuccess,
+                        data = parsedData,
+                        //totalRecords = parsedData.
+                        IsGHLConfig = true
+                });
+                }
+                catch (JsonException jsonEx)
+                {
+                    return BadRequest(new { error = "Invalid JSON format in Data", details = jsonEx.Message });
+                }
+            }
+
             return Ok(result);
         }
+
 
         [HttpPost]
         [Route("Update")]
@@ -208,13 +246,13 @@ namespace ShutterManagement.Controllers
             return Ok(res);
         }
 
-        [HttpPost]
-        [Route("AddOrUpdateOpportunityInGHL")]
-        //[Authorize(Roles = "JobEdit")]
-        public async Task<IActionResult> AddOrUpdateOpportunityInGHL(CreateJob model)
-        {
-            var res = await jobService.AddOrUpdateOpportunityInGHL(model);
-            return Ok(res);
-        }
+        //[HttpPost]
+        //[Route("AddOrUpdateOpportunityInGHL")]
+        ////[Authorize(Roles = "JobEdit")]
+        //public async Task<IActionResult> AddOrUpdateOpportunityInGHL(CreateJob model)
+        //{
+        //    var res = await jobService.AddOrUpdateOpportunityInGHL(model);
+        //    return Ok(res);
+        //}
     }
 }

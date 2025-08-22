@@ -34,6 +34,6 @@ namespace ShutterManagement.Business.Interfaces
         Task<IResponseVm<string>> UpdateEstimateUrlInGhlOnly(TblJob job, string newEstimateUrl, decimal Grandtotal);
         Task<IResponseVm<string>> UpdateJobPowderCoatColor(Guid? JobId, Guid? powderCoatColorId);
 
-        Task<IResponseVm<GHLJobAssignedtoPartner>> AddOrUpdateOpportunityInGHL(CreateJob model, Guid? LoggedInTenantId = null);
+        Task<IResponseVm<GHLJobAssignedtoPartner>> GetGHLOpportunity(Guid? ContactId, Guid? LoggedInTenantId = null);
     }
 }

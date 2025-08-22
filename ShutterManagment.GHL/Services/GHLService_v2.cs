@@ -1402,7 +1402,7 @@ namespace ShutterManagement.GHL.Services
                     Select(x => x.GhlPipelineId).FirstOrDefault();
                 if (!string.IsNullOrEmpty(ContactId))
                 {
-                    requestUrl = $"{AppConstant.GHL_BaseAddress}/opportunities/search?location_id={getGHLConfiguration.LocationId}&pipeline_id={PipelineId}&contact_id={ContactId}";
+                    requestUrl = $"{AppConstant.GHL_BaseAddress}/opportunities/search?location_id={getGHLConfiguration.LocationId}&pipeline_id={PipelineId}&contact_id={ContactId}&status=open";
                 }
                 if (!string.IsNullOrEmpty(GHLUserId))
                 {
@@ -1430,7 +1430,7 @@ namespace ShutterManagement.GHL.Services
                 {
                     PropertyNamingPolicy = JsonNamingPolicy.CamelCase
                 });
-
+               
                 responseVm.IsSuccess = true;
                 responseVm.Data = result;
             }
