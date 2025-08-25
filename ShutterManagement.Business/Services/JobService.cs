@@ -197,10 +197,29 @@ namespace ShutterManagement.Business.Services
 
                     if (IsMultipleOpportunityExist.IsSuccess && IsMultipleOpportunityExist.Data?.opportunities?.Count > 0)
                     {
-                        var wrapper = new GHLJobAssignedtoPartner
+                        var isSubtenant = tenantService.GetAllQuerable()
+                            .Where(x => x.TenantId == tenantId
+                                && !string.IsNullOrEmpty(x.ParentTenantId.ToString())
+                                && x.IsActive == true
+                                && x.IsDelete == false
+                                && x.IsGhlconfigSameAsTenant == true)
+                            .Select(x => x.GhluserId ?? string.Empty)
+                            .FirstOrDefault();
+
+                        var wrapper = new GHLJobAssignedtoPartner();
+
+                        // If subtenant exists, filter opportunities by assigned user
+                        if (!string.IsNullOrEmpty(isSubtenant))
                         {
-                            opportunities = IsMultipleOpportunityExist.Data.opportunities
-                        };
+                            wrapper.opportunities = IsMultipleOpportunityExist.Data.opportunities
+                                .Where(o => o.assignedTo == isSubtenant)
+                                .ToList();
+                        }
+                        else
+                        {
+                            wrapper.opportunities = IsMultipleOpportunityExist.Data.opportunities;
+                        }
+
                         res.Data = System.Text.Json.JsonSerializer.Serialize(wrapper);
                         return res;
                     }
@@ -846,12 +865,27 @@ namespace ShutterManagement.Business.Services
             try
             {
                 LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : claimsProperty.GetTenantId());
+
+
+                bool IsGhlconfigSameAsTenant = false;
+                var IsGHLConfigurationTenantExist = dbContext.TblTenants.Where(x => x.TenantId == LoggedInTenantId && !string.IsNullOrEmpty(x.ParentTenantId.ToString()) && x.IsDelete == false && x.IsActive == true).FirstOrDefault();
+                if (IsGHLConfigurationTenantExist?.IsGhlconfigSameAsTenant ?? false)
+                {
+                    IsGhlconfigSameAsTenant = true;
+                }
+                LoggedInTenantId = IsGhlconfigSameAsTenant ? IsGHLConfigurationTenantExist.ParentTenantId : LoggedInTenantId;
+                var ghlConfigDetails = await gHLConfiguration.GetGHLConfiguration(LoggedInTenantId.ToString());
+               
                 var Checkghlresponse = await gHLConfiguration.CheckGHLConfiguration(LoggedInTenantId);
                 if (Checkghlresponse.IsSuccess)
                 {
                     var gHLStages = dbContext.TblGhlStages
-                    .Where(x => x.TenantId == LoggedInTenantId).OrderByDescending(x => x.CreatedAt)
-                    .ToList();
+                   .Where(x => x.TenantId == LoggedInTenantId && (x.GhlPipelineName.ToLower() == ghlConfigDetails.Data.PipelineId.ToLower() || x.GhlPipelineId.ToLower()
+                   == ghlConfigDetails.Data.PipelineId.ToLower())).OrderBy(x => x.StageOrder)
+                   .ToList();
+                    //var gHLStages = dbContext.TblGhlStages
+                    //.Where(x => x.TenantId == LoggedInTenantId).OrderByDescending(x => x.CreatedAt)
+                    //.ToList();
 
                     var stageList = new List<PipelineAndStage>();
 
@@ -2210,6 +2244,7 @@ namespace ShutterManagement.Business.Services
                 LoggedInTenantId = (LoggedInTenantId != null && LoggedInTenantId != Guid.Empty)
                     ? LoggedInTenantId.Value
                     : claimsProperty.GetTenantId();
+                var res = new GHLJobAssignedtoPartner();
                 var IsGHLContact = contact.GetAllQuerable().Where(x => x.ContactId == ContactId && x.IsActive == true && x.TenantId == LoggedInTenantId
                 && x.IsArchive == false && x.IsDelete == false).FirstOrDefault();
                 if (!string.IsNullOrEmpty(IsGHLContact.GhlcontactId))
@@ -2231,11 +2266,13 @@ namespace ShutterManagement.Business.Services
                                 x.IsActive == true && x.IsDelete == false).FirstOrDefault();
                                 item.JobId = Job != null ? Job.JobId.ToString() : string.Empty ;
                                 item.JobName = Job != null ? Job.JobName : string.Empty;
-                                var res1 = await GetGHLStages(LoggedInTenantId);
-                                var stage = res1?.Data?.FirstOrDefault(x => x.GhlStageId == item.pipelineStageId).GhlStageName;
+                                var res1 = await  GetGHLStages(LoggedInTenantId);
+                                var stage = res1?.Data?.Where(x => x.GhlStageId.ToString().ToLower() == item.pipelineStageId.ToLower()).Select(x => x.GhlStageName ?? string.Empty).FirstOrDefault() ?? string.Empty;
                                 item.pipelineStageName = stage;
                             }
-                            var res = GetOpportunity.Data;
+
+                            res = GetOpportunity.Data;
+
                             response.IsSuccess = true;
                             response.Data = res;
                         }
