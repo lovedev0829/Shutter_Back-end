@@ -229,13 +229,24 @@ namespace ShutterManagement.GHL.Services
             }
         }
 
-        public async Task<IResponseVm<List<PipelineAndStage>>> GetGHLStages()
+        public async Task<IResponseVm<List<PipelineAndStage>>> GetGHLStages(Guid? LoggedInTenantId = null)
         {
             IResponseVm<List<PipelineAndStage>> responseVm = new ResponseVm<List<PipelineAndStage>>();
             try
             {
-                var gHLStages = dBContext.TblGhlStages
-                    .Where(x => x.TenantId == claimsProperty.GetTenantId()).OrderBy(x => x.StageOrder)
+                LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : claimsProperty.GetTenantId());
+
+                var gHLConfiguration = await dBContext.TblGhlconfigurations
+                                            .FirstOrDefaultAsync(c => c.TenantId == LoggedInTenantId);
+                bool IsGhlconfigSameAsTenant = false;
+                var IsGHLConfigurationTenantExist = dBContext.TblTenants.Where(x => x.TenantId == LoggedInTenantId && !string.IsNullOrEmpty(x.ParentTenantId.ToString()) && x.IsDelete == false && x.IsActive == true).FirstOrDefault();
+                if (IsGHLConfigurationTenantExist?.IsGhlconfigSameAsTenant ?? false)
+                {
+                    IsGhlconfigSameAsTenant = true;
+                }
+                LoggedInTenantId = IsGhlconfigSameAsTenant ? IsGHLConfigurationTenantExist.ParentTenantId : LoggedInTenantId;
+                 var gHLStages = dBContext.TblGhlStages
+                    .Where(x => x.TenantId == LoggedInTenantId).OrderBy(x => x.StageOrder)
                     .ToList();
 
                 var stageList = new List<PipelineAndStage>();
