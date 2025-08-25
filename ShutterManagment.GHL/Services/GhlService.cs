@@ -1,4 +1,9 @@
 ﻿
+using System.Net.Http.Headers;
+using System.Numerics;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
@@ -13,11 +18,7 @@ using ShutterManagement.Core.ViewModels.Response;
 using ShutterManagement.DAL.Context;
 using ShutterManagment.GHL.ViewModel.Request;
 using ShutterManagment.GHL.ViewModel.Response;
-using System.Net.Http.Headers;
-using System.Numerics;
-using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
+using static Microsoft.AspNetCore.Hosting.Internal.HostingApplication;
 
 namespace ShutterManagement.GHL.Services
 {
@@ -209,9 +210,16 @@ namespace ShutterManagement.GHL.Services
             IResponseVm<List<PipelineAndStage>> responseVm = new ResponseVm<List<PipelineAndStage>>();
             try
             {
-                
+                var LoggedInTenant = claimsProperty.GetTenantId();
+                bool IsGhlconfigSameAsTenant = false;
+                var IsGHLConfigurationTenantExist = dBContext.TblTenants.Where(x => x.TenantId == LoggedInTenant && !string.IsNullOrEmpty(x.ParentTenantId.ToString()) && x.IsDelete == false && x.IsActive == true).FirstOrDefault();
+                if (IsGHLConfigurationTenantExist?.IsGhlconfigSameAsTenant ?? false)
+                {
+                    IsGhlconfigSameAsTenant = true;
+                }
+                LoggedInTenant = IsGhlconfigSameAsTenant ? IsGHLConfigurationTenantExist.ParentTenantId : LoggedInTenant;
                 var gHLStages = dBContext.TblGhlStages
-                    .Where(x => x.TenantId == claimsProperty.GetTenantId() && (x.GhlPipelineName.ToLower() == getGHLConfiguration.PipelineId.ToLower() || x.GhlPipelineId.ToLower()
+                    .Where(x => x.TenantId == LoggedInTenant && (x.GhlPipelineName.ToLower() == getGHLConfiguration.PipelineId.ToLower() || x.GhlPipelineId.ToLower()
                     == getGHLConfiguration.PipelineId.ToLower())).OrderBy(x => x.StageOrder)
                     .ToList();
 
