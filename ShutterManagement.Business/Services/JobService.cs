@@ -185,6 +185,10 @@ namespace ShutterManagement.Business.Services
             {
                 var tenantId = GetValidTenantId(loggedInTenantId);
                 var validationResult = await ValidateJobRequestAsync(model, tenantId);
+                if (string.IsNullOrEmpty(model.GHL_StageId.ToString()))
+                {
+                    model.GHL_StageId = Guid.Parse(validationResult.Data.StageId);
+                }
                 if (string.IsNullOrEmpty(model.IsJobCreate.ToString()) && string.IsNullOrEmpty(model.ExistingJobId) && string.IsNullOrEmpty(model.ExistingOpportunityId))
                 {
                     var IsMultipleOpportunityExist = await GetGHLOpportunity(model.ContactId, loggedInTenantId);
@@ -218,7 +222,7 @@ namespace ShutterManagement.Business.Services
                             AssignedPersonnel = model.AssignedPersonnel,
                             ContactId = model.ContactId,
                             JobId = Guid.Parse(res.Data),
-                            GhlStageId = Guid.Parse(validationResult.Data.StageId)
+                            GhlStageId = model.GHL_StageId ?? Guid.Empty
                         };
                        await HandleGhlOpportunityCreationAsync(insertedJob, tenantId);
                     }
@@ -237,7 +241,7 @@ namespace ShutterManagement.Business.Services
                             AssignedPersonnel = model.AssignedPersonnel,
                             ContactId = model.ContactId,
                             GhlOpportunityId = model.ExistingOpportunityId,
-                            GhlStageId = Guid.Parse(validationResult.Data.StageId)
+                            GhlStageId = model.GHL_StageId ?? Guid.Empty
                         };
                         await UpdateOpportunityInGhl(insertedJob, tenantId);
                     }
@@ -911,7 +915,16 @@ namespace ShutterManagement.Business.Services
                     return responseVm;
                 }
 
+                bool IsGhlconfigSameAsTenant = false;
+                var IsGHLConfigurationTenantExist = dbContext.TblTenants.Where(x => x.TenantId == LoggedInTenantId && !string.IsNullOrEmpty(x.ParentTenantId.ToString()) && x.IsDelete == false && x.IsActive == true).FirstOrDefault();
+                if (IsGHLConfigurationTenantExist?.IsGhlconfigSameAsTenant ?? false)
+                {
+                    IsGhlconfigSameAsTenant = true;
+                }
+
+                LoggedInTenantId = IsGhlconfigSameAsTenant ? IsGHLConfigurationTenantExist.ParentTenantId : LoggedInTenantId;
                 var configdetails = dbContext.TblGhlconfigurations.Where(s => s.TenantId == LoggedInTenantId && s.IsDelete == false && s.IsActive == true).FirstOrDefault();
+
                 if (configdetails == null)
                 {
                     responseVm.IsSuccess = false;
@@ -1723,6 +1736,7 @@ namespace ShutterManagement.Business.Services
                             GHL_ContactId = opportunitydata.contact_id,
                             lastasync = DateTime.Now,
                             GHLUserId = (ghlUser != null && ghlUser.GhlUserId != null) ? ghlUser.GhlUserId : string.Empty,
+                            ExistingOpportunityId = opportunitydata.id
                         };
                         //await gHLConfiguration.GetGHLConfiguration(opportunitydata.WebhookTenantId);
                         var res = await  JobOpportunityCreate(job, Guid.Parse(opportunitydata.WebhookTenantId));
@@ -1874,6 +1888,7 @@ namespace ShutterManagement.Business.Services
                             GHL_ContactId = opportunitydata.contact_id,
                             lastasync = DateTime.Now,
                             GHLUserId = (ghlUser != null && ghlUser.GhlUserId != null) ? ghlUser.GhlUserId : string.Empty,
+                            ExistingOpportunityId = opportunitydata.id
                         };
                         await gHLConfiguration.GetGHLConfiguration(opportunitydata.WebhookTenantId);
                         var res = await JobOpportunityCreate(job, Guid.Parse(opportunitydata.WebhookTenantId));

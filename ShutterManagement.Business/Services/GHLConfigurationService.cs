@@ -287,6 +287,22 @@ namespace ShutterManagement.Business.Services
             try
             {
                 LoggedInTenantId = ((LoggedInTenantId != Guid.Empty && LoggedInTenantId != null) ? LoggedInTenantId : claimsProperty.GetTenantId());
+                bool IsGhlconfigSameAsTenant = false;
+                var IsGHLConfigurationTenantExist = dbContext.TblTenants.Where(x => x.TenantId == LoggedInTenantId && !string.IsNullOrEmpty(x.ParentTenantId.ToString()) && x.IsDelete == false && x.IsActive == true).FirstOrDefault();
+                if (IsGHLConfigurationTenantExist?.IsGhlconfigSameAsTenant ?? false)
+                {
+                    IsGhlconfigSameAsTenant = true;
+                }
+
+                // Check if the GHL configuration exists for the given tenant ID
+                //if ((bool)IsGHLConfig)
+                //{
+                //    if (Id != claimsProperty.GetTenantId().ToString() && !string.IsNullOrEmpty(claimsProperty.GetParentTenantId().ToString()))
+                //    {
+                //        Id = claimsProperty.GetTenantId().ToString();
+                //    }
+                //}
+                LoggedInTenantId = IsGhlconfigSameAsTenant ? IsGHLConfigurationTenantExist.ParentTenantId : LoggedInTenantId;
                 var isExist = GetAllQuerable().Where(x => x.TenantId == LoggedInTenantId && x.IsDelete==false).FirstOrDefault();
                 if (isExist != null)
                 {
@@ -606,7 +622,7 @@ namespace ShutterManagement.Business.Services
                     {
                         var IsGHLConfigurationExist = GetAllQuerable().Where(x => x.TenantId.ToString() == model.PartnerId && x.IsDelete == false && x.IsActive == true)
                             .FirstOrDefault();
-                        if(!string.IsNullOrEmpty(IsGHLConfigurationExist.ToString()))
+                        if(IsGHLConfigurationExist != null && !string.IsNullOrEmpty(IsGHLConfigurationExist.ToString()))
                             DeleteGHLConfiguration(IsGHLConfigurationExist.Id,IsGHLConfigurationExist.TenantId);
                     }
                 }
